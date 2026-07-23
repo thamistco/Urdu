@@ -1,0 +1,158 @@
+import { useState } from 'react';
+import { View, Pressable } from 'react-native';
+import { Choice, PromptCard, Question, palette, withAlpha } from './common';
+import { Urdu, Txt, Bold } from '../components/Text';
+import { feedback } from '../lib/feedback';
+import { speak } from '../lib/speech';
+import type { ExerciseProps, Exercise } from './types';
+
+type MCEx = Extract<Exercise, { kind: 'multipleChoice' }>;
+type MeaningEx = Extract<Exercise, { kind: 'meaningPick' }>;
+type ListenEx = Extract<Exercise, { kind: 'listenTap' }>;
+
+/** Emoji shown → pick the matching Urdu word (translation-free, Drops-style). */
+export function MultipleChoiceExercise({ exercise, showRoman, locked, onGraded }: ExerciseProps<MCEx>) {
+  const { word, options } = exercise;
+  const [picked, setPicked] = useState<string | null>(null);
+
+  const choose = (id: string) => {
+    if (picked || locked) return;
+    setPicked(id);
+    const correct = id === word.id;
+    correct ? feedback.correct() : feedback.incorrect();
+    onGraded({ items: [{ id: word.id, type: 'word' }], correct });
+  };
+
+  return (
+    <View>
+      <PromptCard height={150}>
+        <Txt style={{ fontSize: 72 }}>{word.emoji}</Txt>
+      </PromptCard>
+      <View className="h-4" />
+      <Question>Which word is this?</Question>
+      <View className="flex-row flex-wrap justify-between">
+        {options.map((o) => {
+          const state =
+            picked == null ? 'idle' : o.id === word.id ? 'correct' : o.id === picked ? 'wrong' : 'muted';
+          return (
+            <Choice
+              key={o.id}
+              state={state}
+              disabled={picked != null || locked}
+              onPress={() => choose(o.id)}
+              className="mb-3 w-[48%]"
+            >
+              <Urdu style={{ fontSize: 34, color: palette.paper, lineHeight: 52 }}>{o.urdu}</Urdu>
+              {picked && showRoman ? (
+                <Txt className="mt-1 text-xs text-paper/50">{o.roman}</Txt>
+              ) : null}
+            </Choice>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+/** Urdu word shown → pick the meaning (reverse recall). */
+export function MeaningPickExercise({ exercise, showRoman, locked, onGraded }: ExerciseProps<MeaningEx>) {
+  const { word, options } = exercise;
+  const [picked, setPicked] = useState<string | null>(null);
+
+  const choose = (id: string) => {
+    if (picked || locked) return;
+    setPicked(id);
+    const correct = id === word.id;
+    correct ? feedback.correct() : feedback.incorrect();
+    onGraded({ items: [{ id: word.id, type: 'word' }], correct });
+  };
+
+  return (
+    <View>
+      <PromptCard height={150}>
+        <Urdu style={{ fontSize: 60, color: palette.ink, lineHeight: 90 }}>{word.urdu}</Urdu>
+        {showRoman ? (
+          <Txt style={{ color: palette.ink }} className="mt-1 text-sm opacity-55">
+            {word.roman}
+          </Txt>
+        ) : null}
+      </PromptCard>
+      <View className="h-4" />
+      <Question>What does it mean?</Question>
+      <View className="gap-3">
+        {options.map((o) => {
+          const state =
+            picked == null ? 'idle' : o.id === word.id ? 'correct' : o.id === picked ? 'wrong' : 'muted';
+          return (
+            <Choice
+              key={o.id}
+              state={state}
+              disabled={picked != null || locked}
+              onPress={() => choose(o.id)}
+            >
+              <View className="flex-row items-center gap-3">
+                <Txt style={{ fontSize: 24 }}>{o.emoji}</Txt>
+                <Bold className="text-base capitalize">{o.meaning}</Bold>
+              </View>
+            </Choice>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+/** Hear it (TTS) → pick the matching emoji + meaning. */
+export function ListenTapExercise({ exercise, showRoman, locked, onGraded }: ExerciseProps<ListenEx>) {
+  const { word, options } = exercise;
+  const [picked, setPicked] = useState<string | null>(null);
+
+  const choose = (id: string) => {
+    if (picked || locked) return;
+    setPicked(id);
+    const correct = id === word.id;
+    correct ? feedback.correct() : feedback.incorrect();
+    onGraded({ items: [{ id: word.id, type: 'word' }], correct });
+  };
+
+  return (
+    <View>
+      <PromptCard height={150}>
+        <Pressable
+          onPress={() => speak(word.urdu, word.roman)}
+          style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.94 : 1 }] })}
+        >
+          <View
+            className="h-20 w-20 items-center justify-center rounded-full"
+            style={{ backgroundColor: withAlpha(palette.gold, 0.2), borderWidth: 2, borderColor: palette.gold }}
+          >
+            <Txt style={{ fontSize: 34 }}>🔊</Txt>
+          </View>
+        </Pressable>
+        <Txt style={{ color: palette.ink }} className="mt-3 text-xs opacity-50">
+          Tap to hear{showRoman ? ` · ${word.roman}` : ''}
+        </Txt>
+      </PromptCard>
+      <View className="h-4" />
+      <Question>Which one did you hear?</Question>
+      <View className="flex-row flex-wrap justify-between">
+        {options.map((o) => {
+          const state =
+            picked == null ? 'idle' : o.id === word.id ? 'correct' : o.id === picked ? 'wrong' : 'muted';
+          return (
+            <Choice
+              key={o.id}
+              state={state}
+              disabled={picked != null || locked}
+              onPress={() => choose(o.id)}
+              className="mb-3 w-[48%]"
+            >
+              <Txt style={{ fontSize: 40 }}>{o.emoji}</Txt>
+              <Bold className="mt-1 text-sm capitalize">{o.meaning}</Bold>
+            </Choice>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
