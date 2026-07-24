@@ -39,6 +39,13 @@ jobs:
         run: |
           node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('app.json'));p.expo.experiments=Object.assign({},p.expo.experiments,{baseUrl:'/${{ github.event.repository.name }}'});fs.writeFileSync('app.json',JSON.stringify(p,null,2));"
 
+      - name: Generate voice clips (only if a TTS key is set)
+        env:
+          GOOGLE_TTS_API_KEY: ${{ secrets.GOOGLE_TTS_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
+        run: node scripts/generate-voice.js
+
       - name: Export web bundle
         env:
           NODE_ENV: production

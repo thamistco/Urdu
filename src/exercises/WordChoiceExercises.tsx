@@ -4,7 +4,7 @@ import { Choice, PromptCard, Question, palette, withAlpha } from './common';
 import { Urdu, Txt, Bold } from '../components/Text';
 import { WordArt } from '../components/Illustration';
 import { feedback } from '../lib/feedback';
-import { speak } from '../lib/speech';
+import { announce } from '../lib/speech';
 import type { ExerciseProps, Exercise } from './types';
 
 type MCEx = Extract<Exercise, { kind: 'multipleChoice' }>;
@@ -20,7 +20,7 @@ export function MultipleChoiceExercise({ exercise, showRoman, locked, onGraded }
     if (picked || locked) return;
     setPicked(id);
     const correct = id === word.id;
-    correct ? feedback.correctAnnounce(word.urdu, word.roman) : feedback.incorrect();
+    correct ? feedback.correctAnnounce(word.id, word.urdu, word.roman) : feedback.incorrect();
     onGraded({ items: [{ id: word.id, type: 'word' }], correct });
   };
 
@@ -64,7 +64,7 @@ export function MeaningPickExercise({ exercise, showRoman, locked, onGraded }: E
     if (picked || locked) return;
     setPicked(id);
     const correct = id === word.id;
-    correct ? feedback.correctAnnounce(word.urdu, word.roman) : feedback.incorrect();
+    correct ? feedback.correctAnnounce(word.id, word.urdu, word.roman) : feedback.incorrect();
     onGraded({ items: [{ id: word.id, type: 'word' }], correct });
   };
 
@@ -112,7 +112,7 @@ export function ListenTapExercise({ exercise, showRoman, locked, onGraded }: Exe
     if (picked || locked) return;
     setPicked(id);
     const correct = id === word.id;
-    correct ? feedback.correctAnnounce(word.urdu, word.roman) : feedback.incorrect();
+    correct ? feedback.correctAnnounce(word.id, word.urdu, word.roman) : feedback.incorrect();
     onGraded({ items: [{ id: word.id, type: 'word' }], correct });
   };
 
@@ -120,7 +120,7 @@ export function ListenTapExercise({ exercise, showRoman, locked, onGraded }: Exe
     <View>
       <PromptCard height={150}>
         <Pressable
-          onPress={() => speak(word.urdu, word.roman)}
+          onPress={() => announce(word.id, word.urdu, word.roman)}
           style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.94 : 1 }] })}
         >
           <View
