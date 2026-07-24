@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { PromptCard, Question, palette, withAlpha } from './common';
 import { Urdu, Txt, Bold } from '../components/Text';
+import { WordArt } from '../components/Illustration';
 import { Button } from '../components/Button';
 import { feedback } from '../lib/feedback';
 import type { ExerciseProps, Exercise } from './types';
@@ -46,8 +47,8 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
   return (
     <View>
       <PromptCard height={140}>
-        <Txt style={{ fontSize: 56 }}>{word.emoji}</Txt>
-        <Txt style={{ color: palette.ink }} className="mt-1 text-sm opacity-60 capitalize">
+        <WordArt word={word} size={80} />
+        <Txt style={{ color: palette.ink }} className="mt-2 text-sm opacity-60 capitalize">
           {word.meaning}
           {showRoman ? ` · ${word.roman}` : ''}
         </Txt>
