@@ -58,15 +58,31 @@ commercial release, get a proper IP review.
     it in, either share the key pages/tables directly, or we consult it from an
     environment with open network access.
 
-## Secondary reference
-- **"Teach Yourself Urdu"** (Delacy / Ahmed) — a well-structured self-study
-  course.
-  https://theswissbay.ch/pdf/Books/Linguistics/Mega%20linguistics%20pack/Indo-European/Indo-Aryan/Urdu,%20Teach%20Yourself.pdf
-  - ⚠️ **Copyrighted commercial book** (this link is an unauthorized copy). Do
-    **not** copy its text, dialogues, exercises, or the selection/arrangement of
-    its content. Only uncopyrightable *facts* (grammar rules, word meanings) may
-    be used — and those we take from the CC-BY source or write ourselves.
-  - Treat as background familiarity only, not a content source.
+## Reference: functional syllabus (copyrighted — background only)
+- **"Complete Urdu"** by **David Matthews & Mohamed Kasim Dalvi** (Teach
+  Yourself / Hodder).
+  - ⚠️ **Copyrighted commercial book.** Do **not** copy its text, dialogues,
+    exercises, or the selection/arrangement of its content. Only uncopyrightable
+    *facts* (grammar rules, word meanings) inform us — written originally.
+  - Useful as a **functional ("can-do") progression** and a **grammar spine**:
+    - Units: (1) greetings, directions, personal details/phone numbers;
+      (2) introductions, polite/respectful forms, family, children;
+      (3) invitations, needs/likes/dislikes, taxis, ordering a meal;
+      (4) possession, relationships, origins, age, geography of Pakistan;
+      (5) work & daily routine, telling the time, days of the week;
+      (6) leisure, customs, schooling, who/whose, weather, months & dates;
+      (7) reservations; (8) at a restaurant / the bill; (9) family & home;
+      (10) hotels & staying somewhere; (11) showing your village/town;
+      (12) travel ("off to Delhi"); (13) packing / completed trips.
+    - Grammar order (full spine): gender & number → **oblique case** (nouns,
+      plurals, feminine, pronouns, possessive adjectives) → postpositions
+      (incl. `tak`, `se pahle`, compound) → **present habitual** →
+      **imperative** (incl. negative commands, "if") → **present continuous** →
+      **future** → **past of "to be" (tha)** → **subjunctive** (+ conditional
+      "if", negative with `na`) → **past habitual / past continuous** →
+      **simple past** (intransitive) → **perfect & pluperfect**.
+  - TODO: sequence a future **phrases + grammar track** along this order,
+    written originally.
   - Note: also not fetchable from the build sandbox (403).
 
 ## How our content is structured today
