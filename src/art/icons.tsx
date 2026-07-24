@@ -310,6 +310,34 @@ export const ElderWoman = ({ size }: IconProps) => (
 export const Child = ({ size }: IconProps) => (
   <Frame size={size}><Person hair={BROWN} robe={G_} small /></Frame>
 );
+/* Distinct younger figures so no two family words share the same picture. */
+export const Girl = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Person hair={ROSE} robe={SKY} small />
+    {/* ponytail */}
+    <Circle cx="46" cy="30" r="4" fill={ROSE} />
+  </Frame>
+);
+export const Boy = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Person hair={IN} robe={JADE} small />
+    {/* cap brim */}
+    <Path d="M23 21 h18 l4 3 H23 Z" fill={GD} />
+  </Frame>
+);
+export const SonChild = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Person hair={BROWN} robe={G_} small />
+    {/* held ball marks the small child */}
+    <Circle cx="46" cy="46" r="5" fill={SKY} />
+  </Frame>
+);
+export const DaughterChild = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Person hair={GD} robe={ROSE} small />
+    <Circle cx="46" cy="46" r="5" fill={JADE} />
+  </Frame>
+);
 
 export const Family = ({ size }: IconProps) => (
   <Frame size={size}>
@@ -437,6 +465,7 @@ export const ICONS: Record<string, (p: IconProps) => JSX.Element> = {
   flower: Flower, tree: Tree, rain: RainCloud, waves: Waves, mountain: Mountain,
   table: Table, chair: Chair, door: Door, window: Window, key: Key, bed: Bed, lamp: Lamp,
   woman: Woman, man: Man, elderMan: ElderMan, elderWoman: ElderWoman, child: Child, family: Family,
+  girl: Girl, boy: Boy, sonChild: SonChild, daughterChild: DaughterChild,
   pen: Pen, mosque: Mosque, salaam: Salaam, thanks: ThanksHands, check: Check, cross: Cross,
   handHeart: HandHeart, smile: Smile, egg: Egg, rice: RiceBowl, meat: Meat, salt: SaltShaker,
 };

@@ -64,6 +64,11 @@ export const LETTERS: Letter[] = [
     note: 'A single upright stroke. It never joins to the letter after it — a natural break in the word.',
   },
   {
+    id: 'alif-madda', name: 'alif madda', sound: 'aa', connects: false, forms: nonConnector('آ'),
+    word: 'آم', roman: 'aam', meaning: 'mango', emoji: '🥭', group: 1,
+    note: 'Alif wearing a wavy hat (madda). It starts a word with a long "aa" — alif alone cannot do that at the beginning.',
+  },
+  {
     id: 'be', name: 'be', sound: 'b', connects: true, forms: connector('ب'),
     word: 'بلی', roman: 'billi', meaning: 'cat', emoji: '🐈', group: 1,
     note: 'One dot below. The bowl stays shallow in Nastaliq — it sits, it does not scoop.',
@@ -86,9 +91,9 @@ export const LETTERS: Letter[] = [
 
   // ---- Group 2 -----------------------------------------------------------
   {
-    id: 'se', name: 'se', sound: 's (soft)', connects: true, forms: connector('ث'),
+    id: 'se', name: 'se', sound: 's', connects: true, forms: connector('ث'),
     word: 'ثمر', roman: 'samar', meaning: 'fruit', emoji: '🍇', group: 2,
-    note: 'Three dots above. One of three letters that sound like "s" in Urdu.',
+    note: 'Three dots above. In Urdu it sounds exactly like seen — one of three letters spelling the same \'s\'.',
   },
   {
     id: 'jeem', name: 'jeem', sound: 'j', connects: true, forms: connector('ج'),
@@ -103,7 +108,7 @@ export const LETTERS: Letter[] = [
   {
     id: 'baRi-he', name: 'baṛī he', sound: 'h', connects: true, forms: connector('ح'),
     word: 'حلوہ', roman: 'halwa', meaning: 'sweet dish', emoji: '🍮', group: 2,
-    note: 'A dotless deep curve. A breathy h from the throat.',
+    note: 'A dotless deep curve. In Urdu it sounds the same as choṭī he — an ordinary h.',
   },
   {
     id: 'khe', name: 'khe', sound: 'kh', connects: true, forms: connector('خ'),
@@ -160,31 +165,31 @@ export const LETTERS: Letter[] = [
     note: 'Seen with three dots above the teeth. Say "sh".',
   },
   {
-    id: 'swaad', name: 'swaad', sound: 's (emphatic)', connects: true, forms: connector('ص'),
+    id: 'swaad', name: 'swaad', sound: 's', connects: true, forms: connector('ص'),
     word: 'صابن', roman: 'saabun', meaning: 'soap', emoji: '🧼', group: 4,
-    note: 'A wide loop with a tail. A heavier, emphatic s.',
+    note: 'A wide loop with a tail. In Urdu it sounds the same as seen — the spelling is inherited from Arabic.',
   },
   {
-    id: 'zwaad', name: 'zwaad', sound: 'z (emphatic)', connects: true, forms: connector('ض'),
+    id: 'zwaad', name: 'zwaad', sound: 'z', connects: true, forms: connector('ض'),
     word: 'ضرب', roman: 'zarb', meaning: 'multiply / strike', emoji: '✖️', group: 4,
-    note: 'Swaad with one dot above. An emphatic z.',
+    note: 'Swaad with one dot above. In Urdu it sounds like ze — one of four letters spelling \'z\'.',
   },
 
   // ---- Group 5 -----------------------------------------------------------
   {
-    id: 'toe', name: 'to’e', sound: 't (emphatic)', connects: true, forms: connector('ط'),
+    id: 'toe', name: 'to’e', sound: 't', connects: true, forms: connector('ط'),
     word: 'طوطا', roman: 'toota', meaning: 'parrot', emoji: '🦜', group: 5,
-    note: 'A loop with an upright stroke. An emphatic t.',
+    note: 'A loop with an upright stroke. In Urdu it sounds like te — the soft dental t.',
   },
   {
-    id: 'zoe', name: 'zo’e', sound: 'z (emphatic)', connects: true, forms: connector('ظ'),
+    id: 'zoe', name: 'zo’e', sound: 'z', connects: true, forms: connector('ظ'),
     word: 'ظرف', roman: 'zarf', meaning: 'vessel', emoji: '🏺', group: 5,
-    note: 'To’e with one dot above. Another emphatic z.',
+    note: 'To’e with one dot above. Another of the four ways Urdu spells \'z\'.',
   },
   {
-    id: 'ain', name: 'ain', sound: '‘ (guttural)', connects: true, forms: connector('ع'),
+    id: 'ain', name: 'ain', sound: 'a / ‘ (silent)', connects: true, forms: connector('ع'),
     word: 'عینک', roman: 'ainak', meaning: 'glasses', emoji: '👓', group: 5,
-    note: 'A shape-shifter — its four forms look very different. A deep throat sound.',
+    note: 'A shape-shifter — its four forms look very different. In Urdu it is not a throat sound: it usually just carries a vowel, or is silent.',
   },
   {
     id: 'ghain', name: 'ghain', sound: 'gh', connects: true, forms: connector('غ'),
