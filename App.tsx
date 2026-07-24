@@ -1,5 +1,5 @@
 import './global.css';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -35,7 +35,7 @@ const navTheme = {
 };
 
 export default function App() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Fraunces: Fraunces_600SemiBold,
     'Fraunces-Black': Fraunces_900Black,
     PublicSans: PublicSans_400Regular,
@@ -45,6 +45,17 @@ export default function App() {
     'NotoNastaliq-Bold': NotoNastaliqUrdu_700Bold,
   });
 
+  // Never let a slow/blocked font load brick the app — proceed after a short
+  // grace period regardless (fonts pop in when ready). Keeps hosted previews
+  // and offline launches from hanging on a blank screen.
+  const [graceElapsed, setGraceElapsed] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setGraceElapsed(true), 2500);
+    return () => clearTimeout(t);
+  }, []);
+
+  const ready = fontsLoaded || !!fontError || graceElapsed;
+
   useEffect(() => {
     initSound();
     // apply persisted sound/haptic prefs to the effect layer, and regen hearts
@@ -53,10 +64,10 @@ export default function App() {
   }, []);
 
   const onReady = useCallback(async () => {
-    if (fontsLoaded) await SplashScreen.hideAsync().catch(() => {});
-  }, [fontsLoaded]);
+    if (ready) await SplashScreen.hideAsync().catch(() => {});
+  }, [ready]);
 
-  if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: palette.ink }} />;
+  if (!ready) return <View style={{ flex: 1, backgroundColor: palette.ink }} />;
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.ink }}>
