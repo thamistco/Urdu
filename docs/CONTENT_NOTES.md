@@ -44,19 +44,23 @@ commercial release, get a proper IP review.
   simple **grammar exercises** (gender, pronouns+"to be", postpositions) mapped
   to chapters 2–8.
 
-## Reference (curriculum comparison)
-- **"Let's Learn Urdu" (English medium)** — National Council for Promotion of
-  Urdu Language (NCPUL) / Urdu Council.
-  https://www.urducouncil.nic.in/sites/default/files/2024-07/Let%27s%20Learn%20Urdu%20%28English%29.pdf
-  - Official government primer — an authoritative source for the **order letters
-    are introduced**, how **position/joining forms** are taught, and the
-    **beginner vocabulary** set.
-  - TODO: align `src/data/letters.ts` group order and `src/data/units.ts` lesson
-    sequence with this book's progression; cross-check example words and add its
-    vocabulary to `src/data/words.ts`.
-  - Note: the PDF is not fetchable from the build sandbox (returns 403). To fold
-    it in, either share the key pages/tables directly, or we consult it from an
-    environment with open network access.
+## Reference: script-teaching method (govt. publication — facts only)
+- **"Let's Learn Urdu: Beginner's Manual for Urdu Script"** by **Gopi Chand
+  Narang** — National Council for Promotion of Urdu Language (NCPUL), Ministry
+  of HRD, Govt of India. (The URL was blocked earlier; reviewed directly from an
+  uploaded scanned copy — no extractable text, images only.)
+  - License status unclear (a govt. publication, no explicit open license
+    found) — treat like the copyrighted sources: **facts/method only**, never
+    reproduce its images, drill sentences, or exercises.
+  - Confirms the pedagogy already used in `letters.ts`: **non-connectors and
+    simple shapes first**, harder connectors and concepts introduced later,
+    graded "gradually and systematically" rather than the traditional
+    alphabet-poster order — validates our Group 1–8 approach.
+  - Its reading drills recombine only the letters taught so far into short
+    connected sentences, repeated for fluency, with the sentence pool growing
+    as more letters are learned. Worth adopting as a **pattern** (short graded
+    reading passages using only already-taught letters) for a future "reading
+    fluency" exercise type — written with our own original sentences.
 
 ## Reference: functional syllabus (copyrighted — background only)
 - **"Complete Urdu"** by **David Matthews & Mohamed Kasim Dalvi** (Teach
