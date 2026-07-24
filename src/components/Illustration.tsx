@@ -2,7 +2,7 @@ import { View, Text as RNText } from 'react-native';
 import Svg, { Rect, Path, Circle } from 'react-native-svg';
 import { ICONS, IconName } from '../art/icons';
 import { palette, withAlpha } from '../theme';
-import type { Word } from '../data/words';
+import { TOPICS, type Word } from '../data/words';
 
 /**
  * Heritage medallion frame — every picture in the app sits inside an 8-point
@@ -134,7 +134,14 @@ export function GoalArt({ goalKey, size = 44 }: { goalKey: string; size?: number
 export function TopicArt({ topicId, size = 44 }: { topicId: string; size?: number }) {
   if (topicId === 'numbers') return <NumeralTile numeral="۳" size={size} />;
   if (topicId === 'colours') return <SwatchTile color="#E8A33D" size={size} />;
-  return <Illustration name={TOPIC_ICON[topicId] ?? 'sparkle'} size={size} />;
+  if (TOPIC_ICON[topicId]) return <Illustration name={TOPIC_ICON[topicId]} size={size} />;
+  // topics without a bespoke illustration yet → their emoji in the medallion
+  const emoji = TOPICS.find((t) => t.id === topicId)?.icon ?? '✨';
+  return (
+    <Medallion size={size}>
+      <RNText style={{ fontSize: size * 0.42 }}>{emoji}</RNText>
+    </Medallion>
+  );
 }
 
 /** Icon for a lesson node on the path (drawn without a frame). */
