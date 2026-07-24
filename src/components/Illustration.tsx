@@ -80,8 +80,8 @@ function SwatchTile({ color, size, ring }: { color: string; size: number; ring?:
 const WORD_ICON: Record<string, IconName> = {
   'w-paani': 'droplet', 'w-kitaab': 'book', 'w-ghar': 'house', 'w-dil': 'heart',
   'w-naam': 'tag', 'w-dost': 'handshake', 'w-kaam': 'briefcase', 'w-waqt': 'clock',
-  'w-maan': 'woman', 'w-baap': 'man', 'w-behen': 'woman', 'w-bhai': 'man',
-  'w-dada': 'elderMan', 'w-dadi': 'elderWoman', 'w-beta': 'child', 'w-beti': 'child',
+  'w-maan': 'woman', 'w-baap': 'man', 'w-behen': 'girl', 'w-bhai': 'boy',
+  'w-dada': 'elderMan', 'w-dadi': 'elderWoman', 'w-beta': 'sonChild', 'w-beti': 'daughterChild',
   'w-roti': 'bread', 'w-chai': 'tea', 'w-doodh': 'milk', 'w-seb': 'apple',
   'w-anda': 'egg', 'w-chawal': 'rice', 'w-gosht': 'meat', 'w-namak': 'salt',
   'w-mez': 'table', 'w-kursi': 'chair', 'w-darwaza': 'door', 'w-khirki': 'window',
