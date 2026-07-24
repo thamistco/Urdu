@@ -9,14 +9,15 @@ import Svg, { Path, Circle, Rect, Line, Polygon, G, Ellipse, Polyline } from 're
  * the whole set feels of a piece.
  */
 
+/* Persian-miniature / gold-leaf palette for the heritage set. */
 const G_ = '#E8A33D'; // gold
-const GD = '#C9862A'; // gold dark
+const GD = '#B9741F'; // deep gold
 const CR = '#F4EBD9'; // cream
-const IN = '#0C1A33'; // ink
-const JADE = '#3FA88F';
-const ROSE = '#D96385';
-const SKY = '#5B93C7';
-const BROWN = '#B07A46';
+const IN = '#0C1A33'; // ink (outlines)
+const JADE = '#2F9E8F'; // turquoise
+const ROSE = '#C4633F'; // terracotta
+const SKY = '#2E5A9E'; // lapis
+const BROWN = '#9A6A3A'; // warm wood
 
 type IconProps = { size?: number };
 const Frame = ({ size = 40, children }: { size?: number; children: React.ReactNode }) => (

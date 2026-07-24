@@ -1,116 +1,93 @@
 import { View, Text as RNText } from 'react-native';
+import Svg, { Rect, Path, Circle } from 'react-native-svg';
 import { ICONS, IconName } from '../art/icons';
 import { palette, withAlpha } from '../theme';
 import type { Word } from '../data/words';
 
 /**
- * A framed illustration tile. Every picture in the app sits in the same rounded
- * "frame" so nothing is ever cut off or mis-sized, and the set reads as one
- * system on both the parchment cards and the dark cards.
+ * Heritage medallion frame — every picture in the app sits inside an 8-point
+ * Islamic-geometric star (two overlapping squares) in gold on deep indigo, the
+ * same motif as the app's lattice. This ornamental framing is what gives the
+ * illustration set its "gold-leaf on indigo" heritage character, and keeps
+ * everything perfectly aligned and uniformly sized.
  */
+function Medallion({ size, children }: { size: number; children: React.ReactNode }) {
+  const gold = palette.gold;
+  return (
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width={size} height={size} viewBox="0 0 64 64" style={{ position: 'absolute' }}>
+        <Rect x={2.5} y={2.5} width={59} height={59} rx={13} fill="#0E1D3A" stroke={withAlpha(gold, 0.38)} strokeWidth={1.2} />
+        {/* 8-point star: a diamond over an axis-aligned square */}
+        <Path d="M32 6 L58 32 L32 58 L6 32 Z" fill={withAlpha(gold, 0.05)} stroke={withAlpha(gold, 0.5)} strokeWidth={1} />
+        <Rect x={13} y={13} width={38} height={38} rx={3} fill="none" stroke={withAlpha(gold, 0.5)} strokeWidth={1} />
+        {/* corner ornament dots */}
+        <Circle cx={32} cy={6} r={1.1} fill={gold} />
+        <Circle cx={58} cy={32} r={1.1} fill={gold} />
+        <Circle cx={32} cy={58} r={1.1} fill={gold} />
+        <Circle cx={6} cy={32} r={1.1} fill={gold} />
+      </Svg>
+      <View style={{ width: size * 0.56, height: size * 0.56, alignItems: 'center', justifyContent: 'center' }}>
+        {children}
+      </View>
+    </View>
+  );
+}
+
 export function Illustration({
   name,
   size = 44,
   tile = true,
-  bg,
 }: {
   name: IconName | string;
   size?: number;
   tile?: boolean;
-  bg?: string;
 }) {
   const Icon = ICONS[name as string];
-  const inner = size * 0.66;
-  const body = Icon ? <Icon size={inner} /> : null;
+  const body = Icon ? <Icon size={size * (tile ? 0.56 : 0.9)} /> : null;
   if (!tile) return body;
-  return (
-    <View
-      style={{
-        width: size,
-        height: size,
-        borderRadius: size * 0.28,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: bg ?? '#132743',
-        borderWidth: 1,
-        borderColor: withAlpha(palette.gold, 0.18),
-      }}
-    >
-      {body}
-    </View>
-  );
+  return <Medallion size={size}>{body}</Medallion>;
 }
 
-/** Numeral tile — the picture cue for number words. */
 function NumeralTile({ numeral, size }: { numeral: string; size: number }) {
   return (
-    <View
-      style={{
-        width: size,
-        height: size,
-        borderRadius: size * 0.28,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#132743',
-        borderWidth: 1,
-        borderColor: withAlpha(palette.gold, 0.18),
-      }}
-    >
-      <RNText style={{ fontFamily: 'NotoNastaliq-Bold', color: palette.gold, fontSize: size * 0.5 }}>
+    <Medallion size={size}>
+      <RNText style={{ fontFamily: 'NotoNastaliq-Bold', color: palette.gold, fontSize: size * 0.42 }}>
         {numeral}
       </RNText>
-    </View>
+    </Medallion>
   );
 }
 
-/** Colour swatch tile — the picture cue for colour words. */
 function SwatchTile({ color, size, ring }: { color: string; size: number; ring?: boolean }) {
   return (
-    <View
-      style={{
-        width: size,
-        height: size,
-        borderRadius: size * 0.28,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#132743',
-        borderWidth: 1,
-        borderColor: withAlpha(palette.gold, 0.18),
-      }}
-    >
+    <Medallion size={size}>
       <View
         style={{
-          width: size * 0.52,
-          height: size * 0.52,
-          borderRadius: size * 0.26,
+          width: size * 0.44,
+          height: size * 0.44,
+          borderRadius: size * 0.22,
           backgroundColor: color,
           borderWidth: ring ? 1.5 : 0,
           borderColor: withAlpha(palette.cream, 0.5),
         }}
       />
-    </View>
+    </Medallion>
   );
 }
 
 // ---- content → art mappings ---------------------------------------------
 
 const WORD_ICON: Record<string, IconName> = {
-  // first words
   'w-paani': 'droplet', 'w-kitaab': 'book', 'w-ghar': 'house', 'w-dil': 'heart',
   'w-naam': 'tag', 'w-dost': 'handshake', 'w-kaam': 'briefcase', 'w-waqt': 'clock',
-  // family
   'w-maan': 'woman', 'w-baap': 'man', 'w-behen': 'woman', 'w-bhai': 'man',
   'w-dada': 'elderMan', 'w-dadi': 'elderWoman', 'w-beta': 'child', 'w-beti': 'child',
-  // food
   'w-roti': 'bread', 'w-chai': 'tea', 'w-doodh': 'milk', 'w-seb': 'apple',
   'w-anda': 'egg', 'w-chawal': 'rice', 'w-gosht': 'meat', 'w-namak': 'salt',
-  // home
   'w-mez': 'table', 'w-kursi': 'chair', 'w-darwaza': 'door', 'w-khirki': 'window',
   'w-chabi': 'key', 'w-ghadi': 'clock', 'w-bistar': 'bed', 'w-chiragh': 'lamp',
-  // nature
   'w-chaand': 'moon', 'w-suraj': 'sun', 'w-tara': 'star', 'w-phool': 'flower',
   'w-darakht': 'tree', 'w-barish': 'rain', 'w-samundar': 'waves', 'w-pahaar': 'mountain',
-  // greetings
   'w-salam': 'salaam', 'w-shukriya': 'thanks', 'w-haan': 'check', 'w-nahi': 'cross',
   'w-maaf': 'handHeart', 'w-khush': 'smile',
 };
@@ -126,36 +103,19 @@ const COLOURS: Record<string, { color: string; ring?: boolean }> = {
   'w-kaala': { color: '#15181C', ring: true }, 'w-safed': { color: '#F4EBD9', ring: true },
 };
 
-/** True when we have real artwork for a word (so exercises can rely on a picture cue). */
 export function hasWordArt(word: Word): boolean {
   return !!(WORD_ICON[word.id] || NUMERALS[word.id] || COLOURS[word.id]);
 }
 
-/**
- * The picture for a word: custom illustration where we have one, a numeral/colour
- * cue for numbers/colours, otherwise the emoji as a graceful fallback.
- */
 export function WordArt({ word, size = 56 }: { word: Word; size?: number }) {
   if (NUMERALS[word.id]) return <NumeralTile numeral={NUMERALS[word.id]} size={size} />;
   if (COLOURS[word.id]) return <SwatchTile {...COLOURS[word.id]} size={size} />;
   const icon = WORD_ICON[word.id];
   if (icon) return <Illustration name={icon} size={size} />;
-  // fallback: emoji centred in a matching frame so sizing/alignment stay consistent
   return (
-    <View
-      style={{
-        width: size,
-        height: size,
-        borderRadius: size * 0.28,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#132743',
-        borderWidth: 1,
-        borderColor: withAlpha(palette.gold, 0.18),
-      }}
-    >
-      <RNText style={{ fontSize: size * 0.5 }}>{word.emoji}</RNText>
-    </View>
+    <Medallion size={size}>
+      <RNText style={{ fontSize: size * 0.42 }}>{word.emoji}</RNText>
+    </Medallion>
   );
 }
 
