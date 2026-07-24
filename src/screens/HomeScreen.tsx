@@ -58,9 +58,8 @@ function LessonNode({
   return (
     <View className="mb-6 flex-row items-center" style={{ marginLeft: offset }}>
       <Pressable
-        disabled={state === 'locked'}
         onPress={onPress}
-        style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.94 : 1 }], opacity: state === 'locked' ? 0.55 : 1 })}
+        style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.94 : 1 }], opacity: state === 'locked' ? 0.7 : 1 })}
       >
         <View
           className="h-[68px] w-[68px] items-center justify-center rounded-full"
@@ -70,12 +69,12 @@ function LessonNode({
             borderColor: state === 'current' ? ring : withAlpha(palette.white, 0.12),
           }}
         >
-          {state === 'locked' ? (
-            <Txt style={{ fontSize: 24, opacity: 0.5 }}>🔒</Txt>
-          ) : state === 'done' ? (
+          {state === 'done' ? (
             <Txt style={{ fontSize: 28, color: '#fff' }}>✓</Txt>
           ) : (
-            <Illustration name={lessonIconName(lesson.kind, lesson.topic)} tile={false} size={34} />
+            <View style={{ opacity: state === 'locked' ? 0.85 : 1 }}>
+              <Illustration name={lessonIconName(lesson.kind, lesson.topic)} tile={false} size={34} />
+            </View>
           )}
         </View>
         {state === 'current' && (
@@ -84,6 +83,14 @@ function LessonNode({
             style={{ backgroundColor: palette.gold }}
           >
             <Eyebrow style={{ color: palette.ink, fontSize: 8 }}>Start</Eyebrow>
+          </View>
+        )}
+        {state === 'locked' && (
+          <View
+            className="absolute -right-1 -top-1 h-5 w-5 items-center justify-center rounded-full"
+            style={{ backgroundColor: palette.ink600, borderWidth: 1, borderColor: withAlpha(palette.white, 0.15) }}
+          >
+            <Txt style={{ fontSize: 10, opacity: 0.7 }}>🔒</Txt>
           </View>
         )}
       </Pressable>
@@ -111,10 +118,9 @@ export function HomeScreen() {
   const dailyRatio = Math.min(1, store.todayXp / goal.xp);
   const word = WORDS[new Date().getDate() % WORDS.length];
 
-  const openLesson = (lesson: Lesson, state: string) => {
-    if (state === 'locked') return;
-    // Even with 0 hearts you can begin — the lesson player handles running out
-    // mid-session (refill with gems, or wait for regen).
+  const openLesson = (lesson: Lesson, _state: string) => {
+    // Any lesson can be started — locked ones are "jump ahead". Even with 0
+    // hearts you can begin; the lesson player handles running out mid-session.
     nav.navigate('Lesson', { lessonId: lesson.id });
   };
 
@@ -202,6 +208,19 @@ export function HomeScreen() {
                 </Eyebrow>
               </View>
             </Pressable>
+          </View>
+        </Reveal>
+
+        {/* jump-ahead hint */}
+        <Reveal delay={150}>
+          <View
+            className="mb-1 flex-row items-center gap-2 rounded-xl px-3 py-2"
+            style={{ backgroundColor: withAlpha(palette.gold, 0.08) }}
+          >
+            <Txt style={{ fontSize: 13 }}>💡</Txt>
+            <Txt className="flex-1 text-[11px] text-paper/55">
+              Tap any lesson to jump ahead — locked ones stay marked, and unlock as you pass them.
+            </Txt>
           </View>
         </Reveal>
 
