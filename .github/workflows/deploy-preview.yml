@@ -42,6 +42,10 @@ jobs:
       - name: Export web bundle
         env:
           NODE_ENV: production
+          # Optional: set these as repo Actions secrets to enable sign-in + cloud
+          # save on the hosted preview. Left empty, the app runs in guest mode.
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
         run: npx expo export --platform web --output-dir dist
 
       - name: SPA fallback + disable Jekyll
