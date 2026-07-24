@@ -25,6 +25,7 @@ import { RootNavigator } from './src/navigation/RootNavigator';
 import { initSound } from './src/lib/sound';
 import { useSettingsStore } from './src/store/useSettingsStore';
 import { useProgressStore } from './src/store/useProgressStore';
+import { useAuthStore } from './src/store/useAuthStore';
 import { palette } from './src/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -61,6 +62,8 @@ export default function App() {
     // apply persisted sound/haptic prefs to the effect layer, and regen hearts
     useSettingsStore.getState().syncEffects();
     useProgressStore.getState().regenHearts();
+    // restore auth session (no-op / guest when no backend is configured)
+    useAuthStore.getState().init();
   }, []);
 
   const onReady = useCallback(async () => {

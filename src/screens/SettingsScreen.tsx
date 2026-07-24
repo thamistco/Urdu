@@ -10,6 +10,7 @@ import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { useSettingsStore, LearnTrack } from '../store/useSettingsStore';
 import { useProgressStore } from '../store/useProgressStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { DAILY_GOALS } from '../data/achievements';
 
 function Row({ label, hint, value, onChange }: { label: string; hint?: string; value: boolean; onChange: (v: boolean) => void }) {
@@ -44,7 +45,20 @@ export function SettingsScreen() {
   const resetAll = useProgressStore((st) => st.resetAll);
   const dailyGoalId = useProgressStore((st) => st.dailyGoalId);
   const setDailyGoal = useProgressStore((st) => st.setDailyGoal);
+  const email = useAuthStore((st) => st.session?.user?.email ?? null);
+  const signOut = useAuthStore((st) => st.signOut);
   const [, force] = useState(0);
+
+  const onAuthAction = () => {
+    if (email) {
+      Alert.alert('Sign out?', 'Your progress stays saved to your account.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Sign out', style: 'destructive', onPress: () => signOut() },
+      ]);
+    } else {
+      signOut(); // clears guest mode → returns to the sign-in screen
+    }
+  };
 
   const confirmReset = () => {
     Alert.alert('Reset all progress?', 'This clears your streak, XP, gems and history. This cannot be undone.', [
@@ -66,6 +80,30 @@ export function SettingsScreen() {
         <TopBar onBack={() => nav.goBack()} title="Settings" />
 
         <Reveal>
+          <Eyebrow className="mb-2 text-paper/50">Account</Eyebrow>
+          <Card className="mb-5">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1 pr-3">
+                <Bold className="text-[15px]">{email ?? 'Guest'}</Bold>
+                <Txt className="text-xs text-paper/50">
+                  {email ? 'Progress is saved to your account' : 'Progress is saved on this device'}
+                </Txt>
+              </View>
+              <Pressable onPress={onAuthAction}>
+                <View
+                  className="rounded-xl px-4 py-2"
+                  style={{ backgroundColor: withAlpha(email ? palette.rose : palette.gold, 0.15), borderWidth: 1, borderColor: withAlpha(email ? palette.rose : palette.gold, 0.35) }}
+                >
+                  <Bold style={{ color: email ? palette.roseLight : palette.gold }} className="text-sm">
+                    {email ? 'Sign out' : 'Sign in'}
+                  </Bold>
+                </View>
+              </Pressable>
+            </View>
+          </Card>
+        </Reveal>
+
+        <Reveal delay={40}>
           <Eyebrow className="mb-2 text-paper/50">Feedback</Eyebrow>
           <Card className="mb-5">
             <Row label="Sound effects" hint="Chimes for correct, soft tones for misses" value={s.soundEnabled} onChange={s.setSound} />
