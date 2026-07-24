@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { Choice, Question, palette } from './common';
 import { Urdu, Txt, Bold } from '../components/Text';
+import { WordArt } from '../components/Illustration';
 import { feedback } from '../lib/feedback';
 import type { ExerciseProps, Exercise } from './types';
 
@@ -95,8 +96,8 @@ export function MatchingExercise({ exercise, showRoman, locked, onGraded }: Exer
               disabled={matched.has(w.id) || done || locked}
               onPress={() => pickRight(w.id)}
             >
-              <Txt style={{ fontSize: 30 }}>{w.emoji}</Txt>
-              <Txt className="mt-0.5 text-[11px] capitalize text-paper/55">{w.meaning}</Txt>
+              <WordArt word={w} size={40} />
+              <Txt className="mt-1 text-[11px] capitalize text-paper/55">{w.meaning}</Txt>
             </Choice>
           ))}
         </View>

@@ -5,6 +5,7 @@ import { Button } from '../../components/Button';
 import { Reveal } from '../../components/Reveal';
 import { GeoDivider } from '../../components/GeoDivider';
 import { Display, Heading, Txt, Bold, Eyebrow, Urdu } from '../../components/Text';
+import { GoalArt } from '../../components/Illustration';
 import { palette, withAlpha } from '../../theme';
 import { feedback } from '../../lib/feedback';
 import { useProgressStore, Goal } from '../../store/useProgressStore';
@@ -117,7 +118,7 @@ export function OnboardingScreen() {
                       borderWidth: 2,
                     }}
                   >
-                    <Txt style={{ fontSize: 26 }}>{g.icon}</Txt>
+                    <GoalArt goalKey={g.key} size={46} />
                     <View className="flex-1">
                       <Bold className="text-[15px]">{g.label}</Bold>
                       <Txt className="text-xs text-paper/60">{g.desc}</Txt>

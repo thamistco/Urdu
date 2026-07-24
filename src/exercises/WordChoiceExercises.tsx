@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Choice, PromptCard, Question, palette, withAlpha } from './common';
 import { Urdu, Txt, Bold } from '../components/Text';
+import { WordArt } from '../components/Illustration';
 import { feedback } from '../lib/feedback';
 import { speak } from '../lib/speech';
 import type { ExerciseProps, Exercise } from './types';
@@ -26,7 +27,7 @@ export function MultipleChoiceExercise({ exercise, showRoman, locked, onGraded }
   return (
     <View>
       <PromptCard height={150}>
-        <Txt style={{ fontSize: 72 }}>{word.emoji}</Txt>
+        <WordArt word={word} size={104} />
       </PromptCard>
       <View className="h-4" />
       <Question>Which word is this?</Question>
@@ -91,7 +92,7 @@ export function MeaningPickExercise({ exercise, showRoman, locked, onGraded }: E
               onPress={() => choose(o.id)}
             >
               <View className="flex-row items-center gap-3">
-                <Txt style={{ fontSize: 24 }}>{o.emoji}</Txt>
+                <WordArt word={o} size={38} />
                 <Bold className="text-base capitalize">{o.meaning}</Bold>
               </View>
             </Choice>
@@ -147,7 +148,7 @@ export function ListenTapExercise({ exercise, showRoman, locked, onGraded }: Exe
               onPress={() => choose(o.id)}
               className="mb-3 w-[48%]"
             >
-              <Txt style={{ fontSize: 40 }}>{o.emoji}</Txt>
+              <WordArt word={o} size={52} />
               <Bold className="mt-1 text-sm capitalize">{o.meaning}</Bold>
             </Choice>
           );

@@ -9,6 +9,7 @@ import { Card } from '../components/Card';
 import { ProgressBar } from '../components/ProgressBar';
 import { Reveal } from '../components/Reveal';
 import { StatChip } from '../components/Stats';
+import { WordArt } from '../components/Illustration';
 import { Display, Heading, Txt, Bold, Eyebrow, Urdu } from '../components/Text';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
@@ -166,14 +167,19 @@ export function HomeScreen() {
         {/* today's word + letter lab */}
         <Reveal delay={120}>
           <View className="mb-5 flex-row gap-3">
-            <Card paper className="flex-1" style={{ paddingVertical: 16 }}>
-              <Eyebrow style={{ color: withAlpha(palette.ink, 0.5) }} className="mb-1">
+            <Card paper className="flex-1" style={{ paddingVertical: 14 }}>
+              <Eyebrow style={{ color: withAlpha(palette.ink, 0.5) }} className="mb-2">
                 Today's word
               </Eyebrow>
-              <Urdu style={{ fontSize: 34, color: palette.ink, lineHeight: 52 }}>{word.urdu}</Urdu>
-              <Txt style={{ color: palette.ink }} className="text-xs opacity-60">
-                {word.roman} · {word.meaning} {word.emoji}
-              </Txt>
+              <View className="flex-row items-center justify-between gap-2">
+                <View className="flex-1">
+                  <Urdu style={{ fontSize: 32, color: palette.ink, lineHeight: 48 }}>{word.urdu}</Urdu>
+                  <Txt style={{ color: palette.ink }} className="text-xs opacity-60">
+                    {word.roman} · {word.meaning}
+                  </Txt>
+                </View>
+                <WordArt word={word} size={46} />
+              </View>
             </Card>
             <Pressable
               onPress={() => {
@@ -183,11 +189,11 @@ export function HomeScreen() {
               style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.97 : 1 }] })}
             >
               <View
-                className="h-full w-24 items-center justify-center rounded-2xl border"
+                className="h-full w-24 items-center justify-center rounded-2xl border px-2 py-3"
                 style={{ borderColor: withAlpha(palette.gold, 0.3), backgroundColor: withAlpha(palette.gold, 0.1) }}
               >
-                <Urdu style={{ fontSize: 40, color: palette.gold, lineHeight: 60 }}>ح</Urdu>
-                <Eyebrow style={{ color: palette.gold, fontSize: 9 }} className="mt-1 text-center">
+                <Urdu style={{ fontSize: 34, color: palette.gold, lineHeight: 42 }}>ح</Urdu>
+                <Eyebrow style={{ color: palette.gold, fontSize: 9 }} className="mt-2 text-center">
                   Letter{'\n'}Lab
                 </Eyebrow>
               </View>

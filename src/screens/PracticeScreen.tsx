@@ -9,6 +9,7 @@ import { Card } from '../components/Card';
 import { Reveal } from '../components/Reveal';
 import { ProgressBar } from '../components/ProgressBar';
 import { Display, Heading, Txt, Bold, Eyebrow, Urdu } from '../components/Text';
+import { TopicArt } from '../components/Illustration';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { dueCount } from '../lib/srs';
@@ -101,7 +102,7 @@ export function PracticeScreen() {
               <Reveal key={t.id} delay={220 + i * 30} style={{ width: '48%' }}>
                 <Pressable onPress={() => go(`practice-topic-${t.id}`)} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.97 : 1 }] })}>
                   <View className="mb-3 rounded-2xl border border-white/10 bg-ink-700 p-4">
-                    <Txt style={{ fontSize: 26 }}>{t.icon}</Txt>
+                    <TopicArt topicId={t.id} size={44} />
                     <Bold className="mt-2 text-sm">{t.title}</Bold>
                     <Txt className="mt-0.5 text-[11px] text-paper/50">
                       {known}/{words.length} words
