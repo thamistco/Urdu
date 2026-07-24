@@ -9,7 +9,7 @@ import { Card } from '../components/Card';
 import { ProgressBar } from '../components/ProgressBar';
 import { Reveal } from '../components/Reveal';
 import { StatChip } from '../components/Stats';
-import { WordArt } from '../components/Illustration';
+import { WordArt, Illustration, lessonIconName } from '../components/Illustration';
 import { Display, Heading, Txt, Bold, Eyebrow, Urdu } from '../components/Text';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
@@ -70,9 +70,13 @@ function LessonNode({
             borderColor: state === 'current' ? ring : withAlpha(palette.white, 0.12),
           }}
         >
-          <Txt style={{ fontSize: 28, opacity: state === 'locked' ? 0.5 : 1 }}>
-            {state === 'locked' ? '🔒' : state === 'done' ? '✓' : lesson.icon}
-          </Txt>
+          {state === 'locked' ? (
+            <Txt style={{ fontSize: 24, opacity: 0.5 }}>🔒</Txt>
+          ) : state === 'done' ? (
+            <Txt style={{ fontSize: 28, color: '#fff' }}>✓</Txt>
+          ) : (
+            <Illustration name={lessonIconName(lesson.kind, lesson.topic)} tile={false} size={34} />
+          )}
         </View>
         {state === 'current' && (
           <View
@@ -189,11 +193,11 @@ export function HomeScreen() {
               style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.97 : 1 }] })}
             >
               <View
-                className="h-full w-24 items-center justify-center rounded-2xl border px-2 py-3"
+                className="h-full w-24 items-center justify-center rounded-2xl border px-2 py-4"
                 style={{ borderColor: withAlpha(palette.gold, 0.3), backgroundColor: withAlpha(palette.gold, 0.1) }}
               >
-                <Urdu style={{ fontSize: 34, color: palette.gold, lineHeight: 42 }}>ح</Urdu>
-                <Eyebrow style={{ color: palette.gold, fontSize: 9 }} className="mt-2 text-center">
+                <Illustration name="pen" tile={false} size={40} />
+                <Eyebrow style={{ color: palette.gold, fontSize: 9 }} className="mt-3 text-center">
                   Letter{'\n'}Lab
                 </Eyebrow>
               </View>
