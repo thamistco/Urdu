@@ -5,7 +5,13 @@ import * as Speech from 'expo-speech';
  * voices exist on many devices but not all — if unavailable the UI still shows
  * the Roman transliteration, so nothing breaks. Never throws into the UI.
  */
+let muted = false;
+export function setSpeechMuted(value: boolean) {
+  muted = value;
+}
+
 export function speak(urdu: string, roman?: string) {
+  if (muted) return;
   try {
     Speech.stop();
     Speech.speak(urdu, {

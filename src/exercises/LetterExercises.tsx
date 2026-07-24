@@ -18,7 +18,7 @@ export function LetterFormExercise({ exercise, locked, onGraded }: ExerciseProps
     if (picked || locked) return;
     setPicked(key);
     const correct = key === position;
-    correct ? feedback.correct() : feedback.incorrect();
+    correct ? feedback.correctAnnounce(letter.forms.isolated, letter.name) : feedback.incorrect();
     onGraded({ items: [{ id: letter.id, type: 'letter' }], correct });
   };
 
@@ -71,7 +71,7 @@ export function LetterPickExercise({ exercise, locked, onGraded }: ExerciseProps
     if (picked || locked) return;
     setPicked(id);
     const correct = id === letter.id;
-    correct ? feedback.correct() : feedback.incorrect();
+    correct ? feedback.correctAnnounce(letter.forms.isolated, letter.name) : feedback.incorrect();
     onGraded({ items: [{ id: letter.id, type: 'letter' }], correct });
   };
 
