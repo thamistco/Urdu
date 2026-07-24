@@ -3,6 +3,14 @@
 Sources to align Harf's letters, joining forms, and vocabulary against as the
 content expands.
 
+## Licensing rule (read first)
+Build content from the **CC-BY source** (with attribution, see `CREDITS.md`) or
+write it **originally**. Copyrighted books listed here are for background only:
+use **uncopyrightable facts** (alphabet, word meanings, grammar rules) — never
+their specific **expression** (sentences, dialogues, exercises, or the
+selection/arrangement of a word list). This is not legal advice; for a
+commercial release, get a proper IP review.
+
 ## Primary, usable source (CC-BY — we can adapt with attribution)
 - **"Basic Urdu"** by **Rajiv Ranjan**, Michigan State University Libraries
   (Pressbooks), licensed **CC-BY**.
@@ -54,11 +62,11 @@ content expands.
 - **"Teach Yourself Urdu"** (Delacy / Ahmed) — a well-structured self-study
   course.
   https://theswissbay.ch/pdf/Books/Linguistics/Mega%20linguistics%20pack/Indo-European/Indo-Aryan/Urdu,%20Teach%20Yourself.pdf
-  - Good for **grammar progression** (pronouns, verb "to be", simple sentences,
-    postpositions), **transliteration conventions**, and graded dialogues that
-    could seed a future "phrases / conversation" track.
-  - TODO: use its unit order to design a grammar/sentence track beyond
-    single-word vocabulary; borrow its dialogue scenarios for phrase lessons.
+  - ⚠️ **Copyrighted commercial book** (this link is an unauthorized copy). Do
+    **not** copy its text, dialogues, exercises, or the selection/arrangement of
+    its content. Only uncopyrightable *facts* (grammar rules, word meanings) may
+    be used — and those we take from the CC-BY source or write ourselves.
+  - Treat as background familiarity only, not a content source.
   - Note: also not fetchable from the build sandbox (403).
 
 ## How our content is structured today
