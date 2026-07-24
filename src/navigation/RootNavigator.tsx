@@ -1,6 +1,8 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useProgressStore } from '../store/useProgressStore';
+import { useAuthStore, isAuthed } from '../store/useAuthStore';
 import { MainTabs } from './MainTabs';
+import { LoginScreen } from '../screens/LoginScreen';
 import { OnboardingScreen } from '../screens/onboarding/OnboardingScreen';
 import { LessonScreen } from '../screens/LessonScreen';
 import { LetterLabScreen } from '../screens/LetterLabScreen';
@@ -13,10 +15,13 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
   const onboarded = useProgressStore((s) => s.onboarded);
+  const authed = useAuthStore(isAuthed);
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: '#0C1A33' } }}>
-      {!onboarded ? (
+      {!authed ? (
+        <Stack.Screen name="Login" component={LoginScreen} />
+      ) : !onboarded ? (
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       ) : (
         <>
