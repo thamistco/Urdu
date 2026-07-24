@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { safeStorage } from './storage';
 
 import { SrsCard, SrsGrade, newCard, review, dueCount } from '../lib/srs';
 import { dayKey, daysBetween } from '../lib/date';
@@ -388,7 +388,7 @@ export const useProgressStore = create<ProgressState>()(
     }),
     {
       name: 'harf-progress',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => safeStorage),
       version: 1,
     }
   )
