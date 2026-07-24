@@ -68,12 +68,17 @@ export function MeaningPickExercise({ exercise, showRoman, locked, onGraded }: E
     onGraded({ items: [{ id: word.id, type: 'word' }], correct });
   };
 
+  // adapt to length — single words render large, phrases scale down to fit
+  const len = word.urdu.length;
+  const fs = len > 16 ? 26 : len > 9 ? 36 : 56;
   return (
     <View>
-      <PromptCard height={150}>
-        <Urdu style={{ fontSize: 60, color: palette.ink, lineHeight: 90 }}>{word.urdu}</Urdu>
+      <PromptCard height={len > 9 ? 170 : 150}>
+        <Urdu style={{ fontSize: fs, color: palette.ink, lineHeight: fs * 1.6, textAlign: 'center' }}>
+          {word.urdu}
+        </Urdu>
         {showRoman ? (
-          <Txt style={{ color: palette.ink }} className="mt-1 text-sm opacity-55">
+          <Txt style={{ color: palette.ink }} className="mt-1 text-sm opacity-55" numberOfLines={1}>
             {word.roman}
           </Txt>
         ) : null}

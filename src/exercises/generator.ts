@@ -83,8 +83,13 @@ export function buildLessonExercises(lesson: Lesson, reviewRefs: ItemRef[] = [])
     if (contextWords[0]) exercises.push(wordExercise(contextWords[0], WORDS, 0));
   }
 
-  if ((lesson.kind === 'vocab' && lesson.topic) || lesson.kind === 'phrases') {
-    const pool = lesson.kind === 'phrases' ? PHRASE_WORDS : wordsByTopic(lesson.topic!);
+  if (lesson.kind === 'phrases') {
+    // Phrases share one icon, so picture/listen cues don't work — always show
+    // the phrase and pick its meaning.
+    const picks = shuffle(PHRASE_WORDS).slice(0, lesson.size);
+    for (const w of picks) exercises.push(wordExercise(w, PHRASE_WORDS, 1));
+  } else if (lesson.kind === 'vocab' && lesson.topic) {
+    const pool = wordsByTopic(lesson.topic);
     const picks = shuffle(pool).slice(0, Math.max(4, lesson.size - 1));
     picks.forEach((w, i) => exercises.push(wordExercise(w, pool, i % 3)));
     // a couple of word-build tiles for kinesthetic reinforcement
