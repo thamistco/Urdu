@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { safeStorage } from './storage';
 import { setMuted } from '../lib/sound';
 import { setHapticsEnabled } from '../lib/haptics';
+import { setSpeechMuted } from '../lib/speech';
 
 export type LearnTrack = 'script' | 'roman' | 'both';
 
@@ -31,6 +32,7 @@ export const useSettingsStore = create<SettingsState>()(
       track: 'both',
       setSound: (v) => {
         setMuted(!v);
+        setSpeechMuted(!v);
         set({ soundEnabled: v });
       },
       setHaptics: (v) => {
@@ -43,6 +45,7 @@ export const useSettingsStore = create<SettingsState>()(
       syncEffects: () => {
         const s = get();
         setMuted(!s.soundEnabled);
+        setSpeechMuted(!s.soundEnabled);
         setHapticsEnabled(s.hapticsEnabled);
       },
     }),

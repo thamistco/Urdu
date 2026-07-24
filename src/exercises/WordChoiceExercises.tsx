@@ -20,7 +20,7 @@ export function MultipleChoiceExercise({ exercise, showRoman, locked, onGraded }
     if (picked || locked) return;
     setPicked(id);
     const correct = id === word.id;
-    correct ? feedback.correct() : feedback.incorrect();
+    correct ? feedback.correctAnnounce(word.urdu, word.roman) : feedback.incorrect();
     onGraded({ items: [{ id: word.id, type: 'word' }], correct });
   };
 
@@ -64,7 +64,7 @@ export function MeaningPickExercise({ exercise, showRoman, locked, onGraded }: E
     if (picked || locked) return;
     setPicked(id);
     const correct = id === word.id;
-    correct ? feedback.correct() : feedback.incorrect();
+    correct ? feedback.correctAnnounce(word.urdu, word.roman) : feedback.incorrect();
     onGraded({ items: [{ id: word.id, type: 'word' }], correct });
   };
 
@@ -112,7 +112,7 @@ export function ListenTapExercise({ exercise, showRoman, locked, onGraded }: Exe
     if (picked || locked) return;
     setPicked(id);
     const correct = id === word.id;
-    correct ? feedback.correct() : feedback.incorrect();
+    correct ? feedback.correctAnnounce(word.urdu, word.roman) : feedback.incorrect();
     onGraded({ items: [{ id: word.id, type: 'word' }], correct });
   };
 
