@@ -20,6 +20,9 @@ expo-env.d.ts
 # Metro
 .metro-health-check*
 
+# Generated voice clips (produced at build time from a TTS key; see VOICE_SETUP.md)
+assets/voice/*.mp3
+
 # debug
 npm-debug.*
 yarn-debug.*
