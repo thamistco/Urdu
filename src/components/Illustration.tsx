@@ -176,3 +176,11 @@ export function TopicArt({ topicId, size = 44 }: { topicId: string; size?: numbe
   if (topicId === 'colours') return <SwatchTile color="#E8A33D" size={size} />;
   return <Illustration name={TOPIC_ICON[topicId] ?? 'sparkle'} size={size} />;
 }
+
+/** Icon for a lesson node on the path (drawn without a frame). */
+export function lessonIconName(kind: string, topic?: string): IconName {
+  if (kind === 'letters') return 'pen';
+  if (kind === 'vocab') return (topic && TOPIC_ICON[topic]) || 'sparkle';
+  if (kind === 'phrases') return 'salaam';
+  return 'star';
+}
