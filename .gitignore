@@ -20,7 +20,18 @@ expo-env.d.ts
 # Metro
 .metro-health-check*
 
-# Generated voice clips (produced at build time from a TTS key; see VOICE_SETUP.md)
+# Generated voice clips.
+#
+# Ignored by default so a fork without a TTS key is not carrying ~11 MB of
+# audio it cannot use. If you want the clips generated ONCE and then shipped
+# with the repo — so every build and every install has the same voice without
+# ever calling the API again — commit them deliberately:
+#
+#   npm run gen:voice
+#   git add -f assets/voice
+#
+# The generator skips anything already on disk, so a later run only pays for
+# words you have added since. See VOICE_SETUP.md.
 assets/voice/*.mp3
 
 # debug
