@@ -1,4 +1,5 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { palette } from '../theme';
 import { useProgressStore } from '../store/useProgressStore';
 import { useAuthStore, isAuthed } from '../store/useAuthStore';
 import { MainTabs } from './MainTabs';
@@ -18,7 +19,7 @@ export function RootNavigator() {
   const authed = useAuthStore(isAuthed);
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: '#141222' } }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: palette.ink } }}>
       {!authed ? (
         <Stack.Screen name="Login" component={LoginScreen} />
       ) : !onboarded ? (

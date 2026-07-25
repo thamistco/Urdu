@@ -401,6 +401,21 @@ const CORE_WORDS: Word[] = [
   { id: 'w-tareekh', urdu: 'تاریخ', roman: 'taareekh', meaning: 'date / history', emoji: '📆', topic: 'days' },
   { id: 'w-mausam', urdu: 'موسم', roman: 'mausam', meaning: 'season / weather', emoji: '🍂', topic: 'days' },
   { id: 'w-sadi', urdu: 'صدی', roman: 'sadi', meaning: 'century', emoji: '🏛️', topic: 'days' },
+  // the twelve months — Urdu uses the same names as English, adapted to its
+  // own script and sounds, the way most languages that adopted the Gregorian
+  // calendar do
+  { id: 'w-january', urdu: 'جنوری', roman: 'janvari', meaning: 'January', emoji: '📅', topic: 'days' },
+  { id: 'w-february', urdu: 'فروری', roman: 'farvari', meaning: 'February', emoji: '📅', topic: 'days' },
+  { id: 'w-march', urdu: 'مارچ', roman: 'maarch', meaning: 'March', emoji: '📅', topic: 'days' },
+  { id: 'w-april', urdu: 'اپریل', roman: 'aprail', meaning: 'April', emoji: '📅', topic: 'days' },
+  { id: 'w-may', urdu: 'مئی', roman: 'maee', meaning: 'May', emoji: '📅', topic: 'days' },
+  { id: 'w-june', urdu: 'جون', roman: 'joon', meaning: 'June', emoji: '📅', topic: 'days' },
+  { id: 'w-july', urdu: 'جولائی', roman: 'julaaee', meaning: 'July', emoji: '📅', topic: 'days' },
+  { id: 'w-august', urdu: 'اگست', roman: 'agast', meaning: 'August', emoji: '📅', topic: 'days' },
+  { id: 'w-september', urdu: 'ستمبر', roman: 'sitambar', meaning: 'September', emoji: '📅', topic: 'days' },
+  { id: 'w-october', urdu: 'اکتوبر', roman: 'aktoobar', meaning: 'October', emoji: '📅', topic: 'days' },
+  { id: 'w-november', urdu: 'نومبر', roman: 'nawambar', meaning: 'November', emoji: '📅', topic: 'days' },
+  { id: 'w-december', urdu: 'دسمبر', roman: 'disambar', meaning: 'December', emoji: '📅', topic: 'days' },
 
   // directions
   { id: 'w-daayaan', urdu: 'دایاں', roman: 'daayaañ', meaning: 'right', emoji: '➡️', topic: 'directions' },

@@ -171,6 +171,24 @@ export const SENTENCES: Sentence[] = [
   { id: 's-138', words: ['میں', 'نے', 'کپڑے', 'سلوائے'], roman: 'main ne kapṛe silwaaye', meaning: 'I had the clothes stitched', level: 'advanced', concept: 'g-causative' },
   { id: 's-139', words: ['مجھے', 'امید', 'ہے', 'کہ', 'سب', 'ٹھیک', 'ہوگا'], roman: 'mujhe umeed hai ke sab ṭheek hoga', meaning: 'I hope everything will be fine', level: 'advanced' },
   { id: 's-140', words: ['وقت', 'سب', 'سے', 'قیمتی', 'چیز', 'ہے'], roman: 'waqt sab se qeemti cheez hai', meaning: 'Time is the most precious thing', level: 'advanced' },
+
+  // ---- a second pass: daily life, family, time, and place ----
+  { id: 's-141', words: ['میری', 'بہن', 'استاد', 'ہے'], roman: 'meri behan ustaad hai', meaning: 'My sister is a teacher', level: 'beginner', concept: 'g-to-be' },
+  { id: 's-142', words: ['یہ', 'میرا', 'کمرہ', 'ہے'], roman: 'ye mera kamra hai', meaning: 'This is my room', level: 'beginner', concept: 'g-to-be' },
+  { id: 's-143', words: ['اس', 'کی', 'کتاب', 'نئی', 'ہے'], roman: 'us ki kitaab nayi hai', meaning: 'Her book is new', level: 'beginner', concept: 'g-possess' },
+  { id: 's-150', words: ['آج', 'جمعہ', 'ہے'], roman: 'aaj juma hai', meaning: 'Today is Friday', level: 'beginner' },
+  { id: 's-156', words: ['میرا', 'بھائی', 'ڈاکٹر', 'ہے'], roman: 'mera bhai ḍākṭar hai', meaning: 'My brother is a doctor', level: 'beginner', concept: 'g-to-be' },
+  { id: 's-144', words: ['میں', 'ہر', 'روز', 'پانی', 'پیتا', 'ہوں'], roman: 'main har roz paani peeta hoon', meaning: 'I drink water every day', level: 'elementary', concept: 'g-present' },
+  { id: 's-145', words: ['وہ', 'اسکول', 'جاتی', 'ہے'], roman: 'wo iskool jaati hai', meaning: 'She goes to school', level: 'elementary', concept: 'g-present' },
+  { id: 's-146', words: ['بچے', 'باغ', 'میں', 'کھیل', 'رہے', 'ہیں'], roman: 'bachche baagh meñ khel rahe haiñ', meaning: 'The children are playing in the garden', level: 'elementary' },
+  { id: 's-147', words: ['کتاب', 'میز', 'کے', 'اوپر', 'ہے'], roman: 'kitaab mez ke oopar hai', meaning: 'The book is on the table', level: 'elementary', concept: 'g-postpositions' },
+  { id: 's-148', words: ['دکان', 'گھر', 'کے', 'پاس', 'ہے'], roman: 'dukaan ghar ke paas hai', meaning: 'The shop is near the house', level: 'elementary', concept: 'g-postpositions' },
+  { id: 's-151', words: ['کل', 'میرا', 'امتحان', 'ہے'], roman: 'kal mera imtihaan hai', meaning: 'Tomorrow is my exam', level: 'elementary' },
+  { id: 's-152', words: ['وہ', 'روز', 'ورزش', 'کرتا', 'ہے'], roman: 'wo roz warzish karta hai', meaning: 'He exercises every day', level: 'elementary', concept: 'g-present' },
+  { id: 's-155', words: ['یہ', 'راستہ', 'کہاں', 'جاتا', 'ہے'], roman: 'ye raasta kahaañ jaata hai', meaning: 'Where does this road go?', level: 'elementary', concept: 'g-questions' },
+  { id: 's-149', words: ['میری', 'سالگرہ', 'اپریل', 'میں', 'ہے'], roman: 'meri saalgirah aprail meñ hai', meaning: 'My birthday is in April', level: 'intermediate' },
+  { id: 's-153', words: ['مجھے', 'موسیقی', 'پسند', 'ہے'], roman: 'mujhe mausiqi pasand hai', meaning: 'I like music', level: 'intermediate', concept: 'g-dative' },
+  { id: 's-154', words: ['ہمیں', 'اردو', 'سیکھنی', 'ہے'], roman: 'hameñ urdu seekhni hai', meaning: 'We need to learn Urdu', level: 'intermediate', concept: 'g-obligation' },
 ];
 
 /** A short reading passage with comprehension. */

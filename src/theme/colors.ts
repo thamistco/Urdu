@@ -1,59 +1,60 @@
 /**
- * Harf color system — "comic".
+ * Harf color system — "sunset".
  *
- * Flat saturated fills, black outlines, newsprint paper: the register of a
- * printed comic panel rather than a night sky. Bright colour carries the
- * meaning and near-black holds everything together.
+ * The register of an indie game at golden hour: a dusky twilight sky, warm
+ * horizon light, and a single glowing accent colour spent on reward. Replaces
+ * the earlier flat "comic" palette with something painterly rather than
+ * printed — gradients and soft glow instead of hard ink outlines.
  *
- * Still grounded in colour psychology for learning:
- *  - A near-black indigo ground → the gutter between panels. Dark enough for
- *    long evening sessions, and it makes the flat colours read as ink on press.
- *  - Newsprint cream as the reading surface → comfort and high legibility for
- *    the Nastaliq script, and the right paper for the register.
- *  - Comic yellow reserved for reward + primary actions → the loudest colour in
- *    the set, so it is spent sparingly.
- *  - Green = correct, red = incorrect. Comics do not do subtle, and at this
- *    saturation the pair is unmistakable at a glance.
+ * Still grounded in the same rules that made the comic version legible:
+ *  - The ground stays dark enough for long evening sessions — this is a dusky
+ *    plum, not daylight orange, so light text still sits comfortably on it.
+ *  - Warm cream/sand as the reading surface, for the same reason newsprint
+ *    worked: high legibility for the Nastaliq script.
+ *  - Sunset orange reserved for reward + primary actions, so it stays the
+ *    loudest thing on screen rather than being spent everywhere.
+ *  - Green = correct, coral-red = incorrect, tuned warmer to sit inside the
+ *    same sunset family rather than reading as a colder, unrelated palette.
  *
- * One rule this palette imposes: **lettering on a bright fill is ink, not
- * white.** White on comic green is 2.4:1 and unreadable; ink is 7.7:1, and
- * black lettering on flat colour is what the register does anyway.
+ * Every consumer references these by name (`palette.gold`, `palette.ink`, …),
+ * so re-theming the whole app is just changing the hex values here.
  */
 
 export const palette = {
-  // base — the near-black indigo of a panel gutter
-  ink: '#141222',
-  ink800: '#1C1930',
-  ink700: '#262240',
-  ink600: '#342E56',
-  ink500: '#443C6E',
+  // base — a dusky twilight plum, the sky just after the sun drops
+  ink: '#241B3A',
+  ink800: '#2E2247',
+  ink700: '#3B2C5C',
+  ink600: '#4A3872',
+  ink500: '#5C4890',
 
-  // surfaces — newsprint
-  paper: '#FFF6E2',
-  paperSoft: '#FFFCF2',
-  paperDim: '#F0E2BE',
+  // surfaces — warm sand, lit like the last light on the horizon
+  paper: '#FFEEDD',
+  paperSoft: '#FFF6EA',
+  paperDim: '#F5DFC0',
 
-  // reward / primary — comic yellow
-  gold: '#FFC72C',
-  goldLight: '#FFD861',
-  goldDark: '#C68F00',
+  // reward / primary — sunset orange, the warmest thing in the scene
+  gold: '#FF8C42',
+  goldLight: '#FFB067',
+  goldDark: '#D9701F',
 
-  // semantic feedback — flat green and red
-  jade: '#2FBF6B',
-  jadeLight: '#5FDC96',
-  jadeDark: '#178246',
+  // semantic feedback — a leaf green and a coral red, both warmed to sit in
+  // the same family as the rest of the palette
+  jade: '#4FBF8B',
+  jadeLight: '#7DDBAB',
+  jadeDark: '#2E8F63',
   /** For large filled panels, where the full-strength green shouts. */
-  jadeDeep: '#219B57',
-  rose: '#EF3E36',
-  roseLight: '#FF7A72',
-  roseDark: '#A81F19',
+  jadeDeep: '#3AA876',
+  rose: '#FF5A5F',
+  roseLight: '#FF8A8E',
+  roseDark: '#C7383D',
 
-  // streak
-  flame: '#FF7A1A',
-  flameLight: '#FFA45C',
+  // streak — an ember, the glow at the very edge of the horizon
+  flame: '#FF6B35',
+  flameLight: '#FF9466',
 
   // text
-  cream: '#FFF6E2',
+  cream: '#FFEEDD',
   white: '#FFFFFF',
 } as const;
 

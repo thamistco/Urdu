@@ -28,6 +28,7 @@ export const GRAMMAR_TRANSLIT: Record<string, string> = {
 
   // gender agreement on adjectives
   'اچھا': 'achha', 'اچھی': 'achhi', 'اچھے': 'achhe', 'اچھو': 'achho',
+  'نئی': 'nayi', 'نئے': 'naye',
   'بڑا': 'baṛa', 'بڑی': 'baṛi', 'بڑے': 'baṛe', 'بڑیاں': 'baṛiyaañ',
 
   // plurals and oblique plurals
