@@ -17,12 +17,12 @@ underneath.
 
 | | |
 | --- | --- |
-| **Vocabulary** | **1,228 words** across **82 themed topics**, each with script, Roman transliteration, meaning and a picture cue |
+| **Vocabulary** | **2,028 words** across **122 themed topics**, each with script, Roman transliteration, meaning and a picture cue |
 | **Script** | All **40 letters** with every position form, connector vs. non-connector behaviour, and a teaching note apiece |
-| **Grammar** | **13 concepts** — pronouns, "to be", gender, possession, postpositions, oblique case, habitual/continuous/past/future, imperative, subjunctive, perfective — each with explanation, paradigm table, examples and drills |
-| **Sentences** | 28 word-order builders + 28 everyday phrases |
-| **Reading** | Graded passages with comprehension questions |
-| **Course** | **20 units · 123 lessons** across four CEFR-style stages (A1 → B2) |
+| **Grammar** | **25 concepts** — pronouns, "to be", gender, plurals, possession, postpositions, oblique case, negation, questions, conjunctions, the four tenses, dative subjects, ability, obligation, comparatives, imperative, subjunctive, perfective, relative clauses, compound verbs, the passive and causatives — each with explanation, paradigm table, examples and drills |
+| **Sentences** | **140** word-order builders + 28 everyday phrases |
+| **Reading** | **17 graded passages** with comprehension questions, from five-line beginner scenes to character sketches |
+| **Course** | **35 units · 221 lessons** across four CEFR-style stages (A1 → B2) |
 | **Exercises** | 11 types: letter-position ID, letter pick, picture→word, word→meaning, listen-&-tap, word build, matching board, grammar teach, grammar drill, sentence build, reading |
 
 ### Learning design
