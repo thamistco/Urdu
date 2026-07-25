@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Pressable } from 'react-native';
-import { Choice, Question, palette, withAlpha } from './common';
+import { BuildDirection, Choice, Question, palette, withAlpha } from './common';
 import { Urdu, Txt, Bold, Eyebrow, urduLine } from '../components/Text';
 import { Button } from '../components/Button';
 import { feedback } from '../lib/feedback';
@@ -14,10 +14,18 @@ type ReadEx = Extract<Exercise, { kind: 'reading' }>;
  * right-to-left and puts the verb last, physically ordering the words teaches
  * word order far better than a rule ever could.
  */
-export function SentenceBuildExercise({ exercise, showRoman, locked, onGraded }: ExerciseProps<BuildEx>) {
-  const { sentence, tiles } = exercise;
+export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGraded }: ExerciseProps<BuildEx>) {
+  const { sentence, tiles, romanTiles } = exercise;
   const [placed, setPlaced] = useState<number[]>([]);
   const [graded, setGraded] = useState<boolean | null>(null);
+
+  // On the Roman track the tiles read left-to-right like the Latin alphabet
+  // they are written in; on the others they lay out right-to-left like the
+  // Urdu they are. Grading is unaffected — the placed order is the answer
+  // either way — but a tray that fills away from where the eye starts is the
+  // single most confusing thing this exercise can do.
+  const roman = track === 'roman' && !!romanTiles;
+  const label = (i: number) => (roman ? romanTiles![i] : tiles[i]);
 
   const available = tiles.map((_, i) => i).filter((i) => !placed.includes(i));
 
@@ -47,16 +55,20 @@ export function SentenceBuildExercise({ exercise, showRoman, locked, onGraded }:
         <Txt style={{ color: palette.ink }} className="text-center text-[15px] font-semibold">
           {sentence.meaning}
         </Txt>
-        {showRoman ? (
+        {/* The transliteration is the answer spelled out, so it is held back
+            until the sentence has been attempted. */}
+        {showRoman && graded != null ? (
           <Txt style={{ color: palette.ink }} className="mt-1 text-center text-xs opacity-55">
             {sentence.roman}
           </Txt>
         ) : null}
       </View>
 
-      {/* assembly line — right-to-left, like Urdu */}
+      {/* assembly line — laid out in the direction the tiles are read */}
       <View
-        className="mb-5 min-h-[76px] flex-row-reverse flex-wrap items-center justify-center rounded-2xl border-2 border-dashed px-3 py-3"
+        className={`mb-2 min-h-[76px] flex-wrap items-center justify-center rounded-2xl border-2 border-dashed px-3 py-3 ${
+          roman ? 'flex-row' : 'flex-row-reverse'
+        }`}
         style={{
           borderColor:
             graded == null ? withAlpha(palette.paper, 0.25) : graded ? palette.jade : palette.rose,
@@ -66,23 +78,44 @@ export function SentenceBuildExercise({ exercise, showRoman, locked, onGraded }:
           <Txt className="text-sm text-paper/30">Tap the words below…</Txt>
         ) : (
           placed.map((i, order) => (
-            <Pressable key={`${i}-${order}`} onPress={() => unplace(i)} hitSlop={4}>
+            <Pressable
+              key={`${i}-${order}`}
+              onPress={() => unplace(i)}
+              hitSlop={4}
+              accessibilityRole="button"
+              accessibilityLabel={`Word ${order + 1} of the sentence. Tap to take it back.`}
+            >
               <View
                 className="mx-1 my-1 rounded-xl px-3 py-1.5"
                 style={{ backgroundColor: withAlpha(palette.gold, 0.18) }}
               >
-                <Urdu style={{ fontSize: 22, lineHeight: urduLine(22) }}>{tiles[i]}</Urdu>
+                {roman ? (
+                  <Bold style={{ fontSize: 18 }}>{label(i)}</Bold>
+                ) : (
+                  <Urdu style={{ fontSize: 22, lineHeight: urduLine(22) }}>{label(i)}</Urdu>
+                )}
               </View>
             </Pressable>
           ))
         )}
       </View>
+      <BuildDirection roman={roman} />
 
       <View className="mb-5 flex-row flex-wrap justify-center">
         {available.map((i) => (
-          <Pressable key={i} onPress={() => place(i)} hitSlop={4}>
+          <Pressable
+            key={i}
+            onPress={() => place(i)}
+            hitSlop={4}
+            accessibilityRole="button"
+            accessibilityLabel="Word tile. Tap to add it to the sentence."
+          >
             <View className="m-1.5 rounded-xl border border-white/10 bg-ink-700 px-4 py-2">
-              <Urdu style={{ fontSize: 22, lineHeight: urduLine(22) }}>{tiles[i]}</Urdu>
+              {roman ? (
+                <Bold style={{ fontSize: 18 }}>{label(i)}</Bold>
+              ) : (
+                <Urdu style={{ fontSize: 22, lineHeight: urduLine(22) }}>{label(i)}</Urdu>
+              )}
             </View>
           </Pressable>
         ))}
@@ -96,9 +129,13 @@ export function SentenceBuildExercise({ exercise, showRoman, locked, onGraded }:
       {graded === false && (
         <View className="items-center">
           <Txt className="mb-1 text-xs text-paper/50">Correct order:</Txt>
-          <Urdu style={{ fontSize: 24, lineHeight: urduLine(24), textAlign: 'center' }}>
-            {sentence.words.join(' ')}
-          </Urdu>
+          {roman ? (
+            <Bold style={{ fontSize: 19, textAlign: 'center' }}>{sentence.roman}</Bold>
+          ) : (
+            <Urdu style={{ fontSize: 24, lineHeight: urduLine(24), textAlign: 'center' }}>
+              {sentence.words.join(' ')}
+            </Urdu>
+          )}
         </View>
       )}
       {graded === true && (
@@ -111,7 +148,7 @@ export function SentenceBuildExercise({ exercise, showRoman, locked, onGraded }:
 }
 
 /** Read a short passage, then answer one comprehension question. */
-export function ReadingExercise({ exercise, showRoman, locked, onGraded }: ExerciseProps<ReadEx>) {
+export function ReadingExercise({ exercise, track, showRoman, locked, onGraded }: ExerciseProps<ReadEx>) {
   const { passage } = exercise;
   const [stage, setStage] = useState<'read' | 'answer'>('read');
   const [picked, setPicked] = useState<string | null>(null);
@@ -135,14 +172,24 @@ export function ReadingExercise({ exercise, showRoman, locked, onGraded }: Exerc
           // Nastaliq descends a long way below its baseline, so each line needs
           // real breathing room before the transliteration underneath it.
           <View key={i} className={i > 0 ? 'mt-5' : ''}>
-            <Urdu style={{ fontSize: 23, color: palette.ink, lineHeight: urduLine(23), textAlign: 'right' }}>
-              {l.urdu}
-            </Urdu>
-            {showRoman ? (
-              <Txt style={{ color: palette.ink }} className="mt-2 text-[11px] leading-4 opacity-50">
+            {/* The Roman track reads the passage in transliteration — the
+                point of the exercise is comprehension, not decoding. */}
+            {track === 'roman' ? (
+              <Txt style={{ color: palette.ink, fontSize: 17 }} className="font-body-bold leading-6">
                 {l.roman}
               </Txt>
-            ) : null}
+            ) : (
+              <>
+                <Urdu style={{ fontSize: 23, color: palette.ink, lineHeight: urduLine(23), textAlign: 'right' }}>
+                  {l.urdu}
+                </Urdu>
+                {showRoman ? (
+                  <Txt style={{ color: palette.ink }} className="mt-2 text-[11px] leading-4 opacity-50">
+                    {l.roman}
+                  </Txt>
+                ) : null}
+              </>
+            )}
             {stage === 'answer' ? (
               <Txt style={{ color: palette.ink }} className="mt-1 text-xs leading-4 opacity-70">
                 {l.meaning}

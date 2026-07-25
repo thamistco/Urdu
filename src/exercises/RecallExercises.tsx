@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { View, TextInput } from 'react-native';
 import { Choice, PromptCard, Question, palette, withAlpha } from './common';
-import { Urdu, Txt, Bold, urduLine } from '../components/Text';
+import { Txt, Bold } from '../components/Text';
+import { Lexeme } from '../components/Lexeme';
 import { WordArt } from '../components/Illustration';
 import { Button } from '../components/Button';
 import { feedback } from '../lib/feedback';
@@ -22,7 +23,7 @@ type ReverseEx = Extract<Exercise, { kind: 'wordFromMeaning' }>;
  * Roman input is accepted (and expected — few learners have an Urdu keyboard),
  * with the spelling matched loosely; see `lib/roman.ts` for why.
  */
-export function TypeWordExercise({ exercise, showRoman, locked, onGraded }: ExerciseProps<TypeEx>) {
+export function TypeWordExercise({ exercise, track, locked, onGraded }: ExerciseProps<TypeEx>) {
   const { word } = exercise;
   const [text, setText] = useState('');
   const [graded, setGraded] = useState<boolean | null>(null);
@@ -91,10 +92,10 @@ export function TypeWordExercise({ exercise, showRoman, locked, onGraded }: Exer
           <Bold style={{ color: graded ? palette.jade : palette.rose }} className="mb-1">
             {graded ? 'From memory ✓' : 'The word is'}
           </Bold>
-          <Urdu style={{ fontSize: 32, lineHeight: urduLine(32) }}>{word.urdu}</Urdu>
-          {showRoman || !graded ? (
-            <Txt className="text-xs text-paper/55">{word.roman}</Txt>
-          ) : null}
+          {/* A wrong answer always gets the transliteration, whatever the
+              track: being told only the shape you failed to recall teaches
+              nothing about how to say it. */}
+          <Lexeme urdu={word.urdu} roman={word.roman} track={graded ? track : 'both'} size={32} />
         </View>
       )}
     </View>
@@ -109,7 +110,7 @@ export function TypeWordExercise({ exercise, showRoman, locked, onGraded }: Exer
  * also covers the large part of the vocabulary — ideas, qualities, abstractions
  * — that no picture can carry.
  */
-export function WordFromMeaningExercise({ exercise, showRoman, locked, onGraded }: ExerciseProps<ReverseEx>) {
+export function WordFromMeaningExercise({ exercise, track, locked, onGraded }: ExerciseProps<ReverseEx>) {
   const { word, options } = exercise;
   const [picked, setPicked] = useState<string | null>(null);
 
@@ -144,8 +145,7 @@ export function WordFromMeaningExercise({ exercise, showRoman, locked, onGraded 
               onPress={() => choose(o.id)}
               className="mb-3 w-[48%]"
             >
-              <Urdu style={{ fontSize: 26, color: palette.paper, lineHeight: urduLine(26) }}>{o.urdu}</Urdu>
-              {showRoman ? <Txt className="text-[11px] text-paper/45">{o.roman}</Txt> : null}
+              <Lexeme urdu={o.urdu} roman={o.roman} track={track} size={26} />
             </Choice>
           );
         })}

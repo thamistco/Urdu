@@ -161,7 +161,11 @@ export function LetterLabScreen() {
                   {letter.roman} — {letter.meaning}
                 </Txt>
               </View>
-              <Txt style={{ fontSize: 36 }}>{letter.emoji}</Txt>
+              {letter.icon ? (
+                <Illustration name={letter.icon} size={48} />
+              ) : (
+                <Txt style={{ fontSize: 36 }}>{letter.emoji}</Txt>
+              )}
             </View>
           </View>
 

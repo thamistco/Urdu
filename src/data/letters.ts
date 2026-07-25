@@ -14,6 +14,8 @@
 
 const T = 'ـ'; // tatweel / kashida
 
+import type { IconName } from '../art/icons';
+
 export type LetterForms = {
   isolated: string;
   initial: string;
@@ -32,6 +34,13 @@ export type Letter = {
   roman: string;
   meaning: string;
   emoji: string;
+  /**
+   * A drawn illustration to use instead of the emoji. Some of these words have
+   * no emoji at all (there is no pomegranate) and some of the near-misses are
+   * actively wrong — the apple that stood in for انار was the same glyph as
+   * the apple for سیب.
+   */
+  icon?: IconName;
   note: string;
   /** Rough teaching group for the learning path. */
   group: number;
@@ -60,7 +69,7 @@ export const LETTERS: Letter[] = [
   // ---- Group 1: first friends -------------------------------------------
   {
     id: 'alif', name: 'alif', sound: 'a / aa', connects: false, forms: nonConnector('ا'),
-    word: 'انار', roman: 'anaar', meaning: 'pomegranate', emoji: '🍎', group: 1,
+    word: 'انار', roman: 'anaar', meaning: 'pomegranate', emoji: '🍎', icon: 'pomegranate', group: 1,
     note: 'A single upright stroke. It never joins to the letter after it — a natural break in the word.',
   },
   {
@@ -237,7 +246,7 @@ export const LETTERS: Letter[] = [
   },
   {
     id: 'noon-ghunna', name: 'noon ghunna', sound: 'ñ (nasal)', connects: false, forms: nonConnector('ں'),
-    word: 'ماں', roman: 'maañ', meaning: 'mother', emoji: '🤱', group: 7,
+    word: 'ہاں', roman: 'haañ', meaning: 'yes', emoji: '✅', icon: 'check', group: 7,
     note: 'A dotless noon at the end of a word — it nasalises the vowel before it.',
   },
   {
@@ -273,7 +282,7 @@ export const LETTERS: Letter[] = [
     id: 'baRi-ye', name: 'baṛī ye', sound: 'e / ai', connects: false, forms: {
       isolated: 'ے', initial: 'یـ', medial: T + 'یـ', final: 'ـے',
     },
-    word: 'میز', roman: 'mez', meaning: 'table', emoji: '🪑', group: 8,
+    word: 'میز', roman: 'mez', meaning: 'table', emoji: '🪑', icon: 'table', group: 8,
     note: 'The "big" ye — a wide sweeping tail used at the end of words for the "e/ai" sound.',
   },
 ];

@@ -19,7 +19,7 @@ type DialogueEx = Extract<Exercise, { kind: 'dialogue' }>;
  * Same two stages as a reading passage: read it in Urdu, then the English
  * appears alongside the question, so the first pass is never a translation.
  */
-export function DialogueExercise({ exercise, showRoman, locked, onGraded }: ExerciseProps<DialogueEx>) {
+export function DialogueExercise({ exercise, track, showRoman, locked, onGraded }: ExerciseProps<DialogueEx>) {
   const { dialogue } = exercise;
   const [stage, setStage] = useState<'read' | 'answer'>('read');
   const [picked, setPicked] = useState<string | null>(null);
@@ -59,21 +59,31 @@ export function DialogueExercise({ exercise, showRoman, locked, onGraded }: Exer
                   borderTopRightRadius: isA ? 16 : 4,
                 }}
               >
-                <Urdu
-                  style={{
-                    fontSize: 22,
-                    color: palette.ink,
-                    lineHeight: urduLine(22),
-                    textAlign: 'right',
-                  }}
-                >
-                  {l.urdu}
-                </Urdu>
-                {showRoman ? (
-                  <Txt style={{ color: palette.ink }} className="mt-2 text-[11px] leading-4 opacity-50">
+                {/* The Roman track hears the conversation in transliteration;
+                    what is being taught is the exchange, not the alphabet. */}
+                {track === 'roman' ? (
+                  <Txt style={{ color: palette.ink, fontSize: 16 }} className="font-body-bold leading-6">
                     {l.roman}
                   </Txt>
-                ) : null}
+                ) : (
+                  <>
+                    <Urdu
+                      style={{
+                        fontSize: 22,
+                        color: palette.ink,
+                        lineHeight: urduLine(22),
+                        textAlign: 'right',
+                      }}
+                    >
+                      {l.urdu}
+                    </Urdu>
+                    {showRoman ? (
+                      <Txt style={{ color: palette.ink }} className="mt-2 text-[11px] leading-4 opacity-50">
+                        {l.roman}
+                      </Txt>
+                    ) : null}
+                  </>
+                )}
                 {stage === 'answer' ? (
                   <Txt style={{ color: palette.ink }} className="mt-1 text-xs leading-4 opacity-75">
                     {l.meaning}

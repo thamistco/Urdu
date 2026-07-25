@@ -7,34 +7,8 @@ import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { POSITIONS, type Letter, type PositionKey } from '../data/letters';
 import { GLYPH_MASKS, MASK_GRID, FONT_ASCENT, FONT_DESCENT } from '../data/glyphMasks';
+import { decodeMask, traceTargets, scoreTrace, type Pt } from '../lib/trace';
 
-/** How much of the letter must be covered, and how much of the drawing must
- *  land on it. The second number is what stops scribbling: ink covers roughly a
- *  quarter of the card, so filling the square scores about 0.25 for precision. */
-const NEED_COVERAGE = 0.55;
-const NEED_PRECISION = 0.4;
-
-const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-
-/** Decode the packed mask. Written out rather than using atob, which React
- *  Native does not provide on every engine. */
-function decodeMask(bits: string): Uint8Array {
-  const cells = new Uint8Array(MASK_GRID * MASK_GRID);
-  let bit = 0;
-  for (let i = 0; i < bits.length; i += 4) {
-    const n =
-      (B64.indexOf(bits[i]) << 18) |
-      (B64.indexOf(bits[i + 1]) << 12) |
-      ((bits[i + 2] === '=' ? 0 : B64.indexOf(bits[i + 2])) << 6) |
-      (bits[i + 3] === '=' ? 0 : B64.indexOf(bits[i + 3]));
-    for (const b of [(n >> 16) & 255, (n >> 8) & 255, n & 255]) {
-      for (let k = 0; k < 8; k++) if (bit < cells.length) cells[bit++] = (b >> k) & 1;
-    }
-  }
-  return cells;
-}
-
-type Pt = { x: number; y: number };
 export type TraceResult = { pass: boolean; coverage: number };
 
 /**
@@ -69,8 +43,10 @@ export function TracePad({
   const [result, setResult] = useState<TraceResult | null>(null);
   const current = useRef<Pt[]>([]);
 
-  const mask = useMemo(() => (entry ? decodeMask(entry[0]) : null), [entry]);
-  const inkCells = useMemo(() => (mask ? mask.reduce((n, v) => n + v, 0) : 0), [mask]);
+  const targets = useMemo(
+    () => (entry ? traceTargets(decodeMask(entry[0], MASK_GRID), MASK_GRID) : null),
+    [entry]
+  );
 
   const responder = useMemo(
     () =>
@@ -93,38 +69,16 @@ export function TracePad({
   );
 
   const check = () => {
-    if (result != null || locked || !mask || !side) return;
+    if (result != null || locked || !targets || !side) return;
 
-    // Walk every stroke, marking the cells it passes through. Interpolating
-    // between samples matters: a fast drag reports points several cells apart.
-    const cell = side / MASK_GRID;
-    const touched = new Set<number>();
-    const mark = (p: Pt) => {
-      const gx = Math.floor(p.x / cell);
-      const gy = Math.floor(p.y / cell);
-      if (gx < 0 || gy < 0 || gx >= MASK_GRID || gy >= MASK_GRID) return;
-      touched.add(gy * MASK_GRID + gx);
-    };
-    for (const stroke of strokes) {
-      for (let i = 0; i < stroke.length; i++) {
-        mark(stroke[i]);
-        const next = stroke[i + 1];
-        if (!next) continue;
-        const steps = Math.ceil(Math.hypot(next.x - stroke[i].x, next.y - stroke[i].y) / (cell / 2));
-        for (let s = 1; s < steps; s++) {
-          mark({
-            x: stroke[i].x + ((next.x - stroke[i].x) * s) / steps,
-            y: stroke[i].y + ((next.y - stroke[i].y) * s) / steps,
-          });
-        }
-      }
-    }
-
-    let onInk = 0;
-    touched.forEach((i) => { if (mask[i]) onInk++; });
-    const coverage = inkCells ? onInk / inkCells : 0;
-    const precision = touched.size ? onInk / touched.size : 0;
-    const pass = touched.size > 8 && coverage >= NEED_COVERAGE && precision >= NEED_PRECISION;
+    const { coverage, precision, pass } = scoreTrace(
+      strokes,
+      side,
+      MASK_GRID,
+      targets.reachable,
+      targets.tolerant
+    );
+    void precision;
 
     const r = { pass, coverage };
     setResult(r);

@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, Ref } from 'react';
 import { View, ScrollView, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LatticeBackground } from './LatticeBackground';
@@ -24,12 +24,16 @@ export function Screen({
   lattice = true,
   padded = true,
   contentClassName = '',
+  scrollRef,
 }: {
   children: ReactNode;
   scroll?: boolean;
   lattice?: boolean;
   padded?: boolean;
   contentClassName?: string;
+  /** For callers that need to move the view themselves — the lesson scrolls to
+   *  the answer when a wrong attempt reveals one below the fold. */
+  scrollRef?: Ref<ScrollView>;
 }) {
   const pad = padded ? 'px-5 pb-10 pt-2' : '';
   const column = { width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' } as const;
@@ -40,6 +44,7 @@ export function Screen({
       <SafeAreaView className="flex-1" edges={['top', 'left', 'right']}>
         {scroll ? (
           <ScrollView
+            ref={scrollRef}
             className="flex-1"
             contentContainerClassName={`${pad} ${contentClassName}`}
             showsVerticalScrollIndicator={false}

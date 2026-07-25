@@ -555,10 +555,16 @@ export const levelOfWord = (w: Word): Level => w.level ?? getTopic(w.topic)?.lev
 
 export const LEVEL_ORDER: Level[] = ['beginner', 'elementary', 'intermediate', 'advanced'];
 
-export const LEVEL_META: Record<Level, { title: string; tag: string; blurb: string; color: string }> = {
+export const LEVEL_META: Record<
+  Level,
+  { title: string; tag: string; blurb: string; romanBlurb?: string; color: string }
+> = {
   beginner: {
     title: 'Beginner', tag: 'A1',
+    // Only this stage teaches the alphabet, so only this stage's blurb has to
+    // change when the learner is not being taught it.
     blurb: 'Read the script and hold your first words.',
+    romanBlurb: 'Your first words, and your first sentences.',
     color: '#FFC72C',
   },
   elementary: {

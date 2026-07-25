@@ -1,5 +1,5 @@
-import { useMemo, useState, useCallback } from 'react';
-import { View, Pressable } from 'react-native';
+import { useMemo, useState, useCallback, useRef } from 'react';
+import { View, Pressable, ScrollView } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -58,6 +58,7 @@ export function LessonScreen() {
   const lesson = resolveLesson(route.params.lessonId)!;
 
   const showRoman = useSettingsStore((s) => s.showRoman);
+  const track = useSettingsStore((s) => s.track);
   const gradeItem = useProgressStore((s) => s.gradeItem);
   const loseHeart = useProgressStore((s) => s.loseHeart);
   const finishLesson = useProgressStore((s) => s.finishLesson);
@@ -70,8 +71,8 @@ export function LessonScreen() {
     const srs = useProgressStore.getState().srs;
     const srsType = useProgressStore.getState().srsType;
     const due = dueQueue(srs, 4).map((id) => ({ id, type: srsType[id] ?? ('word' as const) }));
-    return buildLessonExercises(lesson, due);
-  }, [lesson]);
+    return buildLessonExercises(lesson, due, track);
+  }, [lesson, track]);
 
   const [idx, setIdx] = useState(0);
   const [graded, setGraded] = useState<null | boolean>(null);
@@ -79,6 +80,7 @@ export function LessonScreen() {
   const [done, setDone] = useState(false);
   const [result, setResult] = useState<FinishResult | null>(null);
   const [outOfHearts, setOutOfHearts] = useState(false);
+  const bodyRef = useRef<ScrollView>(null);
 
   const current = exercises[idx];
   const total = exercises.length;
@@ -86,6 +88,13 @@ export function LessonScreen() {
   const onGraded = useCallback(
     (result: GradedResult) => {
       setGraded(result.correct);
+      // Answering both reveals the correct answer at the foot of the exercise
+      // and opens the feedback banner, which takes a third of the screen. A
+      // learner who got it wrong was left looking at the question with the
+      // explanation off-screen below, so bring it into view.
+      if (!result.correct) {
+        setTimeout(() => bodyRef.current?.scrollToEnd({ animated: true }), 120);
+      }
       // update SRS memory for each item touched
       result.items.forEach((it) => gradeItem(it.id, it.type, result.correct ? 'good' : 'again'));
       if (result.correct) {
@@ -188,11 +197,12 @@ export function LessonScreen() {
         </View>
 
         {/* exercise body */}
-        <Screen scroll padded={false} lattice={false}>
-          <View className="px-5 pt-4">
+        <Screen scroll padded={false} lattice={false} scrollRef={bodyRef}>
+          <View className="px-5 pb-8 pt-4">
             <ExerciseView
               key={idx}
               exercise={current}
+              track={track}
               showRoman={showRoman}
               locked={graded != null}
               onGraded={onGraded}

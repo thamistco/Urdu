@@ -3,6 +3,7 @@ import Svg, { Rect, Path, Circle } from 'react-native-svg';
 import { ICONS, IconName } from '../art/icons';
 import { palette, withAlpha } from '../theme';
 import { TOPICS, type Word } from '../data/words';
+import { WORD_ICON, NUMERALS, COLOURS } from '../data/art';
 
 /**
  * Medallion frame — every picture in the app sits inside an 8-point geometric
@@ -76,37 +77,9 @@ function SwatchTile({ color, size, ring }: { color: string; size: number; ring?:
   );
 }
 
-// ---- content → art mappings ---------------------------------------------
-
-export const WORD_ICON: Record<string, IconName> = {
-  'w-paani': 'droplet', 'w-kitaab': 'book', 'w-ghar': 'house', 'w-dil': 'heart',
-  'w-naam': 'tag', 'w-dost': 'handshake', 'w-kaam': 'briefcase', 'w-waqt': 'clock',
-  'w-maan': 'woman', 'w-baap': 'man', 'w-behen': 'girl', 'w-bhai': 'boy',
-  'w-dada': 'elderMan', 'w-dadi': 'elderWoman', 'w-beta': 'sonChild', 'w-beti': 'daughterChild',
-  'w-roti': 'bread', 'w-chai': 'tea', 'w-doodh': 'milk', 'w-seb': 'apple',
-  'w-anda': 'egg', 'w-chawal': 'rice', 'w-gosht': 'meat', 'w-namak': 'salt',
-  'w-mez': 'table', 'w-kursi': 'chair', 'w-darwaza': 'door', 'w-khirki': 'window',
-  'w-chabi': 'key', 'w-ghadi': 'clock', 'w-bistar': 'bed', 'w-chiragh': 'lamp',
-  'w-chaand': 'moon', 'w-suraj': 'sun', 'w-tara': 'star', 'w-phool': 'flower',
-  'w-darakht': 'tree', 'w-barish': 'rain', 'w-samundar': 'waves', 'w-pahaar': 'mountain',
-  'w-salam': 'salaam', 'w-shukriya': 'thanks', 'w-haan': 'check', 'w-nahi': 'cross',
-  'w-maaf': 'handHeart', 'w-khush': 'smile',
-};
-
-export const NUMERALS: Record<string, string> = {
-  'w-ek': '۱', 'w-do': '۲', 'w-teen': '۳', 'w-chaar': '۴',
-  'w-paanch': '۵', 'w-chhe': '۶', 'w-saat': '۷', 'w-aath': '۸',
-};
-
-export const COLOURS: Record<string, { color: string; ring?: boolean }> = {
-  'w-laal': { color: '#E5484D' }, 'w-neela': { color: '#3E7CB1' },
-  'w-hara': { color: '#2E8B75' }, 'w-peela': { color: '#FFC72C' },
-  'w-kaala': { color: '#15181C', ring: true }, 'w-safed': { color: '#FFF6E2', ring: true },
-};
-
-export function hasWordArt(word: Word): boolean {
-  return !!(WORD_ICON[word.id] || NUMERALS[word.id] || COLOURS[word.id]);
-}
+// The mappings themselves live in data/art.ts, where the audit can read them —
+// re-exported here so call sites can keep asking the art module for its art.
+export { WORD_ICON, NUMERALS, COLOURS, hasWordArt, pictureIdentifies } from '../data/art';
 
 export function WordArt({ word, size = 56 }: { word: Word; size?: number }) {
   if (NUMERALS[word.id]) return <NumeralTile numeral={NUMERALS[word.id]} size={size} />;

@@ -545,6 +545,22 @@ export const Sprout = ({ size }: IconProps) => (
   </Frame>
 );
 
+/** Pomegranate — انار, the traditional first word for alif. Unicode has no
+ *  pomegranate, and the apple that stood in for it was the same glyph the app
+ *  already used for سیب. */
+export const Pomegranate = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M32 18 C20 18 14 27 14 36 C14 46 22 54 32 54 C42 54 50 46 50 36 C50 27 44 18 32 18 Z" fill="#B4232E" />
+    <Path d="M32 18 C26 18 21 21 18 26 C22 24 27 23 32 23 C37 23 42 24 46 26 C43 21 38 18 32 18 Z" fill="#8E1A24" />
+    {/* the crown — what actually tells a pomegranate from an apple */}
+    <Path d="M28 18 L28 11 L31 14 L32 8 L33 14 L36 11 L36 18 Z" fill="#7E1720" />
+    <G fill={CR} opacity={0.55}>
+      <Circle cx="27" cy="34" r="2.2" /><Circle cx="36" cy="33" r="2.2" />
+      <Circle cx="31" cy="41" r="2.2" /><Circle cx="40" cy="40" r="2" /><Circle cx="23" cy="41" r="2" />
+    </G>
+  </Frame>
+);
+
 /** Best streak, and the achievements shelf — a ribboned medal. */
 export const Medal = ({ size }: IconProps) => (
   <Frame size={size}>
@@ -582,6 +598,7 @@ export const ICONS: Record<string, (p: IconProps) => JSX.Element> = {
   handHeart: HandHeart, smile: Smile, egg: Egg, rice: RiceBowl, meat: Meat, salt: SaltShaker,
   lattice: Lattice, tiles: Tiles, scroll: Scroll, crescent: Crescent,
   gem: Gem, flame: Flame, bolt: Bolt, sprout: Sprout, medal: Medal, gear: Gear,
+  pomegranate: Pomegranate,
 };
 
 export type IconName = keyof typeof ICONS;

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { View, Pressable } from 'react-native';
-import { PromptCard, Question, palette, withAlpha } from './common';
+import { BuildDirection, PromptCard, Question, palette, withAlpha } from './common';
 import { Urdu, Txt, Bold, urduGlyph, urduLine } from '../components/Text';
 import { WordArt } from '../components/Illustration';
 import { Button } from '../components/Button';
@@ -59,7 +59,7 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
 
       {/* assembly line (RTL) */}
       <View
-        className="mb-5 min-h-[70px] flex-row-reverse flex-wrap items-center justify-center rounded-2xl border-2 border-dashed px-3 py-3"
+        className="mb-2 min-h-[70px] flex-row-reverse flex-wrap items-center justify-center rounded-2xl border-2 border-dashed px-3 py-3"
         style={{
           borderColor:
             graded == null ? withAlpha(palette.paper, 0.25) : graded ? palette.jade : palette.rose,
@@ -69,7 +69,12 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
           <Txt className="text-sm text-paper/30">Tap letters below…</Txt>
         ) : (
           placed.map((i, order) => (
-            <Pressable key={`${i}-${order}`} onPress={() => unplace(i)}>
+            <Pressable
+              key={`${i}-${order}`}
+              onPress={() => unplace(i)}
+              accessibilityRole="button"
+              accessibilityLabel={`Letter ${order + 1} of the word. Tap to take it back.`}
+            >
               <View
                 className="mx-1 my-1 rounded-xl px-3 py-1"
                 style={{ backgroundColor: withAlpha(palette.gold, 0.18) }}
@@ -81,10 +86,17 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
         )}
       </View>
 
+      <BuildDirection />
+
       {/* tile tray */}
       <View className="mb-5 flex-row flex-wrap justify-center">
         {available.map((i) => (
-          <Pressable key={i} onPress={() => place(i)}>
+          <Pressable
+            key={i}
+            onPress={() => place(i)}
+            accessibilityRole="button"
+            accessibilityLabel="Letter tile. Tap to add it to the word."
+          >
             <View className="m-1.5 rounded-xl border border-white/10 bg-ink-700 px-4 py-2">
               <Urdu style={{ ...urduGlyph(26) }}>{tiles[i]}</Urdu>
             </View>
@@ -107,9 +119,18 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
         </View>
       )}
       {graded === false && (
-        <View className="items-center">
-          <Bold style={{ color: palette.rose }}>Correct: </Bold>
-          <Urdu style={{ fontSize: 32, lineHeight: urduLine(32) }}>{word.urdu}</Urdu>
+        // The answer used to be a bare label and a glyph at the very bottom of
+        // the exercise, which the feedback banner — appearing at the same
+        // moment — covered, so a wrong build showed the word "Correct:" and
+        // nothing else. Boxing it makes it a thing on the page rather than a
+        // trailing line, and the lesson now scrolls clear of the banner.
+        <View
+          className="items-center rounded-2xl px-4 py-3"
+          style={{ backgroundColor: withAlpha(palette.rose, 0.14), borderWidth: 2, borderColor: palette.rose }}
+        >
+          <Txt className="text-xs text-paper/60">The word is</Txt>
+          <Urdu style={{ fontSize: 34, lineHeight: urduLine(34) }}>{word.urdu}</Urdu>
+          <Txt className="text-xs text-paper/60">{word.roman}</Txt>
         </View>
       )}
     </View>
