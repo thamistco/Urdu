@@ -21,7 +21,9 @@ export const feedback = {
   correctAnnounce(voiceId: string | undefined, urdu: string, roman?: string) {
     play('correct');
     haptics.correct();
-    setTimeout(() => announce(voiceId, urdu, roman), 420);
+    // The chime blooms for about 850ms. Speaking at 420ms landed the word on
+    // top of its last note; this lets the sound settle first.
+    setTimeout(() => announce(voiceId, urdu, roman), 650);
   },
   incorrect() {
     play('incorrect');
