@@ -11,7 +11,7 @@
 
 import { LETTERS } from './letters';
 import { GRAMMAR } from './grammar';
-import { PASSAGES } from './sentences';
+import { PASSAGES, DIALOGUES } from './sentences';
 import type { Level } from './words';
 
 export type LessonKind =
@@ -21,6 +21,7 @@ export type LessonKind =
   | 'grammar'
   | 'sentences'
   | 'reading'
+  | 'dialogue'
   | 'review';
 
 export type Lesson = {
@@ -37,6 +38,8 @@ export type Lesson = {
   conceptId?: string;
   /** reading passage id */
   passageId?: string;
+  /** dialogue id */
+  dialogueId?: string;
   /** level filter for sentence lessons */
   level?: Level;
   xp: number;
@@ -74,6 +77,9 @@ const S = (level: Level, title: string, subtitle: string, xp = 20, size = 5): Le
 });
 const R = (passageId: string, title: string, subtitle: string, xp = 25, size = 1): Lesson => ({
   id: uid('r'), title, subtitle, icon: '📖', kind: 'reading', passageId, xp, size,
+});
+const D = (dialogueId: string, title: string, subtitle: string, xp = 25, size = 1): Lesson => ({
+  id: uid('d'), title, subtitle, icon: '💬', kind: 'dialogue', dialogueId, xp, size,
 });
 const P = (title: string, subtitle: string, xp = 20, size = 6): Lesson => ({
   id: uid('p'), title, subtitle, icon: '💬', kind: 'phrases', xp, size,
@@ -158,7 +164,9 @@ export const UNITS: Unit[] = [
       R('r-5', 'Reading: My family', 'Five lines you already know'),
       R('r-6', 'Reading: Tea time', 'A small everyday scene'),
       S('beginner', 'Sentence practice', 'Order the words yourself'),
+      D('d-1', 'Talk: Meeting someone', 'Hello, and your name?'),
       R('r-7', 'Reading: Colours around me', 'Naming what you see'),
+      D('d-2', 'Talk: Tea or coffee?', 'Being offered something'),
       REV('Beginner review', 'Script, words and sentences', 40, 12),
     ],
   },
@@ -200,6 +208,7 @@ export const UNITS: Unit[] = [
       V('shapes', 'Shapes & sizes', 'Form, measure and dimension'),
       V('weather', 'Weather', 'Sun, rain, heat and cold'),
       G('g-negation', 'Saying no', 'نہیں · نہ · مت'),
+      D('d-3', 'Talk: Where do you live?', 'Small talk that goes somewhere'),
       R('r-8', 'Reading: At school', 'A morning and an afternoon'),
       REV(),
     ],
@@ -226,6 +235,7 @@ export const UNITS: Unit[] = [
       V('vegetables', 'Vegetables', 'Potato, onion, tomato'),
       V('drinks', 'Drinks', 'Chai, lassi, juice'),
       V('meals', 'Meals & dishes', 'Biryani, daal, naan'),
+      D('d-4', 'Talk: At the fruit stall', 'Asking a price, and haggling'),
       R('r-1', 'Reading: My house', 'Your first passage'),
       REV(),
     ],
@@ -253,6 +263,7 @@ export const UNITS: Unit[] = [
     lessons: [
       V('toys', 'Play & childhood', 'Games and growing up'),
       G('g-conjunctions', 'Joining ideas', 'and · but · or · because'),
+      D('d-5', 'Talk: Asking the way', 'Directions, given and understood'),
       R('r-9', 'Reading: The garden behind the house', 'A quiet place'),
       R('r-10', 'Reading: My friend Sara', 'Talking about someone'),
       S('elementary', 'Sentence practice', 'Longer, joined-up sentences'),
@@ -311,6 +322,7 @@ export const UNITS: Unit[] = [
       V('phone', 'On the phone', 'Calling and messaging'),
       G('g-dative', 'The مجھے feeling', 'Liking, knowing, being hungry'),
       V('expressions', 'Useful expressions', 'The glue of real conversation'),
+      D('d-6', 'Talk: On the phone', 'Taking a message'),
       R('r-11', 'Reading: A trip to Lahore', 'Telling a story in the past'),
       REV(),
     ],
@@ -337,6 +349,7 @@ export const UNITS: Unit[] = [
       V('shopping-talk', 'Bargaining', 'Haggling in the bazaar'),
       V('hotel', 'At a hotel', 'Staying somewhere'),
       G('g-comparative', 'Comparing things', 'Bigger than, the biggest'),
+      D('d-8', 'Talk: Booking a room', 'Checking in somewhere'),
       S('intermediate', 'Sentence practice', 'Weigh one thing against another'),
       REV(),
     ],
@@ -350,6 +363,7 @@ export const UNITS: Unit[] = [
       V('illness', 'Illness & symptoms', 'Fever, cough, pain'),
       V('jobs', 'Work & jobs', 'Professions'),
       V('office', 'The office', 'Working life'),
+      D('d-7', 'Talk: At the doctor', 'Describing a symptom'),
       G('g-future', 'Future tense', 'What you will do'),
       REV(),
     ],
@@ -418,6 +432,7 @@ export const UNITS: Unit[] = [
       V('social', 'Social life', 'People together'),
       V('celebrations', 'Weddings & guests', 'Hosting and being hosted'),
       V('honorifics', 'Respect & address', 'How Urdu shows deference'),
+      D('d-9', 'Talk: Weekend plans', 'Making and accepting a plan'),
       R('r-14', 'Reading: Eid at home', 'A festival morning'),
       S('intermediate', 'Sentence practice', 'Speak about people politely'),
       REV('Intermediate review', 'Everything so far', 45, 12),
@@ -434,6 +449,7 @@ export const UNITS: Unit[] = [
       V('personality', 'Personality', 'Character and temperament'),
       V('relationships', 'Relationships', 'Friends, trust, marriage'),
       V('opposites', 'Opposites', 'Pairs that define each other'),
+      D('d-10', 'Talk: A late arrival', 'Apologising, and waving it off'),
       G('g-imperative', 'Requests & commands', 'Asking politely'),
       REV(),
     ],
@@ -497,6 +513,7 @@ export const UNITS: Unit[] = [
       V('poetry', 'Poetry & music', 'The Urdu literary tradition'),
       V('subjects', 'Fields of study', 'What you can study'),
       G('g-compound', 'Compound verbs', 'The little verb that adds colour'),
+      D('d-11', 'Talk: About a book', 'Disagreeing gently'),
       R('r-17', 'Reading: An evening of poetry', 'Why one couplet silences a room'),
       S('advanced', 'Complex sentences', 'Write the way Urdu writes'),
       REV(),
@@ -512,6 +529,7 @@ export const UNITS: Unit[] = [
       V('media', 'Media & news', 'Journalism and broadcast'),
       V('business', 'Business & trade', 'Commerce and money'),
       V('science', 'Science', 'Enquiry and discovery'),
+      D('d-12', 'Talk: Leaving a job', 'A difficult thing, said well'),
       G('g-perfect', 'Completed actions', 'The نے construction'),
       REV(),
     ],
@@ -591,6 +609,11 @@ export function resolveLesson(id: string): Lesson | undefined {
     const conceptId = id.slice('practice-grammar-'.length);
     const c = GRAMMAR.find((g) => g.id === conceptId);
     return { id, title: c?.title ?? 'Grammar', subtitle: c?.summary ?? '', icon: '📐', kind: 'grammar', conceptId, xp: 20, size: 8 };
+  }
+  if (id.startsWith('practice-dialogue-')) {
+    const dialogueId = id.slice('practice-dialogue-'.length);
+    const d = DIALOGUES.find((x) => x.id === dialogueId);
+    return { id, title: d?.title ?? 'Conversation', subtitle: 'Read and answer', icon: '💬', kind: 'dialogue', dialogueId, xp: 25, size: 1 };
   }
   if (id.startsWith('practice-reading-')) {
     const passageId = id.slice('practice-reading-'.length);

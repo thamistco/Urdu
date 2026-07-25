@@ -1,7 +1,7 @@
 import { Letter, PositionKey } from '../data/letters';
 import { Word } from '../data/words';
 import type { GrammarConcept, GrammarDrill } from '../data/grammar';
-import type { Sentence, Passage } from '../data/sentences';
+import type { Sentence, Passage, Dialogue } from '../data/sentences';
 
 export type ItemRef = { id: string; type: 'letter' | 'word' };
 
@@ -88,6 +88,11 @@ export type Exercise =
       /** read a short passage, then answer a comprehension question */
       kind: 'reading';
       passage: Passage;
+    }
+  | {
+      /** read a two-speaker exchange, then answer about what was meant */
+      kind: 'dialogue';
+      dialogue: Dialogue;
     };
 
 export type ExerciseKind = Exercise['kind'];

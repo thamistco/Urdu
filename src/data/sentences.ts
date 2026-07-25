@@ -485,3 +485,244 @@ export const PASSAGES: Passage[] = [
 export const sentencesByLevel = (level: Level) => SENTENCES.filter((s) => s.level === level);
 export const passagesByLevel = (level: Level) => PASSAGES.filter((p) => p.level === level);
 export const getPassage = (id: string) => PASSAGES.find((p) => p.id === id);
+
+/**
+ * A short two-speaker exchange.
+ *
+ * Passages teach you to read; dialogues teach you what people actually say to
+ * each other, including the parts a textbook leaves out — how a greeting is
+ * answered, where the polite form is used, how someone asks for the price
+ * without being rude. The comprehension question is about what was *meant*,
+ * not just what was said.
+ */
+export type Dialogue = {
+  id: string;
+  title: string;
+  /** one line of setting, in English */
+  setting: string;
+  level: Level;
+  /** A and B — labelled so the exercise can align and colour them */
+  lines: { speaker: 'A' | 'B'; name: string; urdu: string; roman: string; meaning: string }[];
+  question: { ask: string; answer: string; options: string[] };
+};
+
+export const DIALOGUES: Dialogue[] = [
+  {
+    id: 'd-1',
+    title: 'Meeting someone',
+    setting: 'Two people are introduced at a friend’s house.',
+    level: 'beginner',
+    lines: [
+      { speaker: 'A', name: 'Sara', urdu: 'السلام علیکم۔', roman: 'assalaam-o-alaikum.', meaning: 'Peace be upon you.' },
+      { speaker: 'B', name: 'Ali', urdu: 'وعلیکم السلام۔', roman: 'wa-alaikum assalaam.', meaning: 'And peace be upon you.' },
+      { speaker: 'A', name: 'Sara', urdu: 'میرا نام سارہ ہے۔ آپ کا نام؟', roman: 'mera naam Sara hai. aap ka naam?', meaning: 'My name is Sara. And your name?' },
+      { speaker: 'B', name: 'Ali', urdu: 'میں علی ہوں۔ آپ کیسی ہیں؟', roman: 'main Ali hoon. aap kaisi hain?', meaning: 'I am Ali. How are you?' },
+      { speaker: 'A', name: 'Sara', urdu: 'میں ٹھیک ہوں، شکریہ۔', roman: 'main ṭheek hoon, shukriya.', meaning: 'I am well, thank you.' },
+    ],
+    question: {
+      ask: 'How does Ali reply to the greeting?',
+      answer: 'With the matching greeting back',
+      options: ['With the matching greeting back', 'By asking her name first', 'By saying goodbye', 'He does not reply'],
+    },
+  },
+  {
+    id: 'd-2',
+    title: 'Tea or coffee?',
+    setting: 'A guest has just sat down.',
+    level: 'beginner',
+    lines: [
+      { speaker: 'A', name: 'Host', urdu: 'چائے یا کافی؟', roman: 'chai ya coffee?', meaning: 'Tea or coffee?' },
+      { speaker: 'B', name: 'Guest', urdu: 'چائے، شکریہ۔', roman: 'chai, shukriya.', meaning: 'Tea, thank you.' },
+      { speaker: 'A', name: 'Host', urdu: 'چینی کتنی؟', roman: 'cheeni kitni?', meaning: 'How much sugar?' },
+      { speaker: 'B', name: 'Guest', urdu: 'تھوڑی سی۔', roman: 'thoṛi si.', meaning: 'A little.' },
+    ],
+    question: {
+      ask: 'What does the guest choose?',
+      answer: 'Tea, with a little sugar',
+      options: ['Tea, with a little sugar', 'Coffee, with a lot of sugar', 'Tea, with no sugar', 'Nothing at all'],
+    },
+  },
+  {
+    id: 'd-3',
+    title: 'Where do you live?',
+    setting: 'Small talk between two students.',
+    level: 'elementary',
+    lines: [
+      { speaker: 'A', name: 'Ahmed', urdu: 'آپ کہاں رہتے ہیں؟', roman: 'aap kahaañ rehte hain?', meaning: 'Where do you live?' },
+      { speaker: 'B', name: 'Bilal', urdu: 'میں لاہور میں رہتا ہوں۔', roman: 'main Lahore meñ rehta hoon.', meaning: 'I live in Lahore.' },
+      { speaker: 'A', name: 'Ahmed', urdu: 'وہاں آپ کا گھر ہے؟', roman: 'wahaañ aap ka ghar hai?', meaning: 'Is your house there?' },
+      { speaker: 'B', name: 'Bilal', urdu: 'جی ہاں، شہر کے قریب۔', roman: 'ji haañ, shehar ke qareeb.', meaning: 'Yes, near the city.' },
+      { speaker: 'A', name: 'Ahmed', urdu: 'بہت اچھا۔', roman: 'bahut achha.', meaning: 'Very good.' },
+    ],
+    question: {
+      ask: 'Where is Bilal’s house?',
+      answer: 'In Lahore, near the city',
+      options: ['In Lahore, near the city', 'In Lahore, far from the city', 'In Karachi', 'He did not say'],
+    },
+  },
+  {
+    id: 'd-4',
+    title: 'At the fruit stall',
+    setting: 'In the bazaar, in front of the mangoes.',
+    level: 'elementary',
+    lines: [
+      { speaker: 'A', name: 'Buyer', urdu: 'آم کیسے دیے؟', roman: 'aam kaise diye?', meaning: 'How much are the mangoes?' },
+      { speaker: 'B', name: 'Seller', urdu: 'دو سو روپے کلو۔', roman: 'do sau rupay kilo.', meaning: 'Two hundred rupees a kilo.' },
+      { speaker: 'A', name: 'Buyer', urdu: 'بہت مہنگے ہیں۔', roman: 'bahut mehnge hain.', meaning: 'That is very expensive.' },
+      { speaker: 'B', name: 'Seller', urdu: 'اچھے ہیں، دیکھیے۔', roman: 'achhe hain, dekhiye.', meaning: 'They are good ones, look.' },
+      { speaker: 'A', name: 'Buyer', urdu: 'ایک کلو دے دیجیے۔', roman: 'ek kilo de deejiye.', meaning: 'Give me one kilo then.' },
+    ],
+    question: {
+      ask: 'What does the buyer do in the end?',
+      answer: 'Buys a kilo anyway',
+      options: ['Buys a kilo anyway', 'Walks away', 'Gets a lower price', 'Buys two kilos'],
+    },
+  },
+  {
+    id: 'd-5',
+    title: 'Asking the way',
+    setting: 'A stranger stops someone on the street.',
+    level: 'elementary',
+    lines: [
+      { speaker: 'A', name: 'Visitor', urdu: 'معاف کیجیے، اسٹیشن کدھر ہے؟', roman: 'maaf keejiye, station kidhar hai?', meaning: 'Excuse me, where is the station?' },
+      { speaker: 'B', name: 'Local', urdu: 'سیدھے جائیے، پھر دائیں مڑیے۔', roman: 'seedhe jaaiye, phir daaeñ muṛiye.', meaning: 'Go straight, then turn right.' },
+      { speaker: 'A', name: 'Visitor', urdu: 'کتنی دور ہے؟', roman: 'kitni door hai?', meaning: 'How far is it?' },
+      { speaker: 'B', name: 'Local', urdu: 'دس منٹ پیدل۔', roman: 'das minaṭ paidal.', meaning: 'Ten minutes on foot.' },
+      { speaker: 'A', name: 'Visitor', urdu: 'بہت شکریہ۔', roman: 'bahut shukriya.', meaning: 'Thank you very much.' },
+    ],
+    question: {
+      ask: 'Which way should the visitor turn?',
+      answer: 'Right, after going straight',
+      options: ['Right, after going straight', 'Left, after going straight', 'Right, immediately', 'Back the way they came'],
+    },
+  },
+  {
+    id: 'd-6',
+    title: 'On the phone',
+    setting: 'A call to a friend’s house.',
+    level: 'intermediate',
+    lines: [
+      { speaker: 'A', name: 'Caller', urdu: 'ہیلو، کیا عمران گھر پر ہیں؟', roman: 'hello, kya Imran ghar par hain?', meaning: 'Hello, is Imran at home?' },
+      { speaker: 'B', name: 'Sister', urdu: 'نہیں، وہ ابھی باہر گئے ہیں۔', roman: 'nahiñ, wo abhi baahar gaye hain.', meaning: 'No, he has just gone out.' },
+      { speaker: 'A', name: 'Caller', urdu: 'کب واپس آئیں گے؟', roman: 'kab waapas aayeñ ge?', meaning: 'When will he be back?' },
+      { speaker: 'B', name: 'Sister', urdu: 'شام کو۔ کوئی پیغام؟', roman: 'shaam ko. koi paighaam?', meaning: 'In the evening. Any message?' },
+      { speaker: 'A', name: 'Caller', urdu: 'کہہ دیجیے کہ میں نے فون کیا تھا۔', roman: 'keh deejiye ke main ne fon kiya tha.', meaning: 'Please tell him I called.' },
+    ],
+    question: {
+      ask: 'What does the caller ask for?',
+      answer: 'That Imran be told they called',
+      options: ['That Imran be told they called', 'Imran’s phone number', 'To call back in the evening', 'To leave a written note'],
+    },
+  },
+  {
+    id: 'd-7',
+    title: 'At the doctor',
+    setting: 'A morning appointment.',
+    level: 'intermediate',
+    lines: [
+      { speaker: 'A', name: 'Doctor', urdu: 'کیا تکلیف ہے؟', roman: 'kya takleef hai?', meaning: 'What is the trouble?' },
+      { speaker: 'B', name: 'Patient', urdu: 'مجھے دو دن سے بخار ہے۔', roman: 'mujhe do din se bukhaar hai.', meaning: 'I have had a fever for two days.' },
+      { speaker: 'A', name: 'Doctor', urdu: 'کھانسی بھی ہے؟', roman: 'khaañsi bhi hai?', meaning: 'Do you have a cough as well?' },
+      { speaker: 'B', name: 'Patient', urdu: 'جی، رات کو زیادہ۔', roman: 'ji, raat ko zyaada.', meaning: 'Yes, more at night.' },
+      { speaker: 'A', name: 'Doctor', urdu: 'یہ دوا لیجیے اور آرام کیجیے۔', roman: 'ye dawa leejiye aur aaraam keejiye.', meaning: 'Take this medicine and rest.' },
+    ],
+    question: {
+      ask: 'When is the cough worse?',
+      answer: 'At night',
+      options: ['At night', 'In the morning', 'After eating', 'It is not worse at any time'],
+    },
+  },
+  {
+    id: 'd-8',
+    title: 'Booking a room',
+    setting: 'At a hotel desk, late afternoon.',
+    level: 'intermediate',
+    lines: [
+      { speaker: 'A', name: 'Traveller', urdu: 'کیا کمرہ خالی ہے؟', roman: 'kya kamra khaali hai?', meaning: 'Do you have a room free?' },
+      { speaker: 'B', name: 'Clerk', urdu: 'کتنے دن کے لیے؟', roman: 'kitne din ke liye?', meaning: 'For how many days?' },
+      { speaker: 'A', name: 'Traveller', urdu: 'دو راتوں کے لیے۔', roman: 'do raatoñ ke liye.', meaning: 'For two nights.' },
+      { speaker: 'B', name: 'Clerk', urdu: 'ٹھیک ہے۔ شناختی کارڈ دیجیے۔', roman: 'ṭheek hai. shanaakhti kaarḍ deejiye.', meaning: 'Fine. Please give me your ID card.' },
+      { speaker: 'A', name: 'Traveller', urdu: 'یہ رہا۔', roman: 'ye raha.', meaning: 'Here it is.' },
+    ],
+    question: {
+      ask: 'What does the clerk ask for?',
+      answer: 'An ID card',
+      options: ['An ID card', 'Payment in advance', 'A phone number', 'A signature'],
+    },
+  },
+  {
+    id: 'd-9',
+    title: 'Weekend plans',
+    setting: 'Two colleagues on a Thursday.',
+    level: 'intermediate',
+    lines: [
+      { speaker: 'A', name: 'Nadia', urdu: 'اتوار کو کیا کر رہی ہیں؟', roman: 'itwaar ko kya kar rahi hain?', meaning: 'What are you doing on Sunday?' },
+      { speaker: 'B', name: 'Rabia', urdu: 'کچھ خاص نہیں۔ کیوں؟', roman: 'kuchh khaas nahiñ. kyoñ?', meaning: 'Nothing in particular. Why?' },
+      { speaker: 'A', name: 'Nadia', urdu: 'ہم باغ جا رہے ہیں۔ آپ بھی آئیے۔', roman: 'ham baagh ja rahe hain. aap bhi aaiye.', meaning: 'We are going to the garden. Do come too.' },
+      { speaker: 'B', name: 'Rabia', urdu: 'ضرور، کس وقت؟', roman: 'zaroor, kis waqt?', meaning: 'Certainly, at what time?' },
+      { speaker: 'A', name: 'Nadia', urdu: 'صبح دس بجے۔', roman: 'subah das baje.', meaning: 'Ten in the morning.' },
+    ],
+    question: {
+      ask: 'What does Rabia say to the invitation?',
+      answer: 'She accepts and asks the time',
+      options: ['She accepts and asks the time', 'She says she is busy', 'She suggests another day', 'She does not answer'],
+    },
+  },
+  {
+    id: 'd-10',
+    title: 'A late arrival',
+    setting: 'A guest arrives an hour after they were expected.',
+    level: 'advanced',
+    lines: [
+      { speaker: 'A', name: 'Guest', urdu: 'معافی چاہتا ہوں، دیر ہو گئی۔', roman: 'maafi chaahta hoon, der ho gayi.', meaning: 'I am sorry, I am late.' },
+      { speaker: 'B', name: 'Host', urdu: 'کوئی بات نہیں۔ خیریت تو ہے؟', roman: 'koi baat nahiñ. khairiyat to hai?', meaning: 'It does not matter. Is everything all right?' },
+      { speaker: 'A', name: 'Guest', urdu: 'راستے میں بہت رش تھا۔', roman: 'raaste meñ bahut rush tha.', meaning: 'There was a lot of traffic on the way.' },
+      { speaker: 'B', name: 'Host', urdu: 'آج کل یہی حال ہے۔ تشریف رکھیے۔', roman: 'aaj kal yehi haal hai. tashreef rakhiye.', meaning: 'That is how it is these days. Please sit down.' },
+      { speaker: 'A', name: 'Guest', urdu: 'آپ کی مہربانی۔', roman: 'aap ki meherbaani.', meaning: 'That is kind of you.' },
+    ],
+    question: {
+      ask: 'How does the host respond to the apology?',
+      answer: 'Waves it off and checks they are well',
+      options: ['Waves it off and checks they are well', 'Asks why they did not call', 'Says the food is cold', 'Accepts it coldly'],
+    },
+  },
+  {
+    id: 'd-11',
+    title: 'Talking about a book',
+    setting: 'Two friends after a reading.',
+    level: 'advanced',
+    lines: [
+      { speaker: 'A', name: 'Zara', urdu: 'یہ کتاب آپ نے پڑھی؟', roman: 'ye kitaab aap ne paṛhi?', meaning: 'Have you read this book?' },
+      { speaker: 'B', name: 'Hamid', urdu: 'جی، دو بار۔ بہت خوبصورت ہے۔', roman: 'ji, do baar. bahut khoobsurat hai.', meaning: 'Yes, twice. It is very beautiful.' },
+      { speaker: 'A', name: 'Zara', urdu: 'مجھے آخری باب سمجھ نہیں آیا۔', roman: 'mujhe aakhri baab samajh nahiñ aaya.', meaning: 'I did not understand the last chapter.' },
+      { speaker: 'B', name: 'Hamid', urdu: 'وہ جان بوجھ کر ادھورا چھوڑا گیا ہے۔', roman: 'wo jaan boojh kar adhoora chhoṛa gaya hai.', meaning: 'It was left unfinished on purpose.' },
+      { speaker: 'A', name: 'Zara', urdu: 'اب سمجھ آیا۔', roman: 'ab samajh aaya.', meaning: 'Now I understand.' },
+    ],
+    question: {
+      ask: 'What does Hamid say about the last chapter?',
+      answer: 'It was left unfinished deliberately',
+      options: ['It was left unfinished deliberately', 'It is the best chapter', 'He has not read it', 'It was badly translated'],
+    },
+  },
+  {
+    id: 'd-12',
+    title: 'Leaving a job',
+    setting: 'A quiet word with a manager.',
+    level: 'advanced',
+    lines: [
+      { speaker: 'A', name: 'Employee', urdu: 'مجھے آپ سے ایک بات کرنی ہے۔', roman: 'mujhe aap se ek baat karni hai.', meaning: 'I need to speak with you about something.' },
+      { speaker: 'B', name: 'Manager', urdu: 'فرمائیے۔', roman: 'farmaaiye.', meaning: 'Please, go ahead.' },
+      { speaker: 'A', name: 'Employee', urdu: 'میں اگلے مہینے یہ کام چھوڑ رہا ہوں۔', roman: 'main agle maheene ye kaam chhoṛ raha hoon.', meaning: 'I am leaving this job next month.' },
+      { speaker: 'B', name: 'Manager', urdu: 'افسوس ہوا۔ وجہ پوچھ سکتا ہوں؟', roman: 'afsos hua. wajah poochh sakta hoon?', meaning: 'I am sorry to hear it. May I ask why?' },
+      { speaker: 'A', name: 'Employee', urdu: 'مجھے آگے پڑھنا ہے۔', roman: 'mujhe aage paṛhna hai.', meaning: 'I want to study further.' },
+    ],
+    question: {
+      ask: 'Why is the employee leaving?',
+      answer: 'To continue their studies',
+      options: ['To continue their studies', 'For a better salary', 'They are moving city', 'They did not say'],
+    },
+  },
+];
+
+export const dialoguesByLevel = (level: Level) => DIALOGUES.filter((d) => d.level === level);
+export const getDialogue = (id: string) => DIALOGUES.find((d) => d.id === id);

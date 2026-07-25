@@ -155,6 +155,7 @@ export function lessonIconName(kind: string, topic?: string): IconName {
     case 'grammar': return 'lattice';
     case 'sentences': return 'tiles';
     case 'reading': return 'scroll';
+    case 'dialogue': return 'salaam';
     case 'review': return 'crescent';
     default: return 'star';
   }

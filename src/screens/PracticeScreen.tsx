@@ -18,7 +18,7 @@ import { strength } from '../lib/srs';
 import { useProgressStore } from '../store/useProgressStore';
 import { TOPICS, wordsByTopic, LEVEL_META, LEVEL_ORDER, type Level } from '../data/words';
 import { GRAMMAR } from '../data/grammar';
-import { PASSAGES } from '../data/sentences';
+import { PASSAGES, DIALOGUES } from '../data/sentences';
 import type { RootStackParamList } from '../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -49,19 +49,32 @@ function SearchMark({ color }: { color: string }) {
   );
 }
 
+/**
+ * Passages and conversations share a shelf: both are read-then-answer, and a
+ * learner looking for "something to read" wants to see all of it at once.
+ * Ordered easiest-first, since they are authored in no particular order.
+ */
+type ReadItem = {
+  id: string;
+  title: string;
+  level: Level;
+  lines: number;
+  kind: 'passage' | 'conversation';
+};
+
+const READING: ReadItem[] = [
+  ...PASSAGES.map((p) => ({ id: p.id, title: p.title, level: p.level, lines: p.lines.length, kind: 'passage' as const })),
+  ...DIALOGUES.map((d) => ({ id: d.id, title: d.title, level: d.level, lines: d.lines.length, kind: 'conversation' as const })),
+].sort((a, b) => LEVEL_ORDER.indexOf(a.level) - LEVEL_ORDER.indexOf(b.level));
+
 const TAB_TOTAL = {
   topics: TOPICS.length,
   grammar: GRAMMAR.length,
-  reading: PASSAGES.length,
+  reading: READING.length,
 } as const;
 
 /** What the search box counts, in words that read naturally. */
-const TAB_NOUN = { topics: 'topics', grammar: 'grammar points', reading: 'passages' } as const;
-
-/** Passages are authored in no particular order; show them easiest-first. */
-const PASSAGES_BY_LEVEL = [...PASSAGES].sort(
-  (a, b) => LEVEL_ORDER.indexOf(a.level) - LEVEL_ORDER.indexOf(b.level)
-);
+const TAB_NOUN = { topics: 'topics', grammar: 'grammar points', reading: 'readings' } as const;
 
 export function PracticeScreen() {
   const nav = useNavigation<Nav>();
@@ -91,7 +104,7 @@ export function PracticeScreen() {
   const hit = (...fields: string[]) => !q || fields.some((f) => f.toLowerCase().includes(q));
 
   const grammarList = useMemo(() => GRAMMAR.filter((g) => hit(g.title, g.summary)), [q]);
-  const readingList = useMemo(() => PASSAGES_BY_LEVEL.filter((p) => hit(p.title)), [q]);
+  const readingList = useMemo(() => READING.filter((p) => hit(p.title, p.kind)), [q]);
   const topicList = useMemo(() => TOPICS.filter((t) => hit(t.title, t.blurb)), [q]);
   const counts = { topics: topicList.length, grammar: grammarList.length, reading: readingList.length };
   const empty = counts[tab] === 0;
@@ -257,9 +270,9 @@ export function PracticeScreen() {
             {readingList.map((p) => (
               <Pressable
                 key={p.id}
-                onPress={() => go(`practice-reading-${p.id}`)}
+                onPress={() => go(`practice-${p.kind === 'conversation' ? 'dialogue' : 'reading'}-${p.id}`)}
                 accessibilityRole="button"
-                accessibilityLabel={`Read ${p.title}, ${p.lines.length} lines`}
+                accessibilityLabel={`${p.kind === 'conversation' ? 'Conversation' : 'Passage'}: ${p.title}, ${p.lines} lines`}
                 style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
               >
                 <View className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-ink-700 px-4 py-3.5">
@@ -275,7 +288,9 @@ export function PracticeScreen() {
                     <Bold className="text-[15px]" style={{ writingDirection: 'ltr', textAlign: 'left' }}>
                       {p.title}
                     </Bold>
-                    <Txt className="text-xs text-paper/55">{p.lines.length} lines · with a question</Txt>
+                    <Txt className="text-xs text-paper/55">
+                      {p.kind === 'conversation' ? 'Conversation' : 'Passage'} · {p.lines} lines
+                    </Txt>
                   </View>
                   <Txt className="text-paper/35">›</Txt>
                 </View>
