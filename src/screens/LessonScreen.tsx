@@ -27,6 +27,11 @@ import type { RootStackParamList } from '../navigation/types';
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Rt = RouteProp<RootStackParamList, 'Lesson'>;
 
+/** Teaching cards are informational — no hearts, no pass/fail styling. */
+function isTeaching(ex: Exercise | undefined): boolean {
+  return ex?.kind === 'grammarTeach';
+}
+
 function answerLabel(ex: Exercise): string {
   switch (ex.kind) {
     case 'letterForm':
@@ -81,7 +86,7 @@ export function LessonScreen() {
       result.items.forEach((it) => gradeItem(it.id, it.type, result.correct ? 'good' : 'again'));
       if (result.correct) {
         setCorrectCount((c) => c + 1);
-      } else {
+      } else if (!isTeaching(exercises[idx])) {
         loseHeart();
         if (useProgressStore.getState().hearts <= 0) {
           setTimeout(() => setOutOfHearts(true), 500);
@@ -192,25 +197,37 @@ export function LessonScreen() {
           <Animated.View
             entering={SlideInDown.duration(260)}
             style={{
-              backgroundColor: graded ? withAlpha(palette.jade, 0.16) : withAlpha(palette.rose, 0.16),
+              backgroundColor: isTeaching(current)
+                ? withAlpha(palette.gold, 0.14)
+                : graded
+                ? withAlpha(palette.jade, 0.16)
+                : withAlpha(palette.rose, 0.16),
               borderTopWidth: 1,
-              borderTopColor: graded ? palette.jade : palette.rose,
+              borderTopColor: isTeaching(current) ? palette.gold : graded ? palette.jade : palette.rose,
             }}
           >
             <SafeAreaView edges={['bottom']}>
               <View className="px-5 py-4">
                 <View className="mb-3 flex-row items-center gap-2">
-                  <Txt style={{ fontSize: 22 }}>{graded ? '✅' : '🌙'}</Txt>
+                  <Txt style={{ fontSize: 22 }}>{isTeaching(current) ? '📐' : graded ? '✅' : '🌙'}</Txt>
                   <View className="flex-1">
-                    <Bold style={{ color: graded ? palette.jadeLight : palette.roseLight }}>
-                      {graded ? 'Beautifully done' : 'Not quite — that’s okay'}
+                    <Bold style={{ color: isTeaching(current) ? palette.gold : graded ? palette.jadeLight : palette.roseLight }}>
+                      {isTeaching(current)
+                        ? 'Keep that in mind'
+                        : graded
+                        ? 'Beautifully done'
+                        : 'Not quite — that’s okay'}
                     </Bold>
-                    {!graded && current ? (
+                    {!graded && current && !isTeaching(current) ? (
                       <Txt className="text-xs text-paper/70">Answer: {answerLabel(current)}</Txt>
                     ) : null}
                   </View>
                 </View>
-                <Button variant={graded ? 'correct' : 'incorrect'} sound={false} onPress={advance}>
+                <Button
+                  variant={isTeaching(current) ? 'primary' : graded ? 'correct' : 'incorrect'}
+                  sound={false}
+                  onPress={advance}
+                >
                   {idx < total - 1 ? 'Continue' : 'Finish'}
                 </Button>
               </View>
