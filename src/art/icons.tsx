@@ -10,10 +10,10 @@ import Svg, { Path, Circle, Rect, Line, Polygon, G, Ellipse, Polyline } from 're
  */
 
 /* Persian-miniature / gold-leaf palette for the heritage set. */
-const G_ = '#E2A13C'; // saffron
-const GD = '#B87C24'; // deep saffron
-const CR = '#F6EEE2'; // cream
-const IN = '#1E1024'; // ink (outlines)
+const G_ = '#FFC72C'; // comic yellow
+const GD = '#C68F00'; // deep yellow
+const CR = '#FFF6E2'; // newsprint
+const IN = '#141222'; // ink (outlines)
 const JADE = '#2F9E8F'; // turquoise
 const ROSE = '#C4633F'; // terracotta
 const SKY = '#2E5A9E'; // lapis

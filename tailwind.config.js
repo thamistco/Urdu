@@ -7,45 +7,45 @@ module.exports = {
       // Keep in step with src/theme/colors.ts — that file is the source of
       // truth for runtime styles, this mirrors it for the class names.
       colors: {
-        // Calm, focused base — deep aubergine night (calm, focus, warmth)
+        // The near-black indigo of a panel gutter
         ink: {
-          DEFAULT: '#1E1024',
-          800: '#261630',
-          700: '#2F1B3A',
-          600: '#3E2449',
-          500: '#513260',
+          DEFAULT: '#141222',
+          800: '#1C1930',
+          700: '#262240',
+          600: '#342E56',
+          500: '#443C6E',
         },
-        // Warm parchment — the "paper" the script lives on (comfort, readability)
+        // Newsprint — the "paper" the script lives on (comfort, readability)
         paper: {
-          DEFAULT: '#F6EEE2',
-          soft: '#FCF8F0',
-          dim: '#E8DAC6',
+          DEFAULT: '#FFF6E2',
+          soft: '#FFFCF2',
+          dim: '#F0E2BE',
         },
-        // Reward saffron — achievement, energy, warmth (used sparingly)
+        // Comic yellow — reward and primary actions (used sparingly)
         gold: {
-          DEFAULT: '#E2A13C',
-          light: '#EFB458',
-          dark: '#B87C24',
+          DEFAULT: '#FFC72C',
+          light: '#FFD861',
+          dark: '#C68F00',
         },
-        // Pistachio — correct, growth, calm reassurance
+        // Flat green — correct
         jade: {
-          DEFAULT: '#4F8046',
-          light: '#93BE72',
-          dark: '#35592F',
-          deep: '#3F6B3A',
-          soft: '#4F804622',
+          DEFAULT: '#2FBF6B',
+          light: '#5FDC96',
+          dark: '#178246',
+          deep: '#219B57',
+          soft: '#2FBF6B22',
         },
-        // Rose madder — incorrect, never an alarming red
+        // Flat red — incorrect
         rose: {
-          DEFAULT: '#BC4F67',
-          light: '#DE8496',
-          dark: '#8E3549',
-          soft: '#BC4F6722',
+          DEFAULT: '#EF3E36',
+          light: '#FF7A72',
+          dark: '#A81F19',
+          soft: '#EF3E3622',
         },
-        // Streak marigold
+        // Streak
         flame: {
-          DEFAULT: '#EF8F4A',
-          light: '#F8B27C',
+          DEFAULT: '#FF7A1A',
+          light: '#FFA45C',
         },
       },
       fontFamily: {

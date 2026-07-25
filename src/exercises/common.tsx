@@ -65,7 +65,10 @@ export function PromptCard({
   height?: number;
 }) {
   return (
-    <View className="rounded-2xl bg-paper px-6 pb-5 pt-4" style={{ minHeight: height }}>
+    <View
+      className="rounded-2xl bg-paper px-6 pb-5 pt-4"
+      style={{ minHeight: height, borderWidth: 2, borderColor: palette.ink }}
+    >
       {label ? (
         <Eyebrow style={{ color: withAlpha(palette.ink, 0.5) }} className="mb-2 text-center">
           {label}

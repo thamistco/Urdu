@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1E1024"
+      "backgroundColor": "#141222"
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
@@ -22,7 +22,7 @@
       "package": "com.harf.urdu",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#1E1024"
+        "backgroundColor": "#141222"
       },
       "edgeToEdgeEnabled": true
     },
@@ -35,7 +35,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#1E1024",
+          "backgroundColor": "#141222",
           "image": "./assets/images/splash.png",
           "imageWidth": 200
         }

@@ -118,15 +118,15 @@ export function PracticeScreen() {
             >
               <View className="flex-row items-center justify-between">
                 <View className="flex-1 pr-3">
-                  <Eyebrow style={{ color: withAlpha('#ffffff', 0.75) }}>Daily review</Eyebrow>
-                  <Heading style={{ color: '#fff' }} className="mt-1 text-2xl">
+                  <Eyebrow style={{ color: withAlpha(palette.ink, 0.7) }}>Daily review</Eyebrow>
+                  <Heading style={{ color: palette.ink }} className="mt-1 text-2xl">
                     {due > 0 ? `${due} item${due > 1 ? 's' : ''} due` : 'All caught up'}
                   </Heading>
-                  <Txt style={{ color: withAlpha('#ffffff', 0.85) }} className="mt-1 text-sm">
+                  <Txt style={{ color: withAlpha(palette.ink, 0.8) }} className="mt-1 text-sm">
                     {due > 0 ? 'A calm few minutes to lock them in.' : 'Come back later, or drill a topic below.'}
                   </Txt>
                 </View>
-                <CycleMark size={52} color={withAlpha('#ffffff', 0.9)} />
+                <CycleMark size={52} color={withAlpha(palette.ink, 0.85)} />
               </View>
             </View>
           </Pressable>

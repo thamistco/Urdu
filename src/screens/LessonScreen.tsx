@@ -43,6 +43,8 @@ function answerLabel(ex: Exercise): string {
     case 'meaningPick':
     case 'listenTap':
     case 'wordBuild':
+    case 'wordFromMeaning':
+    case 'typeWord':
       return `${ex.word.urdu} — ${ex.word.meaning}`;
     default:
       return '';

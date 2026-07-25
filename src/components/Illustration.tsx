@@ -5,10 +5,9 @@ import { palette, withAlpha } from '../theme';
 import { TOPICS, type Word } from '../data/words';
 
 /**
- * Heritage medallion frame — every picture in the app sits inside an 8-point
- * Islamic-geometric star (two overlapping squares) in saffron on deep plum, the
- * same motif as the app's lattice. This ornamental framing is what gives the
- * illustration set its gold-leaf-on-textile character, and keeps everything
+ * Medallion frame — every picture in the app sits inside an 8-point geometric
+ * star (two overlapping squares) in yellow on ink. This ornamental framing
+ * gives the illustration set a single character, and keeps everything
  * perfectly aligned and uniformly sized.
  */
 function Medallion({ size, children }: { size: number; children: React.ReactNode }) {
@@ -99,8 +98,8 @@ export const NUMERALS: Record<string, string> = {
 
 export const COLOURS: Record<string, { color: string; ring?: boolean }> = {
   'w-laal': { color: '#E5484D' }, 'w-neela': { color: '#3E7CB1' },
-  'w-hara': { color: '#2E8B75' }, 'w-peela': { color: '#E9B03A' },
-  'w-kaala': { color: '#15181C', ring: true }, 'w-safed': { color: '#F6EEE2', ring: true },
+  'w-hara': { color: '#2E8B75' }, 'w-peela': { color: '#FFC72C' },
+  'w-kaala': { color: '#15181C', ring: true }, 'w-safed': { color: '#FFF6E2', ring: true },
 };
 
 export function hasWordArt(word: Word): boolean {

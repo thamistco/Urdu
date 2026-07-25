@@ -9,7 +9,8 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "gen:sounds": "node scripts/generate-sounds.js",
-    "gen:voice": "node scripts/generate-voice.js"
+    "gen:voice": "node scripts/generate-voice.js",
+    "check:roman": "node scripts/check-roman.js"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "^0.2.3",

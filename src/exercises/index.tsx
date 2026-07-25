@@ -4,6 +4,7 @@ import {
   MeaningPickExercise,
   ListenTapExercise,
 } from './WordChoiceExercises';
+import { TypeWordExercise, WordFromMeaningExercise } from './RecallExercises';
 import { WordBuildExercise } from './WordBuild';
 import { MatchingExercise } from './Matching';
 import { GrammarTeachExercise, GrammarDrillExercise } from './GrammarExercises';
@@ -24,6 +25,10 @@ export function ExerciseView(props: ExerciseProps) {
       return <MeaningPickExercise {...(props as any)} />;
     case 'listenTap':
       return <ListenTapExercise {...(props as any)} />;
+    case 'wordFromMeaning':
+      return <WordFromMeaningExercise {...(props as any)} />;
+    case 'typeWord':
+      return <TypeWordExercise {...(props as any)} />;
     case 'wordBuild':
       return <WordBuildExercise {...(props as any)} />;
     case 'matching':
