@@ -60,6 +60,11 @@ function LessonNode({
     <View className="mb-6 flex-row items-center" style={{ marginLeft: offset }}>
       <Pressable
         onPress={onPress}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={`${lesson.title}. ${lesson.subtitle}. ${
+          state === 'done' ? 'Completed' : state === 'current' ? 'Start this lesson' : 'Locked — tap to jump ahead'
+        }`}
         style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.94 : 1 }], opacity: state === 'locked' ? 0.7 : 1 })}
       >
         <View
@@ -96,10 +101,15 @@ function LessonNode({
         )}
       </Pressable>
       <View className="ml-4 flex-1">
-        <Bold className="text-[15px]" style={{ opacity: state === 'locked' ? 0.5 : 1 }}>
+        <Bold
+          className="text-[15px]"
+          style={{ opacity: state === 'locked' ? 0.5 : 1, writingDirection: 'ltr', textAlign: 'left' }}
+        >
           {lesson.title}
         </Bold>
-        <Txt className="text-xs text-paper/55">{lesson.subtitle}</Txt>
+        <Txt className="text-xs text-paper/55" style={{ writingDirection: 'ltr', textAlign: 'left' }}>
+          {lesson.subtitle}
+        </Txt>
       </View>
     </View>
   );
@@ -260,7 +270,7 @@ export function HomeScreen() {
                 </View>
               </Reveal>
               {levelUnits.map((unit, ui) => (
-          <Reveal key={unit.id} delay={160 + ui * 40}>
+          <Reveal key={unit.id} delay={Math.min(120 + ui * 30, 300)}>
             <View className="mb-2 mt-4 flex-row items-center gap-3">
               <View className="h-2 w-2 rounded-full" style={{ backgroundColor: unit.color }} />
               <View className="flex-1">
