@@ -4,6 +4,7 @@ import { Lesson } from '../data/units';
 import { getGrammar } from '../data/grammar';
 import { SENTENCES, PASSAGES, DIALOGUES, getPassage, getDialogue, type Sentence } from '../data/sentences';
 import { WORD_ICON, NUMERALS, COLOURS } from '../components/Illustration';
+import { GLYPH_MASKS } from '../data/glyphMasks';
 import { Exercise, ItemRef } from './types';
 
 const rand = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
@@ -26,6 +27,10 @@ const PHRASE_WORDS: Word[] = PHRASES.map((p) => ({
 const getAnyWord = (id: string): Word | undefined =>
   getWord(id) ?? PHRASE_WORDS.find((w) => w.id === id);
 
+/** Distractors for a review item. Phrases are not in WORDS, so `wordsByTopic`
+ *  returns nothing for them and they would be offered against random nouns. */
+const poolFor = (w: Word): Word[] => (w.topic === 'phrases' ? PHRASE_WORDS : wordsByTopic(w.topic));
+
 // ---- per-item exercise builders -----------------------------------------
 
 function letterExercise(letter: Letter): Exercise {
@@ -34,7 +39,11 @@ function letterExercise(letter: Letter): Exercise {
   const roll = Math.random();
   const position = rand(POSITIONS.map((p) => p.key)) as PositionKey;
 
-  if (roll < 0.3) return { kind: 'letterTrace', letter, position };
+  // Tracing needs a generated mask; without one there is nothing to score
+  // against, so fall through rather than showing a card that cannot be answered.
+  if (roll < 0.3 && GLYPH_MASKS[`${letter.id}:${position}`]) {
+    return { kind: 'letterTrace', letter, position };
+  }
   if (roll < 0.72) {
     return { kind: 'letterForm', letter, position, options: POSITIONS.map((p) => p.key) };
   }
@@ -207,15 +216,18 @@ export function buildLessonExercises(lesson: Lesson, reviewRefs: ItemRef[] = [])
       exercises.push({ kind: 'wordBuild', word: buildable[0], tiles: buildTilesFor(buildable[0]) });
     }
 
-    // close with a matching board (Drops-style); its four pictures must differ
+    // Close with a matching board (Drops-style); its four pictures must differ.
+    // Short lessons introduce fewer than four words, so the board is topped up
+    // from the rest of the topic rather than dropped.
     const board: Word[] = [];
     const boardCues = new Set<string>();
-    for (const w of picks) {
+    for (const w of [...picks, ...shuffle(pool)]) {
+      if (board.length === 4) break;
+      if (board.some((b) => b.id === w.id)) continue;
       const cue = cueOf(w);
       if (boardCues.has(cue)) continue;
       boardCues.add(cue);
       board.push(w);
-      if (board.length === 4) break;
     }
     if (board.length === 4) exercises.push({ kind: 'matching', words: board });
   }
@@ -263,7 +275,7 @@ export function buildLessonExercises(lesson: Lesson, reviewRefs: ItemRef[] = [])
         // Review is where the harder demands belong: a word is only here
         // because it was met before, so asking to recognise it again teaches
         // little. Most reviews retrieve; every third one asks for it typed.
-        if (w) exercises.push(wordExercise(w, wordsByTopic(w.topic), Math.random() < 0.35 ? 'produce' : 'recall'));
+        if (w) exercises.push(wordExercise(w, poolFor(w), Math.random() < 0.35 ? 'produce' : 'recall'));
       }
     }
   }
@@ -277,19 +289,28 @@ export function buildLessonExercises(lesson: Lesson, reviewRefs: ItemRef[] = [])
         if (l) woven.push(letterExercise(l));
       } else {
         const w = getAnyWord(ref.id);
-        if (w) woven.push(wordExercise(w, wordsByTopic(w.topic), 'recall'));
+        if (w) woven.push(wordExercise(w, poolFor(w), 'recall'));
       }
     }
     exercises.splice(1, 0, ...woven);
   }
 
-  return exercises.slice(0, lesson.size);
+  // A vocabulary lesson is composed to an exact shape — meet, recall, type,
+  // build, match — so trimming it to `size` would cut the closing run, which is
+  // the hardest and most valuable part. Every other kind is a flat list where
+  // trimming is the right way to hit the intended length.
+  return lesson.kind === 'vocab' ? exercises : exercises.slice(0, lesson.size);
 }
 
 /** When nothing is due yet, review draws from the base content so the lesson still runs. */
 function fallbackReviewRefs(n: number): ItemRef[] {
-  const letters: ItemRef[] = LETTERS.slice(0, Math.ceil(n / 2)).map((l) => ({ id: l.id, type: 'letter' }));
-  const words: ItemRef[] = WORDS.slice(0, Math.floor(n / 2)).map((w) => ({ id: w.id, type: 'word' }));
+  // Drawn from the early, foundational material rather than the whole 2,000 —
+  // a learner with nothing due yet has not met the advanced vocabulary — but
+  // sampled, so a second empty review is not the same lesson again.
+  const letters: ItemRef[] = shuffle(LETTERS.slice(0, 20)).slice(0, Math.ceil(n / 2))
+    .map((l) => ({ id: l.id, type: 'letter' }));
+  const words: ItemRef[] = shuffle(WORDS.slice(0, 120)).slice(0, Math.floor(n / 2))
+    .map((w) => ({ id: w.id, type: 'word' }));
   return shuffle([...letters, ...words]);
 }
 

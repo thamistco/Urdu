@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Txt } from '../components/Text';
 import { feedback } from '../lib/feedback';
 import { palette, withAlpha } from '../theme';
+import { CONTENT_MAX_WIDTH } from '../components/Screen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { PracticeScreen } from '../screens/PracticeScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
@@ -51,7 +52,11 @@ function TabBar({ state, navigation }: BottomTabBarProps) {
   return (
     <View style={{ backgroundColor: palette.ink800, borderTopWidth: 1, borderTopColor: withAlpha(palette.white, 0.08) }}>
       <SafeAreaView edges={['bottom']}>
-        <View className="flex-row px-3 pt-2 pb-1">
+        {/* the bar spans the screen; the three tabs track the content column */}
+        <View
+          className="flex-row px-3 pt-2 pb-1"
+          style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }}
+        >
           {state.routes.map((route, i) => {
             const focused = state.index === i;
             return (

@@ -9,6 +9,7 @@ import { Reveal } from '../components/Reveal';
 import { ProgressBar } from '../components/ProgressBar';
 import { Display, Heading, Txt, Bold, Eyebrow, Urdu, urduGlyph } from '../components/Text';
 import { Illustration } from '../components/Illustration';
+import type { IconName } from '../art/icons';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { levelProgress, levelTitle, getLeague } from '../lib/gamification';
@@ -21,7 +22,7 @@ import type { RootStackParamList } from '../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-function StatBox({ icon, value, label }: { icon: string; value: string | number; label: string }) {
+function StatBox({ icon, value, label }: { icon: IconName; value: string | number; label: string }) {
   return (
     <View className="w-[31%] items-center rounded-2xl border border-white/10 bg-ink-700 py-4">
       <Illustration name={icon} tile={false} size={24} />
@@ -40,6 +41,19 @@ function WeekChart() {
   const max = Math.max(60, ...values);
   const labels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
   const todayDow = new Date().getDay();
+
+  // A week of stub-height bars says nothing except that the chart is broken.
+  // Before there is any history, say what will fill it.
+  if (values.every((v) => v === 0)) {
+    return (
+      <View className="items-center justify-center" style={{ height: 96 }}>
+        <Txt className="text-center text-xs leading-5 text-paper/45">
+          Finish a lesson and your week starts filling in here.
+        </Txt>
+      </View>
+    );
+  }
+
   return (
     <View className="flex-row items-end justify-between" style={{ height: 96 }}>
       {values.map((v, i) => {
@@ -105,12 +119,12 @@ export function ProfileScreen() {
         <Reveal delay={80}>
           <View className="mb-3 mt-4 flex-row justify-between">
             <StatBox icon="flame" value={s.streak} label="Day streak" />
-            <StatBox icon="⚡" value={s.totalXp} label="Total XP" />
+            <StatBox icon="bolt" value={s.totalXp} label="Total XP" />
             <StatBox icon="gem" value={s.gems} label="Gems" />
           </View>
           <View className="mb-4 flex-row justify-between">
-            <StatBox icon="🏆" value={s.longestStreak} label="Best streak" />
-            <StatBox icon="🔤" value={`${s.learnedLetters.length}/${LETTERS.length}`} label="Letters" />
+            <StatBox icon="medal" value={s.longestStreak} label="Best streak" />
+            <StatBox icon="pen" value={`${s.learnedLetters.length}/${LETTERS.length}`} label="Letters" />
             <StatBox icon="book" value={`${s.learnedWords.length}/${WORDS.length}`} label="Words" />
           </View>
         </Reveal>
@@ -141,7 +155,7 @@ export function ProfileScreen() {
         <Reveal delay={220}>
           <Pressable onPress={link('Achievements')} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}>
             <View className="mb-3 flex-row items-center gap-3 rounded-2xl border border-white/10 bg-ink-700 p-4">
-              <Txt style={{ fontSize: 30 }}>🏅</Txt>
+              <Illustration name="medal" tile={false} size={30} />
               <View className="flex-1">
                 <Bold className="text-[15px]">Achievements</Bold>
                 <Txt className="text-xs text-paper/55">
@@ -157,7 +171,7 @@ export function ProfileScreen() {
         <Reveal delay={260}>
           <Pressable onPress={link('Settings')} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}>
             <View className="mb-8 flex-row items-center gap-3 rounded-2xl border border-white/10 bg-ink-700 p-4">
-              <Txt style={{ fontSize: 30 }}>⚙️</Txt>
+              <Illustration name="gear" tile={false} size={28} />
               <View className="flex-1">
                 <Bold className="text-[15px]">Settings</Bold>
                 <Txt className="text-xs text-paper/55">Sound, haptics, script & Roman, daily goal</Txt>

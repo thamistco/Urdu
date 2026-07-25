@@ -67,6 +67,7 @@ export function TraceExercise({ exercise, locked, onGraded }: ExerciseProps<Trac
   const mask = useMemo(() => (entry ? decodeMask(entry[0]) : null), [entry]);
   const inkCells = useMemo(() => (mask ? mask.reduce((n, v) => n + v, 0) : 0), [mask]);
 
+
   const responder = useMemo(
     () =>
       PanResponder.create({
@@ -142,6 +143,32 @@ export function TraceExercise({ exercise, locked, onGraded }: ExerciseProps<Trac
   const translateY = entry ? entry[3] * side - baselineInBlock : 0;
 
   const positionLabel = POSITIONS.find((p) => p.key === position)?.label ?? position;
+
+  // The generator will not hand us a glyph without a mask, but if one ever went
+  // missing the card would have nothing to score and both its buttons would be
+  // disabled — a lesson the learner cannot leave. Show the letter instead.
+  if (!entry) {
+    return (
+      <View>
+        <Eyebrow style={{ color: palette.gold }} className="mb-2 text-center">
+          {letter.name}
+        </Eyebrow>
+        <Question>Look at the shape</Question>
+        <View
+          className="mb-4 items-center justify-center rounded-2xl bg-paper py-10"
+          style={{ borderWidth: 2, borderColor: palette.ink }}
+        >
+          <Urdu style={{ fontSize: 80, lineHeight: 216, color: palette.ink }}>
+            {letter.forms[position]}
+          </Urdu>
+        </View>
+        <Button onPress={() => onGraded({ items: [{ id: letter.id, type: 'letter' }], correct: true })}>
+          Got it
+        </Button>
+      </View>
+    );
+  }
+
 
   return (
     <View>

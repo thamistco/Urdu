@@ -5,7 +5,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { SlideInDown } from 'react-native-reanimated';
 
-import { Screen } from '../components/Screen';
+import { Screen, CONTENT_MAX_WIDTH } from '../components/Screen';
 import { Button } from '../components/Button';
 import { ProgressBar } from '../components/ProgressBar';
 import { Hearts } from '../components/Stats';
@@ -166,8 +166,12 @@ export function LessonScreen() {
   return (
     <View className="flex-1 bg-ink">
       <SafeAreaView className="flex-1" edges={['top']}>
-        {/* header: close + progress + hearts */}
-        <View className="flex-row items-center gap-3 px-4 pb-3 pt-1">
+        {/* header: close + progress + hearts — the bar is full width, its
+            contents track the content column so they line up with the exercise */}
+        <View
+          className="flex-row items-center gap-3 px-4 pb-3 pt-1"
+          style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }}
+        >
           <Pressable
             hitSlop={12}
             onPress={() => {
@@ -211,7 +215,10 @@ export function LessonScreen() {
             }}
           >
             <SafeAreaView edges={['bottom']}>
-              <View className="px-5 py-4">
+              <View
+                className="px-5 py-4"
+                style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }}
+              >
                 <View className="mb-3 flex-row items-center gap-2">
                   <Illustration
                     name={isTeaching(current) ? 'lattice' : graded ? 'check' : 'crescent'}

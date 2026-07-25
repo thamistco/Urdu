@@ -7,11 +7,12 @@ import { Reveal } from '../components/Reveal';
 import { GeoDivider } from '../components/GeoDivider';
 import { Display, Heading, Txt, Bold, Eyebrow } from '../components/Text';
 import { Illustration } from '../components/Illustration';
+import type { IconName } from '../art/icons';
 import { palette, withAlpha } from '../theme';
 import { levelTitle } from '../lib/gamification';
 import type { FinishResult } from '../store/useProgressStore';
 
-function RewardTile({ icon, value, label, color }: { icon: string; value: string; label: string; color: string }) {
+function RewardTile({ icon, value, label, color }: { icon: IconName; value: string; label: string; color: string }) {
   return (
     <View
       className="flex-1 items-center rounded-2xl border p-4"

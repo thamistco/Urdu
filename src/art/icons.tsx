@@ -545,6 +545,29 @@ export const Sprout = ({ size }: IconProps) => (
   </Frame>
 );
 
+/** Best streak, and the achievements shelf — a ribboned medal. */
+export const Medal = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M24 6 L32 26 L40 6" stroke={SKY} strokeWidth={6} fill="none" strokeLinecap="round" />
+    <Circle cx="32" cy="40" r="16" fill={G_} stroke={GD} strokeWidth={2.5} />
+    <Path d="M32 30 l3 6.4 7 1 -5 4.9 1.2 7-6.2-3.3-6.2 3.3 1.2-7-5-4.9 7-1 Z" fill={CR} />
+  </Frame>
+);
+
+/** Settings — a cog, drawn flat rather than borrowed from the emoji font. */
+export const Gear = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path
+      d="M32 10 l5 2 4-3 4 4-3 4 2 5 5 1v6l-5 1-2 5 3 4-4 4-4-3-5 2-1 5h-6l-1-5-5-2-4 3-4-4 3-4-2-5-5-1v-6l5-1 2-5-3-4 4-4 4 3 5-2 1-5 Z"
+      fill={G_}
+      stroke={GD}
+      strokeWidth={2}
+      strokeLinejoin="round"
+    />
+    <Circle cx="32" cy="32" r="7" fill={IN} />
+  </Frame>
+);
+
 // ---- registry ------------------------------------------------------------
 
 export const ICONS: Record<string, (p: IconProps) => JSX.Element> = {
@@ -558,7 +581,7 @@ export const ICONS: Record<string, (p: IconProps) => JSX.Element> = {
   pen: Pen, mosque: Mosque, salaam: Salaam, thanks: ThanksHands, check: Check, cross: Cross,
   handHeart: HandHeart, smile: Smile, egg: Egg, rice: RiceBowl, meat: Meat, salt: SaltShaker,
   lattice: Lattice, tiles: Tiles, scroll: Scroll, crescent: Crescent,
-  gem: Gem, flame: Flame, bolt: Bolt, sprout: Sprout,
+  gem: Gem, flame: Flame, bolt: Bolt, sprout: Sprout, medal: Medal, gear: Gear,
 };
 
 export type IconName = keyof typeof ICONS;
