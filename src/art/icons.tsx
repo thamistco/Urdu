@@ -456,6 +456,58 @@ export const SaltShaker = ({ size }: IconProps) => (
   </Frame>
 );
 
+/** Grammar — an interlaced jaali screen: structure you can see through. */
+export const Lattice = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Rect x="12" y="12" width="40" height="40" rx="5" fill={SKY} />
+    <G stroke={G_} strokeWidth={2.4} fill="none" strokeLinecap="round">
+      <Path d="M32 15 L49 32 L32 49 L15 32 Z" />
+      <Rect x="21" y="21" width="22" height="22" rx="2" />
+      <Path d="M32 21 v22 M21 32 h22" opacity={0.55} />
+    </G>
+    <Circle cx="32" cy="32" r="3" fill={CR} />
+  </Frame>
+);
+
+/** Sentence building — tiles waiting to be put in order. */
+export const Tiles = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Rect x="9" y="24" width="15" height="16" rx="3" fill={CR} />
+    <Rect x="26" y="20" width="15" height="16" rx="3" fill={G_} />
+    <Rect x="43" y="28" width="12" height="16" rx="3" fill={JADE} />
+    <G stroke={IN} strokeWidth={2} strokeLinecap="round" opacity={0.45}>
+      <Path d="M13 32 h7" />
+      <Path d="M30 28 h7" />
+      <Path d="M46 36 h6" />
+    </G>
+  </Frame>
+);
+
+/** Reading — an open manuscript page with a ruled margin. */
+export const Scroll = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Rect x="14" y="11" width="36" height="42" rx="4" fill={CR} />
+    <Rect x="14" y="11" width="7" height="42" rx="4" fill={G_} />
+    <G stroke={IN} strokeWidth={2.2} strokeLinecap="round" opacity={0.45}>
+      <Path d="M27 21 h17" />
+      <Path d="M27 29 h17" />
+      <Path d="M27 37 h12" />
+    </G>
+    <Circle cx="17.5" cy="32" r="1.6" fill={IN} opacity={0.45} />
+  </Frame>
+);
+
+/** Review — a crescent with a settling star, the app's "come back" motif. */
+export const Crescent = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path
+      d="M42 12 a21 21 0 1 0 0 40 a17 17 0 1 1 0 -40 Z"
+      fill={G_}
+    />
+    <Path d="M24 24 l2.2 4.6 5 .7 -3.6 3.5 .9 5 -4.5 -2.4 -4.5 2.4 .9 -5 -3.6 -3.5 5 -.7 Z" fill={CR} opacity={0.9} />
+  </Frame>
+);
+
 // ---- registry ------------------------------------------------------------
 
 export const ICONS: Record<string, (p: IconProps) => JSX.Element> = {
@@ -468,6 +520,7 @@ export const ICONS: Record<string, (p: IconProps) => JSX.Element> = {
   girl: Girl, boy: Boy, sonChild: SonChild, daughterChild: DaughterChild,
   pen: Pen, mosque: Mosque, salaam: Salaam, thanks: ThanksHands, check: Check, cross: Cross,
   handHeart: HandHeart, smile: Smile, egg: Egg, rice: RiceBowl, meat: Meat, salt: SaltShaker,
+  lattice: Lattice, tiles: Tiles, scroll: Scroll, crescent: Crescent,
 };
 
 export type IconName = keyof typeof ICONS;

@@ -56,13 +56,17 @@ export function GrammarTeachExercise({ exercise, onGraded }: ExerciseProps<Teach
           {concept.table.rows.map((row, r) => (
             <View
               key={r}
-              className="flex-row"
+              className="flex-row items-center"
               style={{ borderTopWidth: 1, borderTopColor: withAlpha(palette.ink, 0.08) }}
             >
               {row.map((cell, c) => (
                 <View key={c} className="flex-1 px-3 py-2.5">
                   {/[؀-ۿ]/.test(cell) ? (
-                    <Urdu style={{ fontSize: 20, color: palette.ink, lineHeight: 34 }}>{cell}</Urdu>
+                    // Urdu cells are right-aligned so the column reads as one
+                    // RTL block instead of drifting with each glyph's width.
+                    <Urdu style={{ fontSize: 20, color: palette.ink, lineHeight: 34, textAlign: 'right' }}>
+                      {cell}
+                    </Urdu>
                   ) : (
                     <Txt style={{ color: palette.ink }} className="text-[13px]">
                       {cell}
@@ -82,8 +86,8 @@ export function GrammarTeachExercise({ exercise, onGraded }: ExerciseProps<Teach
             className="rounded-xl border-l-2 px-4 py-3"
             style={{ borderLeftColor: palette.jade, backgroundColor: withAlpha(palette.jade, 0.08) }}
           >
-            <Urdu style={{ fontSize: 24, lineHeight: 40 }}>{ex.urdu}</Urdu>
-            <Txt className="text-xs text-paper/55">{ex.roman}</Txt>
+            <Urdu style={{ fontSize: 24, lineHeight: 46 }}>{ex.urdu}</Urdu>
+            <Txt className="mt-1.5 text-xs text-paper/55">{ex.roman}</Txt>
             <Txt className="mt-0.5 text-[13px] text-paper/80">{ex.meaning}</Txt>
           </View>
         ))}
@@ -114,11 +118,11 @@ export function GrammarDrillExercise({ exercise, showRoman, locked, onGraded }: 
     <View>
       <Question>Complete the sentence</Question>
       <View className="mb-4 items-center rounded-2xl bg-paper px-5 py-6">
-        <Urdu style={{ fontSize: 30, color: palette.ink, lineHeight: 54, textAlign: 'center' }}>
+        <Urdu style={{ fontSize: 28, color: palette.ink, lineHeight: 56, textAlign: 'center' }}>
           {shown}
         </Urdu>
         {showRoman ? (
-          <Txt style={{ color: palette.ink }} className="mt-1 text-xs opacity-55">
+          <Txt style={{ color: palette.ink }} className="mt-2.5 text-xs opacity-55">
             {picked ? drill.promptRoman.replace('___', '') .replace(/\s+/g, ' ').trim() : drill.promptRoman}
           </Txt>
         ) : null}

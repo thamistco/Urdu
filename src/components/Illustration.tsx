@@ -144,10 +144,19 @@ export function TopicArt({ topicId, size = 44 }: { topicId: string; size?: numbe
   );
 }
 
-/** Icon for a lesson node on the path (drawn without a frame). */
+/**
+ * Icon for a lesson node on the path (drawn without a frame). Each kind of
+ * lesson gets its own mark so a long path stays readable at a glance.
+ */
 export function lessonIconName(kind: string, topic?: string): IconName {
-  if (kind === 'letters') return 'pen';
-  if (kind === 'vocab') return (topic && TOPIC_ICON[topic]) || 'sparkle';
-  if (kind === 'phrases') return 'salaam';
-  return 'star';
+  switch (kind) {
+    case 'letters': return 'pen';
+    case 'vocab': return (topic && TOPIC_ICON[topic]) || 'sparkle';
+    case 'phrases': return 'salaam';
+    case 'grammar': return 'lattice';
+    case 'sentences': return 'tiles';
+    case 'reading': return 'scroll';
+    case 'review': return 'crescent';
+    default: return 'star';
+  }
 }
