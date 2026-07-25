@@ -1,5 +1,7 @@
 import { Letter, PositionKey } from '../data/letters';
 import { Word } from '../data/words';
+import type { GrammarConcept, GrammarDrill } from '../data/grammar';
+import type { Sentence, Passage } from '../data/sentences';
 
 export type ItemRef = { id: string; type: 'letter' | 'word' };
 
@@ -47,6 +49,28 @@ export type Exercise =
   | {
       kind: 'matching';
       words: Word[];
+    }
+  | {
+      /** teaching card — explanation, table and examples, then "got it" */
+      kind: 'grammarTeach';
+      concept: GrammarConcept;
+    }
+  | {
+      /** fill the gap in a sentence with the right form */
+      kind: 'grammarDrill';
+      concept: GrammarConcept;
+      drill: GrammarDrill;
+    }
+  | {
+      /** assemble a sentence from shuffled word tiles */
+      kind: 'sentenceBuild';
+      sentence: Sentence;
+      tiles: string[];
+    }
+  | {
+      /** read a short passage, then answer a comprehension question */
+      kind: 'reading';
+      passage: Passage;
     };
 
 export type ExerciseKind = Exercise['kind'];

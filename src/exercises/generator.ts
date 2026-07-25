@@ -1,6 +1,8 @@
 import { LETTERS, getLetter, Letter, PositionKey, POSITIONS } from '../data/letters';
 import { WORDS, getWord, wordsByTopic, Word, PHRASES } from '../data/words';
 import { Lesson } from '../data/units';
+import { getGrammar } from '../data/grammar';
+import { SENTENCES, PASSAGES, getPassage } from '../data/sentences';
 import { Exercise, ItemRef } from './types';
 
 const rand = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
@@ -99,6 +101,32 @@ export function buildLessonExercises(lesson: Lesson, reviewRefs: ItemRef[] = [])
     if (picks.length >= 4) exercises.push({ kind: 'matching', words: picks.slice(0, 4) });
   }
 
+  if (lesson.kind === 'grammar' && lesson.conceptId) {
+    const c = getGrammar(lesson.conceptId);
+    if (c) {
+      // teach first, then drill it, then reinforce with matching sentences
+      exercises.push({ kind: 'grammarTeach', concept: c });
+      for (const d of c.drills) exercises.push({ kind: 'grammarDrill', concept: c, drill: d });
+      const related = SENTENCES.filter((x) => x.concept === c.id);
+      for (const sen of shuffle(related).slice(0, 2)) {
+        exercises.push({ kind: 'sentenceBuild', sentence: sen, tiles: shuffle(sen.words) });
+      }
+    }
+  }
+
+  if (lesson.kind === 'sentences') {
+    const pool = lesson.level ? SENTENCES.filter((x) => x.level === lesson.level) : SENTENCES;
+    for (const sen of shuffle(pool.length ? pool : SENTENCES).slice(0, lesson.size)) {
+      exercises.push({ kind: 'sentenceBuild', sentence: sen, tiles: shuffle(sen.words) });
+    }
+  }
+
+  if (lesson.kind === 'reading') {
+    const p = lesson.passageId ? getPassage(lesson.passageId) : undefined;
+    const chosen = p ?? shuffle(PASSAGES)[0];
+    if (chosen) exercises.push({ kind: 'reading', passage: chosen });
+  }
+
   if (lesson.kind === 'review') {
     const refs = reviewRefs.length ? reviewRefs : fallbackReviewRefs(lesson.size);
     for (const ref of refs.slice(0, lesson.size)) {
@@ -150,5 +178,9 @@ export function itemsOf(ex: Exercise): ItemRef[] {
       return [{ id: ex.word.id, type: 'word' }];
     case 'matching':
       return ex.words.map((w) => ({ id: w.id, type: 'word' as const }));
+    default:
+      // grammar, sentence-building and reading aren't tied to a single
+      // vocabulary item, so they don't feed the spaced-repetition queue.
+      return [];
   }
 }

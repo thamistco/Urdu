@@ -16,6 +16,7 @@ import { feedback } from '../lib/feedback';
 import { levelProgress, levelTitle } from '../lib/gamification';
 import { useProgressStore } from '../store/useProgressStore';
 import { UNITS, Lesson, LESSON_ORDER } from '../data/units';
+import { LEVEL_META, LEVEL_ORDER, type Level } from '../data/words';
 import { WORDS } from '../data/words';
 import { DAILY_GOALS } from '../data/achievements';
 import type { RootStackParamList } from '../navigation/types';
@@ -224,8 +225,41 @@ export function HomeScreen() {
           </View>
         </Reveal>
 
-        {/* the path */}
-        {UNITS.map((unit, ui) => (
+        {/* the path, grouped into course stages */}
+        {LEVEL_ORDER.map((lvl: Level) => {
+          const levelUnits = UNITS.filter((u) => u.level === lvl);
+          if (!levelUnits.length) return null;
+          const meta = LEVEL_META[lvl];
+          const total = levelUnits.reduce((n, u) => n + u.lessons.length, 0);
+          const done = levelUnits.reduce(
+            (n, u) => n + u.lessons.filter((l) => store.completedLessons[l.id]).length,
+            0
+          );
+          return (
+            <View key={lvl}>
+              <Reveal>
+                <View className="mb-1 mt-7 flex-row items-center gap-3">
+                  <View
+                    className="rounded-lg px-2.5 py-1"
+                    style={{ backgroundColor: withAlpha(meta.color, 0.18), borderWidth: 1, borderColor: withAlpha(meta.color, 0.4) }}
+                  >
+                    <Bold style={{ color: meta.color }} className="text-xs">
+                      {meta.tag}
+                    </Bold>
+                  </View>
+                  <View className="flex-1">
+                    <Heading className="text-lg">{meta.title}</Heading>
+                    <Txt className="text-xs text-paper/50">{meta.blurb}</Txt>
+                  </View>
+                  <Txt className="text-[11px] text-paper/45">
+                    {done}/{total}
+                  </Txt>
+                </View>
+                <View className="mb-1 mt-2">
+                  <ProgressBar progress={total ? done / total : 0} color={meta.color} height={6} spring={false} />
+                </View>
+              </Reveal>
+              {levelUnits.map((unit, ui) => (
           <Reveal key={unit.id} delay={160 + ui * 40}>
             <View className="mb-2 mt-4 flex-row items-center gap-3">
               <View className="h-2 w-2 rounded-full" style={{ backgroundColor: unit.color }} />
@@ -251,7 +285,10 @@ export function HomeScreen() {
               })}
             </View>
           </Reveal>
-        ))}
+              ))}
+            </View>
+          );
+        })}
 
         <Txt className="mb-4 mt-6 text-center text-xs leading-5 text-paper/40">
           Every letter has four faces. Most apps teach one.
