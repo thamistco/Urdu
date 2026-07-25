@@ -10,7 +10,7 @@ import { ProgressBar } from '../components/ProgressBar';
 import { Reveal } from '../components/Reveal';
 import { StatChip } from '../components/Stats';
 import { WordArt, Illustration, lessonIconName } from '../components/Illustration';
-import { Display, Heading, Txt, Bold, Eyebrow, Urdu } from '../components/Text';
+import { Display, Heading, Txt, Bold, Eyebrow, Urdu, urduLine } from '../components/Text';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { levelProgress, levelTitle } from '../lib/gamification';
@@ -254,7 +254,7 @@ export function HomeScreen() {
               </Eyebrow>
               <View className="flex-row items-center justify-between gap-2">
                 <View className="flex-1">
-                  <Urdu style={{ fontSize: 32, color: palette.ink, lineHeight: 48 }}>{word.urdu}</Urdu>
+                  <Urdu style={{ fontSize: 28, color: palette.ink, lineHeight: urduLine(28) }}>{word.urdu}</Urdu>
                   <Txt style={{ color: palette.ink }} className="text-xs opacity-60">
                     {word.roman} · {word.meaning}
                   </Txt>

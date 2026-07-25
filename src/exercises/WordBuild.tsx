@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { PromptCard, Question, palette, withAlpha } from './common';
-import { Urdu, Txt, Bold } from '../components/Text';
+import { Urdu, Txt, Bold, urduGlyph, urduLine } from '../components/Text';
 import { WordArt } from '../components/Illustration';
 import { Button } from '../components/Button';
 import { feedback } from '../lib/feedback';
@@ -74,7 +74,7 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
                 className="mx-1 my-1 rounded-xl px-3 py-1"
                 style={{ backgroundColor: withAlpha(palette.gold, 0.18) }}
               >
-                <Urdu style={{ fontSize: 34, lineHeight: 52 }}>{tiles[i]}</Urdu>
+                <Urdu style={{ ...urduGlyph(26) }}>{tiles[i]}</Urdu>
               </View>
             </Pressable>
           ))
@@ -86,7 +86,7 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
         {available.map((i) => (
           <Pressable key={i} onPress={() => place(i)}>
             <View className="m-1.5 rounded-xl border border-white/10 bg-ink-700 px-4 py-2">
-              <Urdu style={{ fontSize: 36, lineHeight: 54 }}>{tiles[i]}</Urdu>
+              <Urdu style={{ ...urduGlyph(26) }}>{tiles[i]}</Urdu>
             </View>
           </Pressable>
         ))}
@@ -109,7 +109,7 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
       {graded === false && (
         <View className="items-center">
           <Bold style={{ color: palette.rose }}>Correct: </Bold>
-          <Urdu style={{ fontSize: 34, lineHeight: 52 }}>{word.urdu}</Urdu>
+          <Urdu style={{ fontSize: 32, lineHeight: urduLine(32) }}>{word.urdu}</Urdu>
         </View>
       )}
     </View>
