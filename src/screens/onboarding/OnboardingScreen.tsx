@@ -9,9 +9,29 @@ import { GoalArt } from '../../components/Illustration';
 import { TrackChooser } from '../../components/TrackChooser';
 import { palette, withAlpha } from '../../theme';
 import { feedback } from '../../lib/feedback';
-import { useProgressStore, Goal } from '../../store/useProgressStore';
+import { useProgressStore, Goal, Background } from '../../store/useProgressStore';
 import { useSettingsStore, LearnTrack } from '../../store/useSettingsStore';
 import { DAILY_GOALS } from '../../data/achievements';
+import { UNITS } from '../../data/units';
+
+/**
+ * Lessons a learner who already speaks Urdu doesn't need to be *taught* —
+ * they already have the words, spoken. What they came for is the script:
+ * letters, and reading it back. Only the beginner-level basics are safe to
+ * assume — a heritage speaker's vocabulary thins out fast once units reach
+ * specialised topics like politics or philosophy, so only the earliest,
+ * most universal words and phrases are pre-satisfied. Letters, grammar,
+ * sentence-building, dialogues and reading stay mandatory at every level,
+ * since those teach the script and structure, not words already known.
+ *
+ * A lesson's `level` field is only ever set on sentence-kind lessons — a
+ * vocab or phrase lesson's level lives on the *unit* that contains it — so
+ * this has to walk `UNITS` rather than filter the flat `ALL_LESSONS` list.
+ */
+const SKIPPABLE_FOR_SPEAKERS = UNITS.filter((u) => u.level === 'beginner')
+  .flatMap((u) => u.lessons)
+  .filter((l) => l.kind === 'vocab' || l.kind === 'phrases')
+  .map((l) => l.id);
 
 const GOALS: { key: Goal; label: string; desc: string; icon: string }[] = [
   { key: 'family', label: 'Speak with family', desc: 'Parents, grandparents, relatives back home', icon: '👨‍👩‍👧' },
@@ -45,7 +65,7 @@ const PLACEMENT = [
 const placementFor = (track: LearnTrack) =>
   (track === 'roman' ? PLACEMENT.filter((p) => p.kind === 'roman') : PLACEMENT).slice(0, 4);
 
-type Step = 'welcome' | 'goal' | 'track' | 'placement' | 'daily' | 'ready';
+type Step = 'welcome' | 'goal' | 'track' | 'background' | 'placement' | 'daily' | 'ready';
 
 function Dots({ step, total }: { step: number; total: number }) {
   return (
@@ -65,6 +85,7 @@ export function OnboardingScreen() {
   const [step, setStep] = useState<Step>('welcome');
   const [goal, setGoal] = useState<Goal | null>(null);
   const [track, setTrack] = useState<LearnTrack>('both');
+  const [background, setBackground] = useState<Background | null>(null);
   const [pIdx, setPIdx] = useState(0);
   const [pCorrect, setPCorrect] = useState(0);
   const [pAnswered, setPAnswered] = useState(false);
@@ -79,7 +100,8 @@ export function OnboardingScreen() {
     setTrackSetting(track);
     setDailyGoal(daily);
     feedback.levelUp();
-    completeOnboarding(goal ?? 'curious', lvl);
+    const bg = background ?? 'new';
+    completeOnboarding(goal ?? 'curious', lvl, bg, bg === 'speaker' ? SKIPPABLE_FOR_SPEAKERS : []);
   };
 
   // ---- welcome ----
@@ -109,7 +131,7 @@ export function OnboardingScreen() {
     return (
       <Screen>
         <Reveal>
-          <Dots step={0} total={4} />
+          <Dots step={0} total={5} />
           <Heading className="mb-1 text-2xl">Why are you learning Urdu?</Heading>
           <Txt className="mb-6 text-sm text-paper/50">This shapes which words we teach first.</Txt>
           <View className="gap-3">
@@ -154,11 +176,71 @@ export function OnboardingScreen() {
     return (
       <Screen>
         <Reveal>
-          <Dots step={1} total={4} />
+          <Dots step={1} total={5} />
           <Heading className="mb-1 text-2xl">How do you want to learn?</Heading>
           <Txt className="mb-4 text-sm text-paper/50">The most important choice here.</Txt>
           <TrackChooser value={track} onChange={setTrack} />
-          <Button className="mt-6" onPress={() => { setPIdx(0); setPCorrect(0); setStep('placement'); }}>
+          <Button className="mt-6" onPress={() => setStep('background')}>
+            Continue
+          </Button>
+        </Reveal>
+      </Screen>
+    );
+  }
+
+  // ---- background ----
+  if (step === 'background') {
+    const OPTIONS: { key: Background; label: string; desc: string; icon: string }[] = [
+      { key: 'new', label: "I'm starting from scratch", desc: "Urdu is new to me, spoken and written", icon: '🌱' },
+      {
+        key: 'speaker',
+        label: 'I already speak or understand it',
+        desc: "I grew up around it — I just can't read the script",
+        icon: '🗣️',
+      },
+    ];
+    return (
+      <Screen>
+        <Reveal>
+          <Dots step={2} total={5} />
+          <Heading className="mb-1 text-2xl">Do you already know some Urdu?</Heading>
+          <Txt className="mb-6 text-sm text-paper/50">
+            If you already understand it spoken, we'll skip the basic words you know and get you to the script faster.
+          </Txt>
+          <View className="gap-3">
+            {OPTIONS.map((o) => {
+              const sel = background === o.key;
+              return (
+                <Pressable
+                  key={o.key}
+                  onPress={() => {
+                    feedback.tap();
+                    setBackground(o.key);
+                  }}
+                >
+                  <View
+                    className="flex-row items-center gap-4 rounded-2xl border p-4"
+                    style={{
+                      borderColor: sel ? palette.gold : withAlpha(palette.white, 0.1),
+                      backgroundColor: sel ? withAlpha(palette.gold, 0.1) : palette.ink700,
+                      borderWidth: 2,
+                    }}
+                  >
+                    <Txt style={{ fontSize: 32 }}>{o.icon}</Txt>
+                    <View className="flex-1">
+                      <Bold className="text-[15px]">{o.label}</Bold>
+                      <Txt className="text-xs text-paper/60">{o.desc}</Txt>
+                    </View>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+          <Button
+            className="mt-6"
+            disabled={!background}
+            onPress={() => { setPIdx(0); setPCorrect(0); setStep('placement'); }}
+          >
             Continue
           </Button>
         </Reveal>
@@ -189,7 +271,7 @@ export function OnboardingScreen() {
     return (
       <Screen>
         <Reveal key={pIdx}>
-          <Dots step={2} total={4} />
+          <Dots step={3} total={5} />
           <Eyebrow style={{ color: palette.gold }} className="mb-3">
             Quick check · {pIdx + 1} of {questions.length}
           </Eyebrow>
@@ -223,7 +305,7 @@ export function OnboardingScreen() {
     return (
       <Screen>
         <Reveal>
-          <Dots step={3} total={4} />
+          <Dots step={4} total={5} />
           <Heading className="mb-1 text-2xl">Set a daily goal</Heading>
           <Txt className="mb-6 text-sm text-paper/50">A gentle contract with yourself. Change it whenever.</Txt>
           <View className="gap-3">
@@ -271,6 +353,15 @@ export function OnboardingScreen() {
               We'll begin exactly where you are — and the words you miss will come back first.
             </Txt>
           </View>
+          {background === 'speaker' && (
+            <View className="mb-4 w-full rounded-2xl border p-5" style={{ borderColor: withAlpha(palette.jade, 0.3), backgroundColor: withAlpha(palette.jade, 0.08) }}>
+              <Eyebrow style={{ color: palette.jade }} className="mb-1">Fast-tracked</Eyebrow>
+              <Txt className="mt-1 text-sm text-paper/60">
+                We've marked the basic words you likely already know as skipped, so your path leads straight to the
+                script and reading — everything else is still yours to complete.
+              </Txt>
+            </View>
+          )}
           <Button className="mt-4 w-full" onPress={finish}>Start learning</Button>
         </View>
       </Reveal>

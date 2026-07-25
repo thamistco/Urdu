@@ -16,6 +16,14 @@ import {
 import { ACHIEVEMENTS } from '../data/achievements';
 
 export type Goal = 'family' | 'read' | 'heritage' | 'curious';
+/**
+ * Whether the learner already has spoken Urdu, distinct from `Goal` — that's
+ * *why* they're here (which shapes what we teach first), this is *what they
+ * already carry in* (which shapes what we can skip). Named to avoid colliding
+ * with `Goal`'s `'heritage'` value, which means something different: a
+ * motivation ("reconnect with heritage"), not a skill.
+ */
+export type Background = 'new' | 'speaker';
 export type ItemType = 'letter' | 'word';
 
 export type FinishResult = {
@@ -59,6 +67,7 @@ type ProgressState = {
   onboarded: boolean;
   goal: Goal | null;
   startLevel: number;
+  background: Background | null;
 
   // economy
   totalXp: number;
@@ -84,6 +93,11 @@ type ProgressState = {
 
   // learning state
   completedLessons: Record<string, { best: number; done: number }>;
+  /** Lessons pre-satisfied at onboarding for a learner who already speaks
+   *  Urdu — basic vocab they already know, not a real attempt. Kept separate
+   *  from `completedLessons` so they don't inflate lesson-completion
+   *  achievements, but they still count toward unlocking the next lesson. */
+  skippedLessons: Record<string, boolean>;
   learnedLetters: string[];
   learnedWords: string[];
   perfectLessons: number;
@@ -97,7 +111,7 @@ type ProgressState = {
   achieved: Record<string, number>;
 
   // ---- actions ----
-  completeOnboarding: (goal: Goal, startLevel: number) => void;
+  completeOnboarding: (goal: Goal, startLevel: number, background: Background, skipLessonIds: string[]) => void;
   regenHearts: () => void;
   loseHeart: () => void;
   refillHearts: () => boolean;
@@ -127,6 +141,7 @@ export const useProgressStore = create<ProgressState>()(
       onboarded: false,
       goal: null,
       startLevel: 0,
+      background: null,
 
       totalXp: 0,
       gems: 20,
@@ -147,6 +162,7 @@ export const useProgressStore = create<ProgressState>()(
       weeklyXp: 0,
 
       completedLessons: {},
+      skippedLessons: {},
       learnedLetters: [],
       learnedWords: [],
       perfectLessons: 0,
@@ -155,8 +171,14 @@ export const useProgressStore = create<ProgressState>()(
       xpHistory: {},
       achieved: {},
 
-      completeOnboarding: (goal, startLevel) =>
-        set({ onboarded: true, goal, startLevel }),
+      completeOnboarding: (goal, startLevel, background, skipLessonIds) =>
+        set({
+          onboarded: true,
+          goal,
+          startLevel,
+          background,
+          skippedLessons: Object.fromEntries(skipLessonIds.map((id) => [id, true])),
+        }),
 
       regenHearts: () => {
         const s = get();
@@ -348,6 +370,7 @@ export const useProgressStore = create<ProgressState>()(
           onboarded: false,
           goal: null,
           startLevel: 0,
+          background: null,
           totalXp: 0,
           gems: 20,
           hearts: HEARTS_MAX,
@@ -363,6 +386,7 @@ export const useProgressStore = create<ProgressState>()(
           weekKey: weekKeyOf(),
           weeklyXp: 0,
           completedLessons: {},
+          skippedLessons: {},
           learnedLetters: [],
           learnedWords: [],
           perfectLessons: 0,

@@ -345,7 +345,7 @@ export const UNITS: Unit[] = [
   {
     id: 'u17', level: 'intermediate', color: BLUE,
     title: 'Unit 17 · Finding Your Way',
-    subtitle: 'Asking, phoning and the مجھے feeling',
+    subtitle: 'Asking, phoning and the mujhe feeling',
     lessons: [
       V('directions-more', 'Asking the way', 'Finding your way around'),
       V('phone', 'On the phone', 'Calling and messaging'),

@@ -33,16 +33,23 @@ const GREETING: Record<string, string> = {
 };
 
 /** `order` is the path as the learner's track sees it — on the Roman track the
- *  letter lessons are not on it, so the lesson after them unlocks first. */
+ *  letter lessons are not on it, so the lesson after them unlocks first.
+ *
+ *  `skipped` marks lessons pre-satisfied at onboarding for a learner who
+ *  already speaks Urdu (see `Background` in the progress store) — they count
+ *  the same as `completed` for unlocking what comes next, but render as their
+ *  own state rather than a real "done", since nothing was actually attempted. */
 function lessonState(
   lessonId: string,
   completed: Record<string, unknown>,
+  skipped: Record<string, unknown>,
   order: string[]
-): 'done' | 'current' | 'locked' {
+): 'done' | 'skipped' | 'current' | 'locked' {
   if (completed[lessonId]) return 'done';
+  if (skipped[lessonId]) return 'skipped';
   const idx = order.indexOf(lessonId);
   const prev = order[idx - 1];
-  if (idx === 0 || (prev && completed[prev])) return 'current';
+  if (idx === 0 || (prev && (completed[prev] || skipped[prev]))) return 'current';
   return 'locked';
 }
 
@@ -55,11 +62,12 @@ function LessonNode({
 }: {
   lesson: Lesson;
   color: string;
-  state: 'done' | 'current' | 'locked';
+  state: 'done' | 'skipped' | 'current' | 'locked';
   offset: number;
   onPress: () => void;
 }) {
-  const bg = state === 'locked' ? palette.ink700 : state === 'done' ? color : withAlpha(color, 0.22);
+  const bg =
+    state === 'locked' || state === 'skipped' ? palette.ink700 : state === 'done' ? color : withAlpha(color, 0.22);
   const ring = state === 'current' ? palette.gold : 'transparent';
   return (
     <View className="mb-6 flex-row items-center" style={{ marginLeft: offset }}>
@@ -68,22 +76,37 @@ function LessonNode({
         hitSlop={8}
         accessibilityRole="button"
         accessibilityLabel={`${lesson.title}. ${lesson.subtitle}. ${
-          state === 'done' ? 'Completed' : state === 'current' ? 'Start this lesson' : 'Locked — tap to jump ahead'
+          state === 'done'
+            ? 'Completed'
+            : state === 'skipped'
+            ? 'Skipped as already known — tap to try it anyway'
+            : state === 'current'
+            ? 'Start this lesson'
+            : 'Locked — tap to jump ahead'
         }`}
-        style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.94 : 1 }], opacity: state === 'locked' ? 0.7 : 1 })}
+        style={({ pressed }) => ({
+          transform: [{ scale: pressed ? 0.94 : 1 }],
+          opacity: state === 'locked' || state === 'skipped' ? 0.7 : 1,
+        })}
       >
         <View
           className="h-[68px] w-[68px] items-center justify-center rounded-full"
           style={{
             backgroundColor: bg,
-            borderWidth: state === 'current' ? 3 : state === 'done' ? 0 : 2,
-            borderColor: state === 'current' ? ring : withAlpha(palette.white, 0.12),
+            borderWidth: state === 'current' ? 3 : state === 'done' ? 0 : state === 'skipped' ? 2 : 2,
+            borderColor:
+              state === 'current'
+                ? ring
+                : state === 'skipped'
+                ? withAlpha(palette.jade, 0.4)
+                : withAlpha(palette.white, 0.12),
+            borderStyle: state === 'skipped' ? 'dashed' : 'solid',
           }}
         >
           {state === 'done' ? (
             <Txt style={{ fontSize: 28, color: '#fff' }}>✓</Txt>
           ) : (
-            <View style={{ opacity: state === 'locked' ? 0.85 : 1 }}>
+            <View style={{ opacity: state === 'locked' || state === 'skipped' ? 0.85 : 1 }}>
               <Illustration name={lessonIconName(lesson.kind, lesson.topic)} tile={false} size={34} />
             </View>
           )}
@@ -102,6 +125,14 @@ function LessonNode({
             style={{ backgroundColor: palette.ink600, borderWidth: 1, borderColor: withAlpha(palette.white, 0.15) }}
           >
             <Txt style={{ fontSize: 10, opacity: 0.7 }}>🔒</Txt>
+          </View>
+        )}
+        {state === 'skipped' && (
+          <View
+            className="absolute -right-1 -top-1 h-5 w-5 items-center justify-center rounded-full"
+            style={{ backgroundColor: palette.jadeDark, borderWidth: 1, borderColor: withAlpha(palette.white, 0.15) }}
+          >
+            <Txt style={{ fontSize: 10 }}>⏭</Txt>
           </View>
         )}
       </Pressable>
@@ -140,15 +171,16 @@ export function HomeScreen() {
   const units = useMemo(() => unitsForTrack(track), [track]);
   const order = useMemo(() => units.flatMap((u) => u.lessons.map((l) => l.id)), [units]);
 
-  // The one next thing to do: the first lesson on the path not yet finished.
+  // The one next thing to do: the first lesson on the path not yet finished
+  // — skipped lessons count as done here too, since there's nothing left to do.
   const currentId = useMemo(
-    () => order.find((id) => !store.completedLessons[id]) ?? order[order.length - 1],
-    [store.completedLessons, order]
+    () => order.find((id) => !store.completedLessons[id] && !store.skippedLessons[id]) ?? order[order.length - 1],
+    [store.completedLessons, store.skippedLessons, order]
   );
   const currentLesson = findLesson(currentId);
   const currentUnit = units.find((u) => u.lessons.some((l) => l.id === currentId));
   const currentLevel: Level = currentUnit?.level ?? 'beginner';
-  const finished = order.every((id) => store.completedLessons[id]);
+  const finished = order.every((id) => store.completedLessons[id] || store.skippedLessons[id]);
 
   // The course is long. Only the stage you are on is expanded; the others
   // collapse to a progress line you can open when you want to look ahead.
@@ -262,7 +294,7 @@ export function HomeScreen() {
                   <Eyebrow style={{ color: palette.gold }}>
                     {finished
                       ? `All ${order.length} lessons done`
-                      : store.completedLessons[order[0]]
+                      : store.completedLessons[order[0]] || store.skippedLessons[order[0]]
                       ? 'Continue'
                       : 'Start here'}
                   </Eyebrow>
@@ -340,7 +372,7 @@ export function HomeScreen() {
           const meta = LEVEL_META[lvl];
           const total = levelUnits.reduce((n, u) => n + u.lessons.length, 0);
           const done = levelUnits.reduce(
-            (n, u) => n + u.lessons.filter((l) => store.completedLessons[l.id]).length,
+            (n, u) => n + u.lessons.filter((l) => store.completedLessons[l.id] || store.skippedLessons[l.id]).length,
             0
           );
           return (
@@ -398,7 +430,7 @@ export function HomeScreen() {
             </View>
             <View className="mt-3 pl-2">
               {unit.lessons.map((lesson, li) => {
-                const st = lessonState(lesson.id, store.completedLessons, order);
+                const st = lessonState(lesson.id, store.completedLessons, store.skippedLessons, order);
                 const offset = [0, 28, 44, 28][li % 4];
                 return (
                   <LessonNode
