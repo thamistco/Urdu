@@ -90,10 +90,32 @@ commercial release, get a proper IP review.
   - Note: also not fetchable from the build sandbox (403).
 
 ## How our content is structured today
-- `src/data/letters.ts` — the letter set, each with all four position forms and
+- `src/data/letters.ts` — the 40 letters, each with all four position forms and
   a teaching note (grouped by `group` for the path).
-- `src/data/words.ts` — themed vocabulary + short phrases.
-- `src/data/units.ts` — the unit/lesson path built from the above.
+- `src/data/vocab/*.ts` — themed vocabulary in modules, each exporting
+  `TopicPack[]` built by the `pack()` helper in `vocab/types.ts`.
+  `src/data/words.ts` merges these with the core sets into `TOPICS` / `WORDS`:
+  **2,028 words across 122 topics.**
+- `src/data/grammar.ts` — **25 concepts**, each with an explanation, an optional
+  paradigm table, examples and fill-the-gap drills.
+- `src/data/sentences.ts` — **140 sentences** for word-order building (many
+  tagged with the `concept` they illustrate, so grammar lessons can reinforce
+  them) and **17 graded reading passages** with comprehension questions.
+- `src/data/units.ts` — the path: **35 units / 221 lessons**, interleaving
+  script, vocabulary, grammar, sentence building and reading. Every topic,
+  concept and passage is reachable from it.
+
+### Adding content
+A new topic is one `pack(...)` call in a `vocab/` module plus one `V('id', …)`
+line in `units.ts`. A new grammar point is one entry in `GRAMMAR` plus a `G(…)`
+line. Nothing else needs touching — the exercise generator builds the questions.
+
+Two invariants worth preserving:
+- **Every topic, grammar concept and passage must appear in `units.ts`.**
+  Content that isn't on the path is invisible outside the Practice tab.
+- **Picture-based questions need visually distinct options.** The generator
+  enforces this (`cueOf` / `distractorsFor` in `exercises/generator.ts`), because
+  at this scale many words legitimately share an emoji.
 
 When we incorporate the NCPUL progression, keep the four-forms-per-letter thesis
 central and prefer its introduction order for absolute beginners.
