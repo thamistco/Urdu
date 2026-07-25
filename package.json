@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "gen:sounds": "node scripts/generate-sounds.js",
     "gen:voice": "node scripts/generate-voice.js",
-    "check:roman": "node scripts/check-roman.js"
+    "check:roman": "node scripts/check-roman.js",
+    "gen:masks": "node scripts/generate-glyph-masks.js"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "^0.2.3",

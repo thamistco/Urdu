@@ -38,6 +38,7 @@ function answerLabel(ex: Exercise): string {
     case 'letterForm':
       return POSITIONS.find((p) => p.key === ex.position)?.label ?? '';
     case 'letterPick':
+    case 'letterTrace':
       return `${ex.letter.name} — ${ex.letter.forms.isolated}`;
     case 'multipleChoice':
     case 'meaningPick':
