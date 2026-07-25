@@ -6,46 +6,53 @@ module.exports = {
     extend: {
       // Keep in step with src/theme/colors.ts — that file is the source of
       // truth for runtime styles, this mirrors it for the class names.
+      //
+      // This file drifted from colors.ts across two full re-themes (it still
+      // had the very first "comic" indigo/yellow values), because NativeWind
+      // classes like `bg-ink-700` resolve against THIS config, not the
+      // `palette` object — so every className-based colour silently kept the
+      // old look while every inline `style={{ color: palette.x }}` moved.
+      // When colors.ts changes, this has to change with it, by hand.
       colors: {
-        // The near-black indigo of a panel gutter
+        // A warm espresso-black — the ground just after the sun drops.
         ink: {
-          DEFAULT: '#141222',
-          800: '#1C1930',
-          700: '#262240',
-          600: '#342E56',
-          500: '#443C6E',
+          DEFAULT: '#211712',
+          800: '#2C1F17',
+          700: '#3D2A1E',
+          600: '#523822',
+          500: '#6B4A2B',
         },
-        // Newsprint — the "paper" the script lives on (comfort, readability)
+        // Warm sand — the surface the script lives on
         paper: {
-          DEFAULT: '#FFF6E2',
-          soft: '#FFFCF2',
-          dim: '#F0E2BE',
+          DEFAULT: '#FFEEDD',
+          soft: '#FFF6EA',
+          dim: '#F5DFC0',
         },
-        // Comic yellow — reward and primary actions (used sparingly)
+        // Sunset orange — reward and primary actions (used sparingly)
         gold: {
-          DEFAULT: '#FFC72C',
-          light: '#FFD861',
-          dark: '#C68F00',
+          DEFAULT: '#FF8C42',
+          light: '#FFB067',
+          dark: '#D9701F',
         },
-        // Flat green — correct
+        // Leaf green — correct
         jade: {
-          DEFAULT: '#2FBF6B',
-          light: '#5FDC96',
-          dark: '#178246',
-          deep: '#219B57',
-          soft: '#2FBF6B22',
+          DEFAULT: '#4FBF8B',
+          light: '#7DDBAB',
+          dark: '#2E8F63',
+          deep: '#3AA876',
+          soft: '#4FBF8B22',
         },
-        // Flat red — incorrect
+        // Coral red — incorrect
         rose: {
-          DEFAULT: '#EF3E36',
-          light: '#FF7A72',
-          dark: '#A81F19',
-          soft: '#EF3E3622',
+          DEFAULT: '#FF5A5F',
+          light: '#FF8A8E',
+          dark: '#C7383D',
+          soft: '#FF5A5F22',
         },
-        // Streak
+        // Streak — an ember
         flame: {
-          DEFAULT: '#FF7A1A',
-          light: '#FFA45C',
+          DEFAULT: '#FF6B35',
+          light: '#FF9466',
         },
       },
       fontFamily: {

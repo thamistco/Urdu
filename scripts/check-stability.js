@@ -261,13 +261,33 @@ const checked = [];
     await page.waitForTimeout(1400);
   }
 
+  /**
+   * Screens outside the lesson flow don't get walked above, but a bad
+   * selector can crash one just as completely — Achievements did, with an
+   * unstable Zustand selector rebuilding its snapshot on every render until
+   * React gave up (error #185). Visiting them is cheap insurance against the
+   * same shape of bug reappearing somewhere else that answering a question
+   * would never reach.
+   */
+  await seed('both');
+  await tapOnScreen('text=/^Profile$/');
+  await page.waitForTimeout(1000);
+  await tapOnScreen('text=/Achievements/');
+  await page.waitForTimeout(1200);
+  await tapOnScreen('text=/^Back$/');
+  await page.waitForTimeout(800);
+  await tapOnScreen('text=/League/');
+  await page.waitForTimeout(1200);
+
   await browser.close();
   server.close();
 
   console.log(`checked ${checked.length} answered questions across path and practice lessons, both tracks`);
+  console.log('also visited: Profile, Achievements, League standings');
   if (pageErrors.length) {
-    console.log(`\n${pageErrors.length} page errors:`);
+    console.log(`\n${pageErrors.length} page errors — a screen crashed:`);
     pageErrors.slice(0, 5).forEach((e) => console.log('  •', e));
+    process.exit(1);
   }
   if (problems.length) {
     console.log(`\n${problems.length} lessons where the question moved:`);
