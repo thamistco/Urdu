@@ -185,7 +185,32 @@ for (const l of LETTERS)
   for (const p of POSITIONS)
     if (!masks.GLYPH_MASKS[`${l.id}:${p.key}`]) bad(`no trace mask for ${l.id}:${p.key}`);
 
-// --- practice ids resolve --------------------------------------------------
+// --- practice ids resolve, and resolve to the SAME object ------------------
+
+/**
+ * Identity matters, not just existence.
+ *
+ * The lesson screen memoises a whole lesson's worth of generated exercises on
+ * the resolved lesson. Practice lessons are constructed rather than looked up,
+ * and while `resolveLesson` returned a fresh object each call, answering a
+ * question re-rendered the screen, rebuilt the lesson, and regenerated every
+ * question — so the prompt and all four options changed at the instant the
+ * learner tapped, and the answer was graded against a question they had never
+ * been shown. Every practice lesson was unwinnable.
+ */
+const identityIds = [
+  'practice-review',
+  ...TOPICS.map((t) => `practice-topic-${t.id}`),
+  ...GRAMMAR.map((g) => `practice-grammar-${g.id}`),
+  ...PASSAGES.map((p) => `practice-reading-${p.id}`),
+  ...DIALOGUES.map((d) => `practice-dialogue-${d.id}`),
+  ...ALL_LESSONS.slice(0, 20).map((l) => l.id),
+];
+for (const id of identityIds) {
+  if (resolveLesson(id) !== resolveLesson(id))
+    bad(`resolveLesson('${id}') returns a different object each call — memoised callers will thrash`);
+}
+
 for (const t of TOPICS) if (!resolveLesson(`practice-topic-${t.id}`)) bad(`practice-topic-${t.id} unresolved`);
 for (const g of GRAMMAR) if (!resolveLesson(`practice-grammar-${g.id}`)) bad(`practice-grammar-${g.id} unresolved`);
 for (const p of PASSAGES) if (!resolveLesson(`practice-reading-${p.id}`)) bad(`practice-reading-${p.id} unresolved`);
