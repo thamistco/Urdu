@@ -8,10 +8,11 @@ import { Reveal } from '../components/Reveal';
 import { Txt, Bold, Eyebrow } from '../components/Text';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
-import { useSettingsStore, LearnTrack } from '../store/useSettingsStore';
+import { useSettingsStore } from '../store/useSettingsStore';
 import { useProgressStore } from '../store/useProgressStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { DAILY_GOALS } from '../data/achievements';
+import { TrackChooser } from '../components/TrackChooser';
 
 function Row({ label, hint, value, onChange }: { label: string; hint?: string; value: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -32,12 +33,6 @@ function Row({ label, hint, value, onChange }: { label: string; hint?: string; v
     </View>
   );
 }
-
-const TRACKS: { key: LearnTrack; label: string }[] = [
-  { key: 'script', label: 'Script' },
-  { key: 'roman', label: 'Roman' },
-  { key: 'both', label: 'Both' },
-];
 
 export function SettingsScreen() {
   const nav = useNavigation();
@@ -120,35 +115,14 @@ export function SettingsScreen() {
             <Row label="Show Roman Urdu" hint="Transliteration alongside the script" value={s.showRoman} onChange={s.setShowRoman} />
             <View className="h-px bg-white/5 my-2" />
             <Bold className="mb-2 mt-1 text-sm">Learning track</Bold>
-            <View className="flex-row gap-2">
-              {TRACKS.map((t) => {
-                const active = s.track === t.key;
-                return (
-                  <Pressable
-                    key={t.key}
-                    className="flex-1"
-                    onPress={() => {
-                      feedback.tap();
-                      s.setTrack(t.key);
-                      force((n) => n + 1);
-                    }}
-                  >
-                    <View
-                      className="items-center rounded-xl border py-3"
-                      style={{
-                        borderColor: active ? palette.gold : withAlpha(palette.white, 0.1),
-                        backgroundColor: active ? withAlpha(palette.gold, 0.14) : palette.ink800,
-                        borderWidth: 2,
-                      }}
-                    >
-                      <Bold style={{ color: active ? palette.gold : palette.cream }} className="text-sm">
-                        {t.label}
-                      </Bold>
-                    </View>
-                  </Pressable>
-                );
-              })}
-            </View>
+            <TrackChooser
+              value={s.track}
+              onChange={(t) => {
+                s.setTrack(t);
+                force((n) => n + 1);
+              }}
+              compact
+            />
           </Card>
         </Reveal>
 

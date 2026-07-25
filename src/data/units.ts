@@ -623,6 +623,14 @@ export const unitsByLevel = (level: Level) => UNITS.filter((u) => u.level === le
  */
 export const isScriptLesson = (l: Lesson) => l.kind === 'letters';
 
+/** Counted from the path rather than written down, so the numbers the track
+ *  chooser quotes to a learner cannot drift away from the course. */
+export const TOTAL_LESSON_COUNT = UNITS.reduce((n, u) => n + u.lessons.length, 0);
+export const SCRIPT_LESSON_COUNT = UNITS.reduce(
+  (n, u) => n + u.lessons.filter(isScriptLesson).length,
+  0
+);
+
 export function unitsForTrack(track: LearnTrack): Unit[] {
   if (track !== 'roman') return UNITS;
   return UNITS.map((u) => ({

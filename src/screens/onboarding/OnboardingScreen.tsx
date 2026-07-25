@@ -6,6 +6,7 @@ import { Reveal } from '../../components/Reveal';
 import { GeoDivider } from '../../components/GeoDivider';
 import { Display, Heading, Txt, Bold, Eyebrow, Urdu, urduGlyph } from '../../components/Text';
 import { GoalArt } from '../../components/Illustration';
+import { TrackChooser } from '../../components/TrackChooser';
 import { palette, withAlpha } from '../../theme';
 import { feedback } from '../../lib/feedback';
 import { useProgressStore, Goal } from '../../store/useProgressStore';
@@ -17,12 +18,6 @@ const GOALS: { key: Goal; label: string; desc: string; icon: string }[] = [
   { key: 'read', label: 'Read & write it', desc: 'The script itself — Nastaliq', icon: '✍️' },
   { key: 'heritage', label: 'Reconnect with heritage', desc: 'Culture, faith, identity', icon: '🕌' },
   { key: 'curious', label: "I'm just curious", desc: 'No particular reason', icon: '✨' },
-];
-
-const TRACKS: { key: LearnTrack; label: string; desc: string; rec?: boolean }[] = [
-  { key: 'script', label: 'Script first', desc: 'Learn to read the letters — the way Urdu is actually written' },
-  { key: 'roman', label: 'Roman Urdu', desc: 'Latin letters — "aap kaisay hain?" — a faster start' },
-  { key: 'both', label: 'Both together', desc: 'Every word in script and Roman, side by side', rec: true },
 ];
 
 /**
@@ -161,40 +156,8 @@ export function OnboardingScreen() {
         <Reveal>
           <Dots step={1} total={4} />
           <Heading className="mb-1 text-2xl">How do you want to learn?</Heading>
-          <Txt className="mb-6 text-sm text-paper/50">You can change this any time in settings.</Txt>
-          <View className="gap-3">
-            {TRACKS.map((t) => {
-              const sel = track === t.key;
-              return (
-                <Pressable
-                  key={t.key}
-                  onPress={() => {
-                    feedback.tap();
-                    setTrack(t.key);
-                  }}
-                >
-                  <View
-                    className="rounded-2xl border p-4"
-                    style={{
-                      borderColor: sel ? palette.gold : withAlpha(palette.white, 0.1),
-                      backgroundColor: sel ? withAlpha(palette.gold, 0.1) : palette.ink700,
-                      borderWidth: 2,
-                    }}
-                  >
-                    <View className="mb-1 flex-row items-center justify-between">
-                      <Bold className="text-[15px]">{t.label}</Bold>
-                      {t.rec ? (
-                        <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: withAlpha(palette.jade, 0.2) }}>
-                          <Eyebrow style={{ color: palette.jadeLight, fontSize: 9 }}>Recommended</Eyebrow>
-                        </View>
-                      ) : null}
-                    </View>
-                    <Txt className="text-xs text-paper/60">{t.desc}</Txt>
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
+          <Txt className="mb-4 text-sm text-paper/50">The most important choice here.</Txt>
+          <TrackChooser value={track} onChange={setTrack} />
           <Button className="mt-6" onPress={() => { setPIdx(0); setPCorrect(0); setStep('placement'); }}>
             Continue
           </Button>
