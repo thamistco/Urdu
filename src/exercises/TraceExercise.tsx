@@ -181,6 +181,10 @@ export function TraceExercise({ exercise, locked, onGraded }: ExerciseProps<Trac
         className="mb-4 self-center overflow-hidden rounded-2xl bg-paper"
         style={{ width: '100%', aspectRatio: 1, borderWidth: 2, borderColor: palette.ink }}
         onLayout={(e: LayoutChangeEvent) => setSide(e.nativeEvent.layout.width)}
+        // A drawing surface cannot be operated without a pointer, but it should
+        // at least announce itself rather than being a silent rectangle.
+        accessible
+        accessibilityLabel={`Drawing area. Trace ${letter.name} in its ${positionLabel.toLowerCase()} form over the faint model.`}
         {...responder.panHandlers}
       >
         {side > 0 && entry && (
