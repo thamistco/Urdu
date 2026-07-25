@@ -95,7 +95,7 @@ export const LETTERS: Letter[] = [
   {
     id: 'Te', name: 'Te', sound: 'ṭ (hard)', connects: true, forms: connector('ٹ'),
     word: 'ٹماٹر', roman: 'ṭamaaṭar', meaning: 'tomato', emoji: '🍅', group: 1,
-    note: 'A small ط-like mark above marks the retroflex "hard" t — curl the tongue back.',
+    note: 'A small ط (to\'e)-like mark above marks the retroflex "hard" t — curl the tongue back.',
   },
 
   // ---- Group 2 -----------------------------------------------------------
@@ -122,7 +122,7 @@ export const LETTERS: Letter[] = [
   {
     id: 'khe', name: 'khe', sound: 'kh', connects: true, forms: connector('خ'),
     word: 'خط', roman: 'khat', meaning: 'letter (mail)', emoji: '✉️', group: 2,
-    note: 'One dot above the ح curve. A raspy "kh", like clearing the throat gently.',
+    note: 'One dot above the ح (baṛī he) curve. A raspy "kh", like clearing the throat gently.',
   },
 
   // ---- Group 3: the non-joiners -----------------------------------------
