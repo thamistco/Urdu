@@ -6,6 +6,7 @@ import { Confetti } from '../components/Confetti';
 import { Reveal } from '../components/Reveal';
 import { GeoDivider } from '../components/GeoDivider';
 import { Display, Heading, Txt, Bold, Eyebrow } from '../components/Text';
+import { Illustration } from '../components/Illustration';
 import { palette, withAlpha } from '../theme';
 import { levelTitle } from '../lib/gamification';
 import type { FinishResult } from '../store/useProgressStore';
@@ -47,9 +48,13 @@ export function LessonComplete({
         <SafeAreaView className="flex-1">
           <View className="flex-1 items-center justify-center">
             <Reveal>
-              <Txt style={{ fontSize: 60, textAlign: 'center' }}>
-                {result.perfect ? '🌟' : accuracy >= 80 ? '🌙' : '✨'}
-              </Txt>
+              <View className="items-center">
+                <Illustration
+                  name={result.perfect ? 'star' : accuracy >= 80 ? 'crescent' : 'sparkle'}
+                  tile={false}
+                  size={64}
+                />
+              </View>
               <Eyebrow style={{ color: palette.gold }} className="mt-4 text-center">
                 {result.perfect ? 'Flawless session' : 'Session complete'}
               </Eyebrow>

@@ -10,6 +10,7 @@ import { Button } from '../components/Button';
 import { ProgressBar } from '../components/ProgressBar';
 import { Hearts } from '../components/Stats';
 import { Txt, Bold, Heading } from '../components/Text';
+import { Illustration } from '../components/Illustration';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { dueQueue } from '../lib/srs';
@@ -209,7 +210,11 @@ export function LessonScreen() {
             <SafeAreaView edges={['bottom']}>
               <View className="px-5 py-4">
                 <View className="mb-3 flex-row items-center gap-2">
-                  <Txt style={{ fontSize: 22 }}>{isTeaching(current) ? '📐' : graded ? '✅' : '🌙'}</Txt>
+                  <Illustration
+                    name={isTeaching(current) ? 'lattice' : graded ? 'check' : 'crescent'}
+                    tile={false}
+                    size={24}
+                  />
                   <View className="flex-1">
                     <Bold style={{ color: isTeaching(current) ? palette.gold : graded ? palette.jadeLight : palette.roseLight }}>
                       {isTeaching(current)
