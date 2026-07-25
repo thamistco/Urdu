@@ -5,16 +5,22 @@ import { Screen } from '../components/Screen';
 import { TopBar } from '../components/TopBar';
 import { Reveal } from '../components/Reveal';
 import { Txt, Bold, Eyebrow, Urdu, urduLine, urduGlyph } from '../components/Text';
+import { TracePad, tracePadKey } from '../components/TracePad';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { speak } from '../lib/speech';
 import { LETTERS, POSITIONS, PositionKey } from '../data/letters';
 import { useProgressStore } from '../store/useProgressStore';
+import { Illustration } from '../components/Illustration';
 
 export function LetterLabScreen() {
   const nav = useNavigation();
   const [idx, setIdx] = useState(0);
   const [pos, setPos] = useState<PositionKey>('isolated');
+  // The Lab is where you go to study a letter, so it is the right place to
+  // practise writing one — same pad and same scoring as the lesson, without
+  // the hearts.
+  const [tracing, setTracing] = useState(false);
   const learned = useProgressStore((s) => s.learnedLetters);
   const letter = LETTERS[idx];
 
@@ -22,6 +28,7 @@ export function LetterLabScreen() {
     feedback.tap();
     setIdx(i);
     setPos('isolated');
+    setTracing(false);
   };
 
   return (
@@ -70,21 +77,53 @@ export function LetterLabScreen() {
             )}
           </View>
 
-          {/* the paper */}
-          <Pressable onPress={() => speak(letter.word, letter.roman)}>
-            <View className="my-4 rounded-2xl bg-paper px-6 pb-5 pt-3">
-              <View className="h-44 items-center justify-center">
-                <Urdu key={pos} style={{ color: palette.ink, ...urduGlyph(72) }}>
-                  {letter.forms[pos]}
-                </Urdu>
+          {/* the paper — read it, or write it */}
+          <View className="my-4">
+            {tracing ? (
+              <TracePad key={tracePadKey(letter.id, pos)} letter={letter} position={pos} />
+            ) : (
+              <Pressable onPress={() => speak(letter.word, letter.roman)}>
+                <View className="rounded-2xl bg-paper px-6 pb-5 pt-3" style={{ borderWidth: 2, borderColor: palette.ink }}>
+                  <View className="h-44 items-center justify-center">
+                    <Urdu key={pos} style={{ color: palette.ink, ...urduGlyph(72) }}>
+                      {letter.forms[pos]}
+                    </Urdu>
+                  </View>
+                  <View className="items-center border-t pt-3" style={{ borderTopColor: withAlpha(palette.ink, 0.1) }}>
+                    <Txt style={{ color: palette.ink }} className="text-xs opacity-60">
+                      {POSITIONS.find((p) => p.key === pos)?.hint} · tap to hear
+                    </Txt>
+                  </View>
+                </View>
+              </Pressable>
+            )}
+
+            <Pressable
+              onPress={() => {
+                feedback.tap();
+                setTracing((t) => !t);
+              }}
+              accessibilityRole="button"
+              accessibilityState={{ selected: tracing }}
+              accessibilityLabel={tracing ? 'Stop tracing and read the letter' : 'Trace this letter'}
+              className="mt-3 self-center"
+            >
+              <View
+                className="flex-row items-center justify-center gap-2 rounded-full px-4"
+                style={{
+                  minHeight: 44,
+                  backgroundColor: tracing ? withAlpha(palette.gold, 0.2) : 'transparent',
+                  borderWidth: 1.5,
+                  borderColor: tracing ? palette.gold : withAlpha(palette.cream, 0.2),
+                }}
+              >
+                <Illustration name="pen" tile={false} size={16} />
+                <Bold className="text-xs" style={{ color: tracing ? palette.gold : withAlpha(palette.cream, 0.7) }}>
+                  {tracing ? 'Back to reading' : 'Trace it'}
+                </Bold>
               </View>
-              <View className="items-center border-t pt-3" style={{ borderTopColor: withAlpha(palette.ink, 0.1) }}>
-                <Txt style={{ color: palette.ink }} className="text-xs opacity-60">
-                  {POSITIONS.find((p) => p.key === pos)?.hint} · tap to hear 🔊
-                </Txt>
-              </View>
-            </View>
-          </Pressable>
+            </Pressable>
+          </View>
 
           {/* position dial */}
           <View className="mb-5 flex-row gap-2">
