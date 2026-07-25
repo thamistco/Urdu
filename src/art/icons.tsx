@@ -10,10 +10,10 @@ import Svg, { Path, Circle, Rect, Line, Polygon, G, Ellipse, Polyline } from 're
  */
 
 /* Persian-miniature / gold-leaf palette for the heritage set. */
-const G_ = '#E8A33D'; // gold
-const GD = '#B9741F'; // deep gold
-const CR = '#F4EBD9'; // cream
-const IN = '#0C1A33'; // ink (outlines)
+const G_ = '#E2A13C'; // saffron
+const GD = '#B87C24'; // deep saffron
+const CR = '#F6EEE2'; // cream
+const IN = '#1E1024'; // ink (outlines)
 const JADE = '#2F9E8F'; // turquoise
 const ROSE = '#C4633F'; // terracotta
 const SKY = '#2E5A9E'; // lapis
@@ -508,6 +508,43 @@ export const Crescent = ({ size }: IconProps) => (
   </Frame>
 );
 
+// ---- gamification tokens -------------------------------------------------
+
+/** Gems — the soft currency. A faceted jewel in the app's pistachio. */
+export const Gem = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M20 14 h24 l12 14 -24 24 -24 -24 Z" fill="#6FA35C" />
+    <Path d="M20 14 l-12 14 h48 l-12 -14 Z" fill="#93BE72" />
+    <Path d="M32 52 L8 28 h16 Z" fill="#4F8046" />
+    <Path d="M24 28 l8 -14 8 14 -8 24 Z" fill={CR} opacity={0.28} />
+  </Frame>
+);
+
+/** Streak flame — marigold, deliberately warm rather than alarming. */
+export const Flame = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M32 6 C36 18 48 22 48 36 a16 16 0 0 1 -32 0 C16 26 22 24 24 16 C27 21 30 20 32 6 Z" fill="#EF8F4A" />
+    <Path d="M32 26 C34 33 40 35 40 41 a8 8 0 0 1 -16 0 C24 36 29 33 32 26 Z" fill={G_} />
+  </Frame>
+);
+
+/** XP — a bolt, in saffron. */
+export const Bolt = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M36 6 L16 36 h12 l-4 22 20 -30 h-12 Z" fill={G_} stroke={GD} strokeWidth={1.5} strokeLinejoin="round" />
+  </Frame>
+);
+
+/** Achievements — a seedling, for growth. */
+export const Sprout = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M32 54 V28" stroke="#6FA35C" strokeWidth={3.5} strokeLinecap="round" />
+    <Path d="M32 34 C24 34 18 28 18 20 C28 20 32 26 32 34 Z" fill="#93BE72" />
+    <Path d="M32 30 C40 30 46 24 46 16 C36 16 32 22 32 30 Z" fill="#6FA35C" />
+    <Path d="M22 54 h20" stroke={BROWN} strokeWidth={3.5} strokeLinecap="round" />
+  </Frame>
+);
+
 // ---- registry ------------------------------------------------------------
 
 export const ICONS: Record<string, (p: IconProps) => JSX.Element> = {
@@ -521,6 +558,7 @@ export const ICONS: Record<string, (p: IconProps) => JSX.Element> = {
   pen: Pen, mosque: Mosque, salaam: Salaam, thanks: ThanksHands, check: Check, cross: Cross,
   handHeart: HandHeart, smile: Smile, egg: Egg, rice: RiceBowl, meat: Meat, salt: SaltShaker,
   lattice: Lattice, tiles: Tiles, scroll: Scroll, crescent: Crescent,
+  gem: Gem, flame: Flame, bolt: Bolt, sprout: Sprout,
 };
 
 export type IconName = keyof typeof ICONS;

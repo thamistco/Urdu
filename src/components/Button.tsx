@@ -17,15 +17,15 @@ const EDGE: Record<Variant, string> = {
   primary: palette.goldDark,
   secondary: palette.paperDim,
   ghost: 'transparent',
-  correct: '#256E5C',
-  incorrect: '#9E3556',
+  correct: palette.jadeDark,
+  incorrect: palette.roseDark,
 };
 const TEXT: Record<Variant, string> = {
   primary: palette.ink,
   secondary: palette.ink,
   ghost: palette.cream,
-  correct: '#FFFFFF',
-  incorrect: '#FFFFFF',
+  correct: palette.white,
+  incorrect: palette.white,
 };
 
 /**

@@ -29,14 +29,17 @@ underneath.
 - **Spaced repetition (SM-2)** — items you miss come back first.
 - **Gamification** — XP and levels, day streaks with freeze protection, hearts
   with timed regeneration, gems, weekly leagues, tiered achievements, daily goals.
-- **Calm by design** — the palette follows learning colour-psychology (indigo
-  focus base, gold reward accent used sparingly, jade for correct, a muted rose
-  — never alarm-red — for misses). Feedback sounds are soft pentatonic tones.
+- **Calm by design** — the palette ("plum & saffron") follows learning
+  colour-psychology: a deep aubergine focus base, saffron reward accent used
+  sparingly, pistachio for correct, and a muted rose madder — never alarm-red —
+  for misses. Feedback sounds are soft pentatonic tones.
 - **Jump ahead** — any lesson is tappable; locked ones stay marked.
 
 ## Design language
 Heritage-geometric: every illustration sits inside an **8-point Islamic star
-medallion** in gold on deep indigo, echoing the lattice motif used throughout.
+medallion** in saffron on deep plum, echoing the lattice motif used throughout.
+The palette is defined once in `src/theme/colors.ts` and mirrored in
+`tailwind.config.js`; every foreground/background pair clears WCAG AA.
 Typography pairs **Noto Nastaliq Urdu** for the script with Fraunces (display)
 and Public Sans (body).
 

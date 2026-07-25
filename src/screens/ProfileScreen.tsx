@@ -8,6 +8,7 @@ import { Card } from '../components/Card';
 import { Reveal } from '../components/Reveal';
 import { ProgressBar } from '../components/ProgressBar';
 import { Display, Heading, Txt, Bold, Eyebrow, Urdu, urduGlyph } from '../components/Text';
+import { Illustration } from '../components/Illustration';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { levelProgress, levelTitle, getLeague } from '../lib/gamification';
@@ -23,7 +24,7 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 function StatBox({ icon, value, label }: { icon: string; value: string | number; label: string }) {
   return (
     <View className="w-[31%] items-center rounded-2xl border border-white/10 bg-ink-700 py-4">
-      <Txt style={{ fontSize: 22 }}>{icon}</Txt>
+      <Illustration name={icon} tile={false} size={24} />
       <Display className="mt-1 text-xl">{value}</Display>
       <Eyebrow className="mt-0.5 text-paper/45" style={{ fontSize: 9 }}>
         {label}
@@ -103,14 +104,14 @@ export function ProfileScreen() {
         {/* stat grid */}
         <Reveal delay={80}>
           <View className="mb-3 mt-4 flex-row justify-between">
-            <StatBox icon="🔥" value={s.streak} label="Day streak" />
+            <StatBox icon="flame" value={s.streak} label="Day streak" />
             <StatBox icon="⚡" value={s.totalXp} label="Total XP" />
-            <StatBox icon="💠" value={s.gems} label="Gems" />
+            <StatBox icon="gem" value={s.gems} label="Gems" />
           </View>
           <View className="mb-4 flex-row justify-between">
             <StatBox icon="🏆" value={s.longestStreak} label="Best streak" />
             <StatBox icon="🔤" value={`${s.learnedLetters.length}/${LETTERS.length}`} label="Letters" />
-            <StatBox icon="💠" value={`${s.learnedWords.length}/${WORDS.length}`} label="Words" />
+            <StatBox icon="book" value={`${s.learnedWords.length}/${WORDS.length}`} label="Words" />
           </View>
         </Reveal>
 

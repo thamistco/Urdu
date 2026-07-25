@@ -167,8 +167,16 @@ export function HomeScreen() {
                 </Display>
               </View>
               <View className="flex-row gap-2">
-                <StatChip icon="🔥" value={store.streak} color={palette.flame} />
-                <StatChip icon="💠" value={store.gems} color={palette.jadeLight} />
+                <StatChip
+                  icon={<Illustration name="flame" tile={false} size={16} />}
+                  value={store.streak}
+                  color={palette.flame}
+                />
+                <StatChip
+                  icon={<Illustration name="gem" tile={false} size={16} />}
+                  value={store.gems}
+                  color={palette.jadeLight}
+                />
               </View>
             </View>
           </SafeAreaView>

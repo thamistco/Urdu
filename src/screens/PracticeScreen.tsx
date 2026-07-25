@@ -86,6 +86,7 @@ export function PracticeScreen() {
   // time, plus a search that reaches across everything in the current tab.
   const [tab, setTab] = useState<'topics' | 'grammar' | 'reading'>('topics');
   const [query, setQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
   const q = query.trim().toLowerCase();
   const hit = (...fields: string[]) => !q || fields.some((f) => f.toLowerCase().includes(q));
 
@@ -113,7 +114,7 @@ export function PracticeScreen() {
           <Pressable onPress={() => go('practice-review')} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}>
             <View
               className="mb-4 mt-5 overflow-hidden rounded-2xl p-6"
-              style={{ backgroundColor: palette.jade }}
+              style={{ backgroundColor: palette.jadeDeep }}
             >
               <View className="flex-row items-center justify-between">
                 <View className="flex-1 pr-3">
@@ -175,17 +176,31 @@ export function PracticeScreen() {
               </Pressable>
             ))}
           </View>
-          <View className="mb-5 flex-row items-center gap-2 rounded-2xl border border-white/10 bg-ink-700 px-3.5 py-2.5">
-            <SearchMark color={withAlpha(palette.cream, 0.45)} />
+          {/* The focus ring is drawn on the wrapper in the app's own gold — the
+              browser's default white outline sat outside the palette. */}
+          <View
+            className="mb-5 flex-row items-center gap-2 rounded-2xl bg-ink-700 px-3.5 py-2.5"
+            style={{
+              borderWidth: 1,
+              borderColor: searchFocused ? palette.gold : withAlpha(palette.white, 0.1),
+            }}
+          >
+            <SearchMark color={withAlpha(palette.cream, searchFocused ? 0.8 : 0.45)} />
             <TextInput
               value={query}
               onChangeText={setQuery}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
               placeholder={`Search ${TAB_TOTAL[tab]} ${TAB_NOUN[tab]}`}
               placeholderTextColor={withAlpha(palette.cream, 0.35)}
               autoCorrect={false}
               autoCapitalize="none"
               accessibilityLabel="Search practice content"
-              style={{ flex: 1, color: palette.cream, fontFamily: 'PublicSans', fontSize: 14, paddingVertical: 2 }}
+              style={[
+                { flex: 1, color: palette.cream, fontFamily: 'PublicSans', fontSize: 14, paddingVertical: 2 },
+                // react-native-web only; not in the RN style types
+                { outlineStyle: 'none' } as object,
+              ]}
             />
             {query.length > 0 && (
               <Pressable onPress={() => setQuery('')} hitSlop={10} accessibilityRole="button" accessibilityLabel="Clear search">

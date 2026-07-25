@@ -1,48 +1,59 @@
 /**
- * Harf color system.
+ * Harf color system — "plum & saffron".
+ *
+ * The register is block-printed textile under lamplight: a deep aubergine
+ * ground, saffron for reward, pistachio for growth, rose madder for a miss.
  *
  * Grounded in color psychology for learning (see research brief):
- *  - Deep indigo night as the base → calm, focus, trust, low eye-strain for long
- *    evening sessions. Blue lowers arousal and supports sustained concentration.
+ *  - A deep, desaturated ground → calm, focus, low eye-strain for long evening
+ *    sessions. Aubergine keeps the low arousal of a dark base while reading
+ *    warm rather than clinical.
  *  - Warm parchment as the reading surface → comfort + high legibility for the
  *    Nastaliq script, evoking paper and heritage rather than a sterile screen.
- *  - Gold reserved for reward + primary actions → dopamine cue, used sparingly so
- *    it keeps its meaning (achievement, energy).
- *  - Jade green = correct/growth (reassuring, not clinical).
- *  - Muted rose = incorrect. Deliberately NOT a harsh alarm red — we acknowledge
- *    a miss neutrally instead of scolding (calmer, less discouraging).
+ *  - Saffron reserved for reward + primary actions → dopamine cue, used
+ *    sparingly so it keeps its meaning (achievement, energy).
+ *  - Pistachio = correct/growth (reassuring, not clinical).
+ *  - Rose madder = incorrect. Deliberately NOT a harsh alarm red — we
+ *    acknowledge a miss neutrally instead of scolding.
+ *
+ * Every foreground/background pair below clears WCAG AA against the surface it
+ * is used on; `*Dark` shades exist for the raised buttons' lower edge.
  */
 
 export const palette = {
-  // base
-  ink: '#0C1A33',
-  ink800: '#0F2140',
-  ink700: '#152A4E',
-  ink600: '#1D3763',
-  ink500: '#274A82',
+  // base — aubergine, darkest first
+  ink: '#1E1024',
+  ink800: '#261630',
+  ink700: '#2F1B3A',
+  ink600: '#3E2449',
+  ink500: '#513260',
 
   // surfaces
-  paper: '#F4EBD9',
-  paperSoft: '#FBF6EC',
-  paperDim: '#E7DAC2',
+  paper: '#F6EEE2',
+  paperSoft: '#FCF8F0',
+  paperDim: '#E8DAC6',
 
-  // reward / primary
-  gold: '#E8A33D',
-  goldLight: '#F0B055',
-  goldDark: '#C9862A',
+  // reward / primary — saffron
+  gold: '#E2A13C',
+  goldLight: '#EFB458',
+  goldDark: '#B87C24',
 
-  // semantic feedback
-  jade: '#2E8B75',
-  jadeLight: '#3FA88F',
-  rose: '#C4456B',
-  roseLight: '#D96385',
+  // semantic feedback — pistachio and rose madder
+  jade: '#4F8046',
+  jadeLight: '#93BE72',
+  jadeDark: '#35592F',
+  /** For large filled panels — a grass green that size reads loud beside plum. */
+  jadeDeep: '#3F6B3A',
+  rose: '#BC4F67',
+  roseLight: '#DE8496',
+  roseDark: '#8E3549',
 
-  // streak
-  flame: '#FF8A3D',
-  flameLight: '#FFB067',
+  // streak — marigold
+  flame: '#EF8F4A',
+  flameLight: '#F8B27C',
 
   // text
-  cream: '#F4EBD9',
+  cream: '#F6EEE2',
   white: '#FFFFFF',
 } as const;
 
