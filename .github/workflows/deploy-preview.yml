@@ -73,6 +73,15 @@ jobs:
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
         run: npx expo export --platform web --output-dir dist
 
+      # Drives the built app in a real browser and answers questions, checking
+      # that the question does not change under the answer. Needs the bundle, so
+      # it runs after the export rather than with the other checks.
+      - name: Check that answering a question does not replace it
+        run: |
+          npx playwright install --with-deps chromium
+          CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
+            npm run check:stability
+
       - name: SPA fallback + disable Jekyll
         run: |
           cp dist/index.html dist/404.html

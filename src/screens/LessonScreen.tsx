@@ -55,7 +55,19 @@ function answerLabel(ex: Exercise): string {
 export function LessonScreen() {
   const nav = useNavigation<Nav>();
   const route = useRoute<Rt>();
-  const lesson = resolveLesson(route.params.lessonId)!;
+  /**
+   * Resolved once per lesson id, not once per render.
+   *
+   * The exercise set below is memoised on this value, and the generator is
+   * random — so if this changes identity, every question in the lesson is
+   * silently replaced. Practice lessons are built on demand rather than looked
+   * up on the path, so calling `resolveLesson` inline handed back a new object
+   * each render: answering a question re-rendered the screen, which rebuilt the
+   * lesson, which regenerated the questions. The prompt and all four options
+   * changed under the learner's finger at the moment they answered, so the
+   * answer was graded against a question they had never seen.
+   */
+  const lesson = useMemo(() => resolveLesson(route.params.lessonId)!, [route.params.lessonId]);
 
   const showRoman = useSettingsStore((s) => s.showRoman);
   const track = useSettingsStore((s) => s.track);
@@ -66,13 +78,22 @@ export function LessonScreen() {
   const hearts = useProgressStore((s) => s.hearts);
   const gems = useProgressStore((s) => s.gems);
 
-  // Build the exercise set once, weaving in whatever SRS items are due.
+  /**
+   * Build the exercise set once, weaving in whatever SRS items are due.
+   *
+   * Keyed on the lesson *id* and the track — both plain strings — rather than
+   * on the lesson object. The generator is random, so anything that re-runs
+   * this mid-lesson swaps out the question the learner is looking at; making
+   * the dependencies primitives means no caller can cause that by handing back
+   * an equal-but-different object.
+   */
   const exercises = useMemo(() => {
     const srs = useProgressStore.getState().srs;
     const srsType = useProgressStore.getState().srsType;
     const due = dueQueue(srs, 4).map((id) => ({ id, type: srsType[id] ?? ('word' as const) }));
     return buildLessonExercises(lesson, due, track);
-  }, [lesson, track]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lesson.id, track]);
 
   const [idx, setIdx] = useState(0);
   const [graded, setGraded] = useState<null | boolean>(null);

@@ -1,0 +1,281 @@
+/**
+ * Does the question stay put when you answer it?
+ *
+ * It did not. Practice lessons are constructed on demand rather than looked up
+ * on the path, and `resolveLesson` returned a new object every call — so the
+ * exercise set, which is memoised on the lesson and generated randomly, was
+ * rebuilt on every render of the lesson screen. Answering caused a render.
+ * The prompt and all four options were therefore replaced at the instant of
+ * the tap, and the answer was graded against a question the learner had never
+ * been shown. Every practice lesson in the app was unwinnable.
+ *
+ * That is not a thing to fix and hope about. This drives a real browser through
+ * a lesson of every kind, on both tracks, and asserts that the prompt and the
+ * options are byte-identical immediately before and immediately after the
+ * answer is given. Anything that reintroduces a re-render into the generator
+ * fails here.
+ *
+ * Needs a web build in dist/ (npx expo export --platform web --output-dir dist).
+ *
+ * Run with:  npm run check:stability
+ */
+
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const { chromium } = require('playwright-core');
+
+const ROOT = path.join(__dirname, '..');
+const DIST = path.join(ROOT, 'dist');
+const PORT = 8145;
+const CHROME = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium';
+
+if (!fs.existsSync(path.join(DIST, 'index.html'))) {
+  console.error('No web build found in dist/. Run: npx expo export --platform web --output-dir dist');
+  process.exit(1);
+}
+
+const MIME = {
+  '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
+  '.ico': 'image/x-icon', '.ttf': 'font/ttf', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg', '.png': 'image/png',
+};
+
+const server = http.createServer((req, res) => {
+  let p = path.join(DIST, decodeURIComponent(req.url.split('?')[0]));
+  if (!fs.existsSync(p) || fs.statSync(p).isDirectory()) p = path.join(DIST, 'index.html');
+  res.writeHead(200, { 'Content-Type': MIME[path.extname(p)] || 'application/octet-stream' });
+  fs.createReadStream(p).pipe(res);
+});
+
+/** The part of the screen that is the question: everything above the feedback banner. */
+async function questionText(page) {
+  return page.evaluate(() => {
+    const t = document.body.innerText;
+    // cut at the feedback banner, which only exists after answering
+    const cut = t.search(/Beautifully done|Not quite|Perfectly built|Exactly right|That is the shape|Flawless board|Solved with|From memory|The word is|Correct order/);
+    return (cut > 0 ? t.slice(0, cut) : t)
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      // the transliteration under each option is revealed by answering, and the
+      // speaker's hint likewise — those are meant to change
+      .join(' | ');
+  });
+}
+
+/** Strip the parts that are *supposed* to appear once answered. */
+const core = (s) => s.replace(/Tap to hear[^|]*/g, 'Tap to hear').replace(/\s+/g, ' ').trim();
+
+const tokens = (s) => core(s).split('|').map((x) => x.trim()).filter(Boolean);
+
+/**
+ * Answering is allowed to *add* to the screen — the transliteration appears
+ * under each option, a hint appears under the speaker — but never to remove or
+ * replace. So the question is stable exactly when everything that was on
+ * screen before is still there afterwards, in the same order.
+ *
+ * A subsequence test rather than a prefix test, because the added text is
+ * interleaved: "کتاب | نام" becomes "کتاب | kitaab | نام | naam".
+ */
+function isSubsequence(before, after) {
+  let i = 0;
+  for (const tok of after) {
+    if (i < before.length && before[i] === tok) i++;
+  }
+  return i === before.length;
+}
+
+const problems = [];
+const checked = [];
+
+(async () => {
+  await new Promise((r) => server.listen(PORT, r));
+  const browser = await chromium.launch({ executablePath: CHROME });
+  const page = await browser.newPage({ viewport: { width: 412, height: 900 }, deviceScaleFactor: 1 });
+  const pageErrors = [];
+  page.on('pageerror', (e) => pageErrors.push(String(e)));
+
+  const url = `http://localhost:${PORT}/`;
+
+  async function seed(track) {
+    await page.goto(url);
+    await page.waitForTimeout(2200);
+    const guest = page.locator('text=/CONTINUE AS A GUEST/i').first();
+    if (await guest.count()) {
+      await guest.click();
+      await page.waitForTimeout(1600);
+    }
+    await page.evaluate(
+      ([t]) => {
+        const raw = JSON.parse(localStorage.getItem('harf-progress') || '{"state":{},"version":0}');
+        raw.state = {
+          ...raw.state, onboarded: true, goal: 'family', level: 0, hearts: 99, gems: 9000,
+          totalXp: 400, streak: 2, completedLessons: { 'l-1': true }, srs: {}, srsType: {},
+          dailyGoalId: 'steady', todayXp: 0,
+        };
+        localStorage.setItem('harf-progress', JSON.stringify(raw));
+        localStorage.setItem('harf-settings', JSON.stringify({
+          state: { soundEnabled: false, hapticsEnabled: false, showRoman: true, reducedMotion: true, track: t },
+          version: 0,
+        }));
+      },
+      [track]
+    );
+    await page.goto(url);
+    await page.waitForTimeout(2400);
+  }
+
+  /** Click the first answer-shaped control in the exercise body. */
+  async function answerOnce() {
+    const btns = page.locator('[role="button"]');
+    const n = await btns.count();
+    for (let k = 0; k < n; k++) {
+      const b = await btns.nth(k).boundingBox().catch(() => null);
+      if (b && b.y > 150 && b.y < 800 && b.width > 110 && b.height > 40) {
+        await btns.nth(k).click({ force: true }).catch(() => {});
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Tap the first match that is actually within the viewport.
+   *
+   * React Navigation keeps previous screens mounted, so the same label often
+   * exists several times over — once on the screen in front of you and once on
+   * a screen behind it. Clicking the hidden one silently does nothing, which
+   * looks exactly like the app being broken.
+   */
+  async function tapOnScreen(selector) {
+    const items = page.locator(selector);
+    for (let k = 0; k < (await items.count()); k++) {
+      const b = await items.nth(k).boundingBox().catch(() => null);
+      if (b && b.y >= 0 && b.y < 880 && b.width > 0 && b.height > 0) {
+        await items.nth(k).click({ force: true }).catch(() => {});
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * The Practice tab, by position rather than by text: "Practice" also appears
+   * in section headings on screens that stay mounted behind the current one,
+   * and clicking one of those does nothing.
+   */
+  async function openPracticeTab() {
+    const items = page.locator('text=/^Practice$/');
+    for (let k = 0; k < (await items.count()); k++) {
+      const b = await items.nth(k).boundingBox().catch(() => null);
+      if (b && b.y > 780) {
+        await items.nth(k).click({ force: true });
+        await page.waitForTimeout(1400);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async function advance() {
+    const conts = page.locator('text=/CONTINUE/i');
+    for (let k = 0; k < (await conts.count()); k++) {
+      const b = await conts.nth(k).boundingBox().catch(() => null);
+      // only the banner's CONTINUE, at the foot — the Learn screen stays mounted
+      // behind the lesson and has its own "Continue" hero card
+      if (b && b.y > 780) {
+        await conts.nth(k).click({ force: true });
+        await page.waitForTimeout(700);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** Walk one lesson, checking the question does not move under the answer. */
+  async function walk(label, steps) {
+    for (let i = 0; i < steps; i++) {
+      const t = await page.evaluate(() => document.body.innerText);
+      if (/Out of hearts/.test(t)) {
+        const r = page.locator('text=/REFILL/i').first();
+        if (await r.count()) { await r.click({ force: true }); await page.waitForTimeout(900); }
+        continue;
+      }
+      if (/Lesson complete|You're done|Keep it warm/i.test(t)) break;
+
+      // typing and drawing are not answered by tapping an option
+      if (/Type this word/.test(t)) {
+        const input = page.locator('input:visible').first();
+        if (await input.count()) await input.fill('zzz').catch(() => {});
+        await tapOnScreen('text=/^Check$/');
+        await page.waitForTimeout(800);
+        await advance();
+        continue;
+      }
+      if (/draw over the grey letter|Got it/.test(t)) {
+        if (await tapOnScreen('text=/^Got it$/')) { await page.waitForTimeout(700); await advance(); continue; }
+      }
+
+      const before = await questionText(page);
+      if (!(await answerOnce())) break;
+      await page.waitForTimeout(700);
+      const after = await questionText(page);
+
+      const a = tokens(before);
+      const b = tokens(after);
+      checked.push(`${label} step ${i}`);
+      if (!isSubsequence(a, b)) {
+        problems.push(
+          `${label} step ${i}: the question changed when it was answered\n` +
+            `      before: ${a.join(' | ').slice(0, 160)}\n` +
+            `      after : ${b.join(' | ').slice(0, 160)}`
+        );
+        return; // one report per lesson is enough
+      }
+      if (!(await advance())) break;
+    }
+  }
+
+  // ---- path lessons, both tracks -----------------------------------------
+  for (const track of ['both', 'roman']) {
+    await seed(track);
+    if (await tapOnScreen('text=/START HERE|Continue/i')) {
+      await page.waitForTimeout(1800);
+      await walk(`path lesson (${track})`, 12);
+    }
+  }
+
+  // ---- practice lessons: the ones that were broken ------------------------
+  await seed('both');
+  await openPracticeTab();
+  await page.waitForTimeout(1600);
+
+  const practiceEntries = ['Around the Home', 'Food & Drink', 'Family', 'Daily Review'];
+  for (const name of practiceEntries) {
+    await openPracticeTab();
+    await page.waitForTimeout(1200);
+    if (!(await tapOnScreen(`text=/${name}/`))) continue;
+    await page.waitForTimeout(2000);
+    await walk(`practice · ${name}`, 8);
+    await tapOnScreen('text=/✕/'); // leave the lesson
+    await page.waitForTimeout(1400);
+  }
+
+  await browser.close();
+  server.close();
+
+  console.log(`checked ${checked.length} answered questions across path and practice lessons, both tracks`);
+  if (pageErrors.length) {
+    console.log(`\n${pageErrors.length} page errors:`);
+    pageErrors.slice(0, 5).forEach((e) => console.log('  •', e));
+  }
+  if (problems.length) {
+    console.log(`\n${problems.length} lessons where the question moved:`);
+    problems.forEach((p) => console.log('  •', p));
+    process.exit(1);
+  }
+  console.log('the question and its options stay put when answered');
+})().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

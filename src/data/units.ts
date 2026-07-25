@@ -660,6 +660,22 @@ export function previousLessonId(id: string, track: LearnTrack = 'both'): string
  * from the Practice tab).
  */
 export function resolveLesson(id: string): Lesson | undefined {
+  const cached = synthetic.get(id);
+  if (cached) return cached;
+  const built = buildLesson(id);
+  // Practice lessons are constructed rather than looked up, so without this
+  // every call returned an equal-but-different object. Anything that memoises
+  // on the lesson — the exercise generator does — then rebuilt itself on every
+  // render, replacing the question a learner was part-way through answering.
+  // Lessons are immutable and there are few of them, so caching is free.
+  if (built && !findLesson(id)) synthetic.set(id, built);
+  return built;
+}
+
+/** Resolved practice lessons, kept by id so their identity is stable. */
+const synthetic = new Map<string, Lesson>();
+
+function buildLesson(id: string): Lesson | undefined {
   const onPath = findLesson(id);
   if (onPath) return onPath;
 
