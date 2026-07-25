@@ -103,7 +103,9 @@ const REV = (title = 'Unit review', subtitle = 'Mixed practice', xp = 30, size =
   id: uid('rev'), title, subtitle, icon: '🌙', kind: 'review', xp, size,
 });
 
-const GOLD = '#FFC72C', JADE = '#5FDC96', ROSE = '#FF7A72', BLUE = '#5AA9FF';
+// A rotating set of unit accent colours — warm sunset tones plus one cool
+// twilight violet for contrast, so a long path of units doesn't read as one flat hue.
+const GOLD = '#FF8C42', JADE = '#7DDBAB', ROSE = '#FF8A8E', BLUE = '#8C93E8';
 
 export const UNITS: Unit[] = [
   // ══════════════ BEGINNER ══════════════

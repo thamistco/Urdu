@@ -9,11 +9,12 @@ import Svg, { Path, Circle, Rect, Line, Polygon, G, Ellipse, Polyline } from 're
  * the whole set feels of a piece.
  */
 
-/* Persian-miniature / gold-leaf palette for the heritage set. */
-const G_ = '#FFC72C'; // comic yellow
-const GD = '#C68F00'; // deep yellow
-const CR = '#FFF6E2'; // newsprint
-const IN = '#141222'; // ink (outlines)
+/* Persian-miniature / gold-leaf palette for the heritage set — the first four
+ * mirror theme/colors.ts exactly, so the icon set moves with the app palette. */
+const G_ = '#FF8C42'; // sunset orange
+const GD = '#D9701F'; // deep sunset orange
+const CR = '#FFEEDD'; // warm sand
+const IN = '#241B3A'; // ink (outlines) — dusk plum
 const JADE = '#2F9E8F'; // turquoise
 const ROSE = '#C4633F'; // terracotta
 const SKY = '#2E5A9E'; // lapis
