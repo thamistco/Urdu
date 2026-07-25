@@ -36,7 +36,9 @@ underneath.
   meanings.
 - **Tracing is really scored** — each glyph ships with a bitmask of where its
   ink is (`npm run gen:masks`), so coverage and precision are measured, not
-  estimated. A scribble covers 100% and is still rejected.
+  estimated. A scribble covers 100% and is still rejected. The same pad is in
+  the Letter Lab, where you can trace any letter in any of its four forms
+  without a lesson or a heart at stake.
 - **Spaced repetition (SM-2)** — items you miss come back first.
 - **Gamification** — XP and levels, day streaks with freeze protection, hearts
   with timed regeneration, gems, weekly leagues, tiered achievements, daily goals.
