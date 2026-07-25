@@ -21,11 +21,22 @@ underneath.
 | **Script** | All **40 letters** with every position form, connector vs. non-connector behaviour, and a teaching note apiece |
 | **Grammar** | **25 concepts** — pronouns, "to be", gender, plurals, possession, postpositions, oblique case, negation, questions, conjunctions, the four tenses, dative subjects, ability, obligation, comparatives, imperative, subjunctive, perfective, relative clauses, compound verbs, the passive and causatives — each with explanation, paradigm table, examples and drills |
 | **Sentences** | **140** word-order builders + 28 everyday phrases |
-| **Reading** | **17 graded passages** with comprehension questions, from five-line beginner scenes to character sketches |
-| **Course** | **35 units · 221 lessons** across four CEFR-style stages (A1 → B2) |
-| **Exercises** | 11 types: letter-position ID, letter pick, picture→word, word→meaning, listen-&-tap, word build, matching board, grammar teach, grammar drill, sentence build, reading |
+| **Reading** | **17 graded passages** and **12 two-speaker conversations**, all with comprehension questions |
+| **Course** | **35 units · 233 lessons** across four CEFR-style stages (A1 → B2) |
+| **Exercises** | 15 types: letter-position ID, letter pick, **letter tracing**, picture→word, word→meaning, **meaning→word**, **typing from memory**, listen-&-tap, word build, matching board, grammar teach, grammar drill, sentence build, reading, conversation |
 
 ### Learning design
+- **Difficulty climbs within a lesson** — meet a word with a picture, come back
+  to it from the English, type it from memory, build it letter by letter. Every
+  word is seen at least twice and the second sighting always asks for more.
+  Review leans on the harder demands, since an item is only in review because
+  it was met before.
+- **Nothing is solvable by elimination** — the build exercises include decoy
+  tiles, and picture options are checked for distinct art *and* distinct
+  meanings.
+- **Tracing is really scored** — each glyph ships with a bitmask of where its
+  ink is (`npm run gen:masks`), so coverage and precision are measured, not
+  estimated. A scribble covers 100% and is still rejected.
 - **Spaced repetition (SM-2)** — items you miss come back first.
 - **Gamification** — XP and levels, day streaks with freeze protection, hearts
   with timed regeneration, gems, weekly leagues, tiered achievements, daily goals.

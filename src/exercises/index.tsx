@@ -10,6 +10,7 @@ import { WordBuildExercise } from './WordBuild';
 import { MatchingExercise } from './Matching';
 import { GrammarTeachExercise, GrammarDrillExercise } from './GrammarExercises';
 import { SentenceBuildExercise, ReadingExercise } from './SentenceReading';
+import { DialogueExercise } from './DialogueExercise';
 import type { Exercise, ExerciseProps } from './types';
 
 /** Renders the right exercise component for a given exercise. */
@@ -44,6 +45,8 @@ export function ExerciseView(props: ExerciseProps) {
       return <SentenceBuildExercise {...(props as any)} />;
     case 'reading':
       return <ReadingExercise {...(props as any)} />;
+    case 'dialogue':
+      return <DialogueExercise {...(props as any)} />;
     default:
       return null;
   }

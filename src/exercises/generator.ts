@@ -2,7 +2,7 @@ import { LETTERS, getLetter, Letter, PositionKey, POSITIONS } from '../data/lett
 import { WORDS, getWord, wordsByTopic, Word, PHRASES } from '../data/words';
 import { Lesson } from '../data/units';
 import { getGrammar } from '../data/grammar';
-import { SENTENCES, PASSAGES, getPassage, type Sentence } from '../data/sentences';
+import { SENTENCES, PASSAGES, DIALOGUES, getPassage, getDialogue, type Sentence } from '../data/sentences';
 import { WORD_ICON, NUMERALS, COLOURS } from '../components/Illustration';
 import { Exercise, ItemRef } from './types';
 
@@ -238,6 +238,12 @@ export function buildLessonExercises(lesson: Lesson, reviewRefs: ItemRef[] = [])
     for (const sen of shuffle(pool.length ? pool : SENTENCES).slice(0, lesson.size)) {
       exercises.push({ kind: 'sentenceBuild', sentence: sen, tiles: sentenceTilesFor(sen) });
     }
+  }
+
+  if (lesson.kind === 'dialogue') {
+    const d = lesson.dialogueId ? getDialogue(lesson.dialogueId) : undefined;
+    const chosen = d ?? shuffle(DIALOGUES)[0];
+    if (chosen) exercises.push({ kind: 'dialogue', dialogue: chosen });
   }
 
   if (lesson.kind === 'reading') {
