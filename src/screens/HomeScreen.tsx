@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -15,7 +15,7 @@ import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { levelProgress, levelTitle } from '../lib/gamification';
 import { useProgressStore } from '../store/useProgressStore';
-import { UNITS, Lesson, LESSON_ORDER } from '../data/units';
+import { UNITS, Lesson, LESSON_ORDER, findLesson } from '../data/units';
 import { LEVEL_META, LEVEL_ORDER, type Level } from '../data/words';
 import { WORDS } from '../data/words';
 import { DAILY_GOALS } from '../data/achievements';
@@ -129,6 +129,24 @@ export function HomeScreen() {
   const dailyRatio = Math.min(1, store.todayXp / goal.xp);
   const word = WORDS[new Date().getDate() % WORDS.length];
 
+  // The one next thing to do: the first lesson on the path not yet finished.
+  const currentId = useMemo(
+    () => LESSON_ORDER.find((id) => !store.completedLessons[id]) ?? LESSON_ORDER[LESSON_ORDER.length - 1],
+    [store.completedLessons]
+  );
+  const currentLesson = findLesson(currentId);
+  const currentUnit = UNITS.find((u) => u.lessons.some((l) => l.id === currentId));
+  const currentLevel: Level = currentUnit?.level ?? 'beginner';
+
+  // The course is long. Only the stage you are on is expanded; the others
+  // collapse to a progress line you can open when you want to look ahead.
+  const [openLevels, setOpenLevels] = useState<Partial<Record<Level, boolean>>>({});
+  const isOpen = (lvl: Level) => openLevels[lvl] ?? lvl === currentLevel;
+  const toggleLevel = (lvl: Level) => {
+    feedback.tap();
+    setOpenLevels((s) => ({ ...s, [lvl]: !isOpen(lvl) }));
+  };
+
   const openLesson = (lesson: Lesson, _state: string) => {
     // Any lesson can be started — locked ones are "jump ahead". Even with 0
     // hearts you can begin; the lesson player handles running out mid-session.
@@ -174,7 +192,7 @@ export function HomeScreen() {
             </View>
             <ProgressBar progress={ratio} height={10} />
             <View className="mt-3 flex-row items-center gap-2">
-              <Txt style={{ fontSize: 14 }}>🎯</Txt>
+              <Illustration name="sparkle" tile={false} size={16} />
               <View className="flex-1">
                 <ProgressBar progress={dailyRatio} color={palette.jade} height={8} />
               </View>
@@ -184,6 +202,48 @@ export function HomeScreen() {
             </View>
           </Card>
         </Reveal>
+
+        {/* the one obvious next action */}
+        {currentLesson && (
+          <Reveal delay={90}>
+            <Pressable
+              onPress={() => {
+                feedback.tap();
+                nav.navigate('Lesson', { lessonId: currentLesson.id });
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Continue: ${currentLesson.title}. ${currentLesson.subtitle}`}
+              style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
+            >
+              <View
+                className="mb-4 flex-row items-center gap-3 rounded-2xl border px-4 py-3.5"
+                style={{
+                  backgroundColor: withAlpha(palette.gold, 0.14),
+                  borderColor: withAlpha(palette.gold, 0.42),
+                }}
+              >
+                <View
+                  className="h-12 w-12 items-center justify-center rounded-full"
+                  style={{ backgroundColor: withAlpha(palette.gold, 0.22) }}
+                >
+                  <Illustration name={lessonIconName(currentLesson.kind, currentLesson.topic)} tile={false} size={26} />
+                </View>
+                <View className="flex-1">
+                  <Eyebrow style={{ color: palette.gold }}>
+                    {store.completedLessons[LESSON_ORDER[0]] ? 'Continue' : 'Start here'}
+                  </Eyebrow>
+                  <Bold className="mt-0.5 text-[15px]">{currentLesson.title}</Bold>
+                  <Txt className="text-xs text-paper/55">
+                    {currentUnit ? currentUnit.title.replace(/ · .*/, '') : currentLesson.subtitle}
+                    {' · '}
+                    {currentLesson.subtitle}
+                  </Txt>
+                </View>
+                <Txt style={{ color: palette.gold, fontSize: 20 }}>›</Txt>
+              </View>
+            </Pressable>
+          </Reveal>
+        )}
 
         {/* today's word + letter lab */}
         <Reveal delay={120}>
@@ -228,7 +288,7 @@ export function HomeScreen() {
             className="mb-1 flex-row items-center gap-2 rounded-xl px-3 py-2"
             style={{ backgroundColor: withAlpha(palette.gold, 0.08) }}
           >
-            <Txt style={{ fontSize: 13 }}>💡</Txt>
+            <Illustration name="sparkle" tile={false} size={15} />
             <Txt className="flex-1 text-[11px] text-paper/55">
               Tap any lesson to jump ahead — locked ones stay marked, and unlock as you pass them.
             </Txt>
@@ -248,28 +308,46 @@ export function HomeScreen() {
           return (
             <View key={lvl}>
               <Reveal>
-                <View className="mb-1 mt-7 flex-row items-center gap-3">
-                  <View
-                    className="rounded-lg px-2.5 py-1"
-                    style={{ backgroundColor: withAlpha(meta.color, 0.18), borderWidth: 1, borderColor: withAlpha(meta.color, 0.4) }}
-                  >
-                    <Bold style={{ color: meta.color }} className="text-xs">
-                      {meta.tag}
-                    </Bold>
+                <Pressable
+                  onPress={() => toggleLevel(lvl)}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: isOpen(lvl) }}
+                  accessibilityLabel={`${meta.title}. ${done} of ${total} lessons done. ${
+                    isOpen(lvl) ? 'Collapse' : 'Expand'
+                  }`}
+                  style={({ pressed }) => ({ opacity: pressed ? 0.75 : 1 })}
+                >
+                  <View className="mb-1 mt-7 flex-row items-center gap-3">
+                    <View
+                      className="rounded-lg px-2.5 py-1"
+                      style={{ backgroundColor: withAlpha(meta.color, 0.18), borderWidth: 1, borderColor: withAlpha(meta.color, 0.4) }}
+                    >
+                      <Bold style={{ color: meta.color }} className="text-xs">
+                        {meta.tag}
+                      </Bold>
+                    </View>
+                    <View className="flex-1">
+                      <Heading className="text-lg">{meta.title}</Heading>
+                      <Txt className="text-xs text-paper/50">{meta.blurb}</Txt>
+                    </View>
+                    <Txt className="text-[11px] text-paper/45">
+                      {done}/{total}
+                    </Txt>
+                    <Txt style={{ color: withAlpha(palette.cream, 0.5), fontSize: 15 }}>
+                      {isOpen(lvl) ? '⌃' : '⌄'}
+                    </Txt>
                   </View>
-                  <View className="flex-1">
-                    <Heading className="text-lg">{meta.title}</Heading>
-                    <Txt className="text-xs text-paper/50">{meta.blurb}</Txt>
+                  <View className="mb-1 mt-2">
+                    <ProgressBar progress={total ? done / total : 0} color={meta.color} height={6} spring={false} />
                   </View>
-                  <Txt className="text-[11px] text-paper/45">
-                    {done}/{total}
-                  </Txt>
-                </View>
-                <View className="mb-1 mt-2">
-                  <ProgressBar progress={total ? done / total : 0} color={meta.color} height={6} spring={false} />
-                </View>
+                  {!isOpen(lvl) && (
+                    <Txt className="mt-2 text-[11px] text-paper/40">
+                      {levelUnits.length} units · tap to open
+                    </Txt>
+                  )}
+                </Pressable>
               </Reveal>
-              {levelUnits.map((unit, ui) => (
+              {isOpen(lvl) && levelUnits.map((unit, ui) => (
           <Reveal key={unit.id} delay={Math.min(120 + ui * 30, 300)}>
             <View className="mb-2 mt-4 flex-row items-center gap-3">
               <View className="h-2 w-2 rounded-full" style={{ backgroundColor: unit.color }} />

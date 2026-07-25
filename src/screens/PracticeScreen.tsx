@@ -1,14 +1,15 @@
-import { useEffect } from 'react';
-import { View, Pressable } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { View, Pressable, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Path, Circle } from 'react-native-svg';
 
 import { Screen } from '../components/Screen';
 import { Card } from '../components/Card';
 import { Reveal } from '../components/Reveal';
 import { ProgressBar } from '../components/ProgressBar';
-import { Display, Heading, Txt, Bold, Eyebrow, Urdu } from '../components/Text';
+import { Display, Heading, Txt, Bold, Eyebrow } from '../components/Text';
 import { TopicArt } from '../components/Illustration';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
@@ -21,6 +22,46 @@ import { PASSAGES } from '../data/sentences';
 import type { RootStackParamList } from '../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
+
+/** Two arrows chasing each other — the spaced-repetition mark, drawn so it
+ *  takes the card's colour instead of the platform's emoji font. */
+function CycleMark({ size = 52, color = '#fff' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M4.5 10a7.5 7.5 0 0 1 12.9-4M19.5 14a7.5 7.5 0 0 1-12.9 4"
+        stroke={color}
+        strokeWidth={2}
+        fill="none"
+        strokeLinecap="round"
+      />
+      <Path d="M17.4 2.4V6H13.8M6.6 21.6V18h3.6" stroke={color} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function SearchMark({ color }: { color: string }) {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 24 24">
+      <Circle cx={10.5} cy={10.5} r={6.5} stroke={color} strokeWidth={2} fill="none" />
+      <Path d="M15.5 15.5 20 20" stroke={color} strokeWidth={2} strokeLinecap="round" fill="none" />
+    </Svg>
+  );
+}
+
+const TAB_TOTAL = {
+  topics: TOPICS.length,
+  grammar: GRAMMAR.length,
+  reading: PASSAGES.length,
+} as const;
+
+/** What the search box counts, in words that read naturally. */
+const TAB_NOUN = { topics: 'topics', grammar: 'grammar points', reading: 'passages' } as const;
+
+/** Passages are authored in no particular order; show them easiest-first. */
+const PASSAGES_BY_LEVEL = [...PASSAGES].sort(
+  (a, b) => LEVEL_ORDER.indexOf(a.level) - LEVEL_ORDER.indexOf(b.level)
+);
 
 export function PracticeScreen() {
   const nav = useNavigation<Nav>();
@@ -40,6 +81,19 @@ export function PracticeScreen() {
     feedback.tap();
     nav.navigate('Lesson', { lessonId });
   };
+
+  // The catalogue is large, so it is filtered rather than dumped: one tab at a
+  // time, plus a search that reaches across everything in the current tab.
+  const [tab, setTab] = useState<'topics' | 'grammar' | 'reading'>('topics');
+  const [query, setQuery] = useState('');
+  const q = query.trim().toLowerCase();
+  const hit = (...fields: string[]) => !q || fields.some((f) => f.toLowerCase().includes(q));
+
+  const grammarList = useMemo(() => GRAMMAR.filter((g) => hit(g.title, g.summary)), [q]);
+  const readingList = useMemo(() => PASSAGES_BY_LEVEL.filter((p) => hit(p.title)), [q]);
+  const topicList = useMemo(() => TOPICS.filter((t) => hit(t.title, t.blurb)), [q]);
+  const counts = { topics: topicList.length, grammar: grammarList.length, reading: readingList.length };
+  const empty = counts[tab] === 0;
 
   return (
     <View className="flex-1 bg-ink">
@@ -71,7 +125,7 @@ export function PracticeScreen() {
                     {due > 0 ? 'A calm few minutes to lock them in.' : 'Come back later, or drill a topic below.'}
                   </Txt>
                 </View>
-                <Txt style={{ fontSize: 44 }}>🔁</Txt>
+                <CycleMark size={52} color={withAlpha('#ffffff', 0.9)} />
               </View>
             </View>
           </Pressable>
@@ -92,14 +146,70 @@ export function PracticeScreen() {
           </Reveal>
         )}
 
+        {/* browse: one shelf at a time, with search across it */}
+        <Reveal delay={165}>
+          <View className="mb-3 flex-row rounded-2xl border border-white/10 bg-ink-700 p-1">
+            {(['topics', 'grammar', 'reading'] as const).map((k) => (
+              <Pressable
+                key={k}
+                onPress={() => {
+                  feedback.tap();
+                  setTab(k);
+                }}
+                className="flex-1"
+                accessibilityRole="button"
+                accessibilityState={{ selected: tab === k }}
+                accessibilityLabel={`${k} — ${TAB_TOTAL[k]} items`}
+              >
+                <View
+                  className="items-center rounded-xl py-2"
+                  style={{ backgroundColor: tab === k ? withAlpha(palette.gold, 0.2) : 'transparent' }}
+                >
+                  <Bold
+                    className="text-xs capitalize"
+                    style={{ color: tab === k ? palette.gold : withAlpha(palette.cream, 0.55) }}
+                  >
+                    {k}
+                  </Bold>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+          <View className="mb-5 flex-row items-center gap-2 rounded-2xl border border-white/10 bg-ink-700 px-3.5 py-2.5">
+            <SearchMark color={withAlpha(palette.cream, 0.45)} />
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder={`Search ${TAB_TOTAL[tab]} ${TAB_NOUN[tab]}`}
+              placeholderTextColor={withAlpha(palette.cream, 0.35)}
+              autoCorrect={false}
+              autoCapitalize="none"
+              accessibilityLabel="Search practice content"
+              style={{ flex: 1, color: palette.cream, fontFamily: 'PublicSans', fontSize: 14, paddingVertical: 2 }}
+            />
+            {query.length > 0 && (
+              <Pressable onPress={() => setQuery('')} hitSlop={10} accessibilityRole="button" accessibilityLabel="Clear search">
+                <Txt className="text-paper/45">✕</Txt>
+              </Pressable>
+            )}
+          </View>
+        </Reveal>
+
+        {empty && (
+          <Txt className="mb-6 mt-2 text-center text-sm text-paper/45">
+            Nothing matches “{query}”. Try a shorter word.
+          </Txt>
+        )}
+
         {/* grammar */}
-        <Reveal delay={170}>
-          <Eyebrow className="mb-3 text-paper/50">Grammar</Eyebrow>
+        {tab === 'grammar' && (
           <View className="mb-6 gap-2.5">
-            {GRAMMAR.map((g) => (
+            {grammarList.map((g) => (
               <Pressable
                 key={g.id}
                 onPress={() => go(`practice-grammar-${g.id}`)}
+                accessibilityRole="button"
+                accessibilityLabel={`Practise ${g.title}. ${g.summary}`}
                 style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
               >
                 <View className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-ink-700 px-4 py-3.5">
@@ -115,10 +225,7 @@ export function PracticeScreen() {
                     <Bold className="text-[15px]" style={{ writingDirection: 'ltr', textAlign: 'left' }}>
                       {g.title}
                     </Bold>
-                    <Txt
-                      className="text-xs text-paper/55"
-                      style={{ writingDirection: 'ltr', textAlign: 'left' }}
-                    >
+                    <Txt className="text-xs text-paper/55" style={{ writingDirection: 'ltr', textAlign: 'left' }}>
                       {g.summary}
                     </Txt>
                   </View>
@@ -127,85 +234,93 @@ export function PracticeScreen() {
               </Pressable>
             ))}
           </View>
-        </Reveal>
+        )}
 
         {/* reading */}
-        <Reveal delay={185}>
-          <Eyebrow className="mb-3 text-paper/50">Reading</Eyebrow>
+        {tab === 'reading' && (
           <View className="mb-6 gap-2.5">
-            {PASSAGES.map((p) => (
+            {readingList.map((p) => (
               <Pressable
                 key={p.id}
                 onPress={() => go(`practice-reading-${p.id}`)}
+                accessibilityRole="button"
+                accessibilityLabel={`Read ${p.title}, ${p.lines.length} lines`}
                 style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
               >
                 <View className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-ink-700 px-4 py-3.5">
-                  <Txt style={{ fontSize: 20 }}>📖</Txt>
+                  <View
+                    className="rounded-lg px-2 py-1"
+                    style={{ backgroundColor: withAlpha(LEVEL_META[p.level].color, 0.18) }}
+                  >
+                    <Bold style={{ color: LEVEL_META[p.level].color }} className="text-[10px]">
+                      {LEVEL_META[p.level].tag}
+                    </Bold>
+                  </View>
                   <View className="flex-1">
-                    <Bold className="text-[15px]">{p.title}</Bold>
-                    <Txt className="text-xs text-paper/55">
-                      {p.lines.length} lines · {LEVEL_META[p.level].title}
-                    </Txt>
+                    <Bold className="text-[15px]" style={{ writingDirection: 'ltr', textAlign: 'left' }}>
+                      {p.title}
+                    </Bold>
+                    <Txt className="text-xs text-paper/55">{p.lines.length} lines · with a question</Txt>
                   </View>
                   <Txt className="text-paper/35">›</Txt>
                 </View>
               </Pressable>
             ))}
           </View>
-        </Reveal>
+        )}
 
         {/* topics */}
-        <Reveal delay={200}>
-          <Eyebrow className="mb-3 text-paper/50">Drill a topic · {TOPICS.length} sets</Eyebrow>
-        </Reveal>
-        {LEVEL_ORDER.map((lvl: Level) => {
-          const levelTopics = TOPICS.filter((t) => t.level === lvl);
-          if (!levelTopics.length) return null;
-          const meta = LEVEL_META[lvl];
-          return (
-            <View key={lvl} className="mb-2">
-              <View className="mb-2 mt-3 flex-row items-center gap-2">
-                <View className="h-2 w-2 rounded-full" style={{ backgroundColor: meta.color }} />
-                <Bold style={{ color: meta.color }} className="text-xs uppercase tracking-wider">
-                  {meta.tag} · {meta.title}
-                </Bold>
-                <Txt className="text-[11px] text-paper/35">{levelTopics.length} sets</Txt>
-              </View>
-              <View className="flex-row flex-wrap justify-between">
-                {levelTopics.map((t, i) => {
-                  const words = wordsByTopic(t.id);
-                  const known = words.filter((w) => learnedWords.includes(w.id)).length;
-                  return (
-                    <Reveal key={t.id} delay={Math.min(i * 25, 250)} style={{ width: '48%' }}>
-                      <Pressable
-                        onPress={() => go(`practice-topic-${t.id}`)}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Practise ${t.title}, ${known} of ${words.length} words learned`}
-                        style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.97 : 1 }] })}
-                      >
-                        <View className="mb-3 rounded-2xl border border-white/10 bg-ink-700 p-4">
-                          <TopicArt topicId={t.id} size={44} />
-                          <Bold className="mt-2 text-sm" numberOfLines={1}>{t.title}</Bold>
-                          <Txt className="mt-0.5 text-[11px] text-paper/50">
-                            {known}/{words.length} words
-                          </Txt>
-                          <View className="mt-2">
-                            <ProgressBar
-                              progress={words.length ? known / words.length : 0}
-                              color={meta.color}
-                              height={5}
-                              spring={false}
-                            />
+        {tab === 'topics' &&
+          LEVEL_ORDER.map((lvl: Level) => {
+            const levelTopics = topicList.filter((t) => t.level === lvl);
+            if (!levelTopics.length) return null;
+            const meta = LEVEL_META[lvl];
+            return (
+              <View key={lvl} className="mb-2">
+                <View className="mb-2 mt-3 flex-row items-center gap-2">
+                  <View className="h-2 w-2 rounded-full" style={{ backgroundColor: meta.color }} />
+                  <Bold style={{ color: meta.color }} className="text-xs uppercase tracking-wider">
+                    {meta.tag} · {meta.title}
+                  </Bold>
+                  <Txt className="text-[11px] text-paper/35">{levelTopics.length} sets</Txt>
+                </View>
+                <View className="flex-row flex-wrap justify-between">
+                  {levelTopics.map((t, i) => {
+                    const words = wordsByTopic(t.id);
+                    const known = words.filter((w) => learnedWords.includes(w.id)).length;
+                    return (
+                      <Reveal key={t.id} delay={Math.min(i * 25, 250)} style={{ width: '48%' }}>
+                        <Pressable
+                          onPress={() => go(`practice-topic-${t.id}`)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Practise ${t.title}, ${known} of ${words.length} words learned`}
+                          style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.97 : 1 }] })}
+                        >
+                          <View className="mb-3 rounded-2xl border border-white/10 bg-ink-700 p-4">
+                            <TopicArt topicId={t.id} size={44} />
+                            <Bold className="mt-2 text-sm" numberOfLines={1}>
+                              {t.title}
+                            </Bold>
+                            <Txt className="mt-0.5 text-[11px] text-paper/50">
+                              {known}/{words.length} words
+                            </Txt>
+                            <View className="mt-2">
+                              <ProgressBar
+                                progress={words.length ? known / words.length : 0}
+                                color={meta.color}
+                                height={5}
+                                spring={false}
+                              />
+                            </View>
                           </View>
-                        </View>
-                      </Pressable>
-                    </Reveal>
-                  );
-                })}
+                        </Pressable>
+                      </Reveal>
+                    );
+                  })}
+                </View>
               </View>
-            </View>
-          );
-        })}
+            );
+          })}
 
         <View className="h-6" />
       </Screen>

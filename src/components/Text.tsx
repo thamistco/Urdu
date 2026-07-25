@@ -46,13 +46,26 @@ export function Eyebrow({ className = '', style, ...p }: Props) {
   );
 }
 
-export function Urdu({ className = '', style, ...p }: Props) {
+/**
+ * A right-to-left mark. Urdu strings that *start* with a neutral character —
+ * the `___` of a gap-fill, a digit, an opening bracket — would otherwise take
+ * their direction from the surrounding paragraph and land on the left of the
+ * line, i.e. at the end of the sentence instead of the start. Leading with an
+ * RLM anchors those neutrals to the RTL run so the blank sits where the missing
+ * word actually goes. It renders as nothing, and works on native and web alike,
+ * unlike `writingDirection`, which react-native-web ignores.
+ */
+const RLM = '‏';
+
+export function Urdu({ className = '', style, children, ...p }: Props) {
   return (
     <RNText
       {...p}
       style={[{ writingDirection: 'rtl', lineHeight: undefined }, style]}
       className={`font-nastaliq-bold text-paper ${className}`}
-    />
+    >
+      {typeof children === 'string' ? RLM + children : children}
+    </RNText>
   );
 }
 

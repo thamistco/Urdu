@@ -1,6 +1,7 @@
 import { View } from 'react-native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Pressable } from 'react-native';
+import Svg, { Path, Circle } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Txt } from '../components/Text';
 import { feedback } from '../lib/feedback';
@@ -12,11 +13,39 @@ import type { MainTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-const ICONS: Record<string, string> = {
-  Learn: '📚',
-  Practice: '🎯',
-  Profile: '👤',
-};
+/**
+ * Tab glyphs are drawn rather than borrowed from emoji so they can take the
+ * bar's tint (gold when selected, muted otherwise) and stay identical on every
+ * platform — the emoji set rendered differently on each and broke the palette.
+ */
+function TabIcon({ name, color }: { name: string; color: string }) {
+  const p = { stroke: color, strokeWidth: 2, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  return (
+    <Svg width={26} height={26} viewBox="0 0 24 24">
+      {name === 'Learn' && (
+        <>
+          {/* an open book */}
+          <Path d="M12 6.5C10.2 5.2 7.7 4.8 5 5.2v12c2.7-.4 5.2 0 7 1.3 1.8-1.3 4.3-1.7 7-1.3v-12c-2.7-.4-5.2 0-7 1.3Z" {...p} />
+          <Path d="M12 6.5v12" {...p} />
+        </>
+      )}
+      {name === 'Practice' && (
+        <>
+          {/* concentric target — the spaced-repetition motif */}
+          <Circle cx={12} cy={12} r={7.5} {...p} />
+          <Circle cx={12} cy={12} r={3.5} {...p} />
+          <Circle cx={12} cy={12} r={1} fill={color} stroke="none" />
+        </>
+      )}
+      {name === 'Profile' && (
+        <>
+          <Circle cx={12} cy={8.5} r={3.6} {...p} />
+          <Path d="M5.5 19.2c1-3.3 3.5-5 6.5-5s5.5 1.7 6.5 5" {...p} />
+        </>
+      )}
+    </Svg>
+  );
+}
 
 function TabBar({ state, navigation }: BottomTabBarProps) {
   return (
@@ -33,8 +62,14 @@ function TabBar({ state, navigation }: BottomTabBarProps) {
                   if (!focused) navigation.navigate(route.name);
                 }}
                 className="flex-1 items-center py-2"
+                accessibilityRole="tab"
+                accessibilityState={{ selected: focused }}
+                accessibilityLabel={route.name}
               >
-                <Txt style={{ fontSize: 24, opacity: focused ? 1 : 0.45 }}>{ICONS[route.name]}</Txt>
+                <TabIcon
+                  name={route.name}
+                  color={focused ? palette.gold : withAlpha(palette.cream, 0.45)}
+                />
                 <Txt
                   className="mt-1 text-[11px]"
                   style={{ color: focused ? palette.gold : withAlpha(palette.cream, 0.5), fontWeight: '700' }}

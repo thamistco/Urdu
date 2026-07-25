@@ -96,7 +96,7 @@ export function SentenceBuildExercise({ exercise, showRoman, locked, onGraded }:
       {graded === false && (
         <View className="items-center">
           <Txt className="mb-1 text-xs text-paper/50">Correct order:</Txt>
-          <Urdu style={{ fontSize: 24, lineHeight: 42, textAlign: 'center' }}>
+          <Urdu style={{ fontSize: 24, lineHeight: 46, textAlign: 'center' }}>
             {sentence.words.join(' ')}
           </Urdu>
         </View>
@@ -132,17 +132,19 @@ export function ReadingExercise({ exercise, showRoman, locked, onGraded }: Exerc
 
       <View className="mb-4 rounded-2xl bg-paper px-5 py-4">
         {passage.lines.map((l, i) => (
-          <View key={i} className={i > 0 ? 'mt-3' : ''}>
-            <Urdu style={{ fontSize: 24, color: palette.ink, lineHeight: 44, textAlign: 'right' }}>
+          // Nastaliq descends a long way below its baseline, so each line needs
+          // real breathing room before the transliteration underneath it.
+          <View key={i} className={i > 0 ? 'mt-5' : ''}>
+            <Urdu style={{ fontSize: 24, color: palette.ink, lineHeight: 50, textAlign: 'right' }}>
               {l.urdu}
             </Urdu>
             {showRoman ? (
-              <Txt style={{ color: palette.ink }} className="text-[11px] opacity-50">
+              <Txt style={{ color: palette.ink }} className="mt-2 text-[11px] leading-4 opacity-50">
                 {l.roman}
               </Txt>
             ) : null}
             {stage === 'answer' ? (
-              <Txt style={{ color: palette.ink }} className="text-xs opacity-70">
+              <Txt style={{ color: palette.ink }} className="mt-1 text-xs leading-4 opacity-70">
                 {l.meaning}
               </Txt>
             ) : null}
