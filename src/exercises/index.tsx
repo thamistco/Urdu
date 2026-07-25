@@ -1,4 +1,5 @@
 import { LetterFormExercise, LetterPickExercise } from './LetterExercises';
+import { TraceExercise } from './TraceExercise';
 import {
   MultipleChoiceExercise,
   MeaningPickExercise,
@@ -19,6 +20,8 @@ export function ExerciseView(props: ExerciseProps) {
       return <LetterFormExercise {...(props as any)} />;
     case 'letterPick':
       return <LetterPickExercise {...(props as any)} />;
+    case 'letterTrace':
+      return <TraceExercise {...(props as any)} />;
     case 'multipleChoice':
       return <MultipleChoiceExercise {...(props as any)} />;
     case 'meaningPick':

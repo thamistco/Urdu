@@ -29,22 +29,17 @@ const getAnyWord = (id: string): Word | undefined =>
 // ---- per-item exercise builders -----------------------------------------
 
 function letterExercise(letter: Letter): Exercise {
-  // Alternate between "name the position of this glyph" and "pick the glyph".
-  if (Math.random() < 0.6) {
-    const position = rand(POSITIONS.map((p) => p.key)) as PositionKey;
-    return {
-      kind: 'letterForm',
-      letter,
-      position,
-      options: POSITIONS.map((p) => p.key),
-    };
+  // Three ways to meet a letter: name the position of a glyph, pick the glyph
+  // out of four, or draw it. Tracing is the slowest, so it stays a minority.
+  const roll = Math.random();
+  const position = rand(POSITIONS.map((p) => p.key)) as PositionKey;
+
+  if (roll < 0.3) return { kind: 'letterTrace', letter, position };
+  if (roll < 0.72) {
+    return { kind: 'letterForm', letter, position, options: POSITIONS.map((p) => p.key) };
   }
   const distractors = sample(LETTERS, 3, (l) => l.id === letter.id);
-  return {
-    kind: 'letterPick',
-    letter,
-    options: shuffle([letter, ...distractors]),
-  };
+  return { kind: 'letterPick', letter, options: shuffle([letter, ...distractors]) };
 }
 
 /**
@@ -297,6 +292,7 @@ export function itemsOf(ex: Exercise): ItemRef[] {
   switch (ex.kind) {
     case 'letterForm':
     case 'letterPick':
+    case 'letterTrace':
       return [{ id: ex.letter.id, type: 'letter' }];
     case 'multipleChoice':
     case 'meaningPick':

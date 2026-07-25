@@ -41,6 +41,12 @@ export type Exercise =
       options: Word[];
     }
   | {
+      /** draw the letter in one of its four forms, over a faint model */
+      kind: 'letterTrace';
+      letter: Letter;
+      position: PositionKey;
+    }
+  | {
       /** show the meaning, pick the Urdu — the harder direction */
       kind: 'wordFromMeaning';
       word: Word;
