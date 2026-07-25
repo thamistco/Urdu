@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 import { Choice, PromptCard, Question, palette } from './common';
-import { Urdu, Txt, Bold, Eyebrow } from '../components/Text';
+import { Urdu, Txt, Bold, Eyebrow, urduGlyph } from '../components/Text';
 import { POSITIONS, PositionKey } from '../data/letters';
 import { feedback } from '../lib/feedback';
 import type { ExerciseProps, Exercise } from './types';
@@ -27,10 +27,8 @@ export function LetterFormExercise({ exercise, locked, onGraded }: ExerciseProps
       <Eyebrow style={{ color: palette.gold }} className="mb-2 text-center">
         {letter.name} · sounds like “{letter.sound}”
       </Eyebrow>
-      <PromptCard height={170}>
-        <Urdu style={{ fontSize: 92, color: palette.ink, lineHeight: 130 }}>
-          {letter.forms[position]}
-        </Urdu>
+      <PromptCard height={200}>
+        <Urdu style={{ color: palette.ink, ...urduGlyph(66) }}>{letter.forms[position]}</Urdu>
       </PromptCard>
       <View className="h-4" />
       <Question>Which position is this letter showing?</Question>
@@ -105,7 +103,7 @@ export function LetterPickExercise({ exercise, locked, onGraded }: ExerciseProps
               onPress={() => choose(o.id)}
               className="mb-3 w-[48%]"
             >
-              <Urdu style={{ fontSize: 44, color: palette.paper, lineHeight: 66 }}>
+              <Urdu style={{ color: palette.paper, ...urduGlyph(32) }}>
                 {o.forms.isolated}
               </Urdu>
             </Choice>

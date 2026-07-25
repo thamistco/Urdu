@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Screen } from '../components/Screen';
 import { TopBar } from '../components/TopBar';
 import { Reveal } from '../components/Reveal';
-import { Txt, Bold, Eyebrow, Urdu } from '../components/Text';
+import { Txt, Bold, Eyebrow, Urdu, urduLine, urduGlyph } from '../components/Text';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { speak } from '../lib/speech';
@@ -44,7 +44,7 @@ export function LetterLabScreen() {
                     borderWidth: 2,
                   }}
                 >
-                  <Urdu style={{ fontSize: 26, color: active ? palette.gold : palette.paper, lineHeight: 40 }}>
+                  <Urdu style={{ color: active ? palette.gold : palette.paper, ...urduGlyph(20) }}>
                     {l.forms.isolated}
                   </Urdu>
                   {known && (
@@ -74,7 +74,7 @@ export function LetterLabScreen() {
           <Pressable onPress={() => speak(letter.word, letter.roman)}>
             <View className="my-4 rounded-2xl bg-paper px-6 pb-5 pt-3">
               <View className="h-44 items-center justify-center">
-                <Urdu key={pos} style={{ fontSize: 110, color: palette.ink, lineHeight: 165 }}>
+                <Urdu key={pos} style={{ color: palette.ink, ...urduGlyph(72) }}>
                   {letter.forms[pos]}
                 </Urdu>
               </View>
@@ -100,7 +100,7 @@ export function LetterLabScreen() {
                       borderWidth: 2,
                     }}
                   >
-                    <Urdu style={{ fontSize: 24, color: active ? palette.gold : withAlpha(palette.paper, 0.7), lineHeight: 38 }}>
+                    <Urdu style={{ color: active ? palette.gold : withAlpha(palette.paper, 0.7), ...urduGlyph(19) }}>
                       {letter.forms[p.key]}
                     </Urdu>
                     <Eyebrow style={{ color: active ? palette.gold : withAlpha(palette.paper, 0.4), fontSize: 9 }} className="mt-1">
@@ -117,7 +117,7 @@ export function LetterLabScreen() {
             <Eyebrow className="mb-3 text-paper/40">Living in a word</Eyebrow>
             <View className="flex-row items-center justify-between">
               <View>
-                <Urdu style={{ fontSize: 32, lineHeight: 48 }}>{letter.word}</Urdu>
+                <Urdu style={{ fontSize: 32, lineHeight: urduLine(32) }}>{letter.word}</Urdu>
                 <Txt className="mt-1 text-sm text-paper/60">
                   {letter.roman} — {letter.meaning}
                 </Txt>

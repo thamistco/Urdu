@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Choice, PromptCard, Question, palette, withAlpha } from './common';
-import { Urdu, Txt, Bold } from '../components/Text';
+import { Urdu, Txt, Bold, urduLine } from '../components/Text';
 import { WordArt } from '../components/Illustration';
 import { feedback } from '../lib/feedback';
 import { announce } from '../lib/speech';
@@ -43,7 +43,7 @@ export function MultipleChoiceExercise({ exercise, showRoman, locked, onGraded }
               onPress={() => choose(o.id)}
               className="mb-3 w-[48%]"
             >
-              <Urdu style={{ fontSize: 34, color: palette.paper, lineHeight: 52 }}>{o.urdu}</Urdu>
+              <Urdu style={{ fontSize: 28, color: palette.paper, lineHeight: urduLine(28) }}>{o.urdu}</Urdu>
               {picked && showRoman ? (
                 <Txt className="mt-1 text-xs text-paper/50">{o.roman}</Txt>
               ) : null}
@@ -74,7 +74,7 @@ export function MeaningPickExercise({ exercise, showRoman, locked, onGraded }: E
   return (
     <View>
       <PromptCard height={len > 9 ? 170 : 150}>
-        <Urdu style={{ fontSize: fs, color: palette.ink, lineHeight: fs * 1.6, textAlign: 'center' }}>
+        <Urdu style={{ fontSize: fs, color: palette.ink, lineHeight: urduLine(fs), textAlign: 'center' }}>
           {word.urdu}
         </Urdu>
         {showRoman ? (

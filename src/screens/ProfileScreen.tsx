@@ -7,7 +7,7 @@ import { Screen } from '../components/Screen';
 import { Card } from '../components/Card';
 import { Reveal } from '../components/Reveal';
 import { ProgressBar } from '../components/ProgressBar';
-import { Display, Heading, Txt, Bold, Eyebrow, Urdu } from '../components/Text';
+import { Display, Heading, Txt, Bold, Eyebrow, Urdu, urduGlyph } from '../components/Text';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { levelProgress, levelTitle, getLeague } from '../lib/gamification';
@@ -86,7 +86,7 @@ export function ProfileScreen() {
                 className="h-24 w-24 items-center justify-center rounded-full border-2"
                 style={{ borderColor: palette.gold, backgroundColor: withAlpha(palette.gold, 0.12) }}
               >
-                <Urdu style={{ fontSize: 44, color: palette.gold, lineHeight: 66 }}>ح</Urdu>
+                <Urdu style={{ color: palette.gold, ...urduGlyph(32) }}>ح</Urdu>
               </View>
               <Display className="mt-3 text-2xl">Level {level}</Display>
               <Eyebrow style={{ color: palette.gold }}>{levelTitle(level)}</Eyebrow>

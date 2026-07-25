@@ -4,7 +4,7 @@ import { Screen } from '../components/Screen';
 import { Button } from '../components/Button';
 import { Reveal } from '../components/Reveal';
 import { GeoDivider } from '../components/GeoDivider';
-import { Display, Txt, Bold, Eyebrow, Urdu } from '../components/Text';
+import { Display, Txt, Bold, Eyebrow, Urdu, urduGlyph } from '../components/Text';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { useAuthStore } from '../store/useAuthStore';
@@ -60,7 +60,7 @@ export function LoginScreen() {
       <View className="flex-1 justify-center">
         <Reveal>
           <View className="items-center">
-            <Urdu style={{ fontSize: 86, color: palette.gold, lineHeight: 132 }}>حرف</Urdu>
+            <Urdu style={{ color: palette.gold, ...urduGlyph(64) }}>حرف</Urdu>
             <Display className="mb-2 text-4xl">Harf</Display>
             <GeoDivider />
             <Txt className="mb-10 max-w-[300px] text-center text-[15px] leading-6 text-paper/70">

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { Choice, Question, palette } from './common';
-import { Urdu, Txt, Bold } from '../components/Text';
+import { Urdu, Txt, Bold, urduLine } from '../components/Text';
 import { WordArt } from '../components/Illustration';
 import { feedback } from '../lib/feedback';
 import type { ExerciseProps, Exercise } from './types';
@@ -83,7 +83,7 @@ export function MatchingExercise({ exercise, showRoman, locked, onGraded }: Exer
               disabled={matched.has(w.id) || done || locked}
               onPress={() => pickLeft(w.id)}
             >
-              <Urdu style={{ fontSize: 30, color: palette.paper, lineHeight: 46 }}>{w.urdu}</Urdu>
+              <Urdu style={{ fontSize: 26, color: palette.paper, lineHeight: urduLine(26) }}>{w.urdu}</Urdu>
               {showRoman ? <Txt className="text-[11px] text-paper/45">{w.roman}</Txt> : null}
             </Choice>
           ))}

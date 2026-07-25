@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, ScrollView } from 'react-native';
 import { Choice, Question, palette, withAlpha } from './common';
-import { Urdu, Txt, Bold, Eyebrow, Heading } from '../components/Text';
+import { Urdu, Txt, Bold, Eyebrow, Heading, urduLine } from '../components/Text';
 import { Button } from '../components/Button';
 import { feedback } from '../lib/feedback';
 import type { ExerciseProps, Exercise } from './types';
@@ -64,7 +64,7 @@ export function GrammarTeachExercise({ exercise, onGraded }: ExerciseProps<Teach
                   {/[؀-ۿ]/.test(cell) ? (
                     // Urdu cells are right-aligned so the column reads as one
                     // RTL block instead of drifting with each glyph's width.
-                    <Urdu style={{ fontSize: 20, color: palette.ink, lineHeight: 34, textAlign: 'right' }}>
+                    <Urdu style={{ fontSize: 19, color: palette.ink, lineHeight: urduLine(19), textAlign: 'right' }}>
                       {cell}
                     </Urdu>
                   ) : (
@@ -86,7 +86,7 @@ export function GrammarTeachExercise({ exercise, onGraded }: ExerciseProps<Teach
             className="rounded-xl border-l-2 px-4 py-3"
             style={{ borderLeftColor: palette.jade, backgroundColor: withAlpha(palette.jade, 0.08) }}
           >
-            <Urdu style={{ fontSize: 24, lineHeight: 46 }}>{ex.urdu}</Urdu>
+            <Urdu style={{ fontSize: 23, lineHeight: urduLine(23) }}>{ex.urdu}</Urdu>
             <Txt className="mt-1.5 text-xs text-paper/55">{ex.roman}</Txt>
             <Txt className="mt-0.5 text-[13px] text-paper/80">{ex.meaning}</Txt>
           </View>
@@ -118,7 +118,7 @@ export function GrammarDrillExercise({ exercise, showRoman, locked, onGraded }: 
     <View>
       <Question>Complete the sentence</Question>
       <View className="mb-4 items-center rounded-2xl bg-paper px-5 py-6">
-        <Urdu style={{ fontSize: 28, color: palette.ink, lineHeight: 56, textAlign: 'center' }}>
+        <Urdu style={{ fontSize: 26, color: palette.ink, lineHeight: urduLine(26), textAlign: 'center' }}>
           {shown}
         </Urdu>
         {showRoman ? (
@@ -143,7 +143,7 @@ export function GrammarDrillExercise({ exercise, showRoman, locked, onGraded }: 
               onPress={() => choose(o)}
               className="mb-3 w-[48%]"
             >
-              <Urdu style={{ fontSize: 26, color: palette.paper, lineHeight: 44 }}>{o}</Urdu>
+              <Urdu style={{ fontSize: 24, color: palette.paper, lineHeight: urduLine(24) }}>{o}</Urdu>
             </Choice>
           );
         })}

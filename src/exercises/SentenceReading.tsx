@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Choice, Question, palette, withAlpha } from './common';
-import { Urdu, Txt, Bold, Eyebrow } from '../components/Text';
+import { Urdu, Txt, Bold, Eyebrow, urduLine } from '../components/Text';
 import { Button } from '../components/Button';
 import { feedback } from '../lib/feedback';
 import type { ExerciseProps, Exercise } from './types';
@@ -71,7 +71,7 @@ export function SentenceBuildExercise({ exercise, showRoman, locked, onGraded }:
                 className="mx-1 my-1 rounded-xl px-3 py-1.5"
                 style={{ backgroundColor: withAlpha(palette.gold, 0.18) }}
               >
-                <Urdu style={{ fontSize: 24, lineHeight: 40 }}>{tiles[i]}</Urdu>
+                <Urdu style={{ fontSize: 22, lineHeight: urduLine(22) }}>{tiles[i]}</Urdu>
               </View>
             </Pressable>
           ))
@@ -82,7 +82,7 @@ export function SentenceBuildExercise({ exercise, showRoman, locked, onGraded }:
         {available.map((i) => (
           <Pressable key={i} onPress={() => place(i)} hitSlop={4}>
             <View className="m-1.5 rounded-xl border border-white/10 bg-ink-700 px-4 py-2">
-              <Urdu style={{ fontSize: 24, lineHeight: 40 }}>{tiles[i]}</Urdu>
+              <Urdu style={{ fontSize: 22, lineHeight: urduLine(22) }}>{tiles[i]}</Urdu>
             </View>
           </Pressable>
         ))}
@@ -96,7 +96,7 @@ export function SentenceBuildExercise({ exercise, showRoman, locked, onGraded }:
       {graded === false && (
         <View className="items-center">
           <Txt className="mb-1 text-xs text-paper/50">Correct order:</Txt>
-          <Urdu style={{ fontSize: 24, lineHeight: 46, textAlign: 'center' }}>
+          <Urdu style={{ fontSize: 24, lineHeight: urduLine(24), textAlign: 'center' }}>
             {sentence.words.join(' ')}
           </Urdu>
         </View>
@@ -135,7 +135,7 @@ export function ReadingExercise({ exercise, showRoman, locked, onGraded }: Exerc
           // Nastaliq descends a long way below its baseline, so each line needs
           // real breathing room before the transliteration underneath it.
           <View key={i} className={i > 0 ? 'mt-5' : ''}>
-            <Urdu style={{ fontSize: 24, color: palette.ink, lineHeight: 50, textAlign: 'right' }}>
+            <Urdu style={{ fontSize: 23, color: palette.ink, lineHeight: urduLine(23), textAlign: 'right' }}>
               {l.urdu}
             </Urdu>
             {showRoman ? (

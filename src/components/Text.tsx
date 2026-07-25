@@ -57,6 +57,39 @@ export function Eyebrow({ className = '', style, ...p }: Props) {
  */
 const RLM = '‏';
 
+/**
+ * Vertical metrics for Nastaliq.
+ *
+ * Noto Nastaliq declares a 1.9em ascent and a 0.6em descent — the script is
+ * written on a steep diagonal and needs that much room. A line box shorter
+ * than their sum puts the baseline near the bottom of the box and the glyph's
+ * tail lands *below* it, which is why letters were being cut off by their
+ * cards. These two helpers encode the arithmetic once so no call site has to
+ * guess a line height again.
+ */
+
+/**
+ * Line height for running Urdu — words and sentences. Measured across the
+ * alphabet, Nastaliq ink reaches 1.6em above the baseline (گ, medial ک) and
+ * 0.69em below it (م). At anything under ~2.3em successive lines collide.
+ */
+export const urduLine = (fontSize: number) => Math.round(fontSize * 2.3);
+
+/**
+ * Style for one large glyph — a letter shown in one of its four forms.
+ *
+ * Rather than trying to centre each glyph (impossible with a single offset,
+ * since آ rises twice as far as ب and م drops below both), this pins the
+ * *baseline* to a consistent place, about two-thirds down the box. Every form
+ * then sits on the same line, the way it would on ruled paper: tall letters
+ * reach up, deep ones hang below, and nothing is ever cut off.
+ */
+export const urduGlyph = (fontSize: number) => ({
+  fontSize,
+  lineHeight: Math.round(fontSize * 2.7),
+  transform: [{ translateY: -Math.round(fontSize * 0.25) }],
+});
+
 export function Urdu({ className = '', style, children, ...p }: Props) {
   return (
     <RNText

@@ -4,7 +4,7 @@ import { Screen } from '../../components/Screen';
 import { Button } from '../../components/Button';
 import { Reveal } from '../../components/Reveal';
 import { GeoDivider } from '../../components/GeoDivider';
-import { Display, Heading, Txt, Bold, Eyebrow, Urdu } from '../../components/Text';
+import { Display, Heading, Txt, Bold, Eyebrow, Urdu, urduGlyph } from '../../components/Text';
 import { GoalArt } from '../../components/Illustration';
 import { palette, withAlpha } from '../../theme';
 import { feedback } from '../../lib/feedback';
@@ -75,7 +75,7 @@ export function OnboardingScreen() {
       <Screen scroll={false}>
         <Reveal style={{ flex: 1 }}>
           <View className="flex-1 items-center justify-center">
-            <Urdu style={{ fontSize: 96, color: palette.gold, lineHeight: 150 }}>حرف</Urdu>
+            <Urdu style={{ color: palette.gold, ...urduGlyph(76) }}>حرف</Urdu>
             <Display className="mb-3 text-4xl">Harf</Display>
             <GeoDivider />
             <Txt className="mb-10 max-w-[280px] text-center text-[15px] leading-6 text-paper/70">
@@ -214,7 +214,7 @@ export function OnboardingScreen() {
           <Heading className="mb-6 text-xl">{question.q}</Heading>
           <View className="mb-8 h-28 items-center justify-center rounded-2xl bg-paper">
             {question.kind === 'script' ? (
-              <Urdu style={{ fontSize: 64, color: palette.ink, lineHeight: 96 }}>{question.sub}</Urdu>
+              <Urdu style={{ color: palette.ink, ...urduGlyph(52) }}>{question.sub}</Urdu>
             ) : (
               <Heading style={{ color: palette.ink }} className="text-2xl">{question.sub}</Heading>
             )}
