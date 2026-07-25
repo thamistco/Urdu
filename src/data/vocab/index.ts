@@ -8,6 +8,10 @@ import { WORK_PACKS } from './work-study';
 import { HEALTH_PACKS } from './health-body';
 import { CULTURE_PACKS } from './culture-arts';
 import { ESSENTIAL_PACKS } from './essentials';
+import { OBJECT_PACKS } from './daily-objects';
+import { SOCIETY_PACKS } from './society';
+import { EXTRA_PACKS } from './extras';
+import { FINAL_PACKS } from './final';
 
 /** Every vocabulary pack, in course order. */
 export const ALL_PACKS: TopicPack[] = [
@@ -20,6 +24,10 @@ export const ALL_PACKS: TopicPack[] = [
   ...HEALTH_PACKS,
   ...WORK_PACKS,
   ...CULTURE_PACKS,
+  ...OBJECT_PACKS,
+  ...SOCIETY_PACKS,
+  ...EXTRA_PACKS,
+  ...FINAL_PACKS,
 ];
 
 export * from './types';

@@ -3,6 +3,7 @@ import { WORDS, getWord, wordsByTopic, Word, PHRASES } from '../data/words';
 import { Lesson } from '../data/units';
 import { getGrammar } from '../data/grammar';
 import { SENTENCES, PASSAGES, getPassage } from '../data/sentences';
+import { WORD_ICON, NUMERALS, COLOURS } from '../components/Illustration';
 import { Exercise, ItemRef } from './types';
 
 const rand = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
@@ -46,21 +47,54 @@ function letterExercise(letter: Letter): Exercise {
   };
 }
 
-function wordExercise(word: Word, pool: Word[], variant?: number): Exercise {
-  const v = variant ?? Math.floor(Math.random() * 3);
-  const distractors = () => {
-    const same = sample(pool, 3, (w) => w.id === word.id);
-    if (same.length >= 3) return same;
-    const fill = sample(WORDS, 3 - same.length, (w) => w.id === word.id || same.some((s) => s.id === w.id));
-    return [...same, ...fill];
+/**
+ * Pick three distractors. When `distinctCue` is set the options must all look
+ * different from one another — picture-based questions are unanswerable if two
+ * choices share the same illustration or emoji.
+ */
+function distractorsFor(word: Word, pool: Word[], distinctCue: boolean): Word[] {
+  const chosen: Word[] = [];
+  const usedCues = new Set<string>([cueOf(word)]);
+  const consider = (candidates: Word[]) => {
+    for (const c of shuffle(candidates)) {
+      if (chosen.length >= 3) return;
+      if (c.id === word.id || chosen.some((x) => x.id === c.id)) continue;
+      if (distinctCue) {
+        const cue = cueOf(c);
+        if (usedCues.has(cue)) continue;
+        usedCues.add(cue);
+      }
+      chosen.push(c);
+    }
   };
-  if (v === 0) {
-    return { kind: 'multipleChoice', word, options: shuffle([word, ...distractors()]) };
-  }
+  consider(pool);            // prefer same-topic distractors
+  if (chosen.length < 3) consider(WORDS); // widen if the topic is too uniform
+  return chosen;
+}
+
+/** The visual cue a word shows: illustration, numeral, swatch, or its emoji. */
+function cueOf(w: Word): string {
+  if (NUMERALS[w.id]) return `num:${NUMERALS[w.id]}`;
+  if (COLOURS[w.id]) return `col:${COLOURS[w.id].color}`;
+  if (WORD_ICON[w.id]) return `ico:${WORD_ICON[w.id]}`;
+  return `emo:${w.emoji}`;
+}
+
+function wordExercise(word: Word, pool: Word[], variant?: number): Exercise {
+  let v = variant ?? Math.floor(Math.random() * 3);
+  // If we cannot build a visually distinct set, fall back to the text-based
+  // "pick the meaning" question, which is always answerable.
+  const pictureOptions = distractorsFor(word, pool, true);
+  if (pictureOptions.length < 3 && v !== 1) v = 1;
+
   if (v === 1) {
-    return { kind: 'meaningPick', word, options: shuffle([word, ...distractors()]) };
+    const opts = distractorsFor(word, pool, false);
+    return { kind: 'meaningPick', word, options: shuffle([word, ...opts]) };
   }
-  return { kind: 'listenTap', word, options: shuffle([word, ...distractors()]) };
+  if (v === 0) {
+    return { kind: 'multipleChoice', word, options: shuffle([word, ...pictureOptions]) };
+  }
+  return { kind: 'listenTap', word, options: shuffle([word, ...pictureOptions]) };
 }
 
 function buildTilesFor(word: Word): string[] {
@@ -98,7 +132,17 @@ export function buildLessonExercises(lesson: Lesson, reviewRefs: ItemRef[] = [])
     const buildable = picks.filter((w) => Array.from(w.urdu).length <= 5).slice(0, 2);
     for (const w of buildable) exercises.push({ kind: 'wordBuild', word: w, tiles: buildTilesFor(w) });
     // close with a matching board (Drops-style)
-    if (picks.length >= 4) exercises.push({ kind: 'matching', words: picks.slice(0, 4) });
+    // matching shows four pictures at once — they must all differ
+    const board: Word[] = [];
+    const boardCues = new Set<string>();
+    for (const w of picks) {
+      const cue = cueOf(w);
+      if (boardCues.has(cue)) continue;
+      boardCues.add(cue);
+      board.push(w);
+      if (board.length === 4) break;
+    }
+    if (board.length === 4) exercises.push({ kind: 'matching', words: board });
   }
 
   if (lesson.kind === 'grammar' && lesson.conceptId) {
