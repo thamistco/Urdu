@@ -5,6 +5,8 @@
  * a translation-free visual cue.
  */
 
+import { ALL_PACKS } from './vocab';
+
 /** Course stage a piece of content belongs to. */
 export type Level = 'beginner' | 'elementary' | 'intermediate' | 'advanced';
 
@@ -27,7 +29,7 @@ export type Topic = {
   level: Level;
 };
 
-export const TOPICS: Topic[] = [
+const CORE_TOPICS: Topic[] = [
   { id: 'first-words', title: 'First Words', icon: '✨', blurb: 'The words you reach for every day.', level: 'beginner' },
   { id: 'family', title: 'Family', icon: '👨‍👩‍👧', blurb: 'The people you learn Urdu to speak with.', level: 'beginner' },
   { id: 'food', title: 'Food & Drink', icon: '🍲', blurb: 'From chai to roti — the table vocabulary.', level: 'beginner' },
@@ -70,7 +72,7 @@ export const TOPICS: Topic[] = [
   { id: 'connectors', title: 'Linking Words', icon: '🔗', blurb: 'But, because, therefore, although.', level: 'advanced' },
 ];
 
-export const WORDS: Word[] = [
+const CORE_WORDS: Word[] = [
   // first-words
   { id: 'w-paani', urdu: 'پانی', roman: 'paani', meaning: 'water', emoji: '💧', topic: 'first-words' },
   { id: 'w-kitaab', urdu: 'کتاب', roman: 'kitaab', meaning: 'book', emoji: '📖', topic: 'first-words' },
@@ -497,6 +499,10 @@ export const WORDS: Word[] = [
   { id: 'w-magar', urdu: 'مگر', roman: 'magar', meaning: 'however', emoji: '↩️', topic: 'connectors' },
   { id: 'w-taake', urdu: 'تاکہ', roman: 'taake', meaning: 'so that', emoji: '🎯', topic: 'connectors' },
 ];
+
+/** Core topics plus every modular vocabulary pack. */
+export const TOPICS: Topic[] = [...CORE_TOPICS, ...ALL_PACKS.map((p) => p.topic)];
+export const WORDS: Word[] = [...CORE_WORDS, ...ALL_PACKS.flatMap((p) => p.words)];
 
 /** Short, high-value phrases for the "speak with family" goal. */
 export type Phrase = { id: string; urdu: string; roman: string; meaning: string };
