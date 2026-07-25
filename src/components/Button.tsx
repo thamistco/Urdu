@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { Pressable, View, ActivityIndicator } from 'react-native';
 import { Bold } from './Text';
 import { feedback } from '../lib/feedback';
-import { palette } from '../theme';
+import { palette, withAlpha } from '../theme';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'correct' | 'incorrect';
 
@@ -24,8 +24,8 @@ const TEXT: Record<Variant, string> = {
   primary: palette.ink,
   secondary: palette.ink,
   ghost: palette.cream,
-  correct: palette.white,
-  incorrect: palette.white,
+  correct: palette.ink,
+  incorrect: palette.ink,
 };
 
 /**
@@ -73,8 +73,11 @@ export function Button({
               backgroundColor: FILL[variant],
               borderRadius: 16,
               marginBottom: isGhost ? 0 : pressed ? 0 : 4,
-              borderWidth: isGhost ? 1 : 0,
-              borderColor: 'rgba(244,235,217,0.2)',
+              // A flat fill reads as a coloured rectangle; a keyline around it
+              // reads as ink on paper. Ghost buttons have no fill, so they keep
+              // the faint outline that gives them an edge at all.
+              borderWidth: isGhost ? 1 : 2,
+              borderColor: isGhost ? withAlpha(palette.cream, 0.2) : palette.ink,
             }}
             className="flex-row items-center justify-center py-4 px-5"
           >

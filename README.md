@@ -29,17 +29,19 @@ underneath.
 - **Spaced repetition (SM-2)** — items you miss come back first.
 - **Gamification** — XP and levels, day streaks with freeze protection, hearts
   with timed regeneration, gems, weekly leagues, tiered achievements, daily goals.
-- **Calm by design** — the palette ("plum & saffron") follows learning
-  colour-psychology: a deep aubergine focus base, saffron reward accent used
-  sparingly, pistachio for correct, and a muted rose madder — never alarm-red —
-  for misses. Feedback sounds are soft pentatonic tones.
+- **Comic register** — flat saturated fills, black keylines and a halftone
+  screen on a near-black ground, with newsprint cream as the reading surface.
+  Yellow is reserved for reward and primary actions so it keeps its meaning;
+  green and red carry correct and incorrect. Feedback sounds stay soft
+  pentatonic tones — the colour is loud, the audio isn't.
 - **Jump ahead** — any lesson is tappable; locked ones stay marked.
 
 ## Design language
-Heritage-geometric: every illustration sits inside an **8-point Islamic star
-medallion** in saffron on deep plum, echoing the lattice motif used throughout.
-The palette is defined once in `src/theme/colors.ts` and mirrored in
-`tailwind.config.js`; every foreground/background pair clears WCAG AA.
+Every illustration sits inside an **8-point geometric star medallion**, and a
+faint halftone dot screen sits behind every screen. The palette is defined once
+in `src/theme/colors.ts` and mirrored in `tailwind.config.js`; every
+foreground/background pair clears WCAG AA. One rule the palette imposes:
+lettering on a bright fill is ink, not white — white on comic green is 2.4:1.
 Typography pairs **Noto Nastaliq Urdu** for the script with Fraunces (display)
 and Public Sans (body).
 

@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LatticeBackground } from './LatticeBackground';
 
 /**
- * Base screen: the deep-plum canvas + faint lattice, with a single content
+ * Base screen: the ink canvas + faint halftone screen, with a single content
  * column capped to a comfortable reading width (mobile UI principle: generous
  * margins, one clear column, thumb-reachable content).
  */

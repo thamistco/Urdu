@@ -559,21 +559,21 @@ export const LEVEL_META: Record<Level, { title: string; tag: string; blurb: stri
   beginner: {
     title: 'Beginner', tag: 'A1',
     blurb: 'Read the script and hold your first words.',
-    color: '#E2A13C',
+    color: '#FFC72C',
   },
   elementary: {
     title: 'Elementary', tag: 'A2',
     blurb: 'Describe your world and ask simple questions.',
-    color: '#93BE72',
+    color: '#5FDC96',
   },
   intermediate: {
     title: 'Intermediate', tag: 'B1',
     blurb: 'Handle daily life — work, travel, money, health.',
-    color: '#DE8496',
+    color: '#FF7A72',
   },
   advanced: {
     title: 'Advanced', tag: 'B2',
     blurb: 'Express ideas, feelings and opinions with nuance.',
-    color: '#A98BD4',
+    color: '#5AA9FF',
   },
 };

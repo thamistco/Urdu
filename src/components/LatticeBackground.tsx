@@ -1,26 +1,32 @@
 import { View } from 'react-native';
-import Svg, { Defs, Pattern, Path, Rect } from 'react-native-svg';
+import Svg, { Defs, Pattern, Circle, Rect } from 'react-native-svg';
 import { palette, withAlpha } from '../theme';
 
 /**
- * The single ornamental motif — an 8-point Islamic geometric star lattice,
- * rendered very faintly behind content. Design-system discipline: one flourish,
- * used sparingly, so the interface stays calm and grid-driven.
+ * The single ornamental motif — a halftone dot screen, the texture of cheap
+ * four-colour comic printing, laid very faintly behind everything.
+ *
+ * Design-system discipline: one flourish, used sparingly, so the interface
+ * stays calm and grid-driven. On a dark ground this is what carries the comic
+ * register — flat colour alone just reads as a bright theme.
+ *
+ * The dots sit on the offset grid a real halftone screen uses (every other row
+ * shifted by half a cell) rather than a square grid, which is what stops it
+ * looking like polka dots.
  */
-export function LatticeBackground({ opacity = 0.06 }: { opacity?: number }) {
-  const stroke = withAlpha(palette.gold, opacity);
+export function LatticeBackground({ opacity = 0.07 }: { opacity?: number }) {
+  const dot = withAlpha(palette.gold, opacity);
+  const r = 1.6;
   return (
     <View pointerEvents="none" style={{ position: 'absolute', inset: 0 }}>
       <Svg width="100%" height="100%">
         <Defs>
-          <Pattern id="lattice" width={44} height={44} patternUnits="userSpaceOnUse">
-            {/* 8-point star built from two overlapping squares */}
-            <Path d="M22 6 L38 22 L22 38 L6 22 Z" stroke={stroke} strokeWidth={1} fill="none" />
-            <Path d="M22 12 L32 22 L22 32 L12 22 Z" stroke={stroke} strokeWidth={0.75} fill="none" />
-            <Path d="M10 10 L34 34 M34 10 L10 34" stroke={stroke} strokeWidth={0.5} fill="none" />
+          <Pattern id="halftone" width={18} height={18} patternUnits="userSpaceOnUse">
+            <Circle cx={4.5} cy={4.5} r={r} fill={dot} />
+            <Circle cx={13.5} cy={13.5} r={r} fill={dot} />
           </Pattern>
         </Defs>
-        <Rect width="100%" height="100%" fill="url(#lattice)" />
+        <Rect width="100%" height="100%" fill="url(#halftone)" />
       </Svg>
     </View>
   );

@@ -58,7 +58,9 @@ const lettersOfGroup = (g: number) => LETTERS.filter((l) => l.group === g).map((
 let n = 0;
 const uid = (p: string) => `${p}-${++n}`;
 
-const V = (topic: string, title: string, subtitle: string, xp = 15, size = 7): Lesson => ({
+// A vocabulary lesson needs room for its closing run — recall, build, type and
+// the matching board — on top of the words it introduces; see the generator.
+const V = (topic: string, title: string, subtitle: string, xp = 18, size = 9): Lesson => ({
   id: uid('v'), title, subtitle, icon: '✨', kind: 'vocab', topic, xp, size,
 });
 const L = (group: number, title: string, subtitle: string, xp = 20, size = 7): Lesson => ({
@@ -80,7 +82,7 @@ const REV = (title = 'Unit review', subtitle = 'Mixed practice', xp = 30, size =
   id: uid('rev'), title, subtitle, icon: '🌙', kind: 'review', xp, size,
 });
 
-const GOLD = '#E2A13C', JADE = '#93BE72', ROSE = '#DE8496', BLUE = '#A98BD4';
+const GOLD = '#FFC72C', JADE = '#5FDC96', ROSE = '#FF7A72', BLUE = '#5AA9FF';
 
 export const UNITS: Unit[] = [
   // ══════════════ BEGINNER ══════════════
@@ -583,7 +585,7 @@ export function resolveLesson(id: string): Lesson | undefined {
   }
   if (id.startsWith('practice-topic-')) {
     const topic = id.slice('practice-topic-'.length);
-    return { id, title: 'Topic practice', subtitle: topic, icon: '🎯', kind: 'vocab', topic, xp: 15, size: 8 };
+    return { id, title: 'Topic practice', subtitle: topic, icon: '🎯', kind: 'vocab', topic, xp: 18, size: 9 };
   }
   if (id.startsWith('practice-grammar-')) {
     const conceptId = id.slice('practice-grammar-'.length);

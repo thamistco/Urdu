@@ -2,7 +2,7 @@ import { LETTERS, getLetter, Letter, PositionKey, POSITIONS } from '../data/lett
 import { WORDS, getWord, wordsByTopic, Word, PHRASES } from '../data/words';
 import { Lesson } from '../data/units';
 import { getGrammar } from '../data/grammar';
-import { SENTENCES, PASSAGES, getPassage } from '../data/sentences';
+import { SENTENCES, PASSAGES, getPassage, type Sentence } from '../data/sentences';
 import { WORD_ICON, NUMERALS, COLOURS } from '../components/Illustration';
 import { Exercise, ItemRef } from './types';
 
@@ -48,13 +48,22 @@ function letterExercise(letter: Letter): Exercise {
 }
 
 /**
- * Pick three distractors. When `distinctCue` is set the options must all look
- * different from one another — picture-based questions are unanswerable if two
- * choices share the same illustration or emoji.
+ * Pick three distractors.
+ *
+ * `distinctCue` — the options must all *look* different: a picture question is
+ * unanswerable if two choices share an illustration or emoji.
+ * `distinctMeaning` — the options must all *mean* different things: 28 pairs of
+ * words in the vocabulary share an English gloss, and a question with two right
+ * answers is worse than no question.
  */
-function distractorsFor(word: Word, pool: Word[], distinctCue: boolean): Word[] {
+function distractorsFor(
+  word: Word,
+  pool: Word[],
+  { distinctCue = false, distinctMeaning = false } = {}
+): Word[] {
   const chosen: Word[] = [];
   const usedCues = new Set<string>([cueOf(word)]);
+  const usedMeanings = new Set<string>([word.meaning.toLowerCase()]);
   const consider = (candidates: Word[]) => {
     for (const c of shuffle(candidates)) {
       if (chosen.length >= 3) return;
@@ -63,6 +72,11 @@ function distractorsFor(word: Word, pool: Word[], distinctCue: boolean): Word[] 
         const cue = cueOf(c);
         if (usedCues.has(cue)) continue;
         usedCues.add(cue);
+      }
+      if (distinctMeaning) {
+        const m = c.meaning.toLowerCase();
+        if (usedMeanings.has(m)) continue;
+        usedMeanings.add(m);
       }
       chosen.push(c);
     }
@@ -80,15 +94,37 @@ function cueOf(w: Word): string {
   return `emo:${w.emoji}`;
 }
 
-function wordExercise(word: Word, pool: Word[], variant?: number): Exercise {
+/**
+ * How much the learner has to supply themselves.
+ *
+ *  meet     — recognise it: four choices, with a picture or the word in front
+ *             of them. Right for a word they are seeing for the first time.
+ *  recall   — retrieve it: given only the English, choose the Urdu.
+ *  produce  — write it: given only the English, type it with nothing to pick
+ *             from. Reserved for words already met, or review.
+ */
+type Demand = 'meet' | 'recall' | 'produce';
+
+/** Typing a five-word honorific phrase is a spelling test, not a memory test. */
+const isTypeable = (w: Word) => w.roman.replace(/[^a-z]/gi, '').length <= 12;
+
+function wordExercise(word: Word, pool: Word[], demand: Demand = 'meet', variant?: number): Exercise {
+  if (demand === 'produce' && isTypeable(word)) {
+    return { kind: 'typeWord', word };
+  }
+  if (demand === 'recall' || demand === 'produce') {
+    const opts = distractorsFor(word, pool, { distinctMeaning: true });
+    return { kind: 'wordFromMeaning', word, options: shuffle([word, ...opts]) };
+  }
+
   let v = variant ?? Math.floor(Math.random() * 3);
   // If we cannot build a visually distinct set, fall back to the text-based
   // "pick the meaning" question, which is always answerable.
-  const pictureOptions = distractorsFor(word, pool, true);
+  const pictureOptions = distractorsFor(word, pool, { distinctCue: true });
   if (pictureOptions.length < 3 && v !== 1) v = 1;
 
   if (v === 1) {
-    const opts = distractorsFor(word, pool, false);
+    const opts = distractorsFor(word, pool, { distinctMeaning: true });
     return { kind: 'meaningPick', word, options: shuffle([word, ...opts]) };
   }
   if (v === 0) {
@@ -97,11 +133,33 @@ function wordExercise(word: Word, pool: Word[], variant?: number): Exercise {
   return { kind: 'listenTap', word, options: shuffle([word, ...pictureOptions]) };
 }
 
+/** Every letter that actually appears in the vocabulary — the distractor pool. */
+const ALPHABET: string[] = Array.from(
+  new Set(WORDS.flatMap((w) => Array.from(w.urdu)).filter((c) => c.trim().length > 0))
+);
+
 function buildTilesFor(word: Word): string[] {
   // Split into visual character units (grapheme-ish). Urdu combining marks are
   // rare in this vocab, so a code-point split is fine and keeps tiles legible.
   const chars = Array.from(word.urdu).filter((c) => c.trim().length > 0);
-  return shuffle(chars);
+  // Two letters that do NOT belong. Without them the tray is the answer with
+  // its order removed, and the exercise can be solved without reading anything.
+  const decoys = shuffle(ALPHABET.filter((c) => !chars.includes(c))).slice(0, 2);
+  return shuffle([...chars, ...decoys]);
+}
+
+/**
+ * Tiles for a sentence: its own words plus a word or two that don't belong, for
+ * the same reason. Decoys are drawn from other sentences at the same level so
+ * they are plausible rather than obviously foreign.
+ */
+function sentenceTilesFor(sentence: Sentence): string[] {
+  const own = new Set(sentence.words);
+  const pool = SENTENCES.filter((s) => s.level === sentence.level && s.id !== sentence.id)
+    .flatMap((s) => s.words)
+    .filter((w) => !own.has(w));
+  const decoys = shuffle(Array.from(new Set(pool))).slice(0, sentence.words.length > 5 ? 2 : 1);
+  return shuffle([...sentence.words, ...decoys]);
 }
 
 // ---- lesson composition --------------------------------------------------
@@ -116,23 +174,45 @@ export function buildLessonExercises(lesson: Lesson, reviewRefs: ItemRef[] = [])
     const contextWords = letters
       .map((l) => WORDS.find((w) => w.roman.toLowerCase().includes(l.sound[0])))
       .filter(Boolean) as Word[];
-    if (contextWords[0]) exercises.push(wordExercise(contextWords[0], WORDS, 0));
+    if (contextWords[0]) exercises.push(wordExercise(contextWords[0], WORDS, 'meet', 0));
   }
 
   if (lesson.kind === 'phrases') {
     // Phrases share one icon, so picture/listen cues don't work — always show
     // the phrase and pick its meaning.
     const picks = shuffle(PHRASE_WORDS).slice(0, lesson.size);
-    for (const w of picks) exercises.push(wordExercise(w, PHRASE_WORDS, 1));
+    for (const w of picks) exercises.push(wordExercise(w, PHRASE_WORDS, 'meet', 1));
   } else if (lesson.kind === 'vocab' && lesson.topic) {
+    /**
+     * A vocabulary lesson climbs: meet each word with a picture, come back to
+     * two of them from the English side, type one from memory, build one letter
+     * by letter, then close on a matching board. Every word is seen at least
+     * twice, and the second sighting always asks for more than the first.
+     */
     const pool = wordsByTopic(lesson.topic);
-    const picks = shuffle(pool).slice(0, Math.max(4, lesson.size - 1));
-    picks.forEach((w, i) => exercises.push(wordExercise(w, pool, i % 3)));
-    // a couple of word-build tiles for kinesthetic reinforcement
-    const buildable = picks.filter((w) => Array.from(w.urdu).length <= 5).slice(0, 2);
-    for (const w of buildable) exercises.push({ kind: 'wordBuild', word: w, tiles: buildTilesFor(w) });
-    // close with a matching board (Drops-style)
-    // matching shows four pictures at once — they must all differ
+    // Budget the lesson exactly: the four closing exercises and any woven-in
+    // review both take slots, and a truncated lesson would lose the hardest
+    // items — which are the ones at the end.
+    const woven = Math.min(2, reviewRefs.length);
+    const newWords = Math.max(3, lesson.size - 4 - woven);
+    const picks = shuffle(pool).slice(0, newWords);
+    picks.forEach((w, i) => exercises.push(wordExercise(w, pool, 'meet', i % 3)));
+
+    for (const w of shuffle(picks).slice(0, 2)) {
+      exercises.push(wordExercise(w, pool, 'recall'));
+    }
+
+    // Typing sits in the middle, not at the end: it is the hardest thing the
+    // lesson asks for, and finishing on it makes a session feel like an exam.
+    const typeable = picks.filter(isTypeable);
+    if (typeable[0]) exercises.push({ kind: 'typeWord', word: rand(typeable) });
+
+    const buildable = picks.filter((w) => Array.from(w.urdu).length <= 5);
+    if (buildable[0]) {
+      exercises.push({ kind: 'wordBuild', word: buildable[0], tiles: buildTilesFor(buildable[0]) });
+    }
+
+    // close with a matching board (Drops-style); its four pictures must differ
     const board: Word[] = [];
     const boardCues = new Set<string>();
     for (const w of picks) {
@@ -153,7 +233,7 @@ export function buildLessonExercises(lesson: Lesson, reviewRefs: ItemRef[] = [])
       for (const d of c.drills) exercises.push({ kind: 'grammarDrill', concept: c, drill: d });
       const related = SENTENCES.filter((x) => x.concept === c.id);
       for (const sen of shuffle(related).slice(0, 2)) {
-        exercises.push({ kind: 'sentenceBuild', sentence: sen, tiles: shuffle(sen.words) });
+        exercises.push({ kind: 'sentenceBuild', sentence: sen, tiles: sentenceTilesFor(sen) });
       }
     }
   }
@@ -161,7 +241,7 @@ export function buildLessonExercises(lesson: Lesson, reviewRefs: ItemRef[] = [])
   if (lesson.kind === 'sentences') {
     const pool = lesson.level ? SENTENCES.filter((x) => x.level === lesson.level) : SENTENCES;
     for (const sen of shuffle(pool.length ? pool : SENTENCES).slice(0, lesson.size)) {
-      exercises.push({ kind: 'sentenceBuild', sentence: sen, tiles: shuffle(sen.words) });
+      exercises.push({ kind: 'sentenceBuild', sentence: sen, tiles: sentenceTilesFor(sen) });
     }
   }
 
@@ -179,7 +259,10 @@ export function buildLessonExercises(lesson: Lesson, reviewRefs: ItemRef[] = [])
         if (l) exercises.push(letterExercise(l));
       } else {
         const w = getAnyWord(ref.id);
-        if (w) exercises.push(wordExercise(w, wordsByTopic(w.topic)));
+        // Review is where the harder demands belong: a word is only here
+        // because it was met before, so asking to recognise it again teaches
+        // little. Most reviews retrieve; every third one asks for it typed.
+        if (w) exercises.push(wordExercise(w, wordsByTopic(w.topic), Math.random() < 0.35 ? 'produce' : 'recall'));
       }
     }
   }
@@ -193,7 +276,7 @@ export function buildLessonExercises(lesson: Lesson, reviewRefs: ItemRef[] = [])
         if (l) woven.push(letterExercise(l));
       } else {
         const w = getAnyWord(ref.id);
-        if (w) woven.push(wordExercise(w, wordsByTopic(w.topic)));
+        if (w) woven.push(wordExercise(w, wordsByTopic(w.topic), 'recall'));
       }
     }
     exercises.splice(1, 0, ...woven);
@@ -219,6 +302,8 @@ export function itemsOf(ex: Exercise): ItemRef[] {
     case 'meaningPick':
     case 'listenTap':
     case 'wordBuild':
+    case 'wordFromMeaning':
+    case 'typeWord':
       return [{ id: ex.word.id, type: 'word' }];
     case 'matching':
       return ex.words.map((w) => ({ id: w.id, type: 'word' as const }));

@@ -41,6 +41,17 @@ export type Exercise =
       options: Word[];
     }
   | {
+      /** show the meaning, pick the Urdu — the harder direction */
+      kind: 'wordFromMeaning';
+      word: Word;
+      options: Word[];
+    }
+  | {
+      /** show the meaning, type the word from memory — the only free recall */
+      kind: 'typeWord';
+      word: Word;
+    }
+  | {
       kind: 'wordBuild';
       word: Word;
       /** scrambled letter tiles to assemble the script */

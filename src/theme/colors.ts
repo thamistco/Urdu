@@ -1,59 +1,59 @@
 /**
- * Harf color system — "plum & saffron".
+ * Harf color system — "comic".
  *
- * The register is block-printed textile under lamplight: a deep aubergine
- * ground, saffron for reward, pistachio for growth, rose madder for a miss.
+ * Flat saturated fills, black outlines, newsprint paper: the register of a
+ * printed comic panel rather than a night sky. Bright colour carries the
+ * meaning and near-black holds everything together.
  *
- * Grounded in color psychology for learning (see research brief):
- *  - A deep, desaturated ground → calm, focus, low eye-strain for long evening
- *    sessions. Aubergine keeps the low arousal of a dark base while reading
- *    warm rather than clinical.
- *  - Warm parchment as the reading surface → comfort + high legibility for the
- *    Nastaliq script, evoking paper and heritage rather than a sterile screen.
- *  - Saffron reserved for reward + primary actions → dopamine cue, used
- *    sparingly so it keeps its meaning (achievement, energy).
- *  - Pistachio = correct/growth (reassuring, not clinical).
- *  - Rose madder = incorrect. Deliberately NOT a harsh alarm red — we
- *    acknowledge a miss neutrally instead of scolding.
+ * Still grounded in colour psychology for learning:
+ *  - A near-black indigo ground → the gutter between panels. Dark enough for
+ *    long evening sessions, and it makes the flat colours read as ink on press.
+ *  - Newsprint cream as the reading surface → comfort and high legibility for
+ *    the Nastaliq script, and the right paper for the register.
+ *  - Comic yellow reserved for reward + primary actions → the loudest colour in
+ *    the set, so it is spent sparingly.
+ *  - Green = correct, red = incorrect. Comics do not do subtle, and at this
+ *    saturation the pair is unmistakable at a glance.
  *
- * Every foreground/background pair below clears WCAG AA against the surface it
- * is used on; `*Dark` shades exist for the raised buttons' lower edge.
+ * One rule this palette imposes: **lettering on a bright fill is ink, not
+ * white.** White on comic green is 2.4:1 and unreadable; ink is 7.7:1, and
+ * black lettering on flat colour is what the register does anyway.
  */
 
 export const palette = {
-  // base — aubergine, darkest first
-  ink: '#1E1024',
-  ink800: '#261630',
-  ink700: '#2F1B3A',
-  ink600: '#3E2449',
-  ink500: '#513260',
+  // base — the near-black indigo of a panel gutter
+  ink: '#141222',
+  ink800: '#1C1930',
+  ink700: '#262240',
+  ink600: '#342E56',
+  ink500: '#443C6E',
 
-  // surfaces
-  paper: '#F6EEE2',
-  paperSoft: '#FCF8F0',
-  paperDim: '#E8DAC6',
+  // surfaces — newsprint
+  paper: '#FFF6E2',
+  paperSoft: '#FFFCF2',
+  paperDim: '#F0E2BE',
 
-  // reward / primary — saffron
-  gold: '#E2A13C',
-  goldLight: '#EFB458',
-  goldDark: '#B87C24',
+  // reward / primary — comic yellow
+  gold: '#FFC72C',
+  goldLight: '#FFD861',
+  goldDark: '#C68F00',
 
-  // semantic feedback — pistachio and rose madder
-  jade: '#4F8046',
-  jadeLight: '#93BE72',
-  jadeDark: '#35592F',
-  /** For large filled panels — a grass green that size reads loud beside plum. */
-  jadeDeep: '#3F6B3A',
-  rose: '#BC4F67',
-  roseLight: '#DE8496',
-  roseDark: '#8E3549',
+  // semantic feedback — flat green and red
+  jade: '#2FBF6B',
+  jadeLight: '#5FDC96',
+  jadeDark: '#178246',
+  /** For large filled panels, where the full-strength green shouts. */
+  jadeDeep: '#219B57',
+  rose: '#EF3E36',
+  roseLight: '#FF7A72',
+  roseDark: '#A81F19',
 
-  // streak — marigold
-  flame: '#EF8F4A',
-  flameLight: '#F8B27C',
+  // streak
+  flame: '#FF7A1A',
+  flameLight: '#FFA45C',
 
   // text
-  cream: '#F6EEE2',
+  cream: '#FFF6E2',
   white: '#FFFFFF',
 } as const;
 

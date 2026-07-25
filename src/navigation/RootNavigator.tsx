@@ -18,7 +18,7 @@ export function RootNavigator() {
   const authed = useAuthStore(isAuthed);
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: '#1E1024' } }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: '#141222' } }}>
       {!authed ? (
         <Stack.Screen name="Login" component={LoginScreen} />
       ) : !onboarded ? (
