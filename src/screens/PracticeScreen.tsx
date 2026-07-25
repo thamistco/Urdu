@@ -176,8 +176,11 @@ export function PracticeScreen() {
                 accessibilityLabel={`${k} — ${TAB_TOTAL[k]} items`}
               >
                 <View
-                  className="items-center rounded-xl py-2"
-                  style={{ backgroundColor: tab === k ? withAlpha(palette.gold, 0.2) : 'transparent' }}
+                  className="items-center justify-center rounded-xl"
+                  style={{
+                    minHeight: 44,
+                    backgroundColor: tab === k ? withAlpha(palette.gold, 0.2) : 'transparent',
+                  }}
                 >
                   <Bold
                     className="text-xs capitalize"
@@ -192,7 +195,7 @@ export function PracticeScreen() {
           {/* The focus ring is drawn on the wrapper in the app's own gold — the
               browser's default white outline sat outside the palette. */}
           <View
-            className="mb-5 flex-row items-center gap-2 rounded-2xl bg-ink-700 px-3.5 py-2.5"
+            className="mb-5 flex-row items-center gap-2 rounded-2xl bg-ink-700 px-3.5"
             style={{
               borderWidth: 1,
               borderColor: searchFocused ? palette.gold : withAlpha(palette.white, 0.1),
@@ -210,7 +213,7 @@ export function PracticeScreen() {
               autoCapitalize="none"
               accessibilityLabel="Search practice content"
               style={[
-                { flex: 1, color: palette.cream, fontFamily: 'PublicSans', fontSize: 14, paddingVertical: 2 },
+                { flex: 1, color: palette.cream, fontFamily: 'PublicSans', fontSize: 14, paddingVertical: 13 },
                 // react-native-web only; not in the RN style types
                 { outlineStyle: 'none' } as object,
               ]}

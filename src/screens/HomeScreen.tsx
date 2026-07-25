@@ -137,6 +137,7 @@ export function HomeScreen() {
   const currentLesson = findLesson(currentId);
   const currentUnit = UNITS.find((u) => u.lessons.some((l) => l.id === currentId));
   const currentLevel: Level = currentUnit?.level ?? 'beginner';
+  const finished = LESSON_ORDER.every((id) => store.completedLessons[id]);
 
   // The course is long. Only the stage you are on is expanded; the others
   // collapse to a progress line you can open when you want to look ahead.
@@ -217,10 +218,16 @@ export function HomeScreen() {
             <Pressable
               onPress={() => {
                 feedback.tap();
-                nav.navigate('Lesson', { lessonId: currentLesson.id });
+                // Once the path is finished there is no "next" lesson — the
+                // course becomes its review queue.
+                nav.navigate('Lesson', { lessonId: finished ? 'practice-review' : currentLesson.id });
               }}
               accessibilityRole="button"
-              accessibilityLabel={`Continue: ${currentLesson.title}. ${currentLesson.subtitle}`}
+              accessibilityLabel={
+                finished
+                  ? 'Course complete. Open your daily review.'
+                  : `Continue: ${currentLesson.title}. ${currentLesson.subtitle}`
+              }
               style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
             >
               <View
@@ -234,17 +241,23 @@ export function HomeScreen() {
                   className="h-12 w-12 items-center justify-center rounded-full"
                   style={{ backgroundColor: withAlpha(palette.gold, 0.22) }}
                 >
-                  <Illustration name={lessonIconName(currentLesson.kind, currentLesson.topic)} tile={false} size={26} />
+                  <Illustration
+                    name={finished ? 'medal' : lessonIconName(currentLesson.kind, currentLesson.topic)}
+                    tile={false}
+                    size={26}
+                  />
                 </View>
                 <View className="flex-1">
                   <Eyebrow style={{ color: palette.gold }}>
-                    {store.completedLessons[LESSON_ORDER[0]] ? 'Continue' : 'Start here'}
+                    {finished ? 'All 233 lessons done' : store.completedLessons[LESSON_ORDER[0]] ? 'Continue' : 'Start here'}
                   </Eyebrow>
-                  <Bold className="mt-0.5 text-[15px]">{currentLesson.title}</Bold>
+                  <Bold className="mt-0.5 text-[15px]">
+                    {finished ? 'Keep it warm' : currentLesson.title}
+                  </Bold>
                   <Txt className="text-xs text-paper/55">
-                    {currentUnit ? currentUnit.title.replace(/ · .*/, '') : currentLesson.subtitle}
-                    {' · '}
-                    {currentLesson.subtitle}
+                    {finished
+                      ? 'The course is yours — daily review keeps it that way.'
+                      : `${currentUnit ? currentUnit.title.replace(/ · .*/, '') : currentLesson.subtitle} · ${currentLesson.subtitle}`}
                   </Txt>
                 </View>
                 <Txt style={{ color: palette.gold, fontSize: 20 }}>›</Txt>
@@ -290,7 +303,8 @@ export function HomeScreen() {
           </View>
         </Reveal>
 
-        {/* jump-ahead hint */}
+        {/* jump-ahead hint — pointless once there is nothing left to jump to */}
+        {!finished && (
         <Reveal delay={150}>
           <View
             className="mb-1 flex-row items-center gap-2 rounded-xl px-3 py-2"
@@ -302,6 +316,7 @@ export function HomeScreen() {
             </Txt>
           </View>
         </Reveal>
+        )}
 
         {/* the path, grouped into course stages */}
         {LEVEL_ORDER.map((lvl: Level) => {
