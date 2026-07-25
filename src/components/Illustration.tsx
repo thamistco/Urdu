@@ -77,7 +77,7 @@ function SwatchTile({ color, size, ring }: { color: string; size: number; ring?:
 
 // ---- content → art mappings ---------------------------------------------
 
-const WORD_ICON: Record<string, IconName> = {
+export const WORD_ICON: Record<string, IconName> = {
   'w-paani': 'droplet', 'w-kitaab': 'book', 'w-ghar': 'house', 'w-dil': 'heart',
   'w-naam': 'tag', 'w-dost': 'handshake', 'w-kaam': 'briefcase', 'w-waqt': 'clock',
   'w-maan': 'woman', 'w-baap': 'man', 'w-behen': 'girl', 'w-bhai': 'boy',
@@ -92,12 +92,12 @@ const WORD_ICON: Record<string, IconName> = {
   'w-maaf': 'handHeart', 'w-khush': 'smile',
 };
 
-const NUMERALS: Record<string, string> = {
+export const NUMERALS: Record<string, string> = {
   'w-ek': '۱', 'w-do': '۲', 'w-teen': '۳', 'w-chaar': '۴',
   'w-paanch': '۵', 'w-chhe': '۶', 'w-saat': '۷', 'w-aath': '۸',
 };
 
-const COLOURS: Record<string, { color: string; ring?: boolean }> = {
+export const COLOURS: Record<string, { color: string; ring?: boolean }> = {
   'w-laal': { color: '#E5484D' }, 'w-neela': { color: '#3E7CB1' },
   'w-hara': { color: '#2E8B75' }, 'w-peela': { color: '#E8A33D' },
   'w-kaala': { color: '#15181C', ring: true }, 'w-safed': { color: '#F4EBD9', ring: true },
