@@ -40,9 +40,33 @@ const MIME = {
   '.ico': 'image/x-icon', '.ttf': 'font/ttf', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg', '.png': 'image/png',
 };
 
+/**
+ * CI bakes the deploy's base path (`/<repo-name>`) into the export before this
+ * check runs, so index.html asks for `/Urdu/_expo/static/js/...`, not
+ * `/_expo/static/js/...`. This server has no subpath — it serves `dist/`
+ * straight from `/` — so the first, subpath-prefixed lookup always 404s and
+ * fell back to index.html. The browser then tried to *execute* that HTML as
+ * the script it had asked for: `SyntaxError: Unexpected token '<'`, on every
+ * single request, which is why the very first navigation failed and nothing
+ * downstream ever ran. Not hardcoding the repo name here — trying the request
+ * both as given and with its first path segment stripped covers any base path
+ * generically, without this script needing to know what that segment is.
+ */
+function resolveAsset(url) {
+  const clean = decodeURIComponent(url.split('?')[0]);
+  const direct = path.join(DIST, clean);
+  if (fs.existsSync(direct) && fs.statSync(direct).isFile()) return direct;
+
+  const parts = clean.split('/').filter(Boolean);
+  if (parts.length > 1) {
+    const stripped = path.join(DIST, ...parts.slice(1));
+    if (fs.existsSync(stripped) && fs.statSync(stripped).isFile()) return stripped;
+  }
+  return path.join(DIST, 'index.html');
+}
+
 const server = http.createServer((req, res) => {
-  let p = path.join(DIST, decodeURIComponent(req.url.split('?')[0]));
-  if (!fs.existsSync(p) || fs.statSync(p).isDirectory()) p = path.join(DIST, 'index.html');
+  const p = resolveAsset(req.url);
   res.writeHead(200, { 'Content-Type': MIME[path.extname(p)] || 'application/octet-stream' });
   fs.createReadStream(p).pipe(res);
 });
