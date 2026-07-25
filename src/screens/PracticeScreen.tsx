@@ -111,7 +111,7 @@ export function PracticeScreen() {
 
   return (
     <View className="flex-1 bg-ink">
-      <Screen>
+      <Screen scene="forest">
         <Reveal>
           <SafeAreaView edges={['top']}>
             <Eyebrow style={{ color: palette.gold }}>Practice</Eyebrow>

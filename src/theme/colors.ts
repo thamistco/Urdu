@@ -6,27 +6,34 @@
  * the earlier flat "comic" palette with something painterly rather than
  * printed — gradients and soft glow instead of hard ink outlines.
  *
- * Still grounded in the same rules that made the comic version legible:
- *  - The ground stays dark enough for long evening sessions — this is a dusky
- *    plum, not daylight orange, so light text still sits comfortably on it.
+ * The base was originally a dusky plum-violet, and it read as exactly the
+ * thing it was trying not to be: the stock "twilight synthwave" gradient every
+ * AI image generator defaults to. Real sunset scenery — the Alto's Adventure /
+ * Journey reference this was built from — shades dark through warm brown and
+ * oxblood, not violet, so the base moved there instead: an espresso-black
+ * ground shading toward burnt orange, no purple anywhere in the ramp.
+ *
+ * Still grounded in the same rules that made the earlier versions legible:
+ *  - The ground stays dark enough for long evening sessions.
  *  - Warm cream/sand as the reading surface, for the same reason newsprint
  *    worked: high legibility for the Nastaliq script.
  *  - Sunset orange reserved for reward + primary actions, so it stays the
  *    loudest thing on screen rather than being spent everywhere.
- *  - Green = correct, coral-red = incorrect, tuned warmer to sit inside the
- *    same sunset family rather than reading as a colder, unrelated palette.
+ *  - Green = correct, coral-red = incorrect, tuned warm to sit inside the same
+ *    family rather than reading as a colder, unrelated palette.
  *
  * Every consumer references these by name (`palette.gold`, `palette.ink`, …),
  * so re-theming the whole app is just changing the hex values here.
  */
 
 export const palette = {
-  // base — a dusky twilight plum, the sky just after the sun drops
-  ink: '#241B3A',
-  ink800: '#2E2247',
-  ink700: '#3B2C5C',
-  ink600: '#4A3872',
-  ink500: '#5C4890',
+  // base — a warm espresso-black, the ground just after the sun drops.
+  // Chosen over the deep purple it replaces specifically to avoid violet.
+  ink: '#211712',
+  ink800: '#2C1F17',
+  ink700: '#3D2A1E',
+  ink600: '#523822',
+  ink500: '#6B4A2B',
 
   // surfaces — warm sand, lit like the last light on the horizon
   paper: '#FFEEDD',
@@ -56,6 +63,20 @@ export const palette = {
   // text
   cream: '#FFEEDD',
   white: '#FFFFFF',
+
+  /**
+   * The misty-forest family — a second scenery, not a second theme.
+   *
+   * Sourced from a real "into the woods" reference palette (fog, moss, pine),
+   * used by `LatticeBackground`'s `scene="forest"` for sections that want a
+   * change of place rather than a change of mood: the sunset stays the app's
+   * one identity, this is scenery variety within it. Warm gold light still
+   * filters through — the point was to mix the orange in, not replace it.
+   */
+  mossDeep: '#262B15',
+  mossDark: '#464B37',
+  mossCharcoal: '#3F3F3F',
+  mossLight: '#A9B39C',
 } as const;
 
 /** Opacity-tinted helpers for RN (no `/opacity` shorthand at runtime). */

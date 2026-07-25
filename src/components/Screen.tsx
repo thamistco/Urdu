@@ -22,6 +22,7 @@ export function Screen({
   children,
   scroll = true,
   lattice = true,
+  scene,
   padded = true,
   contentClassName = '',
   scrollRef,
@@ -29,6 +30,9 @@ export function Screen({
   children: ReactNode;
   scroll?: boolean;
   lattice?: boolean;
+  /** Which scenery to show — defaults to the sunset every other screen uses.
+   *  Pass 'forest' for a section that wants a change of place. */
+  scene?: 'sunset' | 'forest';
   padded?: boolean;
   contentClassName?: string;
   /** For callers that need to move the view themselves — the lesson scrolls to
@@ -40,7 +44,7 @@ export function Screen({
   return (
     <View className="flex-1 bg-ink">
       <StatusBar barStyle="light-content" />
-      {lattice && <LatticeBackground />}
+      {lattice && <LatticeBackground scene={scene} />}
       <SafeAreaView className="flex-1" edges={['top', 'left', 'right']}>
         {scroll ? (
           <ScrollView

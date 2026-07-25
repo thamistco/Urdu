@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Screen } from '../components/Screen';
@@ -11,8 +12,34 @@ import { useProgressStore } from '../store/useProgressStore';
 
 export function AchievementsScreen() {
   const nav = useNavigation();
-  const metrics = useProgressStore((s) => s.metrics());
+  /**
+   * `metrics()` builds a fresh object on every call, so selecting it directly
+   * — `useProgressStore((s) => s.metrics())` — handed React's
+   * useSyncExternalStore a snapshot that was never equal to the last one, on
+   * *every* render, not just on real changes. It re-rendered forever and
+   * crashed the screen (React error #185, "Maximum update depth exceeded").
+   * Selecting the primitive fields individually keeps each subscription
+   * stable; only this component recomputes the derived object, in a memo.
+   */
+  const completedLessons = useProgressStore((s) => s.completedLessons);
+  const streak = useProgressStore((s) => s.streak);
+  const totalXp = useProgressStore((s) => s.totalXp);
+  const learnedWords = useProgressStore((s) => s.learnedWords);
+  const learnedLetters = useProgressStore((s) => s.learnedLetters);
+  const perfectLessons = useProgressStore((s) => s.perfectLessons);
   const achieved = useProgressStore((s) => s.achieved);
+
+  const metrics = useMemo(
+    () => ({
+      lessonsCompleted: Object.keys(completedLessons).length,
+      streak,
+      totalXp,
+      wordsLearned: learnedWords.length,
+      lettersLearned: learnedLetters.length,
+      perfectLessons,
+    }),
+    [completedLessons, streak, totalXp, learnedWords, learnedLetters, perfectLessons]
+  );
 
   return (
     <View className="flex-1 bg-ink">
