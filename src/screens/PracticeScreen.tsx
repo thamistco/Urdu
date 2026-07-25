@@ -15,7 +15,9 @@ import { feedback } from '../lib/feedback';
 import { dueCount } from '../lib/srs';
 import { strength } from '../lib/srs';
 import { useProgressStore } from '../store/useProgressStore';
-import { TOPICS, wordsByTopic } from '../data/words';
+import { TOPICS, wordsByTopic, LEVEL_META, LEVEL_ORDER, type Level } from '../data/words';
+import { GRAMMAR } from '../data/grammar';
+import { PASSAGES } from '../data/sentences';
 import type { RootStackParamList } from '../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -90,32 +92,120 @@ export function PracticeScreen() {
           </Reveal>
         )}
 
+        {/* grammar */}
+        <Reveal delay={170}>
+          <Eyebrow className="mb-3 text-paper/50">Grammar</Eyebrow>
+          <View className="mb-6 gap-2.5">
+            {GRAMMAR.map((g) => (
+              <Pressable
+                key={g.id}
+                onPress={() => go(`practice-grammar-${g.id}`)}
+                style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
+              >
+                <View className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-ink-700 px-4 py-3.5">
+                  <View
+                    className="rounded-lg px-2 py-1"
+                    style={{ backgroundColor: withAlpha(LEVEL_META[g.level].color, 0.18) }}
+                  >
+                    <Bold style={{ color: LEVEL_META[g.level].color }} className="text-[10px]">
+                      {LEVEL_META[g.level].tag}
+                    </Bold>
+                  </View>
+                  <View className="flex-1">
+                    <Bold className="text-[15px]" style={{ writingDirection: 'ltr', textAlign: 'left' }}>
+                      {g.title}
+                    </Bold>
+                    <Txt
+                      className="text-xs text-paper/55"
+                      style={{ writingDirection: 'ltr', textAlign: 'left' }}
+                    >
+                      {g.summary}
+                    </Txt>
+                  </View>
+                  <Txt className="text-paper/35">›</Txt>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        </Reveal>
+
+        {/* reading */}
+        <Reveal delay={185}>
+          <Eyebrow className="mb-3 text-paper/50">Reading</Eyebrow>
+          <View className="mb-6 gap-2.5">
+            {PASSAGES.map((p) => (
+              <Pressable
+                key={p.id}
+                onPress={() => go(`practice-reading-${p.id}`)}
+                style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
+              >
+                <View className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-ink-700 px-4 py-3.5">
+                  <Txt style={{ fontSize: 20 }}>📖</Txt>
+                  <View className="flex-1">
+                    <Bold className="text-[15px]">{p.title}</Bold>
+                    <Txt className="text-xs text-paper/55">
+                      {p.lines.length} lines · {LEVEL_META[p.level].title}
+                    </Txt>
+                  </View>
+                  <Txt className="text-paper/35">›</Txt>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        </Reveal>
+
         {/* topics */}
         <Reveal delay={200}>
-          <Eyebrow className="mb-3 text-paper/50">Drill a topic</Eyebrow>
+          <Eyebrow className="mb-3 text-paper/50">Drill a topic · {TOPICS.length} sets</Eyebrow>
         </Reveal>
-        <View className="flex-row flex-wrap justify-between">
-          {TOPICS.map((t, i) => {
-            const words = wordsByTopic(t.id);
-            const known = words.filter((w) => learnedWords.includes(w.id)).length;
-            return (
-              <Reveal key={t.id} delay={220 + i * 30} style={{ width: '48%' }}>
-                <Pressable onPress={() => go(`practice-topic-${t.id}`)} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.97 : 1 }] })}>
-                  <View className="mb-3 rounded-2xl border border-white/10 bg-ink-700 p-4">
-                    <TopicArt topicId={t.id} size={44} />
-                    <Bold className="mt-2 text-sm">{t.title}</Bold>
-                    <Txt className="mt-0.5 text-[11px] text-paper/50">
-                      {known}/{words.length} words
-                    </Txt>
-                    <View className="mt-2">
-                      <ProgressBar progress={words.length ? known / words.length : 0} color={palette.jadeLight} height={5} spring={false} />
-                    </View>
-                  </View>
-                </Pressable>
-              </Reveal>
-            );
-          })}
-        </View>
+        {LEVEL_ORDER.map((lvl: Level) => {
+          const levelTopics = TOPICS.filter((t) => t.level === lvl);
+          if (!levelTopics.length) return null;
+          const meta = LEVEL_META[lvl];
+          return (
+            <View key={lvl} className="mb-2">
+              <View className="mb-2 mt-3 flex-row items-center gap-2">
+                <View className="h-2 w-2 rounded-full" style={{ backgroundColor: meta.color }} />
+                <Bold style={{ color: meta.color }} className="text-xs uppercase tracking-wider">
+                  {meta.tag} · {meta.title}
+                </Bold>
+                <Txt className="text-[11px] text-paper/35">{levelTopics.length} sets</Txt>
+              </View>
+              <View className="flex-row flex-wrap justify-between">
+                {levelTopics.map((t, i) => {
+                  const words = wordsByTopic(t.id);
+                  const known = words.filter((w) => learnedWords.includes(w.id)).length;
+                  return (
+                    <Reveal key={t.id} delay={Math.min(i * 25, 250)} style={{ width: '48%' }}>
+                      <Pressable
+                        onPress={() => go(`practice-topic-${t.id}`)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Practise ${t.title}, ${known} of ${words.length} words learned`}
+                        style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.97 : 1 }] })}
+                      >
+                        <View className="mb-3 rounded-2xl border border-white/10 bg-ink-700 p-4">
+                          <TopicArt topicId={t.id} size={44} />
+                          <Bold className="mt-2 text-sm" numberOfLines={1}>{t.title}</Bold>
+                          <Txt className="mt-0.5 text-[11px] text-paper/50">
+                            {known}/{words.length} words
+                          </Txt>
+                          <View className="mt-2">
+                            <ProgressBar
+                              progress={words.length ? known / words.length : 0}
+                              color={meta.color}
+                              height={5}
+                              spring={false}
+                            />
+                          </View>
+                        </View>
+                      </Pressable>
+                    </Reveal>
+                  );
+                })}
+              </View>
+            </View>
+          );
+        })}
 
         <View className="h-6" />
       </Screen>

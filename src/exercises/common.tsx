@@ -36,6 +36,8 @@ export function Choice({
     <Pressable
       disabled={disabled}
       onPress={onPress}
+      accessibilityRole="button"
+      hitSlop={4}
       style={({ pressed }) => ({
         transform: [{ scale: pressed && !disabled ? 0.97 : 1 }],
         opacity: state === 'muted' ? 0.55 : 1,
@@ -44,7 +46,7 @@ export function Choice({
     >
       <View
         className="items-center justify-center rounded-2xl border px-3 py-4"
-        style={{ borderColor: BORDER[state], backgroundColor: FILL[state], borderWidth: 2 }}
+        style={{ borderColor: BORDER[state], backgroundColor: FILL[state], borderWidth: 2, minHeight: 56 }}
       >
         {children}
       </View>

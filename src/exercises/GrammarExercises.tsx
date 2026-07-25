@@ -119,7 +119,7 @@ export function GrammarDrillExercise({ exercise, showRoman, locked, onGraded }: 
         </Urdu>
         {showRoman ? (
           <Txt style={{ color: palette.ink }} className="mt-1 text-xs opacity-55">
-            {drill.promptRoman}
+            {picked ? drill.promptRoman.replace('___', '') .replace(/\s+/g, ' ').trim() : drill.promptRoman}
           </Txt>
         ) : null}
         <Txt style={{ color: palette.ink }} className="mt-2 text-[13px] opacity-70">
