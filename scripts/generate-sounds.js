@@ -39,7 +39,7 @@ function envAt(t, dur, attack, release, decay) {
  * glides and gentle vibrato (organic, breathing quality).
  * note: { freq, start, dur, gain, glideTo?, vibrato?, vibratoDepth?, attack?, release?, decay? }
  */
-function renderNotes(notes, { tail = 0.4, echo = 0.22, echoMs = 130 } = {}) {
+function renderNotes(notes, { tail = 0.4, echo = 0.22, echoMs = 130, level = 1 } = {}) {
   const total = Math.max(...notes.map((n) => n.start + n.dur)) + tail;
   const n = Math.floor(total * SAMPLE_RATE);
   const buf = new Float32Array(n);
@@ -73,10 +73,16 @@ function renderNotes(notes, { tail = 0.4, echo = 0.22, echoMs = 130 } = {}) {
     for (let i = n - 1; i >= d; i--) buf[i] += echo * buf[i - d];
   }
 
-  // normalize gently and soft-clip
+  // Normalise to a common peak, then apply the sound's own level.
+  //
+  // Normalising alone made every cue exactly as loud as every other one, which
+  // quietly undid the whole point of a "subdued" wrong answer: a miss
+  // acknowledged at full volume is a telling-off. `level` is what actually sets
+  // how loud a sound is relative to the others, so it is set deliberately per
+  // sound rather than falling out of how many notes happen to overlap.
   let peak = 0;
   for (let i = 0; i < n; i++) peak = Math.max(peak, Math.abs(buf[i]));
-  const norm = peak > 0 ? 0.62 / peak : 1;
+  const norm = peak > 0 ? (0.62 * level) / peak : 1;
   for (let i = 0; i < n; i++) buf[i] = Math.tanh(buf[i] * norm);
   return buf;
 }
@@ -125,15 +131,17 @@ const SOUNDS = {
       { freq: N.G5, start: 0.22, dur: 0.55, gain: 0.55, ...soft },
       { freq: N.A5, start: 0.34, dur: 0.5, gain: 0.28, ...soft },
     ],
-    { tail: 0.5, echo: 0.24 }
+    { tail: 0.5, echo: 0.24, level: 1 }
   ),
 
-  // Incorrect: low, soft wooden tone gliding gently down a whole step. Calm.
+  // Incorrect: low, soft wooden tone gliding gently down a whole step. Calm,
+  // and noticeably quieter than the correct chime — the miss is acknowledged,
+  // not announced.
   incorrect: renderNotes(
     [
       { freq: N.A3, glideTo: N.G3, start: 0.0, dur: 0.42, gain: 0.5, attack: 0.02, release: 0.2, decay: 2.6, vibratoDepth: 0.002 },
     ],
-    { tail: 0.35, echo: 0.16, echoMs: 110 }
+    { tail: 0.35, echo: 0.16, echoMs: 110, level: 0.55 }
   ),
 
   // Level-up: a slow wind-chime settle up the pentatonic.
@@ -146,7 +154,7 @@ const SOUNDS = {
       { freq: N.C6, start: 0.56, dur: 0.8, gain: 0.5, ...soft },
       { freq: N.D6, start: 0.7, dur: 0.9, gain: 0.32, ...soft },
     ],
-    { tail: 0.8, echo: 0.28 }
+    { tail: 0.8, echo: 0.28, level: 1 }
   ),
 
   // Streak: warm two-note lift A4 → E5.
@@ -155,13 +163,15 @@ const SOUNDS = {
       { freq: N.A4, start: 0.0, dur: 0.45, gain: 0.45, ...soft },
       { freq: N.E5, start: 0.12, dur: 0.6, gain: 0.5, ...soft },
     ],
-    { tail: 0.5, echo: 0.22 }
+    { tail: 0.5, echo: 0.22, level: 0.9 }
   ),
 
   // Tap: a barely-there soft blip.
   tap: renderNotes(
     [{ freq: N.C5, start: 0.0, dur: 0.09, gain: 0.22, attack: 0.006, release: 0.05, decay: 3.5 }],
-    { tail: 0.06, echo: 0 }
+    // a UI tick fires on every single press; it should sit well under the
+    // sounds that actually mean something
+    { tail: 0.06, echo: 0, level: 0.4 }
   ),
 };
 

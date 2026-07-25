@@ -44,7 +44,9 @@ underneath.
   screen on a near-black ground, with newsprint cream as the reading surface.
   Yellow is reserved for reward and primary actions so it keeps its meaning;
   green and red carry correct and incorrect. Feedback sounds stay soft
-  pentatonic tones — the colour is loud, the audio isn't.
+  pentatonic tones — the colour is loud, the audio isn't. Correct rises
+  (C5→G5), incorrect falls a whole step low down and plays 4.5 dB quieter, so
+  a miss is acknowledged rather than announced.
 - **Jump ahead** — any lesson is tappable; locked ones stay marked.
 
 ## Design language
