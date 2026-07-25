@@ -53,6 +53,15 @@ const sentences = load('src/data/sentences.ts');
 const units = load('src/data/units.ts');
 const masks = load('src/data/glyphMasks.ts');
 
+/** Icon names, read out of the art registry (a .tsx file we do not transpile). */
+const MASK_ICON_NAMES = new Set(
+  (fs.readFileSync(path.join(ROOT, 'src/art/icons.tsx'), 'utf8')
+    .split('export const ICONS')[1] || '')
+    .split('};')[0]
+    .match(/([A-Za-z_][A-Za-z0-9_]*)\s*:/g)
+    ?.map((m) => m.replace(':', '').trim()) ?? []
+);
+
 const { WORDS, TOPICS, PHRASES } = words;
 const { LETTERS, POSITIONS } = letters;
 const { GRAMMAR } = grammar;
@@ -107,6 +116,13 @@ for (const w of WORDS) {
 for (const s of SENTENCES) {
   for (const t of s.words) if (!URDU.test(t)) bad(`sentence ${s.id}: non-Urdu tile "${t}"`);
   if (s.concept && !GRAMMAR.some(g => g.id === s.concept)) bad(`sentence ${s.id}: unknown concept ${s.concept}`);
+  // The Roman track reads a per-word transliteration straight off this pairing
+  // (see lib/translit.ts), so the two spellings of a sentence have to line up
+  // word for word. One extra Roman token silently shifts every word after it
+  // onto the wrong tile.
+  const romanTokens = s.roman.trim().split(/\s+/);
+  if (romanTokens.length !== s.words.length)
+    bad(`sentence ${s.id}: ${s.words.length} words but ${romanTokens.length} roman tokens ("${s.roman}")`);
 }
 for (const d of DIALOGUES)
   for (const l of d.lines) {
@@ -145,6 +161,24 @@ for (const t of TOPICS) {
   const n = WORDS.filter(w => w.topic === t.id).length;
   if (n < 4) bad(`topic ${t.id} has only ${n} words (lessons need 4+)`);
 }
+
+// --- letters: no two share a picture or an example word --------------------
+// The alif card showed a red apple for انار, the same glyph the seen card used
+// for سیب — so the picture said "apple" on the letter whose whole job is to
+// say "pomegranate". A shared picture is always either a bug or a confusion.
+const byPicture = {};
+const byWord = {};
+for (const l of LETTERS) {
+  const pic = l.icon || l.emoji;
+  (byPicture[pic] = byPicture[pic] || []).push(l.id);
+  (byWord[l.word] = byWord[l.word] || []).push(l.id);
+}
+for (const [pic, ids] of Object.entries(byPicture))
+  if (ids.length > 1) bad(`letters ${ids.join(' and ')} share the picture ${pic}`);
+for (const [word, ids] of Object.entries(byWord))
+  if (ids.length > 1) bad(`letters ${ids.join(' and ')} share the example word ${word}`);
+for (const l of LETTERS)
+  if (l.icon && !MASK_ICON_NAMES.has(l.icon)) bad(`letter ${l.id}: unknown icon "${l.icon}"`);
 
 // --- tracing masks cover every letter and form -----------------------------
 for (const l of LETTERS)

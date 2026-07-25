@@ -13,6 +13,7 @@ import { LETTERS } from './letters';
 import { GRAMMAR } from './grammar';
 import { PASSAGES, DIALOGUES } from './sentences';
 import type { Level } from './words';
+import type { LearnTrack } from '../store/useSettingsStore';
 
 export type LessonKind =
   | 'letters'
@@ -44,6 +45,9 @@ export type Lesson = {
   level?: Level;
   xp: number;
   size: number;
+  /** what this lesson is called on the Roman track — see `Unit.romanTitle` */
+  romanTitle?: string;
+  romanSubtitle?: string;
 };
 
 export type Unit = {
@@ -53,6 +57,17 @@ export type Unit = {
   color: string;
   level: Level;
   lessons: Lesson[];
+  /**
+   * What this unit is called on the Roman track.
+   *
+   * The first five units are named after the letter groups they teach, because
+   * that is the spine of a script-first course: "First Faces", "The
+   * Non-Joiners", "Teeth & Emphasis". Take the letters out for a learner who
+   * asked not to be taught them and the names describe nothing that is left in
+   * the unit. These name what actually remains.
+   */
+  romanTitle?: string;
+  romanSubtitle?: string;
 };
 
 const lettersOfGroup = (g: number) => LETTERS.filter((l) => l.group === g).map((l) => l.id);
@@ -96,6 +111,8 @@ export const UNITS: Unit[] = [
     id: 'u1', level: 'beginner', color: GOLD,
     title: 'Unit 1 · First Faces',
     subtitle: 'Your first letters and their four positions',
+    romanTitle: 'Unit 1 · First Words',
+    romanSubtitle: 'Everyday words, and how to greet someone',
     lessons: [
       L(1, 'Meet the letters', 'alif · be · pe · te · Te'),
       V('first-words', 'First words', 'Everyday vocabulary', 15, 7),
@@ -108,6 +125,8 @@ export const UNITS: Unit[] = [
     id: 'u2', level: 'beginner', color: JADE,
     title: 'Unit 2 · Hooks & Throats',
     subtitle: 'The jeem family, and saying who you are',
+    romanTitle: 'Unit 2 · You and Yours',
+    romanSubtitle: 'Family, pronouns and your first sentences',
     lessons: [
       L(2, 'The jeem family', 'jeem · che · he · khe'),
       V('family', 'Family', 'The people you love'),
@@ -121,6 +140,8 @@ export const UNITS: Unit[] = [
     id: 'u3', level: 'beginner', color: ROSE,
     title: 'Unit 3 · The Non-Joiners',
     subtitle: 'Letters that break the flow',
+    romanTitle: 'Unit 3 · At the Table',
+    romanSubtitle: 'Food, colours, and how words agree',
     lessons: [
       L(3, 'Standing alone', 'daal · re · ze and friends'),
       V('food', 'Food & drink', 'From chai to roti'),
@@ -134,6 +155,8 @@ export const UNITS: Unit[] = [
     id: 'u4', level: 'beginner', color: GOLD,
     title: 'Unit 4 · Teeth & Emphasis',
     subtitle: 'seen, sheen and the heavy letters',
+    romanTitle: 'Unit 4 · Counting & Home',
+    romanSubtitle: 'Numbers, and the things around you',
     lessons: [
       L(4, 'The teeth', 'seen · sheen · swaad · zwaad'),
       V('numbers', 'Numbers', 'Zero to ten'),
@@ -146,13 +169,15 @@ export const UNITS: Unit[] = [
     id: 'u5', level: 'beginner', color: JADE,
     title: 'Unit 5 · Building Words',
     subtitle: 'kaaf, gaaf and the finishers',
+    romanTitle: 'Unit 5 · Out and About',
+    romanSubtitle: 'Nature, and phrases you will actually say',
     lessons: [
       L(6, 'k, q and g', 'fe · qaaf · kaaf · gaaf'),
       V('nature', 'Nature', 'Sky, water and earth'),
       L(7, 'The finishers', 'laam · meem · noon · waaw'),
       L(8, 'The h family', 'the two he’s, hamza and ye'),
       P('Everyday phrases', 'Speak, don’t just read'),
-      REV('Script review', 'Every letter so far', 40, 12),
+      { ...REV('Script review', 'Every letter so far', 40, 12), romanTitle: 'Unit review', romanSubtitle: 'Everything so far' },
     ],
   },
   {
@@ -167,7 +192,7 @@ export const UNITS: Unit[] = [
       D('d-1', 'Talk: Meeting someone', 'Hello, and your name?'),
       R('r-7', 'Reading: Colours around me', 'Naming what you see'),
       D('d-2', 'Talk: Tea or coffee?', 'Being offered something'),
-      REV('Beginner review', 'Script, words and sentences', 40, 12),
+      { ...REV('Beginner review', 'Script, words and sentences', 40, 12), romanSubtitle: 'Words, grammar and sentences' },
     ],
   },
 
@@ -583,10 +608,42 @@ export const findLesson = (id: string) => ALL_LESSONS.find((l) => l.id === id);
 export const LESSON_ORDER: string[] = ALL_LESSONS.map((l) => l.id);
 export const unitsByLevel = (level: Level) => UNITS.filter((u) => u.level === level);
 
+/**
+ * The path as a given track sees it.
+ *
+ * Someone on the Roman track has said they are not learning the alphabet, so
+ * showing them thirteen lessons of letterforms and tracing — and blocking the
+ * vocabulary behind them, since the path unlocks in order — is the app
+ * ignoring the only choice it asked them to make. Those lessons are dropped
+ * from the path entirely rather than hidden, so the sequence stays contiguous
+ * and the next lesson is always the next one they can actually do.
+ *
+ * Nothing is deleted: `UNITS` remains the whole course, so switching back to
+ * Script or Both restores the letters with whatever progress was made on them.
+ */
+export const isScriptLesson = (l: Lesson) => l.kind === 'letters';
+
+export function unitsForTrack(track: LearnTrack): Unit[] {
+  if (track !== 'roman') return UNITS;
+  return UNITS.map((u) => ({
+    ...u,
+    title: u.romanTitle ?? u.title,
+    subtitle: u.romanSubtitle ?? u.subtitle,
+    lessons: u.lessons
+      .filter((l) => !isScriptLesson(l))
+      .map((l) => ({ ...l, title: l.romanTitle ?? l.title, subtitle: l.romanSubtitle ?? l.subtitle })),
+  })).filter((u) => u.lessons.length > 0);
+}
+
+export function lessonOrderForTrack(track: LearnTrack): string[] {
+  return unitsForTrack(track).flatMap((u) => u.lessons.map((l) => l.id));
+}
+
 /** Lessons the user must finish before this one unlocks (the preceding lesson). */
-export function previousLessonId(id: string): string | undefined {
-  const i = LESSON_ORDER.indexOf(id);
-  return i > 0 ? LESSON_ORDER[i - 1] : undefined;
+export function previousLessonId(id: string, track: LearnTrack = 'both'): string | undefined {
+  const order = lessonOrderForTrack(track);
+  const i = order.indexOf(id);
+  return i > 0 ? order[i - 1] : undefined;
 }
 
 /**

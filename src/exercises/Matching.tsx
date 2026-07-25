@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { Choice, Question, palette } from './common';
-import { Urdu, Txt, Bold, urduLine } from '../components/Text';
+import { Choice, Question, palette, type ChoiceState } from './common';
+import { Txt, Bold } from '../components/Text';
+import { Lexeme } from '../components/Lexeme';
 import { WordArt } from '../components/Illustration';
 import { feedback } from '../lib/feedback';
 import type { ExerciseProps, Exercise } from './types';
@@ -10,7 +11,7 @@ type MatchEx = Extract<Exercise, { kind: 'matching' }>;
 const shuffle = <T,>(a: T[]) => [...a].sort(() => Math.random() - 0.5);
 
 /** Drops-style matching board: pair each Urdu word with its picture. */
-export function MatchingExercise({ exercise, showRoman, locked, onGraded }: ExerciseProps<MatchEx>) {
+export function MatchingExercise({ exercise, track, locked, onGraded }: ExerciseProps<MatchEx>) {
   const { words } = exercise;
   const left = useMemo(() => shuffle(words), [words]);
   const right = useMemo(() => shuffle(words), [words]);
@@ -64,10 +65,13 @@ export function MatchingExercise({ exercise, showRoman, locked, onGraded }: Exer
     tryPair(selLeft, next);
   };
 
-  const stateFor = (id: string, side: 'l' | 'r'): 'idle' | 'correct' | 'wrong' | 'muted' => {
+  const stateFor = (id: string, side: 'l' | 'r'): ChoiceState => {
     if (matched.has(id)) return 'correct';
     const sel = side === 'l' ? selLeft : selRight;
     if (wrong && wrong.includes(id) && sel === id) return 'wrong';
+    // A tile you have tapped but not yet paired had no state of its own, so
+    // the board looked identical before and after the first tap.
+    if (sel === id) return 'selected';
     return 'idle';
   };
 
@@ -83,8 +87,7 @@ export function MatchingExercise({ exercise, showRoman, locked, onGraded }: Exer
               disabled={matched.has(w.id) || done || locked}
               onPress={() => pickLeft(w.id)}
             >
-              <Urdu style={{ fontSize: 26, color: palette.paper, lineHeight: urduLine(26) }}>{w.urdu}</Urdu>
-              {showRoman ? <Txt className="text-[11px] text-paper/45">{w.roman}</Txt> : null}
+              <Lexeme urdu={w.urdu} roman={w.roman} track={track} size={26} />
             </Choice>
           ))}
         </View>

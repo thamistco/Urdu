@@ -1,9 +1,11 @@
 import { LETTERS, getLetter, Letter, PositionKey, POSITIONS } from '../data/letters';
 import { WORDS, getWord, wordsByTopic, Word, PHRASES } from '../data/words';
 import { Lesson } from '../data/units';
-import { getGrammar } from '../data/grammar';
+import { getGrammar, type GrammarConcept, type GrammarDrill } from '../data/grammar';
+import { romanAll } from '../lib/translit';
+import type { LearnTrack } from '../store/useSettingsStore';
 import { SENTENCES, PASSAGES, DIALOGUES, getPassage, getDialogue, type Sentence } from '../data/sentences';
-import { WORD_ICON, NUMERALS, COLOURS } from '../components/Illustration';
+import { WORD_ICON, NUMERALS, COLOURS } from '../data/art';
 import { GLYPH_MASKS } from '../data/glyphMasks';
 import { Exercise, ItemRef } from './types';
 
@@ -166,12 +168,51 @@ function sentenceTilesFor(sentence: Sentence): string[] {
   return shuffle([...sentence.words, ...decoys]);
 }
 
+/**
+ * A sentence-building exercise, or nothing if it cannot be shown on this track.
+ *
+ * On the Roman track the tray has to be Roman, and a tray that is half
+ * transliterated and half Nastaliq is worse than no exercise — so a sentence
+ * whose tiles do not all resolve is skipped and the lesson draws another.
+ * (Every sentence in the course currently resolves; this is what keeps that
+ * true as sentences are added.)
+ */
+function sentenceExercise(sentence: Sentence, track: LearnTrack): Exercise | undefined {
+  const tiles = sentenceTilesFor(sentence);
+  if (track !== 'roman') return { kind: 'sentenceBuild', sentence, tiles };
+  const romanTiles = romanAll(tiles);
+  if (!romanTiles || !romanAll(sentence.words)) return undefined;
+  return { kind: 'sentenceBuild', sentence, tiles, romanTiles };
+}
+
+/** The same, for a grammar drill: its options are inflected forms, and the
+ *  Roman track needs all four of them transliterated or none. */
+function grammarDrillExercise(
+  concept: GrammarConcept,
+  drill: GrammarDrill,
+  track: LearnTrack
+): Exercise | undefined {
+  if (track !== 'roman') return { kind: 'grammarDrill', concept, drill };
+  const romanOptions = romanAll(drill.options);
+  if (!romanOptions) return undefined;
+  return { kind: 'grammarDrill', concept, drill, romanOptions };
+}
+
 // ---- lesson composition --------------------------------------------------
 
-export function buildLessonExercises(lesson: Lesson, reviewRefs: ItemRef[] = []): Exercise[] {
+export function buildLessonExercises(
+  lesson: Lesson,
+  reviewRefs: ItemRef[] = [],
+  track: LearnTrack = 'both'
+): Exercise[] {
   const exercises: Exercise[] = [];
+  // On the Roman track the learner has said they are not learning the
+  // alphabet. Letter lessons are already off their path, but review can still
+  // surface a letter that was practised before the switch, and a vocabulary
+  // lesson would otherwise close on a spell-it-in-Nastaliq exercise.
+  const teachesScript = track !== 'roman';
 
-  if (lesson.kind === 'letters' && lesson.letterIds) {
+  if (lesson.kind === 'letters' && lesson.letterIds && teachesScript) {
     const letters = lesson.letterIds.map(getLetter).filter(Boolean) as Letter[];
     for (const l of letters) exercises.push(letterExercise(l));
     // one word that features these letters, for context
@@ -211,9 +252,14 @@ export function buildLessonExercises(lesson: Lesson, reviewRefs: ItemRef[] = [])
     const typeable = picks.filter(isTypeable);
     if (typeable[0]) exercises.push({ kind: 'typeWord', word: rand(typeable) });
 
+    // Building a word from letter tiles is a spelling exercise in Nastaliq, so
+    // it belongs only to a learner who is reading it. The Roman track gets
+    // another retrieval instead, rather than one exercise fewer.
     const buildable = picks.filter((w) => Array.from(w.urdu).length <= 5);
-    if (buildable[0]) {
+    if (buildable[0] && teachesScript) {
       exercises.push({ kind: 'wordBuild', word: buildable[0], tiles: buildTilesFor(buildable[0]) });
+    } else if (buildable[0]) {
+      exercises.push(wordExercise(buildable[0], pool, 'recall'));
     }
 
     // Close with a matching board (Drops-style); its four pictures must differ.
@@ -237,10 +283,14 @@ export function buildLessonExercises(lesson: Lesson, reviewRefs: ItemRef[] = [])
     if (c) {
       // teach first, then drill it, then reinforce with matching sentences
       exercises.push({ kind: 'grammarTeach', concept: c });
-      for (const d of c.drills) exercises.push({ kind: 'grammarDrill', concept: c, drill: d });
+      for (const d of c.drills) {
+        const ex = grammarDrillExercise(c, d, track);
+        if (ex) exercises.push(ex);
+      }
       const related = SENTENCES.filter((x) => x.concept === c.id);
       for (const sen of shuffle(related).slice(0, 2)) {
-        exercises.push({ kind: 'sentenceBuild', sentence: sen, tiles: sentenceTilesFor(sen) });
+        const ex = sentenceExercise(sen, track);
+        if (ex) exercises.push(ex);
       }
     }
   }
@@ -248,7 +298,8 @@ export function buildLessonExercises(lesson: Lesson, reviewRefs: ItemRef[] = [])
   if (lesson.kind === 'sentences') {
     const pool = lesson.level ? SENTENCES.filter((x) => x.level === lesson.level) : SENTENCES;
     for (const sen of shuffle(pool.length ? pool : SENTENCES).slice(0, lesson.size)) {
-      exercises.push({ kind: 'sentenceBuild', sentence: sen, tiles: sentenceTilesFor(sen) });
+      const ex = sentenceExercise(sen, track);
+      if (ex) exercises.push(ex);
     }
   }
 
@@ -265,10 +316,10 @@ export function buildLessonExercises(lesson: Lesson, reviewRefs: ItemRef[] = [])
   }
 
   if (lesson.kind === 'review') {
-    const refs = reviewRefs.length ? reviewRefs : fallbackReviewRefs(lesson.size);
+    const refs = reviewRefs.length ? reviewRefs : fallbackReviewRefs(lesson.size, teachesScript);
     for (const ref of refs.slice(0, lesson.size)) {
       if (ref.type === 'letter') {
-        const l = getLetter(ref.id);
+        const l = teachesScript ? getLetter(ref.id) : undefined;
         if (l) exercises.push(letterExercise(l));
       } else {
         const w = getAnyWord(ref.id);
@@ -285,7 +336,7 @@ export function buildLessonExercises(lesson: Lesson, reviewRefs: ItemRef[] = [])
     const woven: Exercise[] = [];
     for (const ref of reviewRefs.slice(0, 2)) {
       if (ref.type === 'letter') {
-        const l = getLetter(ref.id);
+        const l = teachesScript ? getLetter(ref.id) : undefined;
         if (l) woven.push(letterExercise(l));
       } else {
         const w = getAnyWord(ref.id);
@@ -303,10 +354,13 @@ export function buildLessonExercises(lesson: Lesson, reviewRefs: ItemRef[] = [])
 }
 
 /** When nothing is due yet, review draws from the base content so the lesson still runs. */
-function fallbackReviewRefs(n: number): ItemRef[] {
+function fallbackReviewRefs(n: number, withLetters = true): ItemRef[] {
   // Drawn from the early, foundational material rather than the whole 2,000 —
   // a learner with nothing due yet has not met the advanced vocabulary — but
   // sampled, so a second empty review is not the same lesson again.
+  if (!withLetters) {
+    return shuffle(WORDS.slice(0, 120)).slice(0, n).map((w) => ({ id: w.id, type: 'word' }));
+  }
   const letters: ItemRef[] = shuffle(LETTERS.slice(0, 20)).slice(0, Math.ceil(n / 2))
     .map((l) => ({ id: l.id, type: 'letter' }));
   const words: ItemRef[] = shuffle(WORDS.slice(0, 120)).slice(0, Math.floor(n / 2))

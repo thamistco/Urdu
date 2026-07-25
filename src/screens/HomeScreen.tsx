@@ -10,12 +10,14 @@ import { ProgressBar } from '../components/ProgressBar';
 import { Reveal } from '../components/Reveal';
 import { StatChip } from '../components/Stats';
 import { WordArt, Illustration, lessonIconName } from '../components/Illustration';
-import { Display, Heading, Txt, Bold, Eyebrow, Urdu, urduLine } from '../components/Text';
+import { Display, Heading, Txt, Bold, Eyebrow } from '../components/Text';
+import { Lexeme } from '../components/Lexeme';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { levelProgress, levelTitle } from '../lib/gamification';
 import { useProgressStore } from '../store/useProgressStore';
-import { UNITS, Lesson, LESSON_ORDER, findLesson } from '../data/units';
+import { useSettingsStore } from '../store/useSettingsStore';
+import { Lesson, unitsForTrack, findLesson } from '../data/units';
 import { LEVEL_META, LEVEL_ORDER, type Level } from '../data/words';
 import { WORDS } from '../data/words';
 import { DAILY_GOALS } from '../data/achievements';
@@ -30,13 +32,16 @@ const GREETING: Record<string, string> = {
   curious: 'Explore Urdu',
 };
 
+/** `order` is the path as the learner's track sees it — on the Roman track the
+ *  letter lessons are not on it, so the lesson after them unlocks first. */
 function lessonState(
   lessonId: string,
-  completed: Record<string, unknown>
+  completed: Record<string, unknown>,
+  order: string[]
 ): 'done' | 'current' | 'locked' {
   if (completed[lessonId]) return 'done';
-  const idx = LESSON_ORDER.indexOf(lessonId);
-  const prev = LESSON_ORDER[idx - 1];
+  const idx = order.indexOf(lessonId);
+  const prev = order[idx - 1];
   if (idx === 0 || (prev && completed[prev])) return 'current';
   return 'locked';
 }
@@ -118,6 +123,7 @@ function LessonNode({
 export function HomeScreen() {
   const nav = useNavigation<Nav>();
   const store = useProgressStore();
+  const track = useSettingsStore((s) => s.track);
   const regenHearts = useProgressStore((s) => s.regenHearts);
 
   useEffect(() => {
@@ -129,15 +135,20 @@ export function HomeScreen() {
   const dailyRatio = Math.min(1, store.todayXp / goal.xp);
   const word = WORDS[new Date().getDate() % WORDS.length];
 
+  // The path as this learner's track sees it: someone who chose Roman is not
+  // shown — or blocked by — the thirteen lessons of alphabet.
+  const units = useMemo(() => unitsForTrack(track), [track]);
+  const order = useMemo(() => units.flatMap((u) => u.lessons.map((l) => l.id)), [units]);
+
   // The one next thing to do: the first lesson on the path not yet finished.
   const currentId = useMemo(
-    () => LESSON_ORDER.find((id) => !store.completedLessons[id]) ?? LESSON_ORDER[LESSON_ORDER.length - 1],
-    [store.completedLessons]
+    () => order.find((id) => !store.completedLessons[id]) ?? order[order.length - 1],
+    [store.completedLessons, order]
   );
   const currentLesson = findLesson(currentId);
-  const currentUnit = UNITS.find((u) => u.lessons.some((l) => l.id === currentId));
+  const currentUnit = units.find((u) => u.lessons.some((l) => l.id === currentId));
   const currentLevel: Level = currentUnit?.level ?? 'beginner';
-  const finished = LESSON_ORDER.every((id) => store.completedLessons[id]);
+  const finished = order.every((id) => store.completedLessons[id]);
 
   // The course is long. Only the stage you are on is expanded; the others
   // collapse to a progress line you can open when you want to look ahead.
@@ -249,7 +260,11 @@ export function HomeScreen() {
                 </View>
                 <View className="flex-1">
                   <Eyebrow style={{ color: palette.gold }}>
-                    {finished ? 'All 233 lessons done' : store.completedLessons[LESSON_ORDER[0]] ? 'Continue' : 'Start here'}
+                    {finished
+                      ? `All ${order.length} lessons done`
+                      : store.completedLessons[order[0]]
+                      ? 'Continue'
+                      : 'Start here'}
                   </Eyebrow>
                   <Bold className="mt-0.5 text-[15px]">
                     {finished ? 'Keep it warm' : currentLesson.title}
@@ -275,9 +290,9 @@ export function HomeScreen() {
               </Eyebrow>
               <View className="flex-row items-center justify-between gap-2">
                 <View className="flex-1">
-                  <Urdu style={{ fontSize: 28, color: palette.ink, lineHeight: urduLine(28) }}>{word.urdu}</Urdu>
+                  <Lexeme urdu={word.urdu} roman={word.roman} track={track} size={28} color={palette.ink} align="left" />
                   <Txt style={{ color: palette.ink }} className="text-xs opacity-60">
-                    {word.roman} · {word.meaning}
+                    {word.meaning}
                   </Txt>
                 </View>
                 <WordArt word={word} size={46} />
@@ -320,7 +335,7 @@ export function HomeScreen() {
 
         {/* the path, grouped into course stages */}
         {LEVEL_ORDER.map((lvl: Level) => {
-          const levelUnits = UNITS.filter((u) => u.level === lvl);
+          const levelUnits = units.filter((u) => u.level === lvl);
           if (!levelUnits.length) return null;
           const meta = LEVEL_META[lvl];
           const total = levelUnits.reduce((n, u) => n + u.lessons.length, 0);
@@ -351,7 +366,9 @@ export function HomeScreen() {
                     </View>
                     <View className="flex-1">
                       <Heading className="text-lg">{meta.title}</Heading>
-                      <Txt className="text-xs text-paper/50">{meta.blurb}</Txt>
+                      <Txt className="text-xs text-paper/50">
+                        {(track === 'roman' && meta.romanBlurb) || meta.blurb}
+                      </Txt>
                     </View>
                     <Txt className="text-[11px] text-paper/45">
                       {done}/{total}
@@ -381,7 +398,7 @@ export function HomeScreen() {
             </View>
             <View className="mt-3 pl-2">
               {unit.lessons.map((lesson, li) => {
-                const st = lessonState(lesson.id, store.completedLessons);
+                const st = lessonState(lesson.id, store.completedLessons, order);
                 const offset = [0, 28, 44, 28][li % 4];
                 return (
                   <LessonNode

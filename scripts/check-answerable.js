@@ -1,0 +1,238 @@
+/**
+ * Can every question actually be answered?
+ *
+ * Three separate reports of the same shape came back from real use: a tick
+ * medallion asked "which word is this?" with ہاں, خوش, سلام and معاف beneath
+ * it; a pair of cupped hands asked the same over معاف, شکریہ, سلام and نہیں; a
+ * letter card offered "apple" for انار. Each time the picture could not
+ * possibly single out its word, and each time the only way to answer was to
+ * guess. That is a pattern, not three mistakes, and patterns need a check
+ * rather than three fixes.
+ *
+ * So this generates every lesson on the path — every kind, both tracks, many
+ * times over, because the generator is random — and asks of each exercise it
+ * produces: is there enough on the screen to tell the right answer from the
+ * three wrong ones? An exercise that fails is one a learner cannot answer
+ * except by luck.
+ *
+ * Run with:  npm run check:answerable
+ */
+
+const ts = require('typescript');
+const fs = require('fs');
+const path = require('path');
+
+const ROOT = path.join(__dirname, '..');
+
+const cache = new Map();
+function load(rel) {
+  const resolved = [rel, rel + '.ts', path.join(rel, 'index.ts')]
+    .map((p) => path.join(ROOT, p))
+    .find((p) => fs.existsSync(p) && fs.statSync(p).isFile());
+  if (!resolved) throw new Error(`cannot resolve ${rel}`);
+  if (cache.has(resolved)) return cache.get(resolved);
+  const js = ts.transpileModule(fs.readFileSync(resolved, 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2019 },
+  }).outputText;
+  const mod = { exports: {} };
+  cache.set(resolved, mod.exports);
+  const here = path.relative(ROOT, path.dirname(resolved));
+  new Function('exports', 'module', 'require', js)(mod.exports, mod, (id) =>
+    id.startsWith('.') ? load(path.join(here, id)) : require(id)
+  );
+  cache.set(resolved, mod.exports);
+  return mod.exports;
+}
+
+const { buildLessonExercises } = load('src/exercises/generator.ts');
+const { unitsForTrack } = load('src/data/units.ts');
+const { pictureIdentifies, WORD_ICON, NUMERALS, COLOURS } = load('src/data/art.ts');
+const { romanOf } = load('src/lib/translit.ts');
+const { WORDS } = load('src/data/words.ts');
+
+const problems = [];
+const seen = new Map(); // rule → count, so one broken word does not print 400 times
+const fail = (rule, detail) => {
+  seen.set(rule, (seen.get(rule) || 0) + 1);
+  if ((seen.get(rule) || 0) <= 3) problems.push(`${rule}: ${detail}`);
+};
+
+/** What a learner can see of an option, given the track. */
+const cueOf = (w) =>
+  NUMERALS[w.id] ? `num:${NUMERALS[w.id]}` : COLOURS[w.id] ? `col:${COLOURS[w.id].color}` : WORD_ICON[w.id] ? `ico:${WORD_ICON[w.id]}` : `emo:${w.emoji}`;
+
+function distinct(values) {
+  return new Set(values).size === values.length;
+}
+
+/**
+ * The rules. Each takes one exercise and the track it was built for, and
+ * complains if the question cannot be told apart from its own distractors.
+ */
+function check(ex, track) {
+  const roman = track === 'roman';
+
+  switch (ex.kind) {
+    case 'multipleChoice':
+      // The prompt is a picture. Either the picture names the thing, or the
+      // exercise shows the English underneath — the component decides that
+      // from `pictureIdentifies`, so what has to hold here is only that the
+      // four *options* are told apart by what is written on them.
+      if (!distinct(ex.options.map((o) => o.urdu)))
+        fail('two options are the same word', `${ex.word.id}`);
+      if (!pictureIdentifies(ex.word) && !distinct(ex.options.map((o) => o.meaning.toLowerCase())))
+        fail('captioned picture with two options meaning the same', `${ex.word.id}`);
+      break;
+
+    case 'listenTap':
+      // The prompt is audio; the options are pictures with their meanings
+      // under them, so two options sharing a picture is only a problem if
+      // they also share a meaning.
+      if (!distinct(ex.options.map((o) => o.meaning.toLowerCase())))
+        fail('listen: two options mean the same', `${ex.word.id}`);
+      if (!distinct(ex.options.map(cueOf))) fail('listen: two options share a picture', `${ex.word.id}`);
+      break;
+
+    case 'meaningPick':
+    case 'wordFromMeaning':
+      if (!distinct(ex.options.map((o) => o.meaning.toLowerCase())))
+        fail('two options mean the same', `${ex.word.id} — ${ex.options.map((o) => o.meaning).join(' / ')}`);
+      if (!distinct(ex.options.map((o) => o.urdu))) fail('two options are the same word', `${ex.word.id}`);
+      break;
+
+    case 'matching':
+      if (!distinct(ex.words.map(cueOf))) fail('matching board shares a picture', ex.words.map((w) => w.id).join(','));
+      if (!distinct(ex.words.map((w) => w.meaning.toLowerCase())))
+        fail('matching board shares a meaning', ex.words.map((w) => w.id).join(','));
+      break;
+
+    case 'wordBuild':
+      if (roman) fail('letter tiles on the Roman track', ex.word.id);
+      // The tray must contain every letter of the answer.
+      for (const ch of Array.from(ex.word.urdu).filter((c) => c.trim())) {
+        if (!ex.tiles.includes(ch)) fail('a letter of the answer is missing from the tray', `${ex.word.id} — ${ch}`);
+      }
+      break;
+
+    case 'sentenceBuild':
+      for (const w of ex.sentence.words) {
+        if (!ex.tiles.includes(w)) fail('a word of the sentence is missing from the tray', `${ex.sentence.id} — ${w}`);
+      }
+      if (roman && !ex.romanTiles) fail('sentence tiles have no transliteration on the Roman track', ex.sentence.id);
+      if (ex.romanTiles && ex.romanTiles.length !== ex.tiles.length)
+        fail('transliterated tray does not match the tray', ex.sentence.id);
+      break;
+
+    case 'grammarDrill':
+      if (!ex.drill.options.includes(ex.drill.answer)) fail('drill answer is not among its options', ex.drill.id);
+      if (roman && !ex.romanOptions) fail('drill options have no transliteration on the Roman track', ex.drill.id);
+      break;
+
+    case 'letterForm':
+    case 'letterPick':
+    case 'letterTrace':
+      if (roman) fail('script exercise on the Roman track', `${ex.kind} ${ex.letter.id}`);
+      break;
+
+    case 'reading':
+      if (!ex.passage.question.options.includes(ex.passage.question.answer))
+        fail('passage answer is not among its options', ex.passage.id);
+      if (roman && ex.passage.lines.some((l) => !l.roman)) fail('passage line has no transliteration', ex.passage.id);
+      break;
+
+    case 'dialogue':
+      if (!ex.dialogue.question.options.includes(ex.dialogue.question.answer))
+        fail('dialogue answer is not among its options', ex.dialogue.id);
+      if (roman && ex.dialogue.lines.some((l) => !l.roman)) fail('dialogue line has no transliteration', ex.dialogue.id);
+      break;
+
+    default:
+      break;
+  }
+}
+
+// ---- run it ---------------------------------------------------------------
+
+const TRACKS = ['both', 'roman'];
+const PASSES = 6; // the generator is random; one pass proves very little
+
+let generated = 0;
+const kinds = new Map();
+
+for (const track of TRACKS) {
+  const lessons = unitsForTrack(track).flatMap((u) => u.lessons);
+  for (let pass = 0; pass < PASSES; pass++) {
+    for (const lesson of lessons) {
+      let exercises;
+      try {
+        exercises = buildLessonExercises(lesson, [], track);
+      } catch (e) {
+        problems.push(`lesson ${lesson.id} (${track}) threw: ${e.message}`);
+        continue;
+      }
+      if (!exercises.length) {
+        fail('lesson generates no exercises', `${lesson.id} (${track})`);
+        continue;
+      }
+      for (const ex of exercises) {
+        generated++;
+        const key = `${ex.kind}/${track}`;
+        kinds.set(key, (kinds.get(key) || 0) + 1);
+        check(ex, track);
+      }
+    }
+  }
+}
+
+// ---- nothing on the Roman path may promise the alphabet -------------------
+
+/**
+ * The units are named after the letter groups they teach, because that is the
+ * spine of a script-first course. Filtering the letter lessons out of a unit
+ * without renaming it leaves "The Non-Joiners — letters that break the flow"
+ * sitting over two vocabulary lessons, which is the same broken promise as the
+ * lessons themselves. Word boundaries matter here: "description" contains
+ * "script".
+ */
+const SCRIPT_WORDS = /\b(letters?|script|alphabet|nastaliq|glyphs?|handwriting|trace)\b/i;
+
+/**
+ * "Letter" also means correspondence, and two lessons teach exactly that —
+ * writing to someone, and the formal register you write to them in. They are
+ * listed rather than pattern-matched around, because the pattern that would
+ * exclude them would also let a real alphabet lesson through.
+ */
+const CORRESPONDENCE = new Set(['r-196', 'v-232']);
+
+for (const u of unitsForTrack('roman')) {
+  if (SCRIPT_WORDS.test(`${u.title} ${u.subtitle}`))
+    fail('a Roman-track unit is still named after the alphabet', `${u.id}: ${u.title} — ${u.subtitle}`);
+  for (const l of u.lessons) {
+    if (!CORRESPONDENCE.has(l.id) && SCRIPT_WORDS.test(`${l.title} ${l.subtitle}`))
+      fail('a Roman-track lesson is still named after the alphabet', `${l.id}: ${l.title} — ${l.subtitle}`);
+  }
+}
+
+// ---- the picture inventory, printed so it can be argued with --------------
+
+const askedByPicture = WORDS.filter((w) => pictureIdentifies(w));
+console.log(
+  `picture-only prompts allowed for ${askedByPicture.length} of ${WORDS.length} words ` +
+    `(${((askedByPicture.length / WORDS.length) * 100).toFixed(0)}%); the rest are captioned with their meaning`
+);
+
+const byTrack = {};
+for (const [key, n] of kinds) {
+  const [kind, track] = key.split('/');
+  (byTrack[track] = byTrack[track] || []).push(`${kind} ${n}`);
+}
+for (const track of TRACKS) console.log(`  ${track.padEnd(6)} ${byTrack[track].sort().join(' · ')}`);
+console.log(`\n${generated} exercises generated across ${TRACKS.length} tracks × ${PASSES} passes`);
+
+if (problems.length) {
+  console.log(`\n${seen.size} kinds of unanswerable question:`);
+  for (const p of problems) console.log('  •', p);
+  for (const [rule, n] of seen) if (n > 3) console.log(`  (${rule} — ${n} occurrences in total)`);
+  process.exit(1);
+}
+console.log('\nevery generated exercise is answerable from what it puts on screen');

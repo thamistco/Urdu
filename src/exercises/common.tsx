@@ -3,16 +3,21 @@ import { Pressable, View } from 'react-native';
 import { Urdu, Txt, Eyebrow } from '../components/Text';
 import { palette, withAlpha } from '../theme';
 
-export type ChoiceState = 'idle' | 'correct' | 'wrong' | 'muted';
+export type ChoiceState = 'idle' | 'selected' | 'correct' | 'wrong' | 'muted';
 
 const BORDER: Record<ChoiceState, string> = {
   idle: withAlpha(palette.white, 0.12),
+  // Picked, but not yet judged. On the matching board this is the whole
+  // feedback a learner gets between the two taps, so it has to be unmissable
+  // — full-strength yellow, not a tint of it.
+  selected: palette.gold,
   correct: palette.jade,
   wrong: palette.rose,
   muted: withAlpha(palette.white, 0.08),
 };
 const FILL: Record<ChoiceState, string> = {
   idle: palette.ink700,
+  selected: withAlpha(palette.gold, 0.22),
   correct: withAlpha(palette.jade, 0.18),
   wrong: withAlpha(palette.rose, 0.18),
   muted: palette.ink800,
@@ -46,7 +51,13 @@ export function Choice({
     >
       <View
         className="items-center justify-center rounded-2xl border px-3 py-4"
-        style={{ borderColor: BORDER[state], backgroundColor: FILL[state], borderWidth: 2, minHeight: 56 }}
+        style={{
+          borderColor: BORDER[state],
+          backgroundColor: FILL[state],
+          borderWidth: state === 'selected' ? 3 : 2,
+          minHeight: 56,
+          transform: [{ scale: state === 'selected' ? 1.03 : 1 }],
+        }}
       >
         {children}
       </View>
@@ -81,6 +92,28 @@ export function PromptCard({
 
 export function Question({ children }: { children: ReactNode }) {
   return <Txt className="mb-4 text-center text-base text-paper/80">{children}</Txt>;
+}
+
+/**
+ * Which way the tray fills.
+ *
+ * Both building exercises lay their tiles out right-to-left, because that is
+ * how Urdu is written — the first tile tapped goes on the right. Nothing said
+ * so, and a learner who assumes it works the way every other list they have
+ * used works will place every letter in a word backwards, be told they are
+ * wrong, and have no idea why. One line fixes that.
+ */
+export function BuildDirection({ roman }: { roman?: boolean }) {
+  return (
+    <View className="mb-4 flex-row items-center justify-center gap-1.5">
+      <Txt style={{ color: palette.gold }} className="text-xs">
+        {roman ? '→' : '←'}
+      </Txt>
+      <Txt className="text-[11px] text-paper/45">
+        {roman ? 'builds left to right' : 'builds right to left, like Urdu'}
+      </Txt>
+    </View>
+  );
 }
 
 export { palette, withAlpha } from '../theme';

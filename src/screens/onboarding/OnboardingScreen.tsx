@@ -25,12 +25,30 @@ const TRACKS: { key: LearnTrack; label: string; desc: string; rec?: boolean }[] 
   { key: 'both', label: 'Both together', desc: 'Every word in script and Roman, side by side', rec: true },
 ];
 
+/**
+ * The placement check.
+ *
+ * Each question is tagged with the writing system it is asked in, because the
+ * question immediately before this one is "do you want to learn the script?".
+ * Answering "no" and then being shown four Nastaliq letters and asked whether
+ * you recognise them is the app not listening — and it also measures nothing,
+ * since the honest answer is "no" by construction. The Roman questions test
+ * the same thing (how much Urdu do you already have?) in the alphabet the
+ * learner just said they read.
+ */
 const PLACEMENT = [
   { q: 'Do you recognise this letter?', sub: 'س', kind: 'script', options: [{ label: "Yes — that's seen", c: true }, { label: 'No idea', c: false }] },
   { q: 'What does this word mean?', sub: 'پانی', kind: 'script', options: [{ label: 'Water', c: true }, { label: 'Bread', c: false }, { label: 'Fire', c: false }] },
   { q: 'Can you read this out loud, even slowly?', sub: 'کتاب', kind: 'script', options: [{ label: 'Yes, I can sound it out', c: true }, { label: 'Script is new to me', c: false }] },
-  { q: 'What does "ghar" mean?', sub: 'Roman Urdu', kind: 'roman', options: [{ label: 'House', c: true }, { label: 'Tea', c: false }, { label: 'Moon', c: false }] },
+  { q: 'What does "ghar" mean?', sub: 'ghar', kind: 'roman', options: [{ label: 'House', c: true }, { label: 'Tea', c: false }, { label: 'Moon', c: false }] },
+  { q: 'What does "paani" mean?', sub: 'paani', kind: 'roman', options: [{ label: 'Water', c: true }, { label: 'Book', c: false }, { label: 'Night', c: false }] },
+  { q: 'What does "shukriya" mean?', sub: 'shukriya', kind: 'roman', options: [{ label: 'Thank you', c: true }, { label: 'Sorry', c: false }, { label: 'Hello', c: false }] },
+  { q: 'What does "maañ" mean?', sub: 'maañ', kind: 'roman', options: [{ label: 'Mother', c: true }, { label: 'Father', c: false }, { label: 'Sister', c: false }] },
 ];
+
+/** The four questions a given track asks. */
+const placementFor = (track: LearnTrack) =>
+  (track === 'roman' ? PLACEMENT.filter((p) => p.kind === 'roman') : PLACEMENT).slice(0, 4);
 
 type Step = 'welcome' | 'goal' | 'track' | 'placement' | 'daily' | 'ready';
 
@@ -187,7 +205,8 @@ export function OnboardingScreen() {
 
   // ---- placement ----
   if (step === 'placement') {
-    const question = PLACEMENT[pIdx];
+    const questions = placementFor(track);
+    const question = questions[pIdx];
     const pick = (correct: boolean) => {
       if (pAnswered) return;
       setPAnswered(true);
@@ -195,7 +214,7 @@ export function OnboardingScreen() {
       feedback.tap();
       setTimeout(() => {
         setPAnswered(false);
-        if (pIdx < PLACEMENT.length - 1) {
+        if (pIdx < questions.length - 1) {
           setPCorrect(nextCorrect);
           setPIdx(pIdx + 1);
         } else {
@@ -209,7 +228,7 @@ export function OnboardingScreen() {
         <Reveal key={pIdx}>
           <Dots step={2} total={4} />
           <Eyebrow style={{ color: palette.gold }} className="mb-3">
-            Quick check · {pIdx + 1} of {PLACEMENT.length}
+            Quick check · {pIdx + 1} of {questions.length}
           </Eyebrow>
           <Heading className="mb-6 text-xl">{question.q}</Heading>
           <View className="mb-8 h-28 items-center justify-center rounded-2xl bg-paper">

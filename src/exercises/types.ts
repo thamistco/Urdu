@@ -2,6 +2,7 @@ import { Letter, PositionKey } from '../data/letters';
 import { Word } from '../data/words';
 import type { GrammarConcept, GrammarDrill } from '../data/grammar';
 import type { Sentence, Passage, Dialogue } from '../data/sentences';
+import type { LearnTrack } from '../store/useSettingsStore';
 
 export type ItemRef = { id: string; type: 'letter' | 'word' };
 
@@ -77,12 +78,21 @@ export type Exercise =
       kind: 'grammarDrill';
       concept: GrammarConcept;
       drill: GrammarDrill;
+      /** the drill's options transliterated, in order — see sentenceBuild */
+      romanOptions?: string[];
     }
   | {
       /** assemble a sentence from shuffled word tiles */
       kind: 'sentenceBuild';
       sentence: Sentence;
       tiles: string[];
+      /**
+       * The same tiles transliterated, in the same order, for the Roman track.
+       * Resolved when the exercise is built rather than when it is drawn, so a
+       * sentence whose tiles cannot all be romanised is simply never offered on
+       * that track instead of rendering a half-Roman tray.
+       */
+      romanTiles?: string[];
     }
   | {
       /** read a short passage, then answer a comprehension question */
@@ -99,6 +109,14 @@ export type ExerciseKind = Exercise['kind'];
 
 export type ExerciseProps<E extends Exercise = Exercise> = {
   exercise: E;
+  /**
+   * Which of the two writing systems the learner reads. Every exercise that
+   * displays Urdu consults this rather than deciding for itself, so the setting
+   * means the same thing everywhere.
+   */
+  track: LearnTrack;
+  /** `track !== 'script'` — kept as its own prop because a few places offer the
+   *  transliteration as a hint independently of what is being read. */
   showRoman: boolean;
   locked: boolean;
   onGraded: (result: GradedResult) => void;

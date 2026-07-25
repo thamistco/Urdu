@@ -4,6 +4,7 @@ import { Choice, Question, palette, withAlpha } from './common';
 import { Urdu, Txt, Bold, Eyebrow, Heading, urduLine } from '../components/Text';
 import { Button } from '../components/Button';
 import { feedback } from '../lib/feedback';
+import { romanOf } from '../lib/translit';
 import type { ExerciseProps, Exercise } from './types';
 
 type TeachEx = Extract<Exercise, { kind: 'grammarTeach' }>;
@@ -14,7 +15,7 @@ type DrillEx = Extract<Exercise, { kind: 'grammarDrill' }>;
  * the rule *before* drilling it is what makes grammar stick rather than feeling
  * like guesswork.
  */
-export function GrammarTeachExercise({ exercise, onGraded }: ExerciseProps<TeachEx>) {
+export function GrammarTeachExercise({ exercise, track, onGraded }: ExerciseProps<TeachEx>) {
   const { concept } = exercise;
   const [read, setRead] = useState(false);
 
@@ -64,9 +65,18 @@ export function GrammarTeachExercise({ exercise, onGraded }: ExerciseProps<Teach
                   {/[؀-ۿ]/.test(cell) ? (
                     // Urdu cells are right-aligned so the column reads as one
                     // RTL block instead of drifting with each glyph's width.
-                    <Urdu style={{ fontSize: 19, color: palette.ink, lineHeight: urduLine(19), textAlign: 'right' }}>
-                      {cell}
-                    </Urdu>
+                    // On the Roman track the table is worthless in a script the
+                    // learner does not read, so its cells are transliterated
+                    // where we have a transliteration for them.
+                    track === 'roman' && romanOf(cell) ? (
+                      <Txt style={{ color: palette.ink }} className="font-body-bold text-[15px]">
+                        {romanOf(cell)}
+                      </Txt>
+                    ) : (
+                      <Urdu style={{ fontSize: 19, color: palette.ink, lineHeight: urduLine(19), textAlign: 'right' }}>
+                        {cell}
+                      </Urdu>
+                    )
                   ) : (
                     <Txt style={{ color: palette.ink }} className="text-[13px]">
                       {cell}
@@ -86,8 +96,14 @@ export function GrammarTeachExercise({ exercise, onGraded }: ExerciseProps<Teach
             className="rounded-xl border-l-2 px-4 py-3"
             style={{ borderLeftColor: palette.jade, backgroundColor: withAlpha(palette.jade, 0.08) }}
           >
-            <Urdu style={{ fontSize: 23, lineHeight: urduLine(23) }}>{ex.urdu}</Urdu>
-            <Txt className="mt-1.5 text-xs text-paper/55">{ex.roman}</Txt>
+            {track === 'roman' ? (
+              <Bold style={{ fontSize: 17 }}>{ex.roman}</Bold>
+            ) : (
+              <>
+                <Urdu style={{ fontSize: 23, lineHeight: urduLine(23) }}>{ex.urdu}</Urdu>
+                <Txt className="mt-1.5 text-xs text-paper/55">{ex.roman}</Txt>
+              </>
+            )}
             <Txt className="mt-0.5 text-[13px] text-paper/80">{ex.meaning}</Txt>
           </View>
         ))}
@@ -99,8 +115,8 @@ export function GrammarTeachExercise({ exercise, onGraded }: ExerciseProps<Teach
 }
 
 /** Fill-in-the-blank drill on a grammar point. */
-export function GrammarDrillExercise({ exercise, showRoman, locked, onGraded }: ExerciseProps<DrillEx>) {
-  const { drill } = exercise;
+export function GrammarDrillExercise({ exercise, track, showRoman, locked, onGraded }: ExerciseProps<DrillEx>) {
+  const { drill, romanOptions } = exercise;
   const [picked, setPicked] = useState<string | null>(null);
 
   const choose = (opt: string) => {
@@ -111,21 +127,33 @@ export function GrammarDrillExercise({ exercise, showRoman, locked, onGraded }: 
     onGraded({ items: [], correct });
   };
 
+  // The Roman track drills the same grammar in transliteration: the point of
+  // "which ending agrees here" survives the change of alphabet intact.
+  const roman = track === 'roman' && !!romanOptions;
+  const romanFor = (o: string) => romanOptions![drill.options.indexOf(o)];
+
   // show the sentence with the gap filled once answered
   const shown = picked ? drill.prompt.replace('___', picked) : drill.prompt;
+  const shownRoman = picked ? drill.promptRoman.replace('___', romanFor(picked)) : drill.promptRoman;
 
   return (
     <View>
       <Question>Complete the sentence</Question>
       <View className="mb-4 items-center rounded-2xl bg-paper px-5 py-6">
-        <Urdu style={{ fontSize: 26, color: palette.ink, lineHeight: urduLine(26), textAlign: 'center' }}>
-          {shown}
-        </Urdu>
-        {showRoman ? (
-          <Txt style={{ color: palette.ink }} className="mt-2.5 text-xs opacity-55">
-            {picked ? drill.promptRoman.replace('___', '') .replace(/\s+/g, ' ').trim() : drill.promptRoman}
-          </Txt>
-        ) : null}
+        {roman ? (
+          <Bold style={{ color: palette.ink, fontSize: 21, textAlign: 'center' }}>{shownRoman}</Bold>
+        ) : (
+          <>
+            <Urdu style={{ fontSize: 26, color: palette.ink, lineHeight: urduLine(26), textAlign: 'center' }}>
+              {shown}
+            </Urdu>
+            {showRoman ? (
+              <Txt style={{ color: palette.ink }} className="mt-2.5 text-xs opacity-55">
+                {picked ? shownRoman : drill.promptRoman}
+              </Txt>
+            ) : null}
+          </>
+        )}
         <Txt style={{ color: palette.ink }} className="mt-2 text-[13px] opacity-70">
           {drill.meaning}
         </Txt>
@@ -143,7 +171,11 @@ export function GrammarDrillExercise({ exercise, showRoman, locked, onGraded }: 
               onPress={() => choose(o)}
               className="mb-3 w-[48%]"
             >
-              <Urdu style={{ fontSize: 24, color: palette.paper, lineHeight: urduLine(24) }}>{o}</Urdu>
+              {roman ? (
+                <Bold style={{ fontSize: 20 }}>{romanFor(o)}</Bold>
+              ) : (
+                <Urdu style={{ fontSize: 24, color: palette.paper, lineHeight: urduLine(24) }}>{o}</Urdu>
+              )}
             </Choice>
           );
         })}
