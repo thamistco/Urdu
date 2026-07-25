@@ -17,7 +17,7 @@ function RewardTile({ icon, value, label, color }: { icon: string; value: string
       className="flex-1 items-center rounded-2xl border p-4"
       style={{ borderColor: withAlpha(color, 0.3), backgroundColor: withAlpha(color, 0.1) }}
     >
-      <Txt style={{ fontSize: 24 }}>{icon}</Txt>
+      <Illustration name={icon} tile={false} size={26} />
       <Display style={{ color }} className="mt-1 text-2xl">
         {value}
       </Display>
@@ -66,9 +66,9 @@ export function LessonComplete({
 
             <Reveal delay={120} style={{ width: '100%' }}>
               <View className="mb-4 mt-2 flex-row gap-3">
-                <RewardTile icon="⚡" value={`+${result.xpGained}`} label="XP" color={palette.gold} />
-                <RewardTile icon="💠" value={`+${result.gemsGained}`} label="Gems" color={palette.jadeLight} />
-                <RewardTile icon="🎯" value={`${accuracy}%`} label="Accuracy" color={palette.rose} />
+                <RewardTile icon="bolt" value={`+${result.xpGained}`} label="XP" color={palette.gold} />
+                <RewardTile icon="gem" value={`+${result.gemsGained}`} label="Gems" color={palette.jadeLight} />
+                <RewardTile icon="crescent" value={`${accuracy}%`} label="Accuracy" color={palette.roseLight} />
               </View>
             </Reveal>
 
@@ -78,7 +78,7 @@ export function LessonComplete({
                   className="mb-3 flex-row items-center justify-center gap-2 rounded-2xl border p-4"
                   style={{ borderColor: withAlpha(palette.flame, 0.35), backgroundColor: withAlpha(palette.flame, 0.1) }}
                 >
-                  <Txt style={{ fontSize: 26 }}>🔥</Txt>
+                  <Illustration name="flame" tile={false} size={26} />
                   <Bold style={{ color: palette.flameLight }}>
                     {result.streak} day streak — keep it alight
                   </Bold>

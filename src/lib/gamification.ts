@@ -48,13 +48,13 @@ export function levelTitle(level: number): string {
 // ---- Weekly leagues (Duolingo-style competitive layer) ------------------
 
 export const LEAGUES = [
-  { id: 'clay', name: 'Clay', icon: '🟤', color: '#A9744F' },
-  { id: 'copper', name: 'Copper', icon: '🟠', color: '#C9862A' },
-  { id: 'silver', name: 'Silver', icon: '⚪', color: '#B8C0CC' },
-  { id: 'gold', name: 'Gold', icon: '🟡', color: '#E8A33D' },
-  { id: 'sapphire', name: 'Sapphire', icon: '🔵', color: '#3E7CB1' },
-  { id: 'ruby', name: 'Ruby', icon: '🔴', color: '#C4456B' },
-  { id: 'emerald', name: 'Emerald', icon: '🟢', color: '#2E8B75' },
+  { id: 'clay', name: 'Clay', icon: '🟤', color: '#B07C55' },
+  { id: 'copper', name: 'Copper', icon: '🟠', color: '#C98A3B' },
+  { id: 'silver', name: 'Silver', icon: '⚪', color: '#C3BECB' },
+  { id: 'gold', name: 'Gold', icon: '🟡', color: '#E2A13C' },
+  { id: 'sapphire', name: 'Sapphire', icon: '🔵', color: '#7FA6D8' },
+  { id: 'ruby', name: 'Ruby', icon: '🔴', color: '#DE8496' },
+  { id: 'emerald', name: 'Emerald', icon: '🟢', color: '#93BE72' },
 ] as const;
 
 export type LeagueId = (typeof LEAGUES)[number]['id'];

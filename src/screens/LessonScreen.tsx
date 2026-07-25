@@ -131,7 +131,7 @@ export function LessonScreen() {
       <Screen scroll={false}>
         <SafeAreaView className="flex-1">
           <View className="flex-1 items-center justify-center px-2">
-            <Txt style={{ fontSize: 64 }}>💔</Txt>
+            <Illustration name="heart" tile={false} size={60} />
             <Heading className="mb-2 mt-4 text-2xl">Out of hearts</Heading>
             <Txt className="mb-8 max-w-[280px] text-center text-sm text-paper/60">
               Hearts refill slowly over time, or you can spend gems to keep the calm going now.
@@ -148,7 +148,7 @@ export function LessonScreen() {
                   }
                 }}
               >
-                Refill · 40 💠 (you have {gems})
+                Refill · 40 gems (you have {gems})
               </Button>
               <Button variant="ghost" onPress={() => nav.navigate('Main')}>
                 Leave for now

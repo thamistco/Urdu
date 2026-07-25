@@ -6,17 +6,17 @@ import { TOPICS, type Word } from '../data/words';
 
 /**
  * Heritage medallion frame — every picture in the app sits inside an 8-point
- * Islamic-geometric star (two overlapping squares) in gold on deep indigo, the
+ * Islamic-geometric star (two overlapping squares) in saffron on deep plum, the
  * same motif as the app's lattice. This ornamental framing is what gives the
- * illustration set its "gold-leaf on indigo" heritage character, and keeps
- * everything perfectly aligned and uniformly sized.
+ * illustration set its gold-leaf-on-textile character, and keeps everything
+ * perfectly aligned and uniformly sized.
  */
 function Medallion({ size, children }: { size: number; children: React.ReactNode }) {
   const gold = palette.gold;
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <Svg width={size} height={size} viewBox="0 0 64 64" style={{ position: 'absolute' }}>
-        <Rect x={2.5} y={2.5} width={59} height={59} rx={13} fill="#0E1D3A" stroke={withAlpha(gold, 0.38)} strokeWidth={1.2} />
+        <Rect x={2.5} y={2.5} width={59} height={59} rx={13} fill={palette.ink800} stroke={withAlpha(gold, 0.38)} strokeWidth={1.2} />
         {/* 8-point star: a diamond over an axis-aligned square */}
         <Path d="M32 6 L58 32 L32 58 L6 32 Z" fill={withAlpha(gold, 0.05)} stroke={withAlpha(gold, 0.5)} strokeWidth={1} />
         <Rect x={13} y={13} width={38} height={38} rx={3} fill="none" stroke={withAlpha(gold, 0.5)} strokeWidth={1} />
@@ -99,8 +99,8 @@ export const NUMERALS: Record<string, string> = {
 
 export const COLOURS: Record<string, { color: string; ring?: boolean }> = {
   'w-laal': { color: '#E5484D' }, 'w-neela': { color: '#3E7CB1' },
-  'w-hara': { color: '#2E8B75' }, 'w-peela': { color: '#E8A33D' },
-  'w-kaala': { color: '#15181C', ring: true }, 'w-safed': { color: '#F4EBD9', ring: true },
+  'w-hara': { color: '#2E8B75' }, 'w-peela': { color: '#E9B03A' },
+  'w-kaala': { color: '#15181C', ring: true }, 'w-safed': { color: '#F6EEE2', ring: true },
 };
 
 export function hasWordArt(word: Word): boolean {
@@ -133,7 +133,7 @@ export function GoalArt({ goalKey, size = 44 }: { goalKey: string; size?: number
 
 export function TopicArt({ topicId, size = 44 }: { topicId: string; size?: number }) {
   if (topicId === 'numbers') return <NumeralTile numeral="۳" size={size} />;
-  if (topicId === 'colours') return <SwatchTile color="#E8A33D" size={size} />;
+  if (topicId === 'colours') return <SwatchTile color={palette.gold} size={size} />;
   if (TOPIC_ICON[topicId]) return <Illustration name={TOPIC_ICON[topicId]} size={size} />;
   // topics without a bespoke illustration yet → their emoji in the medallion
   const emoji = TOPICS.find((t) => t.id === topicId)?.icon ?? '✨';

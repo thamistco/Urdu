@@ -80,7 +80,7 @@ const REV = (title = 'Unit review', subtitle = 'Mixed practice', xp = 30, size =
   id: uid('rev'), title, subtitle, icon: '🌙', kind: 'review', xp, size,
 });
 
-const GOLD = '#E8A33D', JADE = '#2E8B75', ROSE = '#C4456B', BLUE = '#5B93C7';
+const GOLD = '#E2A13C', JADE = '#93BE72', ROSE = '#DE8496', BLUE = '#A98BD4';
 
 export const UNITS: Unit[] = [
   // ══════════════ BEGINNER ══════════════
