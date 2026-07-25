@@ -37,11 +37,13 @@ export function Illustration({
   size = 44,
   tile = true,
 }: {
-  name: IconName | string;
+  /** Deliberately not `string`: an unknown name renders nothing at all, so the
+   *  compiler is the only thing that catches a typo before a learner does. */
+  name: IconName;
   size?: number;
   tile?: boolean;
 }) {
-  const Icon = ICONS[name as string];
+  const Icon = ICONS[name];
   const body = Icon ? <Icon size={size * (tile ? 0.56 : 0.9)} /> : null;
   if (!tile) return body;
   return <Medallion size={size}>{body}</Medallion>;
