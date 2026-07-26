@@ -13,8 +13,8 @@
  *
  * Providers (chosen by whichever env var is set):
  *   GOOGLE_TTS_API_KEY   → Google Cloud Text-to-Speech.
- *                          Optional VOICE_NAME (default ur-IN-Wavenet-A) and
- *                          LANG_CODE (default ur-IN).
+ *                          Optional VOICE_NAME (default ur-IN-Chirp3-HD-Zephyr)
+ *                          and LANG_CODE (default ur-IN).
  *   ELEVENLABS_API_KEY   → ElevenLabs (+ ELEVENLABS_VOICE_ID, multilingual v2).
  *
  * No key set → prints a notice and exits 0, so the build still works.
@@ -85,7 +85,10 @@ const LANG = process.env.LANG_CODE || 'ur-IN';
 
 async function googleTTS(text) {
   const key = process.env.GOOGLE_TTS_API_KEY;
-  const name = process.env.VOICE_NAME || 'ur-IN-Wavenet-A';
+  // Zephyr is the course's one consistent voice (see VOICE_SETUP.md) — every
+  // clip so far was generated with it, so new words must default to it too
+  // rather than silently landing in a different voice on the next CI run.
+  const name = process.env.VOICE_NAME || 'ur-IN-Chirp3-HD-Zephyr';
   const res = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${key}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
