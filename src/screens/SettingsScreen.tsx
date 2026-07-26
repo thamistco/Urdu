@@ -170,7 +170,7 @@ export function SettingsScreen() {
           </Pressable>
         </Reveal>
 
-        <Txt className="mb-8 mt-8 text-center text-xs text-paper/30">Harf · حرف — v1.0</Txt>
+        <Txt className="mb-8 mt-8 text-center text-xs text-paper/30">Harf · حرف · v1.0</Txt>
       </Screen>
     </View>
   );

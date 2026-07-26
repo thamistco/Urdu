@@ -64,7 +64,7 @@ export function LoginScreen() {
             <Display className="mb-2 text-4xl">Harf</Display>
             <GeoDivider />
             <Txt className="mb-10 max-w-[300px] text-center text-[15px] leading-6 text-paper/70">
-              Learn to read Urdu — every letter in all four of its faces. Sign in to keep your
+              Learn to read Urdu, every letter in all four of its faces. Sign in to keep your
               streak and progress safe across devices.
             </Txt>
           </View>

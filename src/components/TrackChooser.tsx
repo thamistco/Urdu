@@ -39,7 +39,7 @@ export const TRACK_OPTIONS: Option[] = [
     key: 'script',
     label: 'Script first',
     summary: 'Learn the Urdu alphabet, and read everything the way it is really written.',
-    gains: ['All 40 letters, in each of their four shapes', 'Tracing practice — you write them yourself'],
+    gains: ['All 40 letters, in each of their four shapes', 'Tracing practice: you write them yourself'],
     costs: ['No transliteration to fall back on'],
     forWhom: 'Best if you want to read signs, books and messages.',
   },
@@ -49,13 +49,13 @@ export const TRACK_OPTIONS: Option[] = [
     summary: 'Every word in Nastaliq with the Roman underneath it.',
     gains: ['The alphabet, but never on its own', 'You pick up the letters while you learn to speak'],
     costs: ['Slower at the start than Roman alone'],
-    forWhom: 'Best if you are not sure — this is the whole course, with the most help.',
+    forWhom: 'Best if you are not sure: this is the whole course, with the most help.',
     recommended: true,
   },
   {
     key: 'roman',
     label: 'Roman Urdu',
-    summary: 'No alphabet. Everything in Latin letters — “aap kaise hain?”',
+    summary: 'No alphabet. Everything in Latin letters: “aap kaise hain?”',
     gains: [
       'Straight into words, sentences and conversation',
       'Listening and answering, all in Roman',
@@ -95,7 +95,7 @@ export function TrackChooser({
   return (
     <View>
       <Txt className="mb-4 text-xs leading-5 text-paper/55">
-        This changes what the course teaches, not just how it looks — the {TOTAL_LESSON_COUNT}
+        This changes what the course teaches, not just how it looks: the {TOTAL_LESSON_COUNT}
         -lesson path is rebuilt around your answer. You can switch whenever you like, in
         Settings; nothing you have already learned is lost.
       </Txt>

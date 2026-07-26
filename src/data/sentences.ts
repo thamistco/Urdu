@@ -441,8 +441,8 @@ export const PASSAGES: Passage[] = [
     ],
     question: {
       ask: 'What did the children receive?',
-      answer: 'Eidi — gift money',
-      options: ['Eidi — gift money', 'New books', 'Sweets only', 'Nothing'],
+      answer: 'Eidi: gift money',
+      options: ['Eidi: gift money', 'New books', 'Sweets only', 'Nothing'],
     },
   },
 

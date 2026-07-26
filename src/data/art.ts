@@ -82,7 +82,7 @@ const DEPICTIVE_TOPICS = new Set([
  * the allow-list above.
  */
 const SYMBOLIC_WORDS = new Set([
-  'w-sar',      // head — drawn as a whole person
+  'w-sar',      // head, drawn as a whole person
   'w-sehat',    // health / condition
   'w-aaram',    // rest / comfort
   'w-naukri',   // job, as opposed to the people who do one

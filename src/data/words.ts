@@ -32,7 +32,7 @@ export type Topic = {
 const CORE_TOPICS: Topic[] = [
   { id: 'first-words', title: 'First Words', icon: '✨', blurb: 'The words you reach for every day.', level: 'beginner' },
   { id: 'family', title: 'Family', icon: '👨‍👩‍👧', blurb: 'The people you learn Urdu to speak with.', level: 'beginner' },
-  { id: 'food', title: 'Food & Drink', icon: '🍲', blurb: 'From chai to roti — the table vocabulary.', level: 'beginner' },
+  { id: 'food', title: 'Food & Drink', icon: '🍲', blurb: 'From chai to roti, the table vocabulary.', level: 'beginner' },
   { id: 'home', title: 'Around the Home', icon: '🏠', blurb: 'Objects and rooms you name daily.', level: 'beginner' },
   { id: 'nature', title: 'Nature', icon: '🌙', blurb: 'Sky, water, earth and weather.', level: 'beginner' },
   { id: 'colours', title: 'Colours', icon: '🎨', blurb: 'Describe the world around you.', level: 'beginner' },
@@ -589,7 +589,7 @@ export const LEVEL_META: Record<
   },
   intermediate: {
     title: 'Intermediate', tag: 'B1',
-    blurb: 'Handle daily life — work, travel, money, health.',
+    blurb: 'Handle daily life, work, travel, money, health.',
     color: '#FF7A72',
   },
   advanced: {

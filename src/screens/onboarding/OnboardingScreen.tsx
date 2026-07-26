@@ -35,7 +35,7 @@ const SKIPPABLE_FOR_SPEAKERS = UNITS.filter((u) => u.level === 'beginner')
 
 const GOALS: { key: Goal; label: string; desc: string; icon: string }[] = [
   { key: 'family', label: 'Speak with family', desc: 'Parents, grandparents, relatives back home', icon: '👨‍👩‍👧' },
-  { key: 'read', label: 'Read & write it', desc: 'The script itself — Nastaliq', icon: '✍️' },
+  { key: 'read', label: 'Read & write it', desc: 'The script itself, Nastaliq', icon: '✍️' },
   { key: 'heritage', label: 'Reconnect with heritage', desc: 'Culture, faith, identity', icon: '🕌' },
   { key: 'curious', label: "I'm just curious", desc: 'No particular reason', icon: '✨' },
 ];
@@ -52,7 +52,7 @@ const GOALS: { key: Goal; label: string; desc: string; icon: string }[] = [
  * learner just said they read.
  */
 const PLACEMENT = [
-  { q: 'Do you recognise this letter?', sub: 'س', kind: 'script', options: [{ label: "Yes — that's seen", c: true }, { label: 'No idea', c: false }] },
+  { q: 'Do you recognise this letter?', sub: 'س', kind: 'script', options: [{ label: "Yes, that's seen", c: true }, { label: 'No idea', c: false }] },
   { q: 'What does this word mean?', sub: 'پانی', kind: 'script', options: [{ label: 'Water', c: true }, { label: 'Bread', c: false }, { label: 'Fire', c: false }] },
   { q: 'Can you read this out loud, even slowly?', sub: 'کتاب', kind: 'script', options: [{ label: 'Yes, I can sound it out', c: true }, { label: 'Script is new to me', c: false }] },
   { q: 'What does "ghar" mean?', sub: 'ghar', kind: 'roman', options: [{ label: 'House', c: true }, { label: 'Tea', c: false }, { label: 'Moon', c: false }] },
@@ -114,7 +114,7 @@ export function OnboardingScreen() {
             <Display className="mb-3 text-4xl">Harf</Display>
             <GeoDivider />
             <Txt className="mb-10 max-w-[280px] text-center text-[15px] leading-6 text-paper/70">
-              Learn to read Urdu the way it's really written — every letter in all four of its faces.
+              Learn to read Urdu the way it's really written: every letter in all four of its faces.
               A few quick questions first, so we start you in the right place.
             </Txt>
             <Button className="w-full max-w-[300px]" onPress={() => setStep('goal')}>
@@ -195,7 +195,7 @@ export function OnboardingScreen() {
       {
         key: 'speaker',
         label: 'I already speak or understand it',
-        desc: "I grew up around it — I just can't read the script",
+        desc: "I grew up around it, but I can't read the script",
         icon: '🗣️',
       },
     ];
@@ -293,7 +293,7 @@ export function OnboardingScreen() {
             ))}
           </View>
           <Txt className="mt-6 text-center text-xs text-paper/30">
-            No wrong answers here — this just finds your starting point.
+            No wrong answers here: this just finds your starting point.
           </Txt>
         </Reveal>
       </Screen>
@@ -350,7 +350,7 @@ export function OnboardingScreen() {
             <Eyebrow style={{ color: palette.gold }} className="mb-1">Your starting level</Eyebrow>
             <Bold className="text-lg">{lvlName}</Bold>
             <Txt className="mt-1 text-sm text-paper/60">
-              We'll begin exactly where you are — and the words you miss will come back first.
+              We'll begin exactly where you are, and the words you miss will come back first.
             </Txt>
           </View>
           {background === 'speaker' && (
@@ -358,7 +358,7 @@ export function OnboardingScreen() {
               <Eyebrow style={{ color: palette.jade }} className="mb-1">Fast-tracked</Eyebrow>
               <Txt className="mt-1 text-sm text-paper/60">
                 We've marked the basic words you likely already know as skipped, so your path leads straight to the
-                script and reading — everything else is still yours to complete.
+                script and reading; everything else is still yours to complete.
               </Txt>
             </View>
           )}
