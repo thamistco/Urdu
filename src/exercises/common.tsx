@@ -116,5 +116,41 @@ export function BuildDirection({ roman }: { roman?: boolean }) {
   );
 }
 
+/** A small tap-to-hear button — reading content (sentences, passages,
+ *  dialogues) only shows a word's script and roman, never how it sounds,
+ *  unless something on screen offers to say it. */
+export function SpeakerButton({
+  onPress,
+  size = 30,
+  label = 'Play audio',
+}: {
+  onPress: () => void;
+  size?: number;
+  label?: string;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.92 : 1 }] })}
+    >
+      <View
+        className="items-center justify-center rounded-full"
+        style={{
+          width: size,
+          height: size,
+          backgroundColor: withAlpha(palette.gold, 0.18),
+          borderWidth: 1.5,
+          borderColor: palette.gold,
+        }}
+      >
+        <Txt style={{ fontSize: size * 0.5 }}>🔊</Txt>
+      </View>
+    </Pressable>
+  );
+}
+
 export { palette, withAlpha } from '../theme';
 export { Urdu };

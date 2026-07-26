@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { View, Pressable } from 'react-native';
-import { BuildDirection, Choice, Question, palette, withAlpha } from './common';
+import { BuildDirection, Choice, Question, SpeakerButton, palette, withAlpha } from './common';
 import { Urdu, Txt, Bold, Eyebrow, urduLine } from '../components/Text';
 import { Button } from '../components/Button';
 import { feedback } from '../lib/feedback';
+import { announce } from '../lib/speech';
 import type { ExerciseProps, Exercise } from './types';
 
 type BuildEx = Extract<Exercise, { kind: 'sentenceBuild' }>;
@@ -44,7 +45,9 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
     const built = placed.map((i) => tiles[i]);
     const correct = built.join(' ') === sentence.words.join(' ');
     setGraded(correct);
-    correct ? feedback.correct() : feedback.incorrect();
+    correct
+      ? feedback.correctAnnounce(sentence.id, sentence.words.join(' '), sentence.roman)
+      : feedback.incorrect();
     onGraded({ items: [], correct });
   };
 
@@ -62,6 +65,12 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
             {sentence.roman}
           </Txt>
         ) : null}
+        <View className="mt-3">
+          <SpeakerButton
+            label="Hear the sentence"
+            onPress={() => announce(sentence.id, sentence.words.join(' '), sentence.roman)}
+          />
+        </View>
       </View>
 
       {/* assembly line — laid out in the direction the tiles are read */}
@@ -171,30 +180,39 @@ export function ReadingExercise({ exercise, track, showRoman, locked, onGraded }
         {passage.lines.map((l, i) => (
           // Nastaliq descends a long way below its baseline, so each line needs
           // real breathing room before the transliteration underneath it.
-          <View key={i} className={i > 0 ? 'mt-5' : ''}>
-            {/* The Roman track reads the passage in transliteration — the
-                point of the exercise is comprehension, not decoding. */}
-            {track === 'roman' ? (
-              <Txt style={{ color: palette.ink, fontSize: 17 }} className="font-body-bold leading-6">
-                {l.roman}
-              </Txt>
-            ) : (
-              <>
-                <Urdu style={{ fontSize: 23, color: palette.ink, lineHeight: urduLine(23), textAlign: 'right' }}>
-                  {l.urdu}
-                </Urdu>
-                {showRoman ? (
-                  <Txt style={{ color: palette.ink }} className="mt-2 text-[11px] leading-4 opacity-50">
-                    {l.roman}
-                  </Txt>
-                ) : null}
-              </>
-            )}
-            {stage === 'answer' ? (
-              <Txt style={{ color: palette.ink }} className="mt-1 text-xs leading-4 opacity-70">
-                {l.meaning}
-              </Txt>
-            ) : null}
+          <View key={i} className={`flex-row items-start justify-between ${i > 0 ? 'mt-5' : ''}`}>
+            <View className="flex-1">
+              {/* The Roman track reads the passage in transliteration — the
+                  point of the exercise is comprehension, not decoding. */}
+              {track === 'roman' ? (
+                <Txt style={{ color: palette.ink, fontSize: 17 }} className="font-body-bold leading-6">
+                  {l.roman}
+                </Txt>
+              ) : (
+                <>
+                  <Urdu style={{ fontSize: 23, color: palette.ink, lineHeight: urduLine(23), textAlign: 'right' }}>
+                    {l.urdu}
+                  </Urdu>
+                  {showRoman ? (
+                    <Txt style={{ color: palette.ink }} className="mt-2 text-[11px] leading-4 opacity-50">
+                      {l.roman}
+                    </Txt>
+                  ) : null}
+                </>
+              )}
+              {stage === 'answer' ? (
+                <Txt style={{ color: palette.ink }} className="mt-1 text-xs leading-4 opacity-70">
+                  {l.meaning}
+                </Txt>
+              ) : null}
+            </View>
+            <View className="ml-2 mt-0.5">
+              <SpeakerButton
+                size={26}
+                label="Hear this line"
+                onPress={() => announce(`${passage.id}-${i}`, l.urdu, l.roman)}
+              />
+            </View>
           </View>
         ))}
       </View>
