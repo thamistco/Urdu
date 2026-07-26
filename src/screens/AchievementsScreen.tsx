@@ -49,7 +49,7 @@ export function AchievementsScreen() {
         <Reveal>
           <Heading className="mb-1 text-2xl">Your journey</Heading>
           <Txt className="mb-5 text-sm text-paper/55">
-            Each badge tiers up as you go — small wins early, rare targets later.
+            Each badge tiers up as you go, small wins early, rare targets later.
           </Txt>
         </Reveal>
 

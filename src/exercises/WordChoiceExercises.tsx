@@ -152,7 +152,7 @@ export function ListenTapExercise({ exercise, showRoman, locked, onGraded }: Exe
         </Pressable>
         <Txt style={{ color: palette.ink }} className="mt-3 text-xs opacity-50">
           {/* The transliteration is the answer written out, so it waits until
-              the question has been answered — otherwise there is nothing to
+              the question has been answered; otherwise there is nothing to
               listen for. */}
           Tap to hear{picked && showRoman ? ` · ${word.roman}` : ''}
         </Txt>

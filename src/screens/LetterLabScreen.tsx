@@ -158,7 +158,7 @@ export function LetterLabScreen() {
               <View>
                 <Urdu style={{ fontSize: 32, lineHeight: urduLine(32) }}>{letter.word}</Urdu>
                 <Txt className="mt-1 text-sm text-paper/60">
-                  {letter.roman} — {letter.meaning}
+                  {letter.roman}: {letter.meaning}
                 </Txt>
               </View>
               {letter.icon ? (

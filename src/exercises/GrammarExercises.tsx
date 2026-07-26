@@ -60,30 +60,47 @@ export function GrammarTeachExercise({ exercise, track, onGraded }: ExerciseProp
               className="flex-row items-center"
               style={{ borderTopWidth: 1, borderTopColor: withAlpha(palette.ink, 0.08) }}
             >
-              {row.map((cell, c) => (
-                <View key={c} className="flex-1 px-3 py-2.5">
-                  {/[؀-ۿ]/.test(cell) ? (
-                    // Urdu cells are right-aligned so the column reads as one
-                    // RTL block instead of drifting with each glyph's width.
-                    // On the Roman track the table is worthless in a script the
-                    // learner does not read, so its cells are transliterated
-                    // where we have a transliteration for them.
-                    track === 'roman' && romanOf(cell) ? (
+              {row.map((cell, c) => {
+                const isUrdu = /[؀-ۿ]/.test(cell);
+                // Authored per cell rather than guessed, so a slash-joined
+                // list of pronouns or a full example sentence still gets a
+                // real romanization instead of falling back to raw script.
+                const roman = concept.table!.rowsRoman?.[r]?.[c] || romanOf(cell);
+                if (!isUrdu) {
+                  return (
+                    <View key={c} className="flex-1 px-3 py-2.5">
+                      <Txt style={{ color: palette.ink }} className="text-[13px]">
+                        {cell}
+                      </Txt>
+                    </View>
+                  );
+                }
+                // On the Roman track the script itself is worthless to a
+                // learner who asked not to be taught it, so only the
+                // romanization shows. On Script/Both, a non-native reader
+                // still needs the romanization, so it shows underneath the
+                // Urdu rather than replacing it.
+                return (
+                  <View key={c} className="flex-1 px-3 py-2.5">
+                    {track === 'roman' ? (
                       <Txt style={{ color: palette.ink }} className="font-body-bold text-[15px]">
-                        {romanOf(cell)}
+                        {roman ?? cell}
                       </Txt>
                     ) : (
-                      <Urdu style={{ fontSize: 19, color: palette.ink, lineHeight: urduLine(19), textAlign: 'right' }}>
-                        {cell}
-                      </Urdu>
-                    )
-                  ) : (
-                    <Txt style={{ color: palette.ink }} className="text-[13px]">
-                      {cell}
-                    </Txt>
-                  )}
-                </View>
-              ))}
+                      <>
+                        <Urdu style={{ fontSize: 19, color: palette.ink, lineHeight: urduLine(19), textAlign: 'right' }}>
+                          {cell}
+                        </Urdu>
+                        {roman && (
+                          <Txt style={{ color: withAlpha(palette.ink, 0.55) }} className="mt-0.5 text-right text-[11px]">
+                            {roman}
+                          </Txt>
+                        )}
+                      </>
+                    )}
+                  </View>
+                );
+              })}
             </View>
           ))}
         </View>

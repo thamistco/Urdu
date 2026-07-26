@@ -173,7 +173,7 @@ export function PracticeScreen() {
                 className="flex-1"
                 accessibilityRole="button"
                 accessibilityState={{ selected: tab === k }}
-                accessibilityLabel={`${k} — ${TAB_TOTAL[k]} items`}
+                accessibilityLabel={`${k}: ${TAB_TOTAL[k]} items`}
               >
                 <View
                   className="items-center justify-center rounded-xl"

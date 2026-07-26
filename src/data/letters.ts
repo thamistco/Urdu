@@ -70,39 +70,39 @@ export const LETTERS: Letter[] = [
   {
     id: 'alif', name: 'alif', sound: 'a / aa', connects: false, forms: nonConnector('ا'),
     word: 'انار', roman: 'anaar', meaning: 'pomegranate', emoji: '🍎', icon: 'pomegranate', group: 1,
-    note: 'A single upright stroke. It never joins to the letter after it — a natural break in the word.',
+    note: 'A single upright stroke. It never joins to the letter after it, a natural break in the word.',
   },
   {
     id: 'alif-madda', name: 'alif madda', sound: 'aa', connects: false, forms: nonConnector('آ'),
     word: 'آم', roman: 'aam', meaning: 'mango', emoji: '🥭', group: 1,
-    note: 'Alif wearing a wavy hat (madda). It starts a word with a long "aa" — alif alone cannot do that at the beginning.',
+    note: 'Alif wearing a wavy hat (madda). It starts a word with a long "aa", alif alone cannot do that at the beginning.',
   },
   {
     id: 'be', name: 'be', sound: 'b', connects: true, forms: connector('ب'),
     word: 'بلی', roman: 'billi', meaning: 'cat', emoji: '🐈', group: 1,
-    note: 'One dot below. The bowl stays shallow in Nastaliq — it sits, it does not scoop.',
+    note: 'One dot below. The bowl stays shallow in Nastaliq, it sits, it does not scoop.',
   },
   {
     id: 'pe', name: 'pe', sound: 'p', connects: true, forms: connector('پ'),
     word: 'پانی', roman: 'paani', meaning: 'water', emoji: '💧', group: 1,
-    note: 'Same bowl as be, but three dots below. A Persian/Urdu letter — Arabic has no p.',
+    note: 'Same bowl as be, but three dots below. A Persian/Urdu letter, Arabic has no p.',
   },
   {
     id: 'te', name: 'te', sound: 't', connects: true, forms: connector('ت'),
     word: 'تارا', roman: 'taara', meaning: 'star', emoji: '⭐', group: 1,
-    note: 'Two dots above. Soft dental t — tongue on the teeth, not the ridge.',
+    note: 'Two dots above. Soft dental t, tongue on the teeth, not the ridge.',
   },
   {
     id: 'Te', name: 'Te', sound: 'ṭ (hard)', connects: true, forms: connector('ٹ'),
     word: 'ٹماٹر', roman: 'ṭamaaṭar', meaning: 'tomato', emoji: '🍅', group: 1,
-    note: 'A small ط (to\'e)-like mark above marks the retroflex "hard" t — curl the tongue back.',
+    note: 'A small ط (to\'e)-like mark above marks the retroflex "hard" t, curl the tongue back.',
   },
 
   // ---- Group 2 -----------------------------------------------------------
   {
     id: 'se', name: 'se', sound: 's', connects: true, forms: connector('ث'),
     word: 'ثمر', roman: 'samar', meaning: 'fruit', emoji: '🍇', group: 2,
-    note: 'Three dots above. In Urdu it sounds exactly like seen — one of three letters spelling the same \'s\'.',
+    note: 'Three dots above. In Urdu it sounds exactly like seen, one of three letters spelling the same \'s\'.',
   },
   {
     id: 'jeem', name: 'jeem', sound: 'j', connects: true, forms: connector('ج'),
@@ -117,7 +117,7 @@ export const LETTERS: Letter[] = [
   {
     id: 'baRi-he', name: 'baṛī he', sound: 'h', connects: true, forms: connector('ح'),
     word: 'حلوہ', roman: 'halwa', meaning: 'sweet dish', emoji: '🍮', group: 2,
-    note: 'A dotless deep curve. In Urdu it sounds the same as choṭī he — an ordinary h.',
+    note: 'A dotless deep curve. In Urdu it sounds the same as choṭī he, an ordinary h.',
   },
   {
     id: 'khe', name: 'khe', sound: 'kh', connects: true, forms: connector('خ'),
@@ -129,12 +129,12 @@ export const LETTERS: Letter[] = [
   {
     id: 'daal', name: 'daal', sound: 'd', connects: false, forms: nonConnector('د'),
     word: 'دل', roman: 'dil', meaning: 'heart', emoji: '❤️', group: 3,
-    note: 'A soft angled stroke. Non-joining — the next letter starts fresh.',
+    note: 'A soft angled stroke. Non-joining, the next letter starts fresh.',
   },
   {
     id: 'Daal', name: 'Ḍaal', sound: 'ḍ (hard)', connects: false, forms: nonConnector('ڈ'),
     word: 'ڈبہ', roman: 'ḍabba', meaning: 'box', emoji: '📦', group: 3,
-    note: 'Daal with the retroflex mark — the hard, curled-tongue d.',
+    note: 'Daal with the retroflex mark, the hard, curled-tongue d.',
   },
   {
     id: 'zaal', name: 'zaal', sound: 'z', connects: false, forms: nonConnector('ذ'),
@@ -149,7 +149,7 @@ export const LETTERS: Letter[] = [
   {
     id: 'Re', name: 'Ṛe', sound: 'ṛ', connects: false, forms: nonConnector('ڑ'),
     word: 'گھڑی', roman: 'ghaṛi', meaning: 'watch / clock', emoji: '⌚', group: 3,
-    note: 'Re with the retroflex mark — a flapped, curled r with no true English match.',
+    note: 'Re with the retroflex mark, a flapped, curled r with no true English match.',
   },
   {
     id: 'ze', name: 'ze', sound: 'z', connects: false, forms: nonConnector('ز'),
@@ -159,7 +159,7 @@ export const LETTERS: Letter[] = [
   {
     id: 'zhe', name: 'zhe', sound: 'zh', connects: false, forms: nonConnector('ژ'),
     word: 'ژالہ', roman: 'zhaala', meaning: 'hail', emoji: '🧊', group: 3,
-    note: 'Re with three dots — a rare "zh" sound, like the s in "measure".',
+    note: 'Re with three dots, a rare "zh" sound, like the s in "measure".',
   },
 
   // ---- Group 4 -----------------------------------------------------------
@@ -176,19 +176,19 @@ export const LETTERS: Letter[] = [
   {
     id: 'swaad', name: 'swaad', sound: 's', connects: true, forms: connector('ص'),
     word: 'صابن', roman: 'saabun', meaning: 'soap', emoji: '🧼', group: 4,
-    note: 'A wide loop with a tail. In Urdu it sounds the same as seen — the spelling is inherited from Arabic.',
+    note: 'A wide loop with a tail. In Urdu it sounds the same as seen, the spelling is inherited from Arabic.',
   },
   {
     id: 'zwaad', name: 'zwaad', sound: 'z', connects: true, forms: connector('ض'),
     word: 'ضرب', roman: 'zarb', meaning: 'multiply / strike', emoji: '✖️', group: 4,
-    note: 'Swaad with one dot above. In Urdu it sounds like ze — one of four letters spelling \'z\'.',
+    note: 'Swaad with one dot above. In Urdu it sounds like ze, one of four letters spelling \'z\'.',
   },
 
   // ---- Group 5 -----------------------------------------------------------
   {
     id: 'toe', name: 'to’e', sound: 't', connects: true, forms: connector('ط'),
     word: 'طوطا', roman: 'toota', meaning: 'parrot', emoji: '🦜', group: 5,
-    note: 'A loop with an upright stroke. In Urdu it sounds like te — the soft dental t.',
+    note: 'A loop with an upright stroke. In Urdu it sounds like te, the soft dental t.',
   },
   {
     id: 'zoe', name: 'zo’e', sound: 'z', connects: true, forms: connector('ظ'),
@@ -198,7 +198,7 @@ export const LETTERS: Letter[] = [
   {
     id: 'ain', name: 'ain', sound: 'a / ‘ (silent)', connects: true, forms: connector('ع'),
     word: 'عینک', roman: 'ainak', meaning: 'glasses', emoji: '👓', group: 5,
-    note: 'A shape-shifter — its four forms look very different. In Urdu it is not a throat sound: it usually just carries a vowel, or is silent.',
+    note: 'A shape-shifter, its four forms look very different. In Urdu it is not a throat sound: it usually just carries a vowel, or is silent.',
   },
   {
     id: 'ghain', name: 'ghain', sound: 'gh', connects: true, forms: connector('غ'),
@@ -225,7 +225,7 @@ export const LETTERS: Letter[] = [
   {
     id: 'gaaf', name: 'gaaf', sound: 'g', connects: true, forms: connector('گ'),
     word: 'گھر', roman: 'ghar', meaning: 'house', emoji: '🏠', group: 6,
-    note: 'Kaaf with a second stroke on top — the tell for a hard "g".',
+    note: 'Kaaf with a second stroke on top, the tell for a hard "g".',
   },
 
   // ---- Group 7: the finishers -------------------------------------------
@@ -242,12 +242,12 @@ export const LETTERS: Letter[] = [
   {
     id: 'noon', name: 'noon', sound: 'n', connects: true, forms: connector('ن'),
     word: 'نام', roman: 'naam', meaning: 'name', emoji: '✍️', group: 7,
-    note: 'Deep bowl, one dot above. Joined forward it looks like be — the dot is the only tell.',
+    note: 'Deep bowl, one dot above. Joined forward it looks like be, the dot is the only tell.',
   },
   {
     id: 'noon-ghunna', name: 'noon ghunna', sound: 'ñ (nasal)', connects: false, forms: nonConnector('ں'),
     word: 'ہاں', roman: 'haañ', meaning: 'yes', emoji: '✅', icon: 'check', group: 7,
-    note: 'A dotless noon at the end of a word — it nasalises the vowel before it.',
+    note: 'A dotless noon at the end of a word, it nasalises the vowel before it.',
   },
   {
     id: 'waw', name: 'waaw', sound: 'w / o / u', connects: false, forms: nonConnector('و'),
@@ -259,19 +259,19 @@ export const LETTERS: Letter[] = [
   {
     id: 'choti-he', name: 'choṭī he', sound: 'h', connects: true, forms: connector('ہ'),
     word: 'ہاتھی', roman: 'haathi', meaning: 'elephant', emoji: '🐘', group: 8,
-    note: 'The "small" h. Its four faces look remarkably different — watch them shift.',
+    note: 'The "small" h. Its four faces look remarkably different, watch them shift.',
   },
   {
     id: 'do-chashmi-he', name: 'do-chashmī he', sound: 'h (aspirate)', connects: true, forms: connector('ھ'),
     word: 'کھانا', roman: 'khaana', meaning: 'food', emoji: '🍲', group: 8,
-    note: 'The "two-eyed" h. It never stands alone in meaning — it aspirates the letter before it (k→kh, b→bh).',
+    note: 'The "two-eyed" h. It never stands alone in meaning, it aspirates the letter before it (k→kh, b→bh).',
   },
   {
     id: 'hamza', name: 'hamza', sound: 'ʔ (glottal)', connects: false, forms: {
       isolated: 'ء', initial: 'ء', medial: 'ئ', final: 'ٔ',
     },
     word: 'چائے', roman: 'chaa’e', meaning: 'tea', emoji: '🍵', group: 8,
-    note: 'A tiny mark, not a full letter — a catch in the voice between two vowels.',
+    note: 'A tiny mark, not a full letter, a catch in the voice between two vowels.',
   },
   {
     id: 'choti-ye', name: 'choṭī ye', sound: 'y / ee', connects: true, forms: connector('ی'),
@@ -283,7 +283,7 @@ export const LETTERS: Letter[] = [
       isolated: 'ے', initial: 'یـ', medial: T + 'یـ', final: 'ـے',
     },
     word: 'میز', roman: 'mez', meaning: 'table', emoji: '🪑', icon: 'table', group: 8,
-    note: 'The "big" ye — a wide sweeping tail used at the end of words for the "e/ai" sound.',
+    note: 'The "big" ye, a wide sweeping tail used at the end of words for the "e/ai" sound.',
   },
 ];
 

@@ -81,7 +81,7 @@ export function LessonComplete({
                 >
                   <Illustration name="flame" tile={false} size={26} />
                   <Bold style={{ color: palette.flameLight }}>
-                    {result.streak} day streak — keep it alight
+                    {result.streak} day streak, keep it alight
                   </Bold>
                 </View>
               </Reveal>
@@ -119,7 +119,7 @@ export function LessonComplete({
 
           <Reveal delay={420}>
             <Txt className="mb-4 text-center text-xs text-paper/50">
-              Come back tomorrow — the words you missed return first.
+              Come back tomorrow: the words you missed return first.
             </Txt>
             <Button onPress={onHome}>Continue</Button>
           </Reveal>

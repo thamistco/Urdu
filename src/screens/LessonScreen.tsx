@@ -39,14 +39,14 @@ function answerLabel(ex: Exercise): string {
       return POSITIONS.find((p) => p.key === ex.position)?.label ?? '';
     case 'letterPick':
     case 'letterTrace':
-      return `${ex.letter.name} — ${ex.letter.forms.isolated}`;
+      return `${ex.letter.name}: ${ex.letter.forms.isolated}`;
     case 'multipleChoice':
     case 'meaningPick':
     case 'listenTap':
     case 'wordBuild':
     case 'wordFromMeaning':
     case 'typeWord':
-      return `${ex.word.urdu} — ${ex.word.meaning}`;
+      return `${ex.word.urdu}: ${ex.word.meaning}`;
     default:
       return '';
   }
@@ -262,7 +262,7 @@ export function LessonScreen() {
                         ? 'Keep that in mind'
                         : graded
                         ? 'Beautifully done'
-                        : 'Not quite — that’s okay'}
+                        : 'Not quite, that’s okay'}
                     </Bold>
                     {!graded && current && !isTeaching(current) ? (
                       <Txt className="text-xs text-paper/70">Answer: {answerLabel(current)}</Txt>

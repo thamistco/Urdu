@@ -78,7 +78,7 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
         />
       </View>
       <Txt className="mb-5 text-[11px] text-paper/40">
-        Spelling is forgiving — kitab, kitaab and کتاب all count.
+        Spelling is forgiving, kitab, kitaab and کتاب all count.
       </Txt>
 
       {graded == null && (
