@@ -262,7 +262,7 @@ export function LessonScreen() {
                         ? 'Keep that in mind'
                         : graded
                         ? 'Beautifully done'
-                        : 'Not quite, that’s okay'}
+                        : 'Not quite, but that’s okay'}
                     </Bold>
                     {!graded && current && !isTeaching(current) ? (
                       <Txt className="text-xs text-paper/70">Answer: {answerLabel(current)}</Txt>
