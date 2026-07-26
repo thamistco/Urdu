@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { View } from 'react-native';
-import { Choice, Question, palette, withAlpha } from './common';
+import { Choice, Question, SpeakerButton, palette, withAlpha } from './common';
 import { Urdu, Txt, Bold, Eyebrow, urduLine } from '../components/Text';
 import { Button } from '../components/Button';
 import { feedback } from '../lib/feedback';
+import { announce } from '../lib/speech';
 import type { ExerciseProps, Exercise } from './types';
 
 type DialogueEx = Extract<Exercise, { kind: 'dialogue' }>;
@@ -89,6 +90,13 @@ export function DialogueExercise({ exercise, track, showRoman, locked, onGraded 
                     {l.meaning}
                   </Txt>
                 ) : null}
+                <View className={`mt-2 flex-row ${isA ? 'justify-start' : 'justify-end'}`}>
+                  <SpeakerButton
+                    size={24}
+                    label="Hear this line"
+                    onPress={() => announce(`${dialogue.id}-${i}`, l.urdu, l.roman)}
+                  />
+                </View>
               </View>
             </View>
           );

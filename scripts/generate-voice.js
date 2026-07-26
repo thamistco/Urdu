@@ -62,6 +62,7 @@ function load(rel) {
 function collectItems() {
   const { WORDS, PHRASES } = load('src/data/words.ts');
   const { LETTERS } = load('src/data/letters.ts');
+  const { SENTENCES, PASSAGES, DIALOGUES } = load('src/data/sentences.ts');
   const items = [];
   const seen = new Set();
   const add = (id, text) => {
@@ -75,6 +76,14 @@ function collectItems() {
   // spelling the TTS engine would otherwise have to guess at.
   for (const w of WORDS) add(w.id, w.pronounce || w.urdu);
   for (const p of PHRASES) add(p.id, p.urdu);
+  // Sentence-building and reading content is spoken too, one clip per full
+  // sentence and per passage/dialogue line. Passage and dialogue lines have
+  // no id of their own in the data, so the exercises and this script both
+  // derive one the same way — from the line's position — rather than
+  // requiring the data to carry an id nothing else needs.
+  for (const s of SENTENCES) add(s.id, s.words.join(' '));
+  for (const p of PASSAGES) p.lines.forEach((l, i) => add(`${p.id}-${i}`, l.urdu));
+  for (const d of DIALOGUES) d.lines.forEach((l, i) => add(`${d.id}-${i}`, l.urdu));
   // Letters are announced by id too, when a traced letter is accepted.
   for (const l of LETTERS) add(l.id, l.forms?.isolated || l.glyph || l.forms?.initial);
   return items;
