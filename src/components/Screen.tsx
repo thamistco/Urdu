@@ -30,9 +30,10 @@ export function Screen({
   children: ReactNode;
   scroll?: boolean;
   lattice?: boolean;
-  /** Which scenery to show — defaults to the sunset every other screen uses.
-   *  Pass 'forest' for a section that wants a change of place. */
-  scene?: 'sunset' | 'forest';
+  /** Which sky to show — defaults to 'auto', which reads the real time of day
+   *  (dawn/day/dusk/night). Pass an explicit value to pin one, e.g. for a
+   *  preview or a screenshot. */
+  scene?: 'auto' | 'dawn' | 'day' | 'dusk' | 'night';
   padded?: boolean;
   contentClassName?: string;
   /** For callers that need to move the view themselves — the lesson scrolls to
