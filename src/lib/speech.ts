@@ -13,7 +13,21 @@ export function setSpeechMuted(value: boolean) {
   muted = value;
 }
 
+/**
+ * Correct feedback delays its pronunciation by a few hundred ms so the chime
+ * and the voice don't collide (see feedback.ts). That delay is real time a
+ * quick learner can spend tapping "Continue" — so without this, a word's
+ * audio could still be in flight when the next question was already on
+ * screen, and land on top of it sounding like a mispronunciation of the new
+ * word. Every screen transition bumps this so stale audio never plays late.
+ */
+let epoch = 0;
+export function speechEpoch() {
+  return epoch;
+}
+
 const clipCache: Record<string, Audio.Sound> = {};
+let lastSound: Audio.Sound | null = null;
 
 async function playClip(id: string): Promise<boolean> {
   const asset = VOICE[id];
@@ -25,6 +39,7 @@ async function playClip(id: string): Promise<boolean> {
       sound = created.sound;
       clipCache[id] = sound;
     }
+    lastSound = sound;
     await sound.replayAsync();
     return true;
   } catch {
@@ -67,4 +82,13 @@ export function stopSpeaking() {
   } catch {
     // ignore
   }
+}
+
+/** Call when the screen moves on from the word being spoken about — cancels
+ *  anything queued and stops anything already playing, so it never lands on
+ *  whatever comes next. */
+export function invalidateSpeech() {
+  epoch += 1;
+  stopSpeaking();
+  lastSound?.stopAsync().catch(() => {});
 }

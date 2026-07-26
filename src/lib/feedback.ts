@@ -1,6 +1,6 @@
 import { play } from './sound';
 import { haptics } from './haptics';
-import { announce } from './speech';
+import { announce, speechEpoch } from './speech';
 
 /**
  * Combined sensory feedback — one call fires the matched sound + haptic so
@@ -22,8 +22,14 @@ export const feedback = {
     play('correct');
     haptics.correct();
     // The chime blooms for about 850ms. Speaking at 420ms landed the word on
-    // top of its last note; this lets the sound settle first.
-    setTimeout(() => announce(voiceId, urdu, roman), 650);
+    // top of its last note; this lets the sound settle first. A learner who
+    // moves on before then shouldn't hear it land on the next question —
+    // invalidateSpeech() bumps the epoch on every advance, so a stale call
+    // here is simply skipped.
+    const epochAtCall = speechEpoch();
+    setTimeout(() => {
+      if (speechEpoch() === epochAtCall) announce(voiceId, urdu, roman);
+    }, 650);
   },
   incorrect() {
     play('incorrect');
