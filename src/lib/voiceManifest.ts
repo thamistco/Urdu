@@ -627,7 +627,6 @@ export const VOICE: Record<string, number> = {
   'w-garage': require('../../assets/voice/w-garage.mp3'),
   'w-garaj-thunder': require('../../assets/voice/w-garaj-thunder.mp3'),
   'w-garam-paani': require('../../assets/voice/w-garam-paani.mp3'),
-  'w-garam-paani2': require('../../assets/voice/w-garam-paani2.mp3'),
   'w-garam2': require('../../assets/voice/w-garam2.mp3'),
   'w-gardan': require('../../assets/voice/w-gardan.mp3'),
   'w-garmahat': require('../../assets/voice/w-garmahat.mp3'),

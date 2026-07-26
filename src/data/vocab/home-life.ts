@@ -108,7 +108,7 @@ export const HOME_PACKS: TopicPack[] = [
       ['w-paudha', 'پودا', 'paudha', 'plant', '🌱'],
       ['w-beej', 'بیج', 'beej', 'seed', '🫘'],
       ['w-jar', 'جڑ', 'jaṛ', 'root', '🥕'],
-      ['w-patta', 'پتہ', 'patta', 'leaf', '🍃'],
+      ['w-patta', 'پتّا', 'patta', 'leaf', '🍃'],
       ['w-shaakh', 'شاخ', 'shaakh', 'branch', '🌿'],
       ['w-ghaas', 'گھاس', 'ghaas', 'grass', '🌾'],
       ['w-kaanta', 'کانٹا', 'kaanṭa', 'thorn', '🌵'],

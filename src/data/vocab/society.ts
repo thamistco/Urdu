@@ -98,7 +98,7 @@ export const SOCIETY_PACKS: TopicPack[] = [
       ['w-taqseem', 'تقسیم', 'taqseem', 'partition / division', '➗'],
       ['w-wirasat2', 'ورثہ', 'wirsa', 'heritage', '🏛️'],
       ['w-nasal', 'نسل', 'nasl', 'generation / race', '👪'],
-      ['w-daur', 'دور', 'daur', 'era', '⏳'],
+      ['w-daur', 'دور', 'daur', 'era', '⏳', 'دَور'],
       ['w-waqia', 'واقعہ', 'waaqia', 'event', '📅'],
     ]
   ),
@@ -149,7 +149,7 @@ export const SOCIETY_PACKS: TopicPack[] = [
       ['w-ilm-o-agahi', 'آگاہی', 'aagaahi', 'awareness', '👁️'],
       ['w-hikmat', 'حکمت', 'hikmat', 'wisdom', '🦉'],
       ['w-tanqeed2', 'تجزیہ', 'tajziya', 'analysis', '🔬'],
-      ['w-nazariya3', 'فکر', 'fikr-e-nazar', 'school of thought', '📚'],
+      ['w-nazariya3', 'مکتبِ فکر', 'maktab-e-fikr', 'school of thought', '📚'],
     ]
   ),
   pack(

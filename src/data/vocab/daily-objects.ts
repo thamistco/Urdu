@@ -46,7 +46,6 @@ export const OBJECT_PACKS: TopicPack[] = [
       ['w-tissue', 'ٹشو', 'ṭishoo', 'tissue', '🧻'],
       ['w-kachra-daan', 'کچرا دان', 'kachra-daan', 'bin', '🗑️'],
       ['w-saaf-suthrai', 'صفائی ستھرائی', 'safaai-suthraai', 'hygiene', '🧼'],
-      ['w-garam-paani2', 'گرم پانی', 'garm paani', 'hot water', '♨️'],
       ['w-nali', 'نالی', 'naali', 'drain', '🕳️'],
       ['w-tauliya2', 'دستی تولیہ', 'dasti tauliya', 'hand towel', '🧻'],
       ['w-baalti2', 'ڈول', 'ḍol', 'pail', '🪣'],

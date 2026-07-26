@@ -121,7 +121,7 @@ export const ESSENTIAL_PACKS: TopicPack[] = [
       ['w-second', 'سیکنڈ', 'saikanḍ', 'second', '⏱️'],
       ['w-arsa', 'عرصہ', 'arsa', 'period of time', '📆'],
       ['w-muddat', 'مدت', 'muddat', 'duration', '⏲️'],
-      ['w-jald', 'جلد', 'jald', 'soon', '🔜'],
+      ['w-jald', 'جلد', 'jald', 'soon', '🔜', 'جَلد'],
       ['w-der-se', 'دیر سے', 'der se', 'late', '🐌'],
       ['w-aaj-kal', 'آج کل', 'aaj kal', 'nowadays', '📅'],
       ['w-hamesha-ke-liye', 'ہمیشہ کے لیے', 'hamesha ke liye', 'forever', '♾️'],
