@@ -83,7 +83,7 @@ export function LetterLabScreen() {
               <TracePad key={tracePadKey(letter.id, pos)} letter={letter} position={pos} />
             ) : (
               <Pressable onPress={() => speak(letter.word, letter.roman)}>
-                <View className="rounded-2xl bg-paper px-6 pb-5 pt-3" style={{ borderWidth: 2, borderColor: palette.ink }}>
+                <View className="rounded-2xl bg-parchment px-6 pb-5 pt-3" style={{ borderWidth: 2, borderColor: palette.ink }}>
                   <View className="h-44 items-center justify-center">
                     <Urdu key={pos} style={{ color: palette.ink, ...urduGlyph(72) }}>
                       {letter.forms[pos]}

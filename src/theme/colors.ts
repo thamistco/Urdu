@@ -35,10 +35,33 @@ export const palette = {
   ink600: '#523822',
   ink500: '#6B4A2B',
 
-  // surfaces — warm sand, lit like the last light on the horizon
+  /**
+   * `paper` is a *text* colour: the light ink used for body copy on the dark
+   * ground. It is deliberately near-white, because that is what it has to be
+   * to stay legible at 14px on espresso-black.
+   *
+   * It used to double as the fill for light card surfaces too, and that
+   * conflation was a real bug: a card painted in a colour chosen for small
+   * text is a near-white slab, and at the size of a grammar table or a reading
+   * passage it stops reading as a surface and starts reading as a hole punched
+   * in the screen. The two roles could never be tuned independently while they
+   * shared one token — darkening the card also dimmed every paragraph in the
+   * app. `parchment` below is the surface; this stays the text.
+   */
   paper: '#FFEEDD',
   paperSoft: '#FFF6EA',
   paperDim: '#F5DFC0',
+
+  /**
+   * Light reading surfaces — cards, tables, passages, the ground Nastaliq is
+   * set on. Dark-on-light genuinely is easier for the script, so these stay
+   * light; they are just pulled off pure white into aged paper so they sit
+   * inside the sunset palette instead of glaring out of it. Still 12:1 against
+   * ink text, far beyond what the script needs.
+   */
+  parchment: '#EFDFC7',
+  parchmentSoft: '#F7EBDA',
+  parchmentDim: '#E2CFB2',
 
   // reward / primary — sunset orange, the warmest thing in the scene
   gold: '#FF8C42',

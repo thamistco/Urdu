@@ -54,7 +54,7 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
   return (
     <View>
       <Question>Build the sentence</Question>
-      <View className="mb-4 items-center rounded-2xl bg-paper px-5 py-4">
+      <View className="mb-4 items-center rounded-2xl bg-parchment px-5 py-4">
         <Txt style={{ color: palette.ink }} className="text-center text-[15px] font-semibold">
           {sentence.meaning}
         </Txt>
@@ -176,7 +176,7 @@ export function ReadingExercise({ exercise, track, showRoman, locked, onGraded }
         Reading · {passage.title}
       </Eyebrow>
 
-      <View className="mb-4 rounded-2xl bg-paper px-5 py-4">
+      <View className="mb-4 rounded-2xl bg-parchment px-5 py-4">
         {passage.lines.map((l, i) => (
           // Nastaliq descends a long way below its baseline, so each line needs
           // real breathing room before the transliteration underneath it.

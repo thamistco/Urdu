@@ -46,7 +46,7 @@ export function GrammarTeachExercise({ exercise, track, onGraded }: ExerciseProp
       </View>
 
       {concept.table && (
-        <View className="mb-4 overflow-hidden rounded-2xl" style={{ backgroundColor: palette.paper }}>
+        <View className="mb-4 overflow-hidden rounded-2xl" style={{ backgroundColor: palette.parchment }}>
           <View className="flex-row" style={{ backgroundColor: withAlpha(palette.ink, 0.08) }}>
             {concept.table.heading.map((h, i) => (
               <View key={i} className="flex-1 px-3 py-2">
@@ -156,7 +156,7 @@ export function GrammarDrillExercise({ exercise, track, showRoman, locked, onGra
   return (
     <View>
       <Question>Complete the sentence</Question>
-      <View className="mb-4 items-center rounded-2xl bg-paper px-5 py-6">
+      <View className="mb-4 items-center rounded-2xl bg-parchment px-5 py-6">
         {roman ? (
           <Bold style={{ color: palette.ink, fontSize: 21, textAlign: 'center' }}>{shownRoman}</Bold>
         ) : (

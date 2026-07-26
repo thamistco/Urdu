@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
-import { Bold, Txt } from './Text';
+import { Bold } from './Text';
 import { Illustration } from './Illustration';
 import { palette, withAlpha } from '../theme';
 import { HEARTS_MAX } from '../lib/gamification';
@@ -43,7 +43,11 @@ export function StatBar({
     <View className="flex-row items-center justify-between">
       <StatChip icon={<Illustration name="flame" tile={false} size={16} />} value={streak} color={palette.flame} />
       <StatChip icon={<Illustration name="gem" tile={false} size={16} />} value={gems} color={palette.jadeLight} />
-      <StatChip icon="❤️" value={`${hearts}/${HEARTS_MAX}`} color={palette.rose} />
+      <StatChip
+        icon={<Illustration name="heart" tile={false} size={16} />}
+        value={`${hearts}/${HEARTS_MAX}`}
+        color={palette.rose}
+      />
     </View>
   );
 }
@@ -52,10 +56,14 @@ export function StatBar({
 export function Hearts({ count }: { count: number }) {
   return (
     <View className="flex-row items-center gap-1">
+      {/* Drawn marks, not ❤️/🤍. System emoji render differently on every
+          platform — which is the exact problem the icon set exists to solve —
+          and next to the drawn flame and gem in the same bar they looked like
+          they belonged to a different app. */}
       {Array.from({ length: HEARTS_MAX }).map((_, i) => (
-        <Txt key={i} style={{ fontSize: 16, opacity: i < count ? 1 : 0.22 }}>
-          {i < count ? '❤️' : '🤍'}
-        </Txt>
+        <View key={i} style={{ opacity: i < count ? 1 : 0.22 }}>
+          <Illustration name="heart" tile={false} size={16} />
+        </View>
       ))}
     </View>
   );
