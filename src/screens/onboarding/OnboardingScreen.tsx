@@ -35,7 +35,7 @@ const SKIPPABLE_FOR_SPEAKERS = UNITS.filter((u) => u.level === 'beginner')
 
 const GOALS: { key: Goal; label: string; desc: string; icon: string }[] = [
   { key: 'family', label: 'Speak with family', desc: 'Parents, grandparents, relatives back home', icon: '👨‍👩‍👧' },
-  { key: 'read', label: 'Read & write it', desc: 'The script itself, Nastaliq', icon: '✍️' },
+  { key: 'read', label: 'Read & write it', desc: 'The script itself: Nastaliq', icon: '✍️' },
   { key: 'heritage', label: 'Reconnect with heritage', desc: 'Culture, faith, identity', icon: '🕌' },
   { key: 'curious', label: "I'm just curious", desc: 'No particular reason', icon: '✨' },
 ];

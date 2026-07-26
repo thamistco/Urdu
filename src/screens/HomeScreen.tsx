@@ -303,7 +303,7 @@ export function HomeScreen() {
                   </Bold>
                   <Txt className="text-xs text-paper/55">
                     {finished
-                      ? 'The course is yours: daily review keeps it that way.'
+                      ? "You've made it through the whole course. Daily review keeps it fresh."
                       : `${currentUnit ? currentUnit.title.replace(/ · .*/, '') : currentLesson.subtitle} · ${currentLesson.subtitle}`}
                   </Txt>
                 </View>
@@ -359,7 +359,7 @@ export function HomeScreen() {
           >
             <Illustration name="sparkle" tile={false} size={15} />
             <Txt className="flex-1 text-[11px] text-paper/55">
-              Tap any lesson to jump ahead, locked ones stay marked, and unlock as you pass them.
+              Tap any lesson to jump ahead. Locked ones unlock as you pass them.
             </Txt>
           </View>
         </Reveal>

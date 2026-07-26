@@ -64,7 +64,7 @@ export function LoginScreen() {
             <Display className="mb-2 text-4xl">Harf</Display>
             <GeoDivider />
             <Txt className="mb-10 max-w-[300px] text-center text-[15px] leading-6 text-paper/70">
-              Learn to read Urdu, every letter in all four of its faces. Sign in to keep your
+              Learn to read Urdu: every letter in all four of its faces. Sign in to keep your
               streak and progress safe across devices.
             </Txt>
           </View>
@@ -99,8 +99,8 @@ export function LoginScreen() {
         {!authConfigured && !note && (
           <Reveal delay={160}>
             <Txt className="mt-5 text-center text-[11px] leading-5 text-paper/35">
-              Guest progress is saved on this device. Connect a backend to enable Google & Apple
-              sign-in and cloud save.
+              Sign-in isn't available just yet. Continue as a guest and your progress stays
+              right here on this device.
             </Txt>
           </Reveal>
         )}

@@ -56,7 +56,7 @@ export function SettingsScreen() {
   };
 
   const confirmReset = () => {
-    Alert.alert('Reset all progress?', 'This clears your streak, XP, gems and history. This cannot be undone.', [
+    Alert.alert('Reset all progress?', 'Your streak, XP, gems and history will all be cleared, and there is no way to get them back.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Reset',
