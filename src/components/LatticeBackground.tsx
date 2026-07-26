@@ -7,7 +7,6 @@ import Svg, {
   Stop,
   Path,
   Circle,
-  Ellipse,
   Rect,
   G,
   Filter,
@@ -21,6 +20,28 @@ import { currentHour, TIME_OF_DAY_HOUR, type TimeOfDay } from '../lib/timeOfDay'
 function pseudoRandom(i: number, seed: number): number {
   const x = Math.sin(i * 12.9898 + seed * 78.233) * 43758.5453;
   return x - Math.floor(x);
+}
+
+/**
+ * A soft sunburst — thin, low-opacity wedges radiating from the orb, the way
+ * light actually blooms in a hand-painted anime sky (the Makoto Shinkai
+ * reference this pass leaned on). Kept faint and blurred rather than a crisp
+ * graphic star burst: this sits behind reading text everywhere, so it has to
+ * read as atmosphere, not decoration competing for attention.
+ */
+function sunburstRays(cx: number, cy: number, count: number, seed: number): string[] {
+  const rays: string[] = [];
+  for (let i = 0; i < count; i++) {
+    const angle = (i / count) * Math.PI * 2;
+    const halfWidth = 0.045 + pseudoRandom(i, seed + 2) * 0.03;
+    const len = 220 + pseudoRandom(i, seed) * 140;
+    const x1 = cx + Math.cos(angle - halfWidth) * len;
+    const y1 = cy + Math.sin(angle - halfWidth) * len;
+    const x2 = cx + Math.cos(angle + halfWidth) * len;
+    const y2 = cy + Math.sin(angle + halfWidth) * len;
+    rays.push(`M${cx.toFixed(1)},${cy.toFixed(1)} L${x1.toFixed(1)},${y1.toFixed(1)} L${x2.toFixed(1)},${y2.toFixed(1)} Z`);
+  }
+  return rays;
 }
 
 /**
@@ -127,6 +148,28 @@ function skyAt(hour: number) {
   };
 }
 
+/**
+ * A fluffy cumulus silhouette built from overlapping circles rather than one
+ * ellipse — the classic stylised anime cloud shape (a row of soft bumps over
+ * a flatter base) instead of a plain blurred blob.
+ */
+const CLOUD_BUMPS = [
+  { dx: -0.9, dy: 0.15, r: 0.55 },
+  { dx: -0.35, dy: -0.15, r: 0.7 },
+  { dx: 0.25, dy: -0.05, r: 0.62 },
+  { dx: 0.8, dy: 0.18, r: 0.5 },
+  { dx: 0.1, dy: 0.25, r: 0.85 },
+];
+function CloudCluster({ cx, cy, scale = 1 }: { cx: number; cy: number; scale?: number }) {
+  return (
+    <G filter="url(#blurFar)">
+      {CLOUD_BUMPS.map((b, i) => (
+        <Circle key={i} cx={cx + b.dx * 90 * scale} cy={cy + b.dy * 60 * scale} r={b.r * 60 * scale} fill="url(#cloud)" />
+      ))}
+    </G>
+  );
+}
+
 type Scene = 'auto' | TimeOfDay;
 
 /**
@@ -199,17 +242,26 @@ export function LatticeBackground({ opacity = 1, scene = 'auto' }: { opacity?: n
 
         <Rect width="400" height="900" fill="url(#sky)" />
 
-        {/* a couple of soft, wide cloud blobs, high in the sky — the same
+        {/* a couple of soft anime-cloud clusters, high in the sky — the same
             gentle blur as the far tree line, so the whole upper scene reads
             as painted rather than vector-flat */}
-        <Ellipse cx="120" cy="200" rx="150" ry="46" fill="url(#cloud)" filter="url(#blurFar)" />
-        <Ellipse cx="300" cy="340" rx="120" ry="36" fill="url(#cloud)" filter="url(#blurFar)" />
+        <CloudCluster cx={120} cy={200} scale={1.1} />
+        <CloudCluster cx={300} cy={330} scale={0.85} />
 
         {/* the glow — sun by dawn, day and dusk, crossfading smoothly into a
             paler, cooler moon by night rather than swapping abruptly */}
         <Circle cx={sky.orbCx} cy={sky.orbCy} r={sky.orbGlowR} fill="url(#sunGlow)" opacity={1 - sky.moonMix} />
-        <Circle cx={sky.orbCx} cy={sky.orbCy} r={sky.orbCoreR} fill="url(#sunCore)" opacity={1 - sky.moonMix} />
         <Circle cx={sky.orbCx} cy={sky.orbCy} r={sky.orbGlowR} fill="url(#moonGlow)" opacity={sky.moonMix} />
+
+        {/* a soft sunburst behind the core — the hand-painted-sky detail,
+            faint enough to read as atmosphere rather than a graphic burst */}
+        <G filter="url(#blurMid)" opacity={0.5}>
+          {sunburstRays(sky.orbCx, sky.orbCy, 10, 3).map((d, i) => (
+            <Path key={i} d={d} fill={sky.moonMix > 0.5 ? withAlpha(palette.paper, 0.1) : withAlpha(palette.gold, 0.14)} />
+          ))}
+        </G>
+
+        <Circle cx={sky.orbCx} cy={sky.orbCy} r={sky.orbCoreR} fill="url(#sunCore)" opacity={1 - sky.moonMix} />
         <Circle cx={sky.orbCx} cy={sky.orbCy} r={sky.orbCoreR} fill="url(#moonCore)" opacity={sky.moonMix} />
 
         {/* a scatter of stars, fading in and out with how close to night it is */}
