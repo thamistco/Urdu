@@ -97,30 +97,44 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
 
       {/* assembly line (RTL) */}
       <View
-        className="mb-2 min-h-[70px] flex-row-reverse flex-wrap items-center justify-center rounded-2xl border-2 border-dashed px-3 py-3"
+        className="mb-2 min-h-[70px] rounded-2xl border-2 border-dashed px-3 py-3"
         style={{
           borderColor:
             graded == null ? withAlpha(palette.paper, 0.25) : graded ? palette.jade : palette.rose,
         }}
       >
         {placed.length === 0 ? (
-          <Txt className="text-sm text-paper/30">Tap letters below…</Txt>
+          <View className="flex-1 items-center justify-center">
+            <Txt className="text-sm text-paper/30">Tap letters below…</Txt>
+          </View>
         ) : (
-          placed.map((i, order) => (
-            <Pressable
-              key={`${i}-${order}`}
-              onPress={() => unplace(i)}
-              accessibilityRole="button"
-              accessibilityLabel={`Letter ${order + 1} of the word. Tap to take it back.`}
-            >
-              <View
-                className="mx-1 my-1 rounded-xl px-3 py-1"
-                style={{ backgroundColor: withAlpha(palette.gold, 0.18) }}
-              >
-                <Urdu style={{ ...urduGlyph(26) }}>{tiles[i]}</Urdu>
-              </View>
-            </Pressable>
-          ))
+          <>
+            {/* Tapped tiles show their isolated glyph — correct in isolation, but
+                Urdu letters change shape to join their neighbours, so a row of
+                isolated forms never actually looks like the word being spelled.
+                This reads the same tiles as one continuous run of text instead,
+                which lets the script's own shaping join them for real. */}
+            <View className="mb-2 items-center justify-center" style={{ minHeight: 40 }}>
+              <Urdu style={{ fontSize: 30, lineHeight: urduLine(30) }}>{assembled}</Urdu>
+            </View>
+            <View className="flex-row-reverse flex-wrap items-center justify-center">
+              {placed.map((i, order) => (
+                <Pressable
+                  key={`${i}-${order}`}
+                  onPress={() => unplace(i)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Letter ${order + 1} of the word. Tap to take it back.`}
+                >
+                  <View
+                    className="mx-1 my-1 rounded-xl px-3 py-1"
+                    style={{ backgroundColor: withAlpha(palette.gold, 0.18) }}
+                  >
+                    <Urdu style={{ ...urduGlyph(26) }}>{tiles[i]}</Urdu>
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          </>
         )}
       </View>
 
