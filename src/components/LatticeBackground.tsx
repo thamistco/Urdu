@@ -30,8 +30,14 @@ type Scene = 'sunset' | 'forest';
  *
  * `sunset` (the default, used almost everywhere): a dusk sky sliding from warm
  * espresso through oxblood to burnt orange, a glowing sun low on the horizon
- * partly hidden behind rolling hills, two birds crossing it. The reference is
- * Alto's Adventure, Monument Valley, Journey.
+ * partly hidden behind rolling green hills, soft mist settled in their folds,
+ * a couple of clouds catching the last light, two birds crossing it. The
+ * hills moved from an earlier brown-toned ramp to the same moss green as the
+ * `forest` scene below — calmer and closer to an actual dusk landscape than
+ * bare silhouette, and it ties the two scenes together as one place rather
+ * than two unrelated ones. References: Alto's Adventure, Monument Valley,
+ * Journey, and the quiet rolling-hills-at-dusk mood of a well-made wellness
+ * site — muted earth and green rather than anything saturated or synthetic.
  *
  * `forest` (used for Practice — a deliberate change of place, not of mood): a
  * misty tree line at dusk, built from a real "into the woods" reference
@@ -74,6 +80,10 @@ export function LatticeBackground({ opacity = 1, scene = 'sunset' }: { opacity?:
               <Stop offset="0" stopColor={withAlpha(palette.gold, 0.16)} />
               <Stop offset="1" stopColor={withAlpha(palette.gold, 0)} />
             </RadialGradient>
+            <RadialGradient id="hillMist" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+              <Stop offset="0" stopColor={withAlpha(palette.mossLight, 0.16)} />
+              <Stop offset="1" stopColor={withAlpha(palette.mossLight, 0)} />
+            </RadialGradient>
           </Defs>
         ) : (
           <Defs>
@@ -104,26 +114,47 @@ export function LatticeBackground({ opacity = 1, scene = 'sunset' }: { opacity?:
             <Circle cx="290" cy="520" r="200" fill="url(#sunGlow)" />
             <Circle cx="290" cy="520" r="72" fill="url(#sunCore)" />
 
+            {/* a couple of clouds catching the glow, drifting ahead of the hills —
+                built from overlapping circles rather than a filter, so this stays
+                cheap and identical across web and native */}
+            <Circle cx="120" cy="368" r="26" fill={withAlpha(palette.goldLight, 0.14)} />
+            <Circle cx="150" cy="378" r="34" fill={withAlpha(palette.goldLight, 0.12)} />
+            <Circle cx="92" cy="384" r="20" fill={withAlpha(palette.goldLight, 0.12)} />
+            <Circle cx="326" cy="412" r="20" fill={withAlpha(palette.paperSoft, 0.12)} />
+            <Circle cx="350" cy="422" r="27" fill={withAlpha(palette.paperSoft, 0.1)} />
+
             {/* two birds crossing the sky — the one Alto's Adventure detail
                 that makes a gradient read as a place, not a colour swatch */}
             <Path d="M70,260 q10,-12 20,0 q10,-12 20,0" stroke={withAlpha(palette.ink600, 0.7)} strokeWidth={3} fill="none" strokeLinecap="round" />
             <Path d="M130,300 q8,-9 16,0 q8,-9 16,0" stroke={withAlpha(palette.ink600, 0.55)} strokeWidth={2.5} fill="none" strokeLinecap="round" />
 
-            {/* far hills — barely there, just enough to read as a horizon */}
+            {/* far hills — soft green, barely there, just enough to read as a horizon */}
             <Path
               d="M0,560 C60,530 110,545 170,528 C230,512 260,545 330,522 C370,510 390,528 400,522 L400,900 L0,900 Z"
-              fill={withAlpha('#4A2F1F', 0.65)}
+              fill={withAlpha(palette.mossDark, 0.55)}
             />
-            {/* mid hills — a shade darker, more relief */}
+
+            {/* a low mist bank settled into the fold between the hills */}
+            <Circle cx="150" cy="645" r="220" fill="url(#hillMist)" />
+            <Circle cx="300" cy="665" r="180" fill="url(#hillMist)" />
+
+            {/* mid hills — deeper green, more relief */}
             <Path
               d="M0,650 C80,610 150,630 210,600 C270,572 320,615 400,585 L400,900 L0,900 Z"
-              fill={withAlpha('#38231A', 0.8)}
+              fill={withAlpha(palette.mossDeep, 0.82)}
             />
             {/* near hills — darkest, closest to the bottom edge */}
             <Path
               d="M0,730 C70,695 140,715 200,690 C260,665 310,700 400,675 L400,900 L0,900 Z"
-              fill={withAlpha(palette.ink800, 0.92)}
+              fill={withAlpha(palette.mossDeep, 0.97)}
             />
+
+            {/* a scatter of wildflowers at the meadow's edge */}
+            <Circle cx="55" cy="862" r="4" fill={withAlpha(palette.goldLight, 0.5)} />
+            <Circle cx="92" cy="880" r="3" fill={withAlpha(palette.paper, 0.4)} />
+            <Circle cx="225" cy="866" r="3.5" fill={withAlpha(palette.roseLight, 0.4)} />
+            <Circle cx="266" cy="884" r="3" fill={withAlpha(palette.goldLight, 0.45)} />
+            <Circle cx="338" cy="868" r="4" fill={withAlpha(palette.paper, 0.35)} />
           </>
         ) : (
           <>
