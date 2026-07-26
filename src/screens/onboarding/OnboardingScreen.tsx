@@ -33,6 +33,18 @@ const SKIPPABLE_FOR_SPEAKERS = UNITS.filter((u) => u.level === 'beginner')
   .filter((l) => l.kind === 'vocab' || l.kind === 'phrases')
   .map((l) => l.id);
 
+/**
+ * The placement quiz used to compute a `startLevel` that nothing ever read —
+ * a learner who tested as "Emerging (B1)" landed at lesson one of the course
+ * exactly like someone brand new to Urdu. It now actually places them: a
+ * near-perfect score skips the entire Beginner stage (they just demonstrated
+ * reading a word, sounding one out, and recognising the script), and a
+ * middling score gets the same basic-vocab skip a heritage speaker gets.
+ * Nothing above Beginner is ever skipped by placement — the quiz only tests
+ * script and absolute-basics, not Elementary-and-up content.
+ */
+const BEGINNER_LESSON_IDS = UNITS.filter((u) => u.level === 'beginner').flatMap((u) => u.lessons.map((l) => l.id));
+
 const GOALS: { key: Goal; label: string; desc: string; icon: string }[] = [
   { key: 'family', label: 'Speak with family', desc: 'Parents, grandparents, relatives back home', icon: '👨‍👩‍👧' },
   { key: 'read', label: 'Read & write it', desc: 'The script itself: Nastaliq', icon: '✍️' },
@@ -89,19 +101,26 @@ export function OnboardingScreen() {
   const [pIdx, setPIdx] = useState(0);
   const [pCorrect, setPCorrect] = useState(0);
   const [pAnswered, setPAnswered] = useState(false);
+  const [pPicked, setPPicked] = useState<string | null>(null);
   const [daily, setDaily] = useState('steady');
 
   const completeOnboarding = useProgressStore((s) => s.completeOnboarding);
   const setDailyGoal = useProgressStore((s) => s.setDailyGoal);
   const setTrackSetting = useSettingsStore((s) => s.setTrack);
 
+  // The placement level and what it (plus a heritage background) skips —
+  // computed here rather than inline in `finish` so the "ready" screen can
+  // also describe it before the learner commits.
+  const lvl = pCorrect >= 4 ? 2 : pCorrect >= 2 ? 1 : 0;
+  const bgSkips = background === 'speaker' ? SKIPPABLE_FOR_SPEAKERS : [];
+  const placementSkips = lvl === 2 ? BEGINNER_LESSON_IDS : lvl === 1 ? SKIPPABLE_FOR_SPEAKERS : [];
+  const skipIds = Array.from(new Set([...bgSkips, ...placementSkips]));
+
   const finish = () => {
-    const lvl = pCorrect >= 4 ? 2 : pCorrect >= 2 ? 1 : 0;
     setTrackSetting(track);
     setDailyGoal(daily);
     feedback.levelUp();
-    const bg = background ?? 'new';
-    completeOnboarding(goal ?? 'curious', lvl, bg, bg === 'speaker' ? SKIPPABLE_FOR_SPEAKERS : []);
+    completeOnboarding(goal ?? 'curious', lvl, background ?? 'new', skipIds);
   };
 
   // ---- welcome ----
@@ -252,13 +271,15 @@ export function OnboardingScreen() {
   if (step === 'placement') {
     const questions = placementFor(track);
     const question = questions[pIdx];
-    const pick = (correct: boolean) => {
+    const pick = (label: string, correct: boolean) => {
       if (pAnswered) return;
       setPAnswered(true);
+      setPPicked(label);
       const nextCorrect = pCorrect + (correct ? 1 : 0);
       feedback.tap();
       setTimeout(() => {
         setPAnswered(false);
+        setPPicked(null);
         if (pIdx < questions.length - 1) {
           setPCorrect(nextCorrect);
           setPIdx(pIdx + 1);
@@ -284,13 +305,23 @@ export function OnboardingScreen() {
             )}
           </View>
           <View className="gap-3">
-            {question.options.map((opt) => (
-              <Pressable key={opt.label} onPress={() => pick(opt.c)}>
-                <View className="rounded-xl border border-white/10 bg-ink-700 px-4 py-4">
-                  <Txt className="text-[15px]">{opt.label}</Txt>
-                </View>
-              </Pressable>
-            ))}
+            {question.options.map((opt) => {
+              const picked = pPicked === opt.label;
+              return (
+                <Pressable key={opt.label} onPress={() => pick(opt.label, opt.c)}>
+                  <View
+                    className="rounded-xl border px-4 py-4"
+                    style={{
+                      borderWidth: 2,
+                      borderColor: picked ? palette.gold : withAlpha(palette.white, 0.1),
+                      backgroundColor: picked ? withAlpha(palette.gold, 0.12) : palette.ink700,
+                    }}
+                  >
+                    <Txt className="text-[15px]">{opt.label}</Txt>
+                  </View>
+                </Pressable>
+              );
+            })}
           </View>
           <Txt className="mt-6 text-center text-xs text-paper/30">
             No wrong answers here: this just finds your starting point.
@@ -338,7 +369,7 @@ export function OnboardingScreen() {
   }
 
   // ---- ready ----
-  const lvlName = pCorrect >= 4 ? 'Emerging (B1)' : pCorrect >= 2 ? 'Early beginner (A2)' : 'Absolute beginner (A1)';
+  const lvlName = lvl === 2 ? 'Emerging (B1)' : lvl === 1 ? 'Early beginner (A2)' : 'Absolute beginner (A1)';
   return (
     <Screen scroll={false}>
       <Reveal style={{ flex: 1 }}>
@@ -353,12 +384,14 @@ export function OnboardingScreen() {
               We'll begin exactly where you are, and the words you miss will come back first.
             </Txt>
           </View>
-          {background === 'speaker' && (
+          {skipIds.length > 0 && (
             <View className="mb-4 w-full rounded-2xl border p-5" style={{ borderColor: withAlpha(palette.jade, 0.3), backgroundColor: withAlpha(palette.jade, 0.08) }}>
               <Eyebrow style={{ color: palette.jade }} className="mb-1">Fast-tracked</Eyebrow>
               <Txt className="mt-1 text-sm text-paper/60">
-                We've marked the basic words you likely already know as skipped, so your path leads straight to the
-                script and reading; everything else is still yours to complete.
+                {lvl === 2
+                  ? "You've already shown you can read the script, so we're starting you past the whole Beginner stage."
+                  : "We've marked the basic words you likely already know as skipped, so your path leads straight to the script and reading."}{' '}
+                Everything else is still yours to complete.
               </Txt>
             </View>
           )}
