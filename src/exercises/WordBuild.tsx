@@ -5,9 +5,46 @@ import { Urdu, Txt, Bold, urduGlyph, urduLine } from '../components/Text';
 import { WordArt } from '../components/Illustration';
 import { Button } from '../components/Button';
 import { feedback } from '../lib/feedback';
+import { LETTERS } from '../data/letters';
 import type { ExerciseProps, Exercise } from './types';
 
 type BuildEx = Extract<Exercise, { kind: 'wordBuild' }>;
+
+const LETTER_NAME: Record<string, string> = Object.fromEntries(
+  LETTERS.map((l) => [l.forms.isolated, l.name])
+);
+
+/**
+ * What's actually wrong with a wrong build, for the two mistakes common
+ * enough to name specifically: a letter left out, or the right letters in
+ * the wrong order. Anything messier (a decoy tile mixed in, several letters
+ * off) falls through to no message — a guess at what went wrong is worse
+ * than the plain "here's the word" reveal underneath this.
+ */
+function diagnoseBuild(assembled: string[], target: string[]): string | null {
+  if (assembled.join('') === target.join('')) return null;
+
+  if (assembled.length === target.length && [...assembled].sort().join('') === [...target].sort().join('')) {
+    return 'Right letters, wrong order.';
+  }
+
+  if (assembled.length < target.length) {
+    let ai = 0;
+    const missing: string[] = [];
+    for (const t of target) {
+      if (ai < assembled.length && assembled[ai] === t) ai++;
+      else missing.push(t);
+    }
+    // every placed tile matched, in order — the gaps are exactly what's missing
+    if (ai === assembled.length && missing.length > 0) {
+      const names = missing.map((c) => LETTER_NAME[c] ?? c).join(', ');
+      const glyphs = missing.join('');
+      return `Missing ${glyphs} (${names}): without ${missing.length === 1 ? 'it' : 'them'}, this doesn't spell the word.`;
+    }
+  }
+
+  return null;
+}
 
 /**
  * Build the Urdu word from scrambled letter tiles. Kinesthetic reinforcement —
@@ -43,6 +80,7 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
   };
 
   const assembled = placed.map((i) => tiles[i]).join('');
+  const diagnosis = graded === false ? diagnoseBuild(placed.map((i) => tiles[i]), target) : null;
 
   return (
     <View>
@@ -131,6 +169,9 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
           <Txt className="text-xs text-paper/60">The word is</Txt>
           <Urdu style={{ fontSize: 34, lineHeight: urduLine(34) }}>{word.urdu}</Urdu>
           <Txt className="text-xs text-paper/60">{word.roman}</Txt>
+          {diagnosis && (
+            <Txt className="mt-2 text-center text-xs text-paper/70">{diagnosis}</Txt>
+          )}
         </View>
       )}
     </View>
