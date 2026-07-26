@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Switch, Pressable, Alert } from 'react-native';
+import { View, Switch, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Screen } from '../components/Screen';
 import { TopBar } from '../components/TopBar';
@@ -8,6 +8,7 @@ import { Reveal } from '../components/Reveal';
 import { Txt, Bold, Eyebrow } from '../components/Text';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
+import { confirmAction } from '../lib/confirm';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useProgressStore } from '../store/useProgressStore';
 import { useAuthStore } from '../store/useAuthStore';
@@ -46,27 +47,22 @@ export function SettingsScreen() {
 
   const onAuthAction = () => {
     if (email) {
-      Alert.alert('Sign out?', 'Your progress stays saved to your account.', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Sign out', style: 'destructive', onPress: () => signOut() },
-      ]);
+      confirmAction('Sign out?', 'Your progress stays saved to your account.', 'Sign out', () => signOut());
     } else {
       signOut(); // clears guest mode → returns to the sign-in screen
     }
   };
 
   const confirmReset = () => {
-    Alert.alert('Reset all progress?', 'Your streak, XP, gems and history will all be cleared, and there is no way to get them back.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Reset',
-        style: 'destructive',
-        onPress: () => {
-          resetAll();
-          feedback.incorrect();
-        },
-      },
-    ]);
+    confirmAction(
+      'Reset all progress?',
+      'Your streak, XP, gems and history will all be cleared, and there is no way to get them back.',
+      'Reset',
+      () => {
+        resetAll();
+        feedback.incorrect();
+      }
+    );
   };
 
   return (

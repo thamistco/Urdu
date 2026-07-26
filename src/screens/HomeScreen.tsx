@@ -14,6 +14,7 @@ import { Display, Heading, Txt, Bold, Eyebrow } from '../components/Text';
 import { Lexeme } from '../components/Lexeme';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
+import { confirmAction } from '../lib/confirm';
 import { levelProgress, levelTitle } from '../lib/gamification';
 import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -210,7 +211,7 @@ export function HomeScreen() {
                   {GREETING[store.goal ?? 'curious']}
                 </Display>
               </View>
-              <View className="flex-row gap-2">
+              <View className="flex-row items-center gap-2">
                 <StatChip
                   icon={<Illustration name="flame" tile={false} size={16} />}
                   value={store.streak}
@@ -221,6 +222,30 @@ export function HomeScreen() {
                   value={store.gems}
                   color={palette.jadeLight}
                 />
+                {/* TEMPORARY test affordance — quick way to restart the whole
+                    course from zero while trying out features. Remove once
+                    testing is done; the real reset lives in Settings. */}
+                <Pressable
+                  onPress={() => {
+                    feedback.tap();
+                    confirmAction(
+                      'Reset progress?',
+                      'Wipes everything and starts the course fresh, for testing.',
+                      'Reset',
+                      () => store.resetAll()
+                    );
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Reset progress (testing)"
+                  hitSlop={6}
+                >
+                  <View
+                    className="h-8 w-8 items-center justify-center rounded-full border"
+                    style={{ borderColor: withAlpha(palette.rose, 0.4), backgroundColor: withAlpha(palette.rose, 0.12) }}
+                  >
+                    <Txt style={{ fontSize: 14 }}>🔄</Txt>
+                  </View>
+                </Pressable>
               </View>
             </View>
           </SafeAreaView>
