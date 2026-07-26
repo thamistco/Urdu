@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, useRef } from 'react';
+import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { View, Pressable, ScrollView } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -13,6 +13,7 @@ import { Txt, Bold, Heading } from '../components/Text';
 import { Illustration } from '../components/Illustration';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
+import { invalidateSpeech } from '../lib/speech';
 import { dueQueue } from '../lib/srs';
 import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -130,7 +131,13 @@ export function LessonScreen() {
     [gradeItem, loseHeart]
   );
 
+  // Stop this lesson's audio the instant the screen is left, however that
+  // happens — closing the lesson mid-word shouldn't leave its pronunciation
+  // playing into whatever the learner opens next.
+  useEffect(() => invalidateSpeech, []);
+
   const advance = () => {
+    invalidateSpeech();
     if (idx < total - 1) {
       setGraded(null);
       setIdx(idx + 1);
