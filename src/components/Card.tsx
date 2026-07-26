@@ -18,7 +18,7 @@ export function Card({
   style?: ViewStyle;
   paper?: boolean;
 }) {
-  const base = paper ? 'bg-paper' : 'bg-ink-700';
+  const base = paper ? 'bg-parchment' : 'bg-ink-700';
   const inner = (
     <View
       className={`rounded-2xl border border-white/10 p-5 ${base} ${className}`}

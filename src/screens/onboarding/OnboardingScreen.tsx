@@ -297,7 +297,7 @@ export function OnboardingScreen() {
             Quick check · {pIdx + 1} of {questions.length}
           </Eyebrow>
           <Heading className="mb-6 text-xl">{question.q}</Heading>
-          <View className="mb-8 h-28 items-center justify-center rounded-2xl bg-paper">
+          <View className="mb-8 h-28 items-center justify-center rounded-2xl bg-parchment">
             {question.kind === 'script' ? (
               <Urdu style={{ color: palette.ink, ...urduGlyph(52) }}>{question.sub}</Urdu>
             ) : (

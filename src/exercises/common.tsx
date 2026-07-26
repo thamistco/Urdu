@@ -77,7 +77,7 @@ export function PromptCard({
 }) {
   return (
     <View
-      className="rounded-2xl bg-paper px-6 pb-5 pt-4"
+      className="rounded-2xl bg-parchment px-6 pb-5 pt-4"
       style={{ minHeight: height, borderWidth: 2, borderColor: palette.ink }}
     >
       {label ? (

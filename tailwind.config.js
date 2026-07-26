@@ -22,11 +22,18 @@ module.exports = {
           600: '#523822',
           500: '#6B4A2B',
         },
-        // Warm sand — the surface the script lives on
+        // Warm sand — the light TEXT colour on the dark ground (not a surface;
+        // see `parchment` for that, and the note in theme/colors.ts).
         paper: {
           DEFAULT: '#FFEEDD',
           soft: '#FFF6EA',
           dim: '#F5DFC0',
+        },
+        // Aged paper — the light SURFACE the script is set on.
+        parchment: {
+          DEFAULT: '#EFDFC7',
+          soft: '#F7EBDA',
+          dim: '#E2CFB2',
         },
         // Sunset orange — reward and primary actions (used sparingly)
         gold: {

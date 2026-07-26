@@ -52,7 +52,7 @@ export function DialogueExercise({ exercise, track, showRoman, locked, onGraded 
               <View
                 className="max-w-[88%] rounded-2xl px-4 py-3"
                 style={{
-                  backgroundColor: palette.paper,
+                  backgroundColor: palette.parchment,
                   borderWidth: 2,
                   borderColor: palette.ink,
                   // a speech bubble squares off the corner nearest its speaker

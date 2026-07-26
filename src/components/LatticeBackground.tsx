@@ -107,6 +107,11 @@ export function LatticeBackground({ opacity = 1, scene = 'sunset' }: { opacity?:
               <Stop offset="0.45" stopColor={withAlpha(palette.paperSoft, 0.18)} />
               <Stop offset="1" stopColor={withAlpha(palette.paperSoft, 0)} />
             </RadialGradient>
+            {/* The brighter, tighter edge of a cloud where it faces the sun. */}
+            <RadialGradient id="cloudCrown" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+              <Stop offset="0" stopColor={withAlpha(palette.paperSoft, 0.42)} />
+              <Stop offset="1" stopColor={withAlpha(palette.paperSoft, 0)} />
+            </RadialGradient>
             {/* Aerial perspective: air itself is not clear, so each further
                 ridge is veiled a little more than the one in front of it. This
                 is what reads as distance — without it the layers look like flat
@@ -158,16 +163,23 @@ export function LatticeBackground({ opacity = 1, scene = 'sunset' }: { opacity?:
                 few soft ellipses under one group opacity, so the bank has some
                 internal relief without any overlap hardening into a seam. The
                 nearer the sun, the warmer the light they catch. */}
-            <G opacity={0.6}>
-              <Ellipse cx="296" cy="436" rx="92" ry="11" fill="url(#cloudWarm)" />
-              <Ellipse cx="322" cy="429" rx="46" ry="8" fill="url(#cloudWarm)" />
+            <G opacity={0.62}>
+              <Ellipse cx="296" cy="437" rx="94" ry="11" fill="url(#cloudWarm)" />
+              <Ellipse cx="318" cy="431" rx="50" ry="8" fill="url(#cloudWarm)" />
+              {/* the lit crown: the sun is below and to the right, so the top
+                  of the bank facing it is brighter and tighter than the body.
+                  Without this a cloud is a uniform smear; with it, it has a
+                  side that faces the light. */}
+              <Ellipse cx="322" cy="428" rx="34" ry="4.5" fill="url(#cloudCrown)" />
             </G>
-            <G opacity={0.4}>
-              <Ellipse cx="116" cy="470" rx="74" ry="9" fill="url(#cloudWarm)" />
-              <Ellipse cx="140" cy="464" rx="34" ry="6" fill="url(#cloudWarm)" />
+            <G opacity={0.42}>
+              <Ellipse cx="116" cy="470" rx="76" ry="9" fill="url(#cloudWarm)" />
+              <Ellipse cx="138" cy="465" rx="38" ry="6.5" fill="url(#cloudWarm)" />
+              <Ellipse cx="146" cy="462" rx="24" ry="3.5" fill="url(#cloudCrown)" />
             </G>
             <G opacity={0.22}>
-              <Ellipse cx="196" cy="368" rx="66" ry="8" fill="url(#cloudPale)" />
+              <Ellipse cx="196" cy="368" rx="68" ry="8" fill="url(#cloudPale)" />
+              <Ellipse cx="212" cy="364" rx="30" ry="4" fill="url(#cloudPale)" />
             </G>
 
             {/* two birds crossing the sky — the one Alto's Adventure detail

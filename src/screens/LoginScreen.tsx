@@ -28,7 +28,7 @@ function ProviderButton({
     >
       <View
         className="flex-row items-center justify-center gap-3 rounded-2xl py-4"
-        style={{ backgroundColor: palette.paper, marginBottom: 4 }}
+        style={{ backgroundColor: palette.parchment, marginBottom: 4 }}
       >
         {loading ? (
           <ActivityIndicator color={palette.ink} />

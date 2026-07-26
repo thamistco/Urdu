@@ -1,32 +1,53 @@
 import { View, Text as RNText } from 'react-native';
-import Svg, { Rect, Path, Circle } from 'react-native-svg';
 import { ICONS, IconName } from '../art/icons';
 import { palette, withAlpha } from '../theme';
 import { TOPICS, type Word } from '../data/words';
 import { WORD_ICON, NUMERALS, COLOURS } from '../data/art';
 
 /**
- * Medallion frame — every picture in the app sits inside an 8-point geometric
- * star (two overlapping squares) in yellow on ink. This ornamental framing
- * gives the illustration set a single character, and keeps everything
- * perfectly aligned and uniformly sized.
+ * The tile every picture sits in.
+ *
+ * This used to be an ornamental 8-point star: a gold diamond crossed with a
+ * gold square, plus four corner dots, stacked behind a 40px icon. At that size
+ * none of it read as ornament — it read as clutter competing with the very
+ * thing it was framing, and it dated the whole app. The frame's actual job is
+ * modest: give every picture the same footprint and the same edge, so a grid
+ * of them looks deliberate. A single rounded container does that.
+ *
+ * Plain views rather than SVG on purpose. A screen can hold twenty of these,
+ * and an SVG frame would mean twenty copies of the same `<Defs>` with the same
+ * gradient ids — ids are document-global, so that is a collision waiting to
+ * render wrong.
  */
 function Medallion({ size, children }: { size: number; children: React.ReactNode }) {
-  const gold = palette.gold;
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Svg width={size} height={size} viewBox="0 0 64 64" style={{ position: 'absolute' }}>
-        <Rect x={2.5} y={2.5} width={59} height={59} rx={13} fill={palette.ink800} stroke={withAlpha(gold, 0.38)} strokeWidth={1.2} />
-        {/* 8-point star: a diamond over an axis-aligned square */}
-        <Path d="M32 6 L58 32 L32 58 L6 32 Z" fill={withAlpha(gold, 0.05)} stroke={withAlpha(gold, 0.5)} strokeWidth={1} />
-        <Rect x={13} y={13} width={38} height={38} rx={3} fill="none" stroke={withAlpha(gold, 0.5)} strokeWidth={1} />
-        {/* corner ornament dots */}
-        <Circle cx={32} cy={6} r={1.1} fill={gold} />
-        <Circle cx={58} cy={32} r={1.1} fill={gold} />
-        <Circle cx={32} cy={58} r={1.1} fill={gold} />
-        <Circle cx={6} cy={32} r={1.1} fill={gold} />
-      </Svg>
-      <View style={{ width: size * 0.56, height: size * 0.56, alignItems: 'center', justifyContent: 'center' }}>
+    <View
+      style={{
+        width: size,
+        height: size,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: size * 0.3,
+        backgroundColor: palette.ink800,
+        borderWidth: 1,
+        borderColor: withAlpha(palette.gold, 0.2),
+        overflow: 'hidden',
+      }}
+    >
+      {/* a single soft highlight along the top edge, so the tile reads as a
+          raised surface catching the same low sun as everything else */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: size * 0.5,
+          backgroundColor: withAlpha(palette.gold, 0.05),
+        }}
+      />
+      <View style={{ width: size * 0.62, height: size * 0.62, alignItems: 'center', justifyContent: 'center' }}>
         {children}
       </View>
     </View>

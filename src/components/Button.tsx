@@ -8,7 +8,7 @@ type Variant = 'primary' | 'secondary' | 'ghost' | 'correct' | 'incorrect';
 
 const FILL: Record<Variant, string> = {
   primary: palette.gold,
-  secondary: palette.paper,
+  secondary: palette.parchment,
   ghost: 'transparent',
   correct: palette.jade,
   incorrect: palette.rose,

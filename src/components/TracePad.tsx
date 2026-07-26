@@ -107,7 +107,7 @@ export function TracePad({
   if (!entry) {
     return (
       <View
-        className="items-center justify-center rounded-2xl bg-paper py-10"
+        className="items-center justify-center rounded-2xl bg-parchment py-10"
         style={{ borderWidth: 2, borderColor: palette.ink }}
       >
         <Urdu style={{ fontSize: 80, lineHeight: 216, color: palette.ink }}>{letter.forms[position]}</Urdu>
@@ -118,7 +118,7 @@ export function TracePad({
   return (
     <View>
       <View
-        className="mb-4 self-center overflow-hidden rounded-2xl bg-paper"
+        className="mb-4 self-center overflow-hidden rounded-2xl bg-parchment"
         style={{ width: '100%', aspectRatio: 1, borderWidth: 2, borderColor: palette.ink }}
         onLayout={(e: LayoutChangeEvent) => setSide(e.nativeEvent.layout.width)}
         // A drawing surface cannot be operated without a pointer, but it should
