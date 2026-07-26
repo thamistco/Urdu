@@ -198,7 +198,7 @@ export const FINAL_PACKS: TopicPack[] = [
       ['w-taadaad', 'تعداد', 'taadaad', 'quantity', '🔢'],
       ['w-fee-sad', 'فیصد', 'feesad', 'per cent', '💯'],
       ['w-ausat', 'اوسط', 'ausat', 'average', '📊'],
-      ['w-kul', 'کل', 'kul', 'total', '➕'],
+      ['w-kul', 'کل', 'kul', 'total', '➕', 'کُل'],
       ['w-baqi', 'باقی', 'baaqi', 'remaining', '➖'],
     ]
   ),

@@ -21,7 +21,7 @@ export const FOOD_PACKS: TopicPack[] = [
       ['w-glass', 'گلاس', 'gilaas', 'glass', '🥛'],
       ['w-jag', 'جگ', 'jag', 'jug', '🏺'],
       ['w-chai-patti', 'چائے پتی', 'chai patti', 'tea leaves', '🍂'],
-      ['w-shakar', 'شکر', 'shakar', 'sugar (coarse)', '🍬'],
+      ['w-shakar', 'شکر', 'shakar', 'sugar (coarse)', '🍬', 'شَکَر'],
       ['w-pyaas', 'پیاس', 'pyaas', 'thirst', '💦'],
       ['w-ghoont', 'گھونٹ', 'ghoonṭ', 'sip', '🥄'],
       ['w-thermos', 'تھرماس', 'tharmaas', 'flask', '🍶'],

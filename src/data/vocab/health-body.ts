@@ -24,7 +24,7 @@ export const HEALTH_PACKS: TopicPack[] = [
       ['w-bhoon', 'بھنویں', 'bhaweñ', 'eyebrows', '👁️'],
       ['w-haddi', 'ہڈی', 'haḍḍi', 'bone', '🦴'],
       ['w-khoon', 'خون', 'khoon', 'blood', '🩸'],
-      ['w-jild', 'جلد', 'jild', 'skin', '🫱'],
+      ['w-jild', 'جلد', 'jild', 'skin', '🫱', 'جِلد'],
     ]
   ),
   pack(

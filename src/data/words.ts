@@ -19,6 +19,11 @@ export type Word = {
   topic: string;
   /** Defaults to the topic's level when omitted. */
   level?: Level;
+  /** A diacritic-marked reading fed to the voice generator instead of `urdu`,
+   *  for the rare word whose bare script collides with another one in the
+   *  course (سر head vs سر musical note, کل yesterday vs کل total, …). See
+   *  the fuller note on `Word` in data/vocab/types.ts. */
+  pronounce?: string;
 };
 
 export type Topic = {
@@ -153,7 +158,7 @@ const CORE_WORDS: Word[] = [
   { id: 'w-khush', urdu: 'خوش', roman: 'khush', meaning: 'happy', emoji: '😊', topic: 'greetings' },
 
   // body
-  { id: 'w-sar', urdu: 'سر', roman: 'sar', meaning: 'head', emoji: '🧑', topic: 'body' },
+  { id: 'w-sar', urdu: 'سر', roman: 'sar', meaning: 'head', emoji: '🧑', topic: 'body', pronounce: 'سَر' },
   { id: 'w-aankh', urdu: 'آنکھ', roman: 'aankh', meaning: 'eye', emoji: '👁️', topic: 'body' },
   { id: 'w-kaan', urdu: 'کان', roman: 'kaan', meaning: 'ear', emoji: '👂', topic: 'body' },
   { id: 'w-naak', urdu: 'ناک', roman: 'naak', meaning: 'nose', emoji: '👃', topic: 'body' },
@@ -224,7 +229,7 @@ const CORE_WORDS: Word[] = [
   { id: 'w-subah', urdu: 'صبح', roman: 'subah', meaning: 'morning', emoji: '🌅', topic: 'time' },
   { id: 'w-shaam', urdu: 'شام', roman: 'shaam', meaning: 'evening', emoji: '🌆', topic: 'time' },
   { id: 'w-aaj', urdu: 'آج', roman: 'aaj', meaning: 'today', emoji: '📅', topic: 'time' },
-  { id: 'w-kal', urdu: 'کل', roman: 'kal', meaning: 'tomorrow / yesterday', emoji: '📆', topic: 'time' },
+  { id: 'w-kal', urdu: 'کل', roman: 'kal', meaning: 'tomorrow / yesterday', emoji: '📆', topic: 'time', pronounce: 'کَل' },
   { id: 'w-hafta', urdu: 'ہفتہ', roman: 'hafta', meaning: 'week', emoji: '🗓️', topic: 'time' },
   { id: 'w-mahina', urdu: 'مہینہ', roman: 'mahina', meaning: 'month', emoji: '🗒️', topic: 'time' },
   { id: 'w-saal', urdu: 'سال', roman: 'saal', meaning: 'year', emoji: '🎊', topic: 'time' },
@@ -422,7 +427,7 @@ const CORE_WORDS: Word[] = [
   { id: 'w-baayaan', urdu: 'بایاں', roman: 'baayaañ', meaning: 'left', emoji: '⬅️', topic: 'directions' },
   { id: 'w-seedha', urdu: 'سیدھا', roman: 'seedha', meaning: 'straight', emoji: '⬆️', topic: 'directions' },
   { id: 'w-qareeb', urdu: 'قریب', roman: 'qareeb', meaning: 'near', emoji: '📍', topic: 'directions' },
-  { id: 'w-door', urdu: 'دور', roman: 'door', meaning: 'far', emoji: '🔭', topic: 'directions' },
+  { id: 'w-door', urdu: 'دور', roman: 'door', meaning: 'far', emoji: '🔭', topic: 'directions', pronounce: 'دُور' },
   { id: 'w-oopar', urdu: 'اوپر', roman: 'oopar', meaning: 'above / up', emoji: '🔼', topic: 'directions' },
   { id: 'w-neeche', urdu: 'نیچے', roman: 'neeche', meaning: 'below / down', emoji: '🔽', topic: 'directions' },
   { id: 'w-andar', urdu: 'اندر', roman: 'andar', meaning: 'inside', emoji: '📥', topic: 'directions' },

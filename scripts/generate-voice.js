@@ -69,7 +69,11 @@ function collectItems() {
     seen.add(id);
     items.push({ id, text });
   };
-  for (const w of WORDS) add(w.id, w.urdu);
+  // `pronounce`, when a word carries one, is a diacritic-marked reading for
+  // a script that collides with another word in the course (سر head vs سر
+  // musical note, and the like) — the audio should say that, not the bare
+  // spelling the TTS engine would otherwise have to guess at.
+  for (const w of WORDS) add(w.id, w.pronounce || w.urdu);
   for (const p of PHRASES) add(p.id, p.urdu);
   // Letters are announced by id too, when a traced letter is accepted.
   for (const l of LETTERS) add(l.id, l.forms?.isolated || l.glyph || l.forms?.initial);
