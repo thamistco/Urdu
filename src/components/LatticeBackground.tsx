@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import Svg, { Defs, LinearGradient, RadialGradient, Stop, Path, Circle, Rect } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, RadialGradient, Stop, Path, Circle, Ellipse, G, Rect } from 'react-native-svg';
 import { palette, withAlpha } from '../theme';
 
 /**
@@ -57,6 +57,15 @@ type Scene = 'sunset' | 'forest';
  * The layers get progressively darker toward the foreground, which is what
  * actually sells the depth — the gradient alone reads as a colour, the
  * silhouettes read as a place.
+ *
+ * One rule holds the whole thing together: **nothing in the air has a hard
+ * edge.** Cloud, haze, bloom and mote are all radial gradients that reach zero
+ * alpha at their rim, never flat-alpha shapes. A flat shape shows its own
+ * outline against a gradient no matter how low you push the alpha, and two of
+ * them overlapping double up into a visible seam — which is precisely what
+ * made an earlier pass at the clouds read as a row of grey discs. Only the
+ * ground silhouettes are allowed a hard edge, because ground is the one thing
+ * here that genuinely has one.
  */
 export function LatticeBackground({ opacity = 1, scene = 'sunset' }: { opacity?: number; scene?: Scene }) {
   return (
@@ -84,6 +93,34 @@ export function LatticeBackground({ opacity = 1, scene = 'sunset' }: { opacity?:
               <Stop offset="0" stopColor={withAlpha(palette.mossLight, 0.16)} />
               <Stop offset="1" stopColor={withAlpha(palette.mossLight, 0)} />
             </RadialGradient>
+            {/* Cloud bodies. Feathered to fully transparent at the rim, because
+                a flat-alpha shape over a gradient shows its outline no matter
+                how low the alpha is — which is what made the first attempt at
+                these read as a row of grey discs rather than cloud. */}
+            <RadialGradient id="cloudWarm" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+              <Stop offset="0" stopColor={withAlpha(palette.goldLight, 0.5)} />
+              <Stop offset="0.45" stopColor={withAlpha(palette.goldLight, 0.28)} />
+              <Stop offset="1" stopColor={withAlpha(palette.goldLight, 0)} />
+            </RadialGradient>
+            <RadialGradient id="cloudPale" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+              <Stop offset="0" stopColor={withAlpha(palette.paperSoft, 0.34)} />
+              <Stop offset="0.45" stopColor={withAlpha(palette.paperSoft, 0.18)} />
+              <Stop offset="1" stopColor={withAlpha(palette.paperSoft, 0)} />
+            </RadialGradient>
+            {/* Aerial perspective: air itself is not clear, so each further
+                ridge is veiled a little more than the one in front of it. This
+                is what reads as distance — without it the layers look like flat
+                paper cut-outs stacked on each other. */}
+            <RadialGradient id="ridgeHaze" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+              <Stop offset="0" stopColor={withAlpha(palette.gold, 0.1)} />
+              <Stop offset="0.6" stopColor={withAlpha(palette.gold, 0.04)} />
+              <Stop offset="1" stopColor={withAlpha(palette.gold, 0)} />
+            </RadialGradient>
+            {/* The sun's light scattering sideways along the horizon line. */}
+            <RadialGradient id="horizonSpread" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+              <Stop offset="0" stopColor={withAlpha(palette.gold, 0.085)} />
+              <Stop offset="1" stopColor={withAlpha(palette.gold, 0)} />
+            </RadialGradient>
           </Defs>
         ) : (
           <Defs>
@@ -109,19 +146,29 @@ export function LatticeBackground({ opacity = 1, scene = 'sunset' }: { opacity?:
           <>
             <Rect width="400" height="900" fill="url(#skySunset)" />
 
-            {/* the sun — a soft bloom, then a brighter core, sitting low so the
-                hill layers below partly cover it, the way a real horizon would */}
+            {/* the sun — light spreading along the horizon, then a soft bloom,
+                then a brighter core, sitting low so the hill layers below partly
+                cover it, the way a real horizon would */}
+            <Ellipse cx="290" cy="532" rx="300" ry="76" fill="url(#horizonSpread)" />
             <Circle cx="290" cy="520" r="200" fill="url(#sunGlow)" />
             <Circle cx="290" cy="520" r="72" fill="url(#sunCore)" />
 
-            {/* a couple of clouds catching the glow, drifting ahead of the hills —
-                built from overlapping circles rather than a filter, so this stays
-                cheap and identical across web and native */}
-            <Circle cx="120" cy="368" r="26" fill={withAlpha(palette.goldLight, 0.14)} />
-            <Circle cx="150" cy="378" r="34" fill={withAlpha(palette.goldLight, 0.12)} />
-            <Circle cx="92" cy="384" r="20" fill={withAlpha(palette.goldLight, 0.12)} />
-            <Circle cx="326" cy="412" r="20" fill={withAlpha(palette.paperSoft, 0.12)} />
-            <Circle cx="350" cy="422" r="27" fill={withAlpha(palette.paperSoft, 0.1)} />
+            {/* Clouds: long, low, horizontal — the shape sunset cloud actually
+                takes, rather than the round puffs of a midday sky. Each is a
+                few soft ellipses under one group opacity, so the bank has some
+                internal relief without any overlap hardening into a seam. The
+                nearer the sun, the warmer the light they catch. */}
+            <G opacity={0.6}>
+              <Ellipse cx="296" cy="436" rx="92" ry="11" fill="url(#cloudWarm)" />
+              <Ellipse cx="322" cy="429" rx="46" ry="8" fill="url(#cloudWarm)" />
+            </G>
+            <G opacity={0.4}>
+              <Ellipse cx="116" cy="470" rx="74" ry="9" fill="url(#cloudWarm)" />
+              <Ellipse cx="140" cy="464" rx="34" ry="6" fill="url(#cloudWarm)" />
+            </G>
+            <G opacity={0.22}>
+              <Ellipse cx="196" cy="368" rx="66" ry="8" fill="url(#cloudPale)" />
+            </G>
 
             {/* two birds crossing the sky — the one Alto's Adventure detail
                 that makes a gradient read as a place, not a colour swatch */}
@@ -133,6 +180,9 @@ export function LatticeBackground({ opacity = 1, scene = 'sunset' }: { opacity?:
               d="M0,560 C60,530 110,545 170,528 C230,512 260,545 330,522 C370,510 390,528 400,522 L400,900 L0,900 Z"
               fill={withAlpha(palette.mossDark, 0.55)}
             />
+            {/* warm air pooling along the far ridge, in front of it — distance
+                reads as haze, not as a paler shade of the same flat green */}
+            <Ellipse cx="210" cy="556" rx="290" ry="42" fill="url(#ridgeHaze)" />
 
             {/* a low mist bank settled into the fold between the hills */}
             <Circle cx="150" cy="645" r="220" fill="url(#hillMist)" />
@@ -143,18 +193,26 @@ export function LatticeBackground({ opacity = 1, scene = 'sunset' }: { opacity?:
               d="M0,650 C80,610 150,630 210,600 C270,572 320,615 400,585 L400,900 L0,900 Z"
               fill={withAlpha(palette.mossDeep, 0.82)}
             />
+            {/* the same veil again over the mid ridge, weaker — each layer is
+                a little clearer than the one behind it */}
+            <Ellipse cx="200" cy="636" rx="300" ry="34" fill="url(#ridgeHaze)" opacity={0.7} />
+
             {/* near hills — darkest, closest to the bottom edge */}
             <Path
               d="M0,730 C70,695 140,715 200,690 C260,665 310,700 400,675 L400,900 L0,900 Z"
               fill={withAlpha(palette.mossDeep, 0.97)}
             />
 
-            {/* a scatter of wildflowers at the meadow's edge */}
-            <Circle cx="55" cy="862" r="4" fill={withAlpha(palette.goldLight, 0.5)} />
-            <Circle cx="92" cy="880" r="3" fill={withAlpha(palette.paper, 0.4)} />
-            <Circle cx="225" cy="866" r="3.5" fill={withAlpha(palette.roseLight, 0.4)} />
-            <Circle cx="266" cy="884" r="3" fill={withAlpha(palette.goldLight, 0.45)} />
-            <Circle cx="338" cy="868" r="4" fill={withAlpha(palette.paper, 0.35)} />
+            {/* Motes of pollen drifting in the last of the light. These were
+                flat opaque dots and read as confetti scattered on the hill;
+                soft-edged and dim, they sit in the air instead of on top of
+                the picture. */}
+            <G opacity={0.55}>
+              <Circle cx="58" cy="806" r="9" fill="url(#cloudWarm)" />
+              <Circle cx="150" cy="848" r="7" fill="url(#cloudWarm)" />
+              <Circle cx="268" cy="820" r="8" fill="url(#cloudWarm)" />
+              <Circle cx="342" cy="862" r="6" fill="url(#cloudWarm)" />
+            </G>
           </>
         ) : (
           <>
