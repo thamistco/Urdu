@@ -585,6 +585,14 @@ export const Gear = ({ size }: IconProps) => (
   </Frame>
 );
 
+export const Speaker = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M12 26 h10 L34 15 v34 L22 38 H12 Z" fill={G_} stroke={IN} strokeWidth={2.5} strokeLinejoin="round" />
+    <Path d="M42 24 a12 12 0 0 1 0 16" stroke={CR} strokeWidth={3.5} fill="none" strokeLinecap="round" />
+    <Path d="M48 18 a20 20 0 0 1 0 28" stroke={CR} strokeWidth={3} fill="none" strokeLinecap="round" opacity={0.6} />
+  </Frame>
+);
+
 // ---- registry ------------------------------------------------------------
 
 export const ICONS: Record<string, (p: IconProps) => JSX.Element> = {
@@ -599,7 +607,7 @@ export const ICONS: Record<string, (p: IconProps) => JSX.Element> = {
   handHeart: HandHeart, smile: Smile, egg: Egg, rice: RiceBowl, meat: Meat, salt: SaltShaker,
   lattice: Lattice, tiles: Tiles, scroll: Scroll, crescent: Crescent,
   gem: Gem, flame: Flame, bolt: Bolt, sprout: Sprout, medal: Medal, gear: Gear,
-  pomegranate: Pomegranate,
+  pomegranate: Pomegranate, speaker: Speaker,
 };
 
 export type IconName = keyof typeof ICONS;
