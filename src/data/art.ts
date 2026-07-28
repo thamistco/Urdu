@@ -23,6 +23,50 @@ export const WORD_ICON: Record<string, IconName> = {
   'w-darakht': 'tree', 'w-barish': 'rain', 'w-samundar': 'waves', 'w-pahaar': 'mountain',
   'w-salam': 'salaam', 'w-shukriya': 'thanks', 'w-haan': 'check', 'w-nahi': 'cross',
   'w-maaf': 'handHeart', 'w-khush': 'smile',
+
+  // ---- second pass -------------------------------------------------------
+  // The set was 60 drawn pictures against 2,425 words, so 97.5% of the course
+  // fell through to a system emoji in a frame — the very inconsistency the
+  // drawn set exists to remove. These add no new drawings; they are words the
+  // *existing* icons already depict honestly and were simply never wired to.
+  // Anything the icon would only approximate was left out on purpose: a guava
+  // is not a pomegranate, a platter is not a table, a desert is not a mountain.
+  'w-aadmi': 'man', 'w-aag': 'flame', 'w-aata': 'bread', 'w-akhbaar': 'scroll',
+  'w-anaaj': 'rice', 'w-anaar': 'pomegranate', 'w-anda2': 'egg', 'w-angoothi': 'gem',
+  'w-aurat': 'woman', 'w-auzaar': 'gear', 'w-baadal': 'rain', 'w-baadal2': 'rain',
+  'w-bacche': 'child', 'w-bachcha': 'child', 'w-bachpan': 'child', 'w-barfbaari': 'rain',
+  'w-barsaat': 'rain', 'w-basta': 'briefcase', 'w-batti': 'lamp', 'w-bauchhaar': 'rain',
+  'w-beej': 'sprout', 'w-bhanji': 'girl', 'w-bhatija': 'boy', 'w-biwi': 'woman',
+  'w-biwi2': 'woman', 'w-boondabaandi2': 'droplet', 'w-boondabandi': 'droplet',
+  'w-boorha': 'elderMan', 'w-bulb': 'lamp', 'w-buzurg': 'elderMan', 'w-chaandi': 'gem',
+  'w-chai-daani': 'tea', 'w-chakki': 'gear', 'w-chameli': 'flower', 'w-chandni': 'moon',
+  'w-chattan': 'mountain', 'w-choolha2': 'flame', 'w-choti': 'mountain', 'w-chulha': 'flame',
+  'w-daftar': 'briefcase', 'w-dahi': 'milk', 'w-dahi2': 'milk', 'w-darwaza2': 'door',
+  'w-darya': 'waves', 'w-dehleez': 'door', 'w-dhoop': 'sun', 'w-dophar': 'sun',
+  'w-fajar': 'sun', 'w-fasal': 'sprout', 'w-fatah': 'medal', 'w-gaddaa': 'bed',
+  'w-garmi': 'flame', 'w-ghaas': 'sprout', 'w-ghaas2': 'sprout', 'w-ghaati': 'mountain',
+  'w-ghadi-wall': 'clock', 'w-ghadi2': 'clock', 'w-ghanta': 'clock', 'w-girjaghar': 'mosque',
+  'w-gulaab': 'flower', 'w-haar': 'gem', 'w-inaam': 'medal', 'w-insaan2': 'man',
+  'w-ishq': 'heart', 'w-jangal': 'tree', 'w-jangal2': 'tree', 'w-jheel': 'waves',
+  'w-kaaghaz': 'scroll', 'w-kaamyaabi': 'medal', 'w-kaapi': 'book', 'w-kabab': 'meat',
+  'w-kambal': 'bed', 'w-katori': 'bowl', 'w-khandaan': 'family', 'w-khat': 'scroll',
+  'w-kunda': 'key', 'w-kunji': 'key', 'w-larka': 'boy', 'w-larki': 'girl', 'w-lassi': 'milk',
+  'w-lehar': 'waves', 'w-lehr': 'waves', 'w-lehr2': 'waves', 'w-likhna': 'pen',
+  'w-log': 'family', 'w-lugat': 'book', 'w-machine': 'gear', 'w-makaan2': 'house',
+  'w-mandir': 'mosque', 'w-mansoon': 'rain', 'w-masjid': 'mosque', 'w-masjid2': 'mosque',
+  'w-minute': 'clock', 'w-mitti': 'sprout', 'w-mohabbat': 'heart', 'w-mombatti': 'lamp',
+  'w-namak-daani': 'salt', 'w-namak2': 'salt', 'w-namaz': 'mosque', 'w-namkeen': 'salt',
+  'w-nana': 'elderMan', 'w-nani': 'elderWoman', 'w-nazm': 'scroll', 'w-novel': 'book',
+  'w-paratha': 'bread', 'w-parivaar': 'family', 'w-paudha': 'tree', 'w-pencil': 'pen',
+  'w-phal2': 'apple', 'w-phal3': 'apple', 'w-piyaala': 'bowl', 'w-pyaali': 'bowl',
+  'w-qalam': 'pen', 'w-rishta': 'family', 'w-roshandan': 'window', 'w-roshni': 'lamp',
+  'w-roshni2': 'lamp', 'w-sabza': 'sprout', 'w-safha': 'scroll', 'w-sailaab3': 'waves',
+  'w-samaan': 'briefcase', 'w-sayyara': 'star', 'w-shaakh': 'tree', 'w-shaayari': 'scroll',
+  'w-shabnam': 'droplet', 'w-shabnam2': 'droplet', 'w-shauhar2': 'man', 'w-shohar': 'man',
+  'w-sitara': 'star', 'w-sofa': 'chair', 'w-stool': 'chair', 'w-taala': 'key',
+  'w-takiya': 'bed', 'w-tamgha': 'medal', 'w-teela': 'mountain', 'w-tehreer': 'pen',
+  'w-thaila': 'briefcase', 'w-toofaan': 'rain', 'w-tuffan2': 'waves', 'w-tuloo': 'sun',
+  'w-waadi2': 'mountain', 'w-wadi': 'mountain', 'w-walid': 'man', 'w-walida': 'woman',
 };
 
 export const NUMERALS: Record<string, string> = {
@@ -34,6 +78,15 @@ export const COLOURS: Record<string, { color: string; ring?: boolean }> = {
   'w-laal': { color: '#E5484D' }, 'w-neela': { color: '#3E7CB1' },
   'w-hara': { color: '#2E8B75' }, 'w-peela': { color: '#FFC72C' },
   'w-kaala': { color: '#15181C', ring: true }, 'w-safed': { color: '#FFF6E2', ring: true },
+  // the colour words added in the vocabulary expansion — a swatch is the one
+  // picture that *is* the word, so these also become picture-only questions
+  'w-gulaabi': { color: '#E89BB0' }, 'w-narangi-clr': { color: '#E8833A' },
+  'w-bhoora': { color: '#8B5E3C' }, 'w-jamni': { color: '#7A4A8C' },
+  'w-khaakstari': { color: '#8A8A82' }, 'w-sunehra': { color: '#D4A73C' },
+  'w-chandi-clr': { color: '#C6C8CA', ring: true }, 'w-aasmani': { color: '#7FB2E5' },
+  'w-surkh': { color: '#C0342B' }, 'w-qirmizi': { color: '#9B2242' },
+  'w-zeetooni': { color: '#7A7F3C' }, 'w-syaah': { color: '#0E0E10', ring: true },
+  'w-pyaazi': { color: '#D9A0A8' }, 'w-firozi': { color: '#3BB3B8' },
 };
 
 export function hasWordArt(word: Word): boolean {

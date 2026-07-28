@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { View, Pressable, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -183,6 +183,41 @@ export function HomeScreen() {
   const currentLevel: Level = currentUnit?.level ?? 'beginner';
   const finished = order.every((id) => store.completedLessons[id] || store.skippedLessons[id]);
 
+  /**
+   * Land on the lesson you are actually up to.
+   *
+   * The path is 233 lessons. Onboarding can now skip a learner a long way down
+   * it — a heritage speaker who places well starts past the whole Beginner
+   * stage — and until this, that learner opened the app at lesson one of
+   * thirty-six with no indication that the answer to "where do I start?" was
+   * two screens further down. The skip was real but invisible, which reads as
+   * the questionnaire having done nothing.
+   *
+   * Fires once per mount, and only when the current lesson is far enough down
+   * to be off-screen; scrolling the app out from under someone who is already
+   * looking at the right thing is worse than not scrolling at all.
+   */
+  const pathRef = useRef<ScrollView>(null);
+  const currentNode = useRef<View>(null);
+  const didAutoScroll = useRef(false);
+  useEffect(() => {
+    if (didAutoScroll.current) return;
+    const t = setTimeout(() => {
+      // `measure` reports pageY — position on screen. The list has not been
+      // scrolled yet at this point, so pageY is also the content offset we
+      // want. Accumulating nested onLayout values instead would mean summing
+      // three levels of parent-relative coordinates, which silently goes wrong
+      // the first time the tree gains a wrapper.
+      currentNode.current?.measure((_x, _y, _w, _h, _px, pageY) => {
+        if (typeof pageY === 'number' && pageY > 420) {
+          didAutoScroll.current = true;
+          pathRef.current?.scrollTo({ y: pageY - 200, animated: true });
+        }
+      });
+    }, 500);
+    return () => clearTimeout(t);
+  }, [currentId]);
+
   // The course is long. Only the stage you are on is expanded; the others
   // collapse to a progress line you can open when you want to look ahead.
   const [openLevels, setOpenLevels] = useState<Partial<Record<Level, boolean>>>({});
@@ -200,7 +235,7 @@ export function HomeScreen() {
 
   return (
     <View className="flex-1 bg-ink">
-      <Screen>
+      <Screen scrollRef={pathRef}>
         {/* header */}
         <Reveal>
           <SafeAreaView edges={['top']}>
@@ -457,7 +492,7 @@ export function HomeScreen() {
               {unit.lessons.map((lesson, li) => {
                 const st = lessonState(lesson.id, store.completedLessons, store.skippedLessons, order);
                 const offset = [0, 28, 44, 28][li % 4];
-                return (
+                const node = (
                   <LessonNode
                     key={lesson.id}
                     lesson={lesson}
@@ -466,6 +501,12 @@ export function HomeScreen() {
                     offset={offset}
                     onPress={() => openLesson(lesson, st)}
                   />
+                );
+                if (lesson.id !== currentId) return node;
+                return (
+                  <View key={lesson.id} ref={currentNode} collapsable={false}>
+                    {node}
+                  </View>
                 );
               })}
             </View>

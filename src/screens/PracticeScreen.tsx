@@ -111,7 +111,7 @@ export function PracticeScreen() {
 
   return (
     <View className="flex-1 bg-ink">
-      <Screen scene="forest">
+      <Screen>
         <Reveal>
           <SafeAreaView edges={['top']}>
             <Eyebrow style={{ color: palette.gold }}>Practice</Eyebrow>
@@ -127,7 +127,15 @@ export function PracticeScreen() {
           <Pressable onPress={() => go('practice-review')} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}>
             <View
               className="mb-4 mt-5 overflow-hidden rounded-2xl p-6"
-              style={{ backgroundColor: palette.jadeDeep }}
+              // Muted rather than the full mint: this is a whole card-sized
+              // area of colour, and at that size jadeDeep was the most
+              // saturated thing on any screen in the app — it read as a
+              // notification pasted over the scenery rather than part of it.
+              style={{
+                backgroundColor: withAlpha(palette.jadeDeep, 0.9),
+                borderWidth: 1,
+                borderColor: withAlpha(palette.jadeLight, 0.35),
+              }}
             >
               <View className="flex-row items-center justify-between">
                 <View className="flex-1 pr-3">

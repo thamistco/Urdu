@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import { Urdu, Txt, Eyebrow } from '../components/Text';
+import { Illustration } from '../components/Illustration';
 import { palette, withAlpha } from '../theme';
 
 export type ChoiceState = 'idle' | 'selected' | 'correct' | 'wrong' | 'muted';
@@ -146,7 +147,7 @@ export function SpeakerButton({
           borderColor: palette.gold,
         }}
       >
-        <Txt style={{ fontSize: size * 0.5 }}>🔊</Txt>
+        <Illustration name="speaker" tile={false} size={size * 0.56} />
       </View>
     </Pressable>
   );
