@@ -5,7 +5,7 @@ import { Button } from '../../components/Button';
 import { Reveal } from '../../components/Reveal';
 import { GeoDivider } from '../../components/GeoDivider';
 import { Display, Heading, Txt, Bold, Eyebrow, Urdu, urduGlyph } from '../../components/Text';
-import { GoalArt } from '../../components/Illustration';
+import { GoalArt, Illustration } from '../../components/Illustration';
 import { TrackChooser } from '../../components/TrackChooser';
 import { palette, withAlpha } from '../../theme';
 import { feedback } from '../../lib/feedback';
@@ -43,7 +43,19 @@ const SKIPPABLE_FOR_SPEAKERS = UNITS.filter((u) => u.level === 'beginner')
  * Nothing above Beginner is ever skipped by placement — the quiz only tests
  * script and absolute-basics, not Elementary-and-up content.
  */
-const BEGINNER_LESSON_IDS = UNITS.filter((u) => u.level === 'beginner').flatMap((u) => u.lessons.map((l) => l.id));
+/**
+ * The nine alphabet lessons of the Beginner stage.
+ *
+ * Deliberately *not* "every Beginner lesson". The quiz used to skip all
+ * thirty-six on a full score, which threw away the beginner grammar, reading
+ * and dialogue lessons as well — none of which the quiz asks a single question
+ * about. Four questions cannot license skipping eighteen lessons they never
+ * tested.
+ */
+const SCRIPT_LESSON_IDS = UNITS.filter((u) => u.level === 'beginner')
+  .flatMap((u) => u.lessons)
+  .filter((l) => l.kind === 'letters')
+  .map((l) => l.id);
 
 const GOALS: { key: Goal; label: string; desc: string; icon: string }[] = [
   { key: 'family', label: 'Speak with family', desc: 'Parents, grandparents, relatives back home', icon: '👨‍👩‍👧' },
@@ -103,6 +115,8 @@ export function OnboardingScreen() {
   const [pAnswered, setPAnswered] = useState(false);
   const [pPicked, setPPicked] = useState<string | null>(null);
   const [daily, setDaily] = useState('steady');
+  // opt-in, never the default — see the note on `canSkipScript` below
+  const [skipScript, setSkipScript] = useState(false);
 
   const completeOnboarding = useProgressStore((s) => s.completeOnboarding);
   const setDailyGoal = useProgressStore((s) => s.setDailyGoal);
@@ -112,9 +126,28 @@ export function OnboardingScreen() {
   // computed here rather than inline in `finish` so the "ready" screen can
   // also describe it before the learner commits.
   const lvl = pCorrect >= 4 ? 2 : pCorrect >= 2 ? 1 : 0;
-  const bgSkips = background === 'speaker' ? SKIPPABLE_FOR_SPEAKERS : [];
-  const placementSkips = lvl === 2 ? BEGINNER_LESSON_IDS : lvl === 1 ? SKIPPABLE_FOR_SPEAKERS : [];
-  const skipIds = Array.from(new Set([...bgSkips, ...placementSkips]));
+
+  /**
+   * Two different claims, so two different skips.
+   *
+   * Knowing what `paani` and `ghar` mean is direct evidence about the basic
+   * vocabulary, so that skip is automatic. Reading one letter and sounding out
+   * one word is *not* evidence of knowing forty letters in four positional
+   * forms each — so the alphabet is never skipped on the quiz's say-so. It is
+   * offered, and the learner decides.
+   *
+   * The default is to keep it, because the two mistakes do not cost the same.
+   * Sitting through lessons you did not need is mild, and the path already
+   * lets you tap ahead to any lesson. Skipping the script and then meeting
+   * words you cannot read is the kind of thing that makes someone quit.
+   */
+  const wantsScript = track !== 'roman';
+  const canSkipScript = lvl === 2 && wantsScript && SCRIPT_LESSON_IDS.length > 0;
+  const basicsSkips =
+    background === 'speaker' || lvl >= 1 ? SKIPPABLE_FOR_SPEAKERS : [];
+  const skipIds = Array.from(
+    new Set([...basicsSkips, ...(canSkipScript && skipScript ? SCRIPT_LESSON_IDS : [])])
+  );
 
   const finish = () => {
     setTrackSetting(track);
@@ -369,12 +402,17 @@ export function OnboardingScreen() {
   }
 
   // ---- ready ----
-  const lvlName = lvl === 2 ? 'Emerging (B1)' : lvl === 1 ? 'Early beginner (A2)' : 'Absolute beginner (A1)';
+  // Honest labels. Four questions — recognise one letter, know two common
+  // words, sound out a third — is evidence of having *some* Urdu already, and
+  // nothing like B1. Telling someone they tested at B1 and then handing them
+  // beginner lessons is a promise the next screen immediately breaks.
+  const lvlName =
+    lvl === 2 ? 'You already have some Urdu' : lvl === 1 ? 'You know a few words' : 'Starting from the beginning';
   return (
     <Screen scroll={false}>
       <Reveal style={{ flex: 1 }}>
         <View className="flex-1 items-center justify-center">
-          <Txt style={{ fontSize: 64 }}>🌙</Txt>
+          <Illustration name="crescent" tile={false} size={64} />
           <Display className="mb-2 mt-4 text-3xl">You're all set</Display>
           <GeoDivider />
           <View className="my-4 w-full rounded-2xl border p-5" style={{ borderColor: withAlpha(palette.gold, 0.3), backgroundColor: withAlpha(palette.gold, 0.08) }}>
@@ -384,14 +422,52 @@ export function OnboardingScreen() {
               We'll begin exactly where you are, and the words you miss will come back first.
             </Txt>
           </View>
-          {skipIds.length > 0 && (
+          {basicsSkips.length > 0 && (
             <View className="mb-4 w-full rounded-2xl border p-5" style={{ borderColor: withAlpha(palette.jade, 0.3), backgroundColor: withAlpha(palette.jade, 0.08) }}>
               <Eyebrow style={{ color: palette.jade }} className="mb-1">Fast-tracked</Eyebrow>
               <Txt className="mt-1 text-sm text-paper/60">
-                {lvl === 2
-                  ? "You've already shown you can read the script, so we're starting you past the whole Beginner stage."
-                  : "We've marked the basic words you likely already know as skipped, so your path leads straight to the script and reading."}{' '}
-                Everything else is still yours to complete.
+                The basic words you already showed you know are marked done, so
+                your path leads straight to the script and reading. Everything
+                else is still yours to complete.
+              </Txt>
+            </View>
+          )}
+
+          {/* The one call the quiz will not make for you. */}
+          {canSkipScript && (
+            <View className="mb-4 w-full rounded-2xl border p-5" style={{ borderColor: withAlpha(palette.gold, 0.3), backgroundColor: withAlpha(palette.gold, 0.06) }}>
+              <Eyebrow style={{ color: palette.gold }} className="mb-1">The alphabet</Eyebrow>
+              <Txt className="mb-3 text-sm text-paper/60">
+                You read every script question correctly. Do you want the nine
+                alphabet lessons, or shall we mark them done?
+              </Txt>
+              {[
+                { v: false, t: 'Start from the alphabet', d: 'All 40 letters, in each of their four shapes' },
+                { v: true, t: 'Skip the alphabet', d: 'I can already read Urdu writing' },
+              ].map((o) => {
+                const on = skipScript === o.v;
+                return (
+                  <Pressable
+                    key={String(o.v)}
+                    onPress={() => { feedback.tap(); setSkipScript(o.v); }}
+                    className="mb-2"
+                  >
+                    <View
+                      className="rounded-xl border p-3"
+                      style={{
+                        borderColor: on ? palette.gold : withAlpha(palette.white, 0.12),
+                        backgroundColor: on ? withAlpha(palette.gold, 0.14) : palette.ink800,
+                        borderWidth: on ? 2 : 1,
+                      }}
+                    >
+                      <Bold className="text-sm">{o.t}</Bold>
+                      <Txt className="text-xs text-paper/50">{o.d}</Txt>
+                    </View>
+                  </Pressable>
+                );
+              })}
+              <Txt className="text-[11px] text-paper/35">
+                Either way you can tap ahead to any lesson later.
               </Txt>
             </View>
           )}
