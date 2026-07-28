@@ -32,6 +32,29 @@ const ROOT = path.join(__dirname, '..');
 const OUT_DIR = path.join(ROOT, 'assets', 'voice');
 const MANIFEST = path.join(ROOT, 'src', 'lib', 'voiceManifest.ts');
 
+/**
+ * What each clip on disk was actually asked to say.
+ *
+ * Generating is keyed by id and skips anything already on disk, which is what
+ * makes adding words cheap — but it also meant that *changing* a word could
+ * never reach the audio. Giving کہنی the diacritics that stop the voice saying
+ * "kehni" left `w-kohni.mp3` sitting there still saying "kehni", and nothing
+ * anywhere would have noticed.
+ *
+ * So the text is recorded next to the clips. A clip whose recorded text no
+ * longer matches the course is stale and regenerates on the next run, without
+ * anyone having to remember which words they touched.
+ */
+const LEDGER = path.join(OUT_DIR, 'spoken.json');
+const readLedger = () => {
+  try {
+    return JSON.parse(fs.readFileSync(LEDGER, 'utf8'));
+  } catch {
+    return {};
+  }
+};
+const writeLedger = (l) => fs.writeFileSync(LEDGER, JSON.stringify(l, null, 0) + '\n');
+
 // ---- load the real content modules --------------------------------------
 /**
  * The previous version scraped `words.ts` with a regular expression, which
@@ -81,7 +104,7 @@ function collectItems() {
   // no id of their own in the data, so the exercises and this script both
   // derive one the same way — from the line's position — rather than
   // requiring the data to carry an id nothing else needs.
-  for (const s of SENTENCES) add(s.id, s.words.join(' '));
+  for (const s of SENTENCES) add(s.id, s.pronounce || s.words.join(' '));
   for (const p of PASSAGES) p.lines.forEach((l, i) => add(`${p.id}-${i}`, l.urdu));
   for (const d of DIALOGUES) d.lines.forEach((l, i) => add(`${d.id}-${i}`, l.urdu));
   // Letters are announced by id too, when a traced letter is accepted.
@@ -205,13 +228,25 @@ function writeManifest() {
   const all = collectItems();
   if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true });
 
-  // Generating is idempotent: anything already on disk is left alone unless
-  // --force. That is what makes this a one-time job — add words later and only
-  // the new ones cost anything.
-  const todo = force ? all : all.filter((i) => !fs.existsSync(path.join(OUT_DIR, `${i.id}.mp3`)));
+  // Generating is idempotent: anything already on disk *that still says what
+  // the course says* is left alone unless --force. That is what makes this a
+  // one-time job — add words later and only the new ones cost anything — while
+  // still letting a changed word reach the audio.
+  const ledger = readLedger();
+  const missing = [];
+  const stale = [];
+  for (const i of all) {
+    if (!fs.existsSync(path.join(OUT_DIR, `${i.id}.mp3`))) missing.push(i);
+    else if (ledger[i.id] !== undefined && ledger[i.id] !== i.text) stale.push(i);
+  }
+  const todo = force ? all : [...missing, ...stale];
   const chars = todo.reduce((n, i) => n + i.text.length, 0);
 
-  console.log(`${all.length} items in the course · ${all.length - todo.length} already done.`);
+  console.log(
+    `${all.length} items in the course · ${all.length - missing.length - stale.length} already done` +
+      (stale.length ? ` · ${stale.length} stale (the word changed since the clip was made)` : '')
+  );
+  for (const s of stale.slice(0, 8)) console.log(`    stale: ${s.id} — was “${ledger[s.id]}”, now “${s.text}”`);
   if (!todo.length) {
     console.log(`Nothing to generate. Manifest: ${writeManifest()} clips.`);
     return;
@@ -224,6 +259,10 @@ function writeManifest() {
     try {
       const audio = await provider.fn(text);
       fs.writeFileSync(path.join(OUT_DIR, `${id}.mp3`), audio);
+      // Written per clip, not at the end, so a run that dies half way leaves a
+      // ledger that matches the disk rather than one that lies about it.
+      ledger[id] = text;
+      writeLedger(ledger);
       ok++;
       if (ok % 100 === 0 || ok === 1) console.log(`  ${ok}/${todo.length}  ${id} “${text}”`);
       await sleep(60); // gentle on rate limits

@@ -180,6 +180,70 @@ for (const [word, ids] of Object.entries(byWord))
 for (const l of LETTERS)
   if (l.icon && !MASK_ICON_NAMES.has(l.icon)) bad(`letter ${l.id}: unknown icon "${l.icon}"`);
 
+// --- one spelling, one transliteration -------------------------------------
+
+/**
+ * The same generalised: a word may not be taught two ways.
+ *
+ * The vocabulary is written pack by pack, so the same word reaches the course
+ * more than once — چٹان arrived as both `chattaan` and `chaṭṭaan`, نشست as
+ * `nashist` and `nishist`, بھیڑیا as `bhediya` and `bheṛiya`. Fifteen words
+ * disagreed with themselves. A learner meeting both spellings has no way to
+ * know which is the typo, and the Roman track is *made* of these spellings.
+ *
+ * Urdu does have real heteronyms — پل is `pal` (a moment) and `pul` (a bridge),
+ * سر is `sar` (head) and `sur` (a musical note) — where two romans is the truth
+ * rather than a mistake. Those are exactly the words the voice generator would
+ * otherwise say wrong, so the rule is: disagree only if you also carry the
+ * `pronounce` reading that tells the two apart. That makes the fix for the
+ * inconsistency and the fix for the audio the same fix.
+ */
+const bySpelling = {};
+for (const w of WORDS) (bySpelling[w.urdu] = bySpelling[w.urdu] || []).push(w);
+for (const [urdu, group] of Object.entries(bySpelling)) {
+  if (group.length < 2) continue;
+  if (new Set(group.map((w) => w.roman)).size < 2) continue;
+  const undiacritised = group.filter((w) => !w.pronounce);
+  if (undiacritised.length)
+    bad(
+      `${urdu} is transliterated ${[...new Set(group.map((w) => w.roman))].join(' and ')} — ` +
+        `${undiacritised.map((w) => w.id).join(', ')} must either agree or carry a pronounce reading`
+    );
+}
+
+// --- a sentence containing an ambiguous spelling must say how to read it ----
+
+/**
+ * The heteronyms are known — every one of them is a word carrying a `pronounce`
+ * reading. A sentence built from those same words inherits the ambiguity but
+ * not the fix, so اس کی کتاب was written with no vowel and the voice guessed
+ * wrong, saying "is ki kitaab" over a transliteration that read "us ki kitaab".
+ *
+ * Rather than list the affected sentences, this derives them: any sentence
+ * using a spelling that some word had to disambiguate must disambiguate it too.
+ * Add a heteronym to the vocabulary and every sentence already using it is
+ * flagged the same day.
+ */
+const AMBIGUOUS = new Set(WORDS.filter((w) => w.pronounce).map((w) => w.urdu));
+for (const s of SENTENCES) {
+  const risky = s.words.filter((w) => AMBIGUOUS.has(w));
+  if (risky.length && !s.pronounce)
+    bad(`sentence ${s.id} contains ${risky.join(', ')} — two words share that spelling, so it needs a pronounce reading`);
+}
+
+// --- no two topics wear the same badge --------------------------------------
+
+/**
+ * The Practice screen is a grid of topics, each a badge and a title. Nine pairs
+ * wore the same badge — 🧭 for Directions, Philosophy *and* Asking the Way —
+ * which is the letter-picture rule again, one level up: a badge that stands for
+ * three things is decoration, not navigation.
+ */
+const byBadge = {};
+for (const t of TOPICS) (byBadge[t.icon] = byBadge[t.icon] || []).push(t.id);
+for (const [icon, ids] of Object.entries(byBadge))
+  if (ids.length > 1) bad(`topics ${ids.join(', ')} all wear the badge ${icon}`);
+
 // --- tracing masks cover every letter and form -----------------------------
 for (const l of LETTERS)
   for (const p of POSITIONS)

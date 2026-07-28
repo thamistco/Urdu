@@ -103,7 +103,7 @@ export const FINAL_PACKS: TopicPack[] = [
     ]
   ),
   pack(
-    { id: 'motion-verbs', title: 'Verbs of Motion', icon: '🏃', blurb: 'Coming, going, moving things.', level: 'intermediate' },
+    { id: 'motion-verbs', title: 'Verbs of Motion', icon: '🚶', blurb: 'Coming, going, moving things.', level: 'intermediate' },
     [
       ['w-daudna2', 'بھاگنا', 'bhaagna', 'to run away', '🏃'],
       ['w-koodna', 'کودنا', 'koodna', 'to jump', '🦘'],
@@ -178,7 +178,7 @@ export const FINAL_PACKS: TopicPack[] = [
     ]
   ),
   pack(
-    { id: 'measure-time', title: 'Measures & Order', icon: '🔢', blurb: 'Sequence, rank and amount.', level: 'advanced' },
+    { id: 'measure-time', title: 'Measures & Order', icon: '⏳', blurb: 'Sequence, rank and amount.', level: 'advanced' },
     [
       ['w-teesra', 'تیسرا', 'teesra', 'third', '3️⃣'],
       ['w-chautha', 'چوتھا', 'chautha', 'fourth', '4️⃣'],
@@ -244,7 +244,7 @@ export const FINAL_PACKS: TopicPack[] = [
       ['w-qawwali', 'قوالی', 'qawwaali', 'qawwali', '🎶'],
       ['w-ghazal-gayak', 'غزل گائیک', 'ghazal gaayak', 'ghazal singer', '🎤'],
       ['w-tarannum', 'ترنم', 'tarannum', 'melodious recitation', '🎵'],
-      ['w-mausiqar', 'موسیقار', 'mausiqaar', 'composer', '🎼'],
+      ['w-mausiqar', 'موسیقار', 'moosiqaar', 'composer', '🎼'],
       ['w-alfaaz', 'الفاظ', 'alfaaz', 'words / lyrics', '📝'],
       ['w-tashbeeh', 'تشبیہ', 'tashbeeh', 'simile', '🪞'],
       ['w-istiara', 'استعارہ', 'istiaara', 'metaphor', '🎭'],

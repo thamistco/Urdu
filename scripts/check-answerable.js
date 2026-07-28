@@ -46,7 +46,7 @@ function load(rel) {
 
 const { buildLessonExercises } = load('src/exercises/generator.ts');
 const { unitsForTrack } = load('src/data/units.ts');
-const { pictureIdentifies, WORD_ICON, NUMERALS, COLOURS } = load('src/data/art.ts');
+const { pictureIdentifies, cueOf } = load('src/data/art.ts');
 const { romanOf } = load('src/lib/translit.ts');
 const { WORDS } = load('src/data/words.ts');
 
@@ -56,10 +56,6 @@ const fail = (rule, detail) => {
   seen.set(rule, (seen.get(rule) || 0) + 1);
   if ((seen.get(rule) || 0) <= 3) problems.push(`${rule}: ${detail}`);
 };
-
-/** What a learner can see of an option, given the track. */
-const cueOf = (w) =>
-  NUMERALS[w.id] ? `num:${NUMERALS[w.id]}` : COLOURS[w.id] ? `col:${COLOURS[w.id].color}` : WORD_ICON[w.id] ? `ico:${WORD_ICON[w.id]}` : `emo:${w.emoji}`;
 
 function distinct(values) {
   return new Set(values).size === values.length;
@@ -212,6 +208,44 @@ for (const u of unitsForTrack('roman')) {
       fail('a Roman-track lesson is still named after the alphabet', `${l.id}: ${l.title} — ${l.subtitle}`);
   }
 }
+
+// ---- no picture may name two words ----------------------------------------
+
+/**
+ * The rule the six-💪 bug was an instance of.
+ *
+ * A picture-only question shows a drawing and four Urdu words, and asks which
+ * one the drawing is. That question has an answer only if the drawing belongs
+ * to exactly one word in the whole course — not merely one word in the four on
+ * screen, because a learner who met 💪 as "arm" on Monday and is shown it as
+ * "elbow" on Friday has been taught something false either way.
+ *
+ * `pictureIdentifies` enforces this by counting, so this cannot fail unless
+ * that counting is broken. It is here because the property is the thing worth
+ * asserting, and a check that reads the same way whether or not the fix stays
+ * implemented is the only kind that survives a refactor.
+ */
+const cueOwners = new Map();
+for (const w of WORDS) {
+  const c = cueOf(w);
+  if (!cueOwners.has(c)) cueOwners.set(c, []);
+  cueOwners.get(c).push(w);
+}
+for (const w of WORDS) {
+  if (!pictureIdentifies(w)) continue;
+  const sharers = cueOwners.get(cueOf(w)).filter((o) => o.id !== w.id);
+  if (sharers.length)
+    fail(
+      'a picture-only word shares its picture',
+      `${w.id} (${w.meaning}) and ${sharers.map((o) => o.meaning).join(', ')} all show ${cueOf(w)}`
+    );
+}
+
+const shared = [...cueOwners.values()].filter((v) => v.length > 1);
+console.log(
+  `${cueOwners.size} distinct pictures across ${WORDS.length} words; ` +
+    `${shared.length} are shared by more than one word (those words are captioned, never asked by picture alone)`
+);
 
 // ---- the picture inventory, printed so it can be argued with --------------
 

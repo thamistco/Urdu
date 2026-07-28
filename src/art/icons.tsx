@@ -593,6 +593,162 @@ export const Speaker = ({ size }: IconProps) => (
   </Frame>
 );
 
+// ---- the body ------------------------------------------------------------
+
+/**
+ * Body parts are the one group where a picture per word genuinely cannot be
+ * improvised, and the emoji font makes it worse rather than better: 💪 is the
+ * only glyph for arm, shoulder *and* elbow, and 👁️ the only one for eye,
+ * eyebrows and eyelashes. Three words, one picture — so "which word is this?"
+ * had no answer, and a learner who met 💪 as "arm" was later told it was
+ * "elbow".
+ *
+ * These borrow the fix anatomical illustration has always used: draw the same
+ * region every time, in the same muted flesh tone, and pick out the one part
+ * being named in the accent colour. The learner is never asked to tell two
+ * pictures apart — they are asked to read where the highlight is, which is
+ * exactly the distinction the word makes.
+ */
+const SKIN = '#C99268'; // the body, drawn back
+const HILITE = G_; // the part actually being named
+
+export const Arm = ({ size }: IconProps) => (
+  <Frame size={size}>
+    {/* shoulder stump, held back, so the highlighted limb has a body to hang from */}
+    <Path d="M14 18 a9 9 0 0 1 12 2" stroke={SKIN} strokeWidth={9} fill="none" strokeLinecap="round" />
+    <Path
+      d="M24 22 L42 30 L36 48"
+      stroke={HILITE}
+      strokeWidth={11}
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Circle cx="34" cy="52" r="6" fill={HILITE} />
+  </Frame>
+);
+
+export const Shoulder = ({ size }: IconProps) => (
+  <Frame size={size}>
+    {/* the torso as one solid mass, so the joint sits on a body rather than
+        beside a second limb */}
+    <Path d="M6 56 V32 a14 14 0 0 1 14 -14 h10 v38 Z" fill={SKIN} />
+    {/* the same arm as the other two, drawn back — only the joint is named */}
+    <Path
+      d="M32 26 L46 36 L40 54"
+      stroke={SKIN}
+      strokeWidth={10}
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Circle cx="31" cy="25" r="11" fill={HILITE} />
+    <Circle cx="31" cy="25" r="11" fill="none" stroke={IN} strokeWidth={2} opacity={0.35} />
+  </Frame>
+);
+
+export const Elbow = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M14 18 a9 9 0 0 1 12 2" stroke={SKIN} strokeWidth={9} fill="none" strokeLinecap="round" />
+    <Path
+      d="M24 22 L44 32 L36 50"
+      stroke={SKIN}
+      strokeWidth={10}
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    {/* the bend itself, where the two segments meet */}
+    <Circle cx="44" cy="32" r="9.5" fill={HILITE} />
+    <Circle cx="44" cy="32" r="9.5" fill="none" stroke={IN} strokeWidth={2} opacity={0.35} />
+  </Frame>
+);
+
+/** The almond every eye icon is drawn in, so the three read as one family. */
+const EyeShape = ({ colour, opacity = 1 }: { colour: string; opacity?: number }) => (
+  <G opacity={opacity}>
+    <Path d="M10 34 C18 22 46 22 54 34 C46 46 18 46 10 34 Z" fill={CR} stroke={colour} strokeWidth={2.5} />
+    <Circle cx="32" cy="34" r="8" fill={colour} />
+    <Circle cx="32" cy="34" r="3.5" fill={IN} />
+  </G>
+);
+
+export const Eye = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <EyeShape colour={HILITE} />
+    <Circle cx="29" cy="31" r="2" fill={CR} />
+  </Frame>
+);
+
+export const Eyebrow = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <EyeShape colour={SKIN} opacity={0.45} />
+    <Path d="M12 18 C22 8 42 8 52 18" stroke={HILITE} strokeWidth={7} fill="none" strokeLinecap="round" />
+  </Frame>
+);
+
+export const Eyelashes = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <EyeShape colour={SKIN} opacity={0.45} />
+    {/* lashes on the upper lid, splayed the way they actually grow */}
+    <Path
+      d="M14 27 L9 20 M22 22 L19 14 M32 20 L32 11 M42 22 L45 14 M50 27 L55 20"
+      stroke={HILITE}
+      strokeWidth={4}
+      strokeLinecap="round"
+    />
+  </Frame>
+);
+
+export const Lips = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M10 32 C18 22 26 22 32 27 C38 22 46 22 54 32 C46 44 18 44 10 32 Z" fill={ROSE} />
+    <Path d="M10 32 C22 28 42 28 54 32" stroke={IN} strokeWidth={2} fill="none" opacity={0.4} />
+  </Frame>
+);
+
+export const Mouth = ({ size }: IconProps) => (
+  <Frame size={size}>
+    {/* open, with teeth and tongue — the cavity, not the lips around it */}
+    <Path d="M10 30 C22 18 42 18 54 30 C46 48 18 48 10 30 Z" fill={IN} />
+    <Path d="M13 29 C24 21 40 21 51 29 Z" fill={CR} />
+    <Path d="M24 40 a9 7 0 0 1 16 0 a12 8 0 0 1 -16 0 Z" fill={ROSE} />
+    <Path d="M10 30 C22 18 42 18 54 30" stroke={ROSE} strokeWidth={4} fill="none" strokeLinecap="round" />
+  </Frame>
+);
+
+export const Skin = ({ size }: IconProps) => (
+  <Frame size={size}>
+    {/* a patch of skin in cross-section: surface, then the layer beneath it */}
+    <Rect x="10" y="16" width="44" height="32" rx="6" fill={SKIN} />
+    <Path d="M10 38 h44" stroke={IN} strokeWidth={2} opacity={0.25} />
+    <Rect x="10" y="38" width="44" height="10" rx={0} fill={ROSE} opacity={0.45} />
+    <Path
+      d="M17 24 q4 -4 8 0 q4 4 8 0 q4 -4 8 0 M17 32 q4 -4 8 0 q4 4 8 0 q4 -4 8 0"
+      stroke={CR}
+      strokeWidth={2}
+      fill="none"
+      opacity={0.55}
+      strokeLinecap="round"
+    />
+  </Frame>
+);
+
+export const Intestine = ({ size }: IconProps) => (
+  <Frame size={size}>
+    {/* the frame of the abdomen, so the coil is read as being inside something */}
+    <Rect x="10" y="8" width="44" height="50" rx="14" fill={SKIN} opacity={0.28} />
+    {/* coiled, not folded — square corners read as a hand, not a gut */}
+    <Path
+      d="M32 14 C48 14 48 26 32 26 C16 26 16 38 32 38 C48 38 48 50 32 50 C24 50 22 47 22 44"
+      stroke={HILITE}
+      strokeWidth={7}
+      fill="none"
+      strokeLinecap="round"
+    />
+  </Frame>
+);
+
 // ---- registry ------------------------------------------------------------
 
 export const ICONS: Record<string, (p: IconProps) => JSX.Element> = {
@@ -608,6 +764,9 @@ export const ICONS: Record<string, (p: IconProps) => JSX.Element> = {
   lattice: Lattice, tiles: Tiles, scroll: Scroll, crescent: Crescent,
   gem: Gem, flame: Flame, bolt: Bolt, sprout: Sprout, medal: Medal, gear: Gear,
   pomegranate: Pomegranate, speaker: Speaker,
+  arm: Arm, shoulder: Shoulder, elbow: Elbow,
+  eye: Eye, eyebrow: Eyebrow, eyelashes: Eyelashes,
+  lips: Lips, mouth: Mouth, skin: Skin, intestine: Intestine,
 };
 
 export type IconName = keyof typeof ICONS;

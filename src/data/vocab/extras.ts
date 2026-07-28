@@ -78,7 +78,7 @@ export const EXTRA_PACKS: TopicPack[] = [
     ]
   ),
   pack(
-    { id: 'shopping-talk', title: 'Bargaining', icon: '🤝', blurb: 'Haggling in the bazaar.', level: 'intermediate' },
+    { id: 'shopping-talk', title: 'Bargaining', icon: '🛍️', blurb: 'Haggling in the bazaar.', level: 'intermediate' },
     [
       ['w-kitne-ka', 'کتنے کا', 'kitne ka', 'how much for', '❓'],
       ['w-mol-bhao', 'مول بھاؤ', 'mol bhaao', 'bargaining', '🤝'],
@@ -103,7 +103,7 @@ export const EXTRA_PACKS: TopicPack[] = [
     ]
   ),
   pack(
-    { id: 'directions-more', title: 'Asking the Way', icon: '🧭', blurb: 'Finding your way around.', level: 'intermediate' },
+    { id: 'directions-more', title: 'Asking the Way', icon: '🚏', blurb: 'Finding your way around.', level: 'intermediate' },
     [
       ['w-kaise-jaun', 'کیسے جاؤں', 'kaise jaaooñ', 'how do I get to', '🧭'],
       ['w-kahan-hai', 'کہاں ہے', 'kahaañ hai', 'where is', '📍'],
@@ -135,7 +135,7 @@ export const EXTRA_PACKS: TopicPack[] = [
       ['w-overtime', 'اضافی وقت', 'izaafi waqt', 'overtime', '⏰'],
       ['w-tankhwah2', 'اجرت', 'ujrat', 'wage', '💵'],
       ['w-bonus', 'بونس', 'bonas', 'bonus', '🎁'],
-      ['w-hazri', 'حاضری', 'haazri', 'attendance', '📋'],
+      ['w-hazri', 'حاضری', 'haaziri', 'attendance', '📋'],
       ['w-rukhsat', 'رخصت', 'rukhsat', 'leave / departure', '🚪'],
       ['w-istifa', 'استعفیٰ', 'istifaa', 'resignation', '📄'],
       ['w-tarqi2', 'ترقی ملنا', 'taraqqi milna', 'to be promoted', '📈'],

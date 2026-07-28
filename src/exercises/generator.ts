@@ -5,7 +5,7 @@ import { getGrammar, type GrammarConcept, type GrammarDrill } from '../data/gram
 import { romanAll } from '../lib/translit';
 import type { LearnTrack } from '../store/useSettingsStore';
 import { SENTENCES, PASSAGES, DIALOGUES, getPassage, getDialogue, type Sentence } from '../data/sentences';
-import { WORD_ICON, NUMERALS, COLOURS } from '../data/art';
+import { cueOf } from '../data/art';
 import { GLYPH_MASKS } from '../data/glyphMasks';
 import { Exercise, ItemRef } from './types';
 
@@ -92,13 +92,6 @@ function distractorsFor(
   return chosen;
 }
 
-/** The visual cue a word shows: illustration, numeral, swatch, or its emoji. */
-function cueOf(w: Word): string {
-  if (NUMERALS[w.id]) return `num:${NUMERALS[w.id]}`;
-  if (COLOURS[w.id]) return `col:${COLOURS[w.id].color}`;
-  if (WORD_ICON[w.id]) return `ico:${WORD_ICON[w.id]}`;
-  return `emo:${w.emoji}`;
-}
 
 /**
  * How much the learner has to supply themselves.

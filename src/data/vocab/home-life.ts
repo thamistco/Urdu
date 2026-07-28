@@ -23,7 +23,7 @@ export const HOME_PACKS: TopicPack[] = [
       ['w-kona', 'کونا', 'kona', 'corner', '📐'],
       ['w-manzil-floor', 'منزل', 'manzil', 'storey / floor', '🏢'],
       ['w-taaq', 'طاق', 'taaq', 'alcove / niche', '🕳️'],
-      ['w-aangan', 'آنگن', 'aangan', 'inner yard', '🌿'],
+      ['w-aangan', 'آنگن', 'aañgan', 'inner yard', '🌿'],
       ['w-darwaza2', 'پھاٹک', 'phaaṭak', 'gate', '🚧'],
     ]
   ),

@@ -78,7 +78,7 @@ export const CITY_PACKS: TopicPack[] = [
     ]
   ),
   pack(
-    { id: 'services', title: 'Public Services', icon: '🏛️', blurb: 'Offices, help and officials.', level: 'advanced' },
+    { id: 'services', title: 'Public Services', icon: '🧰', blurb: 'Offices, help and officials.', level: 'advanced' },
     [
       ['w-hukoomat', 'حکومت', 'hukoomat', 'government', '🏛️'],
       ['w-afsar', 'افسر', 'afsar', 'officer', '🎖️'],

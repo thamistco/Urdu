@@ -28,7 +28,7 @@ export const SOCIETY_PACKS: TopicPack[] = [
     ]
   ),
   pack(
-    { id: 'law', title: 'Law & Justice', icon: '⚖️', blurb: 'Courts, crime and rights.', level: 'advanced' },
+    { id: 'law', title: 'Law & Justice', icon: '👨‍⚖️', blurb: 'Courts, crime and rights.', level: 'advanced' },
     [
       ['w-muqadma', 'مقدمہ', 'muqadma', 'court case', '⚖️'],
       ['w-mulzim', 'ملزم', 'mulzim', 'accused', '🚔'],
@@ -103,7 +103,7 @@ export const SOCIETY_PACKS: TopicPack[] = [
     ]
   ),
   pack(
-    { id: 'environment', title: 'Environment', icon: '🌍', blurb: 'Climate and conservation.', level: 'advanced' },
+    { id: 'environment', title: 'Environment', icon: '♻️', blurb: 'Climate and conservation.', level: 'advanced' },
     [
       ['w-aaloodgi', 'آلودگی', 'aaloodgi', 'pollution', '🏭'],
       ['w-tahaffuz', 'تحفظ', 'tahaffuz', 'protection', '🛡️'],
@@ -128,7 +128,7 @@ export const SOCIETY_PACKS: TopicPack[] = [
     ]
   ),
   pack(
-    { id: 'philosophy', title: 'Thought & Philosophy', icon: '🧭', blurb: 'Reason, ethics and meaning.', level: 'advanced' },
+    { id: 'philosophy', title: 'Thought & Philosophy', icon: '🕯️', blurb: 'Reason, ethics and meaning.', level: 'advanced' },
     [
       ['w-falsafa', 'فلسفہ', 'falsafa', 'philosophy', '🧭'],
       ['w-mantiq', 'منطق', 'mantiq', 'logic', '➗'],

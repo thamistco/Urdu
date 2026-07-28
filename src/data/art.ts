@@ -8,7 +8,7 @@
  */
 
 import type { IconName } from '../art/icons';
-import type { Word } from './words';
+import { WORDS, type Word } from './words';
 
 export const WORD_ICON: Record<string, IconName> = {
   'w-paani': 'droplet', 'w-kitaab': 'book', 'w-ghar': 'house', 'w-dil': 'heart',
@@ -67,6 +67,17 @@ export const WORD_ICON: Record<string, IconName> = {
   'w-takiya': 'bed', 'w-tamgha': 'medal', 'w-teela': 'mountain', 'w-tehreer': 'pen',
   'w-thaila': 'briefcase', 'w-toofaan': 'rain', 'w-tuffan2': 'waves', 'w-tuloo': 'sun',
   'w-waadi2': 'mountain', 'w-wadi': 'mountain', 'w-walid': 'man', 'w-walida': 'woman',
+
+  // ---- the body ----------------------------------------------------------
+  // These are the words the emoji font actively got wrong rather than merely
+  // approximated. It has one glyph — 💪 — for arm, shoulder and elbow, and one
+  // — 👁️ — for eye, eyebrows and eyelashes, so the same picture was shown for
+  // six different words and "which word is this?" had no answer. See the note
+  // over the drawings in art/icons.tsx.
+  'w-bazoo': 'arm', 'w-baazoo2': 'arm', 'w-kandha': 'shoulder', 'w-kohni': 'elbow',
+  'w-aankh': 'eye', 'w-bhow': 'eyebrow', 'w-bhoon': 'eyebrow', 'w-palken': 'eyelashes',
+  'w-munh': 'mouth', 'w-hont2': 'lips', 'w-honth': 'lips',
+  'w-jild': 'skin', 'w-aant': 'intestine',
 };
 
 export const NUMERALS: Record<string, string> = {
@@ -145,6 +156,40 @@ const SYMBOLIC_WORDS = new Set([
   'w-naam', 'w-dost', 'w-kaam', 'w-waqt',
 ]);
 
+/** The picture a word shows: illustration, numeral, swatch, or its emoji. */
+export function cueOf(word: Word): string {
+  if (NUMERALS[word.id]) return `num:${NUMERALS[word.id]}`;
+  if (COLOURS[word.id]) return `col:${COLOURS[word.id].color}`;
+  if (WORD_ICON[word.id]) return `ico:${WORD_ICON[word.id]}`;
+  return `emo:${word.emoji}`;
+}
+
+/**
+ * Pictures that stand for more than one word in the course.
+ *
+ * The lists above are hand-written, and the reason a picture fails to name its
+ * word is usually not that it is a poor drawing — it is that some *other* word
+ * is using the same one. 💪 was arm, shoulder, elbow and muscle; 👁️ was eye,
+ * eyebrows and eyelashes; 🏺 was seven different clay vessels. Those six words
+ * were spotted by hand; 466 of the 766 words then allowed a picture-only
+ * question turned out to have the same problem, which is far too many to keep
+ * on a list.
+ *
+ * So it is counted instead. A picture that names exactly one word can carry a
+ * question alone; a picture shared with anything else cannot, and the word gets
+ * its meaning captioned underneath like any other. This is derived from the
+ * data, so drawing a word its own picture silently promotes it and adding a
+ * word that reuses one silently demotes both — neither can drift.
+ */
+const SHARED_CUES: Set<string> = (() => {
+  const count = new Map<string, number>();
+  for (const w of WORDS) {
+    const c = cueOf(w);
+    count.set(c, (count.get(c) ?? 0) + 1);
+  }
+  return new Set([...count].filter(([, n]) => n > 1).map(([c]) => c));
+})();
+
 /**
  * Can this word be asked with nothing but its picture?
  *
@@ -155,6 +200,8 @@ export function pictureIdentifies(word: Word): boolean {
   // A numeral and a colour swatch are the thing itself, whatever the topic.
   if (NUMERALS[word.id] || COLOURS[word.id]) return true;
   if (SYMBOLIC_WORDS.has(word.id)) return false;
+  // Someone else is already using this picture.
+  if (SHARED_CUES.has(cueOf(word))) return false;
   // A still picture cannot distinguish an action from its object: 🏃 is as much
   // "runner" or "race" as "to run".
   if (/\bto\s/.test(word.meaning)) return false;
