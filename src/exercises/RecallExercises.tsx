@@ -33,7 +33,8 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
     if (graded != null || locked || !text.trim()) return;
     const correct = matchesWord(text, word.urdu, word.roman);
     setGraded(correct);
-    correct ? feedback.correctAnnounce(word.id, word.urdu, word.roman) : feedback.incorrect();
+    correct ? feedback.correctAnnounce(word.id, word.urdu, word.roman)
+      : feedback.incorrectAnnounce(word.id, word.urdu, word.roman);
     onGraded({ items: [{ id: word.id, type: 'word' }], correct });
   };
 
@@ -118,7 +119,8 @@ export function WordFromMeaningExercise({ exercise, track, locked, onGraded }: E
     if (picked || locked) return;
     setPicked(id);
     const correct = id === word.id;
-    correct ? feedback.correctAnnounce(word.id, word.urdu, word.roman) : feedback.incorrect();
+    correct ? feedback.correctAnnounce(word.id, word.urdu, word.roman)
+      : feedback.incorrectAnnounce(word.id, word.urdu, word.roman);
     onGraded({ items: [{ id: word.id, type: 'word' }], correct });
   };
 

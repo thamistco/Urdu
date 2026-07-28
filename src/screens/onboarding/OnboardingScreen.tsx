@@ -142,9 +142,24 @@ export function OnboardingScreen() {
    * words you cannot read is the kind of thing that makes someone quit.
    */
   const wantsScript = track !== 'roman';
-  const canSkipScript = lvl === 2 && wantsScript && SCRIPT_LESSON_IDS.length > 0;
-  const basicsSkips =
-    background === 'speaker' || lvl >= 1 ? SKIPPABLE_FOR_SPEAKERS : [];
+  /**
+   * Placement alone no longer skips anything.
+   *
+   * The four questions are multiple choice over two or three options, so two
+   * correct — the old threshold for skipping the basic vocabulary — is roughly
+   * what pure guessing scores. That meant someone who had just told us, in
+   * their own words, that they are starting from scratch could be fast-tracked
+   * past the beginning anyway, and land on a path that opens somewhere in the
+   * middle of topics they have never seen.
+   *
+   * A person's own answer about whether they already speak Urdu is far better
+   * evidence than a quiz they can guess, so the self-report is what decides:
+   * only "I already speak or understand it" skips the basics, and only such a
+   * learner is even offered the alphabet skip.
+   */
+  const isSpeaker = background === 'speaker';
+  const canSkipScript = lvl === 2 && wantsScript && isSpeaker && SCRIPT_LESSON_IDS.length > 0;
+  const basicsSkips = isSpeaker ? SKIPPABLE_FOR_SPEAKERS : [];
   const skipIds = Array.from(
     new Set([...basicsSkips, ...(canSkipScript && skipScript ? SCRIPT_LESSON_IDS : [])])
   );

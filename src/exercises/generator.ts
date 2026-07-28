@@ -1,6 +1,6 @@
 import { LETTERS, getLetter, Letter, PositionKey, POSITIONS } from '../data/letters';
 import { WORDS, getWord, wordsByTopic, Word, PHRASES } from '../data/words';
-import { Lesson } from '../data/units';
+import { Lesson, ALL_LESSONS } from '../data/units';
 import { getGrammar, type GrammarConcept, type GrammarDrill } from '../data/grammar';
 import { romanAll } from '../lib/translit';
 import type { LearnTrack } from '../store/useSettingsStore';
@@ -316,7 +316,7 @@ export function buildLessonExercises(
   }
 
   if (lesson.kind === 'review') {
-    const refs = reviewRefs.length ? reviewRefs : fallbackReviewRefs(lesson.size, teachesScript);
+    const refs = reviewRefs.length ? reviewRefs : fallbackReviewRefs(lesson.size, teachesScript, lesson.id);
     for (const ref of refs.slice(0, lesson.size)) {
       if (ref.type === 'letter') {
         const l = teachesScript ? getLetter(ref.id) : undefined;
@@ -353,18 +353,50 @@ export function buildLessonExercises(
   return lesson.kind === 'vocab' ? exercises : exercises.slice(0, lesson.size);
 }
 
-/** When nothing is due yet, review draws from the base content so the lesson still runs. */
-function fallbackReviewRefs(n: number, withLetters = true): ItemRef[] {
-  // Drawn from the early, foundational material rather than the whole 2,000 —
-  // a learner with nothing due yet has not met the advanced vocabulary — but
-  // sampled, so a second empty review is not the same lesson again.
-  if (!withLetters) {
-    return shuffle(WORDS.slice(0, 120)).slice(0, n).map((w) => ({ id: w.id, type: 'word' }));
+/**
+ * What the path has actually taught by the time a given lesson is reached.
+ *
+ * Walks the real lesson order and collects the letters and topics introduced
+ * strictly before this lesson, plus this lesson's own unit-mates, so a review
+ * can only ever ask about material the learner has already been shown.
+ */
+function taughtUpTo(lessonId: string): { letters: string[]; words: string[] } {
+  const letters: string[] = [];
+  const words: string[] = [];
+  for (const l of ALL_LESSONS) {
+    if (l.kind === 'letters' && l.letterIds) letters.push(...l.letterIds);
+    if (l.kind === 'vocab' && l.topic) words.push(...wordsByTopic(l.topic).map((w) => w.id));
+    if (l.id === lessonId) break;
   }
-  const letters: ItemRef[] = shuffle(LETTERS.slice(0, 20)).slice(0, Math.ceil(n / 2))
-    .map((l) => ({ id: l.id, type: 'letter' }));
-  const words: ItemRef[] = shuffle(WORDS.slice(0, 120)).slice(0, Math.floor(n / 2))
-    .map((w) => ({ id: w.id, type: 'word' }));
+  return { letters, words };
+}
+
+/**
+ * When nothing is due yet, review still needs something to ask about.
+ *
+ * This used to take `WORDS.slice(0, 120)` and `LETTERS.slice(0, 20)` — the
+ * first entries in *corpus* order, which has nothing to do with the order the
+ * course teaches them. So a Unit 2 review happily asked about words from Unit
+ * 3 and letters not yet introduced: material the learner had never seen, in a
+ * lesson whose whole job is to bring back what they had.
+ *
+ * It is now drawn strictly from what the path has taught up to this lesson.
+ */
+function fallbackReviewRefs(n: number, withLetters = true, lessonId?: string): ItemRef[] {
+  const taught = lessonId ? taughtUpTo(lessonId) : null;
+  // No lesson context (practice review, say) falls back to the foundational
+  // material, which is the old behaviour and correct there — practice review is
+  // not positioned anywhere on the path.
+  const wordPool = taught && taught.words.length ? taught.words : WORDS.slice(0, 120).map((w) => w.id);
+  const letterPool = taught && taught.letters.length ? taught.letters : LETTERS.slice(0, 20).map((l) => l.id);
+
+  if (!withLetters) {
+    return shuffle(wordPool).slice(0, n).map((id) => ({ id, type: 'word' }));
+  }
+  const letters: ItemRef[] = shuffle(letterPool).slice(0, Math.ceil(n / 2))
+    .map((id) => ({ id, type: 'letter' }));
+  const words: ItemRef[] = shuffle(wordPool).slice(0, Math.floor(n / 2))
+    .map((id) => ({ id, type: 'word' }));
   return shuffle([...letters, ...words]);
 }
 

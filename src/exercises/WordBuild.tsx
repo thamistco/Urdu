@@ -75,7 +75,8 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
     const built = placed.map((i) => tiles[i]).join('');
     const correct = built === target.join('');
     setGraded(correct);
-    correct ? feedback.correctAnnounce(word.id, word.urdu, word.roman) : feedback.incorrect();
+    correct ? feedback.correctAnnounce(word.id, word.urdu, word.roman)
+      : feedback.incorrectAnnounce(word.id, word.urdu, word.roman);
     onGraded({ items: [{ id: word.id, type: 'word' }], correct });
   };
 

@@ -47,7 +47,7 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
     setGraded(correct);
     correct
       ? feedback.correctAnnounce(sentence.id, sentence.words.join(' '), sentence.roman)
-      : feedback.incorrect();
+      : feedback.incorrectAnnounce(sentence.id, sentence.words.join(' '), sentence.roman);
     onGraded({ items: [], correct });
   };
 
