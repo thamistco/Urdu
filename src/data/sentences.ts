@@ -21,6 +21,21 @@ export type Sentence = {
   level: Level;
   /** grammar concept this sentence illustrates, if any */
   concept?: string;
+  /**
+   * A diacritic-marked reading fed to the voice generator instead of the bare
+   * words, for a sentence containing a spelling that is two words.
+   *
+   * Words have carried this since the first heteronyms turned up (سر is `sar`,
+   * a head, and `sur`, a musical note), but sentences did not — so "us ki
+   * kitaab" was written اس کی کتاب, and the voice, given no vowel to go on,
+   * read اس as اِس and said "is ki kitaab". The transliteration said one thing
+   * and the audio said another, in the exercise whose whole point is matching
+   * the two.
+   *
+   * Only needed for the handful of sentences that contain such a word; the
+   * audit fails if one of them is missing it.
+   */
+  pronounce?: string;
 };
 
 export const SENTENCES: Sentence[] = [
@@ -105,7 +120,7 @@ export const SENTENCES: Sentence[] = [
   { id: 's-16', words: ['میں', 'روز', 'کام', 'کرتا', 'ہوں'], roman: 'main roz kaam karta hoon', meaning: 'I work every day', level: 'intermediate', concept: 'g-present' },
   { id: 's-17', words: ['وہ', 'چائے', 'پیتی', 'ہے'], roman: 'wo chai peeti hai', meaning: 'She drinks tea', level: 'intermediate', concept: 'g-present' },
   { id: 's-18', words: ['بارش', 'ہو', 'رہی', 'ہے'], roman: 'baarish ho rahi hai', meaning: 'It is raining', level: 'intermediate', concept: 'g-continuous' },
-  { id: 's-19', words: ['میں', 'کل', 'بازار', 'جاؤں', 'گا'], roman: 'main kal bazaar jaaoon ga', meaning: 'I will go to the market tomorrow', level: 'intermediate', concept: 'g-future' },
+  { id: 's-19', words: ['میں', 'کل', 'بازار', 'جاؤں', 'گا'], roman: 'main kal bazaar jaaoon ga', meaning: 'I will go to the market tomorrow', level: 'intermediate', concept: 'g-future', pronounce: 'میں کَل بازار جاؤں گا' },
   { id: 's-20', words: ['وہ', 'گھر', 'میں', 'نہیں', 'تھا'], roman: 'wo ghar meñ nahiñ tha', meaning: 'He was not at home', level: 'intermediate', concept: 'g-past' },
   { id: 's-21', words: ['ڈاکٹر', 'نے', 'دوا', 'دی'], roman: 'ḍākṭar ne dawa di', meaning: 'The doctor gave medicine', level: 'intermediate', concept: 'g-perfect' },
   { id: 's-22', words: ['ہمیں', 'ٹکٹ', 'خریدنا', 'ہے'], roman: 'hameñ ṭikaṭ khareedna hai', meaning: 'We have to buy a ticket', level: 'intermediate', concept: 'g-obligation' },
@@ -117,7 +132,7 @@ export const SENTENCES: Sentence[] = [
   { id: 's-92', words: ['وہ', 'خط', 'لکھ', 'رہی', 'ہے'], roman: 'wo khat likh rahi hai', meaning: 'She is writing a letter', level: 'intermediate', concept: 'g-continuous' },
   { id: 's-93', words: ['بچے', 'باہر', 'کھیل', 'رہے', 'ہیں'], roman: 'bachche baahar khel rahe hain', meaning: 'The children are playing outside', level: 'intermediate', concept: 'g-continuous' },
   { id: 's-94', words: ['کتاب', 'میز', 'پر', 'تھی'], roman: 'kitaab mez par thi', meaning: 'The book was on the table', level: 'intermediate', concept: 'g-past' },
-  { id: 's-95', words: ['ہم', 'کل', 'لاہور', 'میں', 'تھے'], roman: 'ham kal Lahore meñ the', meaning: 'We were in Lahore yesterday', level: 'intermediate', concept: 'g-past' },
+  { id: 's-95', words: ['ہم', 'کل', 'لاہور', 'میں', 'تھے'], roman: 'ham kal Lahore meñ the', meaning: 'We were in Lahore yesterday', level: 'intermediate', concept: 'g-past', pronounce: 'ہم کَل لاہور میں تھے' },
   { id: 's-96', words: ['میں', 'پہلے', 'یہاں', 'رہتا', 'تھا'], roman: 'main pehle yahaañ rehta tha', meaning: 'I used to live here', level: 'intermediate', concept: 'g-past' },
   { id: 's-97', words: ['وہ', 'خط', 'لکھے', 'گی'], roman: 'wo khat likhe gi', meaning: 'She will write a letter', level: 'intermediate', concept: 'g-future' },
   { id: 's-98', words: ['ہم', 'اگلے', 'ہفتے', 'ملیں', 'گے'], roman: 'ham agle hafte mileñ ge', meaning: 'We will meet next week', level: 'intermediate', concept: 'g-future' },
@@ -149,7 +164,7 @@ export const SENTENCES: Sentence[] = [
   { id: 's-116', words: ['یہاں', 'مت', 'بیٹھو'], roman: 'yahaañ mat baiṭho', meaning: "Don't sit here", level: 'advanced', concept: 'g-imperative' },
   { id: 's-117', words: ['دروازہ', 'بند', 'کر', 'دیجیے'], roman: 'darwaaza band kar deejiye', meaning: 'Please close the door', level: 'advanced', concept: 'g-imperative' },
   { id: 's-118', words: ['مجھے', 'معاف', 'کیجیے'], roman: 'mujhe maaf keejiye', meaning: 'Please forgive me', level: 'advanced', concept: 'g-imperative' },
-  { id: 's-119', words: ['شاید', 'وہ', 'کل', 'آئے'], roman: 'shaayad wo kal aaye', meaning: 'Perhaps he will come tomorrow', level: 'advanced', concept: 'g-subjunctive' },
+  { id: 's-119', words: ['شاید', 'وہ', 'کل', 'آئے'], roman: 'shaayad wo kal aaye', meaning: 'Perhaps he will come tomorrow', level: 'advanced', concept: 'g-subjunctive', pronounce: 'شاید وہ کَل آئے' },
   { id: 's-120', words: ['میں', 'کیا', 'کروں'], roman: 'main kya karoon', meaning: 'What should I do?', level: 'advanced', concept: 'g-subjunctive' },
   { id: 's-121', words: ['اگر', 'بارش', 'ہو', 'تو', 'ہم', 'نہ', 'جائیں'], roman: 'agar baarish ho to ham na jaayeñ', meaning: "If it rains, let's not go", level: 'advanced', concept: 'g-subjunctive' },
   { id: 's-122', words: ['میں', 'نے', 'کھانا', 'کھایا'], roman: 'main ne khaana khaaya', meaning: 'I ate the food', level: 'advanced', concept: 'g-perfect' },
@@ -175,7 +190,7 @@ export const SENTENCES: Sentence[] = [
   // ---- a second pass: daily life, family, time, and place ----
   { id: 's-141', words: ['میری', 'بہن', 'استاد', 'ہے'], roman: 'meri behan ustaad hai', meaning: 'My sister is a teacher', level: 'beginner', concept: 'g-to-be' },
   { id: 's-142', words: ['یہ', 'میرا', 'کمرہ', 'ہے'], roman: 'ye mera kamra hai', meaning: 'This is my room', level: 'beginner', concept: 'g-to-be' },
-  { id: 's-143', words: ['اس', 'کی', 'کتاب', 'نئی', 'ہے'], roman: 'us ki kitaab nayi hai', meaning: 'Her book is new', level: 'beginner', concept: 'g-possess' },
+  { id: 's-143', words: ['اس', 'کی', 'کتاب', 'نئی', 'ہے'], roman: 'us ki kitaab nayi hai', meaning: 'Her book is new', level: 'beginner', concept: 'g-possess', pronounce: 'اُس کی کتاب نئی ہے' },
   { id: 's-150', words: ['آج', 'جمعہ', 'ہے'], roman: 'aaj juma hai', meaning: 'Today is Friday', level: 'beginner' },
   { id: 's-156', words: ['میرا', 'بھائی', 'ڈاکٹر', 'ہے'], roman: 'mera bhai ḍākṭar hai', meaning: 'My brother is a doctor', level: 'beginner', concept: 'g-to-be' },
   { id: 's-144', words: ['میں', 'ہر', 'روز', 'پانی', 'پیتا', 'ہوں'], roman: 'main har roz paani peeta hoon', meaning: 'I drink water every day', level: 'elementary', concept: 'g-present' },
@@ -183,7 +198,7 @@ export const SENTENCES: Sentence[] = [
   { id: 's-146', words: ['بچے', 'باغ', 'میں', 'کھیل', 'رہے', 'ہیں'], roman: 'bachche baagh meñ khel rahe haiñ', meaning: 'The children are playing in the garden', level: 'elementary' },
   { id: 's-147', words: ['کتاب', 'میز', 'کے', 'اوپر', 'ہے'], roman: 'kitaab mez ke oopar hai', meaning: 'The book is on the table', level: 'elementary', concept: 'g-postpositions' },
   { id: 's-148', words: ['دکان', 'گھر', 'کے', 'پاس', 'ہے'], roman: 'dukaan ghar ke paas hai', meaning: 'The shop is near the house', level: 'elementary', concept: 'g-postpositions' },
-  { id: 's-151', words: ['کل', 'میرا', 'امتحان', 'ہے'], roman: 'kal mera imtihaan hai', meaning: 'Tomorrow is my exam', level: 'elementary' },
+  { id: 's-151', words: ['کل', 'میرا', 'امتحان', 'ہے'], roman: 'kal mera imtihaan hai', meaning: 'Tomorrow is my exam', level: 'elementary', pronounce: 'کَل میرا امتحان ہے' },
   { id: 's-152', words: ['وہ', 'روز', 'ورزش', 'کرتا', 'ہے'], roman: 'wo roz warzish karta hai', meaning: 'He exercises every day', level: 'elementary', concept: 'g-present' },
   { id: 's-155', words: ['یہ', 'راستہ', 'کہاں', 'جاتا', 'ہے'], roman: 'ye raasta kahaañ jaata hai', meaning: 'Where does this road go?', level: 'elementary', concept: 'g-questions' },
   { id: 's-149', words: ['میری', 'سالگرہ', 'اپریل', 'میں', 'ہے'], roman: 'meri saalgirah aprail meñ hai', meaning: 'My birthday is in April', level: 'intermediate' },
@@ -198,7 +213,7 @@ export const SENTENCES: Sentence[] = [
   { id: 's-162', words: ['وہ', 'چھوٹا', 'لڑکا', 'ہے'], roman: 'wo chhoṭa laṛka hai', meaning: 'He is a small boy', level: 'beginner', concept: 'g-gender' },
   { id: 's-163', words: ['یہ', 'لمبی', 'سڑک', 'ہے'], roman: 'ye lambi saṛak hai', meaning: 'This is a long road', level: 'beginner', concept: 'g-gender' },
   { id: 's-164', words: ['میرا', 'کتا', 'کالا', 'ہے'], roman: 'mera kutta kaala hai', meaning: 'My dog is black', level: 'beginner', concept: 'g-possess' },
-  { id: 's-165', words: ['اس', 'کی', 'بلی', 'سفید', 'ہے'], roman: 'us ki billi safed hai', meaning: 'His cat is white', level: 'beginner', concept: 'g-possess' },
+  { id: 's-165', words: ['اس', 'کی', 'بلی', 'سفید', 'ہے'], roman: 'us ki billi safed hai', meaning: 'His cat is white', level: 'beginner', concept: 'g-possess', pronounce: 'اُس کی بلی سفید ہے' },
   { id: 's-166', words: ['میرے', 'پاس', 'دو', 'بہنیں', 'ہیں'], roman: 'mere paas do behneñ hain', meaning: 'I have two sisters', level: 'beginner', concept: 'g-plurals' },
   { id: 's-167', words: ['یہاں', 'تین', 'کرسیاں', 'ہیں'], roman: 'yahaañ teen kursiyaañ hain', meaning: 'There are three chairs here', level: 'beginner', concept: 'g-plurals' },
   { id: 's-168', words: ['میں', 'یہاں', 'ہوں'], roman: 'main yahaañ hoon', meaning: 'I am here', level: 'beginner', concept: 'g-pronouns' },
@@ -220,7 +235,7 @@ export const SENTENCES: Sentence[] = [
   { id: 's-183', words: ['بلی', 'میز', 'کے', 'نیچے', 'ہے'], roman: 'billi mez ke neeche hai', meaning: 'The cat is under the table', level: 'elementary', concept: 'g-postpositions' },
   { id: 's-184', words: ['دکان', 'اسکول', 'کے', 'سامنے', 'ہے'], roman: 'dukaan iskool ke saamne hai', meaning: 'The shop is in front of the school', level: 'elementary', concept: 'g-postpositions' },
   { id: 's-185', words: ['میں', 'تم', 'سے', 'ملنا', 'چاہتا', 'ہوں'], roman: 'main tum se milna chaahta hoon', meaning: 'I want to meet you', level: 'elementary', concept: 'g-postpositions' },
-  { id: 's-186', words: ['یہ', 'خط', 'اس', 'کے', 'لیے', 'ہے'], roman: 'ye khat us ke liye hai', meaning: 'This letter is for him', level: 'elementary', concept: 'g-postpositions' },
+  { id: 's-186', words: ['یہ', 'خط', 'اس', 'کے', 'لیے', 'ہے'], roman: 'ye khat us ke liye hai', meaning: 'This letter is for him', level: 'elementary', concept: 'g-postpositions', pronounce: 'یہ خط اُس کے لیے ہے' },
   { id: 's-187', words: ['وہ', 'میرے', 'بغیر', 'گیا'], roman: 'wo mere baghair gaya', meaning: 'He went without me', level: 'elementary', concept: 'g-postpositions' },
   { id: 's-188', words: ['مجھے', 'پیسے', 'نہیں', 'چاہیے'], roman: 'mujhe paise nahiñ chaahiye', meaning: 'I don\'t want money', level: 'elementary', concept: 'g-negation' },
   { id: 's-189', words: ['یہاں', 'کوئی', 'کتاب', 'نہیں', 'ہے'], roman: 'yahaañ koi kitaab nahiñ hai', meaning: 'There is no book here', level: 'elementary', concept: 'g-negation' },
@@ -229,7 +244,7 @@ export const SENTENCES: Sentence[] = [
   { id: 's-192', words: ['یہ', 'سامان', 'کس', 'کا', 'ہے'], roman: 'ye saamaan kis ka hai', meaning: 'Whose luggage is this?', level: 'elementary', concept: 'g-questions' },
   { id: 's-193', words: ['آپ', 'کیا', 'کھاتے', 'ہیں'], roman: 'aap kya khaate hain', meaning: 'What do you eat?', level: 'elementary', concept: 'g-questions' },
   { id: 's-194', words: ['میں', 'تھکا', 'ہوا', 'ہوں', 'اور', 'بھوکا', 'بھی', 'ہوں'], roman: 'main thaka hua hoon aur bhookha bhi hoon', meaning: 'I am tired and hungry too', level: 'elementary', concept: 'g-conjunctions' },
-  { id: 's-195', words: ['نہ', 'وہ', 'آیا', 'نہ', 'اس', 'نے', 'فون', 'کیا'], roman: 'na wo aaya na us ne fon kiya', meaning: 'Neither did he come nor did he call', level: 'elementary', concept: 'g-conjunctions' },
+  { id: 's-195', words: ['نہ', 'وہ', 'آیا', 'نہ', 'اس', 'نے', 'فون', 'کیا'], roman: 'na wo aaya na us ne fon kiya', meaning: 'Neither did he come nor did he call', level: 'elementary', concept: 'g-conjunctions', pronounce: 'نہ وہ آیا نہ اُس نے فون کیا' },
   { id: 's-196', words: ['میں', 'چائے', 'پیتا', 'ہوں', 'لیکن', 'کافی', 'نہیں', 'پیتا'], roman: 'main chai peeta hoon lekin coffee nahiñ peeta', meaning: 'I drink tea but I don\'t drink coffee', level: 'elementary', concept: 'g-conjunctions' },
   { id: 's-197', words: ['کمرے', 'میں', 'کوئی', 'نہیں', 'تھا'], roman: 'kamre meñ koi nahiñ tha', meaning: 'There was nobody in the room', level: 'elementary', concept: 'g-oblique' },
   { id: 's-198', words: ['بچوں', 'کو', 'کھانا', 'دو'], roman: 'bachchoñ ko khaana do', meaning: 'Give the children food', level: 'elementary', concept: 'g-oblique' },
@@ -246,7 +261,7 @@ export const SENTENCES: Sentence[] = [
   { id: 's-208', words: ['ہم', 'روز', 'ورزش', 'کرتے', 'ہیں'], roman: 'ham roz warzish karte hain', meaning: 'We exercise every day', level: 'intermediate', concept: 'g-present' },
   { id: 's-209', words: ['بچے', 'شور', 'مچا', 'رہے', 'ہیں'], roman: 'bachche shor macha rahe hain', meaning: 'The children are making noise', level: 'intermediate', concept: 'g-continuous' },
   { id: 's-210', words: ['میں', 'کھانا', 'پکا', 'رہا', 'ہوں'], roman: 'main khaana paka raha hoon', meaning: 'I am cooking food', level: 'intermediate', concept: 'g-continuous' },
-  { id: 's-211', words: ['وہ', 'کل', 'شام', 'کو', 'آیا'], roman: 'wo kal shaam ko aaya', meaning: 'He came yesterday evening', level: 'intermediate', concept: 'g-past' },
+  { id: 's-211', words: ['وہ', 'کل', 'شام', 'کو', 'آیا'], roman: 'wo kal shaam ko aaya', meaning: 'He came yesterday evening', level: 'intermediate', concept: 'g-past', pronounce: 'وہ کَل شام کو آیا' },
   { id: 's-212', words: ['ہم', 'پچھلے', 'سال', 'کراچی', 'گئے'], roman: 'ham pichhle saal Karachi gaye', meaning: 'We went to Karachi last year', level: 'intermediate', concept: 'g-past' },
   { id: 's-213', words: ['میں', 'اگلے', 'سال', 'پڑھوں', 'گا'], roman: 'main agle saal paṛhoon ga', meaning: 'I will study next year', level: 'intermediate', concept: 'g-future' },
   { id: 's-214', words: ['وہ', 'صبح', 'جلدی', 'اٹھے', 'گی'], roman: 'wo subah jaldi uṭhe gi', meaning: 'She will get up early in the morning', level: 'intermediate', concept: 'g-future' },
@@ -258,7 +273,7 @@ export const SENTENCES: Sentence[] = [
   { id: 's-220', words: ['مجھے', 'ابھی', 'جانا', 'ہے'], roman: 'mujhe abhi jaana hai', meaning: 'I have to go right now', level: 'intermediate', concept: 'g-obligation' },
   { id: 's-221', words: ['تمہیں', 'سچ', 'بولنا', 'چاہیے'], roman: 'tumheñ sach bolna chaahiye', meaning: 'You should speak the truth', level: 'intermediate', concept: 'g-obligation' },
   { id: 's-222', words: ['ہمیں', 'وقت', 'پر', 'پہنچنا', 'تھا'], roman: 'hameñ waqt par pahunchna tha', meaning: 'We had to arrive on time', level: 'intermediate', concept: 'g-obligation' },
-  { id: 's-223', words: ['یہ', 'گھر', 'اس', 'گھر', 'سے', 'بڑا', 'ہے'], roman: 'ye ghar us ghar se baṛa hai', meaning: 'This house is bigger than that house', level: 'intermediate', concept: 'g-comparative' },
+  { id: 's-223', words: ['یہ', 'گھر', 'اس', 'گھر', 'سے', 'بڑا', 'ہے'], roman: 'ye ghar us ghar se baṛa hai', meaning: 'This house is bigger than that house', level: 'intermediate', concept: 'g-comparative', pronounce: 'یہ گھر اُس گھر سے بڑا ہے' },
   { id: 's-224', words: ['میری', 'بہن', 'مجھ', 'سے', 'چھوٹی', 'ہے'], roman: 'meri behen mujh se chhoṭi hai', meaning: 'My sister is younger than me', level: 'intermediate', concept: 'g-comparative' },
   { id: 's-225', words: ['یہ', 'سب', 'سے', 'مہنگا', 'کپڑا', 'ہے'], roman: 'ye sab se mehnga kapṛa hai', meaning: 'This is the most expensive cloth', level: 'intermediate', concept: 'g-comparative' },
   { id: 's-226', words: ['وہ', 'اپنے', 'کمرے', 'میں', 'پڑھ', 'رہی', 'ہے'], roman: 'wo apne kamre meñ paṛh rahi hai', meaning: 'She is studying in her room', level: 'intermediate', concept: 'g-continuous' },
@@ -269,7 +284,7 @@ export const SENTENCES: Sentence[] = [
   { id: 's-231', words: ['ہمیں', 'ایک', 'نیا', 'گھر', 'چاہیے'], roman: 'hameñ ek naya ghar chaahiye', meaning: 'We need a new house', level: 'intermediate', concept: 'g-dative' },
   // ---- a third pass: perfect, passive, causative, subjunctive, relative ----
   { id: 's-232', words: ['میں', 'نے', 'یہ', 'خبر', 'سنی', 'تھی'], roman: 'main ne ye khabar suni thi', meaning: 'I had heard this news', level: 'advanced', concept: 'g-perfect' },
-  { id: 's-233', words: ['اس', 'نے', 'مجھے', 'خط', 'بھیجا', 'ہے'], roman: 'us ne mujhe khat bheja hai', meaning: 'He has sent me a letter', level: 'advanced', concept: 'g-perfect' },
+  { id: 's-233', words: ['اس', 'نے', 'مجھے', 'خط', 'بھیجا', 'ہے'], roman: 'us ne mujhe khat bheja hai', meaning: 'He has sent me a letter', level: 'advanced', concept: 'g-perfect', pronounce: 'اُس نے مجھے خط بھیجا ہے' },
   { id: 's-234', words: ['ہم', 'نے', 'وہ', 'فلم', 'دیکھی'], roman: 'ham ne wo film dekhi', meaning: 'We watched that film', level: 'advanced', concept: 'g-perfect' },
   { id: 's-235', words: ['یہ', 'کھانا', 'گھر', 'میں', 'پکایا', 'گیا'], roman: 'ye khaana ghar meñ pakaaya gaya', meaning: 'This food was cooked at home', level: 'advanced', concept: 'g-passive' },
   { id: 's-236', words: ['یہ', 'خط', 'اردو', 'میں', 'لکھا', 'گیا', 'تھا'], roman: 'ye khat urdu meñ likha gaya tha', meaning: 'This letter was written in Urdu', level: 'advanced', concept: 'g-passive' },
@@ -278,7 +293,7 @@ export const SENTENCES: Sentence[] = [
   { id: 's-239', words: ['ماں', 'نے', 'بیٹی', 'کو', 'کپڑے', 'پہنائے'], roman: 'maañ ne beṭi ko kapṛe pehnaaye', meaning: 'The mother dressed the daughter', level: 'advanced', concept: 'g-causative' },
   { id: 's-240', words: ['میں', 'نے', 'گھر', 'صاف', 'کروایا'], roman: 'main ne ghar saaf karwaaya', meaning: 'I had the house cleaned', level: 'advanced', concept: 'g-causative' },
   { id: 's-241', words: ['بارش', 'رک', 'گئی'], roman: 'baarish ruk gayi', meaning: 'The rain stopped', level: 'advanced', concept: 'g-compound' },
-  { id: 's-242', words: ['اس', 'نے', 'کھانا', 'کھا', 'لیا'], roman: 'us ne khaana kha liya', meaning: 'He finished eating the food', level: 'advanced', concept: 'g-compound' },
+  { id: 's-242', words: ['اس', 'نے', 'کھانا', 'کھا', 'لیا'], roman: 'us ne khaana kha liya', meaning: 'He finished eating the food', level: 'advanced', concept: 'g-compound', pronounce: 'اُس نے کھانا کھا لیا' },
   { id: 's-243', words: ['چابی', 'کھو', 'گئی'], roman: 'chaabi kho gayi', meaning: 'The key got lost', level: 'advanced', concept: 'g-compound' },
   { id: 's-244', words: ['اگر', 'وہ', 'آئے', 'تو', 'مجھے', 'بتانا'], roman: 'agar wo aaye to mujhe bataana', meaning: 'If he comes, tell me', level: 'advanced', concept: 'g-subjunctive' },
   { id: 's-245', words: ['شاید', 'بارش', 'ہو'], roman: 'shaayad baarish ho', meaning: 'Perhaps it will rain', level: 'advanced', concept: 'g-subjunctive' },

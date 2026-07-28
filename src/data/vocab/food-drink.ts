@@ -123,7 +123,7 @@ export const FOOD_PACKS: TopicPack[] = [
       ['w-daalchini', 'دار چینی', 'daar cheeni', 'cinnamon', '🪵'],
       ['w-kali-mirch', 'کالی مرچ', 'kaali mirch', 'black pepper', '⚫'],
       ['w-sirka', 'سرکہ', 'sirka', 'vinegar', '🫗'],
-      ['w-shehad', 'شہد', 'shehad', 'honey', '🍯'],
+      ['w-shehad', 'شہد', 'shahad', 'honey', '🍯'],
       ['w-ghee', 'گھی', 'ghee', 'clarified butter', '🧈'],
     ]
   ),

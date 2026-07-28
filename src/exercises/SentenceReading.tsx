@@ -20,6 +20,11 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
   const [placed, setPlaced] = useState<number[]>([]);
   const [graded, setGraded] = useState<boolean | null>(null);
 
+  // What the voice should say, which is not always what is written: اس is
+  // spelled the same whether it is read `us` or `is`, so the sentences that
+  // contain one carry a diacritic-marked reading for the audio to follow.
+  const spoken = sentence.pronounce ?? sentence.words.join(' ');
+
   // On the Roman track the tiles read left-to-right like the Latin alphabet
   // they are written in; on the others they lay out right-to-left like the
   // Urdu they are. Grading is unaffected — the placed order is the answer
@@ -46,8 +51,8 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
     const correct = built.join(' ') === sentence.words.join(' ');
     setGraded(correct);
     correct
-      ? feedback.correctAnnounce(sentence.id, sentence.words.join(' '), sentence.roman)
-      : feedback.incorrectAnnounce(sentence.id, sentence.words.join(' '), sentence.roman);
+      ? feedback.correctAnnounce(sentence.id, spoken, sentence.roman)
+      : feedback.incorrectAnnounce(sentence.id, spoken, sentence.roman);
     onGraded({ items: [], correct });
   };
 
@@ -68,7 +73,7 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
         <View className="mt-3">
           <SpeakerButton
             label="Hear the sentence"
-            onPress={() => announce(sentence.id, sentence.words.join(' '), sentence.roman)}
+            onPress={() => announce(sentence.id, spoken, sentence.roman)}
           />
         </View>
       </View>

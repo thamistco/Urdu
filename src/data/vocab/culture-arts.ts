@@ -3,7 +3,7 @@ import { pack, type TopicPack } from './types';
 /** Arts, faith, festivals, literature and leisure. */
 export const CULTURE_PACKS: TopicPack[] = [
   pack(
-    { id: 'music-art', title: 'Music & Art', icon: '🎨', blurb: 'Sound, colour and craft.', level: 'intermediate' },
+    { id: 'music-art', title: 'Music & Art', icon: '🎵', blurb: 'Sound, colour and craft.', level: 'intermediate' },
     [
       ['w-mausiqi', 'موسیقی', 'mausiqi', 'music', '🎵'],
       ['w-saaz', 'ساز', 'saaz', 'instrument', '🎻'],
@@ -53,7 +53,7 @@ export const CULTURE_PACKS: TopicPack[] = [
     ]
   ),
   pack(
-    { id: 'faith', title: 'Faith & Worship', icon: '🕌', blurb: 'Belief and religious life.', level: 'advanced' },
+    { id: 'faith', title: 'Faith & Worship', icon: '🤲', blurb: 'Belief and religious life.', level: 'advanced' },
     [
       ['w-deen', 'دین', 'deen', 'religion / faith', '🕌'],
       ['w-imaan', 'ایمان', 'eemaan', 'belief', '🤍'],
