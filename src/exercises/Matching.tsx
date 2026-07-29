@@ -6,6 +6,7 @@ import { Lexeme } from '../components/Lexeme';
 import { WordArt } from '../components/Illustration';
 import { feedback } from '../lib/feedback';
 import type { ExerciseProps, Exercise } from './types';
+import { glossOf } from '../data/words';
 
 type MatchEx = Extract<Exercise, { kind: 'matching' }>;
 const shuffle = <T,>(a: T[]) => [...a].sort(() => Math.random() - 0.5);
@@ -100,7 +101,7 @@ export function MatchingExercise({ exercise, track, locked, onGraded }: Exercise
               onPress={() => pickRight(w.id)}
             >
               <WordArt word={w} size={40} />
-              <Txt className="mt-1 text-[11px] capitalize text-paper/55">{w.meaning}</Txt>
+              <Txt className="mt-1 text-[11px] capitalize text-paper/55">{glossOf(w)}</Txt>
             </Choice>
           ))}
         </View>

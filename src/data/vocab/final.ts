@@ -182,7 +182,7 @@ export const FINAL_PACKS: TopicPack[] = [
     [
       ['w-teesra', 'تیسرا', 'teesra', 'third', '3️⃣'],
       ['w-chautha', 'چوتھا', 'chautha', 'fourth', '4️⃣'],
-      ['w-nisf', 'نصف', 'nisf', 'half (formal)', '◐'],
+      ['w-nisf', 'نصف', 'nisf', 'half', '◐'],
       ['w-chauthai', 'چوتھائی', 'chauthaai', 'quarter', '🍕'],
       ['w-teen-chauthai', 'پون', 'paun', 'three-quarters', '🕐'],
       ['w-sava', 'سوا', 'sawa', 'and a quarter', '🕜'],

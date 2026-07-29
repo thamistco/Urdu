@@ -7,6 +7,7 @@ import { Button } from '../components/Button';
 import { feedback } from '../lib/feedback';
 import { LETTERS } from '../data/letters';
 import type { ExerciseProps, Exercise } from './types';
+import { glossOf } from '../data/words';
 
 type BuildEx = Extract<Exercise, { kind: 'wordBuild' }>;
 
@@ -88,7 +89,7 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
       <PromptCard height={140}>
         <WordArt word={word} size={80} />
         <Txt style={{ color: palette.ink }} className="mt-2 text-sm opacity-60 capitalize">
-          {word.meaning}
+          {glossOf(word)}
           {showRoman ? ` · ${word.roman}` : ''}
         </Txt>
       </PromptCard>

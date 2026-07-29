@@ -8,6 +8,7 @@ import { Button } from '../components/Button';
 import { feedback } from '../lib/feedback';
 import { matchesWord } from '../lib/roman';
 import type { ExerciseProps, Exercise } from './types';
+import { glossOf } from '../data/words';
 
 type TypeEx = Extract<Exercise, { kind: 'typeWord' }>;
 type ReverseEx = Extract<Exercise, { kind: 'wordFromMeaning' }>;
@@ -46,7 +47,7 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
       <PromptCard height={150}>
         <WordArt word={word} size={76} />
         <Txt style={{ color: palette.ink }} className="mt-2 text-base font-semibold capitalize">
-          {word.meaning}
+          {glossOf(word)}
         </Txt>
       </PromptCard>
 
@@ -71,7 +72,7 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
           returnKeyType="done"
           placeholder="type it in Roman or Urdu"
           placeholderTextColor={withAlpha(palette.cream, 0.3)}
-          accessibilityLabel={`Type the Urdu for ${word.meaning}`}
+          accessibilityLabel={`Type the Urdu for ${glossOf(word)}`}
           style={[
             { color: palette.cream, fontFamily: 'PublicSans', fontSize: 18, paddingVertical: 4 },
             { outlineStyle: 'none' } as object, // react-native-web only
@@ -128,7 +129,7 @@ export function WordFromMeaningExercise({ exercise, track, locked, onGraded }: E
     <View>
       <PromptCard height={130}>
         <Txt style={{ color: palette.ink }} className="text-center text-2xl font-semibold capitalize">
-          {word.meaning}
+          {glossOf(word)}
         </Txt>
       </PromptCard>
 

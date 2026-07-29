@@ -7,6 +7,7 @@ import { WordArt, pictureIdentifies } from '../components/Illustration';
 import { feedback } from '../lib/feedback';
 import { announce } from '../lib/speech';
 import type { ExerciseProps, Exercise } from './types';
+import { glossOf } from '../data/words';
 
 type MCEx = Extract<Exercise, { kind: 'multipleChoice' }>;
 type MeaningEx = Extract<Exercise, { kind: 'meaningPick' }>;
@@ -41,7 +42,7 @@ export function MultipleChoiceExercise({ exercise, track, showRoman, locked, onG
         <WordArt word={word} size={104} />
         {speaks ? null : (
           <Txt style={{ color: palette.ink }} className="mt-2 text-base capitalize opacity-70">
-            {word.meaning}
+            {glossOf(word)}
           </Txt>
         )}
       </PromptCard>
@@ -113,7 +114,7 @@ export function MeaningPickExercise({ exercise, track, showRoman, locked, onGrad
             >
               <View className="flex-row items-center gap-3">
                 <WordArt word={o} size={38} />
-                <Bold className="text-base capitalize">{o.meaning}</Bold>
+                <Bold className="text-base capitalize">{glossOf(o)}</Bold>
               </View>
             </Choice>
           );
@@ -175,7 +176,7 @@ export function ListenTapExercise({ exercise, showRoman, locked, onGraded }: Exe
               className="mb-3 w-[48%]"
             >
               <WordArt word={o} size={52} />
-              <Bold className="mt-1 text-sm capitalize">{o.meaning}</Bold>
+              <Bold className="mt-1 text-sm capitalize">{glossOf(o)}</Bold>
             </Choice>
           );
         })}

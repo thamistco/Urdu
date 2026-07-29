@@ -231,6 +231,26 @@ for (const s of SENTENCES) {
     bad(`sentence ${s.id} contains ${risky.join(', ')} — two words share that spelling, so it needs a pronounce reading`);
 }
 
+// --- register belongs in the field, not in the English ---------------------
+
+/**
+ * Five words said their register in a parenthetical inside `meaning` — "father
+ * (formal)", "yes (polite)", "husband (informal)", "wife (respectful)" — four
+ * different wordings for a distinction the course never defined, present on the
+ * handful of words whose author happened to think of it and absent on the rest.
+ *
+ * It is a field now, and `glossOf` renders it, so this rejects the hand-typed
+ * form coming back. Anything genuinely parenthetical about the *sense* of a word
+ * ("heart (organ)", "nephew (brother's son)") is fine and is why this matches
+ * register words specifically rather than parentheses.
+ */
+const REGISTER_IN_GLOSS =
+  /\((formal|informal|polite|casual|intimate|respectful|familiar|honorific|rude|colloquial)\)/i;
+for (const w of WORDS) {
+  if (REGISTER_IN_GLOSS.test(w.meaning))
+    bad(`${w.id}: "${w.meaning}" states its register in the English — use the register field instead`);
+}
+
 // --- grammar tables: columns say what is in them ---------------------------
 
 /**

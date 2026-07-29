@@ -2,6 +2,24 @@
 
 export type Level = 'beginner' | 'elementary' | 'intermediate' | 'advanced';
 
+/**
+ * How formal a word is — the thing Urdu marks heavily and English barely marks
+ * at all.
+ *
+ * Choosing between آپ, تم and تو, or between والد and باپ, is not a matter of
+ * taste: the wrong one is rude to an elder or cold to a sibling. The course was
+ * silent on this except where an author happened to write it into the English
+ * gloss — "father (formal)", "yes (polite)" — which meant it showed up in some
+ * places, in inconsistent wording, and polluted the meaning string that the
+ * exercise generator compares options by.
+ *
+ * So it is a field. `formal` is written and official Urdu, `polite` is the
+ * register you use with anyone you are not close to, `casual` is friends and
+ * children, and `intimate` is the small set of words that are warm with family
+ * and insulting with a stranger.
+ */
+export type Register = 'formal' | 'polite' | 'casual' | 'intimate';
+
 export type Word = {
   id: string;
   urdu: string;
@@ -21,6 +39,12 @@ export type Word = {
    * here. The learner never sees this string; the display stays plain.
    */
   pronounce?: string;
+  /**
+   * Overrides the register the word's topic implies. Most words have no
+   * register worth marking; see REGISTER_BY_TOPIC in words.ts for the topics
+   * whose vocabulary is register-bound as a whole.
+   */
+  register?: Register;
 };
 
 export type Topic = {

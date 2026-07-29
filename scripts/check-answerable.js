@@ -48,7 +48,7 @@ const { buildLessonExercises } = load('src/exercises/generator.ts');
 const { unitsForTrack } = load('src/data/units.ts');
 const { pictureIdentifies, cueOf } = load('src/data/art.ts');
 const { romanOf } = load('src/lib/translit.ts');
-const { WORDS } = load('src/data/words.ts');
+const { WORDS, glossOf } = load('src/data/words.ts');
 
 const problems = [];
 const seen = new Map(); // rule → count, so one broken word does not print 400 times
@@ -98,8 +98,10 @@ function check(ex, track) {
 
     case 'matching':
       if (!distinct(ex.words.map(cueOf))) fail('matching board shares a picture', ex.words.map((w) => w.id).join(','));
-      if (!distinct(ex.words.map((w) => w.meaning.toLowerCase())))
-        fail('matching board shares a meaning', ex.words.map((w) => w.id).join(','));
+      // What the tile shows, not the raw meaning: the board prints the gloss
+      // with its register, so "yes" and "yes (polite)" really are two tiles.
+      if (!distinct(ex.words.map((w) => glossOf(w).toLowerCase())))
+        fail('matching board shares a caption', ex.words.map((w) => w.id).join(','));
       break;
 
     case 'wordBuild':

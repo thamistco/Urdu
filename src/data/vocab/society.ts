@@ -180,7 +180,7 @@ export const SOCIETY_PACKS: TopicPack[] = [
   pack(
     { id: 'formal', title: 'Formal & Written', icon: '📜', blurb: 'Letters, notices and officialese.', level: 'advanced' },
     [
-      ['w-janab', 'جناب', 'janaab', 'sir (respectful)', '🎩'],
+      ['w-janab', 'جناب', 'janaab', 'sir', '🎩'],
       ['w-mohtarma', 'محترمہ', 'mohtarma', 'madam', '👩'],
       ['w-baad-salam', 'بعد از سلام', 'baad-az-salaam', 'after greetings', '✉️'],
       ['w-guzarish', 'گزارش', 'guzaarish', 'humble request', '🙏'],
@@ -209,7 +209,7 @@ export const SOCIETY_PACKS: TopicPack[] = [
       ['w-sahib', 'صاحب', 'saahib', 'sir / Mr', '🎩'],
       ['w-begum', 'بیگم', 'begum', 'lady / Mrs', '👩'],
       ['w-tashreef', 'تشریف', 'tashreef', 'honoured presence', '🪑'],
-      ['w-farmaiye', 'فرمائیے', 'farmaaiye', 'please say (polite)', '💬'],
+      ['w-farmaiye', 'فرمائیے', 'farmaaiye', 'please say', '💬'],
       ['w-meherbani', 'مہربانی', 'meherbaani', 'kindness', '🤝'],
       ['w-inayat', 'عنایت', 'inaayat', 'favour', '🎁'],
       ['w-khidmat', 'خدمت', 'khidmat', 'service', '🛎️'],
