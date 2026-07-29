@@ -33,7 +33,7 @@ const OUT_DIR = path.join(ROOT, 'assets', 'voice');
 const MANIFEST = path.join(ROOT, 'src', 'lib', 'voiceManifest.ts');
 
 /**
- * What each clip on disk was actually asked to say.
+ * What each clip on disk was actually asked to say, and who said it.
  *
  * Generating is keyed by id and skips anything already on disk, which is what
  * makes adding words cheap — but it also meant that *changing* a word could
@@ -41,14 +41,23 @@ const MANIFEST = path.join(ROOT, 'src', 'lib', 'voiceManifest.ts');
  * "kehni" left `w-kohni.mp3` sitting there still saying "kehni", and nothing
  * anywhere would have noticed.
  *
- * So the text is recorded next to the clips. A clip whose recorded text no
- * longer matches the course is stale and regenerates on the next run, without
- * anyone having to remember which words they touched.
+ * So the request is recorded next to the clips. A clip whose recorded text or
+ * voice no longer matches the course is stale and regenerates on the next run,
+ * without anyone having to remember what they touched. The voice half matters
+ * as much as the text: giving a dialogue's two speakers different voices
+ * changes nothing about the words, so text alone would have called every one
+ * of those clips up to date.
  */
 const LEDGER = path.join(OUT_DIR, 'spoken.json');
+
+/** Older ledgers stored a bare string; every one of those clips was Zephyr. */
+const FIRST_VOICE = 'ur-IN-Chirp3-HD-Zephyr';
+const entryOf = (v) => (typeof v === 'string' ? { text: v, voice: FIRST_VOICE } : v);
+
 const readLedger = () => {
   try {
-    return JSON.parse(fs.readFileSync(LEDGER, 'utf8'));
+    const raw = JSON.parse(fs.readFileSync(LEDGER, 'utf8'));
+    return Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, entryOf(v)]));
   } catch {
     return {};
   }
@@ -82,16 +91,42 @@ function load(rel) {
   return mod.exports;
 }
 
+/**
+ * The cast.
+ *
+ * `narrator` reads the course — every word, phrase, sentence and letter — and
+ * is the voice the app has always had. The other three exist only so that a
+ * conversation sounds like more than one person: a speaker takes the primary
+ * voice of their gender, and a second speaker of the *same* gender takes the
+ * understudy rather than the same voice twice, which is the case (Ahmed and
+ * Bilal; Nadia and Rabia) that a naive male/female split would still get wrong.
+ *
+ * All four are Chirp3-HD in ur-IN, so they sit together tonally.
+ */
+const CAST = {
+  narrator: process.env.VOICE_NAME || FIRST_VOICE,
+  f: ['ur-IN-Chirp3-HD-Zephyr', 'ur-IN-Chirp3-HD-Kore'],
+  m: ['ur-IN-Chirp3-HD-Puck', 'ur-IN-Chirp3-HD-Fenrir'],
+};
+
+/** Which voice a dialogue's speaker gets, given who else is in the scene. */
+function castFor(dialogue, speaker) {
+  const gender = dialogue.voices[speaker];
+  const other = speaker === 'A' ? 'B' : 'A';
+  const understudy = dialogue.voices[other] === gender && speaker === 'B';
+  return CAST[gender][understudy ? 1 : 0];
+}
+
 function collectItems() {
   const { WORDS, PHRASES } = load('src/data/words.ts');
   const { LETTERS } = load('src/data/letters.ts');
   const { SENTENCES, PASSAGES, DIALOGUES } = load('src/data/sentences.ts');
   const items = [];
   const seen = new Set();
-  const add = (id, text) => {
+  const add = (id, text, voice = CAST.narrator) => {
     if (!id || !text || seen.has(id)) return;
     seen.add(id);
-    items.push({ id, text });
+    items.push({ id, text, voice });
   };
   // `pronounce`, when a word carries one, is a diacritic-marked reading for
   // a script that collides with another word in the course (سر head vs سر
@@ -106,7 +141,7 @@ function collectItems() {
   // requiring the data to carry an id nothing else needs.
   for (const s of SENTENCES) add(s.id, s.pronounce || s.words.join(' '));
   for (const p of PASSAGES) p.lines.forEach((l, i) => add(`${p.id}-${i}`, l.urdu));
-  for (const d of DIALOGUES) d.lines.forEach((l, i) => add(`${d.id}-${i}`, l.urdu));
+  for (const d of DIALOGUES) d.lines.forEach((l, i) => add(`${d.id}-${i}`, l.urdu, castFor(d, l.speaker)));
   // Letters are announced by id too, when a traced letter is accepted.
   for (const l of LETTERS) add(l.id, l.forms?.isolated || l.glyph || l.forms?.initial);
   return items;
@@ -115,12 +150,8 @@ function collectItems() {
 // ---- providers ----------------------------------------------------------
 const LANG = process.env.LANG_CODE || 'ur-IN';
 
-async function googleTTS(text) {
+async function googleTTS(text, name) {
   const key = process.env.GOOGLE_TTS_API_KEY;
-  // Zephyr is the course's one consistent voice (see VOICE_SETUP.md) — every
-  // clip so far was generated with it, so new words must default to it too
-  // rather than silently landing in a different voice on the next CI run.
-  const name = process.env.VOICE_NAME || 'ur-IN-Chirp3-HD-Zephyr';
   const res = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${key}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -162,7 +193,7 @@ async function listGoogleVoices() {
   console.log('\nUse one with:  VOICE_NAME=<name> LANG_CODE=<code> npm run gen:voice');
 }
 
-async function elevenTTS(text) {
+async function elevenTTS(text, _voice) {
   const key = process.env.ELEVENLABS_API_KEY;
   const voice = process.env.ELEVENLABS_VOICE_ID;
   if (!voice) throw new Error('ELEVENLABS_VOICE_ID is required with ELEVENLABS_API_KEY');
@@ -237,16 +268,24 @@ function writeManifest() {
   const stale = [];
   for (const i of all) {
     if (!fs.existsSync(path.join(OUT_DIR, `${i.id}.mp3`))) missing.push(i);
-    else if (ledger[i.id] !== undefined && ledger[i.id] !== i.text) stale.push(i);
+    else {
+      const was = ledger[i.id];
+      if (was && (was.text !== i.text || was.voice !== i.voice)) stale.push(i);
+    }
   }
   const todo = force ? all : [...missing, ...stale];
   const chars = todo.reduce((n, i) => n + i.text.length, 0);
 
   console.log(
     `${all.length} items in the course · ${all.length - missing.length - stale.length} already done` +
-      (stale.length ? ` · ${stale.length} stale (the word changed since the clip was made)` : '')
+      (stale.length ? ` · ${stale.length} stale (the text or the voice changed since the clip was made)` : '')
   );
-  for (const s of stale.slice(0, 8)) console.log(`    stale: ${s.id} — was “${ledger[s.id]}”, now “${s.text}”`);
+  for (const s of stale.slice(0, 8)) {
+    const was = ledger[s.id];
+    const what =
+      was.text !== s.text ? `“${was.text}” \u2192 “${s.text}”` : `${was.voice} \u2192 ${s.voice}`;
+    console.log(`    stale: ${s.id} — ${what}`);
+  }
   if (!todo.length) {
     console.log(`Nothing to generate. Manifest: ${writeManifest()} clips.`);
     return;
@@ -255,13 +294,13 @@ function writeManifest() {
 
   let ok = 0;
   const failed = [];
-  for (const { id, text } of todo) {
+  for (const { id, text, voice } of todo) {
     try {
-      const audio = await provider.fn(text);
+      const audio = await provider.fn(text, voice);
       fs.writeFileSync(path.join(OUT_DIR, `${id}.mp3`), audio);
       // Written per clip, not at the end, so a run that dies half way leaves a
       // ledger that matches the disk rather than one that lies about it.
-      ledger[id] = text;
+      ledger[id] = { text, voice };
       writeLedger(ledger);
       ok++;
       if (ok % 100 === 0 || ok === 1) console.log(`  ${ok}/${todo.length}  ${id} “${text}”`);
