@@ -14,7 +14,7 @@ import { Illustration } from '../components/Illustration';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { invalidateSpeech } from '../lib/speech';
-import { dueQueue } from '../lib/srs';
+import { dueQueue, dueBudget } from '../lib/srs';
 import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { resolveLesson } from '../data/units';
@@ -32,6 +32,27 @@ type Rt = RouteProp<RootStackParamList, 'Lesson'>;
 /** Teaching cards are informational — no hearts, no pass/fail styling. */
 function isTeaching(ex: Exercise | undefined): boolean {
   return ex?.kind === 'grammarTeach';
+}
+
+/**
+ * How much the learner had to supply, which is how much a correct answer is
+ * worth to the schedule.
+ *
+ * `produce` is the kinds that put nothing on screen to choose from — typing a
+ * word, assembling it letter by letter, ordering a sentence's words. Getting
+ * one of those right is real evidence of recall; picking the right picture out
+ * of four is much weaker, and the interval should grow accordingly.
+ */
+function demandOf(ex: Exercise | undefined): 'produce' | 'recognise' {
+  switch (ex?.kind) {
+    case 'typeWord':
+    case 'wordBuild':
+    case 'sentenceBuild':
+    case 'letterTrace':
+      return 'produce';
+    default:
+      return 'recognise';
+  }
 }
 
 function answerLabel(ex: Exercise): string {
@@ -91,7 +112,11 @@ export function LessonScreen() {
   const exercises = useMemo(() => {
     const srs = useProgressStore.getState().srs;
     const srsType = useProgressStore.getState().srsType;
-    const due = dueQueue(srs, 4).map((id) => ({ id, type: srsType[id] ?? ('word' as const) }));
+    // How many due items to ask for is scheduling policy, not a screen
+    // decision — see `dueBudget`, which is where the old flat cap of four for
+    // every kind of lesson was quietly defeating spaced repetition.
+    const want = dueBudget(lesson.kind, lesson.size);
+    const due = dueQueue(srs, want).map((id) => ({ id, type: srsType[id] ?? ('word' as const) }));
     return buildLessonExercises(lesson, due, track);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lesson.id, track]);
@@ -117,8 +142,15 @@ export function LessonScreen() {
       if (!result.correct) {
         setTimeout(() => bodyRef.current?.scrollToEnd({ animated: true }), 120);
       }
-      // update SRS memory for each item touched
-      result.items.forEach((it) => gradeItem(it.id, it.type, result.correct ? 'good' : 'again'));
+      // update SRS memory for each item touched.
+      //
+      // Every answer used to be graded `good` or `again`, which left the
+      // scheduler's `easy` branch dead: recalling a word from nothing but its
+      // English and recognising it among four pictures pushed the next review
+      // out by exactly the same amount. They are not the same evidence, so a
+      // correct answer on an exercise that supplied no options counts as easy.
+      const grade = !result.correct ? 'again' : demandOf(exercises[idx]) === 'produce' ? 'easy' : 'good';
+      result.items.forEach((it) => gradeItem(it.id, it.type, grade));
       if (result.correct) {
         setCorrectCount((c) => c + 1);
       } else if (!isTeaching(exercises[idx])) {
@@ -128,7 +160,13 @@ export function LessonScreen() {
         }
       }
     },
-    [gradeItem, loseHeart]
+    // `idx` and `exercises` belong here because the body reads
+    // `exercises[idx]`. They were missing, so the callback was built once on the
+    // first render and every answer for the rest of the lesson was judged
+    // against exercise 0 — which in a grammar lesson is the teaching card, and
+    // `isTeaching` therefore suppressed the heart loss for every wrong answer in
+    // the lesson. Grammar cost nothing to get wrong.
+    [gradeItem, loseHeart, exercises, idx]
   );
 
   // Stop this lesson's audio the instant the screen is left, however that

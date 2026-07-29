@@ -73,6 +73,24 @@ export function dueCount(cards: Record<string, SrsCard>, now = Date.now()): numb
   return Object.values(cards).filter((c) => isDue(c, now)).length;
 }
 
+/**
+ * How many due items a lesson should ask for.
+ *
+ * Scheduling policy, so it lives with the scheduler rather than in the screen
+ * that happens to call it — where it sat as a bare `4` for every kind of lesson
+ * alike. That quietly defeated the whole mechanism: with forty items due, a
+ * fifteen-question review revisited four of them and filled the remaining eleven
+ * from the general pool of everything taught so far, so the items closest to
+ * being forgotten — the only ones the schedule cares about — were mostly left
+ * out.
+ *
+ * A review lesson is *for* this, so it takes as many as it has room for.
+ * Anything else is teaching something new and takes a handful alongside.
+ */
+export function dueBudget(kind: string, size: number): number {
+  return kind === 'review' ? size : 4;
+}
+
 /** A cheap 0..1 "strength" for UI meters. */
 export function strength(card: SrsCard): number {
   return Math.min(1, card.interval / 21);
