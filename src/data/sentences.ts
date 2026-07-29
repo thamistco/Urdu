@@ -641,11 +641,27 @@ export type Dialogue = {
   /** A and B — labelled so the exercise can align and colour them */
   lines: { speaker: 'A' | 'B'; name: string; urdu: string; roman: string; meaning: string }[];
   question: { ask: string; answer: string; options: string[] };
+  /**
+   * Who each speaker sounds like.
+   *
+   * Every clip in the course was read by one voice, which is right for a word
+   * and wrong for a conversation: a five-line exchange between Sara and Ali
+   * came out as one person reading both parts, so the only way to follow who
+   * was speaking was to read the labels — in an exercise meant to be listened
+   * to. The voice generator gives each speaker their own voice from this, and
+   * two speakers of the same gender get two different voices of that gender
+   * rather than the same one twice.
+   *
+   * Required, not optional, so a new dialogue cannot be written without
+   * deciding — the failure mode this fixes is silent.
+   */
+  voices: { A: 'f' | 'm'; B: 'f' | 'm' };
 };
 
 export const DIALOGUES: Dialogue[] = [
   {
     id: 'd-1',
+    voices: { A: 'f', B: 'm' },
     title: 'Meeting someone',
     setting: 'Two people are introduced at a friend’s house.',
     level: 'beginner',
@@ -664,6 +680,7 @@ export const DIALOGUES: Dialogue[] = [
   },
   {
     id: 'd-2',
+    voices: { A: 'm', B: 'f' },
     title: 'Tea or coffee?',
     setting: 'A guest has just sat down.',
     level: 'beginner',
@@ -681,6 +698,7 @@ export const DIALOGUES: Dialogue[] = [
   },
   {
     id: 'd-3',
+    voices: { A: 'm', B: 'm' },
     title: 'Where do you live?',
     setting: 'Small talk between two students.',
     level: 'elementary',
@@ -699,6 +717,7 @@ export const DIALOGUES: Dialogue[] = [
   },
   {
     id: 'd-4',
+    voices: { A: 'f', B: 'm' },
     title: 'At the fruit stall',
     setting: 'In the bazaar, in front of the mangoes.',
     level: 'elementary',
@@ -717,6 +736,7 @@ export const DIALOGUES: Dialogue[] = [
   },
   {
     id: 'd-5',
+    voices: { A: 'm', B: 'f' },
     title: 'Asking the way',
     setting: 'A stranger stops someone on the street.',
     level: 'elementary',
@@ -735,6 +755,7 @@ export const DIALOGUES: Dialogue[] = [
   },
   {
     id: 'd-6',
+    voices: { A: 'm', B: 'f' },
     title: 'On the phone',
     setting: 'A call to a friend’s house.',
     level: 'intermediate',
@@ -753,6 +774,7 @@ export const DIALOGUES: Dialogue[] = [
   },
   {
     id: 'd-7',
+    voices: { A: 'f', B: 'm' },
     title: 'At the doctor',
     setting: 'A morning appointment.',
     level: 'intermediate',
@@ -771,6 +793,7 @@ export const DIALOGUES: Dialogue[] = [
   },
   {
     id: 'd-8',
+    voices: { A: 'm', B: 'f' },
     title: 'Booking a room',
     setting: 'At a hotel desk, late afternoon.',
     level: 'intermediate',
@@ -789,6 +812,7 @@ export const DIALOGUES: Dialogue[] = [
   },
   {
     id: 'd-9',
+    voices: { A: 'f', B: 'f' },
     title: 'Weekend plans',
     setting: 'Two colleagues on a Thursday.',
     level: 'intermediate',
@@ -807,6 +831,7 @@ export const DIALOGUES: Dialogue[] = [
   },
   {
     id: 'd-10',
+    voices: { A: 'f', B: 'm' },
     title: 'A late arrival',
     setting: 'A guest arrives an hour after they were expected.',
     level: 'advanced',
@@ -825,6 +850,7 @@ export const DIALOGUES: Dialogue[] = [
   },
   {
     id: 'd-11',
+    voices: { A: 'f', B: 'm' },
     title: 'Talking about a book',
     setting: 'Two friends after a reading.',
     level: 'advanced',
@@ -843,6 +869,7 @@ export const DIALOGUES: Dialogue[] = [
   },
   {
     id: 'd-12',
+    voices: { A: 'm', B: 'f' },
     title: 'Leaving a job',
     setting: 'A quiet word with a manager.',
     level: 'advanced',
