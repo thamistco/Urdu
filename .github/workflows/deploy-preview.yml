@@ -64,6 +64,12 @@ jobs:
           ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
         run: node scripts/generate-voice.js
 
+      # After generation, so a clip the API returned as silence is caught here
+      # rather than by a learner. ~40s for all 2,893 with ffmpeg, which the
+      # ubuntu runners ship.
+      - name: Check that every voice clip is audible
+        run: npm run check:voice
+
       - name: Export web bundle
         env:
           NODE_ENV: production

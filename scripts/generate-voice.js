@@ -27,6 +27,7 @@
 const fs = require('fs');
 const path = require('path');
 const ts = require('typescript');
+const { bufferProblem, ffmpegAvailable } = require('./lib/audio');
 
 const ROOT = path.join(__dirname, '..');
 const OUT_DIR = path.join(ROOT, 'assets', 'voice');
@@ -107,6 +108,27 @@ const CAST = {
   narrator: process.env.VOICE_NAME || FIRST_VOICE,
   f: ['ur-IN-Chirp3-HD-Zephyr', 'ur-IN-Chirp3-HD-Kore'],
   m: ['ur-IN-Chirp3-HD-Puck', 'ur-IN-Chirp3-HD-Fenrir'],
+};
+
+/**
+ * Where to turn when Chirp3-HD will not say a word at all.
+ *
+ * The near-silent responses are not evenly spread: measured over repeated
+ * attempts, ہاں and ں came back silent 8 times out of 8 and کیا 5 times out of 8,
+ * while every Chirp3-HD voice — Zephyr, Kore, Leda — failed on all three. The
+ * model simply does not handle one- to three-character Urdu input. The older
+ * Wavenet voices produce all three cleanly, every time.
+ *
+ * So a clip that stays silent falls back to the Wavenet voice of the same
+ * gender. It is a slightly different timbre on a handful of very short items —
+ * eight letters and a few words — which is a far smaller cost than a course
+ * whose alphabet cards play nothing.
+ */
+const FALLBACK_VOICE = {
+  'ur-IN-Chirp3-HD-Zephyr': 'ur-IN-Wavenet-A',
+  'ur-IN-Chirp3-HD-Kore': 'ur-IN-Wavenet-A',
+  'ur-IN-Chirp3-HD-Puck': 'ur-IN-Wavenet-B',
+  'ur-IN-Chirp3-HD-Fenrir': 'ur-IN-Wavenet-B',
 };
 
 /** Which voice a dialogue's speaker gets, given who else is in the scene. */
@@ -293,14 +315,47 @@ function writeManifest() {
   console.log(`Generating ${todo.length} clips with ${provider.name} (${chars} characters)…\n`);
 
   let ok = 0;
+  let retried = 0;
+  const fellBack = [];
   const failed = [];
+  if (!ffmpegAvailable())
+    console.log('  (ffmpeg not found — clips are checked by length only; install it to catch long silences)\n');
   for (const { id, text, voice } of todo) {
     try {
-      const audio = await provider.fn(text, voice);
+      // The API answers a bad synthesis with 200 and a fragment of near-silence
+      // (see lib/audio.js), and every one of those succeeds on a retry — so the
+      // clip is inspected before it is written, and a silent one is asked for
+      // again rather than shipped.
+      let audio = null;
+      let problem = null;
+      let actual = voice;
+      const attempts = [voice, voice, voice];
+      const fallback = FALLBACK_VOICE[voice];
+      if (fallback) attempts.push(fallback, fallback);
+      for (let i = 0; i < attempts.length; i++) {
+        actual = attempts[i];
+        audio = await provider.fn(text, actual);
+        problem = bufferProblem(audio, path.join(OUT_DIR, `.${id}.probe`));
+        if (!problem) break;
+        retried++;
+        const next = attempts[i + 1];
+        console.log(
+          `  ↻ ${id} came back ${problem}` + (next && next !== actual ? ` — falling back to ${next}` : '')
+        );
+        await sleep(400);
+      }
+      if (problem) throw new Error(`still ${problem} after ${attempts.length} attempts`);
+      if (actual !== voice) fellBack.push(`${id} (${actual})`);
+
       fs.writeFileSync(path.join(OUT_DIR, `${id}.mp3`), audio);
       // Written per clip, not at the end, so a run that dies half way leaves a
       // ledger that matches the disk rather than one that lies about it.
-      ledger[id] = { text, voice };
+      //
+      // `voice` is what was asked for and is what staleness compares against;
+      // `actual` records what produced the file. Storing only `actual` would
+      // make a fallen-back clip differ from the course's intent on every run
+      // and regenerate for ever.
+      ledger[id] = actual === voice ? { text, voice } : { text, voice, actual };
       writeLedger(ledger);
       ok++;
       if (ok % 100 === 0 || ok === 1) console.log(`  ${ok}/${todo.length}  ${id} “${text}”`);
@@ -317,7 +372,14 @@ function writeManifest() {
   }
 
   const total = writeManifest();
-  console.log(`\n${ok} generated · ${failed.length} failed · ${total} clips on disk.`);
+  console.log(
+    `\n${ok} generated · ${failed.length} failed · ${total} clips on disk` +
+      (retried ? ` · ${retried} silent responses retried` : '') + '.'
+  );
+  if (fellBack.length) {
+    console.log(`\n${fellBack.length} needed the Wavenet fallback (Chirp3-HD will not speak text this short):`);
+    console.log('  ' + fellBack.join(', '));
+  }
   console.log(`Manifest: ${path.relative(ROOT, MANIFEST)}`);
   if (failed.length) {
     console.log(`\nFailures (first 5):`);

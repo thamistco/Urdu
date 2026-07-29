@@ -14,6 +14,7 @@
     "gen:masks": "node scripts/generate-glyph-masks.js",
     "audit": "node scripts/audit-content.js",
     "check:trace": "node scripts/check-trace.js",
+    "check:voice": "node scripts/check-voice.js",
     "check:answerable": "node scripts/check-answerable.js",
     "check:stability": "node scripts/check-stability.js"
   },
