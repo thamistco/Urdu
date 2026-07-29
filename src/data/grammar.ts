@@ -66,15 +66,16 @@ export const GRAMMAR: GrammarConcept[] = [
       'وہ (wo) does double duty: it means "he", "she" and "they", and also "that". Context tells you which.',
     ],
     table: {
-      heading: ['Urdu', 'Roman', 'Meaning'],
+      heading: ['Pronoun', 'Meaning'],
       rows: [
-        ['میں', 'main', 'I'],
-        ['ہم', 'ham', 'we'],
-        ['آپ', 'aap', 'you (polite)'],
-        ['تم', 'tum', 'you (casual)'],
-        ['یہ', 'ye', 'he/she/this (near)'],
-        ['وہ', 'wo', 'he/she/that (far)'],
+        ['میں', 'I'],
+        ['ہم', 'we'],
+        ['آپ', 'you (polite)'],
+        ['تم', 'you (casual)'],
+        ['یہ', 'he/she/this (near)'],
+        ['وہ', 'he/she/that (far)'],
       ],
+      rowsRoman: [['main', ''], ['ham', ''], ['aap', ''], ['tum', ''], ['ye', ''], ['wo', '']],
     },
     examples: [
       { urdu: 'میں طالبِ علم ہوں', roman: 'main taalib-e-ilm hoon', meaning: 'I am a student' },
@@ -109,7 +110,7 @@ export const GRAMMAR: GrammarConcept[] = [
     level: 'beginner',
     explain: [
       'Urdu sentences usually end with the verb. The commonest verb is ہونا (hona): "to be".',
-      'Pick the ending by who you are talking about: ہوں (hoon) after میں (main), ہے (hai) after a single person or thing, ہیں (hain) after آپ (aap), ہم (hum), and plurals.',
+      'Pick the ending by who you are talking about: ہوں (hoon) after میں (main), ہے (hai) after a single person or thing, ہیں (hain) after آپ (aap), ہم (ham), and plurals.',
       'There is no word for "a" or "an", "I am a doctor" is simply میں ڈاکٹر ہوں (main ḍākṭar hoon).',
     ],
     table: {
@@ -124,7 +125,7 @@ export const GRAMMAR: GrammarConcept[] = [
         ['main', 'hoon', 'main khush hoon (I am happy)'],
         ['tum', 'ho', 'tum khush ho (you are happy)'],
         ['ye / wo', 'hai', 'wo khush hai (he/she is happy)'],
-        ['hum / aap / wo (pl.)', 'hain', 'hum khush hain (we are happy)'],
+        ['ham / aap / wo (pl.)', 'hain', 'ham khush hain (we are happy)'],
       ],
     },
     examples: [
@@ -465,16 +466,17 @@ export const GRAMMAR: GrammarConcept[] = [
       'For a yes/no question, put کیا (kya) at the front, or simply raise your voice at the end. کیا آپ ڈاکٹر ہیں؟ (kya aap ḍākṭar hain?): "Are you a doctor?"',
     ],
     table: {
-      heading: ['Urdu', 'Roman', 'Meaning'],
+      heading: ['Question word', 'Meaning'],
       rows: [
-        ['کون', 'kaun', 'who'],
-        ['کیا', 'kya', 'what'],
-        ['کہاں', 'kahaañ', 'where'],
-        ['کب', 'kab', 'when'],
-        ['کیوں', 'kyoñ', 'why'],
-        ['کیسے', 'kaise', 'how'],
-        ['کتنا', 'kitna', 'how much'],
+        ['کون', 'who'],
+        ['کیا', 'what'],
+        ['کہاں', 'where'],
+        ['کب', 'when'],
+        ['کیوں', 'why'],
+        ['کیسے', 'how'],
+        ['کتنا', 'how much'],
       ],
+      rowsRoman: [['kaun', ''], ['kya', ''], ['kahaañ', ''], ['kab', ''], ['kyoñ', ''], ['kaise', ''], ['kitna', '']],
     },
     examples: [
       { urdu: 'آپ کا نام کیا ہے؟', roman: 'aap ka naam kya hai?', meaning: 'What is your name?' },
@@ -513,15 +515,16 @@ export const GRAMMAR: GrammarConcept[] = [
       'کہ (ke) is the workhorse "that", introducing a reported thought: مجھے لگتا ہے کہ وہ آئے گا (mujhe lagta hai ke wo aaye ga): "I think that he will come".',
     ],
     table: {
-      heading: ['Urdu', 'Roman', 'Meaning'],
+      heading: ['Connector', 'Meaning'],
       rows: [
-        ['اور', 'aur', 'and'],
-        ['لیکن / مگر', 'lekin / magar', 'but'],
-        ['یا', 'ya', 'or'],
-        ['کیونکہ', 'kyoñke', 'because'],
-        ['اس لیے', 'is liye', 'therefore'],
-        ['کہ', 'ke', 'that'],
+        ['اور', 'and'],
+        ['لیکن / مگر', 'but'],
+        ['یا', 'or'],
+        ['کیونکہ', 'because'],
+        ['اس لیے', 'therefore'],
+        ['کہ', 'that'],
       ],
+      rowsRoman: [['aur', ''], ['lekin / magar', ''], ['ya', ''], ['kyoñke', ''], ['is liye', ''], ['ke', '']],
     },
     examples: [
       { urdu: 'میں تھکا ہوں کیونکہ میں نے کام کیا', roman: 'main thaka hoon kyoñke main ne kaam kiya', meaning: 'I am tired because I worked' },
@@ -566,7 +569,7 @@ export const GRAMMAR: GrammarConcept[] = [
         ['main (f.)', 'jaati hoon', ''],
         ['wo (m.)', 'jaata hai', ''],
         ['wo (f.)', 'jaati hai', ''],
-        ['hum / wo (pl.)', 'jaate hain', ''],
+        ['ham / wo (pl.)', 'jaate hain', ''],
       ],
     },
     examples: [
@@ -672,7 +675,7 @@ export const GRAMMAR: GrammarConcept[] = [
     explain: [
       'The future adds ‑گا / ‑گی / ‑گے (‑ga / ‑gi / ‑ge) to the subjunctive stem: میں جاؤں گا (main jaaoon ga): "I will go".',
       'The گا (ga) part agrees with the subject, exactly like the other verb endings you have met.',
-      'Common forms: میں کروں گا (main karoon ga, I will do), وہ کرے گا (wo kare ga, he will do), ہم کریں گے (hum kareñ ge, we will do).',
+      'Common forms: میں کروں گا (main karoon ga, I will do), وہ کرے گا (wo kare ga, he will do), ہم کریں گے (ham kareñ ge, we will do).',
     ],
     examples: [
       { urdu: 'میں کل آؤں گا', roman: 'main kal aaoon ga', meaning: 'I will come tomorrow' },
@@ -715,7 +718,7 @@ export const GRAMMAR: GrammarConcept[] = [
         ['mujh ko', 'mujhe', ''],
         ['tum ko', 'tumheñ', ''],
         ['us ko', 'use', ''],
-        ['hum ko', 'hameñ', ''],
+        ['ham ko', 'hameñ', ''],
         ['un ko', 'unheñ', ''],
       ],
     },
@@ -752,7 +755,7 @@ export const GRAMMAR: GrammarConcept[] = [
     level: 'intermediate',
     explain: [
       'Put سکنا (sakna) after the bare verb stem and everything else stays normal: میں جا سکتا ہوں (main ja sakta hoon): "I can go".',
-      'The stem never changes; سکنا (sakna) carries all the endings. میں بول سکتا ہوں (main bol sakta hoon), وہ بول سکتی ہے (wo bol sakti hai), ہم بول سکتے ہیں (hum bol sakte hain).',
+      'The stem never changes; سکنا (sakna) carries all the endings. میں بول سکتا ہوں (main bol sakta hoon), وہ بول سکتی ہے (wo bol sakti hai), ہم بول سکتے ہیں (ham bol sakte hain).',
       'For the negative, نہیں (nahiñ) goes before the pair: میں نہیں جا سکتا (main nahiñ ja sakta). To say you *managed* to do something, پانا (paana) does that job: میں نہیں جا پایا (main nahiñ ja paaya): "I couldn\'t manage to go".',
     ],
     examples: [
@@ -909,7 +912,7 @@ export const GRAMMAR: GrammarConcept[] = [
     level: 'advanced',
     explain: [
       'The subjunctive covers wishes, suggestions, doubts and "if", things not stated as fact.',
-      'Forms are the future without گا (ga): میں جاؤں (main jaaoon, that I go), وہ جائے (wo jaaye, that he go), ہم جائیں (hum jaayeñ, that we go).',
+      'Forms are the future without گا (ga): میں جاؤں (main jaaoon, that I go), وہ جائے (wo jaaye, that he go), ہم جائیں (ham jaayeñ, that we go).',
       'Use it after اگر (agar, if), شاید (shaayad, perhaps), and to suggest: چلیں؟ (chaleñ?): "shall we go?" Its negative is نہ (na), not نہیں (nahiñ).',
     ],
     examples: [

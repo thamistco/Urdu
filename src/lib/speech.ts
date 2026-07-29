@@ -29,9 +29,14 @@ export function speechEpoch() {
 const clipCache: Record<string, Audio.Sound> = {};
 let lastSound: Audio.Sound | null = null;
 
-async function playClip(id: string): Promise<boolean> {
+/**
+ * Play a bundled clip, returning how long it runs for — or null if there is no
+ * clip. `replayAsync` resolves when playback *starts*, so anything that has to
+ * follow the audio needs the duration rather than the promise.
+ */
+async function playClip(id: string): Promise<number | null> {
   const asset = VOICE[id];
-  if (!asset) return false;
+  if (!asset) return null;
   try {
     let sound = clipCache[id];
     if (!sound) {
@@ -40,10 +45,10 @@ async function playClip(id: string): Promise<boolean> {
       clipCache[id] = sound;
     }
     lastSound = sound;
-    await sound.replayAsync();
-    return true;
+    const status = await sound.replayAsync();
+    return status.isLoaded && typeof status.durationMillis === 'number' ? status.durationMillis : 0;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -66,8 +71,49 @@ function deviceSpeak(urdu: string, roman?: string) {
 /** Pronounce an item, preferring its bundled clip. `id` is the word/letter id. */
 export async function announce(id: string | undefined, urdu: string, roman?: string) {
   if (muted) return;
-  if (id && (await playClip(id))) return;
+  if (id && (await playClip(id)) !== null) return;
   deviceSpeak(urdu, roman);
+}
+
+let glossEnabled = true;
+export function setGlossEnabled(value: boolean) {
+  glossEnabled = value;
+}
+
+/**
+ * Pronounce an item, then say what it means.
+ *
+ * Getting an answer right is the moment the pair is worth hearing as a pair —
+ * the app said دماغ and stopped, leaving the learner to read "brain" off the
+ * screen in silence. The gloss follows the clip rather than overlapping it,
+ * timed off the clip's real duration, and uses the device's English voice
+ * because the bundled clips are Urdu only.
+ *
+ * Guarded by the same epoch as everything else: tap Continue before the gloss
+ * has started and it is dropped rather than spoken over the next question.
+ */
+export async function announceWithMeaning(
+  id: string | undefined,
+  urdu: string,
+  roman: string | undefined,
+  meaning: string
+) {
+  if (muted) return;
+  const epochAtCall = epoch;
+  const ms = id ? await playClip(id) : null;
+  if (ms === null) deviceSpeak(urdu, roman);
+  if (!glossEnabled || !meaning) return;
+  // No clip means device TTS is mid-sentence with no duration to wait on, so
+  // the gloss is skipped rather than talked over.
+  if (ms === null) return;
+  setTimeout(() => {
+    if (epoch !== epochAtCall || muted || !glossEnabled) return;
+    try {
+      Speech.speak(meaning, { language: 'en', rate: 0.95 });
+    } catch {
+      // ignore
+    }
+  }, ms + 220);
 }
 
 /** Direct device TTS (used where there is no id, e.g. free text). */

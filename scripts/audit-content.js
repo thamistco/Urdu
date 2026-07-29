@@ -231,6 +231,38 @@ for (const s of SENTENCES) {
     bad(`sentence ${s.id} contains ${risky.join(', ')} — two words share that spelling, so it needs a pronounce reading`);
 }
 
+// --- grammar tables: columns say what is in them ---------------------------
+
+/**
+ * A column headed "Urdu" is a lie on the Roman track.
+ *
+ * The table renders a script cell as its romanization for a learner who asked
+ * not to be taught the script — correct in itself, but three tables had an
+ * authored "Urdu" column *and* an authored "Roman" one, so that learner saw the
+ * same transliteration printed twice, the first time under a heading reading
+ * "Urdu". The component already prints the romanization under every script cell,
+ * which is what makes the second column redundant on the other tracks too.
+ *
+ * So: name a column after what it holds (Pronoun, Question word, Connector) and
+ * let `rowsRoman` carry the reading. Also checks the shapes line up, since a
+ * short row silently drops its last cell rather than complaining.
+ */
+for (const c of GRAMMAR) {
+  const t = c.table;
+  if (!t) continue;
+  for (const h of t.heading) {
+    if (/^(urdu|script|roman|transliteration)$/i.test(h.trim()))
+      bad(`grammar ${c.id}: table column headed "${h}" — name it after what it holds, not which alphabet`);
+  }
+  t.rows.forEach((row, r) => {
+    if (row.length !== t.heading.length)
+      bad(`grammar ${c.id}: table row ${r} has ${row.length} cells for ${t.heading.length} columns`);
+    const rr = t.rowsRoman?.[r];
+    if (rr && rr.length !== row.length)
+      bad(`grammar ${c.id}: rowsRoman row ${r} has ${rr.length} cells for ${row.length} in the row`);
+  });
+}
+
 // --- no two topics wear the same badge --------------------------------------
 
 /**
