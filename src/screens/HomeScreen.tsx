@@ -19,7 +19,7 @@ import { levelProgress, levelTitle } from '../lib/gamification';
 import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { Lesson, unitsForTrack, findLesson } from '../data/units';
-import { LEVEL_META, LEVEL_ORDER, type Level } from '../data/words';
+import { LEVEL_META, LEVEL_ORDER, type Level, glossOf } from '../data/words';
 import { WORDS } from '../data/words';
 import { DAILY_GOALS } from '../data/achievements';
 import type { RootStackParamList } from '../navigation/types';
@@ -384,7 +384,7 @@ export function HomeScreen() {
                 <View className="flex-1">
                   <Lexeme urdu={word.urdu} roman={word.roman} track={track} size={28} color={palette.ink} align="left" />
                   <Txt style={{ color: palette.ink }} className="text-xs opacity-60">
-                    {word.meaning}
+                    {glossOf(word)}
                   </Txt>
                 </View>
                 <WordArt word={word} size={46} />

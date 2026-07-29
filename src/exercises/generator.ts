@@ -1,5 +1,5 @@
 import { LETTERS, getLetter, Letter, PositionKey, POSITIONS } from '../data/letters';
-import { WORDS, getWord, wordsByTopic, Word, PHRASES } from '../data/words';
+import { WORDS, getWord, wordsByTopic, glossOf, Word, PHRASES } from '../data/words';
 import { Lesson, ALL_LESSONS } from '../data/units';
 import { getGrammar, type GrammarConcept, type GrammarDrill } from '../data/grammar';
 import { romanAll } from '../lib/translit';
@@ -119,7 +119,12 @@ function wordExercise(word: Word, pool: Word[], demand: Demand = 'meet', variant
   let v = variant ?? Math.floor(Math.random() * 3);
   // If we cannot build a visually distinct set, fall back to the text-based
   // "pick the meaning" question, which is always answerable.
-  const pictureOptions = distractorsFor(word, pool, { distinctCue: true });
+  // Distinct pictures *and* distinct meanings. Only the picture used to be
+  // required, which let ہاں and جی ہاں — both "yes" — sit in one question as two
+  // correct answers. That was reachable all along and merely hidden, because one
+  // of them spelled its register into its English ("yes (polite)") and so
+  // compared unequal.
+  const pictureOptions = distractorsFor(word, pool, { distinctCue: true, distinctMeaning: true });
   if (pictureOptions.length < 3 && v !== 1) v = 1;
 
   if (v === 1) {
@@ -258,14 +263,22 @@ export function buildLessonExercises(
     // Close with a matching board (Drops-style); its four pictures must differ.
     // Short lessons introduce fewer than four words, so the board is topped up
     // from the rest of the topic rather than dropped.
+    // A board pairs a picture with a caption, so both halves have to be
+    // distinguishable: two tiles sharing a picture is unanswerable, and so is
+    // two sharing a caption. The caption is the *displayed* gloss rather than
+    // the raw meaning, because that is what the learner reads — "yes" and "yes
+    // (polite)" are two tiles, باپ and والد are one.
     const board: Word[] = [];
     const boardCues = new Set<string>();
+    const boardGlosses = new Set<string>();
     for (const w of [...picks, ...shuffle(pool)]) {
       if (board.length === 4) break;
       if (board.some((b) => b.id === w.id)) continue;
       const cue = cueOf(w);
-      if (boardCues.has(cue)) continue;
+      const gloss = glossOf(w).toLowerCase();
+      if (boardCues.has(cue) || boardGlosses.has(gloss)) continue;
       boardCues.add(cue);
+      boardGlosses.add(gloss);
       board.push(w);
     }
     if (board.length === 4) exercises.push({ kind: 'matching', words: board });

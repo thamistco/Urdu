@@ -6,6 +6,9 @@
  */
 
 import { ALL_PACKS } from './vocab';
+import type { Register } from './vocab/types';
+
+export type { Register };
 
 /** Course stage a piece of content belongs to. */
 export type Level = 'beginner' | 'elementary' | 'intermediate' | 'advanced';
@@ -24,6 +27,8 @@ export type Word = {
    *  course (سر head vs سر musical note, کل yesterday vs کل total, …). See
    *  the fuller note on `Word` in data/vocab/types.ts. */
   pronounce?: string;
+  /** How formal the word is; see `Register` in data/vocab/types.ts. */
+  register?: Register;
 };
 
 export type Topic = {
@@ -118,8 +123,8 @@ const CORE_WORDS: Word[] = [
   { id: 'w-cousin-m', urdu: 'کزن', roman: 'kazin', meaning: 'cousin', emoji: '🧑', topic: 'family' },
   { id: 'w-parivaar', urdu: 'خاندان', roman: 'khaandaan', meaning: 'family', emoji: '👪', topic: 'family' },
   { id: 'w-bacche', urdu: 'بچے', roman: 'bachche', meaning: 'children', emoji: '🧒', topic: 'family' },
-  { id: 'w-shauhar2', urdu: 'میاں', roman: 'miyaañ', meaning: 'husband (informal)', emoji: '🤵', topic: 'family' },
-  { id: 'w-biwi2', urdu: 'بیگم', roman: 'begum', meaning: 'wife (respectful)', emoji: '👰', topic: 'family' },
+  { id: 'w-shauhar2', urdu: 'میاں', roman: 'miyaañ', meaning: 'husband', register: 'casual', emoji: '🤵', topic: 'family' },
+  { id: 'w-biwi2', urdu: 'بیگم', roman: 'begum', meaning: 'wife', register: 'polite', emoji: '👰', topic: 'family' },
   { id: 'w-susraal', urdu: 'سسرال', roman: 'susraal', meaning: 'in-laws\' home', emoji: '🏠', topic: 'family' },
   { id: 'w-saas', urdu: 'ساس', roman: 'saas', meaning: 'mother-in-law', emoji: '👵', topic: 'family' },
   { id: 'w-sasur', urdu: 'سسر', roman: 'sasur', meaning: 'father-in-law', emoji: '👴', topic: 'family' },
@@ -246,7 +251,7 @@ const CORE_WORDS: Word[] = [
   { id: 'w-mashaallah', urdu: 'ماشاء اللہ', roman: 'masha-allah', meaning: 'expression of praise', emoji: '✨', topic: 'greetings' },
   { id: 'w-shabbakhair', urdu: 'شب بخیر', roman: 'shab bakhair', meaning: 'good night', emoji: '🌙', topic: 'greetings' },
   { id: 'w-subahbakhair', urdu: 'صبح بخیر', roman: 'subah bakhair', meaning: 'good morning', emoji: '🌅', topic: 'greetings' },
-  { id: 'w-jeehaan2', urdu: 'جی ہاں', roman: 'jee haan', meaning: 'yes (polite)', emoji: '✅', topic: 'greetings' },
+  { id: 'w-jeehaan2', urdu: 'جی ہاں', roman: 'jee haan', meaning: 'yes', register: 'polite', emoji: '✅', topic: 'greetings' },
 
   // body
   { id: 'w-sar', urdu: 'سر', roman: 'sar', meaning: 'head', emoji: '🧑', topic: 'body', pronounce: 'سَر' },
@@ -899,18 +904,58 @@ const CORE_WORDS: Word[] = [
   { id: 'w-taake', urdu: 'تاکہ', roman: 'taake', meaning: 'so that', emoji: '🎯', topic: 'connectors' },
   { id: 'w-warna', urdu: 'ورنہ', roman: 'warna', meaning: 'otherwise', emoji: '↩️', topic: 'connectors' },
   { id: 'w-balke', urdu: 'بلکہ', roman: 'balke', meaning: 'rather / in fact', emoji: '➕', topic: 'connectors' },
-  { id: 'w-chunaanche', urdu: 'چنانچہ', roman: 'chunaañche', meaning: 'therefore (formal)', emoji: '➡️', topic: 'connectors' },
+  { id: 'w-chunaanche', urdu: 'چنانچہ', roman: 'chunaañche', meaning: 'therefore', register: 'formal', emoji: '➡️', topic: 'connectors' },
   { id: 'w-yaani', urdu: 'یعنی', roman: 'yaani', meaning: 'that is / i.e.', emoji: '💬', topic: 'connectors' },
   { id: 'w-jabtak', urdu: 'جب تک', roman: 'jab tak', meaning: 'until', emoji: '⏳', topic: 'connectors' },
   { id: 'w-jaise', urdu: 'جیسے', roman: 'jaise', meaning: 'like / such as', emoji: '🔀', topic: 'connectors' },
   { id: 'w-sirf', urdu: 'صرف', roman: 'sirf', meaning: 'only / just', emoji: '☝️', topic: 'connectors' },
   { id: 'w-bhi', urdu: 'بھی', roman: 'bhi', meaning: 'also / too', emoji: '➕', topic: 'connectors' },
-  { id: 'w-harchand', urdu: 'ہر چند', roman: 'har chand', meaning: 'although (formal)', emoji: '🔁', topic: 'connectors' },
+  { id: 'w-harchand', urdu: 'ہر چند', roman: 'har chand', meaning: 'although', register: 'formal', emoji: '🔁', topic: 'connectors' },
   { id: 'w-albatta2', urdu: 'البتہ', roman: 'albatta', meaning: 'however / certainly', emoji: '✅', topic: 'connectors' },
 ];
 
 /** Core topics plus every modular vocabulary pack. */
 export const TOPICS: Topic[] = [...CORE_TOPICS, ...ALL_PACKS.map((p) => p.topic)];
+/**
+ * Topics whose vocabulary is register-bound as a whole.
+ *
+ * Marking 2,426 words by hand would be a list nobody maintains, and most words
+ * have no register worth marking — a chair is a chair to your grandmother and
+ * to your friend. But a whole topic can be register-defined, and two of them
+ * are: "Formal & Written" exists precisely because that Urdu is not what you
+ * speak, and "Respect & Address" is the vocabulary of deference. Every word in
+ * them inherits it, and a word can override with its own `register`.
+ */
+const REGISTER_BY_TOPIC: Record<string, Register> = {
+  formal: 'formal',
+  honorifics: 'polite',
+};
+
+/** The register a word carries: its own if stated, otherwise its topic's. */
+export function registerOf(word: Word): Register | undefined {
+  return word.register ?? REGISTER_BY_TOPIC[word.topic];
+}
+
+/**
+ * What a word means, as the learner should read it — with its register, if it
+ * has one worth naming.
+ *
+ * Register lives in its own field rather than inside `meaning` for two reasons.
+ * The generator compares options by meaning to keep two right answers out of one
+ * question, and باپ and والد both mean "father", so they have to compare equal or
+ * the question breaks. And it has to be worded the same way every time, which a
+ * parenthetical typed by hand in five places was not: the course had "(formal)",
+ * "(informal)", "(polite)" and "(respectful)" for four registers it never
+ * defined.
+ *
+ * Display goes through here, so the distinction the learner needs is on screen
+ * everywhere at once instead of wherever an author remembered it.
+ */
+export function glossOf(word: Word): string {
+  const r = registerOf(word);
+  return r ? `${word.meaning} (${r})` : word.meaning;
+}
+
 export const WORDS: Word[] = [...CORE_WORDS, ...ALL_PACKS.flatMap((p) => p.words)];
 
 /** Short, high-value phrases for the "speak with family" goal. */
