@@ -101,6 +101,13 @@ export function SettingsScreen() {
             <View className="h-px bg-white/5" />
             <Row label="Haptics" hint="Gentle vibration with feedback" value={s.hapticsEnabled} onChange={s.setHaptics} />
             <View className="h-px bg-white/5" />
+            <Row
+              label="Say the meaning too"
+              hint="After a correct answer, hear the English as well as the Urdu"
+              value={s.speakMeaning}
+              onChange={s.setSpeakMeaning}
+            />
+            <View className="h-px bg-white/5" />
             <Row label="Reduced motion" hint="Calmer, minimal animation" value={s.reducedMotion} onChange={s.setReducedMotion} />
           </Card>
         </Reveal>

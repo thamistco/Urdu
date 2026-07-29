@@ -11,8 +11,11 @@ export const PEOPLE_PACKS: TopicPack[] = [
       ['w-khala', 'خالہ', 'khaala', "mother's sister", '👩‍🦳'],
       ['w-nana', 'نانا', 'naana', 'maternal grandfather', '👴🏽'],
       ['w-nani', 'نانی', 'naani', 'maternal grandmother', '👵🏽'],
-      ['w-bhatija', 'بھتیجا', 'bhateeja', 'nephew', '👦🏽'],
-      ['w-bhanji', 'بھانجی', 'bhaanji', 'niece', '👧🏽'],
+      // Urdu splits what English collapses: a brother's son and a sister's son
+      // are different words, so "nephew" alone leaves the learner unable to
+      // choose between them — and unable to answer a question that offers both.
+      ['w-bhatija', 'بھتیجا', 'bhateeja', "nephew (brother's son)", '👦🏽'],
+      ['w-bhanji', 'بھانجی', 'bhaanji', "niece (sister's daughter)", '👧🏽'],
       ['w-damaad', 'داماد', 'daamaad', 'son-in-law', '🤵'],
       ['w-bahu', 'بہو', 'bahu', 'daughter-in-law', '👰'],
       ['w-shohar', 'شوہر', 'shauhar', 'husband', '💑'],

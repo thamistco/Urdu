@@ -109,9 +109,12 @@ const CORE_WORDS: Word[] = [
   { id: 'w-dadi', urdu: 'دادی', roman: 'daadi', meaning: 'grandmother', emoji: '👵', topic: 'family' },
   { id: 'w-beta', urdu: 'بیٹا', roman: 'beṭa', meaning: 'son', emoji: '🧒', topic: 'family' },
   { id: 'w-beti', urdu: 'بیٹی', roman: 'beṭi', meaning: 'daughter', emoji: '👧', topic: 'family' },
-  { id: 'w-chachi', urdu: 'چچی', roman: 'chachi', meaning: "uncle's wife", emoji: '👩', topic: 'family' },
-  { id: 'w-phupa', urdu: 'پھوپھا', roman: 'phoopha', meaning: "aunt's husband", emoji: '👨', topic: 'family' },
-  { id: 'w-mami', urdu: 'ممانی', roman: 'mumaani', meaning: "maternal uncle's wife", emoji: '👩', topic: 'family' },
+  { id: 'w-chachi', urdu: 'چچی', roman: 'chachi', meaning: "father's brother's wife", emoji: '👩', topic: 'family' },
+  { id: 'w-phupa', urdu: 'پھوپھا', roman: 'phoopha', meaning: "father's sister's husband", emoji: '👨', topic: 'family' },
+  { id: 'w-mami', urdu: 'ممانی', roman: 'mumaani', meaning: "mother's brother's wife", emoji: '👩', topic: 'family' },
+  // خالو completes the set: the course taught all four blood aunts and uncles but
+  // only three of their spouses, so خالہ was the one aunt whose husband had no name.
+  { id: 'w-khalu', urdu: 'خالو', roman: 'khaaloo', meaning: "mother's sister's husband", emoji: '🧑‍🦰', topic: 'family' },
   { id: 'w-cousin-m', urdu: 'کزن', roman: 'kazin', meaning: 'cousin', emoji: '🧑', topic: 'family' },
   { id: 'w-parivaar', urdu: 'خاندان', roman: 'khaandaan', meaning: 'family', emoji: '👪', topic: 'family' },
   { id: 'w-bacche', urdu: 'بچے', roman: 'bachche', meaning: 'children', emoji: '🧒', topic: 'family' },

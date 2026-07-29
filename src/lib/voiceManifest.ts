@@ -1550,6 +1550,7 @@ export const VOICE: Record<string, number> = {
   'w-khala': require('../../assets/voice/w-khala.mp3'),
   'w-khaleej': require('../../assets/voice/w-khaleej.mp3'),
   'w-khalia': require('../../assets/voice/w-khalia.mp3'),
+  'w-khalu': require('../../assets/voice/w-khalu.mp3'),
   'w-khamosh': require('../../assets/voice/w-khamosh.mp3'),
   'w-khamosh-rehna': require('../../assets/voice/w-khamosh-rehna.mp3'),
   'w-khamoshi': require('../../assets/voice/w-khamoshi.mp3'),

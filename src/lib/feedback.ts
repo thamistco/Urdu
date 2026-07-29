@@ -1,6 +1,6 @@
 import { play } from './sound';
 import { haptics } from './haptics';
-import { announce, speechEpoch } from './speech';
+import { announce, announceWithMeaning, speechEpoch } from './speech';
 
 /**
  * Speak once the feedback chime has had room, without letting a stale word
@@ -37,6 +37,20 @@ export const feedback = {
     play('correct');
     haptics.correct();
     speakAfterChime(voiceId, urdu, roman);
+  },
+  /**
+   * Correct feedback that pronounces the answer and then says what it means.
+   *
+   * Used where the exercise knows the English — a word, not a letter or a
+   * sentence — so the pair is heard as a pair at the moment it landed.
+   */
+  correctAnnounceMeaning(voiceId: string | undefined, urdu: string, roman: string | undefined, meaning: string) {
+    play('correct');
+    haptics.correct();
+    const epochAtCall = speechEpoch();
+    setTimeout(() => {
+      if (speechEpoch() === epochAtCall) announceWithMeaning(voiceId, urdu, roman, meaning);
+    }, 400);
   },
   incorrect() {
     play('incorrect');
