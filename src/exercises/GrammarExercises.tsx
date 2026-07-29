@@ -14,10 +14,47 @@ type DrillEx = Extract<Exercise, { kind: 'grammarDrill' }>;
  * A teaching card. Not graded — the learner reads, then continues. Presenting
  * the rule *before* drilling it is what makes grammar stick rather than feeling
  * like guesswork.
+ *
+ * Revealed a stage at a time. Every concept carries three paragraphs of prose
+ * (450 characters on average), a table of up to seven rows, and three worked
+ * examples, and showing all of it at once made the card a wall of text — the
+ * learner's own report, and the reason nobody reads the third paragraph.
+ *
+ * The stages *accumulate* rather than replace one another: by the time the
+ * examples are on screen the rule is still above them, which is the whole point
+ * of an example. Paging would have hidden the rule at the moment it was needed.
  */
-export function GrammarTeachExercise({ exercise, track, onGraded }: ExerciseProps<TeachEx>) {
+type Stage = 'rule' | 'table' | 'examples';
+
+export function GrammarTeachExercise({ exercise, track, onGraded, onExpand }: ExerciseProps<TeachEx>) {
   const { concept } = exercise;
   const [read, setRead] = useState(false);
+
+  // Only the stages this concept actually has: eight of the twenty-five have no
+  // table, and an empty stage would be a tap that changes nothing.
+  //
+  // Three, not one per paragraph. Splitting the prose finer was tried and left
+  // a single short paragraph alone on the screen with a button under it, which
+  // reads as unfinished rather than calm — the prose is one argument and belongs
+  // together. What made the card a wall was the prose *and* a seven-row table
+  // *and* three worked examples arriving at once.
+  const stages: Stage[] = [
+    'rule',
+    ...(concept.table ? (['table'] as Stage[]) : []),
+    ...(concept.examples.length ? (['examples'] as Stage[]) : []),
+  ];
+  const [shown, setShown] = useState(1);
+  const allShown = shown >= stages.length;
+  const visible = new Set(stages.slice(0, shown));
+
+  const next = () => {
+    feedback.tap();
+    setShown((n) => n + 1);
+    // The revealed block pushes the button for the *following* stage off the
+    // bottom of the screen, which reads as the lesson having stalled. Wait for
+    // the layout, then bring the foot of the card back into view.
+    setTimeout(() => onExpand?.(), 120);
+  };
 
   const done = () => {
     if (read) return;
@@ -34,6 +71,23 @@ export function GrammarTeachExercise({ exercise, track, onGraded }: ExerciseProp
       </Eyebrow>
       <Heading className="mb-4 text-center text-2xl">{concept.title}</Heading>
 
+      {/* how far through the card the learner is */}
+      {stages.length > 1 && (
+        <View className="mb-4 flex-row items-center justify-center gap-1.5">
+          {stages.map((st, i) => (
+            <View
+              key={st}
+              style={{
+                width: i < shown ? 18 : 6,
+                height: 6,
+                borderRadius: 3,
+                backgroundColor: i < shown ? palette.gold : withAlpha(palette.paper, 0.2),
+              }}
+            />
+          ))}
+        </View>
+      )}
+
       <View
         className="mb-4 rounded-2xl p-5"
         style={{ backgroundColor: palette.ink700, borderWidth: 1, borderColor: withAlpha(palette.gold, 0.2) }}
@@ -45,7 +99,7 @@ export function GrammarTeachExercise({ exercise, track, onGraded }: ExerciseProp
         ))}
       </View>
 
-      {concept.table && (
+      {concept.table && visible.has('table') && (
         <View className="mb-4 overflow-hidden rounded-2xl" style={{ backgroundColor: palette.parchment }}>
           <View className="flex-row" style={{ backgroundColor: withAlpha(palette.ink, 0.08) }}>
             {concept.table.heading.map((h, i) => (
@@ -106,7 +160,11 @@ export function GrammarTeachExercise({ exercise, track, onGraded }: ExerciseProp
         </View>
       )}
 
+      {visible.has('examples') && (
       <View className="mb-5 gap-2.5">
+        <Eyebrow style={{ color: palette.jade }} className="mb-0.5">
+          In use
+        </Eyebrow>
         {concept.examples.map((ex, i) => (
           <View
             key={i}
@@ -125,8 +183,15 @@ export function GrammarTeachExercise({ exercise, track, onGraded }: ExerciseProp
           </View>
         ))}
       </View>
+      )}
 
-      {!read && <Button onPress={done}>Got it</Button>}
+      {allShown ? (
+        !read && <Button onPress={done}>Got it</Button>
+      ) : (
+        <Button onPress={next}>
+          {stages[shown] === 'table' ? 'Show the pattern' : 'Show examples'}
+        </Button>
+      )}
     </View>
   );
 }

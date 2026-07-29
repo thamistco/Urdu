@@ -120,4 +120,14 @@ export type ExerciseProps<E extends Exercise = Exercise> = {
   showRoman: boolean;
   locked: boolean;
   onGraded: (result: GradedResult) => void;
+  /**
+   * "I just made myself taller — bring the bottom of me into view."
+   *
+   * An exercise that reveals content on a tap pushes its own next button below
+   * the fold, and a button the learner cannot see is a lesson that looks stuck.
+   * The grammar card hit this the moment it started revealing its table on
+   * demand. The exercise cannot scroll the lesson itself — it is inside the
+   * lesson's ScrollView, not in charge of it — so it asks.
+   */
+  onExpand?: () => void;
 };

@@ -272,6 +272,7 @@ export function LessonScreen() {
               showRoman={showRoman}
               locked={graded != null}
               onGraded={onGraded}
+              onExpand={() => bodyRef.current?.scrollToEnd({ animated: true })}
             />
           </View>
         </Screen>
