@@ -23,6 +23,7 @@ import { LEVEL_META, LEVEL_ORDER, type Level, glossOf } from '../data/words';
 import { WORDS } from '../data/words';
 import { DAILY_GOALS } from '../data/achievements';
 import type { RootStackParamList } from '../navigation/types';
+import { dueCount } from '../lib/srs';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -161,6 +162,10 @@ export function HomeScreen() {
   useEffect(() => {
     regenHearts();
   }, [regenHearts]);
+
+  // Recomputed from `store.srs` rather than called as an action, so the card
+  // appears and clears as answers land instead of only on a remount.
+  const dueNow = useMemo(() => dueCount(store.srs), [store.srs]);
 
   const { level, ratio } = levelProgress(store.totalXp);
   const goal = DAILY_GOALS.find((g) => g.id === store.dailyGoalId) ?? DAILY_GOALS[1];
@@ -314,6 +319,52 @@ export function HomeScreen() {
             </View>
           </Card>
         </Reveal>
+
+        {/* Whatever the schedule says is slipping.
+            The spaced-repetition engine has always been running — every answer
+            updates a memory record, and review lessons draw from what is due —
+            but nothing outside the Practice tab ever said so, so the one number
+            that should decide how a session starts was invisible on the screen
+            the learner lands on. Shown only when something is actually due;
+            an empty queue is not worth a card. */}
+        {dueNow > 0 && (
+          <Reveal delay={75}>
+            <Pressable
+              onPress={() => {
+                feedback.tap();
+                nav.navigate('Lesson', { lessonId: 'practice-review' });
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Review ${dueNow} ${dueNow === 1 ? 'item' : 'items'} due now`}
+              style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
+            >
+              <View
+                className="mb-4 flex-row items-center gap-3 rounded-2xl border px-4 py-3"
+                style={{
+                  backgroundColor: withAlpha(palette.jade, 0.14),
+                  borderColor: withAlpha(palette.jade, 0.42),
+                }}
+              >
+                <View
+                  className="h-10 w-10 items-center justify-center rounded-full"
+                  style={{ backgroundColor: withAlpha(palette.jade, 0.22) }}
+                >
+                  <Illustration name="clock" tile={false} size={22} />
+                </View>
+                <View className="flex-1">
+                  <Eyebrow style={{ color: palette.jade }}>Due for review</Eyebrow>
+                  <Bold className="mt-0.5 text-[15px]">
+                    {dueNow} {dueNow === 1 ? 'thing' : 'things'} to bring back
+                  </Bold>
+                  <Txt className="text-xs text-paper/55">
+                    Reviewed now, they stick; left much longer, they go.
+                  </Txt>
+                </View>
+                <Txt style={{ color: palette.jade, fontSize: 20 }}>›</Txt>
+              </View>
+            </Pressable>
+          </Reveal>
+        )}
 
         {/* the one obvious next action */}
         {currentLesson && (

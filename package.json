@@ -15,6 +15,7 @@
     "audit": "node scripts/audit-content.js",
     "check:trace": "node scripts/check-trace.js",
     "check:voice": "node scripts/check-voice.js",
+    "check:srs": "node scripts/check-srs.js",
     "check:answerable": "node scripts/check-answerable.js",
     "check:stability": "node scripts/check-stability.js"
   },
