@@ -1,7 +1,14 @@
 import { pack, type TopicPack } from './types';
 
-/** Closing breadth: professions, study fields, verbs of mind, and social life. */
-export const FINAL_PACKS: TopicPack[] = [
+/**
+ * Professions and trades, fields of study, the verbs of thinking and speaking
+ * and moving, social life, qualities, measures of time, weather, and poetry.
+ *
+ * The file was called `final.ts` — named for the moment it was written rather
+ * than for anything in it. Ten topics and several hundred words lived behind a
+ * name that told a reader only that it came last.
+ */
+export const WORK_MIND_SOCIETY_PACKS: TopicPack[] = [
   pack(
     { id: 'jobs-more', title: 'More Professions', icon: '🧑‍🍳', blurb: 'Trades and callings.', level: 'intermediate' },
     [

@@ -57,6 +57,18 @@ jobs:
       - name: Check formatting
         run: npm run format:check
 
+      # Folder layout and file names, from the engineering standard. It caught
+      # `src/data/vocab/final.ts` on its first run — ten topics and several
+      # hundred words behind a name that told a reader only that it came last.
+      - name: Check the project structure
+        run: npm run check:structure
+
+      # Unit tests for the pure logic: the XP curve, the league ladder, the gem
+      # payout and the streak arithmetic. The check:* scripts cover content and
+      # rendering; this covers the functions.
+      - name: Unit tests
+        run: npm test
+
       - name: Audit content
         run: npm run audit
 
