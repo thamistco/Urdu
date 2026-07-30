@@ -20,6 +20,7 @@
 const fs = require('fs');
 const path = require('path');
 const { findProblems, ffmpegAvailable } = require('./lib/audio');
+const { loadData } = require('./lib/load-ts');
 
 const ROOT = path.join(__dirname, '..');
 const OUT_DIR = path.join(ROOT, 'assets', 'voice');
@@ -55,7 +56,37 @@ const listed = new Set([...manifest.matchAll(/^\s*'([^']+)':/gm)].map((m) => m[1
 const onDisk = new Set(clips.map((f) => f.replace(/\.mp3$/, '')));
 for (const id of listed) if (!onDisk.has(id)) broken.push(`${id}: in the manifest but not on disk`);
 
-console.log(`${clips.length} clips checked · ${listed.size} in the manifest`);
+/**
+ * Every speakable thing must have a clip.
+ *
+ * `announce()` falls back to the device's own text-to-speech when an id has no
+ * recording. That fallback sounds reasonable in the source and is bad in the
+ * hand: a browser has no Urdu voice, so it either reads the script in an
+ * English voice or reads the Roman — and in an app for learning Urdu, a stock
+ * English voice mispronouncing a word is worse than silence, and worse still
+ * because it would affect only the newest words, which is exactly where a
+ * learner has no way to know it is wrong.
+ *
+ * Coverage is complete today. This exists so that adding a word without
+ * regenerating the voice fails the build instead of quietly landing a word the
+ * app pronounces in the wrong language.
+ */
+const { WORDS, LETTERS, SENTENCES, PASSAGES, DIALOGUES } = loadData();
+const speakable = [
+  ...WORDS.map((w) => [w.id, `word ${w.urdu}`]),
+  ...LETTERS.map((l) => [l.id, `letter ${l.char ?? l.id}`]),
+  ...SENTENCES.map((s) => [s.id, 'sentence']),
+  ...PASSAGES.flatMap((p) => (p.lines || []).map((_, i) => [`${p.id}-${i}`, `passage line`])),
+  ...DIALOGUES.flatMap((d) => (d.lines || []).map((_, i) => [`${d.id}-${i}`, `dialogue line`])),
+];
+const uncovered = speakable.filter(([id]) => !listed.has(id));
+for (const [id, what] of uncovered.slice(0, 40))
+  broken.push(`${id}: ${what} has no clip — the app would speak it with the device voice`);
+if (uncovered.length > 40) broken.push(`… and ${uncovered.length - 40} more without a clip`);
+
+console.log(
+  `${clips.length} clips checked · ${listed.size} in the manifest · ${speakable.length} speakable items, ${speakable.length - uncovered.length} covered`
+);
 
 if (broken.length) {
   console.log(`\n${broken.length} unusable:`);

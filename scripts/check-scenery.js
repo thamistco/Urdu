@@ -16,16 +16,18 @@
  * So this does the only thing that settles it: renders the real exported app,
  * hides every layer above the background, and reads the actual pixels.
  *
- *   npm run web:build && npm run check:scenery
+ *   npx expo export --platform web --output-dir dist && npm run check:scenery
  *
- * Needs `dist/` (an `expo export --platform web`) and Chromium. Skips with a
- * clear message rather than failing if either is missing, so it can sit in a
- * chain without becoming the reason an unrelated build goes red.
+ * The server, the Chromium lookup and the guest-entry dance come from
+ * `lib/serve-dist.js` rather than being repeated here — the first version of
+ * this file had its own naive copy of the server, which 404'd every asset once
+ * CI baked the deploy's base path into the export, and so failed with "could
+ * not find the background SVG" while passing locally. It blocked two deploys.
  */
 
 const fs = require('fs');
 const path = require('path');
-const http = require('http');
+const { serveDist, findChromium, enterAsGuest } = require('./lib/serve-dist');
 
 const ROOT = path.join(__dirname, '..');
 const DIST = path.join(ROOT, 'dist');
@@ -38,76 +40,51 @@ const FLOOR = 6;
 /** The body text colour this is measured against — palette.paper. */
 const TEXT = [0xff, 0xee, 0xdd];
 
-if (!fs.existsSync(path.join(DIST, 'index.html'))) {
-  console.log('check:scenery — no dist/, run the web export first. Skipping.');
+/**
+ * Skipping is for a developer who has not built the web bundle. In CI it would
+ * be a green tick over a check that never ran, which is worse than a red one —
+ * so there, a missing prerequisite is a failure.
+ */
+function missing(reason) {
+  if (process.env.CI) {
+    console.error(`check:scenery — ${reason}. In CI that is a failure, not a skip.`);
+    process.exit(1);
+  }
+  console.log(`check:scenery — ${reason}. Skipping.`);
   process.exit(0);
 }
+
+if (!fs.existsSync(path.join(DIST, 'index.html'))) missing('no dist/, run the web export first');
 
 let chromium;
 try {
   chromium = require('playwright-core').chromium;
 } catch {
-  console.log('check:scenery — playwright-core not installed. Skipping.');
-  process.exit(0);
+  missing('playwright-core is not installed');
 }
-
-/** The bundled Chromium's version is in the directory name, so resolve it
- *  rather than hard-coding a path that goes stale on the next image. */
-function findChromium() {
-  for (const p of ['/opt/pw-browsers/chromium', process.env.CHROMIUM_PATH].filter(Boolean)) {
-    if (fs.existsSync(p) && fs.statSync(p).isFile()) return p;
-  }
-  const base = '/opt/pw-browsers';
-  if (!fs.existsSync(base)) return null;
-  for (const d of fs.readdirSync(base)) {
-    const p = path.join(base, d, 'chrome-linux', 'chrome');
-    if (fs.existsSync(p)) return p;
-  }
-  return null;
-}
-
-const MIME = {
-  '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
-  '.ico': 'image/x-icon', '.ttf': 'font/ttf', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg', '.png': 'image/png',
-};
 
 (async () => {
   const exe = findChromium();
-  if (!exe) {
-    console.log('check:scenery — no Chromium found. Skipping.');
-    process.exit(0);
-  }
+  if (!exe) missing('no Chromium found');
 
-  const server = http.createServer((q, r) => {
-    let p = path.join(DIST, decodeURIComponent(q.url.split('?')[0]));
-    if (!fs.existsSync(p) || fs.statSync(p).isDirectory()) p = path.join(DIST, 'index.html');
-    r.writeHead(200, { 'Content-Type': MIME[path.extname(p)] || 'application/octet-stream' });
-    fs.createReadStream(p).pipe(r);
-  });
-  await new Promise((r) => server.listen(PORT, r));
-
+  const server = await serveDist(DIST, PORT);
   const browser = await chromium.launch({ executablePath: exe });
   const page = await browser.newPage({ viewport: { width: 412, height: 900 } });
   const url = `http://localhost:${PORT}/`;
-  await page.goto(url);
-  await page.waitForTimeout(2000);
 
-  const guest = page.locator('text=/CONTINUE AS A GUEST/i').first();
-  if (await guest.count()) {
-    await guest.click();
-    await page.waitForTimeout(1200);
-  }
-  await page.evaluate(() => {
-    const raw = JSON.parse(localStorage.getItem('harf-progress') || '{"state":{},"version":0}');
-    raw.state = { ...raw.state, onboarded: true, goal: 'family', hearts: 5, srs: {}, srsType: {}, completedLessons: {} };
-    localStorage.setItem('harf-progress', JSON.stringify(raw));
-    localStorage.setItem(
-      'harf-settings',
-      JSON.stringify({ state: { soundEnabled: false, hapticsEnabled: false, reducedMotion: true }, version: 0 })
-    );
-  });
-  await page.goto(url);
-  await page.waitForTimeout(2500);
+  const fail = async (msg) => {
+    console.error(`check:scenery — ${msg}`);
+    await browser.close();
+    server.close();
+    process.exit(1);
+  };
+
+  // A bundle that did not load is the failure this check has actually hit, so
+  // say so in those words rather than reporting a missing element downstream.
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+
+  await enterAsGuest(page, url);
 
   // Hide everything above the scenery, so what is measured is the background a
   // paragraph would actually be set on rather than whatever card covers it here.
@@ -122,10 +99,15 @@ const MIME = {
     return true;
   });
   if (!found) {
-    console.error('check:scenery — could not find the background SVG. The scene may have been restructured; update the selector.');
-    await browser.close();
-    server.close();
-    process.exit(1);
+    const syntax = errors.find((e) => /Unexpected token '<'|Failed to fetch|SyntaxError/.test(e));
+    await fail(
+      syntax
+        ? `the app bundle never loaded — ${syntax}\n` +
+            `  This is the base-path failure: the export asks for /<base>/_expo/... and the\n` +
+            `  server is not serving it. lib/serve-dist.js is meant to handle that; check it.`
+        : 'could not find the background SVG. The scene may have been restructured; update the selector.' +
+            (errors.length ? `\n  page errors: ${errors.slice(0, 3).join(' | ')}` : '')
+    );
   }
   await page.waitForTimeout(400);
 
@@ -151,8 +133,6 @@ const MIME = {
       const Lt = L(text[0], text[1], text[2]);
       let worst = Infinity;
       let at = null;
-      let below = 0;
-      const total = c.width * c.height;
       for (let y = 0; y < c.height; y++) {
         for (let x = 0; x < c.width; x++) {
           const i = (y * c.width + x) * 4;
@@ -163,7 +143,7 @@ const MIME = {
           }
         }
       }
-      return { worst, at, total, below };
+      return { worst, at };
     },
     { dataUrl: 'data:image/png;base64,' + shot.toString('base64'), text: TEXT }
   );

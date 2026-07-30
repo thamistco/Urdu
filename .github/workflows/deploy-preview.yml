@@ -118,6 +118,10 @@ jobs:
       # has always promised 6:1 against the cream. Nothing measured it, and it
       # was not true — stacked cloud layers came to 4.47:1, under WCAG AA. This
       # reads the real pixels of the built app, so needs the export too.
+      #
+      # `npm run check:all` runs this whole job locally, reading its steps from
+      # this file, against a build made with the deploy's base path — which is
+      # the difference that made this step pass locally and fail here twice.
       - name: Check the scenery stays behind the text
         run: |
           CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \

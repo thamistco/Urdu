@@ -242,9 +242,14 @@ export function SettingsScreen() {
             <View className="h-px bg-white/5" />
             <Row label="Haptics" hint="Gentle vibration with feedback" value={s.hapticsEnabled} onChange={s.setHaptics} />
             <View className="h-px bg-white/5" />
+            {/* The hint says whose voice it is. "Hear the English as well as
+                the Urdu" did not, and the surprise was the whole problem: the
+                Urdu is a recorded voice, the English is whatever the phone or
+                browser has, so a word arrived in two different voices with no
+                warning that the second one was coming. */}
             <Row
-              label="Say the meaning too"
-              hint="After a correct answer, hear the English as well as the Urdu"
+              label="Read the meaning in English"
+              hint="After a correct answer, your device's English voice reads the translation. Off by default — the Urdu is a recorded voice, this one is not."
               value={s.speakMeaning}
               onChange={s.setSpeakMeaning}
             />
