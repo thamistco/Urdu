@@ -75,7 +75,14 @@ export const GRAMMAR: GrammarConcept[] = [
         ['یہ', 'he/she/this (near)'],
         ['وہ', 'he/she/that (far)'],
       ],
-      rowsRoman: [['main', ''], ['ham', ''], ['aap', ''], ['tum', ''], ['ye', ''], ['wo', '']],
+      rowsRoman: [
+        ['main', ''],
+        ['ham', ''],
+        ['aap', ''],
+        ['tum', ''],
+        ['ye', ''],
+        ['wo', ''],
+      ],
     },
     examples: [
       { urdu: 'میں طالبِ علم ہوں', roman: 'main taalib-e-ilm hoon', meaning: 'I am a student' },
@@ -282,9 +289,9 @@ export const GRAMMAR: GrammarConcept[] = [
         ['Masculine plural', 'کے', 'علی کے بیٹے'],
       ],
       rowsRoman: [
-        ['', 'ka', 'Ali ka beṭa (Ali\'s son)'],
-        ['', 'ki', 'Ali ki beṭi (Ali\'s daughter)'],
-        ['', 'ke', 'Ali ke beṭe (Ali\'s sons)'],
+        ['', 'ka', "Ali ka beṭa (Ali's son)"],
+        ['', 'ki', "Ali ki beṭi (Ali's daughter)"],
+        ['', 'ke', "Ali ke beṭe (Ali's sons)"],
       ],
     },
     examples: [
@@ -425,8 +432,8 @@ export const GRAMMAR: GrammarConcept[] = [
       ],
       rowsRoman: [
         ['nahiñ', '', 'main nahiñ jaaoon ga (I will not go)'],
-        ['mat', '', 'mat bolo (don\'t speak)'],
-        ['na', '', 'shaayad wo na aaye (perhaps he won\'t come)'],
+        ['mat', '', "mat bolo (don't speak)"],
+        ['na', '', "shaayad wo na aaye (perhaps he won't come)"],
       ],
     },
     examples: [
@@ -476,7 +483,15 @@ export const GRAMMAR: GrammarConcept[] = [
         ['کیسے', 'how'],
         ['کتنا', 'how much'],
       ],
-      rowsRoman: [['kaun', ''], ['kya', ''], ['kahaañ', ''], ['kab', ''], ['kyoñ', ''], ['kaise', ''], ['kitna', '']],
+      rowsRoman: [
+        ['kaun', ''],
+        ['kya', ''],
+        ['kahaañ', ''],
+        ['kab', ''],
+        ['kyoñ', ''],
+        ['kaise', ''],
+        ['kitna', ''],
+      ],
     },
     examples: [
       { urdu: 'آپ کا نام کیا ہے؟', roman: 'aap ka naam kya hai?', meaning: 'What is your name?' },
@@ -524,12 +539,27 @@ export const GRAMMAR: GrammarConcept[] = [
         ['اس لیے', 'therefore'],
         ['کہ', 'that'],
       ],
-      rowsRoman: [['aur', ''], ['lekin / magar', ''], ['ya', ''], ['kyoñke', ''], ['is liye', ''], ['ke', '']],
+      rowsRoman: [
+        ['aur', ''],
+        ['lekin / magar', ''],
+        ['ya', ''],
+        ['kyoñke', ''],
+        ['is liye', ''],
+        ['ke', ''],
+      ],
     },
     examples: [
-      { urdu: 'میں تھکا ہوں کیونکہ میں نے کام کیا', roman: 'main thaka hoon kyoñke main ne kaam kiya', meaning: 'I am tired because I worked' },
+      {
+        urdu: 'میں تھکا ہوں کیونکہ میں نے کام کیا',
+        roman: 'main thaka hoon kyoñke main ne kaam kiya',
+        meaning: 'I am tired because I worked',
+      },
       { urdu: 'چائے یا کافی؟', roman: 'chai ya coffee?', meaning: 'Tea or coffee?' },
-      { urdu: 'وہ محنتی ہے لیکن خاموش ہے', roman: 'wo mehnati hai lekin khaamosh hai', meaning: 'He is hard-working but quiet' },
+      {
+        urdu: 'وہ محنتی ہے لیکن خاموش ہے',
+        roman: 'wo mehnati hai lekin khaamosh hai',
+        meaning: 'He is hard-working but quiet',
+      },
     ],
     drills: [
       {
@@ -840,7 +870,11 @@ export const GRAMMAR: GrammarConcept[] = [
     },
     examples: [
       { urdu: 'چائے کافی سے سستی ہے', roman: 'chai coffee se sasti hai', meaning: 'Tea is cheaper than coffee' },
-      { urdu: 'یہ کتاب سب سے دلچسپ ہے', roman: 'ye kitaab sab se dilchasp hai', meaning: 'This book is the most interesting' },
+      {
+        urdu: 'یہ کتاب سب سے دلچسپ ہے',
+        roman: 'ye kitaab sab se dilchasp hai',
+        meaning: 'This book is the most interesting',
+      },
     ],
     drills: [
       {
@@ -987,9 +1021,21 @@ export const GRAMMAR: GrammarConcept[] = [
       ],
     },
     examples: [
-      { urdu: 'جو کتاب میز پر ہے، وہ میری ہے', roman: 'jo kitaab mez par hai, wo meri hai', meaning: 'The book that is on the table is mine' },
-      { urdu: 'جب بارش ہوتی ہے، تب ٹھنڈ ہوتی ہے', roman: 'jab baarish hoti hai, tab ṭhanḍ hoti hai', meaning: 'When it rains, it gets cold' },
-      { urdu: 'جہاں چاہ، وہاں راہ', roman: 'jahaañ chaah, wahaañ raah', meaning: 'Where there is a will, there is a way' },
+      {
+        urdu: 'جو کتاب میز پر ہے، وہ میری ہے',
+        roman: 'jo kitaab mez par hai, wo meri hai',
+        meaning: 'The book that is on the table is mine',
+      },
+      {
+        urdu: 'جب بارش ہوتی ہے، تب ٹھنڈ ہوتی ہے',
+        roman: 'jab baarish hoti hai, tab ṭhanḍ hoti hai',
+        meaning: 'When it rains, it gets cold',
+      },
+      {
+        urdu: 'جہاں چاہ، وہاں راہ',
+        roman: 'jahaañ chaah, wahaañ raah',
+        meaning: 'Where there is a will, there is a way',
+      },
     ],
     drills: [
       {
@@ -1066,8 +1112,16 @@ export const GRAMMAR: GrammarConcept[] = [
     ],
     examples: [
       { urdu: 'دروازہ کھولا گیا', roman: 'darwaaza khola gaya', meaning: 'The door was opened' },
-      { urdu: 'یہ کتاب اردو میں لکھی گئی', roman: 'ye kitaab urdu meñ likhi gayi', meaning: 'This book was written in Urdu' },
-      { urdu: 'کھانا تیار کیا جا رہا ہے', roman: 'khaana tayyaar kiya ja raha hai', meaning: 'The food is being prepared' },
+      {
+        urdu: 'یہ کتاب اردو میں لکھی گئی',
+        roman: 'ye kitaab urdu meñ likhi gayi',
+        meaning: 'This book was written in Urdu',
+      },
+      {
+        urdu: 'کھانا تیار کیا جا رہا ہے',
+        roman: 'khaana tayyaar kiya ja raha hai',
+        meaning: 'The food is being prepared',
+      },
     ],
     drills: [
       {
@@ -1107,9 +1161,17 @@ export const GRAMMAR: GrammarConcept[] = [
       ],
     },
     examples: [
-      { urdu: 'وہ بچوں کو اردو پڑھاتی ہے', roman: 'wo bachchoñ ko urdu paṛhaati hai', meaning: 'She teaches Urdu to the children' },
+      {
+        urdu: 'وہ بچوں کو اردو پڑھاتی ہے',
+        roman: 'wo bachchoñ ko urdu paṛhaati hai',
+        meaning: 'She teaches Urdu to the children',
+      },
       { urdu: 'میں نے کپڑے سلوائے', roman: 'main ne kapṛe silwaaye', meaning: 'I had the clothes stitched' },
-      { urdu: 'ماں نے بچے کو کھانا کھلایا', roman: 'maañ ne bachche ko khaana khilaaya', meaning: 'The mother fed the child' },
+      {
+        urdu: 'ماں نے بچے کو کھانا کھلایا',
+        roman: 'maañ ne bachche ko khaana khilaaya',
+        meaning: 'The mother fed the child',
+      },
     ],
     drills: [
       {

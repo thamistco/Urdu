@@ -245,7 +245,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
  */
 function writeManifest() {
   const ids = fs.existsSync(OUT_DIR)
-    ? fs.readdirSync(OUT_DIR).filter((f) => f.endsWith('.mp3')).map((f) => f.replace(/\.mp3$/, '')).sort()
+    ? fs
+        .readdirSync(OUT_DIR)
+        .filter((f) => f.endsWith('.mp3'))
+        .map((f) => f.replace(/\.mp3$/, ''))
+        .sort()
     : [];
   const entries = ids.map((id) => `  '${id}': require('../../assets/voice/${id}.mp3'),`).join('\n');
   fs.writeFileSync(
@@ -304,8 +308,7 @@ function writeManifest() {
   );
   for (const s of stale.slice(0, 8)) {
     const was = ledger[s.id];
-    const what =
-      was.text !== s.text ? `“${was.text}” \u2192 “${s.text}”` : `${was.voice} \u2192 ${s.voice}`;
+    const what = was.text !== s.text ? `“${was.text}” \u2192 “${s.text}”` : `${was.voice} \u2192 ${s.voice}`;
     console.log(`    stale: ${s.id} — ${what}`);
   }
   if (!todo.length) {
@@ -339,9 +342,7 @@ function writeManifest() {
         if (!problem) break;
         retried++;
         const next = attempts[i + 1];
-        console.log(
-          `  ↻ ${id} came back ${problem}` + (next && next !== actual ? ` — falling back to ${next}` : '')
-        );
+        console.log(`  ↻ ${id} came back ${problem}` + (next && next !== actual ? ` — falling back to ${next}` : ''));
         await sleep(400);
       }
       if (problem) throw new Error(`still ${problem} after ${attempts.length} attempts`);
@@ -374,7 +375,8 @@ function writeManifest() {
   const total = writeManifest();
   console.log(
     `\n${ok} generated · ${failed.length} failed · ${total} clips on disk` +
-      (retried ? ` · ${retried} silent responses retried` : '') + '.'
+      (retried ? ` · ${retried} silent responses retried` : '') +
+      '.'
   );
   if (fellBack.length) {
     console.log(`\n${fellBack.length} needed the Wavenet fallback (Chirp3-HD will not speak text this short):`);

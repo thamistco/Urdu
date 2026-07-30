@@ -87,10 +87,10 @@ function LessonNode({
           state === 'done'
             ? 'Completed'
             : state === 'skipped'
-            ? 'Skipped as already known, tap to try it anyway'
-            : state === 'current'
-            ? 'Start this lesson'
-            : 'Locked, tap to jump ahead'
+              ? 'Skipped as already known, tap to try it anyway'
+              : state === 'current'
+                ? 'Start this lesson'
+                : 'Locked, tap to jump ahead'
         }`}
         style={({ pressed }) => ({
           transform: [{ scale: pressed ? 0.94 : 1 }],
@@ -106,8 +106,8 @@ function LessonNode({
               state === 'current'
                 ? ring
                 : state === 'skipped'
-                ? withAlpha(palette.jade, 0.4)
-                : withAlpha(palette.white, 0.12),
+                  ? withAlpha(palette.jade, 0.4)
+                  : withAlpha(palette.white, 0.12),
             borderStyle: state === 'skipped' ? 'dashed' : 'solid',
           }}
         >
@@ -253,9 +253,7 @@ export function HomeScreen() {
             <View className="mb-4 flex-row items-start justify-between">
               <View className="flex-1 pr-3">
                 <Eyebrow style={{ color: palette.gold }}>Harf · حرف</Eyebrow>
-                <Display className="mt-1 text-3xl leading-9">
-                  {GREETING[store.goal ?? 'curious']}
-                </Display>
+                <Display className="mt-1 text-3xl leading-9">{GREETING[store.goal ?? 'curious']}</Display>
               </View>
               <View className="flex-row items-center gap-2">
                 <StatChip
@@ -299,7 +297,10 @@ export function HomeScreen() {
                 >
                   <View
                     className="h-8 w-8 items-center justify-center rounded-full border"
-                    style={{ borderColor: withAlpha(palette.rose, 0.4), backgroundColor: withAlpha(palette.rose, 0.12) }}
+                    style={{
+                      borderColor: withAlpha(palette.rose, 0.4),
+                      backgroundColor: withAlpha(palette.rose, 0.12),
+                    }}
                   >
                     <CycleMark size={16} color={palette.roseLight} />
                   </View>
@@ -374,9 +375,7 @@ export function HomeScreen() {
                   <Bold className="mt-0.5 text-[15px]">
                     {dueNow} {dueNow === 1 ? 'thing' : 'things'} to bring back
                   </Bold>
-                  <Txt className="text-xs text-paper/55">
-                    Reviewed now, they stick; left much longer, they go.
-                  </Txt>
+                  <Txt className="text-xs text-paper/55">Reviewed now, they stick; left much longer, they go.</Txt>
                 </View>
                 <Txt style={{ color: palette.jade, fontSize: 20 }}>›</Txt>
               </View>
@@ -424,12 +423,10 @@ export function HomeScreen() {
                     {finished
                       ? `All ${order.length} lessons done`
                       : store.completedLessons[order[0]] || store.skippedLessons[order[0]]
-                      ? 'Continue'
-                      : 'Start here'}
+                        ? 'Continue'
+                        : 'Start here'}
                   </Eyebrow>
-                  <Bold className="mt-0.5 text-[15px]">
-                    {finished ? 'Keep it warm' : currentLesson.title}
-                  </Bold>
+                  <Bold className="mt-0.5 text-[15px]">{finished ? 'Keep it warm' : currentLesson.title}</Bold>
                   <Txt className="text-xs text-paper/55">
                     {finished
                       ? "You've made it through the whole course. Daily review keeps it fresh."
@@ -451,7 +448,14 @@ export function HomeScreen() {
               </Eyebrow>
               <View className="flex-row items-center justify-between gap-2">
                 <View className="flex-1">
-                  <Lexeme urdu={word.urdu} roman={word.roman} track={track} size={28} color={palette.ink} align="left" />
+                  <Lexeme
+                    urdu={word.urdu}
+                    roman={word.roman}
+                    track={track}
+                    size={28}
+                    color={palette.ink}
+                    align="left"
+                  />
                   <Txt style={{ color: palette.ink }} className="text-xs opacity-60">
                     {glossOf(word)}
                   </Txt>
@@ -481,17 +485,17 @@ export function HomeScreen() {
 
         {/* jump-ahead hint — pointless once there is nothing left to jump to */}
         {!finished && (
-        <Reveal delay={150}>
-          <View
-            className="mb-1 flex-row items-center gap-2 rounded-xl px-3 py-2"
-            style={{ backgroundColor: withAlpha(palette.gold, 0.08) }}
-          >
-            <Illustration name="sparkle" tile={false} size={15} />
-            <Txt className="flex-1 text-[11px] text-paper/55">
-              Tap any lesson to jump ahead. Locked ones unlock as you pass them.
-            </Txt>
-          </View>
-        </Reveal>
+          <Reveal delay={150}>
+            <View
+              className="mb-1 flex-row items-center gap-2 rounded-xl px-3 py-2"
+              style={{ backgroundColor: withAlpha(palette.gold, 0.08) }}
+            >
+              <Illustration name="sparkle" tile={false} size={15} />
+              <Txt className="flex-1 text-[11px] text-paper/55">
+                Tap any lesson to jump ahead. Locked ones unlock as you pass them.
+              </Txt>
+            </View>
+          </Reveal>
         )}
 
         {/* the path, grouped into course stages */}
@@ -519,7 +523,11 @@ export function HomeScreen() {
                   <View className="mb-1 mt-7 flex-row items-center gap-3">
                     <View
                       className="rounded-lg px-2.5 py-1"
-                      style={{ backgroundColor: withAlpha(meta.color, 0.18), borderWidth: 1, borderColor: withAlpha(meta.color, 0.4) }}
+                      style={{
+                        backgroundColor: withAlpha(meta.color, 0.18),
+                        borderWidth: 1,
+                        borderColor: withAlpha(meta.color, 0.4),
+                      }}
                     >
                       <Bold style={{ color: meta.color }} className="text-xs">
                         {meta.tag}
@@ -534,53 +542,50 @@ export function HomeScreen() {
                     <Txt className="text-[11px] text-paper/45">
                       {done}/{total}
                     </Txt>
-                    <Txt style={{ color: withAlpha(palette.cream, 0.5), fontSize: 15 }}>
-                      {isOpen(lvl) ? '⌃' : '⌄'}
-                    </Txt>
+                    <Txt style={{ color: withAlpha(palette.cream, 0.5), fontSize: 15 }}>{isOpen(lvl) ? '⌃' : '⌄'}</Txt>
                   </View>
                   <View className="mb-1 mt-2">
                     <ProgressBar progress={total ? done / total : 0} color={meta.color} height={6} spring={false} />
                   </View>
                   {!isOpen(lvl) && (
-                    <Txt className="mt-2 text-[11px] text-paper/40">
-                      {levelUnits.length} units · tap to open
-                    </Txt>
+                    <Txt className="mt-2 text-[11px] text-paper/40">{levelUnits.length} units · tap to open</Txt>
                   )}
                 </Pressable>
               </Reveal>
-              {isOpen(lvl) && levelUnits.map((unit, ui) => (
-          <Reveal key={unit.id} delay={Math.min(120 + ui * 30, 300)}>
-            <View className="mb-2 mt-4 flex-row items-center gap-3">
-              <View className="h-2 w-2 rounded-full" style={{ backgroundColor: unit.color }} />
-              <View className="flex-1">
-                <Eyebrow style={{ color: unit.color }}>{unit.title}</Eyebrow>
-                <Txt className="text-xs text-paper/45">{unit.subtitle}</Txt>
-              </View>
-            </View>
-            <View className="mt-3 pl-2">
-              {unit.lessons.map((lesson, li) => {
-                const st = lessonState(lesson.id, store.completedLessons, store.skippedLessons, order);
-                const offset = [0, 28, 44, 28][li % 4];
-                const node = (
-                  <LessonNode
-                    key={lesson.id}
-                    lesson={lesson}
-                    color={unit.color}
-                    state={st}
-                    offset={offset}
-                    onPress={() => openLesson(lesson, st)}
-                  />
-                );
-                if (lesson.id !== currentId) return node;
-                return (
-                  <View key={lesson.id} ref={currentNode} collapsable={false}>
-                    {node}
-                  </View>
-                );
-              })}
-            </View>
-          </Reveal>
-              ))}
+              {isOpen(lvl) &&
+                levelUnits.map((unit, ui) => (
+                  <Reveal key={unit.id} delay={Math.min(120 + ui * 30, 300)}>
+                    <View className="mb-2 mt-4 flex-row items-center gap-3">
+                      <View className="h-2 w-2 rounded-full" style={{ backgroundColor: unit.color }} />
+                      <View className="flex-1">
+                        <Eyebrow style={{ color: unit.color }}>{unit.title}</Eyebrow>
+                        <Txt className="text-xs text-paper/45">{unit.subtitle}</Txt>
+                      </View>
+                    </View>
+                    <View className="mt-3 pl-2">
+                      {unit.lessons.map((lesson, li) => {
+                        const st = lessonState(lesson.id, store.completedLessons, store.skippedLessons, order);
+                        const offset = [0, 28, 44, 28][li % 4];
+                        const node = (
+                          <LessonNode
+                            key={lesson.id}
+                            lesson={lesson}
+                            color={unit.color}
+                            state={st}
+                            offset={offset}
+                            onPress={() => openLesson(lesson, st)}
+                          />
+                        );
+                        if (lesson.id !== currentId) return node;
+                        return (
+                          <View key={lesson.id} ref={currentNode} collapsable={false}>
+                            {node}
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </Reveal>
+                ))}
             </View>
           );
         })}

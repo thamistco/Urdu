@@ -115,9 +115,21 @@ function floatToWav(float32) {
 
 // ---- notes (C major pentatonic: C D E G A) --------------------------------
 const N = {
-  E3: 164.81, G3: 196.0, A3: 220.0, C4: 261.63, D4: 293.66, E4: 329.63,
-  G4: 392.0, A4: 440.0, C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99,
-  A5: 880.0, C6: 1046.5, D6: 1174.66,
+  E3: 164.81,
+  G3: 196.0,
+  A3: 220.0,
+  C4: 261.63,
+  D4: 293.66,
+  E4: 329.63,
+  G4: 392.0,
+  A4: 440.0,
+  C5: 523.25,
+  D5: 587.33,
+  E5: 659.25,
+  G5: 783.99,
+  A5: 880.0,
+  C6: 1046.5,
+  D6: 1174.66,
 };
 
 const soft = { attack: 0.03, release: 0.18, decay: 1.9 };
@@ -139,7 +151,17 @@ const SOUNDS = {
   // not announced.
   incorrect: renderNotes(
     [
-      { freq: N.A3, glideTo: N.G3, start: 0.0, dur: 0.42, gain: 0.5, attack: 0.02, release: 0.2, decay: 2.6, vibratoDepth: 0.002 },
+      {
+        freq: N.A3,
+        glideTo: N.G3,
+        start: 0.0,
+        dur: 0.42,
+        gain: 0.5,
+        attack: 0.02,
+        release: 0.2,
+        decay: 2.6,
+        vibratoDepth: 0.002,
+      },
     ],
     { tail: 0.35, echo: 0.16, echoMs: 110, level: 0.55 }
   ),

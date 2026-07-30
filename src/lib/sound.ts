@@ -62,8 +62,6 @@ export async function play(name: SoundName) {
 }
 
 export async function unloadSound() {
-  await Promise.all(
-    Object.values(players).map((s) => s?.unloadAsync().catch(() => {}))
-  );
+  await Promise.all(Object.values(players).map((s) => s?.unloadAsync().catch(() => {})));
   ready = false;
 }

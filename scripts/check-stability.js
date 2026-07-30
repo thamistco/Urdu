@@ -36,8 +36,15 @@ if (!fs.existsSync(path.join(DIST, 'index.html'))) {
 }
 
 const MIME = {
-  '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
-  '.ico': 'image/x-icon', '.ttf': 'font/ttf', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg', '.png': 'image/png',
+  '.html': 'text/html',
+  '.js': 'text/javascript',
+  '.css': 'text/css',
+  '.json': 'application/json',
+  '.ico': 'image/x-icon',
+  '.ttf': 'font/ttf',
+  '.woff2': 'font/woff2',
+  '.mp3': 'audio/mpeg',
+  '.png': 'image/png',
 };
 
 /**
@@ -76,21 +83,33 @@ async function questionText(page) {
   return page.evaluate(() => {
     const t = document.body.innerText;
     // cut at the feedback banner, which only exists after answering
-    const cut = t.search(/Beautifully done|Not quite|Perfectly built|Exactly right|That is the shape|Flawless board|Solved with|From memory|The word is|Correct order/);
-    return (cut > 0 ? t.slice(0, cut) : t)
-      .split('\n')
-      .map((s) => s.trim())
-      .filter(Boolean)
-      // the transliteration under each option is revealed by answering, and the
-      // speaker's hint likewise — those are meant to change
-      .join(' | ');
+    const cut = t.search(
+      /Beautifully done|Not quite|Perfectly built|Exactly right|That is the shape|Flawless board|Solved with|From memory|The word is|Correct order/
+    );
+    return (
+      (cut > 0 ? t.slice(0, cut) : t)
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean)
+        // the transliteration under each option is revealed by answering, and the
+        // speaker's hint likewise — those are meant to change
+        .join(' | ')
+    );
   });
 }
 
 /** Strip the parts that are *supposed* to appear once answered. */
-const core = (s) => s.replace(/Tap to hear[^|]*/g, 'Tap to hear').replace(/\s+/g, ' ').trim();
+const core = (s) =>
+  s
+    .replace(/Tap to hear[^|]*/g, 'Tap to hear')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-const tokens = (s) => core(s).split('|').map((x) => x.trim()).filter(Boolean);
+const tokens = (s) =>
+  core(s)
+    .split('|')
+    .map((x) => x.trim())
+    .filter(Boolean);
 
 /**
  * Answering is allowed to *add* to the screen — the transliteration appears
@@ -133,15 +152,28 @@ const checked = [];
       ([t]) => {
         const raw = JSON.parse(localStorage.getItem('harf-progress') || '{"state":{},"version":0}');
         raw.state = {
-          ...raw.state, onboarded: true, goal: 'family', level: 0, hearts: 99, gems: 9000,
-          totalXp: 400, streak: 2, completedLessons: { 'l-1': true }, srs: {}, srsType: {},
-          dailyGoalId: 'steady', todayXp: 0,
+          ...raw.state,
+          onboarded: true,
+          goal: 'family',
+          level: 0,
+          hearts: 99,
+          gems: 9000,
+          totalXp: 400,
+          streak: 2,
+          completedLessons: { 'l-1': true },
+          srs: {},
+          srsType: {},
+          dailyGoalId: 'steady',
+          todayXp: 0,
         };
         localStorage.setItem('harf-progress', JSON.stringify(raw));
-        localStorage.setItem('harf-settings', JSON.stringify({
-          state: { soundEnabled: false, hapticsEnabled: false, showRoman: true, reducedMotion: true, track: t },
-          version: 0,
-        }));
+        localStorage.setItem(
+          'harf-settings',
+          JSON.stringify({
+            state: { soundEnabled: false, hapticsEnabled: false, showRoman: true, reducedMotion: true, track: t },
+            version: 0,
+          })
+        );
       },
       [track]
     );
@@ -154,9 +186,15 @@ const checked = [];
     const btns = page.locator('[role="button"]');
     const n = await btns.count();
     for (let k = 0; k < n; k++) {
-      const b = await btns.nth(k).boundingBox().catch(() => null);
+      const b = await btns
+        .nth(k)
+        .boundingBox()
+        .catch(() => null);
       if (b && b.y > 150 && b.y < 800 && b.width > 110 && b.height > 40) {
-        await btns.nth(k).click({ force: true }).catch(() => {});
+        await btns
+          .nth(k)
+          .click({ force: true })
+          .catch(() => {});
         return true;
       }
     }
@@ -174,9 +212,15 @@ const checked = [];
   async function tapOnScreen(selector) {
     const items = page.locator(selector);
     for (let k = 0; k < (await items.count()); k++) {
-      const b = await items.nth(k).boundingBox().catch(() => null);
+      const b = await items
+        .nth(k)
+        .boundingBox()
+        .catch(() => null);
       if (b && b.y >= 0 && b.y < 880 && b.width > 0 && b.height > 0) {
-        await items.nth(k).click({ force: true }).catch(() => {});
+        await items
+          .nth(k)
+          .click({ force: true })
+          .catch(() => {});
         return true;
       }
     }
@@ -191,7 +235,10 @@ const checked = [];
   async function openPracticeTab() {
     const items = page.locator('text=/^Practice$/');
     for (let k = 0; k < (await items.count()); k++) {
-      const b = await items.nth(k).boundingBox().catch(() => null);
+      const b = await items
+        .nth(k)
+        .boundingBox()
+        .catch(() => null);
       if (b && b.y > 780) {
         await items.nth(k).click({ force: true });
         await page.waitForTimeout(1400);
@@ -204,7 +251,10 @@ const checked = [];
   async function advance() {
     const conts = page.locator('text=/CONTINUE/i');
     for (let k = 0; k < (await conts.count()); k++) {
-      const b = await conts.nth(k).boundingBox().catch(() => null);
+      const b = await conts
+        .nth(k)
+        .boundingBox()
+        .catch(() => null);
       // only the banner's CONTINUE, at the foot — the Learn screen stays mounted
       // behind the lesson and has its own "Continue" hero card
       if (b && b.y > 780) {
@@ -222,7 +272,10 @@ const checked = [];
       const t = await page.evaluate(() => document.body.innerText);
       if (/Out of hearts/.test(t)) {
         const r = page.locator('text=/REFILL/i').first();
-        if (await r.count()) { await r.click({ force: true }); await page.waitForTimeout(900); }
+        if (await r.count()) {
+          await r.click({ force: true });
+          await page.waitForTimeout(900);
+        }
         continue;
       }
       if (/Lesson complete|You're done|Keep it warm/i.test(t)) break;
@@ -237,7 +290,11 @@ const checked = [];
         continue;
       }
       if (/draw over the grey letter|Got it/.test(t)) {
-        if (await tapOnScreen('text=/^Got it$/')) { await page.waitForTimeout(700); await advance(); continue; }
+        if (await tapOnScreen('text=/^Got it$/')) {
+          await page.waitForTimeout(700);
+          await advance();
+          continue;
+        }
       }
 
       const before = await questionText(page);

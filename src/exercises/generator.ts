@@ -9,8 +9,8 @@ import { cueOf } from '../data/art';
 import { GLYPH_MASKS } from '../data/glyphMasks';
 import { Exercise, ItemRef } from './types';
 
-const rand = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
-const shuffle = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
+const rand = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+const shuffle = <T>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
 
 function sample<T>(pool: T[], n: number, exclude: (t: T) => boolean): T[] {
   return shuffle(pool.filter((t) => !exclude(t))).slice(0, n);
@@ -26,8 +26,7 @@ const PHRASE_WORDS: Word[] = PHRASES.map((p) => ({
   topic: 'phrases',
 }));
 
-const getAnyWord = (id: string): Word | undefined =>
-  getWord(id) ?? PHRASE_WORDS.find((w) => w.id === id);
+const getAnyWord = (id: string): Word | undefined => getWord(id) ?? PHRASE_WORDS.find((w) => w.id === id);
 
 /** Distractors for a review item. Phrases are not in WORDS, so `wordsByTopic`
  *  returns nothing for them and they would be offered against random nouns. */
@@ -62,11 +61,7 @@ function letterExercise(letter: Letter): Exercise {
  * words in the vocabulary share an English gloss, and a question with two right
  * answers is worse than no question.
  */
-function distractorsFor(
-  word: Word,
-  pool: Word[],
-  { distinctCue = false, distinctMeaning = false } = {}
-): Word[] {
+function distractorsFor(word: Word, pool: Word[], { distinctCue = false, distinctMeaning = false } = {}): Word[] {
   const chosen: Word[] = [];
   const usedCues = new Set<string>([cueOf(word)]);
   const usedMeanings = new Set<string>([word.meaning.toLowerCase()]);
@@ -87,11 +82,10 @@ function distractorsFor(
       chosen.push(c);
     }
   };
-  consider(pool);            // prefer same-topic distractors
+  consider(pool); // prefer same-topic distractors
   if (chosen.length < 3) consider(WORDS); // widen if the topic is too uniform
   return chosen;
 }
-
 
 /**
  * How much the learner has to supply themselves.
@@ -185,11 +179,7 @@ function sentenceExercise(sentence: Sentence, track: LearnTrack): Exercise | und
 
 /** The same, for a grammar drill: its options are inflected forms, and the
  *  Roman track needs all four of them transliterated or none. */
-function grammarDrillExercise(
-  concept: GrammarConcept,
-  drill: GrammarDrill,
-  track: LearnTrack
-): Exercise | undefined {
+function grammarDrillExercise(concept: GrammarConcept, drill: GrammarDrill, track: LearnTrack): Exercise | undefined {
   if (track !== 'roman') return { kind: 'grammarDrill', concept, drill };
   const romanOptions = romanAll(drill.options);
   if (!romanOptions) return undefined;
@@ -397,11 +387,15 @@ function fallbackReviewRefs(n: number, withLetters = true, lessonId?: string): I
   const letterPool = taught && taught.letters.length ? taught.letters : LETTERS.slice(0, 20).map((l) => l.id);
 
   if (!withLetters) {
-    return shuffle(wordPool).slice(0, n).map((id) => ({ id, type: 'word' }));
+    return shuffle(wordPool)
+      .slice(0, n)
+      .map((id) => ({ id, type: 'word' }));
   }
-  const letters: ItemRef[] = shuffle(letterPool).slice(0, Math.ceil(n / 2))
+  const letters: ItemRef[] = shuffle(letterPool)
+    .slice(0, Math.ceil(n / 2))
     .map((id) => ({ id, type: 'letter' }));
-  const words: ItemRef[] = shuffle(wordPool).slice(0, Math.floor(n / 2))
+  const words: ItemRef[] = shuffle(wordPool)
+    .slice(0, Math.floor(n / 2))
     .map((id) => ({ id, type: 'word' }));
   return shuffle([...letters, ...words]);
 }

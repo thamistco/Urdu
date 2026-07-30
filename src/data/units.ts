@@ -16,16 +16,7 @@ import type { Level } from './words';
 import type { LearnTrack } from '../store/useSettingsStore';
 import { palette } from '../theme';
 
-
-export type LessonKind =
-  | 'letters'
-  | 'vocab'
-  | 'phrases'
-  | 'grammar'
-  | 'sentences'
-  | 'reading'
-  | 'dialogue'
-  | 'review';
+export type LessonKind = 'letters' | 'vocab' | 'phrases' | 'grammar' | 'sentences' | 'reading' | 'dialogue' | 'review';
 
 export type Lesson = {
   id: string;
@@ -81,40 +72,99 @@ const uid = (p: string) => `${p}-${++n}`;
 // A vocabulary lesson needs room for its closing run — recall, build, type and
 // the matching board — on top of the words it introduces; see the generator.
 const V = (topic: string, title: string, subtitle: string, xp = 18, size = 9): Lesson => ({
-  id: uid('v'), title, subtitle, icon: '✨', kind: 'vocab', topic, xp, size,
+  id: uid('v'),
+  title,
+  subtitle,
+  icon: '✨',
+  kind: 'vocab',
+  topic,
+  xp,
+  size,
 });
 const L = (group: number, title: string, subtitle: string, xp = 20, size = 7): Lesson => ({
-  id: uid('l'), title, subtitle, icon: '🔤', kind: 'letters', letterIds: lettersOfGroup(group), xp, size,
+  id: uid('l'),
+  title,
+  subtitle,
+  icon: '🔤',
+  kind: 'letters',
+  letterIds: lettersOfGroup(group),
+  xp,
+  size,
 });
 const G = (conceptId: string, title: string, subtitle: string, xp = 25, size = 6): Lesson => ({
-  id: uid('g'), title, subtitle, icon: '📐', kind: 'grammar', conceptId, xp, size,
+  id: uid('g'),
+  title,
+  subtitle,
+  icon: '📐',
+  kind: 'grammar',
+  conceptId,
+  xp,
+  size,
 });
 const S = (level: Level, title: string, subtitle: string, xp = 20, size = 5): Lesson => ({
-  id: uid('s'), title, subtitle, icon: '🧩', kind: 'sentences', level, xp, size,
+  id: uid('s'),
+  title,
+  subtitle,
+  icon: '🧩',
+  kind: 'sentences',
+  level,
+  xp,
+  size,
 });
 const R = (passageId: string, title: string, subtitle: string, xp = 25, size = 1): Lesson => ({
-  id: uid('r'), title, subtitle, icon: '📖', kind: 'reading', passageId, xp, size,
+  id: uid('r'),
+  title,
+  subtitle,
+  icon: '📖',
+  kind: 'reading',
+  passageId,
+  xp,
+  size,
 });
 const D = (dialogueId: string, title: string, subtitle: string, xp = 25, size = 1): Lesson => ({
-  id: uid('d'), title, subtitle, icon: '💬', kind: 'dialogue', dialogueId, xp, size,
+  id: uid('d'),
+  title,
+  subtitle,
+  icon: '💬',
+  kind: 'dialogue',
+  dialogueId,
+  xp,
+  size,
 });
 const P = (title: string, subtitle: string, xp = 20, size = 6): Lesson => ({
-  id: uid('p'), title, subtitle, icon: '💬', kind: 'phrases', xp, size,
+  id: uid('p'),
+  title,
+  subtitle,
+  icon: '💬',
+  kind: 'phrases',
+  xp,
+  size,
 });
 const REV = (title = 'Unit review', subtitle = 'Mixed practice', xp = 30, size = 9): Lesson => ({
-  id: uid('rev'), title, subtitle, icon: '🌙', kind: 'review', xp, size,
+  id: uid('rev'),
+  title,
+  subtitle,
+  icon: '🌙',
+  kind: 'review',
+  xp,
+  size,
 });
 
 // A rotating set of unit accent colours — warm sunset tones plus one dusty
 // teal for contrast, so a long path of units doesn't read as one flat hue.
 // Deliberately not a violet/lavender: that reads as the same purple the rest
 // of the palette moved away from.
-const GOLD = palette.gold, JADE = palette.jadeLight, ROSE = palette.roseLight, BLUE = palette.accentTeal;
+const GOLD = palette.gold,
+  JADE = palette.jadeLight,
+  ROSE = palette.roseLight,
+  BLUE = palette.accentTeal;
 
 export const UNITS: Unit[] = [
   // ══════════════ BEGINNER ══════════════
   {
-    id: 'u1', level: 'beginner', color: GOLD,
+    id: 'u1',
+    level: 'beginner',
+    color: GOLD,
     title: 'Unit 1 · First Faces',
     subtitle: 'Your first letters and their four positions',
     romanTitle: 'Unit 1 · First Words',
@@ -128,7 +178,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u2', level: 'beginner', color: JADE,
+    id: 'u2',
+    level: 'beginner',
+    color: JADE,
     title: 'Unit 2 · Hooks & Throats',
     subtitle: 'The jeem family, and saying who you are',
     romanTitle: 'Unit 2 · You and Yours',
@@ -143,7 +195,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u3', level: 'beginner', color: ROSE,
+    id: 'u3',
+    level: 'beginner',
+    color: ROSE,
     title: 'Unit 3 · The Non-Joiners',
     subtitle: 'Letters that break the flow',
     romanTitle: 'Unit 3 · At the Table',
@@ -158,7 +212,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u4', level: 'beginner', color: GOLD,
+    id: 'u4',
+    level: 'beginner',
+    color: GOLD,
     title: 'Unit 4 · Teeth & Emphasis',
     subtitle: 'seen, sheen and the heavy letters',
     romanTitle: 'Unit 4 · Counting & Home',
@@ -172,7 +228,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u5', level: 'beginner', color: JADE,
+    id: 'u5',
+    level: 'beginner',
+    color: JADE,
     title: 'Unit 5 · Building Words',
     subtitle: 'kaaf, gaaf and the finishers',
     romanTitle: 'Unit 5 · Out and About',
@@ -183,11 +241,17 @@ export const UNITS: Unit[] = [
       L(7, 'The finishers', 'laam · meem · noon · waaw'),
       L(8, 'The h family', 'the two he’s, hamza and ye'),
       P('Everyday phrases', 'Speak, don’t just read'),
-      { ...REV('Script review', 'Every letter so far', 40, 12), romanTitle: 'Unit review', romanSubtitle: 'Everything so far' },
+      {
+        ...REV('Script review', 'Every letter so far', 40, 12),
+        romanTitle: 'Unit review',
+        romanSubtitle: 'Everything so far',
+      },
     ],
   },
   {
-    id: 'u6', level: 'beginner', color: ROSE,
+    id: 'u6',
+    level: 'beginner',
+    color: ROSE,
     title: 'Unit 6 · Your First Readings',
     subtitle: 'Whole sentences, and your first pages of Urdu',
     lessons: [
@@ -198,13 +262,18 @@ export const UNITS: Unit[] = [
       D('d-1', 'Talk: Meeting someone', 'Hello, and your name?'),
       R('r-7', 'Reading: Colours around me', 'Naming what you see'),
       D('d-2', 'Talk: Tea or coffee?', 'Being offered something'),
-      { ...REV('Beginner review', 'Script, words and sentences', 40, 12), romanSubtitle: 'Words, grammar and sentences' },
+      {
+        ...REV('Beginner review', 'Script, words and sentences', 40, 12),
+        romanSubtitle: 'Words, grammar and sentences',
+      },
     ],
   },
 
   // ══════════════ ELEMENTARY ══════════════
   {
-    id: 'u7', level: 'elementary', color: JADE,
+    id: 'u7',
+    level: 'elementary',
+    color: JADE,
     title: 'Unit 7 · You & Your Body',
     subtitle: 'Describe yourself and how you feel',
     lessons: [
@@ -217,7 +286,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u8', level: 'elementary', color: GOLD,
+    id: 'u8',
+    level: 'elementary',
+    color: GOLD,
     title: 'Unit 8 · Home & Family',
     subtitle: 'Your household and relatives',
     lessons: [
@@ -230,7 +301,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u9', level: 'elementary', color: BLUE,
+    id: 'u9',
+    level: 'elementary',
+    color: BLUE,
     title: 'Unit 9 · Kitchen & Bath',
     subtitle: 'The working rooms of the house',
     lessons: [
@@ -245,7 +318,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u10', level: 'elementary', color: ROSE,
+    id: 'u10',
+    level: 'elementary',
+    color: ROSE,
     title: 'Unit 10 · The Living World',
     subtitle: 'Animals, birds and growing things',
     lessons: [
@@ -258,7 +333,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u11', level: 'elementary', color: JADE,
+    id: 'u11',
+    level: 'elementary',
+    color: JADE,
     title: 'Unit 11 · At the Table',
     subtitle: 'Food, drink and the market',
     lessons: [
@@ -272,7 +349,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u12', level: 'elementary', color: GOLD,
+    id: 'u12',
+    level: 'elementary',
+    color: GOLD,
     title: 'Unit 12 · Days & Things',
     subtitle: 'Time, clothes, school and numbers',
     lessons: [
@@ -288,7 +367,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u13', level: 'elementary', color: BLUE,
+    id: 'u13',
+    level: 'elementary',
+    color: BLUE,
     title: 'Unit 13 · People & Play',
     subtitle: 'Friends, childhood and joining ideas',
     lessons: [
@@ -304,7 +385,9 @@ export const UNITS: Unit[] = [
 
   // ══════════════ INTERMEDIATE ══════════════
   {
-    id: 'u14', level: 'intermediate', color: ROSE,
+    id: 'u14',
+    level: 'intermediate',
+    color: ROSE,
     title: 'Unit 14 · Every Day',
     subtitle: 'Routines and the present tense',
     lessons: [
@@ -318,7 +401,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u15', level: 'intermediate', color: GOLD,
+    id: 'u15',
+    level: 'intermediate',
+    color: GOLD,
     title: 'Unit 15 · The Verbs You Need',
     subtitle: 'The engine room of the language',
     lessons: [
@@ -331,7 +416,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u16', level: 'intermediate', color: JADE,
+    id: 'u16',
+    level: 'intermediate',
+    color: JADE,
     title: 'Unit 16 · Out & About',
     subtitle: 'The city, directions and transport',
     lessons: [
@@ -345,7 +432,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u17', level: 'intermediate', color: BLUE,
+    id: 'u17',
+    level: 'intermediate',
+    color: BLUE,
     title: 'Unit 17 · Finding Your Way',
     subtitle: 'Asking, phoning and the mujhe feeling',
     lessons: [
@@ -359,7 +448,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u18', level: 'intermediate', color: ROSE,
+    id: 'u18',
+    level: 'intermediate',
+    color: ROSE,
     title: 'Unit 18 · Money & Shopping',
     subtitle: 'Buying, selling and the past tense',
     lessons: [
@@ -372,7 +463,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u19', level: 'intermediate', color: GOLD,
+    id: 'u19',
+    level: 'intermediate',
+    color: GOLD,
     title: 'Unit 19 · Bank & Bargain',
     subtitle: 'Handling money and comparing prices',
     lessons: [
@@ -386,7 +479,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u20', level: 'intermediate', color: JADE,
+    id: 'u20',
+    level: 'intermediate',
+    color: JADE,
     title: 'Unit 20 · Health & Work',
     subtitle: 'The doctor, the office and the future',
     lessons: [
@@ -400,7 +495,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u21', level: 'intermediate', color: BLUE,
+    id: 'u21',
+    level: 'intermediate',
+    color: BLUE,
     title: 'Unit 21 · Working Life',
     subtitle: 'Careers, study and what you must do',
     lessons: [
@@ -413,7 +510,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u22', level: 'intermediate', color: ROSE,
+    id: 'u22',
+    level: 'intermediate',
+    color: ROSE,
     title: 'Unit 22 · Travel & Time',
     subtitle: 'Journeys, countries and the calendar',
     lessons: [
@@ -427,7 +526,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u23', level: 'intermediate', color: GOLD,
+    id: 'u23',
+    level: 'intermediate',
+    color: GOLD,
     title: 'Unit 23 · House & Field',
     subtitle: 'Tools, materials and the land',
     lessons: [
@@ -442,7 +543,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u24', level: 'intermediate', color: JADE,
+    id: 'u24',
+    level: 'intermediate',
+    color: JADE,
     title: 'Unit 24 · Senses & Seasons',
     subtitle: 'What you taste, hear and wear',
     lessons: [
@@ -456,7 +559,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u25', level: 'intermediate', color: BLUE,
+    id: 'u25',
+    level: 'intermediate',
+    color: BLUE,
     title: 'Unit 25 · Together',
     subtitle: 'Guests, weddings and showing respect',
     lessons: [
@@ -472,7 +577,9 @@ export const UNITS: Unit[] = [
 
   // ══════════════ ADVANCED ══════════════
   {
-    id: 'u26', level: 'advanced', color: ROSE,
+    id: 'u26',
+    level: 'advanced',
+    color: ROSE,
     title: 'Unit 26 · Describing People',
     subtitle: 'Character, appearance and relationships',
     lessons: [
@@ -486,7 +593,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u27', level: 'advanced', color: GOLD,
+    id: 'u27',
+    level: 'advanced',
+    color: GOLD,
     title: 'Unit 27 · Fine Description',
     subtitle: 'Precision, judgement and degree',
     lessons: [
@@ -498,7 +607,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u28', level: 'advanced', color: JADE,
+    id: 'u28',
+    level: 'advanced',
+    color: JADE,
     title: 'Unit 28 · Mind & Feeling',
     subtitle: 'Subtler emotions and ideas',
     lessons: [
@@ -511,7 +622,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u29', level: 'advanced', color: BLUE,
+    id: 'u29',
+    level: 'advanced',
+    color: BLUE,
     title: 'Unit 29 · Thought & Belief',
     subtitle: 'Philosophy, faith and the sentences that pair up',
     lessons: [
@@ -524,7 +637,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u30', level: 'advanced', color: ROSE,
+    id: 'u30',
+    level: 'advanced',
+    color: ROSE,
     title: 'Unit 30 · Culture & Faith',
     subtitle: 'Festivals, poetry and belief',
     lessons: [
@@ -537,7 +652,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u31', level: 'advanced', color: GOLD,
+    id: 'u31',
+    level: 'advanced',
+    color: GOLD,
     title: 'Unit 31 · Poetry & Story',
     subtitle: 'The literary heart of Urdu',
     lessons: [
@@ -551,7 +668,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u32', level: 'advanced', color: JADE,
+    id: 'u32',
+    level: 'advanced',
+    color: JADE,
     title: 'Unit 32 · The Modern World',
     subtitle: 'Technology, media and enterprise',
     lessons: [
@@ -566,7 +685,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u33', level: 'advanced', color: BLUE,
+    id: 'u33',
+    level: 'advanced',
+    color: BLUE,
     title: 'Unit 33 · State & Society',
     subtitle: 'Politics, law, economy and history',
     lessons: [
@@ -580,7 +701,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u34', level: 'advanced', color: ROSE,
+    id: 'u34',
+    level: 'advanced',
+    color: ROSE,
     title: 'Unit 34 · Body & Medicine',
     subtitle: 'Clinical language and public help',
     lessons: [
@@ -593,7 +716,9 @@ export const UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u35', level: 'advanced', color: GOLD,
+    id: 'u35',
+    level: 'advanced',
+    color: GOLD,
     title: 'Unit 35 · The Wider World',
     subtitle: 'Land, sky, formal Urdu and mastery',
     lessons: [
@@ -632,10 +757,7 @@ export const isScriptLesson = (l: Lesson) => l.kind === 'letters';
 /** Counted from the path rather than written down, so the numbers the track
  *  chooser quotes to a learner cannot drift away from the course. */
 export const TOTAL_LESSON_COUNT = UNITS.reduce((n, u) => n + u.lessons.length, 0);
-export const SCRIPT_LESSON_COUNT = UNITS.reduce(
-  (n, u) => n + u.lessons.filter(isScriptLesson).length,
-  0
-);
+export const SCRIPT_LESSON_COUNT = UNITS.reduce((n, u) => n + u.lessons.filter(isScriptLesson).length, 0);
 
 export function unitsForTrack(track: LearnTrack): Unit[] {
   if (track !== 'roman') return UNITS;
@@ -686,7 +808,15 @@ function buildLesson(id: string): Lesson | undefined {
   if (onPath) return onPath;
 
   if (id === 'practice-review') {
-    return { id, title: 'Daily Review', subtitle: 'Your due words & letters', icon: '🔁', kind: 'review', xp: 20, size: 10 };
+    return {
+      id,
+      title: 'Daily Review',
+      subtitle: 'Your due words & letters',
+      icon: '🔁',
+      kind: 'review',
+      xp: 20,
+      size: 10,
+    };
   }
   if (id.startsWith('practice-topic-')) {
     const topic = id.slice('practice-topic-'.length);
@@ -695,17 +825,44 @@ function buildLesson(id: string): Lesson | undefined {
   if (id.startsWith('practice-grammar-')) {
     const conceptId = id.slice('practice-grammar-'.length);
     const c = GRAMMAR.find((g) => g.id === conceptId);
-    return { id, title: c?.title ?? 'Grammar', subtitle: c?.summary ?? '', icon: '📐', kind: 'grammar', conceptId, xp: 20, size: 8 };
+    return {
+      id,
+      title: c?.title ?? 'Grammar',
+      subtitle: c?.summary ?? '',
+      icon: '📐',
+      kind: 'grammar',
+      conceptId,
+      xp: 20,
+      size: 8,
+    };
   }
   if (id.startsWith('practice-dialogue-')) {
     const dialogueId = id.slice('practice-dialogue-'.length);
     const d = DIALOGUES.find((x) => x.id === dialogueId);
-    return { id, title: d?.title ?? 'Conversation', subtitle: 'Read and answer', icon: '💬', kind: 'dialogue', dialogueId, xp: 25, size: 1 };
+    return {
+      id,
+      title: d?.title ?? 'Conversation',
+      subtitle: 'Read and answer',
+      icon: '💬',
+      kind: 'dialogue',
+      dialogueId,
+      xp: 25,
+      size: 1,
+    };
   }
   if (id.startsWith('practice-reading-')) {
     const passageId = id.slice('practice-reading-'.length);
     const p = PASSAGES.find((x) => x.id === passageId);
-    return { id, title: p?.title ?? 'Reading', subtitle: 'Read and answer', icon: '📖', kind: 'reading', passageId, xp: 25, size: 1 };
+    return {
+      id,
+      title: p?.title ?? 'Reading',
+      subtitle: 'Read and answer',
+      icon: '📖',
+      kind: 'reading',
+      passageId,
+      xp: 25,
+      size: 1,
+    };
   }
   return undefined;
 }

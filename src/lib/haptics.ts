@@ -21,10 +21,7 @@ export const haptics = {
   select: () => safe(() => Haptics.selectionAsync()),
   light: () => safe(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)),
   medium: () => safe(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)),
-  correct: () =>
-    safe(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)),
-  incorrect: () =>
-    safe(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning)),
-  celebrate: () =>
-    safe(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)),
+  correct: () => safe(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)),
+  incorrect: () => safe(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning)),
+  celebrate: () => safe(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)),
 };

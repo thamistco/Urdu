@@ -16,7 +16,17 @@ import { useTesterStore, TESTER_MODE_AVAILABLE } from '../store/useTesterStore';
 import { DAILY_GOALS } from '../data/achievements';
 import { TrackChooser } from '../components/TrackChooser';
 
-function Row({ label, hint, value, onChange }: { label: string; hint?: string; value: boolean; onChange: (v: boolean) => void }) {
+function Row({
+  label,
+  hint,
+  value,
+  onChange,
+}: {
+  label: string;
+  hint?: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
   return (
     <View className="flex-row items-center justify-between py-3">
       <View className="flex-1 pr-4">
@@ -52,9 +62,7 @@ function TesterPanel() {
   if (!t.unlocked) {
     return (
       <Card className="mb-5">
-        <Txt className="mb-3 text-xs text-paper/50">
-          For testing only. Nothing here changes what a learner sees.
-        </Txt>
+        <Txt className="mb-3 text-xs text-paper/50">For testing only. Nothing here changes what a learner sees.</Txt>
         <TextInput
           value={user}
           onChangeText={(v) => {
@@ -82,7 +90,11 @@ function TesterPanel() {
           className="mb-3 rounded-xl px-3 py-2.5"
           style={{ backgroundColor: withAlpha(palette.white, 0.06), color: palette.paper }}
         />
-        {wrong && <Txt className="mb-2 text-xs" style={{ color: palette.roseLight }}>Not right.</Txt>}
+        {wrong && (
+          <Txt className="mb-2 text-xs" style={{ color: palette.roseLight }}>
+            Not right.
+          </Txt>
+        )}
         <Pressable
           onPress={() => {
             feedback.tap();
@@ -92,7 +104,11 @@ function TesterPanel() {
         >
           <View
             className="items-center rounded-xl py-2.5"
-            style={{ backgroundColor: withAlpha(palette.gold, 0.18), borderWidth: 1, borderColor: withAlpha(palette.gold, 0.4) }}
+            style={{
+              backgroundColor: withAlpha(palette.gold, 0.18),
+              borderWidth: 1,
+              borderColor: withAlpha(palette.gold, 0.4),
+            }}
           >
             <Bold style={{ color: palette.gold }} className="text-sm">
               Unlock
@@ -125,11 +141,15 @@ function TesterPanel() {
       {anyOn && (
         <View
           className="mt-3 rounded-xl px-3 py-2"
-          style={{ backgroundColor: withAlpha(palette.gold, 0.12), borderWidth: 1, borderColor: withAlpha(palette.gold, 0.3) }}
+          style={{
+            backgroundColor: withAlpha(palette.gold, 0.12),
+            borderWidth: 1,
+            borderColor: withAlpha(palette.gold, 0.3),
+          }}
         >
           <Txt className="text-xs" style={{ color: palette.gold }}>
-            Tester mode is on — this is not what a learner sees. Turn both off to
-            get the real hearts and locked path back.
+            Tester mode is on — this is not what a learner sees. Turn both off to get the real hearts and locked path
+            back.
           </Txt>
         </View>
       )}
@@ -155,7 +175,11 @@ function TesterPanel() {
       >
         <View
           className="mt-3 items-center rounded-xl py-2.5"
-          style={{ backgroundColor: withAlpha(palette.rose, 0.14), borderWidth: 1, borderColor: withAlpha(palette.rose, 0.35) }}
+          style={{
+            backgroundColor: withAlpha(palette.rose, 0.14),
+            borderWidth: 1,
+            borderColor: withAlpha(palette.rose, 0.35),
+          }}
         >
           <Bold style={{ color: palette.roseLight }} className="text-sm">
             Reset progress and start over
@@ -224,7 +248,11 @@ export function SettingsScreen() {
               <Pressable onPress={onAuthAction}>
                 <View
                   className="rounded-xl px-4 py-2"
-                  style={{ backgroundColor: withAlpha(email ? palette.rose : palette.gold, 0.15), borderWidth: 1, borderColor: withAlpha(email ? palette.rose : palette.gold, 0.35) }}
+                  style={{
+                    backgroundColor: withAlpha(email ? palette.rose : palette.gold, 0.15),
+                    borderWidth: 1,
+                    borderColor: withAlpha(email ? palette.rose : palette.gold, 0.35),
+                  }}
                 >
                   <Bold style={{ color: email ? palette.roseLight : palette.gold }} className="text-sm">
                     {email ? 'Sign out' : 'Sign in'}
@@ -238,9 +266,19 @@ export function SettingsScreen() {
         <Reveal delay={40}>
           <Eyebrow className="mb-2 text-paper/50">Feedback</Eyebrow>
           <Card className="mb-5">
-            <Row label="Sound effects" hint="Chimes for correct, soft tones for misses" value={s.soundEnabled} onChange={s.setSound} />
+            <Row
+              label="Sound effects"
+              hint="Chimes for correct, soft tones for misses"
+              value={s.soundEnabled}
+              onChange={s.setSound}
+            />
             <View className="h-px bg-white/5" />
-            <Row label="Haptics" hint="Gentle vibration with feedback" value={s.hapticsEnabled} onChange={s.setHaptics} />
+            <Row
+              label="Haptics"
+              hint="Gentle vibration with feedback"
+              value={s.hapticsEnabled}
+              onChange={s.setHaptics}
+            />
             <View className="h-px bg-white/5" />
             {/* The hint says whose voice it is. "Hear the English as well as
                 the Urdu" did not, and the surprise was the whole problem: the
@@ -254,14 +292,24 @@ export function SettingsScreen() {
               onChange={s.setSpeakMeaning}
             />
             <View className="h-px bg-white/5" />
-            <Row label="Reduced motion" hint="Calmer, minimal animation" value={s.reducedMotion} onChange={s.setReducedMotion} />
+            <Row
+              label="Reduced motion"
+              hint="Calmer, minimal animation"
+              value={s.reducedMotion}
+              onChange={s.setReducedMotion}
+            />
           </Card>
         </Reveal>
 
         <Reveal delay={60}>
           <Eyebrow className="mb-2 text-paper/50">Script</Eyebrow>
           <Card className="mb-5">
-            <Row label="Show Roman Urdu" hint="Transliteration alongside the script" value={s.showRoman} onChange={s.setShowRoman} />
+            <Row
+              label="Show Roman Urdu"
+              hint="Transliteration alongside the script"
+              value={s.showRoman}
+              onChange={s.setShowRoman}
+            />
             <View className="h-px bg-white/5 my-2" />
             <Bold className="mb-2 mt-1 text-sm">Learning track</Bold>
             <TrackChooser
@@ -300,7 +348,9 @@ export function SettingsScreen() {
                       }}
                     >
                       <Bold className="text-sm">{g.label}</Bold>
-                      <Txt className="text-[11px] text-paper/55">{g.desc} · +{g.xp} XP</Txt>
+                      <Txt className="text-[11px] text-paper/55">
+                        {g.desc} · +{g.xp} XP
+                      </Txt>
                     </View>
                   </Pressable>
                 );
@@ -312,7 +362,10 @@ export function SettingsScreen() {
         <Reveal delay={180}>
           <Eyebrow className="mb-2 text-paper/50">Data</Eyebrow>
           <Pressable onPress={confirmReset}>
-            <View className="rounded-2xl border p-4" style={{ borderColor: withAlpha(palette.rose, 0.3), backgroundColor: withAlpha(palette.rose, 0.08) }}>
+            <View
+              className="rounded-2xl border p-4"
+              style={{ borderColor: withAlpha(palette.rose, 0.3), backgroundColor: withAlpha(palette.rose, 0.08) }}
+            >
               <Bold style={{ color: palette.roseLight }}>Reset all progress</Bold>
               <Txt className="mt-0.5 text-xs text-paper/50">Clears streak, XP, gems and memory. Cannot be undone.</Txt>
             </View>

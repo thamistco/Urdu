@@ -20,13 +20,22 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
  * platform — the emoji set rendered differently on each and broke the palette.
  */
 function TabIcon({ name, color }: { name: string; color: string }) {
-  const p = { stroke: color, strokeWidth: 2, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  const p = {
+    stroke: color,
+    strokeWidth: 2,
+    fill: 'none',
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+  };
   return (
     <Svg width={26} height={26} viewBox="0 0 24 24">
       {name === 'Learn' && (
         <>
           {/* an open book */}
-          <Path d="M12 6.5C10.2 5.2 7.7 4.8 5 5.2v12c2.7-.4 5.2 0 7 1.3 1.8-1.3 4.3-1.7 7-1.3v-12c-2.7-.4-5.2 0-7 1.3Z" {...p} />
+          <Path
+            d="M12 6.5C10.2 5.2 7.7 4.8 5 5.2v12c2.7-.4 5.2 0 7 1.3 1.8-1.3 4.3-1.7 7-1.3v-12c-2.7-.4-5.2 0-7 1.3Z"
+            {...p}
+          />
           <Path d="M12 6.5v12" {...p} />
         </>
       )}
@@ -50,7 +59,9 @@ function TabIcon({ name, color }: { name: string; color: string }) {
 
 function TabBar({ state, navigation }: BottomTabBarProps) {
   return (
-    <View style={{ backgroundColor: palette.ink800, borderTopWidth: 1, borderTopColor: withAlpha(palette.white, 0.08) }}>
+    <View
+      style={{ backgroundColor: palette.ink800, borderTopWidth: 1, borderTopColor: withAlpha(palette.white, 0.08) }}
+    >
       <SafeAreaView edges={['bottom']}>
         {/* the bar spans the screen; the three tabs track the content column */}
         <View
@@ -71,10 +82,7 @@ function TabBar({ state, navigation }: BottomTabBarProps) {
                 accessibilityState={{ selected: focused }}
                 accessibilityLabel={route.name}
               >
-                <TabIcon
-                  name={route.name}
-                  color={focused ? palette.gold : withAlpha(palette.cream, 0.45)}
-                />
+                <TabIcon name={route.name} color={focused ? palette.gold : withAlpha(palette.cream, 0.45)} />
                 <Txt
                   className="mt-1 text-[11px]"
                   style={{ color: focused ? palette.gold : withAlpha(palette.cream, 0.5), fontWeight: '700' }}
@@ -92,10 +100,7 @@ function TabBar({ state, navigation }: BottomTabBarProps) {
 
 export function MainTabs() {
   return (
-    <Tab.Navigator
-      screenOptions={{ headerShown: false }}
-      tabBar={(props) => <TabBar {...props} />}
-    >
+    <Tab.Navigator screenOptions={{ headerShown: false }} tabBar={(props) => <TabBar {...props} />}>
       <Tab.Screen name="Learn" component={HomeScreen} />
       <Tab.Screen name="Practice" component={PracticeScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />

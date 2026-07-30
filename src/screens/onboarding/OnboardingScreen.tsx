@@ -79,13 +79,74 @@ const GOALS: { key: Goal; label: string; desc: string }[] = [
  * learner just said they read.
  */
 const PLACEMENT = [
-  { q: 'Do you recognise this letter?', sub: 'س', kind: 'script', options: [{ label: "Yes, that's seen", c: true }, { label: 'No idea', c: false }] },
-  { q: 'What does this word mean?', sub: 'پانی', kind: 'script', options: [{ label: 'Water', c: true }, { label: 'Bread', c: false }, { label: 'Fire', c: false }] },
-  { q: 'Can you read this out loud, even slowly?', sub: 'کتاب', kind: 'script', options: [{ label: 'Yes, I can sound it out', c: true }, { label: 'Script is new to me', c: false }] },
-  { q: 'What does "ghar" mean?', sub: 'ghar', kind: 'roman', options: [{ label: 'House', c: true }, { label: 'Tea', c: false }, { label: 'Moon', c: false }] },
-  { q: 'What does "paani" mean?', sub: 'paani', kind: 'roman', options: [{ label: 'Water', c: true }, { label: 'Book', c: false }, { label: 'Night', c: false }] },
-  { q: 'What does "shukriya" mean?', sub: 'shukriya', kind: 'roman', options: [{ label: 'Thank you', c: true }, { label: 'Sorry', c: false }, { label: 'Hello', c: false }] },
-  { q: 'What does "maañ" mean?', sub: 'maañ', kind: 'roman', options: [{ label: 'Mother', c: true }, { label: 'Father', c: false }, { label: 'Sister', c: false }] },
+  {
+    q: 'Do you recognise this letter?',
+    sub: 'س',
+    kind: 'script',
+    options: [
+      { label: "Yes, that's seen", c: true },
+      { label: 'No idea', c: false },
+    ],
+  },
+  {
+    q: 'What does this word mean?',
+    sub: 'پانی',
+    kind: 'script',
+    options: [
+      { label: 'Water', c: true },
+      { label: 'Bread', c: false },
+      { label: 'Fire', c: false },
+    ],
+  },
+  {
+    q: 'Can you read this out loud, even slowly?',
+    sub: 'کتاب',
+    kind: 'script',
+    options: [
+      { label: 'Yes, I can sound it out', c: true },
+      { label: 'Script is new to me', c: false },
+    ],
+  },
+  {
+    q: 'What does "ghar" mean?',
+    sub: 'ghar',
+    kind: 'roman',
+    options: [
+      { label: 'House', c: true },
+      { label: 'Tea', c: false },
+      { label: 'Moon', c: false },
+    ],
+  },
+  {
+    q: 'What does "paani" mean?',
+    sub: 'paani',
+    kind: 'roman',
+    options: [
+      { label: 'Water', c: true },
+      { label: 'Book', c: false },
+      { label: 'Night', c: false },
+    ],
+  },
+  {
+    q: 'What does "shukriya" mean?',
+    sub: 'shukriya',
+    kind: 'roman',
+    options: [
+      { label: 'Thank you', c: true },
+      { label: 'Sorry', c: false },
+      { label: 'Hello', c: false },
+    ],
+  },
+  {
+    q: 'What does "maañ" mean?',
+    sub: 'maañ',
+    kind: 'roman',
+    options: [
+      { label: 'Mother', c: true },
+      { label: 'Father', c: false },
+      { label: 'Sister', c: false },
+    ],
+  },
 ];
 
 /** The four questions a given track asks. */
@@ -163,9 +224,7 @@ export function OnboardingScreen() {
   const isSpeaker = background === 'speaker';
   const canSkipScript = lvl === 2 && wantsScript && isSpeaker && SCRIPT_LESSON_IDS.length > 0;
   const basicsSkips = isSpeaker ? SKIPPABLE_FOR_SPEAKERS : [];
-  const skipIds = Array.from(
-    new Set([...basicsSkips, ...(canSkipScript && skipScript ? SCRIPT_LESSON_IDS : [])])
-  );
+  const skipIds = Array.from(new Set([...basicsSkips, ...(canSkipScript && skipScript ? SCRIPT_LESSON_IDS : [])]));
 
   const finish = () => {
     setTrackSetting(track);
@@ -184,8 +243,8 @@ export function OnboardingScreen() {
             <Display className="mb-3 text-4xl">Harf</Display>
             <GeoDivider />
             <Txt className="mb-10 max-w-[280px] text-center text-[15px] leading-6 text-paper/70">
-              Learn to read Urdu the way it's really written: every letter in all four of its faces.
-              A few quick questions first, so we start you in the right place.
+              Learn to read Urdu the way it's really written: every letter in all four of its faces. A few quick
+              questions first, so we start you in the right place.
             </Txt>
             <Button className="w-full max-w-[300px]" onPress={() => setStep('goal')}>
               Let's start
@@ -311,7 +370,11 @@ export function OnboardingScreen() {
           <Button
             className="mt-6"
             disabled={!background}
-            onPress={() => { setPIdx(0); setPCorrect(0); setStep('placement'); }}
+            onPress={() => {
+              setPIdx(0);
+              setPCorrect(0);
+              setStep('placement');
+            }}
           >
             Continue
           </Button>
@@ -354,7 +417,9 @@ export function OnboardingScreen() {
             {question.kind === 'script' ? (
               <Urdu style={{ color: palette.ink, ...urduGlyph(52) }}>{question.sub}</Urdu>
             ) : (
-              <Heading style={{ color: palette.ink }} className="text-2xl">{question.sub}</Heading>
+              <Heading style={{ color: palette.ink }} className="text-2xl">
+                {question.sub}
+              </Heading>
             )}
           </View>
           <View className="gap-3">
@@ -396,7 +461,13 @@ export function OnboardingScreen() {
             {DAILY_GOALS.map((g) => {
               const sel = daily === g.id;
               return (
-                <Pressable key={g.id} onPress={() => { feedback.tap(); setDaily(g.id); }}>
+                <Pressable
+                  key={g.id}
+                  onPress={() => {
+                    feedback.tap();
+                    setDaily(g.id);
+                  }}
+                >
                   <View
                     className="flex-row items-center justify-between rounded-2xl border p-4"
                     style={{
@@ -415,7 +486,9 @@ export function OnboardingScreen() {
               );
             })}
           </View>
-          <Button className="mt-6" onPress={() => setStep('ready')}>Continue</Button>
+          <Button className="mt-6" onPress={() => setStep('ready')}>
+            Continue
+          </Button>
         </Reveal>
       </Screen>
     );
@@ -435,31 +508,45 @@ export function OnboardingScreen() {
           <Illustration name="crescent" tile={false} size={64} />
           <Display className="mb-2 mt-4 text-3xl">You're all set</Display>
           <GeoDivider />
-          <View className="my-4 w-full rounded-2xl border p-5" style={{ borderColor: withAlpha(palette.gold, 0.3), backgroundColor: withAlpha(palette.gold, 0.08) }}>
-            <Eyebrow style={{ color: palette.gold }} className="mb-1">Your starting level</Eyebrow>
+          <View
+            className="my-4 w-full rounded-2xl border p-5"
+            style={{ borderColor: withAlpha(palette.gold, 0.3), backgroundColor: withAlpha(palette.gold, 0.08) }}
+          >
+            <Eyebrow style={{ color: palette.gold }} className="mb-1">
+              Your starting level
+            </Eyebrow>
             <Bold className="text-lg">{lvlName}</Bold>
             <Txt className="mt-1 text-sm text-paper/60">
               We'll begin exactly where you are, and the words you miss will come back first.
             </Txt>
           </View>
           {basicsSkips.length > 0 && (
-            <View className="mb-4 w-full rounded-2xl border p-5" style={{ borderColor: withAlpha(palette.jade, 0.3), backgroundColor: withAlpha(palette.jade, 0.08) }}>
-              <Eyebrow style={{ color: palette.jade }} className="mb-1">Fast-tracked</Eyebrow>
+            <View
+              className="mb-4 w-full rounded-2xl border p-5"
+              style={{ borderColor: withAlpha(palette.jade, 0.3), backgroundColor: withAlpha(palette.jade, 0.08) }}
+            >
+              <Eyebrow style={{ color: palette.jade }} className="mb-1">
+                Fast-tracked
+              </Eyebrow>
               <Txt className="mt-1 text-sm text-paper/60">
-                The basic words you already showed you know are marked done, so
-                your path leads straight to the script and reading. Everything
-                else is still yours to complete.
+                The basic words you already showed you know are marked done, so your path leads straight to the script
+                and reading. Everything else is still yours to complete.
               </Txt>
             </View>
           )}
 
           {/* The one call the quiz will not make for you. */}
           {canSkipScript && (
-            <View className="mb-4 w-full rounded-2xl border p-5" style={{ borderColor: withAlpha(palette.gold, 0.3), backgroundColor: withAlpha(palette.gold, 0.06) }}>
-              <Eyebrow style={{ color: palette.gold }} className="mb-1">The alphabet</Eyebrow>
+            <View
+              className="mb-4 w-full rounded-2xl border p-5"
+              style={{ borderColor: withAlpha(palette.gold, 0.3), backgroundColor: withAlpha(palette.gold, 0.06) }}
+            >
+              <Eyebrow style={{ color: palette.gold }} className="mb-1">
+                The alphabet
+              </Eyebrow>
               <Txt className="mb-3 text-sm text-paper/60">
-                You read every script question correctly. Do you want the nine
-                alphabet lessons, or shall we mark them done?
+                You read every script question correctly. Do you want the nine alphabet lessons, or shall we mark them
+                done?
               </Txt>
               {[
                 { v: false, t: 'Start from the alphabet', d: 'All 40 letters, in each of their four shapes' },
@@ -469,7 +556,10 @@ export function OnboardingScreen() {
                 return (
                   <Pressable
                     key={String(o.v)}
-                    onPress={() => { feedback.tap(); setSkipScript(o.v); }}
+                    onPress={() => {
+                      feedback.tap();
+                      setSkipScript(o.v);
+                    }}
                     className="mb-2"
                   >
                     <View
@@ -486,12 +576,12 @@ export function OnboardingScreen() {
                   </Pressable>
                 );
               })}
-              <Txt className="text-[11px] text-paper/35">
-                Either way you can tap ahead to any lesson later.
-              </Txt>
+              <Txt className="text-[11px] text-paper/35">Either way you can tap ahead to any lesson later.</Txt>
             </View>
           )}
-          <Button className="mt-4 w-full" onPress={finish}>Start learning</Button>
+          <Button className="mt-4 w-full" onPress={finish}>
+            Start learning
+          </Button>
         </View>
       </Reveal>
     </Screen>

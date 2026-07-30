@@ -99,7 +99,11 @@ const NOW = Date.UTC(2026, 0, 1);
     easy.interval > good.interval,
     `easy ${easy.interval}d vs good ${good.interval}d`
   );
-  check('the easy path raises ease, the good path does not', easy.ease > good.ease, `${easy.ease.toFixed(2)} vs ${good.ease.toFixed(2)}`);
+  check(
+    'the easy path raises ease, the good path does not',
+    easy.ease > good.ease,
+    `${easy.ease.toFixed(2)} vs ${good.ease.toFixed(2)}`
+  );
 }
 
 // ---- the queue is ordered by how overdue, and only holds what is due ------
@@ -153,7 +157,10 @@ const NOW = Date.UTC(2026, 0, 1);
 
 {
   const vocab = ALL_LESSONS.find((l) => l.kind === 'vocab');
-  const due = [{ id: WORDS[0].id, type: 'word' }, { id: WORDS[1].id, type: 'word' }];
+  const due = [
+    { id: WORDS[0].id, type: 'word' },
+    { id: WORDS[1].id, type: 'word' },
+  ];
   const withDue = buildLessonExercises(vocab, due, 'both');
   const ids = new Set(withDue.map((ex) => ex.word?.id).filter(Boolean));
   check(

@@ -34,13 +34,20 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
     if (graded != null || locked || !text.trim()) return;
     const correct = matchesWord(text, word.urdu, word.roman);
     setGraded(correct);
-    correct ? feedback.correctAnnounceMeaning(word.id, word.urdu, word.roman, word.meaning)
+    correct
+      ? feedback.correctAnnounceMeaning(word.id, word.urdu, word.roman, word.meaning)
       : feedback.incorrectAnnounce(word.id, word.urdu, word.roman);
     onGraded({ items: [{ id: word.id, type: 'word' }], correct });
   };
 
   const border =
-    graded === true ? palette.jade : graded === false ? palette.rose : focused ? palette.gold : withAlpha(palette.white, 0.15);
+    graded === true
+      ? palette.jade
+      : graded === false
+        ? palette.rose
+        : focused
+          ? palette.gold
+          : withAlpha(palette.white, 0.15);
 
   return (
     <View>
@@ -54,10 +61,7 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
       <View className="h-4" />
       <Question>Type this word</Question>
 
-      <View
-        className="mb-2 rounded-2xl bg-ink-700 px-4 py-3"
-        style={{ borderWidth: 1.5, borderColor: border }}
-      >
+      <View className="mb-2 rounded-2xl bg-ink-700 px-4 py-3" style={{ borderWidth: 1.5, borderColor: border }}>
         <TextInput
           value={text}
           onChangeText={setText}
@@ -79,9 +83,7 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
           ]}
         />
       </View>
-      <Txt className="mb-5 text-[11px] text-paper/40">
-        Spelling is forgiving, kitab, kitaab and کتاب all count.
-      </Txt>
+      <Txt className="mb-5 text-[11px] text-paper/40">Spelling is forgiving, kitab, kitaab and کتاب all count.</Txt>
 
       {graded == null && (
         <Button variant={text.trim() ? 'primary' : 'ghost'} disabled={!text.trim()} onPress={check}>
@@ -120,7 +122,8 @@ export function WordFromMeaningExercise({ exercise, track, locked, onGraded }: E
     if (picked || locked) return;
     setPicked(id);
     const correct = id === word.id;
-    correct ? feedback.correctAnnounceMeaning(word.id, word.urdu, word.roman, word.meaning)
+    correct
+      ? feedback.correctAnnounceMeaning(word.id, word.urdu, word.roman, word.meaning)
       : feedback.incorrectAnnounce(word.id, word.urdu, word.roman);
     onGraded({ items: [{ id: word.id, type: 'word' }], correct });
   };
@@ -138,8 +141,7 @@ export function WordFromMeaningExercise({ exercise, track, locked, onGraded }: E
 
       <View className="flex-row flex-wrap justify-between">
         {options.map((o) => {
-          const state =
-            picked == null ? 'idle' : o.id === word.id ? 'correct' : o.id === picked ? 'wrong' : 'muted';
+          const state = picked == null ? 'idle' : o.id === word.id ? 'correct' : o.id === picked ? 'wrong' : 'muted';
           return (
             <Choice
               key={o.id}

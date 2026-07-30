@@ -56,10 +56,7 @@ export const TRACK_OPTIONS: Option[] = [
     key: 'roman',
     label: 'Roman Urdu',
     summary: 'No alphabet. Everything in Latin letters: “aap kaise hain?”',
-    gains: [
-      'Straight into words, sentences and conversation',
-      'Listening and answering, all in Roman',
-    ],
+    gains: ['Straight into words, sentences and conversation', 'Listening and answering, all in Roman'],
     costs: [
       `Skips the ${SCRIPT_LESSON_COUNT} alphabet lessons and all tracing`,
       'You will not be able to read Urdu writing',
@@ -96,8 +93,8 @@ export function TrackChooser({
     <View>
       <Txt className="mb-4 text-xs leading-5 text-paper/55">
         This changes what the course teaches, not just how it looks: the {TOTAL_LESSON_COUNT}
-        -lesson path is rebuilt around your answer. You can switch whenever you like, in
-        Settings; nothing you have already learned is lost.
+        -lesson path is rebuilt around your answer. You can switch whenever you like, in Settings; nothing you have
+        already learned is lost.
       </Txt>
 
       <View className="gap-3">

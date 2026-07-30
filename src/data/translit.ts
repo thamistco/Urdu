@@ -20,51 +20,113 @@
 
 export const GRAMMAR_TRANSLIT: Record<string, string> = {
   // pronouns
-  'آپ': 'aap', 'میں': 'main', 'وہ': 'wo', 'ہم': 'hum', 'تم': 'tum', 'یہ': 'ye',
-  'مجھے': 'mujhe', 'مجھ': 'mujh', 'میرا': 'mera',
+  آپ: 'aap',
+  میں: 'main',
+  وہ: 'wo',
+  ہم: 'hum',
+  تم: 'tum',
+  یہ: 'ye',
+  مجھے: 'mujhe',
+  مجھ: 'mujh',
+  میرا: 'mera',
 
   // to be
-  'ہوں': 'hoon', 'ہے': 'hai', 'ہیں': 'hain', 'ہو': 'ho',
+  ہوں: 'hoon',
+  ہے: 'hai',
+  ہیں: 'hain',
+  ہو: 'ho',
 
   // gender agreement on adjectives
-  'اچھا': 'achha', 'اچھی': 'achhi', 'اچھے': 'achhe', 'اچھو': 'achho',
-  'نئی': 'nayi', 'نئے': 'naye',
-  'بڑا': 'baṛa', 'بڑی': 'baṛi', 'بڑے': 'baṛe', 'بڑیاں': 'baṛiyaañ',
+  اچھا: 'achha',
+  اچھی: 'achhi',
+  اچھے: 'achhe',
+  اچھو: 'achho',
+  نئی: 'nayi',
+  نئے: 'naye',
+  بڑا: 'baṛa',
+  بڑی: 'baṛi',
+  بڑے: 'baṛe',
+  بڑیاں: 'baṛiyaañ',
 
   // plurals and oblique plurals
-  'کتابیں': 'kitaabeñ', 'کتابوں': 'kitaaboñ', 'کتابیاں': 'kitaabiyaañ',
-  'لڑکے': 'laṛke', 'لڑکوں': 'laṛkoñ',
+  کتابیں: 'kitaabeñ',
+  کتابوں: 'kitaaboñ',
+  کتابیاں: 'kitaabiyaañ',
+  لڑکے: 'laṛke',
+  لڑکوں: 'laṛkoñ',
 
   // bare endings
-  'ی': '-i', 'ا': '-a', 'ے': '-e', 'وں': '-oñ', 'و': '-o', 'یے': '-iye',
-  'تی': '-ti', 'تا': '-ta', 'تے': '-te', 'تیں': '-tiñ',
+  ی: '-i',
+  ا: '-a',
+  ے: '-e',
+  وں: '-oñ',
+  و: '-o',
+  یے: '-iye',
+  تی: '-ti',
+  تا: '-ta',
+  تے: '-te',
+  تیں: '-tiñ',
 
   // postpositions
-  'کا': 'ka', 'کی': 'ki', 'کے': 'ke', 'کو': 'ko', 'سے': 'se', 'تک': 'tak', 'نے': 'ne',
+  کا: 'ka',
+  کی: 'ki',
+  کے: 'ke',
+  کو: 'ko',
+  سے: 'se',
+  تک: 'tak',
+  نے: 'ne',
 
   // negation
-  'مت': 'mat', 'نہ': 'na',
+  مت: 'mat',
+  نہ: 'na',
 
   // continuous
-  'رہا': 'raha', 'رہی': 'rahi', 'رہے': 'rahe', 'رہیں': 'raheñ',
+  رہا: 'raha',
+  رہی: 'rahi',
+  رہے: 'rahe',
+  رہیں: 'raheñ',
 
   // past
-  'تھا': 'tha', 'تھی': 'thi', 'تھے': 'the', 'تھیں': 'thiñ',
+  تھا: 'tha',
+  تھی: 'thi',
+  تھے: 'the',
+  تھیں: 'thiñ',
 
   // future
-  'گا': 'ga', 'گی': 'gi', 'گے': 'ge', 'گیں': 'giñ',
+  گا: 'ga',
+  گی: 'gi',
+  گے: 'ge',
+  گیں: 'giñ',
 
   // verb stems and compound verbs that appear as drill options
-  'آتا': 'aata', 'آتی': 'aati', 'آتے': 'aate',
-  'آیا': 'aaya', 'آئے': 'aaye', 'آتا ہے': 'aata hai', 'آئے گا': 'aaye ga',
+  آتا: 'aata',
+  آتی: 'aati',
+  آتے: 'aate',
+  آیا: 'aaya',
+  آئے: 'aaye',
+  'آتا ہے': 'aata hai',
+  'آئے گا': 'aaye ga',
   // the causative chain: read it / teach it / have it taught
-  'جانتی': 'jaanti', 'پڑھے': 'paṛhe', 'پڑھتے': 'paṛhte', 'پڑھاتے': 'paṛhaate',
-  'پڑھواتے': 'paṛhwaate',
-  'سکتا': 'sakta', 'سکتی': 'sakti', 'سکتے': 'sakte', 'سکنا': 'sakna',
-  'چاہیے': 'chaahiye', 'پڑا': 'paṛa',
-  'گیا': 'gaya', 'گئی': 'gayi', 'گئے': 'gaye',
-  'لیا': 'liya', 'دیا': 'diya', 'ڈالا': 'ḍaala',
+  جانتی: 'jaanti',
+  پڑھے: 'paṛhe',
+  پڑھتے: 'paṛhte',
+  پڑھاتے: 'paṛhaate',
+  پڑھواتے: 'paṛhwaate',
+  سکتا: 'sakta',
+  سکتی: 'sakti',
+  سکتے: 'sakte',
+  سکنا: 'sakna',
+  چاہیے: 'chaahiye',
+  پڑا: 'paṛa',
+  گیا: 'gaya',
+  گئی: 'gayi',
+  گئے: 'gaye',
+  لیا: 'liya',
+  دیا: 'diya',
+  ڈالا: 'ḍaala',
 
   // place words
-  'یہاں': 'yahaañ', 'وہاں': 'wahaañ', 'جہاں': 'jahaañ',
+  یہاں: 'yahaañ',
+  وہاں: 'wahaañ',
+  جہاں: 'jahaañ',
 };

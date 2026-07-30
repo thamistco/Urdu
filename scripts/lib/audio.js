@@ -147,7 +147,9 @@ function clipProblemAsync(file) {
     if (bytes === 0) return resolve('empty file');
     const seconds = bytes / BYTES_PER_SECOND;
     if (!ffmpegAvailable())
-      return resolve(seconds < MIN_SECONDS ? `only ${seconds.toFixed(2)}s (ffmpeg unavailable, length checked alone)` : null);
+      return resolve(
+        seconds < MIN_SECONDS ? `only ${seconds.toFixed(2)}s (ffmpeg unavailable, length checked alone)` : null
+      );
     execFile(
       'ffmpeg',
       ['-hide_banner', '-nostats', '-i', file, '-af', 'volumedetect', '-f', 'null', '-'],

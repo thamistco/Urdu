@@ -55,7 +55,10 @@ export function LetterLabScreen() {
                     {l.forms.isolated}
                   </Urdu>
                   {known && (
-                    <View className="absolute -right-1 -top-1 h-4 w-4 items-center justify-center rounded-full" style={{ backgroundColor: palette.jade }}>
+                    <View
+                      className="absolute -right-1 -top-1 h-4 w-4 items-center justify-center rounded-full"
+                      style={{ backgroundColor: palette.jade }}
+                    >
                       <Txt style={{ fontSize: 9, color: palette.white }}>✓</Txt>
                     </View>
                   )}
@@ -83,7 +86,10 @@ export function LetterLabScreen() {
               <TracePad key={tracePadKey(letter.id, pos)} letter={letter} position={pos} />
             ) : (
               <Pressable onPress={() => speak(letter.word, letter.roman)}>
-                <View className="rounded-2xl bg-parchment px-6 pb-5 pt-3" style={{ borderWidth: 2, borderColor: palette.ink }}>
+                <View
+                  className="rounded-2xl bg-parchment px-6 pb-5 pt-3"
+                  style={{ borderWidth: 2, borderColor: palette.ink }}
+                >
                   <View className="h-44 items-center justify-center">
                     <Urdu key={pos} style={{ color: palette.ink, ...urduGlyph(72) }}>
                       {letter.forms[pos]}
@@ -130,7 +136,14 @@ export function LetterLabScreen() {
             {POSITIONS.map((p) => {
               const active = pos === p.key;
               return (
-                <Pressable key={p.key} className="flex-1" onPress={() => { feedback.tap(); setPos(p.key); }}>
+                <Pressable
+                  key={p.key}
+                  className="flex-1"
+                  onPress={() => {
+                    feedback.tap();
+                    setPos(p.key);
+                  }}
+                >
                   <View
                     className="items-center rounded-xl border px-1 py-3"
                     style={{
@@ -142,7 +155,10 @@ export function LetterLabScreen() {
                     <Urdu style={{ color: active ? palette.gold : withAlpha(palette.paper, 0.7), ...urduGlyph(19) }}>
                       {letter.forms[p.key]}
                     </Urdu>
-                    <Eyebrow style={{ color: active ? palette.gold : withAlpha(palette.paper, 0.4), fontSize: 9 }} className="mt-1">
+                    <Eyebrow
+                      style={{ color: active ? palette.gold : withAlpha(palette.paper, 0.4), fontSize: 9 }}
+                      className="mt-1"
+                    >
                       {p.label}
                     </Eyebrow>
                   </View>
@@ -170,7 +186,10 @@ export function LetterLabScreen() {
           </View>
 
           {/* the note */}
-          <View className="mb-6 rounded-xl border-l-2 p-4" style={{ borderLeftColor: palette.jade, backgroundColor: withAlpha(palette.jade, 0.08) }}>
+          <View
+            className="mb-6 rounded-xl border-l-2 p-4"
+            style={{ borderLeftColor: palette.jade, backgroundColor: withAlpha(palette.jade, 0.08) }}
+          >
             <Txt className="text-sm leading-6 text-paper/80">{letter.note}</Txt>
           </View>
 
@@ -183,7 +202,10 @@ export function LetterLabScreen() {
             <Txt className="text-xs text-paper/40">
               {idx + 1} / {LETTERS.length}
             </Txt>
-            <Pressable disabled={idx === LETTERS.length - 1} onPress={() => selectLetter(Math.min(LETTERS.length - 1, idx + 1))}>
+            <Pressable
+              disabled={idx === LETTERS.length - 1}
+              onPress={() => selectLetter(Math.min(LETTERS.length - 1, idx + 1))}
+            >
               <Bold className="text-sm" style={{ color: palette.gold, opacity: idx === LETTERS.length - 1 ? 0.3 : 1 }}>
                 Next →
               </Bold>

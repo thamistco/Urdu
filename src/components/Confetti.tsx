@@ -1,12 +1,6 @@
 import { useEffect } from 'react';
 import { View, Dimensions } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withDelay, withTiming, Easing } from 'react-native-reanimated';
 import { palette } from '../theme';
 
 const COLORS = [palette.gold, palette.jade, palette.rose, palette.flame, palette.goldLight];
@@ -22,15 +16,14 @@ function Piece({ index }: { index: number }) {
   const delay = Math.random() * 400;
 
   useEffect(() => {
-    t.value = withDelay(delay, withTiming(1, { duration: 1600 + Math.random() * 700, easing: Easing.out(Easing.quad) }));
+    t.value = withDelay(
+      delay,
+      withTiming(1, { duration: 1600 + Math.random() * 700, easing: Easing.out(Easing.quad) })
+    );
   }, [t, delay]);
 
   const style = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: t.value * 620 },
-      { translateX: t.value * drift },
-      { rotate: `${t.value * rot}deg` },
-    ],
+    transform: [{ translateY: t.value * 620 }, { translateX: t.value * drift }, { rotate: `${t.value * rot}deg` }],
     opacity: 1 - t.value * 0.7,
   }));
 

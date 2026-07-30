@@ -17,8 +17,7 @@
  */
 
 /** Strip the marks Urdu romanisation uses for retroflex and long vowels. */
-const stripDiacritics = (s: string) =>
-  s.normalize('NFD').replace(/[̀-ͯ]/g, '');
+const stripDiacritics = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 /**
  * Drop everything romanisers disagree about: vowel length, hyphens, spaces,
@@ -31,21 +30,21 @@ const stripDiacritics = (s: string) =>
 function skeleton(s: string): string {
   return stripDiacritics(s)
     .toLowerCase()
-    .replace(/[^a-z]/g, '')      // ezafe hyphens, spaces, apostrophes
-    .replace(/ee/g, 'i')         // peeta / pita
-    .replace(/oo/g, 'o')         // hoon / hon
-    .replace(/ei/g, 'ai')        // mein / main
-    .replace(/(.)\1+/g, '$1')    // kitaab → kitab
-    .replace(/u/g, 'o')          // hun / hoon, khush / khoosh
-    .replace(/w/g, 'v')          // wo / vo, waqt / vaqt
+    .replace(/[^a-z]/g, '') // ezafe hyphens, spaces, apostrophes
+    .replace(/ee/g, 'i') // peeta / pita
+    .replace(/oo/g, 'o') // hoon / hon
+    .replace(/ei/g, 'ai') // mein / main
+    .replace(/(.)\1+/g, '$1') // kitaab → kitab
+    .replace(/u/g, 'o') // hun / hoon, khush / khoosh
+    .replace(/w/g, 'v') // wo / vo, waqt / vaqt
     .replace(/ck/g, 'k')
-    .replace(/y$/, 'i');         // achhy / achhi
+    .replace(/y$/, 'i'); // achhy / achhi
 }
 
 /** Urdu text with the marks and spacing that don't change the reading removed. */
 function urduSkeleton(s: string): string {
   return s
-    .replace(/[‎‏؜]/g, '')  // bidi marks
+    .replace(/[‎‏؜]/g, '') // bidi marks
     .replace(/[ً-ْٰ]/g, '') // harakat, if anyone types them
     .replace(/\s+/g, '');
 }
