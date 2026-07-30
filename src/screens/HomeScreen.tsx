@@ -10,10 +10,12 @@ import { ProgressBar } from '../components/ProgressBar';
 import { Reveal } from '../components/Reveal';
 import { StatChip } from '../components/Stats';
 import { WordArt, Illustration, lessonIconName } from '../components/Illustration';
+import { CycleMark } from '../art/icons';
 import { Display, Heading, Txt, Bold, Eyebrow } from '../components/Text';
 import { Lexeme } from '../components/Lexeme';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
+import { confirmAction } from '../lib/confirm';
 import { levelProgress, levelTitle } from '../lib/gamification';
 import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -266,6 +268,42 @@ export function HomeScreen() {
                   value={store.gems}
                   color={palette.jadeLight}
                 />
+                {/* TEMPORARY, and asked for knowingly: a one-tap way to walk
+                    the course from the first lesson again while testing.
+                    Delete this Pressable to remove it — nothing else depends
+                    on it, and the same thing lives permanently in Settings →
+                    Data, and behind the passphrase in Settings → Tester.
+
+                    It is on the home screen, so it is on every learner's
+                    home screen; the confirm dialog is the only thing between
+                    a mis-tap and a wiped streak. That is the whole cost, and
+                    it is the reason this comment says remove it. The dialog
+                    now says plainly that this is a testing button, so nobody
+                    reaches the confirm step thinking it is a feature. */}
+                <Pressable
+                  onPress={() => {
+                    feedback.tap();
+                    confirmAction(
+                      'Start the course over?',
+                      'A testing button: clears progress, streak, XP and memory on this device so the path can be walked from the first lesson again. There is no way to get them back.',
+                      'Reset',
+                      () => {
+                        store.resetAll();
+                        feedback.incorrect();
+                      }
+                    );
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Reset progress and start the course over (for testing)"
+                  hitSlop={6}
+                >
+                  <View
+                    className="h-8 w-8 items-center justify-center rounded-full border"
+                    style={{ borderColor: withAlpha(palette.rose, 0.4), backgroundColor: withAlpha(palette.rose, 0.12) }}
+                  >
+                    <CycleMark size={16} color={palette.roseLight} />
+                  </View>
+                </Pressable>
               </View>
             </View>
           </SafeAreaView>

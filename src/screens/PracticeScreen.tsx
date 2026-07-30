@@ -11,6 +11,7 @@ import { Reveal } from '../components/Reveal';
 import { ProgressBar } from '../components/ProgressBar';
 import { Display, Heading, Txt, Bold, Eyebrow } from '../components/Text';
 import { TopicArt } from '../components/Illustration';
+import { CycleMark } from '../art/icons';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { dueCount } from '../lib/srs';
@@ -22,23 +23,6 @@ import { PASSAGES, DIALOGUES } from '../data/sentences';
 import type { RootStackParamList } from '../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
-
-/** Two arrows chasing each other — the spaced-repetition mark, drawn so it
- *  takes the card's colour instead of the platform's emoji font. */
-function CycleMark({ size = 52, color = palette.white }: { size?: number; color?: string }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24">
-      <Path
-        d="M4.5 10a7.5 7.5 0 0 1 12.9-4M19.5 14a7.5 7.5 0 0 1-12.9 4"
-        stroke={color}
-        strokeWidth={2}
-        fill="none"
-        strokeLinecap="round"
-      />
-      <Path d="M17.4 2.4V6H13.8M6.6 21.6V18h3.6" stroke={color} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
 
 function SearchMark({ color }: { color: string }) {
   return (
