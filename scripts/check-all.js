@@ -20,7 +20,11 @@
  *
  *   npm run check:all
  *
- * app.json is modified (base path) and restored, including on failure.
+ * No file is modified. The subpath arrives as `HARF_BASE_URL`, exactly as it
+ * does in CI — see app.config.js. An earlier version of this script rewrote
+ * app.json and restored it afterwards, so a killed run left the tree dirty and
+ * two concurrent runs corrupted each other's build. Configuration belongs in
+ * the environment, not in a file the checker edits behind your back.
  */
 
 const fs = require('fs');
@@ -29,7 +33,6 @@ const { execSync } = require('child_process');
 
 const ROOT = path.join(__dirname, '..');
 const WORKFLOW = path.join(ROOT, '.github', 'workflows', 'deploy-preview.yml');
-const APP_JSON = path.join(ROOT, 'app.json');
 const REPO = 'Urdu'; // matches github.event.repository.name in the workflow
 
 /**
@@ -90,22 +93,27 @@ if (process.env.HARF_CHECK_ALL_RUNNING) {
 }
 process.env.HARF_CHECK_ALL_RUNNING = '1';
 
-const original = fs.readFileSync(APP_JSON, 'utf8');
 let failed = null;
 
-function restore() {
-  fs.writeFileSync(APP_JSON, original);
-}
-process.on('exit', restore);
-process.on('SIGINT', () => {
-  restore();
-  process.exit(130);
-});
+/**
+ * The environment every step runs in — the same one the workflow provides.
+ *
+ * `CI=1` matters as much as the base path: the browser checks skip when they
+ * cannot find a bundle or a browser, and a skip is only forgivable for someone
+ * who has not built yet. Here, where the whole point is to stand in for CI, a
+ * skip would be a green tick over a check that never ran.
+ */
+const ENV = {
+  ...process.env,
+  CI: '1',
+  HARF_BASE_URL: `/${REPO}`,
+  HARF_BUILD_SHA: process.env.HARF_BUILD_SHA || 'local',
+};
 
 function run(label, cmd) {
-  process.stdout.write(`\n[1m▸ ${label}[0m\n  $ ${cmd}\n`);
+  process.stdout.write(`\n\x1b[1m\u25b8 ${label}\x1b[0m\n  $ ${cmd}\n`);
   try {
-    execSync(cmd, { cwd: ROOT, stdio: 'inherit', env: { ...process.env, CI: '1' } });
+    execSync(cmd, { cwd: ROOT, stdio: 'inherit', env: ENV });
     return true;
   } catch {
     failed = label;
@@ -113,29 +121,22 @@ function run(label, cmd) {
   }
 }
 
-// The export has to happen where the workflow puts it: after the base path is
-// written, and before the checks that drive the built app.
-const EXPORT = 'rm -rf dist && npx expo export --platform web --output-dir dist';
+/** The one build command, the same one the workflow runs. */
+const BUILD = 'rm -rf dist && npm run build:web';
 
-console.log(`check:all — ${steps.length} steps, read from ${path.relative(ROOT, WORKFLOW)}`);
-console.log(`Building with baseUrl "/${REPO}", as the deploy does. app.json is restored afterwards.`);
-
-const app = JSON.parse(original);
-app.expo.experiments = { ...(app.expo.experiments || {}), baseUrl: `/${REPO}` };
-fs.writeFileSync(APP_JSON, JSON.stringify(app, null, 2));
+console.log(`check:all \u2014 ${steps.length} steps, read from ${path.relative(ROOT, WORKFLOW)}`);
+console.log(`Building with HARF_BASE_URL="/${REPO}", as the deploy does. No files are modified.`);
 
 let exported = false;
 for (const step of steps) {
-  // Anything that drives the built app needs the export to exist first.
+  // Anything that drives the built app needs the bundle to exist first.
   const needsBuild = /check:(stability|scenery)|web:meta/.test(step.cmd);
   if (needsBuild && !exported) {
-    if (!run('Export web bundle (with the deploy base path)', EXPORT)) break;
+    if (!run('Build the web bundle (with the deploy base path)', BUILD)) break;
     exported = true;
   }
   if (!run(step.name, step.cmd)) break;
 }
-
-restore();
 
 if (failed) {
   console.error(`\n[31mcheck:all — failed at: ${failed}[0m`);
