@@ -32,7 +32,17 @@ export const useSettingsStore = create<SettingsState>()(
       hapticsEnabled: true,
       showRoman: true,
       reducedMotion: false,
-      speakMeaning: true,
+      /**
+       * Off by default. When on, a correct answer plays the recorded Urdu clip
+       * and then has the *device's English voice* read the meaning aloud — two
+       * different speakers on one word, the second of them a stock browser
+       * voice reading English in an app for learning Urdu. It shipped on by
+       * default, and it sounded exactly like the bug it was mistaken for.
+       *
+       * The feature itself is defensible for a learner who wants it, so the
+       * switch stays; being on for everyone who never asked for it is not.
+       */
+      speakMeaning: false,
       track: 'both',
       setSound: (v) => {
         setMuted(!v);
@@ -61,6 +71,25 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: 'harf-settings',
       storage: createJSONStorage(() => safeStorage),
+      /**
+       * Version 1 turns the English gloss off for everyone who already has it.
+       *
+       * Changing a default only reaches people who have never opened the app;
+       * this setting shipped on, so every existing install has `true` written
+       * to storage and would go on doing the thing that was reported. A new
+       * default without a migration is a fix that reaches nobody who has the
+       * problem.
+       *
+       * Only this one field is touched — sound, haptics, Roman and track are
+       * carried through as they were, because those the learner may well have
+       * chosen on purpose.
+       */
+      version: 1,
+      migrate: (persisted, from) => {
+        const s = (persisted ?? {}) as Partial<SettingsState>;
+        if (from < 1) return { ...s, speakMeaning: false };
+        return s;
+      },
       onRehydrateStorage: () => (state) => state?.syncEffects(),
     }
   )
