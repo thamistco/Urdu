@@ -28,7 +28,9 @@
     "lint": "eslint 'src/**/*.{ts,tsx}' 'scripts/**/*.js'",
     "format": "prettier --write 'src/**/*.{ts,tsx}' 'scripts/**/*.js' '*.{json,js}'",
     "format:check": "prettier --check 'src/**/*.{ts,tsx}' 'scripts/**/*.js' '*.{json,js}'",
-    "check:secrets": "node scripts/check-secrets.js"
+    "check:secrets": "node scripts/check-secrets.js",
+    "test": "vitest run",
+    "check:structure": "node scripts/check-structure.js"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "^0.2.3",
@@ -76,7 +78,8 @@
     "playwright": "1.49.0",
     "prettier": "^3.9.6",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^4.1.10"
   },
   "private": true
 }

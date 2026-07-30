@@ -1,0 +1,158 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  HEARTS_MAX,
+  demote,
+  gemsForLesson,
+  getLeague,
+  LEAGUES,
+  levelFromXp,
+  levelProgress,
+  levelTitle,
+  promote,
+  xpForLevel,
+} from './gamification';
+
+/**
+ * The XP curve, the league ladder and the gem payout.
+ *
+ * These decide what a learner sees after every single lesson, and until now
+ * nothing checked them — the project had `check:*` scripts for content, audio,
+ * pixels and the live site, and no unit tests at all for its own arithmetic.
+ * The tests assert *properties* the design promises rather than transcribing
+ * the implementation back at itself: a test that says `xpForLevel(4) === 360`
+ * only proves the function still does what it does, and breaks on any tuning.
+ */
+
+describe('the level curve', () => {
+  it('starts at level 1 with no XP owed', () => {
+    expect(xpForLevel(1)).toBe(0);
+    expect(levelFromXp(0)).toBe(1);
+  });
+
+  it('never asks for less XP to reach a higher level', () => {
+    for (let level = 1; level < 60; level++) {
+      expect(xpForLevel(level + 1)).toBeGreaterThan(xpForLevel(level));
+    }
+  });
+
+  it('gets harder as it goes — each level costs more than the one before', () => {
+    // The stated design: early levels come fast for momentum, later ones
+    // stretch out. That is a claim about the *second* difference, not the first.
+    for (let level = 2; level < 40; level++) {
+      const thisStep = xpForLevel(level + 1) - xpForLevel(level);
+      const lastStep = xpForLevel(level) - xpForLevel(level - 1);
+      expect(thisStep).toBeGreaterThan(lastStep);
+    }
+  });
+
+  it('agrees with itself: the level for a threshold is the level it unlocks', () => {
+    for (let level = 1; level < 40; level++) {
+      expect(levelFromXp(xpForLevel(level))).toBe(level);
+      // One XP short is still the previous level.
+      if (level > 1) expect(levelFromXp(xpForLevel(level) - 1)).toBe(level - 1);
+    }
+  });
+});
+
+describe('progress within a level', () => {
+  it('reports a ratio between 0 and 1 at every XP total', () => {
+    for (let xp = 0; xp < 20_000; xp += 37) {
+      const { ratio } = levelProgress(xp);
+      expect(ratio).toBeGreaterThanOrEqual(0);
+      expect(ratio).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('is exactly at the start of a level when the level is just reached', () => {
+    for (let level = 2; level < 20; level++) {
+      const { into, ratio } = levelProgress(xpForLevel(level));
+      expect(into).toBe(0);
+      expect(ratio).toBe(0);
+    }
+  });
+
+  it('never reports progress past the next threshold', () => {
+    for (let xp = 0; xp < 20_000; xp += 53) {
+      const { into, span } = levelProgress(xp);
+      expect(into).toBeLessThan(span);
+    }
+  });
+});
+
+describe('level titles', () => {
+  it('never goes backwards as the level rises', () => {
+    const order = ['Beginner', 'Apprentice', 'Rising', 'Confident', 'Fluent Reader', 'Calligrapher', 'Master'];
+    let lastSeen = 0;
+    for (let level = 1; level <= 40; level++) {
+      const rank = order.indexOf(levelTitle(level));
+      expect(rank).toBeGreaterThanOrEqual(0); // no title outside the ladder
+      expect(rank).toBeGreaterThanOrEqual(lastSeen);
+      lastSeen = rank;
+    }
+  });
+});
+
+describe('the league ladder', () => {
+  it('has no duplicate ids', () => {
+    expect(new Set(LEAGUES.map((l) => l.id)).size).toBe(LEAGUES.length);
+  });
+
+  it('falls back to the first league for an id it does not know', () => {
+    // A stored league id from an older build must not crash the profile screen.
+    expect(getLeague('not-a-league')).toBe(LEAGUES[0]);
+  });
+
+  it('stops at the top rather than running off the end', () => {
+    const top = LEAGUES[LEAGUES.length - 1].id;
+    expect(promote(top)).toBe(top);
+  });
+
+  it('stops at the bottom rather than running off the start', () => {
+    const bottom = LEAGUES[0].id;
+    expect(demote(bottom)).toBe(bottom);
+  });
+
+  it('promote and demote are inverses in the middle of the ladder', () => {
+    for (let i = 1; i < LEAGUES.length - 1; i++) {
+      const id = LEAGUES[i].id;
+      expect(demote(promote(id))).toBe(id);
+      expect(promote(demote(id))).toBe(id);
+    }
+  });
+});
+
+describe('gems for a lesson', () => {
+  it('never pays a negative amount, at any accuracy', () => {
+    for (const review of [true, false]) {
+      for (let accuracy = 0; accuracy <= 1.0001; accuracy += 0.05) {
+        expect(gemsForLesson(accuracy, review)).toBeGreaterThanOrEqual(0);
+      }
+    }
+  });
+
+  it('pays a whole number — gems are counted, not measured', () => {
+    for (let accuracy = 0; accuracy <= 1.0001; accuracy += 0.05) {
+      expect(Number.isInteger(gemsForLesson(accuracy, false))).toBe(true);
+    }
+  });
+
+  it('never pays less for a better performance', () => {
+    for (const review of [true, false]) {
+      let previous = -1;
+      for (let accuracy = 0; accuracy <= 1.0001; accuracy += 0.05) {
+        const paid = gemsForLesson(accuracy, review);
+        expect(paid).toBeGreaterThanOrEqual(previous);
+        previous = paid;
+      }
+    }
+  });
+});
+
+describe('the hearts economy', () => {
+  it('allows at least one mistake before a lesson ends', () => {
+    // A max of 1 would mean the first wrong answer ends the session, which is
+    // not what any screen's copy says.
+    expect(HEARTS_MAX).toBeGreaterThan(1);
+  });
+});
