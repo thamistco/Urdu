@@ -111,7 +111,16 @@ async function enterAsGuest(page, url, state = {}) {
   }
   await page.evaluate((extra) => {
     const raw = JSON.parse(localStorage.getItem('harf-progress') || '{"state":{},"version":0}');
-    raw.state = { ...raw.state, onboarded: true, goal: 'family', hearts: 5, srs: {}, srsType: {}, completedLessons: {}, ...extra };
+    raw.state = {
+      ...raw.state,
+      onboarded: true,
+      goal: 'family',
+      hearts: 5,
+      srs: {},
+      srsType: {},
+      completedLessons: {},
+      ...extra,
+    };
     localStorage.setItem('harf-progress', JSON.stringify(raw));
     localStorage.setItem(
       'harf-settings',

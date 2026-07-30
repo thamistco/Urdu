@@ -38,8 +38,24 @@ jobs:
       # These run before the build so a broken push fails loudly rather than
       # deploying. They are cheap — seconds — and cover the things a
       # typechecker cannot: content wiring, and how forgiving typed answers are.
+      # Nothing may be pushed carrying a credential. This scans what git
+      # actually tracks, for credential shapes rather than the word "key", and
+      # self-tests against a canary so it cannot silently stop matching.
+      - name: Check no credentials are committed
+        run: npm run check:secrets
+
       - name: Typecheck
         run: npm run typecheck
+
+      # Style is enforced, not requested. `react-hooks/exhaustive-deps` is an
+      # error here rather than a warning: a stale dependency array is what made
+      # every answer in a lesson get judged against the first question, so
+      # grammar cost nothing to get wrong.
+      - name: Lint
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
 
       - name: Audit content
         run: npm run audit
@@ -63,10 +79,6 @@ jobs:
       - name: Check the theme is the only place colour lives
         run: npm run check:theme
 
-      - name: Set web base path to the repo subpath
-        run: |
-          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('app.json'));p.expo.experiments=Object.assign({},p.expo.experiments,{baseUrl:'/${{ github.event.repository.name }}'});fs.writeFileSync('app.json',JSON.stringify(p,null,2));"
-
       - name: Generate voice clips (only if a TTS key is set)
         env:
           GOOGLE_TTS_API_KEY: ${{ secrets.GOOGLE_TTS_API_KEY }}
@@ -80,9 +92,16 @@ jobs:
       - name: Check that every voice clip is audible
         run: npm run check:voice
 
-      - name: Export web bundle
+      # `npm run build:web` is the only way this project builds, here and on a
+      # laptop. The subpath and the commit stamp arrive as environment
+      # variables that app.config.js reads — nothing rewrites a tracked file
+      # mid-job any more. That rewrite is what made CI builds differ from local
+      # ones, which is what let a broken check reach the deploy four times.
+      - name: Build the web bundle
         env:
           NODE_ENV: production
+          HARF_BASE_URL: /${{ github.event.repository.name }}
+          HARF_BUILD_SHA: ${{ github.sha }}
           # Optional: set these as repo Actions secrets to enable sign-in + cloud
           # save on the hosted preview. Left empty, the app runs in guest mode.
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
@@ -94,7 +113,7 @@ jobs:
           EXPO_PUBLIC_TESTER_MODE: ${{ vars.EXPO_PUBLIC_TESTER_MODE }}
           EXPO_PUBLIC_TESTER_USER: ${{ secrets.EXPO_PUBLIC_TESTER_USER }}
           EXPO_PUBLIC_TESTER_PASS: ${{ secrets.EXPO_PUBLIC_TESTER_PASS }}
-        run: npx expo export --platform web --output-dir dist
+        run: npm run build:web
 
       # Expo's export writes a <title> and nothing else, so without this the
       # hosted app has no description for a search engine and a link to it
@@ -103,6 +122,8 @@ jobs:
       - name: Add the description and share card to the web page
         env:
           SITE_ORIGIN: https://${{ github.repository_owner }}.github.io
+          HARF_BASE_URL: /${{ github.event.repository.name }}
+          HARF_BUILD_SHA: ${{ github.sha }}
         run: npm run web:meta
 
       # Drives the built app in a real browser and answers questions, checking
@@ -149,3 +170,15 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+      # A green pipeline is not a deploy. This fetches the live URL and asserts
+      # it is serving the commit that was just built, using the stamp
+      # app.config.js put in the bundle. Without it, "success" here means the
+      # upload returned 200 — which is not the same as the site having changed,
+      # and twice it was reported as if it were.
+      - uses: actions/checkout@v4
+      - name: Verify the live site is serving this commit
+        env:
+          SITE_URL: ${{ steps.deployment.outputs.page_url }}
+          HARF_BUILD_SHA: ${{ github.sha }}
+        run: node scripts/check-deployed.js

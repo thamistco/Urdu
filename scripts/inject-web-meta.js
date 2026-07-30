@@ -27,10 +27,19 @@ if (!fs.existsSync(INDEX)) {
   process.exit(1);
 }
 
-const { expo } = JSON.parse(fs.readFileSync(path.join(ROOT, 'app.json'), 'utf8'));
+/**
+ * The config is read through `app.config.js`, not straight out of `app.json`.
+ *
+ * `baseUrl` is a function of the environment now (see app.config.js for why),
+ * so app.json no longer holds the whole truth. Reading the resolved config is
+ * the difference between this script agreeing with the bundle Expo just built
+ * and this script guessing.
+ */
+const expo = require(path.join(ROOT, 'app.config.js'))();
 const name = expo.name || 'App';
 const description = expo.description || '';
 const baseUrl = (expo.experiments && expo.experiments.baseUrl) || '';
+const buildSha = (expo.extra && expo.extra.buildSha) || '';
 
 /**
  * The share picture is the app icon, which has to be reachable at a stable URL.
@@ -72,6 +81,10 @@ const tags = [
   description && `<meta name="twitter:description" content="${esc(description)}" />`,
   iconUrl && `<meta name="twitter:image" content="${esc(iconUrl)}" />`,
   `<meta name="theme-color" content="${esc((expo.splash && expo.splash.backgroundColor) || '#211712')}" />`,
+  // The commit this bundle was built from. Not decoration: `check:deployed`
+  // fetches the live page and asserts this matches, which is the only way to
+  // know a deploy actually published rather than merely reporting success.
+  buildSha && `<meta name="harf:build" content="${esc(buildSha)}" />`,
 ].filter(Boolean);
 
 let html = fs.readFileSync(INDEX, 'utf8');
@@ -86,7 +99,6 @@ html = html.replace('</title>', `</title>${block}`);
 fs.writeFileSync(INDEX, html);
 
 console.log(`Injected ${tags.length} meta tags into ${path.relative(ROOT, INDEX)}`);
-if (!origin)
-  console.log('  (SITE_ORIGIN not set — share-image tags skipped, since a relative og:image never renders)');
+if (!origin) console.log('  (SITE_ORIGIN not set — share-image tags skipped, since a relative og:image never renders)');
 else if (!iconUrl) console.log('  (assets/images/icon.png missing — share-image tags skipped)');
 else console.log(`  share card copied to ${SHARE_NAME}, served at ${iconUrl}`);
