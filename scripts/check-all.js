@@ -38,19 +38,33 @@ const REPO = 'Urdu'; // matches github.event.repository.name in the workflow
  * Only `npm run …` and `node scripts/…` lines are taken. The rest of the job —
  * checkout, setup-node, Pages upload, `playwright install` — is either
  * meaningless locally or already true of this machine.
+ *
+ * **Comment lines are skipped, and this script excludes itself.** The first
+ * version did neither, and the workflow contains a comment that mentions
+ * `npm run check:all` by name. So it parsed its own name out of English prose
+ * and ran itself, recursively, each level re-exporting the bundle. It did not
+ * error; it simply never finished, which is the worst way for a check to fail.
+ * Both guards below are asserted, not assumed.
  */
+const SELF = 'check:all';
+
 function stepsFromWorkflow() {
   const yml = fs.readFileSync(WORKFLOW, 'utf8').split('\n');
   const steps = [];
   let name = null;
   for (const line of yml) {
+    if (/^\s*#/.test(line)) continue; // prose, not pipeline
     const n = line.match(/^\s*- name:\s*(.+?)\s*$/);
     if (n) {
       name = n[1];
       continue;
     }
-    for (const m of line.matchAll(/\b(npm run [a-z:]+|node scripts\/[\w-]+\.js)\b/g)) {
+    // Strip a trailing comment before matching, so `npm run x  # see check:all`
+    // contributes the command and not the aside.
+    const code = line.replace(/\s#.*$/, '');
+    for (const m of code.matchAll(/\b(npm run [a-z:]+|node scripts\/[\w-]+\.js)\b/g)) {
       const cmd = m[1];
+      if (cmd.includes(SELF)) continue;
       if (steps.some((s) => s.cmd === cmd)) continue;
       steps.push({ name: name || cmd, cmd });
     }
@@ -59,12 +73,22 @@ function stepsFromWorkflow() {
 }
 
 const steps = stepsFromWorkflow();
+
+if (steps.some((s) => s.cmd.includes(SELF))) {
+  console.error(`check:all — parsed itself out of the workflow and would recurse. The comment filter is broken.`);
+  process.exit(1);
+}
 if (steps.length < 6) {
   console.error(
     `check:all — only found ${steps.length} runnable steps in the workflow. This parser is broken, not the pipeline; fix it rather than trusting a short green run.`
   );
   process.exit(1);
 }
+if (process.env.HARF_CHECK_ALL_RUNNING) {
+  console.error('check:all — refusing to run inside another check:all. Something re-entered it.');
+  process.exit(1);
+}
+process.env.HARF_CHECK_ALL_RUNNING = '1';
 
 const original = fs.readFileSync(APP_JSON, 'utf8');
 let failed = null;
