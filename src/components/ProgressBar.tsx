@@ -1,11 +1,6 @@
 import { useEffect } from 'react';
 import { View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-  withSpring,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming, withSpring } from 'react-native-reanimated';
 import { palette } from '../theme';
 
 /** Smoothly-animated progress bar. Spring on grow → feels alive, not mechanical. */
@@ -25,17 +20,13 @@ export function ProgressBar({
   const w = useSharedValue(0);
   useEffect(() => {
     const clamped = Math.max(0, Math.min(1, progress));
-    w.value = spring
-      ? withSpring(clamped, { damping: 18, stiffness: 120 })
-      : withTiming(clamped, { duration: 350 });
+    w.value = spring ? withSpring(clamped, { damping: 18, stiffness: 120 }) : withTiming(clamped, { duration: 350 });
   }, [progress, spring, w]);
 
   const style = useAnimatedStyle(() => ({ width: `${w.value * 100}%` }));
 
   return (
-    <View
-      style={{ height, backgroundColor: track, borderRadius: height / 2, overflow: 'hidden' }}
-    >
+    <View style={{ height, backgroundColor: track, borderRadius: height / 2, overflow: 'hidden' }}>
       <Animated.View style={[{ height: '100%', backgroundColor: color, borderRadius: height / 2 }, style]}>
         {/* subtle top highlight for a soft, tactile sheen */}
         <View

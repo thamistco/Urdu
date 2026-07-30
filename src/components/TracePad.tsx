@@ -43,10 +43,7 @@ export function TracePad({
   const [result, setResult] = useState<TraceResult | null>(null);
   const current = useRef<Pt[]>([]);
 
-  const targets = useMemo(
-    () => (entry ? traceTargets(decodeMask(entry[0], MASK_GRID), MASK_GRID) : null),
-    [entry]
-  );
+  const targets = useMemo(() => (entry ? traceTargets(decodeMask(entry[0], MASK_GRID), MASK_GRID) : null), [entry]);
 
   const responder = useMemo(
     () =>
@@ -71,13 +68,7 @@ export function TracePad({
   const check = () => {
     if (result != null || locked || !targets || !side) return;
 
-    const { coverage, precision, pass } = scoreTrace(
-      strokes,
-      side,
-      MASK_GRID,
-      targets.reachable,
-      targets.tolerant
-    );
+    const { coverage, precision, pass } = scoreTrace(strokes, side, MASK_GRID, targets.reachable, targets.tolerant);
     void precision;
 
     const r = { pass, coverage };
@@ -192,9 +183,7 @@ export function TracePad({
           <Bold style={{ color: result.pass ? palette.jade : palette.rose }}>
             {result.pass ? 'That is the shape ✓' : 'Follow the grey letter more closely'}
           </Bold>
-          <Txt className="mt-1 text-xs text-paper/50">
-            {Math.round(result.coverage * 100)}% of the letter covered
-          </Txt>
+          <Txt className="mt-1 text-xs text-paper/50">{Math.round(result.coverage * 100)}% of the letter covered</Txt>
         </View>
       )}
     </View>

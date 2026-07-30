@@ -161,7 +161,9 @@ try {
     );
     process.exit(1);
   }
-  console.log(`check:scenery — brightest point of the scenery is ${worst}:1 against the body text (floor ${FLOOR}:1). Clear.`);
+  console.log(
+    `check:scenery — brightest point of the scenery is ${worst}:1 against the body text (floor ${FLOOR}:1). Clear.`
+  );
 })().catch((e) => {
   console.error('check:scenery — ' + e.message);
   process.exit(1);

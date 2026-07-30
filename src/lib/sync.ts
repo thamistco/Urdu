@@ -42,7 +42,10 @@ export async function pushProgress() {
   await supabase
     .from('progress')
     .upsert({ user_id: currentUserId, data, updated_at: new Date().toISOString() })
-    .then(() => {}, () => {});
+    .then(
+      () => {},
+      () => {}
+    );
 }
 
 function schedulePush() {
@@ -56,11 +59,7 @@ export async function pullThenMerge(userId: string) {
   if (!supabase) return;
   currentUserId = userId;
 
-  const { data, error } = await supabase
-    .from('progress')
-    .select('data')
-    .eq('user_id', userId)
-    .maybeSingle();
+  const { data, error } = await supabase.from('progress').select('data').eq('user_id', userId).maybeSingle();
 
   if (!error && data?.data) {
     await applyRemote(data.data as any);

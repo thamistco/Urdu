@@ -11,9 +11,7 @@ import { glossOf } from '../data/words';
 
 type BuildEx = Extract<Exercise, { kind: 'wordBuild' }>;
 
-const LETTER_NAME: Record<string, string> = Object.fromEntries(
-  LETTERS.map((l) => [l.forms.isolated, l.name])
-);
+const LETTER_NAME: Record<string, string> = Object.fromEntries(LETTERS.map((l) => [l.forms.isolated, l.name]));
 
 /**
  * What's actually wrong with a wrong build, for the two mistakes common
@@ -76,13 +74,20 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
     const built = placed.map((i) => tiles[i]).join('');
     const correct = built === target.join('');
     setGraded(correct);
-    correct ? feedback.correctAnnounceMeaning(word.id, word.urdu, word.roman, word.meaning)
+    correct
+      ? feedback.correctAnnounceMeaning(word.id, word.urdu, word.roman, word.meaning)
       : feedback.incorrectAnnounce(word.id, word.urdu, word.roman);
     onGraded({ items: [{ id: word.id, type: 'word' }], correct });
   };
 
   const assembled = placed.map((i) => tiles[i]).join('');
-  const diagnosis = graded === false ? diagnoseBuild(placed.map((i) => tiles[i]), target) : null;
+  const diagnosis =
+    graded === false
+      ? diagnoseBuild(
+          placed.map((i) => tiles[i]),
+          target
+        )
+      : null;
 
   return (
     <View>
@@ -101,8 +106,7 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
       <View
         className="mb-2 min-h-[70px] rounded-2xl border-2 border-dashed px-3 py-3"
         style={{
-          borderColor:
-            graded == null ? withAlpha(palette.paper, 0.25) : graded ? palette.jade : palette.rose,
+          borderColor: graded == null ? withAlpha(palette.paper, 0.25) : graded ? palette.jade : palette.rose,
         }}
       >
         {placed.length === 0 ? (
@@ -159,11 +163,7 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
       </View>
 
       {graded == null && (
-        <Button
-          variant={placed.length ? 'primary' : 'ghost'}
-          disabled={placed.length === 0}
-          onPress={check}
-        >
+        <Button variant={placed.length ? 'primary' : 'ghost'} disabled={placed.length === 0} onPress={check}>
           Check
         </Button>
       )}
@@ -185,9 +185,7 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
           <Txt className="text-xs text-paper/60">The word is</Txt>
           <Urdu style={{ fontSize: 34, lineHeight: urduLine(34) }}>{word.urdu}</Urdu>
           <Txt className="text-xs text-paper/60">{word.roman}</Txt>
-          {diagnosis && (
-            <Txt className="mt-2 text-center text-xs text-paper/70">{diagnosis}</Txt>
-          )}
+          {diagnosis && <Txt className="mt-2 text-center text-xs text-paper/70">{diagnosis}</Txt>}
         </View>
       )}
     </View>

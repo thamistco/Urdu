@@ -57,11 +57,7 @@ export function isDue(card: SrsCard, now = Date.now()): boolean {
 }
 
 /** Ids of due cards, soonest-overdue first, capped to `limit`. */
-export function dueQueue(
-  cards: Record<string, SrsCard>,
-  limit: number,
-  now = Date.now()
-): string[] {
+export function dueQueue(cards: Record<string, SrsCard>, limit: number, now = Date.now()): string[] {
   return Object.values(cards)
     .filter((c) => isDue(c, now))
     .sort((a, b) => a.due - b.due)

@@ -74,9 +74,7 @@ export function Illustration({
 function NumeralTile({ numeral, size }: { numeral: string; size: number }) {
   return (
     <Medallion size={size}>
-      <RNText style={{ fontFamily: 'NotoNastaliq-Bold', color: palette.gold, fontSize: size * 0.42 }}>
-        {numeral}
-      </RNText>
+      <RNText style={{ fontFamily: 'NotoNastaliq-Bold', color: palette.gold, fontSize: size * 0.42 }}>{numeral}</RNText>
     </Medallion>
   );
 }
@@ -115,11 +113,18 @@ export function WordArt({ word, size = 56 }: { word: Word; size?: number }) {
 }
 
 const GOAL_ICON: Record<string, IconName> = {
-  family: 'family', read: 'pen', heritage: 'mosque', curious: 'sparkle',
+  family: 'family',
+  read: 'pen',
+  heritage: 'mosque',
+  curious: 'sparkle',
 };
 const TOPIC_ICON: Record<string, IconName> = {
-  'first-words': 'sparkle', family: 'family', food: 'bowl', home: 'house',
-  nature: 'moon', greetings: 'salaam',
+  'first-words': 'sparkle',
+  family: 'family',
+  food: 'bowl',
+  home: 'house',
+  nature: 'moon',
+  greetings: 'salaam',
 };
 
 export function GoalArt({ goalKey, size = 44 }: { goalKey: string; size?: number }) {
@@ -145,14 +150,23 @@ export function TopicArt({ topicId, size = 44 }: { topicId: string; size?: numbe
  */
 export function lessonIconName(kind: string, topic?: string): IconName {
   switch (kind) {
-    case 'letters': return 'pen';
-    case 'vocab': return (topic && TOPIC_ICON[topic]) || 'sparkle';
-    case 'phrases': return 'salaam';
-    case 'grammar': return 'lattice';
-    case 'sentences': return 'tiles';
-    case 'reading': return 'scroll';
-    case 'dialogue': return 'salaam';
-    case 'review': return 'crescent';
-    default: return 'star';
+    case 'letters':
+      return 'pen';
+    case 'vocab':
+      return (topic && TOPIC_ICON[topic]) || 'sparkle';
+    case 'phrases':
+      return 'salaam';
+    case 'grammar':
+      return 'lattice';
+    case 'sentences':
+      return 'tiles';
+    case 'reading':
+      return 'scroll';
+    case 'dialogue':
+      return 'salaam';
+    case 'review':
+      return 'crescent';
+    default:
+      return 'star';
   }
 }

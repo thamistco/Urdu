@@ -117,7 +117,13 @@ type ProgressState = {
   loseHeart: () => void;
   refillHearts: () => boolean;
   gradeItem: (id: string, type: ItemType, grade: SrsGrade) => void;
-  finishLesson: (args: { lessonId: string; correct: number; total: number; xp: number; isReview: boolean }) => FinishResult;
+  finishLesson: (args: {
+    lessonId: string;
+    correct: number;
+    total: number;
+    xp: number;
+    isReview: boolean;
+  }) => FinishResult;
   setDailyGoal: (id: string) => void;
   useFreeze: () => void;
   addGems: (n: number) => void;
@@ -194,8 +200,7 @@ export const useProgressStore = create<ProgressState>()(
           const consumedMin = gained * HEART_REGEN_MINUTES;
           set({
             hearts,
-            heartsUpdatedAt:
-              hearts >= HEARTS_MAX ? Date.now() : s.heartsUpdatedAt + consumedMin * 60000,
+            heartsUpdatedAt: hearts >= HEARTS_MAX ? Date.now() : s.heartsUpdatedAt + consumedMin * 60000,
           });
         }
       },

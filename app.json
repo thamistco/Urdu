@@ -14,9 +14,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#211712"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.harf.urdu"

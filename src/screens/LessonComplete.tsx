@@ -77,12 +77,13 @@ export function LessonComplete({
               <Reveal delay={220} style={{ width: '100%' }}>
                 <View
                   className="mb-3 flex-row items-center justify-center gap-2 rounded-2xl border p-4"
-                  style={{ borderColor: withAlpha(palette.flame, 0.35), backgroundColor: withAlpha(palette.flame, 0.1) }}
+                  style={{
+                    borderColor: withAlpha(palette.flame, 0.35),
+                    backgroundColor: withAlpha(palette.flame, 0.1),
+                  }}
                 >
                   <Illustration name="flame" tile={false} size={26} />
-                  <Bold style={{ color: palette.flameLight }}>
-                    {result.streak}-day streak. Keep it alight!
-                  </Bold>
+                  <Bold style={{ color: palette.flameLight }}>{result.streak}-day streak. Keep it alight!</Bold>
                 </View>
               </Reveal>
             )}

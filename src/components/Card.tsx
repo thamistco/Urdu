@@ -22,10 +22,7 @@ export function Card({
   const inner = (
     <View
       className={`rounded-2xl border border-white/10 p-5 ${base} ${className}`}
-      style={[
-        accent ? { borderLeftWidth: 4, borderLeftColor: accent } : null,
-        style,
-      ]}
+      style={[accent ? { borderLeftWidth: 4, borderLeftColor: accent } : null, style]}
     >
       {children}
     </View>

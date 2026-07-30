@@ -86,10 +86,7 @@ export function Button({
             ) : (
               <>
                 {icon}
-                <Bold
-                  style={{ color: TEXT[variant] }}
-                  className="text-[15px] uppercase tracking-[1.5px]"
-                >
+                <Bold style={{ color: TEXT[variant] }} className="text-[15px] uppercase tracking-[1.5px]">
                   {children}
                 </Bold>
               </>

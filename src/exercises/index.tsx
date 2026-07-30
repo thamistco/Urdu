@@ -1,10 +1,6 @@
 import { LetterFormExercise, LetterPickExercise } from './LetterExercises';
 import { TraceExercise } from './TraceExercise';
-import {
-  MultipleChoiceExercise,
-  MeaningPickExercise,
-  ListenTapExercise,
-} from './WordChoiceExercises';
+import { MultipleChoiceExercise, MeaningPickExercise, ListenTapExercise } from './WordChoiceExercises';
 import { TypeWordExercise, WordFromMeaningExercise } from './RecallExercises';
 import { WordBuildExercise } from './WordBuild';
 import { MatchingExercise } from './Matching';

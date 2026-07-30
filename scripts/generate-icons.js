@@ -105,9 +105,9 @@ function chromePath() {
   return path.join(base, dir, 'chrome-linux', 'chrome');
 }
 
-const INK = '#211712';       // the app's background; the splash sits on it
-const LETTER = '#2A1208';    // the letter: near-black, the darkest note
-const SUN = '#FFF6EA';       // the disc in its bowl, the one light note
+const INK = '#211712'; // the app's background; the splash sits on it
+const LETTER = '#2A1208'; // the letter: near-black, the darkest note
+const SUN = '#FFF6EA'; // the disc in its bowl, the one light note
 const GROUND_LIGHT = '#FF9A50';
 const GROUND_DEEP = '#F0741F';
 /** Android flattens the adaptive icon's background to a single colour. */

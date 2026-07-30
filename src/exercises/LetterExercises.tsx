@@ -18,7 +18,8 @@ export function LetterFormExercise({ exercise, locked, onGraded }: ExerciseProps
     if (picked || locked) return;
     setPicked(key);
     const correct = key === position;
-    correct ? feedback.correctAnnounce(letter.id, letter.forms.isolated, letter.name)
+    correct
+      ? feedback.correctAnnounce(letter.id, letter.forms.isolated, letter.name)
       : feedback.incorrectAnnounce(letter.id, letter.forms.isolated, letter.name);
     onGraded({ items: [{ id: letter.id, type: 'letter' }], correct });
   };
@@ -35,14 +36,7 @@ export function LetterFormExercise({ exercise, locked, onGraded }: ExerciseProps
       <Question>Which position is this letter showing?</Question>
       <View className="flex-row flex-wrap justify-between">
         {POSITIONS.map((p) => {
-          const state =
-            picked == null
-              ? 'idle'
-              : p.key === position
-              ? 'correct'
-              : p.key === picked
-              ? 'wrong'
-              : 'muted';
+          const state = picked == null ? 'idle' : p.key === position ? 'correct' : p.key === picked ? 'wrong' : 'muted';
           return (
             <Choice
               key={p.key}
@@ -70,7 +64,8 @@ export function LetterPickExercise({ exercise, locked, onGraded }: ExerciseProps
     if (picked || locked) return;
     setPicked(id);
     const correct = id === letter.id;
-    correct ? feedback.correctAnnounce(letter.id, letter.forms.isolated, letter.name)
+    correct
+      ? feedback.correctAnnounce(letter.id, letter.forms.isolated, letter.name)
       : feedback.incorrectAnnounce(letter.id, letter.forms.isolated, letter.name);
     onGraded({ items: [{ id: letter.id, type: 'letter' }], correct });
   };
@@ -89,14 +84,7 @@ export function LetterPickExercise({ exercise, locked, onGraded }: ExerciseProps
       <Question>Which letter is this?</Question>
       <View className="flex-row flex-wrap justify-between">
         {options.map((o) => {
-          const state =
-            picked == null
-              ? 'idle'
-              : o.id === letter.id
-              ? 'correct'
-              : o.id === picked
-              ? 'wrong'
-              : 'muted';
+          const state = picked == null ? 'idle' : o.id === letter.id ? 'correct' : o.id === picked ? 'wrong' : 'muted';
           return (
             <Choice
               key={o.id}
@@ -105,9 +93,7 @@ export function LetterPickExercise({ exercise, locked, onGraded }: ExerciseProps
               onPress={() => choose(o.id)}
               className="mb-3 w-[48%]"
             >
-              <Urdu style={{ color: palette.paper, ...urduGlyph(32) }}>
-                {o.forms.isolated}
-              </Urdu>
+              <Urdu style={{ color: palette.paper, ...urduGlyph(32) }}>{o.forms.isolated}</Urdu>
             </Choice>
           );
         })}

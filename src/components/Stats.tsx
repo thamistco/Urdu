@@ -30,15 +30,7 @@ export function StatChip({
 }
 
 /** The row of live stats shown at the top of learning screens. */
-export function StatBar({
-  streak,
-  gems,
-  hearts,
-}: {
-  streak: number;
-  gems: number;
-  hearts: number;
-}) {
+export function StatBar({ streak, gems, hearts }: { streak: number; gems: number; hearts: number }) {
   return (
     <View className="flex-row items-center justify-between">
       <StatChip icon={<Illustration name="flame" tile={false} size={16} />} value={streak} color={palette.flame} />

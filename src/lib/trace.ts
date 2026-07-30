@@ -48,7 +48,8 @@ export function dilate(mask: Uint8Array, grid: number, radius: number): Uint8Arr
       for (let dy = -radius; dy <= radius; dy++) {
         for (let dx = -radius; dx <= radius; dx++) {
           if (dx * dx + dy * dy > r2) continue;
-          const ny = y + dy, nx = x + dx;
+          const ny = y + dy,
+            nx = x + dx;
           if (ny < 0 || nx < 0 || ny >= grid || nx >= grid) continue;
           out[ny * grid + nx] = 1;
         }
@@ -86,13 +87,16 @@ function paintedCells(strokes: Pt[][], side: number, grid: number): Set<number> 
   const stamp = (p: Pt) => {
     const cx = p.x / cell;
     const cy = p.y / cell;
-    const gx0 = Math.floor(cx), gy0 = Math.floor(cy);
+    const gx0 = Math.floor(cx),
+      gy0 = Math.floor(cy);
     for (let dy = -r; dy <= r; dy++) {
       for (let dx = -r; dx <= r; dx++) {
-        const gx = gx0 + dx, gy = gy0 + dy;
+        const gx = gx0 + dx,
+          gy = gy0 + dy;
         if (gx < 0 || gy < 0 || gx >= grid || gy >= grid) continue;
         // distance from the path to the centre of this cell
-        const ddx = gx + 0.5 - cx, ddy = gy + 0.5 - cy;
+        const ddx = gx + 0.5 - cx,
+          ddy = gy + 0.5 - cy;
         if (ddx * ddx + ddy * ddy > r2) continue;
         painted.add(gy * grid + gx);
       }

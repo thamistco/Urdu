@@ -19,7 +19,9 @@ export function RootNavigator() {
   const authed = useAuthStore(isAuthed);
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: palette.ink } }}>
+    <Stack.Navigator
+      screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: palette.ink } }}
+    >
       {!authed ? (
         <Stack.Screen name="Login" component={LoginScreen} />
       ) : !onboarded ? (
@@ -34,7 +36,11 @@ export function RootNavigator() {
           />
           <Stack.Screen name="LetterLab" component={LetterLabScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="Leaderboard" component={LeaderboardScreen} options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="Achievements" component={AchievementsScreen} options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen
+            name="Achievements"
+            component={AchievementsScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
           <Stack.Screen name="Settings" component={SettingsScreen} options={{ animation: 'slide_from_right' }} />
         </>
       )}

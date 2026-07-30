@@ -48,7 +48,7 @@ const CASES = [
 
   // distinctions that carry meaning and must survive the reduction
   ['gar', 'گھر', 'ghar', false], // aspiration: گر is a different word
-  ['ke', 'کی', 'ki', false],     // کے / کی / کا is a grammar lesson
+  ['ke', 'کی', 'ki', false], // کے / کی / کا is a grammar lesson
   ['dakter', 'ڈاکٹر', 'ḍākṭar', false],
   ['', 'کتاب', 'kitaab', false],
   ['   ', 'کتاب', 'kitaab', false],

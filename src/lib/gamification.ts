@@ -67,8 +67,7 @@ export const LEAGUES = [
 
 export type LeagueId = (typeof LEAGUES)[number]['id'];
 
-export const getLeague = (id: string) =>
-  LEAGUES.find((l) => l.id === id) ?? LEAGUES[0];
+export const getLeague = (id: string) => LEAGUES.find((l) => l.id === id) ?? LEAGUES[0];
 
 export function promote(current: LeagueId): LeagueId {
   const i = LEAGUES.findIndex((l) => l.id === current);

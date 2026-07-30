@@ -165,8 +165,20 @@ export function LatticeBackground({ opacity = 1 }: { opacity?: number }) {
 
           {/* two birds crossing — the one detail that makes a gradient read as
               a place rather than a colour swatch */}
-          <Path d="M70,258 q10,-12 20,0 q10,-12 20,0" stroke={withAlpha(palette.ink600, 0.7)} strokeWidth={3} fill="none" strokeLinecap="round" />
-          <Path d="M132,296 q8,-9 16,0 q8,-9 16,0" stroke={withAlpha(palette.ink600, 0.55)} strokeWidth={2.5} fill="none" strokeLinecap="round" />
+          <Path
+            d="M70,258 q10,-12 20,0 q10,-12 20,0"
+            stroke={withAlpha(palette.ink600, 0.7)}
+            strokeWidth={3}
+            fill="none"
+            strokeLinecap="round"
+          />
+          <Path
+            d="M132,296 q8,-9 16,0 q8,-9 16,0"
+            stroke={withAlpha(palette.ink600, 0.55)}
+            strokeWidth={2.5}
+            fill="none"
+            strokeLinecap="round"
+          />
 
           {/* Low cloud, warm because it is near the sun, and lying across it —
               the sun reads as *behind* the weather rather than in front. */}

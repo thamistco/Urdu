@@ -11,8 +11,20 @@ import { useProgressStore } from '../store/useProgressStore';
 
 /** Believable weekly cohort. Deterministic per-week so it feels stable. */
 const NAMES = [
-  'Ayesha', 'Bilal', 'Zara', 'Omar', 'Hina', 'Kamran', 'Sana', 'Yusuf',
-  'Mariam', 'Faisal', 'Nadia', 'Tariq', 'Rida', 'Imran',
+  'Ayesha',
+  'Bilal',
+  'Zara',
+  'Omar',
+  'Hina',
+  'Kamran',
+  'Sana',
+  'Yusuf',
+  'Mariam',
+  'Faisal',
+  'Nadia',
+  'Tariq',
+  'Rida',
+  'Imran',
 ];
 
 function seededXp(seed: number, i: number) {
@@ -58,7 +70,8 @@ export function LeaderboardScreen() {
           {rows.map((r, i) => {
             const rank = i + 1;
             const zone = i < PROMOTE_ZONE ? 'up' : i >= DEMOTE_ZONE ? 'down' : 'stay';
-            const zoneColor = zone === 'up' ? palette.jade : zone === 'down' ? palette.rose : withAlpha(palette.white, 0.15);
+            const zoneColor =
+              zone === 'up' ? palette.jade : zone === 'down' ? palette.rose : withAlpha(palette.white, 0.15);
             return (
               <Reveal key={r.name} delay={i * 25}>
                 <View
@@ -90,11 +103,15 @@ export function LeaderboardScreen() {
         <View className="mt-5 flex-row items-center justify-center gap-4">
           <View className="flex-row items-center gap-1.5">
             <View className="h-3 w-3 rounded-full" style={{ backgroundColor: palette.jade }} />
-            <Eyebrow className="text-paper/50" style={{ fontSize: 9 }}>Promotion</Eyebrow>
+            <Eyebrow className="text-paper/50" style={{ fontSize: 9 }}>
+              Promotion
+            </Eyebrow>
           </View>
           <View className="flex-row items-center gap-1.5">
             <View className="h-3 w-3 rounded-full" style={{ backgroundColor: palette.rose }} />
-            <Eyebrow className="text-paper/50" style={{ fontSize: 9 }}>Demotion</Eyebrow>
+            <Eyebrow className="text-paper/50" style={{ fontSize: 9 }}>
+              Demotion
+            </Eyebrow>
           </View>
         </View>
         <View className="h-6" />

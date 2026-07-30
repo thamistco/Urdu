@@ -35,9 +35,9 @@ const ROOT = path.join(__dirname, '..');
 const FONT = path.join(ROOT, 'node_modules/@expo-google-fonts/noto-nastaliq-urdu/NotoNastaliqUrdu_700Bold.ttf');
 const OUT = path.join(ROOT, 'src/data/glyphMasks.ts');
 
-const FONT_SIZE = 160;   // rasterisation size; the emitted numbers are ratios
-const PAD = 1.18;        // square side as a multiple of the glyph's longest edge
-const GRID = 40;         // mask resolution per axis
+const FONT_SIZE = 160; // rasterisation size; the emitted numbers are ratios
+const PAD = 1.18; // square side as a multiple of the glyph's longest edge
+const GRID = 40; // mask resolution per axis
 
 function loadLetters() {
   const src = fs.readFileSync(path.join(ROOT, 'src/data/letters.ts'), 'utf8');
@@ -101,7 +101,10 @@ function loadLetters() {
         ctx.fillText(job.text, anchorX, anchorY);
 
         const px = ctx.getImageData(0, 0, W, H).data;
-        let minX = W, minY = H, maxX = -1, maxY = -1;
+        let minX = W,
+          minY = H,
+          maxX = -1,
+          maxY = -1;
         for (let y = 0; y < H; y++) {
           for (let x = 0; x < W; x++) {
             if (px[(y * W + x) * 4 + 3] > 60) {
@@ -112,7 +115,10 @@ function loadLetters() {
             }
           }
         }
-        if (maxX < 0) { out[job.key] = null; continue; }
+        if (maxX < 0) {
+          out[job.key] = null;
+          continue;
+        }
 
         // Frame the ink in a square with a little air around it.
         const side = Math.max(maxX - minX + 1, maxY - minY + 1) * PAD;
@@ -132,7 +138,10 @@ function loadLetters() {
             let hit = 0;
             for (let y = y0; y < y1 && !hit; y++) {
               for (let x = x0; x < x1; x++) {
-                if (px[(y * W + x) * 4 + 3] > 60) { hit = 1; break; }
+                if (px[(y * W + x) * 4 + 3] > 60) {
+                  hit = 1;
+                  break;
+                }
               }
             }
             grid[gy * GRID + gx] = hit;
@@ -145,9 +154,13 @@ function loadLetters() {
             let on = 0;
             for (let dy = -1; dy <= 1 && !on; dy++) {
               for (let dx = -1; dx <= 1; dx++) {
-                const ny = gy + dy, nx = gx + dx;
+                const ny = gy + dy,
+                  nx = gx + dx;
                 if (ny < 0 || nx < 0 || ny >= GRID || nx >= GRID) continue;
-                if (grid[ny * GRID + nx]) { on = 1; break; }
+                if (grid[ny * GRID + nx]) {
+                  on = 1;
+                  break;
+                }
               }
             }
             dilated[gy * GRID + gx] = on;
@@ -163,9 +176,9 @@ function loadLetters() {
           bits: btoa(bin),
           ink: dilated.reduce((n, v) => n + v, 0),
           // as fractions of the square's side:
-          fs: FONT_SIZE / side,               // font size to draw at
-          cx: (anchorX - left) / side,        // where the text's centre sits
-          by: (anchorY - top) / side,         // where its baseline sits
+          fs: FONT_SIZE / side, // font size to draw at
+          cx: (anchorX - left) / side, // where the text's centre sits
+          by: (anchorY - top) / side, // where its baseline sits
         };
       }
       return { out, ascent, descent };
@@ -179,7 +192,12 @@ function loadLetters() {
   const blank = Object.entries(masks).filter(([, m]) => !m || m.ink < 8);
   if (blank.length) {
     console.error(`${blank.length} glyphs rendered blank — did the font load?`);
-    console.error(blank.slice(0, 8).map(([k]) => k).join(', '));
+    console.error(
+      blank
+        .slice(0, 8)
+        .map(([k]) => k)
+        .join(', ')
+    );
     process.exit(1);
   }
 

@@ -71,10 +71,7 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
           </Txt>
         ) : null}
         <View className="mt-3">
-          <SpeakerButton
-            label="Hear the sentence"
-            onPress={() => announce(sentence.id, spoken, sentence.roman)}
-          />
+          <SpeakerButton label="Hear the sentence" onPress={() => announce(sentence.id, spoken, sentence.roman)} />
         </View>
       </View>
 
@@ -84,8 +81,7 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
           roman ? 'flex-row' : 'flex-row-reverse'
         }`}
         style={{
-          borderColor:
-            graded == null ? withAlpha(palette.paper, 0.25) : graded ? palette.jade : palette.rose,
+          borderColor: graded == null ? withAlpha(palette.paper, 0.25) : graded ? palette.jade : palette.rose,
         }}
       >
         {placed.length === 0 ? (
@@ -237,13 +233,7 @@ export function ReadingExercise({ exercise, track, showRoman, locked, onGraded }
           <View className="gap-3">
             {passage.question.options.map((o) => {
               const state =
-                picked == null
-                  ? 'idle'
-                  : o === passage.question.answer
-                  ? 'correct'
-                  : o === picked
-                  ? 'wrong'
-                  : 'muted';
+                picked == null ? 'idle' : o === passage.question.answer ? 'correct' : o === picked ? 'wrong' : 'muted';
               return (
                 <Choice key={o} state={state} disabled={picked != null || locked} onPress={() => choose(o)}>
                   <Bold className="text-[15px]">{o}</Bold>

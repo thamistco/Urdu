@@ -35,7 +35,7 @@ function load(rel) {
 const { GLYPH_MASKS, MASK_GRID } = load('src/data/glyphMasks.ts');
 const { decodeMask, traceTargets, scoreTrace, NEED_COVERAGE, NEED_PRECISION } = load('src/lib/trace.ts');
 
-const SIDE = 340;                 // the card on a typical phone, in px
+const SIDE = 340; // the card on a typical phone, in px
 const CELL = SIDE / MASK_GRID;
 
 /**
@@ -50,17 +50,26 @@ function centreline(mask) {
     let run = [];
     for (let x = 0; x <= MASK_GRID; x++) {
       if (x < MASK_GRID && at(x, y)) run.push(x);
-      else if (run.length) { pts.add(`${run[(run.length / 2) | 0]},${y}`); run = []; }
+      else if (run.length) {
+        pts.add(`${run[(run.length / 2) | 0]},${y}`);
+        run = [];
+      }
     }
   }
   for (let x = 0; x < MASK_GRID; x++) {
     let run = [];
     for (let y = 0; y <= MASK_GRID; y++) {
       if (y < MASK_GRID && at(x, y)) run.push(y);
-      else if (run.length) { pts.add(`${x},${run[(run.length / 2) | 0]}`); run = []; }
+      else if (run.length) {
+        pts.add(`${x},${run[(run.length / 2) | 0]}`);
+        run = [];
+      }
     }
   }
-  return [...pts].map((s) => { const [x, y] = s.split(',').map(Number); return { x, y }; });
+  return [...pts].map((s) => {
+    const [x, y] = s.split(',').map(Number);
+    return { x, y };
+  });
 }
 
 /** A hand cuts corners; smooth the path so the simulation is not simply
@@ -68,11 +77,15 @@ function centreline(mask) {
 function smooth(stroke, window) {
   if (stroke.length < window) return stroke;
   return stroke.map((_, i) => {
-    let x = 0, y = 0, n = 0;
+    let x = 0,
+      y = 0,
+      n = 0;
     for (let k = -window; k <= window; k++) {
       const p = stroke[i + k];
       if (!p) continue;
-      x += p.x; y += p.y; n++;
+      x += p.x;
+      y += p.y;
+      n++;
     }
     return { x: x / n, y: y / n };
   });
@@ -91,14 +104,21 @@ function toStrokes(pts, jitter, rng) {
       x: (cur.x + 0.5 + (rng() - 0.5) * 2 * jitter) * CELL,
       y: (cur.y + 0.5 + (rng() - 0.5) * 2 * jitter) * CELL,
     });
-    let best = null, bd = Infinity;
+    let best = null,
+      bd = Infinity;
     left.forEach((k) => {
       const [x, y] = k.split(',').map(Number);
       const d = (x - cur.x) ** 2 + (y - cur.y) ** 2;
-      if (d < bd) { bd = d; best = { x, y }; }
+      if (d < bd) {
+        bd = d;
+        best = { x, y };
+      }
     });
     if (!best) break;
-    if (bd > 16) { strokes.push(stroke); stroke = []; }  // pen lift
+    if (bd > 16) {
+      strokes.push(stroke);
+      stroke = [];
+    } // pen lift
     cur = best;
   }
   if (stroke.length) strokes.push(stroke);
@@ -108,7 +128,7 @@ function toStrokes(pts, jitter, rng) {
 /** A deterministic RNG so the report is the same every run. */
 function makeRng(seed) {
   let s = seed >>> 0;
-  return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+  return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
 }
 
 const GRADES = [
@@ -122,8 +142,10 @@ console.log(`thresholds: coverage ≥ ${NEED_COVERAGE}, precision ≥ ${NEED_PRE
 
 for (const grade of GRADES) {
   const rng = makeRng(12345);
-  let passed = 0, n = 0;
-  let worstCov = 1, worstKey = '';
+  let passed = 0,
+    n = 0;
+  let worstCov = 1,
+    worstKey = '';
   for (const [key, entry] of Object.entries(GLYPH_MASKS)) {
     const mask = decodeMask(entry[0], MASK_GRID);
     const targets = traceTargets(mask, MASK_GRID);
@@ -134,7 +156,10 @@ for (const grade of GRADES) {
     const r = scoreTrace(strokes, SIDE, MASK_GRID, targets.reachable, targets.tolerant);
     n++;
     if (r.pass) passed++;
-    if (grade.want === 'pass' && r.coverage < worstCov) { worstCov = r.coverage; worstKey = key; }
+    if (grade.want === 'pass' && r.coverage < worstCov) {
+      worstCov = r.coverage;
+      worstKey = key;
+    }
   }
   const rate = (passed / n) * 100;
   const ok = grade.want === 'pass' ? rate >= 95 : rate <= 5;

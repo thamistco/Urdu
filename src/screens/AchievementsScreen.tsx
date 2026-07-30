@@ -61,9 +61,7 @@ export function AchievementsScreen() {
             const nextThreshold = a.tiers[Math.min(tier, maxTier - 1)];
             const prevThreshold = tier > 0 ? a.tiers[tier - 1] : 0;
             const isMax = tier >= maxTier;
-            const ratio = isMax
-              ? 1
-              : Math.min(1, (value - prevThreshold) / (nextThreshold - prevThreshold));
+            const ratio = isMax ? 1 : Math.min(1, (value - prevThreshold) / (nextThreshold - prevThreshold));
             const unlocked = tier > 0;
 
             return (
@@ -78,7 +76,9 @@ export function AchievementsScreen() {
                   <View className="flex-row items-center gap-3">
                     <View
                       className="h-12 w-12 items-center justify-center rounded-full"
-                      style={{ backgroundColor: unlocked ? withAlpha(palette.gold, 0.2) : withAlpha(palette.white, 0.06) }}
+                      style={{
+                        backgroundColor: unlocked ? withAlpha(palette.gold, 0.2) : withAlpha(palette.white, 0.06),
+                      }}
                     >
                       <Txt style={{ fontSize: 26, opacity: unlocked ? 1 : 0.4 }}>{a.icon}</Txt>
                     </View>
@@ -86,7 +86,10 @@ export function AchievementsScreen() {
                       <View className="flex-row items-center gap-2">
                         <Bold className="text-[15px]">{a.title}</Bold>
                         {tier > 0 && (
-                          <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: withAlpha(palette.gold, 0.2) }}>
+                          <View
+                            className="rounded-full px-2 py-0.5"
+                            style={{ backgroundColor: withAlpha(palette.gold, 0.2) }}
+                          >
                             <Eyebrow style={{ color: palette.gold, fontSize: 8 }}>
                               {isMax ? 'MAX' : `Tier ${tier}`}
                             </Eyebrow>
@@ -97,7 +100,12 @@ export function AchievementsScreen() {
                     </View>
                   </View>
                   <View className="mt-3">
-                    <ProgressBar progress={ratio} color={unlocked ? palette.gold : withAlpha(palette.white, 0.3)} height={7} spring={false} />
+                    <ProgressBar
+                      progress={ratio}
+                      color={unlocked ? palette.gold : withAlpha(palette.white, 0.3)}
+                      height={7}
+                      spring={false}
+                    />
                     <Txt className="mt-1 text-right text-[11px] text-paper/45">
                       {isMax ? `${value} · complete` : `${value} / ${nextThreshold}`}
                     </Txt>

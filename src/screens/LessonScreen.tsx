@@ -194,14 +194,7 @@ export function LessonScreen() {
   };
 
   if (done && result) {
-    return (
-      <LessonComplete
-        result={result}
-        correct={correctCount}
-        total={total}
-        onHome={() => nav.navigate('Main')}
-      />
-    );
+    return <LessonComplete result={result} correct={correctCount} total={total} onHome={() => nav.navigate('Main')} />;
   }
 
   if (outOfHearts) {
@@ -285,17 +278,14 @@ export function LessonScreen() {
               backgroundColor: isTeaching(current)
                 ? withAlpha(palette.gold, 0.14)
                 : graded
-                ? withAlpha(palette.jade, 0.16)
-                : withAlpha(palette.rose, 0.16),
+                  ? withAlpha(palette.jade, 0.16)
+                  : withAlpha(palette.rose, 0.16),
               borderTopWidth: 1,
               borderTopColor: isTeaching(current) ? palette.gold : graded ? palette.jade : palette.rose,
             }}
           >
             <SafeAreaView edges={['bottom']}>
-              <View
-                className="px-5 py-4"
-                style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }}
-              >
+              <View className="px-5 py-4" style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }}>
                 <View className="mb-3 flex-row items-center gap-2">
                   <Illustration
                     name={isTeaching(current) ? 'lattice' : graded ? 'check' : 'crescent'}
@@ -303,12 +293,16 @@ export function LessonScreen() {
                     size={24}
                   />
                   <View className="flex-1">
-                    <Bold style={{ color: isTeaching(current) ? palette.gold : graded ? palette.jadeLight : palette.roseLight }}>
+                    <Bold
+                      style={{
+                        color: isTeaching(current) ? palette.gold : graded ? palette.jadeLight : palette.roseLight,
+                      }}
+                    >
                       {isTeaching(current)
                         ? 'Keep that in mind'
                         : graded
-                        ? 'Beautifully done'
-                        : 'Not quite, but that’s okay'}
+                          ? 'Beautifully done'
+                          : 'Not quite, but that’s okay'}
                     </Bold>
                     {!graded && current && !isTeaching(current) ? (
                       <Txt className="text-xs text-paper/70">Answer: {answerLabel(current)}</Txt>

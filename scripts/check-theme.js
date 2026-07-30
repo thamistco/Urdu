@@ -44,8 +44,7 @@ const COLORS = path.join(SRC, 'theme', 'colors.ts');
 const TAILWIND = path.join(ROOT, 'tailwind.config.js');
 
 const problems = [];
-const bad = (file, line, msg) =>
-  problems.push(`${path.relative(ROOT, file)}${line ? `:${line}` : ''}  ${msg}`);
+const bad = (file, line, msg) => problems.push(`${path.relative(ROOT, file)}${line ? `:${line}` : ''}  ${msg}`);
 
 /** Blank comments out but keep their newlines, so line numbers still point at
  *  the code they came from. Deleting them outright shifts every later line and
@@ -127,12 +126,26 @@ if (tw.size < 15) {
 
 for (const [name, hex] of tw) {
   const t = byName.get(name);
-  if (!t) bad(TAILWIND, null, `\`${name}\` (${hex}) is not in the palette — a class name resolving to a colour colors.ts has never heard of`);
+  if (!t)
+    bad(
+      TAILWIND,
+      null,
+      `\`${name}\` (${hex}) is not in the palette — a class name resolving to a colour colors.ts has never heard of`
+    );
   else if (t.hex !== hex)
-    bad(TAILWIND, null, `\`${name}\` is ${hex} here and ${t.hex} in colors.ts — the two have drifted; className and inline styles are showing different colours`);
+    bad(
+      TAILWIND,
+      null,
+      `\`${name}\` is ${hex} here and ${t.hex} in colors.ts — the two have drifted; className and inline styles are showing different colours`
+    );
 }
 for (const t of tokens) {
-  if (!tw.has(t.name)) bad(TAILWIND, null, `\`${t.name}\` (${t.hex}) is in the palette but has no class name here — inline styles can reach it, \`className\` cannot`);
+  if (!tw.has(t.name))
+    bad(
+      TAILWIND,
+      null,
+      `\`${t.name}\` (${t.hex}) is in the palette but has no class name here — inline styles can reach it, \`className\` cannot`
+    );
 }
 
 // ---------------------------------------------- 2. raw hex outside the theme
@@ -155,7 +168,10 @@ for (const file of files) {
     if (off || marker.includes('check:theme-ok')) return;
     for (const m of line.matchAll(HEX)) {
       const hex = (m[1] || m[2]).toUpperCase();
-      const known = tokens.find((t) => t.hex === hex || (hex.length === 4 && t.hex === `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`));
+      const known = tokens.find(
+        (t) =>
+          t.hex === hex || (hex.length === 4 && t.hex === `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`)
+      );
       bad(
         file,
         i + 1,
@@ -177,7 +193,9 @@ const consumers = files
 // A token can be spent two ways: `palette.x` at runtime, or a Tailwind class
 // name in a `className` string. Both count.
 const classNames = new Set();
-for (const m of consumers.matchAll(/(?:bg|text|border|from|via|to|fill|stroke|ring|shadow|decoration|caret|divide|outline|accent|placeholder)-([a-z]+)(?:-([a-z0-9]+))?/g)) {
+for (const m of consumers.matchAll(
+  /(?:bg|text|border|from|via|to|fill|stroke|ring|shadow|decoration|caret|divide|outline|accent|placeholder)-([a-z]+)(?:-([a-z0-9]+))?/g
+)) {
   classNames.add(flatName(m[1], m[2] === undefined ? 'DEFAULT' : m[2]));
 }
 // colors.ts may forward a token into the `theme` object; that is a use too.
