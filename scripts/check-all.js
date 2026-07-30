@@ -38,47 +38,100 @@ const REPO = 'Urdu'; // matches github.event.repository.name in the workflow
 /**
  * Pull the runnable commands out of the workflow, in order.
  *
- * Only `npm run …` and `node scripts/…` lines are taken. The rest of the job —
+ * Only `npm …` and `node scripts/…` lines are taken. The rest of the job —
  * checkout, setup-node, Pages upload, `playwright install` — is either
  * meaningless locally or already true of this machine.
  *
- * **Comment lines are skipped, and this script excludes itself.** The first
- * version did neither, and the workflow contains a comment that mentions
- * `npm run check:all` by name. So it parsed its own name out of English prose
- * and ran itself, recursively, each level re-exporting the bundle. It did not
- * error; it simply never finished, which is the worst way for a check to fail.
- * Both guards below are asserted, not assumed.
+ * **Comment lines are skipped, and this script excludes itself.** An early
+ * version did neither, and the workflow mentions `npm run check:all` by name in
+ * prose. So it parsed its own name out of English and ran itself recursively,
+ * each level re-exporting the bundle. It did not error; it simply never
+ * finished, which is the worst way for a check to fail.
+ *
+ * **And every command in the workflow is accounted for.** The pattern used to
+ * be `npm run <script>`, which does not match `npm test` — so when a unit-test
+ * step was added to the workflow, this quietly ran seventeen of eighteen steps
+ * and reported a clean pipeline. A checker that silently skips is the exact
+ * failure it exists to prevent, so the omission is now impossible: anything
+ * that looks like a command and is neither recognised nor on the documented
+ * skip list is a hard error.
  */
 const SELF = 'check:all';
+
+/**
+ * Workflow steps that deliberately do not run locally, and why. Anything not
+ * matched and not listed here stops the run rather than being ignored.
+ */
+const NOT_LOCAL = [
+  { re: /^actions\//, why: 'a GitHub Action, not a command' },
+  { re: /^npx playwright install/, why: 'the browser is already installed here' },
+  { re: /^cp dist\/index\.html|^touch dist\/\.nojekyll/, why: 'Pages packaging, not a check' },
+  { re: /^node -e /, why: 'inline scripting in the workflow' },
+  { re: /^CHROMIUM_PATH=/, why: 'resolved by the checks themselves locally' },
+  { re: /^npm ci$/, why: 'dependencies are already installed in a working checkout' },
+];
 
 function stepsFromWorkflow() {
   const yml = fs.readFileSync(WORKFLOW, 'utf8').split('\n');
   const steps = [];
+  const unrecognised = [];
   let name = null;
+  let inRun = false;
+
   for (const line of yml) {
     if (/^\s*#/.test(line)) continue; // prose, not pipeline
     const n = line.match(/^\s*- name:\s*(.+?)\s*$/);
     if (n) {
       name = n[1];
+      inRun = false;
       continue;
     }
-    // Strip a trailing comment before matching, so `npm run x  # see check:all`
-    // contributes the command and not the aside.
+    if (/^\s*(- )?uses:/.test(line)) {
+      inRun = false;
+      continue;
+    }
+    if (/^\s*run:\s*\|?\s*$/.test(line)) {
+      inRun = true;
+      continue;
+    }
+
+    // Strip a trailing comment, so `npm run x  # see check:all` contributes
+    // the command and not the aside.
     const code = line.replace(/\s#.*$/, '');
-    for (const m of code.matchAll(/\b(npm run [a-z:]+|node scripts\/[\w-]+\.js)\b/g)) {
-      const cmd = m[1];
-      if (cmd.includes(SELF)) continue;
-      if (steps.some((s) => s.cmd === cmd)) continue;
-      steps.push({ name: name || cmd, cmd });
+    const inline = code.match(/^\s*run:\s*(.+?)\s*$/);
+    const body = inline ? inline[1] : inRun && code.trim() ? code.trim() : null;
+    if (inline) inRun = false;
+    if (!body) continue;
+
+    const cmd = body.match(/\b(npm (?:run [a-z:]+|test)|node scripts\/[\w-]+\.js)\b/);
+    if (cmd) {
+      const found = cmd[1];
+      if (found.includes(SELF)) continue;
+      if (!steps.some((s) => s.cmd === found)) steps.push({ name: name || found, cmd: found });
+      continue;
+    }
+    if (body.endsWith('\\') || !NOT_LOCAL.some((s) => s.re.test(body))) {
+      if (!body.endsWith('\\')) unrecognised.push(body);
     }
   }
-  return steps;
+  return { steps, unrecognised };
 }
 
-const steps = stepsFromWorkflow();
+const { steps, unrecognised } = stepsFromWorkflow();
 
 if (steps.some((s) => s.cmd.includes(SELF))) {
   console.error(`check:all — parsed itself out of the workflow and would recurse. The comment filter is broken.`);
+  process.exit(1);
+}
+if (unrecognised.length) {
+  console.error(
+    `check:all — ${unrecognised.length} workflow command${unrecognised.length === 1 ? '' : 's'} neither recognised nor listed as not-runnable-locally:\n`
+  );
+  for (const u of unrecognised) console.error(`  ${u}`);
+  console.error(
+    '\nRunning some of the pipeline and calling it clean is how a broken step reaches the deploy.\n' +
+      'Teach the parser to run it, or add it to NOT_LOCAL with the reason it cannot run here.'
+  );
   process.exit(1);
 }
 if (steps.length < 6) {
@@ -129,13 +182,16 @@ console.log(`Building with HARF_BASE_URL="/${REPO}", as the deploy does. No file
 
 let exported = false;
 for (const step of steps) {
-  // Anything that drives the built app needs the bundle to exist first.
+  // Anything that drives the built app needs the bundle to exist first. The
+  // workflow builds before those steps, so normally this never fires — it is
+  // the safety net for a reordering that would otherwise fail confusingly.
   const needsBuild = /check:(stability|scenery)|web:meta/.test(step.cmd);
   if (needsBuild && !exported) {
     if (!run('Build the web bundle (with the deploy base path)', BUILD)) break;
     exported = true;
   }
   if (!run(step.name, step.cmd)) break;
+  if (/build:web/.test(step.cmd)) exported = true;
 }
 
 if (failed) {
