@@ -34,6 +34,44 @@
  * carried by colour alone falls apart — and it is why the sun is a tonal step
  * rather than merely a warmer orange.
  *
+ * The sun's size and place were settled by measurement rather than eye. Sampling
+ * the contrast between the cream letter and whatever sits immediately behind it,
+ * all the way round its outline, caught the first attempt failing badly: the
+ * descending stroke crossed the sun at 1.5:1, so letter and disc were the same
+ * brightness where they met. Moving the sun down into the open part of the bowl,
+ * where no stroke crosses it, fixed that.
+ *
+ * **The ground is bright.** The draft before this one put the letter on a sky
+ * that fell away to near-black at the corners, and set against two dozen icons
+ * of the kind people actually keep on a home screen it was the dullest thing
+ * there — a brown smudge among saturated flat colour. Measuring those icons'
+ * backgrounds explains it: their median saturation is 0.84, and not one of them
+ * fades to black at its corners. Depth in an icon has to come from somewhere
+ * other than darkness.
+ *
+ * So the ground is the app's own orange, carrying a slight diagonal shift from
+ * light to deep — but staying inside the orange the whole way. That is the
+ * distinction the first draft missed: a gradient *within a hue* reads as a
+ * sheen, and a gradient *toward black* reads as dirt.
+ *
+ * **The letter is the dark note, not the light one.** A cream letter on that
+ * bright ground was tried first and measured 1.95:1, with over half its outline
+ * below 3:1 — worse than every icon in the reference set, whose figure-to-ground
+ * contrast runs from 4.3:1 to 18.9:1 with a median near 15:1 and *nothing* under
+ * 3:1. Two light values cannot both be bright. Inverting it — near-black letter,
+ * cream disc, bright orange ground — keeps the tile at the top of the brightness
+ * range and takes contrast to 6.7:1, with 4% of the outline under 3:1. Bright
+ * and legible turned out not to be a trade at all; the first attempt had simply
+ * put the wrong element in the light.
+ *
+ * The hairlines were the other measured problem, and the one an ornate script
+ * was always going to have. Nastaliq is built on extreme stroke contrast: the
+ * thinnest twentieth of this glyph is 30px at 1024, which is 0.94px on a 32px
+ * icon — under one pixel, so it simply is not drawn. A same-colour stroke of 12
+ * lifts that to about 1.3px and holds the tail's terminal together at small
+ * sizes. Twenty was tried and rejected: it closes up the angled cut on the top
+ * stroke, and a Nastaliq ح without its taper is just a hook.
+ *
  * Layers are exported full-bleed and *unmasked*: no rounded corners baked in.
  * The system applies the mask, and a pre-rounded layer gives jagged edges and
  * spoils the specular highlight.
@@ -67,9 +105,13 @@ function chromePath() {
   return path.join(base, dir, 'chrome-linux', 'chrome');
 }
 
-const INK = '#2A1A18';
-const CREAM = '#FFEEDD';
-const SUN = '#FFB877';
+const INK = '#211712';       // the app's background; the splash sits on it
+const LETTER = '#2A1208';    // the letter: near-black, the darkest note
+const SUN = '#FFF6EA';       // the disc in its bowl, the one light note
+const GROUND_LIGHT = '#FF9A50';
+const GROUND_DEEP = '#F0741F';
+/** Android flattens the adaptive icon's background to a single colour. */
+const GROUND_FLAT = '#F98038';
 
 /**
  * One icon as SVG.
@@ -83,16 +125,22 @@ function iconSvg({ size, transparent = false, inset = 1 }) {
   const c = s / 2;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${s} ${s}">
   <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#2A1A18"/>
-      <stop offset="0.55" stop-color="#7A3520"/>
-      <stop offset="1" stop-color="#D9701F"/>
+    <!-- Light at the top-left, deep at the bottom-right, and orange throughout.
+         It never leaves the hue, so it reads as a sheen across a bright tile
+         rather than as a tile going dark at the edges. -->
+    <linearGradient id="ground" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="${GROUND_LIGHT}"/>
+      <stop offset="1" stop-color="${GROUND_DEEP}"/>
     </linearGradient>
   </defs>
-  ${transparent ? '' : `<rect width="${s}" height="${s}" fill="url(#sky)"/>`}
+  ${transparent ? '' : `<rect width="${s}" height="${s}" fill="url(#ground)"/>`}
   <g transform="translate(${c} ${c}) scale(${inset}) translate(${-c} ${-c})">
-    <circle cx="524" cy="470" r="176" fill="${SUN}"/>
-    <text x="512" y="700" text-anchor="middle" font-family="Nastaliq" font-size="660" fill="${CREAM}">ح</text>
+    <circle cx="470" cy="625" r="100" fill="${SUN}"/>
+    <!-- The stroke is the same colour as the fill: not an outline, a way of
+         thickening the hairlines an ornate script leaves behind at icon sizes.
+         See the note above for the measurement that set it. -->
+    <text x="512" y="714" text-anchor="middle" font-family="Nastaliq" font-size="820"
+          fill="${LETTER}" stroke="${LETTER}" stroke-width="16" stroke-linejoin="round">ح</text>
   </g>
 </svg>`;
 }

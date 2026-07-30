@@ -24,7 +24,7 @@
       "package": "com.harf.urdu",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#211712"
+        "backgroundColor": "#F98038"
       },
       "edgeToEdgeEnabled": true
     },
