@@ -72,7 +72,14 @@ function loadLetters() {
     }
   }
 
+  // This whole function is serialised and run inside the browser, so it cannot
+  // call helpers from this file — everything it needs has to be inside it.
+  // Splitting it would mean either duplicating the helpers on both sides or
+  // marshalling them across as strings, both of which are worse than one long
+  // function with a clear top-to-bottom shape. See rule 159 in
+  // docs/ENGINEERING_STANDARDS.md.
   const result = await page.evaluate(
+    // eslint-disable-next-line max-lines-per-function, complexity
     ({ jobs, FONT_SIZE, PAD, GRID }) => {
       const W = FONT_SIZE * 5;
       const H = FONT_SIZE * 5;

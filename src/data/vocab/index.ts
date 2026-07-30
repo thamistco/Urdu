@@ -11,7 +11,7 @@ import { ESSENTIAL_PACKS } from './essentials';
 import { OBJECT_PACKS } from './daily-objects';
 import { SOCIETY_PACKS } from './society';
 import { EXTRA_PACKS } from './extras';
-import { FINAL_PACKS } from './final';
+import { WORK_MIND_SOCIETY_PACKS } from './work-mind-society';
 
 /** Every vocabulary pack, in course order. */
 export const ALL_PACKS: TopicPack[] = [
@@ -27,7 +27,7 @@ export const ALL_PACKS: TopicPack[] = [
   ...OBJECT_PACKS,
   ...SOCIETY_PACKS,
   ...EXTRA_PACKS,
-  ...FINAL_PACKS,
+  ...WORK_MIND_SOCIETY_PACKS,
 ];
 
 export * from './types';

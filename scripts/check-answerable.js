@@ -63,7 +63,16 @@ function distinct(values) {
 /**
  * The rules. Each takes one exercise and the track it was built for, and
  * complains if the question cannot be told apart from its own distractors.
+ *
+ * Exempted from `max-lines-per-function` and `complexity` deliberately: this is
+ * a dispatch over the thirteen exercise kinds, and `complexity` counts every
+ * `case` as a branch, so a flat table of thirteen short arms scores 42. Split
+ * into thirteen named functions it would be strictly harder to read — the value
+ * of this shape is seeing all the kinds side by side, which is how you notice a
+ * kind is missing. The rule is right about tangled logic and wrong about
+ * dispatch tables; see rule 159 in docs/ENGINEERING_STANDARDS.md.
  */
+// eslint-disable-next-line max-lines-per-function, complexity
 function check(ex, track) {
   const roman = track === 'roman';
 
