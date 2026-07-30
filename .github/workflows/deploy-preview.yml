@@ -80,6 +80,13 @@ jobs:
           # save on the hosted preview. Left empty, the app runs in guest mode.
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          # Set EXPO_PUBLIC_TESTER_MODE as a repo variable to put the tester
+          # panel on the hosted preview. Left unset, the panel is not built at
+          # all — see src/store/useTesterStore.ts for why that matters more than
+          # the passphrase does.
+          EXPO_PUBLIC_TESTER_MODE: ${{ vars.EXPO_PUBLIC_TESTER_MODE }}
+          EXPO_PUBLIC_TESTER_USER: ${{ secrets.EXPO_PUBLIC_TESTER_USER }}
+          EXPO_PUBLIC_TESTER_PASS: ${{ secrets.EXPO_PUBLIC_TESTER_PASS }}
         run: npx expo export --platform web --output-dir dist
 
       # Drives the built app in a real browser and answers questions, checking

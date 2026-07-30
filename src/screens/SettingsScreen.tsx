@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Switch, Pressable } from 'react-native';
+import { View, Switch, Pressable, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Screen } from '../components/Screen';
 import { TopBar } from '../components/TopBar';
@@ -12,6 +12,7 @@ import { confirmAction } from '../lib/confirm';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useProgressStore } from '../store/useProgressStore';
 import { useAuthStore } from '../store/useAuthStore';
+import { useTesterStore, TESTER_MODE_AVAILABLE } from '../store/useTesterStore';
 import { DAILY_GOALS } from '../data/achievements';
 import { TrackChooser } from '../components/TrackChooser';
 
@@ -32,6 +33,115 @@ function Row({ label, hint, value, onChange }: { label: string; hint?: string; v
         thumbColor={palette.paper}
       />
     </View>
+  );
+}
+
+/**
+ * Unlimited hearts and an open path, for looking at the app rather than playing
+ * it — and, just as much, for putting the real constraints back so the state a
+ * learner actually meets can be seen on purpose. See useTesterStore for why this
+ * is a passphrase and not a login, and why it ships only behind a build flag.
+ */
+function TesterPanel() {
+  const t = useTesterStore();
+  const [user, setUser] = useState('');
+  const [pass, setPass] = useState('');
+  const [wrong, setWrong] = useState(false);
+
+  if (!t.unlocked) {
+    return (
+      <Card className="mb-5">
+        <Txt className="mb-3 text-xs text-paper/50">
+          For testing only. Nothing here changes what a learner sees.
+        </Txt>
+        <TextInput
+          value={user}
+          onChangeText={(v) => {
+            setUser(v);
+            setWrong(false);
+          }}
+          placeholder="username"
+          placeholderTextColor={withAlpha(palette.paper, 0.3)}
+          autoCapitalize="none"
+          autoCorrect={false}
+          className="mb-2 rounded-xl px-3 py-2.5"
+          style={{ backgroundColor: withAlpha(palette.white, 0.06), color: palette.paper }}
+        />
+        <TextInput
+          value={pass}
+          onChangeText={(v) => {
+            setPass(v);
+            setWrong(false);
+          }}
+          placeholder="password"
+          placeholderTextColor={withAlpha(palette.paper, 0.3)}
+          secureTextEntry
+          autoCapitalize="none"
+          autoCorrect={false}
+          className="mb-3 rounded-xl px-3 py-2.5"
+          style={{ backgroundColor: withAlpha(palette.white, 0.06), color: palette.paper }}
+        />
+        {wrong && <Txt className="mb-2 text-xs" style={{ color: palette.roseLight }}>Not right.</Txt>}
+        <Pressable
+          onPress={() => {
+            feedback.tap();
+            if (!t.tryUnlock(user, pass)) setWrong(true);
+          }}
+          accessibilityRole="button"
+        >
+          <View
+            className="items-center rounded-xl py-2.5"
+            style={{ backgroundColor: withAlpha(palette.gold, 0.18), borderWidth: 1, borderColor: withAlpha(palette.gold, 0.4) }}
+          >
+            <Bold style={{ color: palette.gold }} className="text-sm">
+              Unlock
+            </Bold>
+          </View>
+        </Pressable>
+      </Card>
+    );
+  }
+
+  const anyOn = t.infiniteHearts || t.unlockAll;
+  return (
+    <Card className="mb-5">
+      {/* Both start off, so the first thing an unlocked tester sees is still the
+          real app. A banner while either is on, because a tester who forgets is
+          testing something no learner will ever use. */}
+      <Row
+        label="Unlimited hearts"
+        hint="Wrong answers cost nothing"
+        value={t.infiniteHearts}
+        onChange={t.setInfiniteHearts}
+      />
+      <View className="h-px bg-white/5" />
+      <Row
+        label="Unlock every lesson"
+        hint="Open any lesson without finishing the ones before it"
+        value={t.unlockAll}
+        onChange={t.setUnlockAll}
+      />
+      {anyOn && (
+        <View
+          className="mt-3 rounded-xl px-3 py-2"
+          style={{ backgroundColor: withAlpha(palette.gold, 0.12), borderWidth: 1, borderColor: withAlpha(palette.gold, 0.3) }}
+        >
+          <Txt className="text-xs" style={{ color: palette.gold }}>
+            Tester mode is on — this is not what a learner sees. Turn both off to
+            get the real hearts and locked path back.
+          </Txt>
+        </View>
+      )}
+      <Pressable
+        onPress={() => {
+          feedback.tap();
+          t.lock();
+        }}
+        accessibilityRole="button"
+      >
+        <Txt className="mt-3 text-center text-xs text-paper/40">Lock tester mode</Txt>
+      </Pressable>
+    </Card>
   );
 }
 
@@ -172,6 +282,15 @@ export function SettingsScreen() {
             </View>
           </Pressable>
         </Reveal>
+
+        {TESTER_MODE_AVAILABLE && (
+          <Reveal delay={200}>
+            <View className="mt-5">
+              <Eyebrow className="mb-2 text-paper/50">Tester</Eyebrow>
+              <TesterPanel />
+            </View>
+          </Reveal>
+        )}
 
         <Txt className="mb-8 mt-8 text-center text-xs text-paper/30">Harf · حرف · v1.0</Txt>
       </Screen>
