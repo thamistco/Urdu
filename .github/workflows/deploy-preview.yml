@@ -89,6 +89,15 @@ jobs:
           EXPO_PUBLIC_TESTER_PASS: ${{ secrets.EXPO_PUBLIC_TESTER_PASS }}
         run: npx expo export --platform web --output-dir dist
 
+      # Expo's export writes a <title> and nothing else, so without this the
+      # hosted app has no description for a search engine and a link to it
+      # pastes as a bare URL with no card. Runs after the export, and after the
+      # base path is set, so the absolute URLs are right.
+      - name: Add the description and share card to the web page
+        env:
+          SITE_ORIGIN: https://${{ github.repository_owner }}.github.io
+        run: npm run web:meta
+
       # Drives the built app in a real browser and answers questions, checking
       # that the question does not change under the answer. Needs the bundle, so
       # it runs after the export rather than with the other checks.

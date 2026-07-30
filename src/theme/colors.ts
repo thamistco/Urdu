@@ -100,6 +100,20 @@ export const palette = {
   mossDark: '#464B37',
   mossCharcoal: '#3F3F3F',
   mossLight: '#A9B39C',
+
+  /**
+   * The sunset sky ramp and the near hill.
+   *
+   * These five were the last colours in the app written as raw hex inside a
+   * component. They are scenery rather than interface — nothing else uses them —
+   * but a palette most of the colours go through is not a palette, and the next
+   * person tuning the sunset had to know to go looking inside an SVG.
+   */
+  skyDusk: '#3A2416',
+  skyEmber: '#5C2F1C',
+  skyGlow: '#7A3D1E',
+  skyHorizon: '#8A4420',
+  mossNear: '#5A5C3E',
 } as const;
 
 /** Opacity-tinted helpers for RN (no `/opacity` shorthand at runtime). */

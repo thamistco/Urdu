@@ -3,7 +3,7 @@ import { View, Pressable } from 'react-native';
 import { Choice, PromptCard, Question, palette, withAlpha } from './common';
 import { Txt, Bold } from '../components/Text';
 import { Lexeme } from '../components/Lexeme';
-import { WordArt, pictureIdentifies } from '../components/Illustration';
+import { WordArt, Illustration, pictureIdentifies } from '../components/Illustration';
 import { feedback } from '../lib/feedback';
 import { announce } from '../lib/speech';
 import type { ExerciseProps, Exercise } from './types';
@@ -151,7 +151,7 @@ export function ListenTapExercise({ exercise, showRoman, locked, onGraded }: Exe
             className="h-20 w-20 items-center justify-center rounded-full"
             style={{ backgroundColor: withAlpha(palette.gold, 0.2), borderWidth: 2, borderColor: palette.gold }}
           >
-            <Txt style={{ fontSize: 34 }}>🔊</Txt>
+            <Illustration name="speaker" tile={false} size={36} />
           </View>
         </Pressable>
         <Txt style={{ color: palette.ink }} className="mt-3 text-xs opacity-50">

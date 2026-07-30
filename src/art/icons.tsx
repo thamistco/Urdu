@@ -749,6 +749,34 @@ export const Intestine = ({ size }: IconProps) => (
   </Frame>
 );
 
+/**
+ * A padlock, for a lesson not yet open.
+ *
+ * It sat on the path as the 🔒 emoji — a bright yellow-and-grey object among
+ * two dozen drawn marks in the app's own palette, on the screen a learner looks
+ * at most. Every locked lesson wore one, so it was the most repeated image in
+ * the product and the only one that came from the system font.
+ */
+export const Lock = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M22 30 V22 a10 10 0 0 1 20 0 v8" stroke={CR} strokeWidth={6} fill="none" strokeLinecap="round" />
+    <Rect x="14" y="30" width="36" height="26" rx="6" fill={CR} />
+    <Circle cx="32" cy="41" r="4.5" fill={IN} />
+    <Rect x="30" y="41" width="4" height="8" rx="2" fill={IN} />
+  </Frame>
+);
+
+/** Someone already speaking — for the learner who grew up hearing Urdu. */
+export const SpeechBubble = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path
+      d="M10 20 a8 8 0 0 1 8 -8 h28 a8 8 0 0 1 8 8 v16 a8 8 0 0 1 -8 8 H26 L14 54 V44 h-4 a8 8 0 0 1 0 -8 Z"
+      fill={G_}
+    />
+    <Path d="M22 24 h20 M22 33 h13" stroke={IN} strokeWidth={3.5} strokeLinecap="round" opacity={0.75} />
+  </Frame>
+);
+
 // ---- registry ------------------------------------------------------------
 
 export const ICONS: Record<string, (p: IconProps) => JSX.Element> = {
@@ -767,6 +795,7 @@ export const ICONS: Record<string, (p: IconProps) => JSX.Element> = {
   arm: Arm, shoulder: Shoulder, elbow: Elbow,
   eye: Eye, eyebrow: Eyebrow, eyelashes: Eyelashes,
   lips: Lips, mouth: Mouth, skin: Skin, intestine: Intestine,
+  lock: Lock, speechBubble: SpeechBubble,
 };
 
 export type IconName = keyof typeof ICONS;

@@ -95,10 +95,10 @@ commercial release, get a proper IP review.
 - `src/data/vocab/*.ts` — themed vocabulary in modules, each exporting
   `TopicPack[]` built by the `pack()` helper in `vocab/types.ts`.
   `src/data/words.ts` merges these with the core sets into `TOPICS` / `WORDS`:
-  **2,028 words across 122 topics.**
+  **2,426 words across 122 topics.**
 - `src/data/grammar.ts` — **25 concepts**, each with an explanation, an optional
   paradigm table, examples and fill-the-gap drills.
-- `src/data/sentences.ts` — **140 sentences** for word-order building (many
+- `src/data/sentences.ts` — **256 sentences** for word-order building (many
   tagged with the `concept` they illustrate, so grammar lessons can reinforce
   them) and **17 graded reading passages** with comprehension questions.
 - `src/data/units.ts` — the path: **35 units / 221 lessons**, interleaving

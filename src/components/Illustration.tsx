@@ -131,7 +131,7 @@ export function TopicArt({ topicId, size = 44 }: { topicId: string; size?: numbe
   if (topicId === 'colours') return <SwatchTile color={palette.gold} size={size} />;
   if (TOPIC_ICON[topicId]) return <Illustration name={TOPIC_ICON[topicId]} size={size} />;
   // topics without a bespoke illustration yet → their emoji in the medallion
-  const emoji = TOPICS.find((t) => t.id === topicId)?.icon ?? '✨';
+  const emoji = TOPICS.find((t) => t.id === topicId)?.icon ?? '✨'; // audit:emoji-ok — topic art falls back to its data emoji
   return (
     <Medallion size={size}>
       <RNText style={{ fontSize: size * 0.42 }}>{emoji}</RNText>
