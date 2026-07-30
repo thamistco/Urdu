@@ -1,159 +1,147 @@
 /* eslint-disable */
 /**
- * Generates Harf's app icon, adaptive icon and splash mark as PNGs — no image
- * libraries, just a tiny hand-rolled RGBA→PNG encoder (zlib is built into Node).
+ * The app icon, drawn from the same Nastaliq the course is set in.
  *
- * The mark is an 8-point Islamic geometric star in reward-gold on deep indigo —
- * the same lattice motif used throughout the app, distilled to a single glyph.
+ * What was here before was an eight-pointed gold star on navy: the palette the
+ * app used two redesigns ago, and structurally the same ornament that came off
+ * the exercise tiles for looking tacky. It said nothing about Urdu and nothing
+ * about this app.
  *
- * Run: node scripts/generate-icons.js
+ * The mark is ح — the first letter of حرف, the app's name — with the sun caught
+ * in its bowl, so the icon carries the sunset the rest of the app is built on.
+ * Apple's icon guidance decided three things, and each rules out something that
+ * looked better in isolation:
+ *
+ *  - **A letter, not the word.** The guidance permits a mnemonic like the first
+ *    letter and discourages words, because text in an icon neither localises nor
+ *    scales. Setting حرف entire was the handsomest draft at 512px and an
+ *    unreadable smudge at 32.
+ *
+ *  - **Hard edges, no baked effects.** Foreground layers want clearly defined
+ *    edges so the system's own highlights and shadows land correctly, and custom
+ *    glows fight them. The sun was a soft radial gradient in the draft; here it
+ *    is a flat disc, and it sits in the *background* so the foreground stays one
+ *    clean shape.
+ *
+ *  - **Sized for the circular mask, not the square.** watchOS and visionOS mask
+ *    to a circle, so the corners of the canvas cannot be used. The glyph is
+ *    scaled to sit inside the inscribed circle, which is why it reads slightly
+ *    generous against a round mask and comfortable rather than cramped against a
+ *    rounded rectangle.
+ *
+ * Checked at every size down to a 32px favicon, in default, dark and monochrome,
+ * under both masks. Monochrome is the test that matters — it is where a design
+ * carried by colour alone falls apart — and it is why the sun is a tonal step
+ * rather than merely a warmer orange.
+ *
+ * Layers are exported full-bleed and *unmasked*: no rounded corners baked in.
+ * The system applies the mask, and a pre-rounded layer gives jagged edges and
+ * spoils the specular highlight.
+ *
+ *   node scripts/generate-icons.js
  */
+
 const fs = require('fs');
 const path = require('path');
-const zlib = require('zlib');
+const { chromium } = require('playwright-core');
 
-const OUT = path.join(__dirname, '..', 'assets', 'images');
+const ROOT = path.join(__dirname, '..');
+const OUT = path.join(ROOT, 'assets', 'images');
+const FONT = path.join(
+  ROOT,
+  'node_modules',
+  '@expo-google-fonts',
+  'noto-nastaliq-urdu',
+  'NotoNastaliqUrdu_600SemiBold.ttf'
+);
 
-const INK = [12, 26, 51, 255];
-const GOLD = [232, 163, 61, 255];
-const GOLD_DK = [201, 134, 42, 255];
-const CLEAR = [0, 0, 0, 0];
+/** Chromium ships in a versioned directory; find it rather than hard-code it. */
+function chromePath() {
+  const base = '/opt/pw-browsers';
+  const dir = fs
+    .readdirSync(base)
+    .filter((d) => d.startsWith('chromium-'))
+    .sort()
+    .pop();
+  if (!dir) throw new Error('no chromium under /opt/pw-browsers');
+  return path.join(base, dir, 'chrome-linux', 'chrome');
+}
 
-// ---- PNG encoder ---------------------------------------------------------
-function encodePNG(width, height, rgba) {
-  const raw = Buffer.alloc((width * 4 + 1) * height);
-  let p = 0;
-  for (let y = 0; y < height; y++) {
-    raw[p++] = 0; // filter: none
-    for (let x = 0; x < width; x++) {
-      const i = (y * width + x) * 4;
-      raw[p++] = rgba[i];
-      raw[p++] = rgba[i + 1];
-      raw[p++] = rgba[i + 2];
-      raw[p++] = rgba[i + 3];
-    }
+const INK = '#2A1A18';
+const CREAM = '#FFEEDD';
+const SUN = '#FFB877';
+
+/**
+ * One icon as SVG.
+ *
+ * `inset` shrinks the artwork toward the middle for Android's adaptive icon,
+ * which crops to a shape covering roughly the central two thirds — anything
+ * outside that is not guaranteed to survive on every launcher.
+ */
+function iconSvg({ size, transparent = false, inset = 1 }) {
+  const s = 1024;
+  const c = s / 2;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${s} ${s}">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2A1A18"/>
+      <stop offset="0.55" stop-color="#7A3520"/>
+      <stop offset="1" stop-color="#D9701F"/>
+    </linearGradient>
+  </defs>
+  ${transparent ? '' : `<rect width="${s}" height="${s}" fill="url(#sky)"/>`}
+  <g transform="translate(${c} ${c}) scale(${inset}) translate(${-c} ${-c})">
+    <circle cx="524" cy="470" r="176" fill="${SUN}"/>
+    <text x="512" y="700" text-anchor="middle" font-family="Nastaliq" font-size="660" fill="${CREAM}">ح</text>
+  </g>
+</svg>`;
+}
+
+/** The name in full, for the splash — the one place with room to read it. */
+function splashSvg(w, h) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+  <rect width="${w}" height="${h}" fill="${INK}"/>
+  <text x="${w / 2}" y="${h / 2 + 110}" text-anchor="middle" font-family="Nastaliq" font-size="300" fill="#FF8C42">حرف</text>
+</svg>`;
+}
+
+const TARGETS = [
+  // Full-bleed square, unmasked. iOS, iPadOS, macOS and the web mask this
+  // themselves; baking in corners is what makes the edges look chewed.
+  { file: 'icon.png', size: 1024, opts: {} },
+  // Android's adaptive foreground sits on its own background colour and is
+  // cropped toward the middle, so the art is inset to match.
+  { file: 'adaptive-icon.png', size: 1024, opts: { transparent: true, inset: 0.62 } },
+  { file: 'favicon.png', size: 256, opts: {} },
+];
+
+(async () => {
+  if (!fs.existsSync(FONT)) {
+    console.error(`Nastaliq not found at ${path.relative(ROOT, FONT)} — run npm ci first.`);
+    process.exit(1);
   }
-  const idat = zlib.deflateSync(raw, { level: 9 });
+  const fontData = fs.readFileSync(FONT).toString('base64');
+  const browser = await chromium.launch({ executablePath: chromePath(), args: ['--no-sandbox'] });
 
-  const chunk = (type, data) => {
-    const len = Buffer.alloc(4);
-    len.writeUInt32BE(data.length, 0);
-    const typeBuf = Buffer.from(type, 'ascii');
-    const body = Buffer.concat([typeBuf, data]);
-    const crc = Buffer.alloc(4);
-    crc.writeUInt32BE(crc32(body) >>> 0, 0);
-    return Buffer.concat([len, body, crc]);
+  const shoot = async (markup, w, h, file) => {
+    const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
+    await page.setContent(
+      `<style>@font-face{font-family:Nastaliq;src:url(data:font/ttf;base64,${fontData});}
+       html,body{margin:0;padding:0;background:transparent}</style>${markup}`
+    );
+    // The face has to resolve before the glyph is drawn, or the shot lands on a
+    // fallback font and the letter comes out in the wrong script entirely.
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(250);
+    await page.screenshot({ path: path.join(OUT, file), omitBackground: true });
+    await page.close();
+    console.log(`  ${file.padEnd(20)} ${w}×${h}`);
   };
 
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(width, 0);
-  ihdr.writeUInt32BE(height, 4);
-  ihdr[8] = 8; // bit depth
-  ihdr[9] = 6; // color type RGBA
-  ihdr[10] = 0;
-  ihdr[11] = 0;
-  ihdr[12] = 0;
+  console.log('Writing icons:');
+  for (const t of TARGETS) await shoot(iconSvg({ size: t.size, ...t.opts }), t.size, t.size, t.file);
+  await shoot(splashSvg(1284, 2778), 1284, 2778, 'splash.png');
 
-  const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
-  return Buffer.concat([sig, chunk('IHDR', ihdr), chunk('IDAT', idat), chunk('IEND', Buffer.alloc(0))]);
-}
-
-const CRC_TABLE = (() => {
-  const t = new Uint32Array(256);
-  for (let n = 0; n < 256; n++) {
-    let c = n;
-    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-    t[n] = c >>> 0;
-  }
-  return t;
+  await browser.close();
+  console.log('\nDone. Layers are full-bleed and unmasked — the system rounds them.');
 })();
-function crc32(buf) {
-  let c = 0xffffffff;
-  for (let i = 0; i < buf.length; i++) c = CRC_TABLE[(c ^ buf[i]) & 0xff] ^ (c >>> 8);
-  return (c ^ 0xffffffff) >>> 0;
-}
-
-// ---- drawing -------------------------------------------------------------
-function canvas(size, bg) {
-  const rgba = Buffer.alloc(size * size * 4);
-  for (let i = 0; i < size * size; i++) {
-    rgba[i * 4] = bg[0];
-    rgba[i * 4 + 1] = bg[1];
-    rgba[i * 4 + 2] = bg[2];
-    rgba[i * 4 + 3] = bg[3];
-  }
-  return rgba;
-}
-
-function setPx(rgba, size, x, y, c, a = 1) {
-  if (x < 0 || y < 0 || x >= size || y >= size) return;
-  const i = (y * size + x) * 4;
-  const alpha = (c[3] / 255) * a;
-  rgba[i] = Math.round(rgba[i] * (1 - alpha) + c[0] * alpha);
-  rgba[i + 1] = Math.round(rgba[i + 1] * (1 - alpha) + c[1] * alpha);
-  rgba[i + 2] = Math.round(rgba[i + 2] * (1 - alpha) + c[2] * alpha);
-  rgba[i + 3] = Math.max(rgba[i + 3], Math.round(c[3] * a));
-}
-
-// star polygon: n points, alternating outer/inner radius, rotated
-function starPoints(cx, cy, outer, inner, points, rot = -Math.PI / 2) {
-  const pts = [];
-  for (let i = 0; i < points * 2; i++) {
-    const r = i % 2 === 0 ? outer : inner;
-    const a = rot + (Math.PI * i) / points;
-    pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]);
-  }
-  return pts;
-}
-
-function pointInPoly(x, y, poly) {
-  let inside = false;
-  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const [xi, yi] = poly[i];
-    const [xj, yj] = poly[j];
-    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
-  }
-  return inside;
-}
-
-function fillPoly(rgba, size, poly, c) {
-  // 2x supersample for smooth edges
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      let hits = 0;
-      for (const [dx, dy] of [[0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75]]) {
-        if (pointInPoly(x + dx, y + dy, poly)) hits++;
-      }
-      if (hits) setPx(rgba, size, x, y, c, hits / 4);
-    }
-  }
-}
-
-function drawMark(rgba, size, scale = 0.66) {
-  const c = size / 2;
-  const outer = (size * scale) / 2;
-  const inner = outer * 0.44;
-  // outer 8-point star (gold)
-  fillPoly(rgba, size, starPoints(c, c, outer, inner, 8), GOLD);
-  // inner rotated star punch-out (ink) → lattice depth
-  fillPoly(rgba, size, starPoints(c, c, outer * 0.6, inner * 0.62, 8, 0), INK);
-  // center gold dot
-  fillPoly(rgba, size, starPoints(c, c, outer * 0.24, outer * 0.24 * 0.9, 16, 0), GOLD_DK);
-}
-
-// ---- outputs -------------------------------------------------------------
-if (!fs.existsSync(OUT)) fs.mkdirSync(OUT, { recursive: true });
-
-function write(name, size, bg, scale) {
-  const rgba = canvas(size, bg);
-  drawMark(rgba, size, scale);
-  const png = encodePNG(size, size, rgba);
-  fs.writeFileSync(path.join(OUT, name), png);
-  console.log(`  ✓ ${name}  (${size}×${size}, ${(png.length / 1024).toFixed(1)} KB)`);
-}
-
-write('icon.png', 512, INK, 0.66);
-write('adaptive-icon.png', 512, CLEAR, 0.58); // foreground only; bg from app.json
-write('splash.png', 512, INK, 0.5);
-write('favicon.png', 64, INK, 0.7);
-console.log('Done. Icons written to assets/images/');
