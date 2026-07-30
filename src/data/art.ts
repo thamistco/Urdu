@@ -85,6 +85,17 @@ export const NUMERALS: Record<string, string> = {
   'w-paanch': '۵', 'w-chhe': '۶', 'w-saat': '۷', 'w-aath': '۸',
 };
 
+/**
+ * The colour words, each drawn as the colour it names.
+ *
+ * These are the one place in the app where a hex literal is the *content*
+ * rather than the styling: لال has to be red, and it has to stay red through
+ * any re-theme, because the swatch is the question. A palette token here would
+ * mean a learner one day being shown the interface's accent orange and asked to
+ * name it "red". Hence the region marker rather than a token — `check:theme`
+ * otherwise fails on every raw hex under src/.
+ */
+/* check:theme-off — depicted colour: these ARE the vocabulary */
 export const COLOURS: Record<string, { color: string; ring?: boolean }> = {
   'w-laal': { color: '#E5484D' }, 'w-neela': { color: '#3E7CB1' },
   'w-hara': { color: '#2E8B75' }, 'w-peela': { color: '#FFC72C' },
@@ -99,6 +110,7 @@ export const COLOURS: Record<string, { color: string; ring?: boolean }> = {
   'w-zeetooni': { color: '#7A7F3C' }, 'w-syaah': { color: '#0E0E10', ring: true },
   'w-pyaazi': { color: '#D9A0A8' }, 'w-firozi': { color: '#3BB3B8' },
 };
+/* check:theme-on */
 
 export function hasWordArt(word: Word): boolean {
   return !!(WORD_ICON[word.id] || NUMERALS[word.id] || COLOURS[word.id]);

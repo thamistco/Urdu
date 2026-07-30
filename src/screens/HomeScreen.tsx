@@ -110,7 +110,7 @@ function LessonNode({
           }}
         >
           {state === 'done' ? (
-            <Txt style={{ fontSize: 28, color: '#fff' }}>✓</Txt>
+            <Txt style={{ fontSize: 28, color: palette.white }}>✓</Txt>
           ) : (
             <View style={{ opacity: state === 'locked' || state === 'skipped' ? 0.85 : 1 }}>
               <Illustration name={lessonIconName(lesson.kind, lesson.topic)} tile={false} size={34} />

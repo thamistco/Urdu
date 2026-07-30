@@ -25,7 +25,7 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 /** Two arrows chasing each other — the spaced-repetition mark, drawn so it
  *  takes the card's colour instead of the platform's emoji font. */
-function CycleMark({ size = 52, color = '#fff' }: { size?: number; color?: string }) {
+function CycleMark({ size = 52, color = palette.white }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       <Path

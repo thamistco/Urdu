@@ -33,7 +33,6 @@ export const palette = {
   ink800: '#2C1F17',
   ink700: '#3D2A1E',
   ink600: '#523822',
-  ink500: '#6B4A2B',
 
   /**
    * `paper` is a *text* colour: the light ink used for body copy on the dark
@@ -60,8 +59,6 @@ export const palette = {
    * ink text, far beyond what the script needs.
    */
   parchment: '#EFDFC7',
-  parchmentSoft: '#F7EBDA',
-  parchmentDim: '#E2CFB2',
 
   // reward / primary — sunset orange, the warmest thing in the scene
   gold: '#FF8C42',
@@ -88,13 +85,30 @@ export const palette = {
   white: '#FFFFFF',
 
   /**
-   * The misty-forest family — a second scenery, not a second theme.
+   * Accents that only ever mark *which one* — a CEFR stage, a unit on the path.
+   * They carry no meaning of their own (unlike jade = correct, rose = wrong);
+   * they exist so a long list doesn't read as one flat hue.
    *
-   * Sourced from a real "into the woods" reference palette (fog, moss, pine),
-   * used by `LatticeBackground`'s `scene="forest"` for sections that want a
-   * change of place rather than a change of mood: the sunset stays the app's
-   * one identity, this is scenery variety within it. Warm gold light still
-   * filters through — the point was to mix the orange in, not replace it.
+   * These lived as bare hex inside `words.ts` and `units.ts`, which meant a
+   * re-theme moved the whole app and left the level badges behind.
+   */
+  accentAmber: '#FFC72C',
+  accentMint: '#5FDC96',
+  accentCoral: '#FF7A72',
+  accentSky: '#5AA9FF',
+  accentTeal: '#6FB3B0',
+
+  /**
+   * The misty-forest family — pine, moss and fog.
+   *
+   * Sourced from a real "into the woods" reference palette. These were once a
+   * second, alternate scenery selected by a prop, which nothing ever selected;
+   * they are now the body of the one scene `LatticeBackground` draws. Warm gold
+   * light still filters through it — the point was to mix the orange into the
+   * green, not to replace one with the other.
+   *
+   * `mossLight` is the fog and haze colour and does most of the work here: it
+   * is what turns three stacked silhouettes into distance.
    */
   mossDeep: '#262B15',
   mossDark: '#464B37',
@@ -102,18 +116,21 @@ export const palette = {
   mossLight: '#A9B39C',
 
   /**
-   * The sunset sky ramp and the near hill.
+   * The warm end of the sky ramp, low down where the sun is.
    *
-   * These five were the last colours in the app written as raw hex inside a
+   * These were the last colours in the app written as raw hex inside a
    * component. They are scenery rather than interface — nothing else uses them —
    * but a palette most of the colours go through is not a palette, and the next
-   * person tuning the sunset had to know to go looking inside an SVG.
+   * person tuning the sky had to know to go looking inside an SVG.
+   *
+   * There were two more, `skyHorizon` and `mossNear`, left behind when the sky
+   * stopped shading orange most of the way down. An unused colour in a palette
+   * is worse than none: it reads as an available choice and is really a scrap
+   * of a version that no longer exists, so `check:theme` now fails on one.
    */
   skyDusk: '#3A2416',
-  skyEmber: '#5C2F1C',
-  skyGlow: '#7A3D1E',
-  skyHorizon: '#8A4420',
-  mossNear: '#5A5C3E',
+  skyEmber: '#4A2617',
+  skyGlow: '#5F3018',
 } as const;
 
 /** Opacity-tinted helpers for RN (no `/opacity` shorthand at runtime). */

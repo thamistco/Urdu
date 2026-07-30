@@ -56,7 +56,7 @@ export function LetterLabScreen() {
                   </Urdu>
                   {known && (
                     <View className="absolute -right-1 -top-1 h-4 w-4 items-center justify-center rounded-full" style={{ backgroundColor: palette.jade }}>
-                      <Txt style={{ fontSize: 9, color: '#fff' }}>✓</Txt>
+                      <Txt style={{ fontSize: 9, color: palette.white }}>✓</Txt>
                     </View>
                   )}
                 </View>

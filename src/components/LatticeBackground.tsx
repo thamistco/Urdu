@@ -21,236 +21,218 @@ function treeline(baseY: number, amp: number, teeth: number, seed: number): stri
   return `${d} L${w},900 L0,900 Z`;
 }
 
-type Scene = 'sunset' | 'forest';
-
 /**
- * The scenery behind a screen — two scenes sharing one composition (sky
- * gradient → glow → three parallax layers), so a section can change place
- * without the app changing identity.
+ * The scenery behind every screen: a misty forest at dusk with the sun barely
+ * showing through.
  *
- * `sunset` (the default, used almost everywhere): a dusk sky sliding from warm
- * espresso through oxblood to burnt orange, a glowing sun low on the horizon
- * partly hidden behind rolling green hills, soft mist settled in their folds,
- * a couple of clouds catching the last light, two birds crossing it. The
- * hills moved from an earlier brown-toned ramp to the same moss green as the
- * `forest` scene below — calmer and closer to an actual dusk landscape than
- * bare silhouette, and it ties the two scenes together as one place rather
- * than two unrelated ones. References: Alto's Adventure, Monument Valley,
- * Journey, and the quiet rolling-hills-at-dusk mood of a well-made wellness
- * site — muted earth and green rather than anything saturated or synthetic.
+ * It began as a sunset — a bright disc low over bare green hills. That read as
+ * a *sunset*, which is a colour, rather than as a *place*. What was asked for,
+ * and what this is now, is forest: ridges carrying tree lines, fog lying in the
+ * valleys between them, layered cloud across the sky, and the sun reduced to a
+ * warm bloom behind the weather rather than a lamp hanging in the middle of the
+ * picture. Mist is the subject; the sun is the hint that gives it a direction.
  *
- * `forest` (used for Practice — a deliberate change of place, not of mood): a
- * misty tree line at dusk, built from a real "into the woods" reference
- * palette (moss, pine, fog), with the same warm gold light now filtering
- * through the canopy instead of sitting on a horizon. The orange stays,
- * because the sunset is still the one thing every scene in this app has —
- * this is scenery variety within that, not a second theme.
+ * There used to be a second `forest` scene selectable by a prop. Nothing ever
+ * selected it — every screen took the default — so it was two hundred lines
+ * nobody had seen. Its ideas are the ones worth keeping, so they are here, in
+ * the one scene that actually renders, and the dead branch is gone.
  *
- * Deliberately no purple anywhere in either ramp — the first sunset version
- * shaded through plum and wine-rose, and read as the generic "twilight"
- * gradient every AI image generator reaches for by default.
+ * References: Alto's Adventure, Monument Valley, Journey — muted earth and
+ * green, nothing saturated or synthetic. Deliberately no purple: the first
+ * version shaded through plum and wine-rose and read as the generic "twilight"
+ * gradient every image generator reaches for by default.
  *
  * Kept dark by design, not literal daylight brightness: this sits behind body
- * text on every screen — lessons, cards, whole paragraphs — and the scenery
- * has to lose to legibility. Every stop in both ramps was checked against the
- * cream text colour and stays at 6:1 contrast or better (WCAG AA is 4.5:1).
- * The layers get progressively darker toward the foreground, which is what
- * actually sells the depth — the gradient alone reads as a colour, the
- * silhouettes read as a place.
+ * text on every screen — lessons, cards, whole paragraphs — and the scenery has
+ * to lose to legibility. Every stop was checked against the cream text colour
+ * and stays at 6:1 contrast or better (WCAG AA is 4.5:1). The layers darken
+ * toward the foreground, which is what actually sells the depth — a gradient
+ * alone reads as a colour; silhouettes read as a place.
  *
  * One rule holds the whole thing together: **nothing in the air has a hard
- * edge.** Cloud, haze, bloom and mote are all radial gradients that reach zero
- * alpha at their rim, never flat-alpha shapes. A flat shape shows its own
- * outline against a gradient no matter how low you push the alpha, and two of
- * them overlapping double up into a visible seam — which is precisely what
- * made an earlier pass at the clouds read as a row of grey discs. Only the
- * ground silhouettes are allowed a hard edge, because ground is the one thing
- * here that genuinely has one.
+ * edge.** Cloud, fog, bloom and mote are radial gradients that reach zero alpha
+ * at their rim, never flat-alpha shapes. A flat shape shows its own outline
+ * against a gradient no matter how low the alpha, and two overlapping double up
+ * into a visible seam — which is exactly what made an early pass at the clouds
+ * read as a row of grey discs. Only the ground silhouettes get a hard edge,
+ * because ground is the one thing here that genuinely has one.
  */
-export function LatticeBackground({ opacity = 1, scene = 'sunset' }: { opacity?: number; scene?: Scene }) {
+export function LatticeBackground({ opacity = 1 }: { opacity?: number }) {
   return (
     <View pointerEvents="none" style={{ position: 'absolute', inset: 0, opacity }}>
       <Svg width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 400 900">
-        {scene === 'sunset' ? (
-          <Defs>
-            <LinearGradient id="skySunset" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor={palette.ink} />
-              <Stop offset="0.3" stopColor={palette.skyDusk} />
-              <Stop offset="0.6" stopColor={palette.skyEmber} />
-              <Stop offset="0.82" stopColor={palette.skyGlow} />
-              <Stop offset="1" stopColor={palette.skyHorizon} />
-            </LinearGradient>
-            <RadialGradient id="sunCore" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
-              <Stop offset="0" stopColor={withAlpha(palette.goldLight, 0.85)} />
-              <Stop offset="0.55" stopColor={withAlpha(palette.gold, 0.4)} />
-              <Stop offset="1" stopColor={withAlpha(palette.gold, 0)} />
-            </RadialGradient>
-            <RadialGradient id="sunGlow" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
-              <Stop offset="0" stopColor={withAlpha(palette.gold, 0.16)} />
-              <Stop offset="1" stopColor={withAlpha(palette.gold, 0)} />
-            </RadialGradient>
-            <RadialGradient id="hillMist" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
-              <Stop offset="0" stopColor={withAlpha(palette.mossLight, 0.16)} />
-              <Stop offset="1" stopColor={withAlpha(palette.mossLight, 0)} />
-            </RadialGradient>
-            {/* Cloud bodies. Feathered to fully transparent at the rim, because
-                a flat-alpha shape over a gradient shows its outline no matter
-                how low the alpha is — which is what made the first attempt at
-                these read as a row of grey discs rather than cloud. */}
-            <RadialGradient id="cloudWarm" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
-              <Stop offset="0" stopColor={withAlpha(palette.goldLight, 0.5)} />
-              <Stop offset="0.45" stopColor={withAlpha(palette.goldLight, 0.28)} />
-              <Stop offset="1" stopColor={withAlpha(palette.goldLight, 0)} />
-            </RadialGradient>
-            <RadialGradient id="cloudPale" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
-              <Stop offset="0" stopColor={withAlpha(palette.paperSoft, 0.34)} />
-              <Stop offset="0.45" stopColor={withAlpha(palette.paperSoft, 0.18)} />
-              <Stop offset="1" stopColor={withAlpha(palette.paperSoft, 0)} />
-            </RadialGradient>
-            {/* The brighter, tighter edge of a cloud where it faces the sun. */}
-            <RadialGradient id="cloudCrown" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
-              <Stop offset="0" stopColor={withAlpha(palette.paperSoft, 0.42)} />
-              <Stop offset="1" stopColor={withAlpha(palette.paperSoft, 0)} />
-            </RadialGradient>
-            {/* Aerial perspective: air itself is not clear, so each further
-                ridge is veiled a little more than the one in front of it. This
-                is what reads as distance — without it the layers look like flat
-                paper cut-outs stacked on each other. */}
-            <RadialGradient id="ridgeHaze" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
-              <Stop offset="0" stopColor={withAlpha(palette.gold, 0.1)} />
-              <Stop offset="0.6" stopColor={withAlpha(palette.gold, 0.04)} />
-              <Stop offset="1" stopColor={withAlpha(palette.gold, 0)} />
-            </RadialGradient>
-            {/* The sun's light scattering sideways along the horizon line. */}
-            <RadialGradient id="horizonSpread" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
-              <Stop offset="0" stopColor={withAlpha(palette.gold, 0.085)} />
-              <Stop offset="1" stopColor={withAlpha(palette.gold, 0)} />
-            </RadialGradient>
-          </Defs>
-        ) : (
-          <Defs>
-            <LinearGradient id="skyForest" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor={palette.mossDeep} />
-              <Stop offset="0.4" stopColor={palette.mossCharcoal} />
-              <Stop offset="0.72" stopColor={palette.mossDark} />
-              <Stop offset="1" stopColor={palette.mossNear} />
-            </LinearGradient>
-            <RadialGradient id="canopyGlow" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
-              <Stop offset="0" stopColor={withAlpha(palette.gold, 0.28)} />
-              <Stop offset="0.5" stopColor={withAlpha(palette.gold, 0.1)} />
-              <Stop offset="1" stopColor={withAlpha(palette.gold, 0)} />
-            </RadialGradient>
-            <RadialGradient id="mist" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
-              <Stop offset="0" stopColor={withAlpha(palette.mossLight, 0.18)} />
-              <Stop offset="1" stopColor={withAlpha(palette.mossLight, 0)} />
-            </RadialGradient>
-          </Defs>
-        )}
+        <Defs>
+          {/* Cool and green up top, warming only near the horizon. The old ramp
+              went orange most of the way down, which is what made it read as a
+              sunset rather than as weather over a forest. */}
+          <LinearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={palette.mossDeep} />
+            <Stop offset="0.34" stopColor={palette.mossCharcoal} />
+            <Stop offset="0.62" stopColor={palette.skyDusk} />
+            <Stop offset="0.84" stopColor={palette.skyEmber} />
+            <Stop offset="1" stopColor={palette.skyGlow} />
+          </LinearGradient>
 
-        {scene === 'sunset' ? (
-          <>
-            <Rect width="400" height="900" fill="url(#skySunset)" />
+          {/* The sun, as a hint: no hard core any more, just a warm swelling in
+              the cloud where it sits. A visible disc made itself the subject. */}
+          <RadialGradient id="sunBloom" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+            <Stop offset="0" stopColor={withAlpha(palette.goldLight, 0.28)} />
+            <Stop offset="0.4" stopColor={withAlpha(palette.gold, 0.13)} />
+            <Stop offset="1" stopColor={withAlpha(palette.gold, 0)} />
+          </RadialGradient>
+          <RadialGradient id="horizonSpread" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+            <Stop offset="0" stopColor={withAlpha(palette.gold, 0.07)} />
+            <Stop offset="1" stopColor={withAlpha(palette.gold, 0)} />
+          </RadialGradient>
 
-            {/* the sun — light spreading along the horizon, then a soft bloom,
-                then a brighter core, sitting low so the hill layers below partly
-                cover it, the way a real horizon would */}
-            <Ellipse cx="290" cy="532" rx="300" ry="76" fill="url(#horizonSpread)" />
-            <Circle cx="290" cy="520" r="200" fill="url(#sunGlow)" />
-            <Circle cx="290" cy="520" r="72" fill="url(#sunCore)" />
+          {/* Fog. Cool and pale, and the thing there is most of in this picture:
+              it lies in the valleys, drifts across the tree lines, and is what
+              turns three silhouettes into distance. */}
+          <RadialGradient id="fog" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+            <Stop offset="0" stopColor={withAlpha(palette.mossLight, 0.2)} />
+            <Stop offset="0.55" stopColor={withAlpha(palette.mossLight, 0.09)} />
+            <Stop offset="1" stopColor={withAlpha(palette.mossLight, 0)} />
+          </RadialGradient>
+          <RadialGradient id="fogWarm" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+            <Stop offset="0" stopColor={withAlpha(palette.paperSoft, 0.16)} />
+            <Stop offset="1" stopColor={withAlpha(palette.paperSoft, 0)} />
+          </RadialGradient>
 
-            {/* Clouds: long, low, horizontal — the shape sunset cloud actually
-                takes, rather than the round puffs of a midday sky. Each is a
-                few soft ellipses under one group opacity, so the bank has some
-                internal relief without any overlap hardening into a seam. The
-                nearer the sun, the warmer the light they catch. */}
-            <G opacity={0.62}>
-              <Ellipse cx="296" cy="437" rx="94" ry="11" fill="url(#cloudWarm)" />
-              <Ellipse cx="318" cy="431" rx="50" ry="8" fill="url(#cloudWarm)" />
-              {/* the lit crown: the sun is below and to the right, so the top
-                  of the bank facing it is brighter and tighter than the body.
-                  Without this a cloud is a uniform smear; with it, it has a
-                  side that faces the light. */}
-              <Ellipse cx="322" cy="428" rx="34" ry="4.5" fill="url(#cloudCrown)" />
-            </G>
-            <G opacity={0.42}>
-              <Ellipse cx="116" cy="470" rx="76" ry="9" fill="url(#cloudWarm)" />
-              <Ellipse cx="138" cy="465" rx="38" ry="6.5" fill="url(#cloudWarm)" />
-              <Ellipse cx="146" cy="462" rx="24" ry="3.5" fill="url(#cloudCrown)" />
-            </G>
-            <G opacity={0.22}>
-              <Ellipse cx="196" cy="368" rx="68" ry="8" fill="url(#cloudPale)" />
-              <Ellipse cx="212" cy="364" rx="30" ry="4" fill="url(#cloudPale)" />
-            </G>
+          {/* Cloud bodies, feathered to nothing at the rim — a flat-alpha shape
+              shows its own outline over a gradient however low the alpha, and
+              two overlapping double into a seam. That is what made an early
+              pass at these read as a row of grey discs. */}
+          <RadialGradient id="cloudWarm" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+            <Stop offset="0" stopColor={withAlpha(palette.goldLight, 0.3)} />
+            <Stop offset="0.45" stopColor={withAlpha(palette.goldLight, 0.16)} />
+            <Stop offset="1" stopColor={withAlpha(palette.goldLight, 0)} />
+          </RadialGradient>
+          <RadialGradient id="cloudPale" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+            <Stop offset="0" stopColor={withAlpha(palette.paperSoft, 0.3)} />
+            <Stop offset="0.45" stopColor={withAlpha(palette.paperSoft, 0.15)} />
+            <Stop offset="1" stopColor={withAlpha(palette.paperSoft, 0)} />
+          </RadialGradient>
+          <RadialGradient id="cloudCool" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+            <Stop offset="0" stopColor={withAlpha(palette.mossLight, 0.22)} />
+            <Stop offset="0.5" stopColor={withAlpha(palette.mossLight, 0.1)} />
+            <Stop offset="1" stopColor={withAlpha(palette.mossLight, 0)} />
+          </RadialGradient>
+          {/* The brighter, tighter edge where a cloud faces the light. Without
+              it a cloud is a uniform smear; with it, it has a lit side.
+              Kept quiet on purpose: three warm layers stack here — two cloud
+              bodies and this — and at their first values the pile-up measured
+              4.47:1 against the cream body text, under even the WCAG AA floor,
+              while the comment at the top of this file claimed 6:1. See
+              `npm run check:scenery`, which measures it rather than trusting
+              anyone's estimate of what a stack of alphas comes to. */}
+          <RadialGradient id="cloudCrown" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+            <Stop offset="0" stopColor={withAlpha(palette.paperSoft, 0.24)} />
+            <Stop offset="1" stopColor={withAlpha(palette.paperSoft, 0)} />
+          </RadialGradient>
 
-            {/* two birds crossing the sky — the one Alto's Adventure detail
-                that makes a gradient read as a place, not a colour swatch */}
-            <Path d="M70,260 q10,-12 20,0 q10,-12 20,0" stroke={withAlpha(palette.ink600, 0.7)} strokeWidth={3} fill="none" strokeLinecap="round" />
-            <Path d="M130,300 q8,-9 16,0 q8,-9 16,0" stroke={withAlpha(palette.ink600, 0.55)} strokeWidth={2.5} fill="none" strokeLinecap="round" />
+          {/* Aerial perspective: air is not clear, so each further ridge is
+              veiled a little more than the one in front. This is what reads as
+              depth — without it the layers are flat paper cut-outs stacked up. */}
+          <RadialGradient id="ridgeHaze" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+            <Stop offset="0" stopColor={withAlpha(palette.mossLight, 0.13)} />
+            <Stop offset="0.6" stopColor={withAlpha(palette.mossLight, 0.05)} />
+            <Stop offset="1" stopColor={withAlpha(palette.mossLight, 0)} />
+          </RadialGradient>
+        </Defs>
 
-            {/* far hills — soft green, barely there, just enough to read as a horizon */}
-            <Path
-              d="M0,560 C60,530 110,545 170,528 C230,512 260,545 330,522 C370,510 390,528 400,522 L400,900 L0,900 Z"
-              fill={withAlpha(palette.mossDark, 0.55)}
-            />
-            {/* warm air pooling along the far ridge, in front of it — distance
-                reads as haze, not as a paler shade of the same flat green */}
-            <Ellipse cx="210" cy="556" rx="290" ry="42" fill="url(#ridgeHaze)" />
+        <>
+          <Rect width="400" height="900" fill="url(#sky)" />
 
-            {/* a low mist bank settled into the fold between the hills */}
-            <Circle cx="150" cy="645" r="220" fill="url(#hillMist)" />
-            <Circle cx="300" cy="665" r="180" fill="url(#hillMist)" />
+          {/* The sun, low and to the right, showing only as a warm swelling in
+              the weather. Cloud crosses it below, so it is never a clean disc. */}
+          <Ellipse cx="286" cy="548" rx="300" ry="70" fill="url(#horizonSpread)" />
+          <Circle cx="286" cy="524" r="168" fill="url(#sunBloom)" />
 
-            {/* mid hills — deeper green, more relief */}
-            <Path
-              d="M0,650 C80,610 150,630 210,600 C270,572 320,615 400,585 L400,900 L0,900 Z"
-              fill={withAlpha(palette.mossDeep, 0.82)}
-            />
-            {/* the same veil again over the mid ridge, weaker — each layer is
-                a little clearer than the one behind it */}
-            <Ellipse cx="200" cy="636" rx="300" ry="34" fill="url(#ridgeHaze)" opacity={0.7} />
+          {/* High cloud: cool and pale, drifting across the upper sky. Sparse
+              enough to leave air between the banks. */}
+          <G opacity={0.4}>
+            <Ellipse cx="128" cy="196" rx="104" ry="13" fill="url(#cloudCool)" />
+            <Ellipse cx="152" cy="189" rx="56" ry="8" fill="url(#cloudCool)" />
+          </G>
+          <G opacity={0.3}>
+            <Ellipse cx="300" cy="268" rx="86" ry="10" fill="url(#cloudPale)" />
+            <Ellipse cx="318" cy="262" rx="42" ry="6" fill="url(#cloudPale)" />
+          </G>
+          <G opacity={0.34}>
+            <Ellipse cx="86" cy="330" rx="92" ry="11" fill="url(#cloudCool)" />
+            <Ellipse cx="108" cy="324" rx="46" ry="7" fill="url(#cloudPale)" />
+          </G>
 
-            {/* near hills — darkest, closest to the bottom edge */}
-            <Path
-              d="M0,730 C70,695 140,715 200,690 C260,665 310,700 400,675 L400,900 L0,900 Z"
-              fill={withAlpha(palette.mossDeep, 0.97)}
-            />
+          {/* two birds crossing — the one detail that makes a gradient read as
+              a place rather than a colour swatch */}
+          <Path d="M70,258 q10,-12 20,0 q10,-12 20,0" stroke={withAlpha(palette.ink600, 0.7)} strokeWidth={3} fill="none" strokeLinecap="round" />
+          <Path d="M132,296 q8,-9 16,0 q8,-9 16,0" stroke={withAlpha(palette.ink600, 0.55)} strokeWidth={2.5} fill="none" strokeLinecap="round" />
 
-            {/* Motes of pollen drifting in the last of the light. These were
-                flat opaque dots and read as confetti scattered on the hill;
-                soft-edged and dim, they sit in the air instead of on top of
-                the picture. */}
-            <G opacity={0.55}>
-              <Circle cx="58" cy="806" r="9" fill="url(#cloudWarm)" />
-              <Circle cx="150" cy="848" r="7" fill="url(#cloudWarm)" />
-              <Circle cx="268" cy="820" r="8" fill="url(#cloudWarm)" />
-              <Circle cx="342" cy="862" r="6" fill="url(#cloudWarm)" />
-            </G>
-          </>
-        ) : (
-          <>
-            <Rect width="400" height="900" fill="url(#skyForest)" />
+          {/* Low cloud, warm because it is near the sun, and lying across it —
+              the sun reads as *behind* the weather rather than in front. */}
+          <G opacity={0.44}>
+            <Ellipse cx="292" cy="446" rx="106" ry="12" fill="url(#cloudWarm)" />
+            <Ellipse cx="316" cy="439" rx="54" ry="8" fill="url(#cloudWarm)" />
+            <Ellipse cx="322" cy="435" rx="34" ry="4.5" fill="url(#cloudCrown)" />
+          </G>
+          <G opacity={0.34}>
+            <Ellipse cx="112" cy="480" rx="84" ry="10" fill="url(#cloudWarm)" />
+            <Ellipse cx="136" cy="474" rx="40" ry="6.5" fill="url(#cloudWarm)" />
+            <Ellipse cx="144" cy="471" rx="24" ry="3.5" fill="url(#cloudCrown)" />
+          </G>
 
-            {/* light breaking through the canopy — low and warm, the same
-                gold as the sunset scene, so the two scenes still feel related */}
-            <Circle cx="230" cy="470" r="230" fill="url(#canopyGlow)" />
+          {/* ---- the land, in three layers, each with its own tree line ---- */}
 
-            {/* a drifting mist bank, low over the clearing */}
-            <Circle cx="180" cy="700" r="260" fill="url(#mist)" />
-            <Circle cx="300" cy="740" r="200" fill="url(#mist)" />
+          {/* far ridge: palest, barely separated from the sky */}
+          <Path
+            d="M0,566 C60,538 110,552 170,534 C230,518 260,550 330,528 C370,516 390,534 400,528 L400,900 L0,900 Z"
+            fill={withAlpha(palette.mossDark, 0.5)}
+          />
+          <Path d={treeline(560, 26, 22, 1)} fill={withAlpha(palette.mossDark, 0.42)} />
+          {/* Fog pooling in front of the far ridge — distance reads as haze,
+              not as a paler shade of the same flat green.
+              One layer, not two. There were a haze and a fog ellipse here,
+              overlapping across most of their width, and two soft shapes at
+              alpha ~0.16 compose to ~0.28 rather than ~0.16 — the exact trap
+              the note at the top of this file warns about, walked into three
+              paragraphs below writing it. It made this the brightest place in
+              the whole scene, 5.5:1 behind body text, and the fix was never a
+              dimmer fog; it was one fog. */}
+          <Ellipse cx="200" cy="578" rx="320" ry="48" fill="url(#ridgeHaze)" />
 
-            {/* far tree line — palest, furthest back */}
-            <Path d={treeline(560, 60, 14, 1)} fill={withAlpha(palette.mossDark, 0.45)} />
-            {/* mid tree line — taller, denser */}
-            <Path d={treeline(660, 90, 11, 7)} fill={withAlpha(palette.mossDark, 0.75)} />
-            {/* near tree line — darkest, closest to the bottom edge */}
-            <Path d={treeline(760, 110, 9, 13)} fill={withAlpha(palette.mossDeep, 0.95)} />
+          {/* mid ridge */}
+          <Path
+            d="M0,660 C80,620 150,640 210,610 C270,582 320,626 400,596 L400,900 L0,900 Z"
+            fill={withAlpha(palette.mossDeep, 0.78)}
+          />
+          <Path d={treeline(652, 34, 17, 7)} fill={withAlpha(palette.mossDeep, 0.72)} />
+          {/* the valley between the ridges, full of it */}
+          <Ellipse cx="230" cy="668" rx="300" ry="40" fill="url(#fog)" />
+          <Ellipse cx="96" cy="676" rx="200" ry="28" fill="url(#fogWarm)" />
 
-            {/* a couple of fireflies over the clearing — the forest's answer
-                to the sunset scene's birds */}
-            <Circle cx="150" cy="640" r="3" fill={withAlpha(palette.goldLight, 0.8)} />
-            <Circle cx="240" cy="600" r="2.2" fill={withAlpha(palette.goldLight, 0.6)} />
-          </>
-        )}
+          {/* near ridge: darkest, closest, its trees the only ones with any
+              individual shape */}
+          <Path
+            d="M0,742 C70,706 140,726 200,700 C260,676 310,712 400,686 L400,900 L0,900 Z"
+            fill={withAlpha(palette.mossDeep, 0.97)}
+          />
+          <Path d={treeline(738, 44, 13, 13)} fill={palette.ink} opacity={0.72} />
+          {/* a last thin band of fog caught at the foot of the near trees */}
+          <Ellipse cx="180" cy="760" rx="280" ry="22" fill="url(#fog)" opacity={0.7} />
+
+          {/* Motes drifting in the last of the light.
+              These were flat opaque dots and read as confetti thrown on the
+              hill; softening them stopped that, but four of them spread across
+              the bare dark foreground still read as dust on the lens, because
+              there was nothing down there for light to catch on. So they moved
+              up into the fog, where mist is the reason they are visible at all,
+              and there are two rather than four — a mote is a detail, and four
+              identical details in a row is a pattern. */}
+          <G opacity={0.45}>
+            <Circle cx="96" cy="700" r="7" fill="url(#fogWarm)" />
+            <Circle cx="252" cy="686" r="5" fill="url(#fogWarm)" />
+          </G>
+        </>
       </Svg>
     </View>
   );

@@ -44,6 +44,7 @@ function Row({ label, hint, value, onChange }: { label: string; hint?: string; v
  */
 function TesterPanel() {
   const t = useTesterStore();
+  const resetAll = useProgressStore((st) => st.resetAll);
   const [user, setUser] = useState('');
   const [pass, setPass] = useState('');
   const [wrong, setWrong] = useState(false);
@@ -132,6 +133,36 @@ function TesterPanel() {
           </Txt>
         </View>
       )}
+      {/* The reset lived on the home screen, one tap from every learner, with a
+          comment on it saying to remove it once testing was done. This is where
+          a testing affordance belongs: behind the passphrase, next to the other
+          two. The permanent one is still in Data below, for real users. */}
+      <Pressable
+        onPress={() => {
+          feedback.tap();
+          confirmAction(
+            'Start the course over?',
+            'Clears progress, streak, XP and memory on this device so you can walk the path from the first lesson again.',
+            'Reset',
+            () => {
+              resetAll();
+              feedback.incorrect();
+            }
+          );
+        }}
+        accessibilityRole="button"
+        accessibilityLabel="Reset progress for testing"
+      >
+        <View
+          className="mt-3 items-center rounded-xl py-2.5"
+          style={{ backgroundColor: withAlpha(palette.rose, 0.14), borderWidth: 1, borderColor: withAlpha(palette.rose, 0.35) }}
+        >
+          <Bold style={{ color: palette.roseLight }} className="text-sm">
+            Reset progress and start over
+          </Bold>
+        </View>
+      </Pressable>
+
       <Pressable
         onPress={() => {
           feedback.tap();

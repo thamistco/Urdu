@@ -63,11 +63,21 @@ the name live in [docs/store-listing.md](docs/store-listing.md).
 - **Jump ahead** — any lesson is tappable; locked ones stay marked.
 
 ## Design language
-Every illustration sits inside an **8-point geometric star medallion**, and a
-faint halftone dot screen sits behind every screen. The palette is defined once
-in `src/theme/colors.ts` and mirrored in `tailwind.config.js`; every
-foreground/background pair clears WCAG AA. One rule the palette imposes:
-lettering on a bright fill is ink, not white — white on comic green is 2.4:1.
+Behind every screen is a **misty forest at dusk** — three ridges carrying tree
+lines, fog lying in the valleys between them, layered cloud, and the sun as a
+warm bloom behind the weather rather than a disc in the middle of the picture.
+It is decoration that has to lose to legibility, so its brightest point is held
+to 6:1 against the body text and measured, not estimated (`npm run
+check:scenery`) — the stacked cloud layers were at 4.47:1, under WCAG AA, while
+the comment above them claimed 6.
+
+The palette is defined once in `src/theme/colors.ts` and mirrored in
+`tailwind.config.js`. That mirror is now enforced (`npm run check:theme`),
+because it had silently drifted across two re-themes: NativeWind resolves
+`bg-ink-700` against the config, so every `className` colour kept the old look
+while every inline `palette.x` moved. Every foreground/background pair clears
+WCAG AA. One rule the palette imposes: lettering on a bright fill is ink, not
+white — white on comic green is 2.4:1.
 Typography pairs **Noto Nastaliq Urdu** for the script with Fraunces (display)
 and Public Sans (body).
 
@@ -122,4 +132,18 @@ from the CC-BY source is credited in [`CREDITS.md`](CREDITS.md).
 
 ## Verification
 `npx tsc --noEmit` passes (strict) · `npx expo export --platform web` builds
-clean · automated Playwright walkthrough of every screen reports no runtime errors.
+clean · automated Playwright walkthrough of every screen reports no runtime
+errors. Beyond that, each claim this README makes has a script that fails when
+it stops being true, and all of them run in CI before anything deploys:
+
+| Check | What it would catch |
+| --- | --- |
+| `npm run audit` | content wiring: a lesson pointing at a topic that does not exist, a picture that cannot identify its word, two topics sharing a badge |
+| `npm run check:answerable` | a generated question that cannot be answered from what it puts on screen |
+| `npm run check:roman` | the typed-answer matcher accepting or refusing the wrong spellings |
+| `npm run check:trace` | letter tracing that an honest attempt cannot pass, or a scribble can |
+| `npm run check:srs` | spaced repetition not behaving the way the app says it does |
+| `npm run check:voice` | a clip the TTS API returned as silence |
+| `npm run check:theme` | `tailwind.config.js` drifting from `colors.ts`, colour written as raw hex outside the theme, a palette token nothing uses |
+| `npm run check:scenery` | the background getting bright enough to fight the text on it |
+| `npm run check:stability` | a question changing under the answer being given to it |

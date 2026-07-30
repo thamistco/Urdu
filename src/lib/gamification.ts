@@ -47,6 +47,13 @@ export function levelTitle(level: number): string {
 
 // ---- Weekly leagues (Duolingo-style competitive layer) ------------------
 
+/**
+ * Each league is named after a material, and its colour is that material —
+ * copper is copper-coloured, sapphire is sapphire. Like the colour words in
+ * `data/art.ts` this is depicted colour, not interface colour: silver that
+ * re-themed to sunset orange would just be a wrong silver.
+ */
+/* check:theme-off — depicted colour: the material each league is named for */
 export const LEAGUES = [
   { id: 'clay', name: 'Clay', icon: '🟤', color: '#C08457' },
   { id: 'copper', name: 'Copper', icon: '🟠', color: '#E0913A' },
@@ -56,6 +63,7 @@ export const LEAGUES = [
   { id: 'ruby', name: 'Ruby', icon: '🔴', color: '#FF7A72' },
   { id: 'emerald', name: 'Emerald', icon: '🟢', color: '#5FDC96' },
 ] as const;
+/* check:theme-on */
 
 export type LeagueId = (typeof LEAGUES)[number]['id'];
 

@@ -14,6 +14,8 @@ import { GRAMMAR } from './grammar';
 import { PASSAGES, DIALOGUES } from './sentences';
 import type { Level } from './words';
 import type { LearnTrack } from '../store/useSettingsStore';
+import { palette } from '../theme';
+
 
 export type LessonKind =
   | 'letters'
@@ -107,7 +109,7 @@ const REV = (title = 'Unit review', subtitle = 'Mixed practice', xp = 30, size =
 // teal for contrast, so a long path of units doesn't read as one flat hue.
 // Deliberately not a violet/lavender: that reads as the same purple the rest
 // of the palette moved away from.
-const GOLD = '#FF8C42', JADE = '#7DDBAB', ROSE = '#FF8A8E', BLUE = '#6FB3B0';
+const GOLD = palette.gold, JADE = palette.jadeLight, ROSE = palette.roseLight, BLUE = palette.accentTeal;
 
 export const UNITS: Unit[] = [
   // ══════════════ BEGINNER ══════════════
