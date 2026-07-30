@@ -14,7 +14,6 @@ import { Display, Heading, Txt, Bold, Eyebrow } from '../components/Text';
 import { Lexeme } from '../components/Lexeme';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
-import { confirmAction } from '../lib/confirm';
 import { levelProgress, levelTitle } from '../lib/gamification';
 import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -24,6 +23,7 @@ import { WORDS } from '../data/words';
 import { DAILY_GOALS } from '../data/achievements';
 import type { RootStackParamList } from '../navigation/types';
 import { dueCount } from '../lib/srs';
+import { testerFlags } from '../store/useTesterStore';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -52,6 +52,10 @@ function lessonState(
   const idx = order.indexOf(lessonId);
   const prev = order[idx - 1];
   if (idx === 0 || (prev && (completed[prev] || skipped[prev]))) return 'current';
+  // Tester mode opens the path so any lesson can be looked at without playing
+  // thirty before it. Off by default even once unlocked, precisely so the locked
+  // state a real learner meets can still be seen.
+  if (testerFlags().unlockAll) return 'current';
   return 'locked';
 }
 
@@ -262,30 +266,6 @@ export function HomeScreen() {
                   value={store.gems}
                   color={palette.jadeLight}
                 />
-                {/* TEMPORARY test affordance — quick way to restart the whole
-                    course from zero while trying out features. Remove once
-                    testing is done; the real reset lives in Settings. */}
-                <Pressable
-                  onPress={() => {
-                    feedback.tap();
-                    confirmAction(
-                      'Reset progress?',
-                      'Wipes everything and starts the course fresh, for testing.',
-                      'Reset',
-                      () => store.resetAll()
-                    );
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel="Reset progress (testing)"
-                  hitSlop={6}
-                >
-                  <View
-                    className="h-8 w-8 items-center justify-center rounded-full border"
-                    style={{ borderColor: withAlpha(palette.rose, 0.4), backgroundColor: withAlpha(palette.rose, 0.12) }}
-                  >
-                    <Txt style={{ fontSize: 14 }}>🔄</Txt>
-                  </View>
-                </Pressable>
               </View>
             </View>
           </SafeAreaView>

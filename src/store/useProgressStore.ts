@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { safeStorage } from './storage';
 
 import { SrsCard, SrsGrade, newCard, review, dueCount } from '../lib/srs';
+import { testerFlags } from './useTesterStore';
 import { dayKey, daysBetween } from '../lib/date';
 import {
   HEARTS_MAX,
@@ -200,6 +201,8 @@ export const useProgressStore = create<ProgressState>()(
       },
 
       loseHeart: () => {
+        // Tester mode watches the app rather than plays it; see useTesterStore.
+        if (testerFlags().infiniteHearts) return;
         const s = get();
         const hearts = Math.max(0, s.hearts - 1);
         set({
