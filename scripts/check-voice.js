@@ -35,6 +35,39 @@ const clips = fs
   .filter((f) => f.endsWith('.mp3'))
   .sort();
 
+/**
+ * A clip on this machine is not a clip in the app.
+ *
+ * `.gitignore` excludes `assets/voice/*.mp3`, so a fork without a TTS key does
+ * not carry 11 MB of audio it cannot use; the shipped set was added once with
+ * `git add -f`. That means a newly generated clip is invisible to `git add -A`
+ * and to `git status`, and the only signal that it never got committed is the
+ * app quietly speaking that one word in the browser's English voice.
+ *
+ * It happened: خالو was generated locally and never added, so the deployed app
+ * had 2,892 of 2,893 clips and spoke that one word in English for a day.
+ * Checking the disk would have said everything was fine — the file was right
+ * there. So this asks git what is actually committed, which is the only thing a
+ * build ever sees.
+ *
+ * Worse, `spoken.json` — the generator's ledger of what it has already made —
+ * *is* tracked, and it was updated in that same commit. So `gen:voice` would
+ * skip the word forever, key or no key, because as far as the ledger is
+ * concerned the clip exists. Nothing else in the pipeline could have noticed.
+ */
+let tracked = null;
+try {
+  tracked = new Set(
+    require('child_process')
+      .execSync('git ls-files "assets/voice/*.mp3"', { cwd: ROOT, encoding: 'utf8' })
+      .split('\n')
+      .filter(Boolean)
+      .map((p) => path.basename(p))
+  );
+} catch {
+  // not a git checkout (a tarball, a fresh CI export) — disk is all there is
+}
+
 if (!clips.length) {
   console.log('No clips on disk — the app will fall back to device speech.');
   process.exit(0);
@@ -79,9 +112,16 @@ const speakable = [
   ...PASSAGES.flatMap((p) => (p.lines || []).map((_, i) => [`${p.id}-${i}`, `passage line`])),
   ...DIALOGUES.flatMap((d) => (d.lines || []).map((_, i) => [`${d.id}-${i}`, `dialogue line`])),
 ];
-const uncovered = speakable.filter(([id]) => !listed.has(id));
-for (const [id, what] of uncovered.slice(0, 40))
-  broken.push(`${id}: ${what} has no clip — the app would speak it with the device voice`);
+const shipped = (id) => listed.has(id) && (tracked === null || tracked.has(`${id}.mp3`));
+const uncovered = speakable.filter(([id]) => !shipped(id));
+for (const [id, what] of uncovered.slice(0, 40)) {
+  const onDiskOnly = tracked !== null && listed.has(id) && onDisk.has(id) && !tracked.has(`${id}.mp3`);
+  broken.push(
+    onDiskOnly
+      ? `${id}: ${what} has a clip on disk that git is not tracking — assets/voice/*.mp3 is gitignored, so run \`git add -f assets/voice/${id}.mp3\`. Until then the deployed app speaks this word with the device voice.`
+      : `${id}: ${what} has no clip — the app would speak it with the device voice`
+  );
+}
 if (uncovered.length > 40) broken.push(`… and ${uncovered.length - 40} more without a clip`);
 
 console.log(
@@ -92,7 +132,11 @@ if (broken.length) {
   console.log(`\n${broken.length} unusable:`);
   for (const b of broken.slice(0, 40)) console.log('  •', b);
   if (broken.length > 40) console.log(`  … and ${broken.length - 40} more`);
-  console.log('\nRe-run `npm run gen:voice` with a key set; silent responses are now retried.');
+  // Two different problems, two different fixes — telling someone to
+  // regenerate a clip that is already sitting on their disk sends them the
+  // wrong way, and the untracked case says what to run in its own line.
+  if (broken.some((b) => !b.includes('git is not tracking')))
+    console.log('\nRe-run `npm run gen:voice` with a key set; silent responses are now retried.');
   process.exit(1);
 }
 console.log('every clip is audible');
