@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View } from 'react-native';
-import { Choice, Question, SpeakerButton, palette, withAlpha } from './common';
+import { Choice, Question, SpeakerButton, palette } from './common';
 import { Urdu, Txt, Bold, Eyebrow, urduLine } from '../components/Text';
 import { Button } from '../components/Button';
 import { feedback } from '../lib/feedback';
@@ -118,13 +118,7 @@ export function DialogueExercise({ exercise, track, showRoman, locked, onGraded 
           <View className="gap-3">
             {dialogue.question.options.map((o) => {
               const state =
-                picked == null
-                  ? 'idle'
-                  : o === dialogue.question.answer
-                  ? 'correct'
-                  : o === picked
-                  ? 'wrong'
-                  : 'muted';
+                picked == null ? 'idle' : o === dialogue.question.answer ? 'correct' : o === picked ? 'wrong' : 'muted';
               return (
                 <Choice key={o} state={state} disabled={picked != null || locked} onPress={() => choose(o)}>
                   <Bold className="text-center text-[15px]">{o}</Bold>

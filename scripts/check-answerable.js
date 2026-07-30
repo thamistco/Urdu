@@ -47,7 +47,6 @@ function load(rel) {
 const { buildLessonExercises } = load('src/exercises/generator.ts');
 const { unitsForTrack } = load('src/data/units.ts');
 const { pictureIdentifies, cueOf } = load('src/data/art.ts');
-const { romanOf } = load('src/lib/translit.ts');
 const { WORDS, glossOf } = load('src/data/words.ts');
 
 const problems = [];
@@ -74,8 +73,7 @@ function check(ex, track) {
       // exercise shows the English underneath — the component decides that
       // from `pictureIdentifies`, so what has to hold here is only that the
       // four *options* are told apart by what is written on them.
-      if (!distinct(ex.options.map((o) => o.urdu)))
-        fail('two options are the same word', `${ex.word.id}`);
+      if (!distinct(ex.options.map((o) => o.urdu))) fail('two options are the same word', `${ex.word.id}`);
       if (!pictureIdentifies(ex.word) && !distinct(ex.options.map((o) => o.meaning.toLowerCase())))
         fail('captioned picture with two options meaning the same', `${ex.word.id}`);
       break;
@@ -141,7 +139,8 @@ function check(ex, track) {
     case 'dialogue':
       if (!ex.dialogue.question.options.includes(ex.dialogue.question.answer))
         fail('dialogue answer is not among its options', ex.dialogue.id);
-      if (roman && ex.dialogue.lines.some((l) => !l.roman)) fail('dialogue line has no transliteration', ex.dialogue.id);
+      if (roman && ex.dialogue.lines.some((l) => !l.roman))
+        fail('dialogue line has no transliteration', ex.dialogue.id);
       break;
 
     default:

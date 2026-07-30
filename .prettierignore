@@ -1,0 +1,10 @@
+# Generated, huge, or not ours to format.
+dist/
+node_modules/
+assets/
+# Vocabulary and content tables are laid out by hand in aligned columns so a
+# reviewer can scan a topic down the page. Prettier would reflow every row and
+# make a one-word fix show up as a two-hundred-line diff.
+src/data/vocab/
+src/lib/voiceManifest.ts
+src/data/glyphMasks.ts

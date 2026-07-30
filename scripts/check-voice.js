@@ -77,67 +77,65 @@ if (!ffmpegAvailable())
   console.log('ffmpeg not found — checking length only, which catches this failure but not a long silence.\n');
 
 (async () => {
-const found = await findProblems(clips.map((f) => path.join(OUT_DIR, f)));
-const broken = found
-  .map(({ file, problem }) => `${path.basename(file, '.mp3')}: ${problem}`)
-  .sort();
+  const found = await findProblems(clips.map((f) => path.join(OUT_DIR, f)));
+  const broken = found.map(({ file, problem }) => `${path.basename(file, '.mp3')}: ${problem}`).sort();
 
-// The manifest is what the app actually loads, so a clip on disk that is not in
-// it is dead weight, and an id in it with no file is a crash waiting to happen.
-const manifest = fs.readFileSync(path.join(ROOT, 'src', 'lib', 'voiceManifest.ts'), 'utf8');
-const listed = new Set([...manifest.matchAll(/^\s*'([^']+)':/gm)].map((m) => m[1]));
-const onDisk = new Set(clips.map((f) => f.replace(/\.mp3$/, '')));
-for (const id of listed) if (!onDisk.has(id)) broken.push(`${id}: in the manifest but not on disk`);
+  // The manifest is what the app actually loads, so a clip on disk that is not in
+  // it is dead weight, and an id in it with no file is a crash waiting to happen.
+  const manifest = fs.readFileSync(path.join(ROOT, 'src', 'lib', 'voiceManifest.ts'), 'utf8');
+  const listed = new Set([...manifest.matchAll(/^\s*'([^']+)':/gm)].map((m) => m[1]));
+  const onDisk = new Set(clips.map((f) => f.replace(/\.mp3$/, '')));
+  for (const id of listed) if (!onDisk.has(id)) broken.push(`${id}: in the manifest but not on disk`);
 
-/**
- * Every speakable thing must have a clip.
- *
- * `announce()` falls back to the device's own text-to-speech when an id has no
- * recording. That fallback sounds reasonable in the source and is bad in the
- * hand: a browser has no Urdu voice, so it either reads the script in an
- * English voice or reads the Roman — and in an app for learning Urdu, a stock
- * English voice mispronouncing a word is worse than silence, and worse still
- * because it would affect only the newest words, which is exactly where a
- * learner has no way to know it is wrong.
- *
- * Coverage is complete today. This exists so that adding a word without
- * regenerating the voice fails the build instead of quietly landing a word the
- * app pronounces in the wrong language.
- */
-const { WORDS, LETTERS, SENTENCES, PASSAGES, DIALOGUES } = loadData();
-const speakable = [
-  ...WORDS.map((w) => [w.id, `word ${w.urdu}`]),
-  ...LETTERS.map((l) => [l.id, `letter ${l.char ?? l.id}`]),
-  ...SENTENCES.map((s) => [s.id, 'sentence']),
-  ...PASSAGES.flatMap((p) => (p.lines || []).map((_, i) => [`${p.id}-${i}`, `passage line`])),
-  ...DIALOGUES.flatMap((d) => (d.lines || []).map((_, i) => [`${d.id}-${i}`, `dialogue line`])),
-];
-const shipped = (id) => listed.has(id) && (tracked === null || tracked.has(`${id}.mp3`));
-const uncovered = speakable.filter(([id]) => !shipped(id));
-for (const [id, what] of uncovered.slice(0, 40)) {
-  const onDiskOnly = tracked !== null && listed.has(id) && onDisk.has(id) && !tracked.has(`${id}.mp3`);
-  broken.push(
-    onDiskOnly
-      ? `${id}: ${what} has a clip on disk that git is not tracking — assets/voice/*.mp3 is gitignored, so run \`git add -f assets/voice/${id}.mp3\`. Until then the deployed app speaks this word with the device voice.`
-      : `${id}: ${what} has no clip — the app would speak it with the device voice`
+  /**
+   * Every speakable thing must have a clip.
+   *
+   * `announce()` falls back to the device's own text-to-speech when an id has no
+   * recording. That fallback sounds reasonable in the source and is bad in the
+   * hand: a browser has no Urdu voice, so it either reads the script in an
+   * English voice or reads the Roman — and in an app for learning Urdu, a stock
+   * English voice mispronouncing a word is worse than silence, and worse still
+   * because it would affect only the newest words, which is exactly where a
+   * learner has no way to know it is wrong.
+   *
+   * Coverage is complete today. This exists so that adding a word without
+   * regenerating the voice fails the build instead of quietly landing a word the
+   * app pronounces in the wrong language.
+   */
+  const { WORDS, LETTERS, SENTENCES, PASSAGES, DIALOGUES } = loadData();
+  const speakable = [
+    ...WORDS.map((w) => [w.id, `word ${w.urdu}`]),
+    ...LETTERS.map((l) => [l.id, `letter ${l.char ?? l.id}`]),
+    ...SENTENCES.map((s) => [s.id, 'sentence']),
+    ...PASSAGES.flatMap((p) => (p.lines || []).map((_, i) => [`${p.id}-${i}`, `passage line`])),
+    ...DIALOGUES.flatMap((d) => (d.lines || []).map((_, i) => [`${d.id}-${i}`, `dialogue line`])),
+  ];
+  const shipped = (id) => listed.has(id) && (tracked === null || tracked.has(`${id}.mp3`));
+  const uncovered = speakable.filter(([id]) => !shipped(id));
+  for (const [id, what] of uncovered.slice(0, 40)) {
+    const onDiskOnly = tracked !== null && listed.has(id) && onDisk.has(id) && !tracked.has(`${id}.mp3`);
+    broken.push(
+      onDiskOnly
+        ? `${id}: ${what} has a clip on disk that git is not tracking — assets/voice/*.mp3 is gitignored, so run \`git add -f assets/voice/${id}.mp3\`. Until then the deployed app speaks this word with the device voice.`
+        : `${id}: ${what} has no clip — the app would speak it with the device voice`
+    );
+  }
+  if (uncovered.length > 40) broken.push(`… and ${uncovered.length - 40} more without a clip`);
+
+  console.log(
+    `${clips.length} clips checked · ${listed.size} in the manifest · ${speakable.length} speakable items, ${speakable.length - uncovered.length} covered`
   );
-}
-if (uncovered.length > 40) broken.push(`… and ${uncovered.length - 40} more without a clip`);
 
-console.log(
-  `${clips.length} clips checked · ${listed.size} in the manifest · ${speakable.length} speakable items, ${speakable.length - uncovered.length} covered`
-);
-
-if (broken.length) {
-  console.log(`\n${broken.length} unusable:`);
-  for (const b of broken.slice(0, 40)) console.log('  •', b);
-  if (broken.length > 40) console.log(`  … and ${broken.length - 40} more`);
-  // Two different problems, two different fixes — telling someone to
-  // regenerate a clip that is already sitting on their disk sends them the
-  // wrong way, and the untracked case says what to run in its own line.
-  if (broken.some((b) => !b.includes('git is not tracking')))
-    console.log('\nRe-run `npm run gen:voice` with a key set; silent responses are now retried.');
-  process.exit(1);
-}
-console.log('every clip is audible');
+  if (broken.length) {
+    console.log(`\n${broken.length} unusable:`);
+    for (const b of broken.slice(0, 40)) console.log('  •', b);
+    if (broken.length > 40) console.log(`  … and ${broken.length - 40} more`);
+    // Two different problems, two different fixes — telling someone to
+    // regenerate a clip that is already sitting on their disk sends them the
+    // wrong way, and the untracked case says what to run in its own line.
+    if (broken.some((b) => !b.includes('git is not tracking')))
+      console.log('\nRe-run `npm run gen:voice` with a key set; silent responses are now retried.');
+    process.exit(1);
+  }
+  console.log('every clip is audible');
 })();

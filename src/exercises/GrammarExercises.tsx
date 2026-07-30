@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, ScrollView } from 'react-native';
+import { View } from 'react-native';
 import { Choice, Question, palette, withAlpha } from './common';
 import { Urdu, Txt, Bold, Eyebrow, Heading, urduLine } from '../components/Text';
 import { Button } from '../components/Button';
@@ -142,11 +142,16 @@ export function GrammarTeachExercise({ exercise, track, onGraded, onExpand }: Ex
                       </Txt>
                     ) : (
                       <>
-                        <Urdu style={{ fontSize: 19, color: palette.ink, lineHeight: urduLine(19), textAlign: 'right' }}>
+                        <Urdu
+                          style={{ fontSize: 19, color: palette.ink, lineHeight: urduLine(19), textAlign: 'right' }}
+                        >
                           {cell}
                         </Urdu>
                         {roman && (
-                          <Txt style={{ color: withAlpha(palette.ink, 0.55) }} className="mt-0.5 text-right text-[11px]">
+                          <Txt
+                            style={{ color: withAlpha(palette.ink, 0.55) }}
+                            className="mt-0.5 text-right text-[11px]"
+                          >
                             {roman}
                           </Txt>
                         )}
@@ -161,36 +166,34 @@ export function GrammarTeachExercise({ exercise, track, onGraded, onExpand }: Ex
       )}
 
       {visible.has('examples') && (
-      <View className="mb-5 gap-2.5">
-        <Eyebrow style={{ color: palette.jade }} className="mb-0.5">
-          In use
-        </Eyebrow>
-        {concept.examples.map((ex, i) => (
-          <View
-            key={i}
-            className="rounded-xl border-l-2 px-4 py-3"
-            style={{ borderLeftColor: palette.jade, backgroundColor: withAlpha(palette.jade, 0.08) }}
-          >
-            {track === 'roman' ? (
-              <Bold style={{ fontSize: 17 }}>{ex.roman}</Bold>
-            ) : (
-              <>
-                <Urdu style={{ fontSize: 23, lineHeight: urduLine(23) }}>{ex.urdu}</Urdu>
-                <Txt className="mt-1.5 text-xs text-paper/55">{ex.roman}</Txt>
-              </>
-            )}
-            <Txt className="mt-0.5 text-[13px] text-paper/80">{ex.meaning}</Txt>
-          </View>
-        ))}
-      </View>
+        <View className="mb-5 gap-2.5">
+          <Eyebrow style={{ color: palette.jade }} className="mb-0.5">
+            In use
+          </Eyebrow>
+          {concept.examples.map((ex, i) => (
+            <View
+              key={i}
+              className="rounded-xl border-l-2 px-4 py-3"
+              style={{ borderLeftColor: palette.jade, backgroundColor: withAlpha(palette.jade, 0.08) }}
+            >
+              {track === 'roman' ? (
+                <Bold style={{ fontSize: 17 }}>{ex.roman}</Bold>
+              ) : (
+                <>
+                  <Urdu style={{ fontSize: 23, lineHeight: urduLine(23) }}>{ex.urdu}</Urdu>
+                  <Txt className="mt-1.5 text-xs text-paper/55">{ex.roman}</Txt>
+                </>
+              )}
+              <Txt className="mt-0.5 text-[13px] text-paper/80">{ex.meaning}</Txt>
+            </View>
+          ))}
+        </View>
       )}
 
       {allShown ? (
         !read && <Button onPress={done}>Got it</Button>
       ) : (
-        <Button onPress={next}>
-          {stages[shown] === 'table' ? 'Show the pattern' : 'Show examples'}
-        </Button>
+        <Button onPress={next}>{stages[shown] === 'table' ? 'Show the pattern' : 'Show examples'}</Button>
       )}
     </View>
   );
@@ -243,8 +246,7 @@ export function GrammarDrillExercise({ exercise, track, showRoman, locked, onGra
 
       <View className="flex-row flex-wrap justify-between">
         {drill.options.map((o) => {
-          const state =
-            picked == null ? 'idle' : o === drill.answer ? 'correct' : o === picked ? 'wrong' : 'muted';
+          const state = picked == null ? 'idle' : o === drill.answer ? 'correct' : o === picked ? 'wrong' : 'muted';
           return (
             <Choice
               key={o}
