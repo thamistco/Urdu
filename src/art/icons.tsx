@@ -802,6 +802,37 @@ export const SpeechBubble = ({ size }: IconProps) => (
   </Frame>
 );
 
+/**
+ * Two arrows chasing each other — coming round again.
+ *
+ * Not part of the `ICONS` registry below, because that maps content to
+ * pictures and this is chrome: it marks the review deck on Practice and the
+ * start-over button on Home. It takes a colour rather than the miniature
+ * palette for the same reason, so it can sit on whatever it is placed on.
+ *
+ * It lived as a private copy inside PracticeScreen. A second screen wanting
+ * the same mark is the moment a private copy becomes two marks that drift.
+ */
+export const CycleMark = ({ size = 52, color }: { size?: number; color: string }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24">
+    <Path
+      d="M4.5 10a7.5 7.5 0 0 1 12.9-4M19.5 14a7.5 7.5 0 0 1-12.9 4"
+      stroke={color}
+      strokeWidth={2}
+      fill="none"
+      strokeLinecap="round"
+    />
+    <Path
+      d="M17.4 2.4V6H13.8M6.6 21.6V18h3.6"
+      stroke={color}
+      strokeWidth={2}
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
 // ---- registry ------------------------------------------------------------
 
 export const ICONS: Record<string, (p: IconProps) => JSX.Element> = {
