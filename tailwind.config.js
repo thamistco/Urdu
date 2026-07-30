@@ -4,15 +4,21 @@ module.exports = {
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
-      // Keep in step with src/theme/colors.ts — that file is the source of
-      // truth for runtime styles, this mirrors it for the class names.
+      // Mirrors src/theme/colors.ts, which is the source of truth.
       //
-      // This file drifted from colors.ts across two full re-themes (it still
-      // had the very first "comic" indigo/yellow values), because NativeWind
-      // classes like `bg-ink-700` resolve against THIS config, not the
-      // `palette` object — so every className-based colour silently kept the
-      // old look while every inline `style={{ color: palette.x }}` moved.
-      // When colors.ts changes, this has to change with it, by hand.
+      // This has to be a mirror rather than an import: NativeWind resolves
+      // class names like `bg-ink-700` against THIS file at build time, and it
+      // is CommonJS loaded by the bundler, so it cannot pull in a TS module.
+      //
+      // Hand-maintained mirrors drift, and this one did — across two full
+      // re-themes it still held the very first "comic" indigo/yellow values,
+      // so every className colour silently kept the old look while every
+      // inline `style={{ color: palette.x }}` moved. Nothing looked broken;
+      // the app was simply two themes at once.
+      //
+      // `npm run check:theme` now compares the two token by token and fails on
+      // any difference, in either direction. That is what keeps this honest —
+      // not the comment above it, which is what was here last time.
       colors: {
         // A warm espresso-black — the ground just after the sun drops.
         ink: {
@@ -20,7 +26,6 @@ module.exports = {
           800: '#2C1F17',
           700: '#3D2A1E',
           600: '#523822',
-          500: '#6B4A2B',
         },
         // Warm sand — the light TEXT colour on the dark ground (not a surface;
         // see `parchment` for that, and the note in theme/colors.ts).
@@ -32,8 +37,6 @@ module.exports = {
         // Aged paper — the light SURFACE the script is set on.
         parchment: {
           DEFAULT: '#EFDFC7',
-          soft: '#F7EBDA',
-          dim: '#E2CFB2',
         },
         // Sunset orange — reward and primary actions (used sparingly)
         gold: {
@@ -47,20 +50,41 @@ module.exports = {
           light: '#7DDBAB',
           dark: '#2E8F63',
           deep: '#3AA876',
-          soft: '#4FBF8B22',
         },
         // Coral red — incorrect
         rose: {
           DEFAULT: '#FF5A5F',
           light: '#FF8A8E',
           dark: '#C7383D',
-          soft: '#FF5A5F22',
         },
         // Streak — an ember
         flame: {
           DEFAULT: '#FF6B35',
           light: '#FF9466',
         },
+        // The misty forest the scenery is drawn in.
+        moss: {
+          deep: '#262B15',
+          dark: '#464B37',
+          charcoal: '#3F3F3F',
+          light: '#A9B39C',
+        },
+        // The warm low end of the sky ramp.
+        sky: {
+          dusk: '#3A2416',
+          ember: '#4A2617',
+          glow: '#5F3018',
+        },
+        // Which-one-is-it accents: stages, units. No meaning of their own.
+        accent: {
+          amber: '#FFC72C',
+          mint: '#5FDC96',
+          coral: '#FF7A72',
+          sky: '#5AA9FF',
+          teal: '#6FB3B0',
+        },
+        cream: '#FFEEDD',
+        white: '#FFFFFF',
       },
       fontFamily: {
         display: ['Fraunces', 'serif'],

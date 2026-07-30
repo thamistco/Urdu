@@ -56,6 +56,13 @@ jobs:
       - name: Check that spaced repetition does what it claims
         run: npm run check:srs
 
+      # The palette promises that re-theming is one file. Two things break that
+      # silently and neither shows on screen: tailwind.config.js drifting from
+      # colors.ts (it has, across two re-themes), and colour written as raw hex
+      # inside a component.
+      - name: Check the theme is the only place colour lives
+        run: npm run check:theme
+
       - name: Set web base path to the repo subpath
         run: |
           node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('app.json'));p.expo.experiments=Object.assign({},p.expo.experiments,{baseUrl:'/${{ github.event.repository.name }}'});fs.writeFileSync('app.json',JSON.stringify(p,null,2));"
@@ -106,6 +113,15 @@ jobs:
           npx playwright install --with-deps chromium
           CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
             npm run check:stability
+
+      # The scenery sits behind body text on every screen, and its own comment
+      # has always promised 6:1 against the cream. Nothing measured it, and it
+      # was not true — stacked cloud layers came to 4.47:1, under WCAG AA. This
+      # reads the real pixels of the built app, so needs the export too.
+      - name: Check the scenery stays behind the text
+        run: |
+          CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
+            npm run check:scenery
 
       - name: SPA fallback + disable Jekyll
         run: |

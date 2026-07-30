@@ -1,4 +1,5 @@
 import Svg, { Path, Circle, Rect, Line, Polygon, G, Ellipse, Polyline } from 'react-native-svg';
+import { palette } from '../theme';
 
 /**
  * Harf's illustration set — flat, warm vector art in the app palette, drawn to
@@ -9,16 +10,41 @@ import Svg, { Path, Circle, Rect, Line, Polygon, G, Ellipse, Polyline } from 're
  * the whole set feels of a piece.
  */
 
-/* Persian-miniature / gold-leaf palette for the heritage set, the first four
- * mirror theme/colors.ts exactly, so the icon set moves with the app palette. */
-const G_ = '#FF8C42'; // sunset orange
-const GD = '#D9701F'; // deep sunset orange
-const CR = '#FFEEDD'; // warm sand
-const IN = '#211712'; // ink (outlines), warm espresso-black
-const JADE = '#2F9E8F'; // turquoise
-const ROSE = '#C4633F'; // terracotta
-const SKY = '#2E5A9E'; // lapis
-const BROWN = '#9A6A3A'; // warm wood
+/**
+ * Persian-miniature / gold-leaf palette for the illustration set.
+ *
+ * The first four said they "mirror theme/colors.ts exactly, so the icon set
+ * moves with the app palette" — and they were copies of the hex, so they did
+ * not move at all. A re-theme would have left every illustration behind. They
+ * are references now, which is what the comment always claimed.
+ *
+ * The rest are different in kind: turquoise, terracotta, lapis, wood, leaf,
+ * marigold, pomegranate. These are *depicted* colour, the pigments of the
+ * miniature tradition this set is drawn from. They belong to the pictures, not
+ * to the interface, and a re-theme must not touch them — a lapis dome is that
+ * blue for a reason, and a pomegranate that goes orange with the buttons is not
+ * a pomegranate. Hence the `check:theme-ok` markers: that is how a literal
+ * declares itself deliberate rather than overlooked. They were scattered
+ * through the drawings as bare hex before, which is why the same pistachio
+ * green appeared three times and could have drifted apart.
+ */
+const G_ = palette.gold;
+const GD = palette.goldDark;
+const CR = palette.paper;
+const IN = palette.ink;
+const JADE = '#2F9E8F'; // turquoise — pigment, not theme  check:theme-ok
+const ROSE = '#C4633F'; // terracotta — pigment, not theme  check:theme-ok
+const SKY = '#2E5A9E'; // lapis — pigment, not theme  check:theme-ok
+const BROWN = '#9A6A3A'; // warm wood — pigment, not theme  check:theme-ok
+const LEAF = '#6FA35C'; // pistachio leaf  check:theme-ok
+const LEAF_LIGHT = '#93BE72'; // its lit face  check:theme-ok
+const LEAF_DARK = '#4F8046'; // its shadow side  check:theme-ok
+const MARIGOLD = '#EF8F4A'; // flame, warm rather than alarming  check:theme-ok
+const POMEGRANATE = '#B4232E'; // انار  check:theme-ok
+const POMEGRANATE_DARK = '#8E1A24'; // its shaded shoulder  check:theme-ok
+const POMEGRANATE_CROWN = '#7E1720'; // the calyx  check:theme-ok
+const GREY_HAIR = '#C9C4BC'; // check:theme-ok
+const SKIN = '#C99268'; // the body, drawn back  check:theme-ok
 
 type IconProps = { size?: number };
 const Frame = ({ size = 40, children }: { size?: number; children: React.ReactNode }) => (
@@ -306,7 +332,7 @@ export const ElderMan = ({ size }: IconProps) => (
   <Frame size={size}><Person hair={CR} robe={SKY} beard /></Frame>
 );
 export const ElderWoman = ({ size }: IconProps) => (
-  <Frame size={size}><Person hair={'#C9C4BC'} robe={ROSE} /></Frame>
+  <Frame size={size}><Person hair={GREY_HAIR} robe={ROSE} /></Frame>
 );
 export const Child = ({ size }: IconProps) => (
   <Frame size={size}><Person hair={BROWN} robe={G_} small /></Frame>
@@ -514,9 +540,9 @@ export const Crescent = ({ size }: IconProps) => (
 /** Gems — the soft currency. A faceted jewel in the app's pistachio. */
 export const Gem = ({ size }: IconProps) => (
   <Frame size={size}>
-    <Path d="M20 14 h24 l12 14 -24 24 -24 -24 Z" fill="#6FA35C" />
-    <Path d="M20 14 l-12 14 h48 l-12 -14 Z" fill="#93BE72" />
-    <Path d="M32 52 L8 28 h16 Z" fill="#4F8046" />
+    <Path d="M20 14 h24 l12 14 -24 24 -24 -24 Z" fill={LEAF} />
+    <Path d="M20 14 l-12 14 h48 l-12 -14 Z" fill={LEAF_LIGHT} />
+    <Path d="M32 52 L8 28 h16 Z" fill={LEAF_DARK} />
     <Path d="M24 28 l8 -14 8 14 -8 24 Z" fill={CR} opacity={0.28} />
   </Frame>
 );
@@ -524,7 +550,7 @@ export const Gem = ({ size }: IconProps) => (
 /** Streak flame — marigold, deliberately warm rather than alarming. */
 export const Flame = ({ size }: IconProps) => (
   <Frame size={size}>
-    <Path d="M32 6 C36 18 48 22 48 36 a16 16 0 0 1 -32 0 C16 26 22 24 24 16 C27 21 30 20 32 6 Z" fill="#EF8F4A" />
+    <Path d="M32 6 C36 18 48 22 48 36 a16 16 0 0 1 -32 0 C16 26 22 24 24 16 C27 21 30 20 32 6 Z" fill={MARIGOLD} />
     <Path d="M32 26 C34 33 40 35 40 41 a8 8 0 0 1 -16 0 C24 36 29 33 32 26 Z" fill={G_} />
   </Frame>
 );
@@ -539,9 +565,9 @@ export const Bolt = ({ size }: IconProps) => (
 /** Achievements — a seedling, for growth. */
 export const Sprout = ({ size }: IconProps) => (
   <Frame size={size}>
-    <Path d="M32 54 V28" stroke="#6FA35C" strokeWidth={3.5} strokeLinecap="round" />
-    <Path d="M32 34 C24 34 18 28 18 20 C28 20 32 26 32 34 Z" fill="#93BE72" />
-    <Path d="M32 30 C40 30 46 24 46 16 C36 16 32 22 32 30 Z" fill="#6FA35C" />
+    <Path d="M32 54 V28" stroke={LEAF} strokeWidth={3.5} strokeLinecap="round" />
+    <Path d="M32 34 C24 34 18 28 18 20 C28 20 32 26 32 34 Z" fill={LEAF_LIGHT} />
+    <Path d="M32 30 C40 30 46 24 46 16 C36 16 32 22 32 30 Z" fill={LEAF} />
     <Path d="M22 54 h20" stroke={BROWN} strokeWidth={3.5} strokeLinecap="round" />
   </Frame>
 );
@@ -551,10 +577,10 @@ export const Sprout = ({ size }: IconProps) => (
  *  already used for سیب. */
 export const Pomegranate = ({ size }: IconProps) => (
   <Frame size={size}>
-    <Path d="M32 18 C20 18 14 27 14 36 C14 46 22 54 32 54 C42 54 50 46 50 36 C50 27 44 18 32 18 Z" fill="#B4232E" />
-    <Path d="M32 18 C26 18 21 21 18 26 C22 24 27 23 32 23 C37 23 42 24 46 26 C43 21 38 18 32 18 Z" fill="#8E1A24" />
+    <Path d="M32 18 C20 18 14 27 14 36 C14 46 22 54 32 54 C42 54 50 46 50 36 C50 27 44 18 32 18 Z" fill={POMEGRANATE} />
+    <Path d="M32 18 C26 18 21 21 18 26 C22 24 27 23 32 23 C37 23 42 24 46 26 C43 21 38 18 32 18 Z" fill={POMEGRANATE_DARK} />
     {/* the crown — what actually tells a pomegranate from an apple */}
-    <Path d="M28 18 L28 11 L31 14 L32 8 L33 14 L36 11 L36 18 Z" fill="#7E1720" />
+    <Path d="M28 18 L28 11 L31 14 L32 8 L33 14 L36 11 L36 18 Z" fill={POMEGRANATE_CROWN} />
     <G fill={CR} opacity={0.55}>
       <Circle cx="27" cy="34" r="2.2" /><Circle cx="36" cy="33" r="2.2" />
       <Circle cx="31" cy="41" r="2.2" /><Circle cx="40" cy="40" r="2" /><Circle cx="23" cy="41" r="2" />
@@ -609,7 +635,6 @@ export const Speaker = ({ size }: IconProps) => (
  * pictures apart — they are asked to read where the highlight is, which is
  * exactly the distinction the word makes.
  */
-const SKIN = '#C99268'; // the body, drawn back
 const HILITE = G_; // the part actually being named
 
 export const Arm = ({ size }: IconProps) => (

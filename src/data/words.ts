@@ -7,6 +7,8 @@
 
 import { ALL_PACKS } from './vocab';
 import type { Register } from './vocab/types';
+import { palette } from '../theme';
+
 
 export type { Register };
 
@@ -1019,21 +1021,21 @@ export const LEVEL_META: Record<
     // change when the learner is not being taught it.
     blurb: 'Read the script and hold your first words.',
     romanBlurb: 'Your first words, and your first sentences.',
-    color: '#FFC72C',
+    color: palette.accentAmber,
   },
   elementary: {
     title: 'Elementary', tag: 'A2',
     blurb: 'Describe your world and ask simple questions.',
-    color: '#5FDC96',
+    color: palette.accentMint,
   },
   intermediate: {
     title: 'Intermediate', tag: 'B1',
     blurb: 'Handle daily life, work, travel, money, health.',
-    color: '#FF7A72',
+    color: palette.accentCoral,
   },
   advanced: {
     title: 'Advanced', tag: 'B2',
     blurb: 'Express ideas, feelings and opinions with nuance.',
-    color: '#5AA9FF',
+    color: palette.accentSky,
   },
 };
