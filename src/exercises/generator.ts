@@ -22,7 +22,7 @@ const PHRASE_WORDS: Word[] = PHRASES.map((p) => ({
   urdu: p.urdu,
   roman: p.roman,
   meaning: p.meaning,
-  emoji: '💬',
+  emoji: '💬', // audit:emoji-ok — phrases have no picture of their own
   topic: 'phrases',
 }));
 

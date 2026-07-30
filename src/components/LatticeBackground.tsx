@@ -75,10 +75,10 @@ export function LatticeBackground({ opacity = 1, scene = 'sunset' }: { opacity?:
           <Defs>
             <LinearGradient id="skySunset" x1="0" y1="0" x2="0" y2="1">
               <Stop offset="0" stopColor={palette.ink} />
-              <Stop offset="0.3" stopColor="#3A2416" />
-              <Stop offset="0.6" stopColor="#5C2F1C" />
-              <Stop offset="0.82" stopColor="#7A3D1E" />
-              <Stop offset="1" stopColor="#8A4420" />
+              <Stop offset="0.3" stopColor={palette.skyDusk} />
+              <Stop offset="0.6" stopColor={palette.skyEmber} />
+              <Stop offset="0.82" stopColor={palette.skyGlow} />
+              <Stop offset="1" stopColor={palette.skyHorizon} />
             </LinearGradient>
             <RadialGradient id="sunCore" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
               <Stop offset="0" stopColor={withAlpha(palette.goldLight, 0.85)} />
@@ -133,7 +133,7 @@ export function LatticeBackground({ opacity = 1, scene = 'sunset' }: { opacity?:
               <Stop offset="0" stopColor={palette.mossDeep} />
               <Stop offset="0.4" stopColor={palette.mossCharcoal} />
               <Stop offset="0.72" stopColor={palette.mossDark} />
-              <Stop offset="1" stopColor="#5A5C3E" />
+              <Stop offset="1" stopColor={palette.mossNear} />
             </LinearGradient>
             <RadialGradient id="canopyGlow" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
               <Stop offset="0" stopColor={withAlpha(palette.gold, 0.28)} />

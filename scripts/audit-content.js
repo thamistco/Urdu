@@ -1,7 +1,7 @@
 /**
  * Content audit — the checks that a typechecker cannot make.
  *
- * The course is now 2,000+ words, 25 grammar concepts, 140 sentences, 17
+ * The course is now 2,426 words, 25 grammar concepts, 256 sentences, 17
  * passages, 12 conversations and 233 lessons wired together by string ids.
  * TypeScript will not tell you that a lesson points at a topic that no longer
  * exists, that a question's answer is missing from its own options, that a
@@ -229,6 +229,121 @@ for (const s of SENTENCES) {
   const risky = s.words.filter((w) => AMBIGUOUS.has(w));
   if (risky.length && !s.pronounce)
     bad(`sentence ${s.id} contains ${risky.join(', ')} — two words share that spelling, so it needs a pronounce reading`);
+}
+
+// --- no system emoji in the app's own chrome --------------------------------
+
+/**
+ * Colour emoji are content, not interface.
+ *
+ * The drawn icon set exists because system emoji render differently on every
+ * platform, and one 🔒 among two dozen hand-drawn marks looks like it wandered
+ * in from another app. Vocabulary carries emoji by design — a word's picture
+ * falls back to one — so only the screens and components are checked.
+ *
+ * This exists because the sweep that should have caught it was a shell one-liner
+ * whose character-range pattern was invalid; grep printed an error, exited 0,
+ * and the empty output read as "clean" while a padlock sat on every locked
+ * lesson on the home screen. A check that cannot fail out loud is worse than no
+ * check, so this one is asserted against a known-bad string below.
+ *
+ * Typographic marks — ✓ ✕ → ← — are deliberately allowed: they are glyphs in
+ * the text font, not pictures, and they render identically everywhere.
+ */
+const EMOJI = /[\u{1F300}-\u{1FAFF}\u{1F900}-\u{1F9FF}\u{2190}-\u{21FF}\u{2600}-\u{27BF}]/u;
+const ALLOWED_MARKS = new Set(['✓', '✔', '✕', '✖', '→', '←', '↑', '↓', '·', '…']);
+const chromeDirs = ['src/screens', 'src/components', 'src/exercises'];
+
+function walk(dir) {
+  const out = [];
+  const full = path.join(ROOT, dir);
+  if (!fs.existsSync(full)) return out;
+  for (const entry of fs.readdirSync(full, { withFileTypes: true })) {
+    const rel = path.join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...walk(rel));
+    else if (/\.tsx?$/.test(entry.name)) out.push(rel);
+  }
+  return out;
+}
+
+/**
+ * Comments are stripped rather than pattern-matched line by line, because a
+ * comment explaining why an emoji was removed contains the emoji, and a first
+ * attempt at this flagged its own explanation. Block comments and JSX comments
+ * both have to go, not just `//` lines.
+ *
+ * A line ending in `audit:emoji-ok` is exempt. There are two, both places where
+ * an emoji is deliberately *content*: a topic with no bespoke drawing falls back
+ * to the emoji it carries in the data, and the synthetic word built for phrases
+ * needs some picture. Marking them beats loosening the rule.
+ */
+const blankOut = (m) => m.replace(/[^\n]/g, ' '); // keep the newlines, lose the text
+const stripComments = (src) =>
+  src
+    // Blanking rather than deleting: removing a block comment removes its
+    // newlines too, which shifts every line number after it — and then the
+    // exemption lookup reads the wrong line and the report points at innocent
+    // code. This version keeps the file exactly as many lines long.
+    .replace(/\{\s*\/\*[\s\S]*?\*\/\s*\}/g, blankOut)
+    .replace(/\/\*[\s\S]*?\*\//g, blankOut)
+    .split('\n')
+    .map((l) => (/^\s*\/\//.test(l) ? '' : l))
+    .join('\n');
+
+for (const file of chromeDirs.flatMap(walk)) {
+  const raw = fs.readFileSync(path.join(ROOT, file), 'utf8');
+  stripComments(raw).split('\n').forEach((line, i) => {
+    if (/audit:emoji-ok/.test(raw.split('\n')[i] || '')) return;
+    for (const ch of [...line]) {
+      if (ALLOWED_MARKS.has(ch) || !EMOJI.test(ch)) continue;
+      bad(`${file}:${i + 1} draws the system emoji ${ch} — the app has a drawn icon set`);
+      return;
+    }
+  });
+}
+
+// The check tests itself: if the pattern stops matching, this fires rather than
+// letting a silently-broken sweep report success.
+if (!EMOJI.test('🔒') || !EMOJI.test('🗣') || EMOJI.test('a'))
+  bad('the emoji pattern in audit-content.js no longer matches emoji — the sweep is broken, not clean');
+
+// --- the marketing copy still describes the actual course -------------------
+
+/**
+ * Numbers in a README go stale the moment someone adds a word.
+ *
+ * The store listing and the README both make countable claims — forty letters,
+ * 2,426 words, 256 sentences — and copy like that is written once and never
+ * revisited, so it quietly becomes a lie the first time the vocabulary grows.
+ * Anyone who then quotes it in an app store is making a false claim to a
+ * shopper, which is a worse failure than a stale comment.
+ *
+ * So the claims are checked against the data that produced them. Add words and
+ * this fails until the copy is updated, which is the point.
+ */
+const copyFiles = ['README.md', 'docs/store-listing.md', 'docs/CONTENT_NOTES.md'];
+const claims = [
+  [String(LETTERS.length), 'letters'],
+  [WORDS.length.toLocaleString('en-GB'), 'words'],
+  [String(SENTENCES.length), 'sentences'],
+  [String(GRAMMAR.length), 'grammar concepts'],
+];
+for (const file of copyFiles) {
+  const full = path.join(ROOT, file);
+  if (!fs.existsSync(full)) continue;
+  const text = fs.readFileSync(full, 'utf8');
+  for (const [n, what] of claims) {
+    // Compare the number written *next to* the noun, not merely present
+    // somewhere in the file — a correct figure elsewhere in the document would
+    // otherwise excuse a wrong one here. `\s` spans the line break, because
+    // prose wraps between the number and the word it counts.
+    const noun = what.split(' ')[0];
+    const re = new RegExp(`([\\d][\\d,]*)\\s+${noun}\\b`, 'gi');
+    for (const m of text.matchAll(re)) {
+      if (m[1] !== n)
+        bad(`${file} says "${m[1]} ${noun}" but there are ${n} — the copy has drifted from the course`);
+    }
+  }
 }
 
 // --- register belongs in the field, not in the English ---------------------

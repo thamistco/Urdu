@@ -6,6 +6,7 @@ import { Reveal } from '../../components/Reveal';
 import { GeoDivider } from '../../components/GeoDivider';
 import { Display, Heading, Txt, Bold, Eyebrow, Urdu, urduGlyph } from '../../components/Text';
 import { GoalArt, Illustration } from '../../components/Illustration';
+import type { IconName } from '../../art/icons';
 import { TrackChooser } from '../../components/TrackChooser';
 import { palette, withAlpha } from '../../theme';
 import { feedback } from '../../lib/feedback';
@@ -57,11 +58,13 @@ const SCRIPT_LESSON_IDS = UNITS.filter((u) => u.level === 'beginner')
   .filter((l) => l.kind === 'letters')
   .map((l) => l.id);
 
-const GOALS: { key: Goal; label: string; desc: string; icon: string }[] = [
-  { key: 'family', label: 'Speak with family', desc: 'Parents, grandparents, relatives back home', icon: '👨‍👩‍👧' },
-  { key: 'read', label: 'Read & write it', desc: 'The script itself: Nastaliq', icon: '✍️' },
-  { key: 'heritage', label: 'Reconnect with heritage', desc: 'Culture, faith, identity', icon: '🕌' },
-  { key: 'curious', label: "I'm just curious", desc: 'No particular reason', icon: '✨' },
+// No `icon` field: the goal cards draw their art from the key via `GoalArt`,
+// and the emoji that used to sit here were read by nothing at all.
+const GOALS: { key: Goal; label: string; desc: string }[] = [
+  { key: 'family', label: 'Speak with family', desc: 'Parents, grandparents, relatives back home' },
+  { key: 'read', label: 'Read & write it', desc: 'The script itself: Nastaliq' },
+  { key: 'heritage', label: 'Reconnect with heritage', desc: 'Culture, faith, identity' },
+  { key: 'curious', label: "I'm just curious", desc: 'No particular reason' },
 ];
 
 /**
@@ -257,13 +260,15 @@ export function OnboardingScreen() {
 
   // ---- background ----
   if (step === 'background') {
-    const OPTIONS: { key: Background; label: string; desc: string; icon: string }[] = [
-      { key: 'new', label: "I'm starting from scratch", desc: "Urdu is new to me, spoken and written", icon: '🌱' },
+    // Drawn art, like every other choice in the app. These two were the last
+    // raw emoji on the screen a learner sees first.
+    const OPTIONS: { key: Background; label: string; desc: string; icon: IconName }[] = [
+      { key: 'new', label: "I'm starting from scratch", desc: 'Urdu is new to me, spoken and written', icon: 'sprout' },
       {
         key: 'speaker',
         label: 'I already speak or understand it',
         desc: "I grew up around it, but I can't read the script",
-        icon: '🗣️',
+        icon: 'speechBubble',
       },
     ];
     return (
@@ -293,7 +298,7 @@ export function OnboardingScreen() {
                       borderWidth: 2,
                     }}
                   >
-                    <Txt style={{ fontSize: 32 }}>{o.icon}</Txt>
+                    <Illustration name={o.icon} tile={false} size={34} />
                     <View className="flex-1">
                       <Bold className="text-[15px]">{o.label}</Bold>
                       <Txt className="text-xs text-paper/60">{o.desc}</Txt>

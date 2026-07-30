@@ -1,12 +1,23 @@
 # Harf · حرف
 
-**A calm, gamified app for learning Urdu — from the alphabet to expressing ideas.**
+**Learn to read Urdu the way it is really written.**
 
-Harf teaches Urdu the way it is actually written and spoken: every letter in all
-four of its position forms, vocabulary in themed sets, grammar explained plainly
-and then drilled, and short graded readings. A four-stage course
-(Beginner → Elementary → Intermediate → Advanced) with spaced repetition
-underneath.
+حرف means "letter", which is the whole idea. Urdu is written in Nastaliq, and
+every letter changes shape depending on where it sits in a word — ب at the start
+of a word looks nothing like ب at the end. Most courses teach the isolated forms,
+hand you a transliteration, and leave you unable to read a shop sign.
+
+Harf teaches all forty letters in all four of their joining forms, then 2,426
+words spoken aloud, 256 sentences you assemble right-to-left yourself, 25 grammar
+ideas one at a time, and 17 readings. A four-stage course (Beginner →
+Elementary → Intermediate → Advanced) with spaced repetition underneath, so what
+you are about to forget comes back first.
+
+Not learning the script? Pick the Roman track at the start and the entire course
+is taught in transliteration instead.
+
+Free, no advertisements, no account required. Store copy and the reasoning behind
+the name live in [docs/store-listing.md](docs/store-listing.md).
 
 > Core thesis: every Urdu letter has **four faces** — alone, at the start, in the
 > middle, at the end. Most apps teach one. Harf teaches all four.
@@ -17,7 +28,7 @@ underneath.
 
 | | |
 | --- | --- |
-| **Vocabulary** | **2,028 words** across **122 themed topics**, each with script, Roman transliteration, meaning and a picture cue |
+| **Vocabulary** | **2,426 words** across **122 themed topics**, each with script, Roman transliteration, meaning and a picture cue |
 | **Script** | All **40 letters** with every position form, connector vs. non-connector behaviour, and a teaching note apiece |
 | **Grammar** | **25 concepts** — pronouns, "to be", gender, plurals, possession, postpositions, oblique case, negation, questions, conjunctions, the four tenses, dative subjects, ability, obligation, comparatives, imperative, subjunctive, perfective, relative clauses, compound verbs, the passive and causatives — each with explanation, paradigm table, examples and drills |
 | **Sentences** | **140** word-order builders + 28 everyday phrases |

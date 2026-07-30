@@ -130,7 +130,7 @@ function LessonNode({
             className="absolute -right-1 -top-1 h-5 w-5 items-center justify-center rounded-full"
             style={{ backgroundColor: palette.ink600, borderWidth: 1, borderColor: withAlpha(palette.white, 0.15) }}
           >
-            <Txt style={{ fontSize: 10, opacity: 0.7 }}>🔒</Txt>
+            <Illustration name="lock" tile={false} size={11} />
           </View>
         )}
         {state === 'skipped' && (
