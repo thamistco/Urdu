@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Pressable, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -47,8 +47,20 @@ type ReadItem = {
 };
 
 const READING: ReadItem[] = [
-  ...PASSAGES.map((p) => ({ id: p.id, title: p.title, level: p.level, lines: p.lines.length, kind: 'passage' as const })),
-  ...DIALOGUES.map((d) => ({ id: d.id, title: d.title, level: d.level, lines: d.lines.length, kind: 'conversation' as const })),
+  ...PASSAGES.map((p) => ({
+    id: p.id,
+    title: p.title,
+    level: p.level,
+    lines: p.lines.length,
+    kind: 'passage' as const,
+  })),
+  ...DIALOGUES.map((d) => ({
+    id: d.id,
+    title: d.title,
+    level: d.level,
+    lines: d.lines.length,
+    kind: 'conversation' as const,
+  })),
 ].sort((a, b) => LEVEL_ORDER.indexOf(a.level) - LEVEL_ORDER.indexOf(b.level));
 
 const TAB_TOTAL = {
@@ -85,11 +97,20 @@ export function PracticeScreen() {
   const [query, setQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
   const q = query.trim().toLowerCase();
-  const hit = (...fields: string[]) => !q || fields.some((f) => f.toLowerCase().includes(q));
+  /**
+   * Does any of these fields match the search box?
+   *
+   * Wrapped in `useCallback` so the three lists below can depend on `hit`
+   * itself rather than on `q`, which is what `hit` happens to close over. Both
+   * spellings behave identically today; only this one stays correct if `hit`
+   * ever reads something else, and only this one can be verified by
+   * `react-hooks/exhaustive-deps` instead of asserted in a comment.
+   */
+  const hit = useCallback((...fields: string[]) => !q || fields.some((f) => f.toLowerCase().includes(q)), [q]);
 
-  const grammarList = useMemo(() => GRAMMAR.filter((g) => hit(g.title, g.summary)), [q]);
-  const readingList = useMemo(() => READING.filter((p) => hit(p.title, p.kind)), [q]);
-  const topicList = useMemo(() => TOPICS.filter((t) => hit(t.title, t.blurb)), [q]);
+  const grammarList = useMemo(() => GRAMMAR.filter((g) => hit(g.title, g.summary)), [hit]);
+  const readingList = useMemo(() => READING.filter((p) => hit(p.title, p.kind)), [hit]);
+  const topicList = useMemo(() => TOPICS.filter((t) => hit(t.title, t.blurb)), [hit]);
   const counts = { topics: topicList.length, grammar: grammarList.length, reading: readingList.length };
   const empty = counts[tab] === 0;
 
@@ -108,7 +129,10 @@ export function PracticeScreen() {
 
         {/* daily review hero */}
         <Reveal delay={80}>
-          <Pressable onPress={() => go('practice-review')} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}>
+          <Pressable
+            onPress={() => go('practice-review')}
+            style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
+          >
             <View
               className="mb-4 mt-5 overflow-hidden rounded-2xl p-6"
               // Muted rather than the full mint: this is a whole card-sized
@@ -211,7 +235,12 @@ export function PracticeScreen() {
               ]}
             />
             {query.length > 0 && (
-              <Pressable onPress={() => setQuery('')} hitSlop={10} accessibilityRole="button" accessibilityLabel="Clear search">
+              <Pressable
+                onPress={() => setQuery('')}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel="Clear search"
+              >
                 <Txt className="text-paper/45">✕</Txt>
               </Pressable>
             )}

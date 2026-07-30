@@ -1,4 +1,4 @@
-import Svg, { Path, Circle, Rect, Line, Polygon, G, Ellipse, Polyline } from 'react-native-svg';
+import Svg, { Path, Circle, Rect, Line, Polygon, G, Ellipse } from 'react-native-svg';
 import { palette } from '../theme';
 
 /**
@@ -114,7 +114,14 @@ export const Briefcase = ({ size }: IconProps) => (
 export const Handshake = ({ size }: IconProps) => (
   <Frame size={size}>
     <Circle cx="32" cy="32" r="20" fill={JADE} opacity={0.18} />
-    <Path d="M18 34 l8 -6 6 5 6 -5 8 6" stroke={G_} strokeWidth={3.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <Path
+      d="M18 34 l8 -6 6 5 6 -5 8 6"
+      stroke={G_}
+      strokeWidth={3.5}
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
     <Path d="M26 28 l6 5 6 -5" stroke={CR} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" />
   </Frame>
 );
@@ -125,7 +132,14 @@ export const Bowl = ({ size }: IconProps) => (
   <Frame size={size}>
     <Path d="M14 30 h36 a18 18 0 0 1 -36 0 Z" fill={G_} />
     <Path d="M14 30 h36" stroke={CR} strokeWidth={3} />
-    <Path d="M26 22 q2 -6 -2 -10 M34 22 q2 -6 -2 -10" stroke={CR} strokeWidth={2.5} fill="none" strokeLinecap="round" opacity={0.7} />
+    <Path
+      d="M26 22 q2 -6 -2 -10 M34 22 q2 -6 -2 -10"
+      stroke={CR}
+      strokeWidth={2.5}
+      fill="none"
+      strokeLinecap="round"
+      opacity={0.7}
+    />
   </Frame>
 );
 
@@ -141,7 +155,14 @@ export const TeaCup = ({ size }: IconProps) => (
   <Frame size={size}>
     <Path d="M16 28 h28 v8 a14 14 0 0 1 -28 0 Z" fill={CR} />
     <Path d="M44 30 a6 6 0 0 1 0 12" stroke={G_} strokeWidth={3} fill="none" />
-    <Path d="M24 22 q2 -5 -1 -9 M32 22 q2 -5 -1 -9" stroke={CR} strokeWidth={2.5} fill="none" strokeLinecap="round" opacity={0.6} />
+    <Path
+      d="M24 22 q2 -5 -1 -9 M32 22 q2 -5 -1 -9"
+      stroke={CR}
+      strokeWidth={2.5}
+      fill="none"
+      strokeLinecap="round"
+      opacity={0.6}
+    />
     <Rect x="12" y="46" width="34" height="4" rx="2" fill={G_} />
   </Frame>
 );
@@ -158,8 +179,11 @@ export const Bread = ({ size }: IconProps) => (
     <Ellipse cx="32" cy="32" rx="22" ry="16" fill={G_} />
     <Ellipse cx="32" cy="32" rx="22" ry="16" fill="none" stroke={GD} strokeWidth={2.5} />
     <G fill={GD}>
-      <Circle cx="24" cy="28" r="1.7" /><Circle cx="34" cy="26" r="1.7" /><Circle cx="40" cy="34" r="1.7" />
-      <Circle cx="28" cy="37" r="1.7" /><Circle cx="20" cy="34" r="1.7" />
+      <Circle cx="24" cy="28" r="1.7" />
+      <Circle cx="34" cy="26" r="1.7" />
+      <Circle cx="40" cy="34" r="1.7" />
+      <Circle cx="28" cy="37" r="1.7" />
+      <Circle cx="20" cy="34" r="1.7" />
     </G>
   </Frame>
 );
@@ -178,10 +202,14 @@ export const Sun = ({ size }: IconProps) => (
   <Frame size={size}>
     <Circle cx="32" cy="32" r="12" fill={G_} />
     <G stroke={G_} strokeWidth={3} strokeLinecap="round">
-      <Line x1="32" y1="6" x2="32" y2="14" /><Line x1="32" y1="50" x2="32" y2="58" />
-      <Line x1="6" y1="32" x2="14" y2="32" /><Line x1="50" y1="32" x2="58" y2="32" />
-      <Line x1="14" y1="14" x2="19" y2="19" /><Line x1="45" y1="45" x2="50" y2="50" />
-      <Line x1="50" y1="14" x2="45" y2="19" /><Line x1="19" y1="45" x2="14" y2="50" />
+      <Line x1="32" y1="6" x2="32" y2="14" />
+      <Line x1="32" y1="50" x2="32" y2="58" />
+      <Line x1="6" y1="32" x2="14" y2="32" />
+      <Line x1="50" y1="32" x2="58" y2="32" />
+      <Line x1="14" y1="14" x2="19" y2="19" />
+      <Line x1="45" y1="45" x2="50" y2="50" />
+      <Line x1="50" y1="14" x2="45" y2="19" />
+      <Line x1="19" y1="45" x2="14" y2="50" />
     </G>
   </Frame>
 );
@@ -195,15 +223,21 @@ export const Star = ({ size }: IconProps) => (
 export const Sparkle = ({ size }: IconProps) => (
   <Frame size={size}>
     <Path d="M32 12 C34 24 40 30 52 32 C40 34 34 40 32 52 C30 40 24 34 12 32 C24 30 30 24 32 12 Z" fill={G_} />
-    <Path d="M50 12 C50.8 16 52 17.2 56 18 C52 18.8 50.8 20 50 24 C49.2 20 48 18.8 44 18 C48 17.2 49.2 16 50 12 Z" fill={CR} />
+    <Path
+      d="M50 12 C50.8 16 52 17.2 56 18 C52 18.8 50.8 20 50 24 C49.2 20 48 18.8 44 18 C48 17.2 49.2 16 50 12 Z"
+      fill={CR}
+    />
   </Frame>
 );
 
 export const Flower = ({ size }: IconProps) => (
   <Frame size={size}>
     <G fill={ROSE}>
-      <Circle cx="32" cy="18" r="8" /><Circle cx="46" cy="28" r="8" />
-      <Circle cx="40" cy="44" r="8" /><Circle cx="24" cy="44" r="8" /><Circle cx="18" cy="28" r="8" />
+      <Circle cx="32" cy="18" r="8" />
+      <Circle cx="46" cy="28" r="8" />
+      <Circle cx="40" cy="44" r="8" />
+      <Circle cx="24" cy="44" r="8" />
+      <Circle cx="18" cy="28" r="8" />
     </G>
     <Circle cx="32" cy="32" r="7" fill={G_} />
   </Frame>
@@ -222,7 +256,9 @@ export const RainCloud = ({ size }: IconProps) => (
   <Frame size={size}>
     <Path d="M20 34 a10 10 0 0 1 20 -4 a8 8 0 0 1 2 16 H22 a8 8 0 0 1 -2 -12 Z" fill={CR} />
     <G stroke={SKY} strokeWidth={3} strokeLinecap="round">
-      <Line x1="24" y1="46" x2="21" y2="52" /><Line x1="33" y1="46" x2="30" y2="52" /><Line x1="42" y1="46" x2="39" y2="52" />
+      <Line x1="24" y1="46" x2="21" y2="52" />
+      <Line x1="33" y1="46" x2="30" y2="52" />
+      <Line x1="42" y1="46" x2="39" y2="52" />
     </G>
   </Frame>
 );
@@ -314,28 +350,47 @@ const Person = ({ hair, robe, beard, small }: { hair: string; robe: string; bear
   const r = small ? 7 : 9;
   return (
     <>
-      <Path d={`M${small ? 20 : 16} 54 q0 -16 16 -16 q16 0 16 16 Z`} fill={robe} transform={small ? 'translate(0,4)' : ''} />
+      <Path
+        d={`M${small ? 20 : 16} 54 q0 -16 16 -16 q16 0 16 16 Z`}
+        fill={robe}
+        transform={small ? 'translate(0,4)' : ''}
+      />
       <Circle cx="32" cy={cy} r={r} fill={CR} />
-      <Path d={`M32 ${cy - r} a${r} ${r} 0 0 0 -${r} ${r} q${r} -4 ${r * 2} 0 a${r} ${r} 0 0 0 -${r} -${r} Z`} fill={hair} />
-      {beard && <Path d={`M${32 - r + 2} ${cy + 2} a${r - 2} ${r - 1} 0 0 0 ${(r - 2) * 2} 0 Z`} fill={CR} opacity={0.9} />}
+      <Path
+        d={`M32 ${cy - r} a${r} ${r} 0 0 0 -${r} ${r} q${r} -4 ${r * 2} 0 a${r} ${r} 0 0 0 -${r} -${r} Z`}
+        fill={hair}
+      />
+      {beard && (
+        <Path d={`M${32 - r + 2} ${cy + 2} a${r - 2} ${r - 1} 0 0 0 ${(r - 2) * 2} 0 Z`} fill={CR} opacity={0.9} />
+      )}
     </>
   );
 };
 
 export const Woman = ({ size }: IconProps) => (
-  <Frame size={size}><Person hair={ROSE} robe={JADE} /></Frame>
+  <Frame size={size}>
+    <Person hair={ROSE} robe={JADE} />
+  </Frame>
 );
 export const Man = ({ size }: IconProps) => (
-  <Frame size={size}><Person hair={IN} robe={G_} /></Frame>
+  <Frame size={size}>
+    <Person hair={IN} robe={G_} />
+  </Frame>
 );
 export const ElderMan = ({ size }: IconProps) => (
-  <Frame size={size}><Person hair={CR} robe={SKY} beard /></Frame>
+  <Frame size={size}>
+    <Person hair={CR} robe={SKY} beard />
+  </Frame>
 );
 export const ElderWoman = ({ size }: IconProps) => (
-  <Frame size={size}><Person hair={GREY_HAIR} robe={ROSE} /></Frame>
+  <Frame size={size}>
+    <Person hair={GREY_HAIR} robe={ROSE} />
+  </Frame>
 );
 export const Child = ({ size }: IconProps) => (
-  <Frame size={size}><Person hair={BROWN} robe={G_} small /></Frame>
+  <Frame size={size}>
+    <Person hair={BROWN} robe={G_} small />
+  </Frame>
 );
 /* Distinct younger figures so no two family words share the same picture. */
 export const Girl = ({ size }: IconProps) => (
@@ -409,7 +464,10 @@ export const Salaam = ({ size }: IconProps) => (
   <Frame size={size}>
     <Circle cx="32" cy="32" r="20" fill={JADE} opacity={0.16} />
     {/* dove */}
-    <Path d="M18 38 q6 -12 20 -12 q-4 -4 2 -8 q1 6 6 6 q8 0 10 8 q-8 2 -14 8 q-2 6 -8 6 q2 -6 -2 -8 q-8 2 -14 2 Z" fill={CR} />
+    <Path
+      d="M18 38 q6 -12 20 -12 q-4 -4 2 -8 q1 6 6 6 q8 0 10 8 q-8 2 -14 8 q-2 6 -8 6 q2 -6 -2 -8 q-8 2 -14 2 Z"
+      fill={CR}
+    />
     <Circle cx="44" cy="26" r="1.4" fill={IN} />
   </Frame>
 );
@@ -479,7 +537,11 @@ export const SaltShaker = ({ size }: IconProps) => (
   <Frame size={size}>
     <Path d="M22 24 h20 v22 a4 4 0 0 1 -4 4 H26 a4 4 0 0 1 -4 -4 Z" fill={CR} />
     <Path d="M24 24 q8 -8 16 0 Z" fill={G_} />
-    <G fill={IN} opacity={0.55}><Circle cx="29" cy="20" r="1.2" /><Circle cx="35" cy="20" r="1.2" /><Circle cx="32" cy="17" r="1.2" /></G>
+    <G fill={IN} opacity={0.55}>
+      <Circle cx="29" cy="20" r="1.2" />
+      <Circle cx="35" cy="20" r="1.2" />
+      <Circle cx="32" cy="17" r="1.2" />
+    </G>
   </Frame>
 );
 
@@ -527,10 +589,7 @@ export const Scroll = ({ size }: IconProps) => (
 /** Review — a crescent with a settling star, the app's "come back" motif. */
 export const Crescent = ({ size }: IconProps) => (
   <Frame size={size}>
-    <Path
-      d="M42 12 a21 21 0 1 0 0 40 a17 17 0 1 1 0 -40 Z"
-      fill={G_}
-    />
+    <Path d="M42 12 a21 21 0 1 0 0 40 a17 17 0 1 1 0 -40 Z" fill={G_} />
     <Path d="M24 24 l2.2 4.6 5 .7 -3.6 3.5 .9 5 -4.5 -2.4 -4.5 2.4 .9 -5 -3.6 -3.5 5 -.7 Z" fill={CR} opacity={0.9} />
   </Frame>
 );
@@ -578,12 +637,18 @@ export const Sprout = ({ size }: IconProps) => (
 export const Pomegranate = ({ size }: IconProps) => (
   <Frame size={size}>
     <Path d="M32 18 C20 18 14 27 14 36 C14 46 22 54 32 54 C42 54 50 46 50 36 C50 27 44 18 32 18 Z" fill={POMEGRANATE} />
-    <Path d="M32 18 C26 18 21 21 18 26 C22 24 27 23 32 23 C37 23 42 24 46 26 C43 21 38 18 32 18 Z" fill={POMEGRANATE_DARK} />
+    <Path
+      d="M32 18 C26 18 21 21 18 26 C22 24 27 23 32 23 C37 23 42 24 46 26 C43 21 38 18 32 18 Z"
+      fill={POMEGRANATE_DARK}
+    />
     {/* the crown — what actually tells a pomegranate from an apple */}
     <Path d="M28 18 L28 11 L31 14 L32 8 L33 14 L36 11 L36 18 Z" fill={POMEGRANATE_CROWN} />
     <G fill={CR} opacity={0.55}>
-      <Circle cx="27" cy="34" r="2.2" /><Circle cx="36" cy="33" r="2.2" />
-      <Circle cx="31" cy="41" r="2.2" /><Circle cx="40" cy="40" r="2" /><Circle cx="23" cy="41" r="2" />
+      <Circle cx="27" cy="34" r="2.2" />
+      <Circle cx="36" cy="33" r="2.2" />
+      <Circle cx="31" cy="41" r="2.2" />
+      <Circle cx="40" cy="40" r="2" />
+      <Circle cx="23" cy="41" r="2" />
     </G>
   </Frame>
 );
@@ -836,22 +901,81 @@ export const CycleMark = ({ size = 52, color }: { size?: number; color: string }
 // ---- registry ------------------------------------------------------------
 
 export const ICONS: Record<string, (p: IconProps) => JSX.Element> = {
-  droplet: Droplet, book: Book, house: House, heart: Heart, tag: Tag, clock: Clock,
-  briefcase: Briefcase, handshake: Handshake, bowl: Bowl, apple: Apple, tea: TeaCup,
-  milk: MilkGlass, bread: Bread, moon: Moon, sun: Sun, star: Star, sparkle: Sparkle,
-  flower: Flower, tree: Tree, rain: RainCloud, waves: Waves, mountain: Mountain,
-  table: Table, chair: Chair, door: Door, window: Window, key: Key, bed: Bed, lamp: Lamp,
-  woman: Woman, man: Man, elderMan: ElderMan, elderWoman: ElderWoman, child: Child, family: Family,
-  girl: Girl, boy: Boy, sonChild: SonChild, daughterChild: DaughterChild,
-  pen: Pen, mosque: Mosque, salaam: Salaam, thanks: ThanksHands, check: Check, cross: Cross,
-  handHeart: HandHeart, smile: Smile, egg: Egg, rice: RiceBowl, meat: Meat, salt: SaltShaker,
-  lattice: Lattice, tiles: Tiles, scroll: Scroll, crescent: Crescent,
-  gem: Gem, flame: Flame, bolt: Bolt, sprout: Sprout, medal: Medal, gear: Gear,
-  pomegranate: Pomegranate, speaker: Speaker,
-  arm: Arm, shoulder: Shoulder, elbow: Elbow,
-  eye: Eye, eyebrow: Eyebrow, eyelashes: Eyelashes,
-  lips: Lips, mouth: Mouth, skin: Skin, intestine: Intestine,
-  lock: Lock, speechBubble: SpeechBubble,
+  droplet: Droplet,
+  book: Book,
+  house: House,
+  heart: Heart,
+  tag: Tag,
+  clock: Clock,
+  briefcase: Briefcase,
+  handshake: Handshake,
+  bowl: Bowl,
+  apple: Apple,
+  tea: TeaCup,
+  milk: MilkGlass,
+  bread: Bread,
+  moon: Moon,
+  sun: Sun,
+  star: Star,
+  sparkle: Sparkle,
+  flower: Flower,
+  tree: Tree,
+  rain: RainCloud,
+  waves: Waves,
+  mountain: Mountain,
+  table: Table,
+  chair: Chair,
+  door: Door,
+  window: Window,
+  key: Key,
+  bed: Bed,
+  lamp: Lamp,
+  woman: Woman,
+  man: Man,
+  elderMan: ElderMan,
+  elderWoman: ElderWoman,
+  child: Child,
+  family: Family,
+  girl: Girl,
+  boy: Boy,
+  sonChild: SonChild,
+  daughterChild: DaughterChild,
+  pen: Pen,
+  mosque: Mosque,
+  salaam: Salaam,
+  thanks: ThanksHands,
+  check: Check,
+  cross: Cross,
+  handHeart: HandHeart,
+  smile: Smile,
+  egg: Egg,
+  rice: RiceBowl,
+  meat: Meat,
+  salt: SaltShaker,
+  lattice: Lattice,
+  tiles: Tiles,
+  scroll: Scroll,
+  crescent: Crescent,
+  gem: Gem,
+  flame: Flame,
+  bolt: Bolt,
+  sprout: Sprout,
+  medal: Medal,
+  gear: Gear,
+  pomegranate: Pomegranate,
+  speaker: Speaker,
+  arm: Arm,
+  shoulder: Shoulder,
+  elbow: Elbow,
+  eye: Eye,
+  eyebrow: Eyebrow,
+  eyelashes: Eyelashes,
+  lips: Lips,
+  mouth: Mouth,
+  skin: Skin,
+  intestine: Intestine,
+  lock: Lock,
+  speechBubble: SpeechBubble,
 };
 
 export type IconName = keyof typeof ICONS;

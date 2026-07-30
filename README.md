@@ -147,3 +147,15 @@ it stops being true, and all of them run in CI before anything deploys:
 | `npm run check:theme` | `tailwind.config.js` drifting from `colors.ts`, colour written as raw hex outside the theme, a palette token nothing uses |
 | `npm run check:scenery` | the background getting bright enough to fight the text on it |
 | `npm run check:stability` | a question changing under the answer being given to it |
+| `npm run check:secrets` | a credential reaching a tracked file |
+| `npm run check:deployed` | the live site not actually serving the commit CI just built |
+| `npm run lint` / `format:check` | style drift, dead code, and stale React dependency arrays |
+
+All of them, in the deploy's own order and against a deploy-shaped build:
+
+```bash
+npm run check:all
+```
+
+Conventions this project follows, and why, are in
+[CONTRIBUTING.md](CONTRIBUTING.md).

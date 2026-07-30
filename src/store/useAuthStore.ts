@@ -50,7 +50,7 @@ async function nativeOAuth(provider: Provider): Promise<{ ok: boolean; message?:
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       initialized: false,
       session: null,
       isGuest: false,

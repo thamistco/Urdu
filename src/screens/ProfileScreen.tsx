@@ -7,7 +7,7 @@ import { Screen } from '../components/Screen';
 import { Card } from '../components/Card';
 import { Reveal } from '../components/Reveal';
 import { ProgressBar } from '../components/ProgressBar';
-import { Display, Heading, Txt, Bold, Eyebrow, Urdu, urduGlyph } from '../components/Text';
+import { Display, Txt, Bold, Eyebrow, Urdu, urduGlyph } from '../components/Text';
 import { Illustration } from '../components/Illustration';
 import type { IconName } from '../art/icons';
 import { palette, withAlpha } from '../theme';
@@ -139,7 +139,10 @@ export function ProfileScreen() {
 
         {/* league */}
         <Reveal delay={180}>
-          <Pressable onPress={link('Leaderboard')} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}>
+          <Pressable
+            onPress={link('Leaderboard')}
+            style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
+          >
             <View className="mb-3 flex-row items-center gap-3 rounded-2xl border border-white/10 bg-ink-700 p-4">
               <Txt style={{ fontSize: 30 }}>{league.icon}</Txt>
               <View className="flex-1">
@@ -153,7 +156,10 @@ export function ProfileScreen() {
 
         {/* achievements */}
         <Reveal delay={220}>
-          <Pressable onPress={link('Achievements')} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}>
+          <Pressable
+            onPress={link('Achievements')}
+            style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
+          >
             <View className="mb-3 flex-row items-center gap-3 rounded-2xl border border-white/10 bg-ink-700 p-4">
               <Illustration name="medal" tile={false} size={30} />
               <View className="flex-1">
@@ -169,7 +175,10 @@ export function ProfileScreen() {
 
         {/* settings */}
         <Reveal delay={260}>
-          <Pressable onPress={link('Settings')} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}>
+          <Pressable
+            onPress={link('Settings')}
+            style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
+          >
             <View className="mb-8 flex-row items-center gap-3 rounded-2xl border border-white/10 bg-ink-700 p-4">
               <Illustration name="gear" tile={false} size={28} />
               <View className="flex-1">

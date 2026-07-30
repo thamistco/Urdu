@@ -22,7 +22,7 @@ type ListenEx = Extract<Exercise, { kind: 'listenTap' }>;
  * under the picture — which turns the exercise into meaning → word, still a
  * real question, rather than a riddle with no fair answer.
  */
-export function MultipleChoiceExercise({ exercise, track, showRoman, locked, onGraded }: ExerciseProps<MCEx>) {
+export function MultipleChoiceExercise({ exercise, track, locked, onGraded }: ExerciseProps<MCEx>) {
   const { word, options } = exercise;
   const [picked, setPicked] = useState<string | null>(null);
   const speaks = pictureIdentifies(word);
@@ -31,7 +31,8 @@ export function MultipleChoiceExercise({ exercise, track, showRoman, locked, onG
     if (picked || locked) return;
     setPicked(id);
     const correct = id === word.id;
-    correct ? feedback.correctAnnounceMeaning(word.id, word.urdu, word.roman, word.meaning)
+    correct
+      ? feedback.correctAnnounceMeaning(word.id, word.urdu, word.roman, word.meaning)
       : feedback.incorrectAnnounce(word.id, word.urdu, word.roman);
     onGraded({ items: [{ id: word.id, type: 'word' }], correct });
   };
@@ -50,8 +51,7 @@ export function MultipleChoiceExercise({ exercise, track, showRoman, locked, onG
       <Question>{speaks ? 'Which word is this?' : 'Which word means this?'}</Question>
       <View className="flex-row flex-wrap justify-between">
         {options.map((o) => {
-          const state =
-            picked == null ? 'idle' : o.id === word.id ? 'correct' : o.id === picked ? 'wrong' : 'muted';
+          const state = picked == null ? 'idle' : o.id === word.id ? 'correct' : o.id === picked ? 'wrong' : 'muted';
           return (
             <Choice
               key={o.id}
@@ -78,7 +78,7 @@ export function MultipleChoiceExercise({ exercise, track, showRoman, locked, onG
 }
 
 /** Urdu word shown → pick the meaning (reverse recall). */
-export function MeaningPickExercise({ exercise, track, showRoman, locked, onGraded }: ExerciseProps<MeaningEx>) {
+export function MeaningPickExercise({ exercise, track, locked, onGraded }: ExerciseProps<MeaningEx>) {
   const { word, options } = exercise;
   const [picked, setPicked] = useState<string | null>(null);
 
@@ -86,7 +86,8 @@ export function MeaningPickExercise({ exercise, track, showRoman, locked, onGrad
     if (picked || locked) return;
     setPicked(id);
     const correct = id === word.id;
-    correct ? feedback.correctAnnounceMeaning(word.id, word.urdu, word.roman, word.meaning)
+    correct
+      ? feedback.correctAnnounceMeaning(word.id, word.urdu, word.roman, word.meaning)
       : feedback.incorrectAnnounce(word.id, word.urdu, word.roman);
     onGraded({ items: [{ id: word.id, type: 'word' }], correct });
   };
@@ -103,15 +104,9 @@ export function MeaningPickExercise({ exercise, track, showRoman, locked, onGrad
       <Question>What does it mean?</Question>
       <View className="gap-3">
         {options.map((o) => {
-          const state =
-            picked == null ? 'idle' : o.id === word.id ? 'correct' : o.id === picked ? 'wrong' : 'muted';
+          const state = picked == null ? 'idle' : o.id === word.id ? 'correct' : o.id === picked ? 'wrong' : 'muted';
           return (
-            <Choice
-              key={o.id}
-              state={state}
-              disabled={picked != null || locked}
-              onPress={() => choose(o.id)}
-            >
+            <Choice key={o.id} state={state} disabled={picked != null || locked} onPress={() => choose(o.id)}>
               <View className="flex-row items-center gap-3">
                 <WordArt word={o} size={38} />
                 <Bold className="text-base capitalize">{glossOf(o)}</Bold>
@@ -133,7 +128,8 @@ export function ListenTapExercise({ exercise, showRoman, locked, onGraded }: Exe
     if (picked || locked) return;
     setPicked(id);
     const correct = id === word.id;
-    correct ? feedback.correctAnnounceMeaning(word.id, word.urdu, word.roman, word.meaning)
+    correct
+      ? feedback.correctAnnounceMeaning(word.id, word.urdu, word.roman, word.meaning)
       : feedback.incorrectAnnounce(word.id, word.urdu, word.roman);
     onGraded({ items: [{ id: word.id, type: 'word' }], correct });
   };
@@ -165,8 +161,7 @@ export function ListenTapExercise({ exercise, showRoman, locked, onGraded }: Exe
       <Question>Which one did you hear?</Question>
       <View className="flex-row flex-wrap justify-between">
         {options.map((o) => {
-          const state =
-            picked == null ? 'idle' : o.id === word.id ? 'correct' : o.id === picked ? 'wrong' : 'muted';
+          const state = picked == null ? 'idle' : o.id === word.id ? 'correct' : o.id === picked ? 'wrong' : 'muted';
           return (
             <Choice
               key={o.id}

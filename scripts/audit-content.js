@@ -55,8 +55,7 @@ const masks = load('src/data/glyphMasks.ts');
 
 /** Icon names, read out of the art registry (a .tsx file we do not transpile). */
 const MASK_ICON_NAMES = new Set(
-  (fs.readFileSync(path.join(ROOT, 'src/art/icons.tsx'), 'utf8')
-    .split('export const ICONS')[1] || '')
+  (fs.readFileSync(path.join(ROOT, 'src/art/icons.tsx'), 'utf8').split('export const ICONS')[1] || '')
     .split('};')[0]
     .match(/([A-Za-z_][A-Za-z0-9_]*)\s*:/g)
     ?.map((m) => m.replace(':', '').trim()) ?? []
@@ -75,25 +74,55 @@ console.log(`path ${UNITS.length} units / ${ALL_LESSONS.length} lessons`);
 
 // --- ids unique -----------------------------------------------------------
 const dupes = (arr, label) => {
-  const seen = new Set(), d = new Set();
-  for (const x of arr) (seen.has(x) ? d.add(x) : seen.add(x));
+  const seen = new Set(),
+    d = new Set();
+  for (const x of arr) seen.has(x) ? d.add(x) : seen.add(x);
   if (d.size) bad(`duplicate ${label}: ${[...d].slice(0, 6).join(', ')}`);
 };
-dupes(WORDS.map(w => w.id), 'word ids');
-dupes(TOPICS.map(t => t.id), 'topic ids');
-dupes(PHRASES.map(p => p.id), 'phrase ids');
-dupes(LETTERS.map(l => l.id), 'letter ids');
-dupes(GRAMMAR.map(g => g.id), 'grammar ids');
-dupes(SENTENCES.map(s => s.id), 'sentence ids');
-dupes(PASSAGES.map(p => p.id), 'passage ids');
-dupes(DIALOGUES.map(d => d.id), 'dialogue ids');
-dupes(ALL_LESSONS.map(l => l.id), 'lesson ids');
-dupes(GRAMMAR.flatMap(g => g.drills.map(d => d.id)), 'drill ids');
+dupes(
+  WORDS.map((w) => w.id),
+  'word ids'
+);
+dupes(
+  TOPICS.map((t) => t.id),
+  'topic ids'
+);
+dupes(
+  PHRASES.map((p) => p.id),
+  'phrase ids'
+);
+dupes(
+  LETTERS.map((l) => l.id),
+  'letter ids'
+);
+dupes(
+  GRAMMAR.map((g) => g.id),
+  'grammar ids'
+);
+dupes(
+  SENTENCES.map((s) => s.id),
+  'sentence ids'
+);
+dupes(
+  PASSAGES.map((p) => p.id),
+  'passage ids'
+);
+dupes(
+  DIALOGUES.map((d) => d.id),
+  'dialogue ids'
+);
+dupes(
+  ALL_LESSONS.map((l) => l.id),
+  'lesson ids'
+);
+dupes(
+  GRAMMAR.flatMap((g) => g.drills.map((d) => d.id)),
+  'drill ids'
+);
 
 // --- every answer is among its options ------------------------------------
 for (const g of GRAMMAR)
-  for (const d of g.drills)
-    if (!d.options.includes(d.answer)) bad(`drill ${d.id}: answer not in options`);
+  for (const d of g.drills) if (!d.options.includes(d.answer)) bad(`drill ${d.id}: answer not in options`);
 for (const p of PASSAGES)
   if (!p.question.options.includes(p.question.answer)) bad(`passage ${p.id}: answer not in options`);
 for (const d of DIALOGUES)
@@ -109,13 +138,13 @@ for (const w of WORDS) {
   if (LATIN.test(w.urdu)) bad(`word ${w.id}: Latin letters inside urdu "${w.urdu}"`);
   // Roman should be Latin letters (with the diacritics Urdu romanisation uses),
   // spaces and the punctuation that shows up in ezafe constructions.
-  if (!/^[\p{Script=Latin}\p{M}0-9 '’\-]+$/u.test(w.roman))
+  if (!/^[\p{Script=Latin}\p{M}0-9 '’-]+$/u.test(w.roman))
     bad(`word ${w.id}: non-Latin characters in roman "${w.roman}"`);
   if (!w.meaning.trim()) bad(`word ${w.id}: empty meaning`);
 }
 for (const s of SENTENCES) {
   for (const t of s.words) if (!URDU.test(t)) bad(`sentence ${s.id}: non-Urdu tile "${t}"`);
-  if (s.concept && !GRAMMAR.some(g => g.id === s.concept)) bad(`sentence ${s.id}: unknown concept ${s.concept}`);
+  if (s.concept && !GRAMMAR.some((g) => g.id === s.concept)) bad(`sentence ${s.id}: unknown concept ${s.concept}`);
   // The Roman track reads a per-word transliteration straight off this pairing
   // (see lib/translit.ts), so the two spellings of a sentence have to line up
   // word for word. One extra Roman token silently shifts every word after it
@@ -130,12 +159,11 @@ for (const d of DIALOGUES)
     if (LATIN.test(l.urdu)) bad(`dialogue ${d.id}: Latin inside urdu "${l.urdu}"`);
     if (!['A', 'B'].includes(l.speaker)) bad(`dialogue ${d.id}: bad speaker`);
   }
-for (const p of PASSAGES)
-  for (const l of p.lines) if (LATIN.test(l.urdu)) bad(`passage ${p.id}: Latin inside urdu`);
+for (const p of PASSAGES) for (const l of p.lines) if (LATIN.test(l.urdu)) bad(`passage ${p.id}: Latin inside urdu`);
 
 // --- every dialogue actually alternates speakers ---------------------------
 for (const d of DIALOGUES) {
-  const names = new Set(d.lines.map(l => l.speaker));
+  const names = new Set(d.lines.map((l) => l.speaker));
   if (names.size < 2) bad(`dialogue ${d.id}: only one speaker`);
   for (let i = 1; i < d.lines.length; i++)
     if (d.lines[i].speaker === d.lines[i - 1].speaker)
@@ -143,22 +171,22 @@ for (const d of DIALOGUES) {
 }
 
 // --- the path reaches everything ------------------------------------------
-const usedTopics = new Set(ALL_LESSONS.filter(l => l.topic).map(l => l.topic));
-const usedConcepts = new Set(ALL_LESSONS.filter(l => l.conceptId).map(l => l.conceptId));
-const usedPassages = new Set(ALL_LESSONS.filter(l => l.passageId).map(l => l.passageId));
-const usedDialogues = new Set(ALL_LESSONS.filter(l => l.dialogueId).map(l => l.dialogueId));
+const usedTopics = new Set(ALL_LESSONS.filter((l) => l.topic).map((l) => l.topic));
+const usedConcepts = new Set(ALL_LESSONS.filter((l) => l.conceptId).map((l) => l.conceptId));
+const usedPassages = new Set(ALL_LESSONS.filter((l) => l.passageId).map((l) => l.passageId));
+const usedDialogues = new Set(ALL_LESSONS.filter((l) => l.dialogueId).map((l) => l.dialogueId));
 for (const t of TOPICS) if (!usedTopics.has(t.id)) bad(`topic never taught: ${t.id}`);
 for (const g of GRAMMAR) if (!usedConcepts.has(g.id)) bad(`grammar never taught: ${g.id}`);
 for (const p of PASSAGES) if (!usedPassages.has(p.id)) bad(`passage never read: ${p.id}`);
 for (const d of DIALOGUES) if (!usedDialogues.has(d.id)) bad(`dialogue never used: ${d.id}`);
-for (const t of usedTopics) if (!TOPICS.some(x => x.id === t)) bad(`lesson points at missing topic ${t}`);
-for (const c of usedConcepts) if (!GRAMMAR.some(x => x.id === c)) bad(`lesson points at missing concept ${c}`);
-for (const p of usedPassages) if (!PASSAGES.some(x => x.id === p)) bad(`lesson points at missing passage ${p}`);
-for (const d of usedDialogues) if (!DIALOGUES.some(x => x.id === d)) bad(`lesson points at missing dialogue ${d}`);
+for (const t of usedTopics) if (!TOPICS.some((x) => x.id === t)) bad(`lesson points at missing topic ${t}`);
+for (const c of usedConcepts) if (!GRAMMAR.some((x) => x.id === c)) bad(`lesson points at missing concept ${c}`);
+for (const p of usedPassages) if (!PASSAGES.some((x) => x.id === p)) bad(`lesson points at missing passage ${p}`);
+for (const d of usedDialogues) if (!DIALOGUES.some((x) => x.id === d)) bad(`lesson points at missing dialogue ${d}`);
 
 // --- every topic has enough words to build a lesson -----------------------
 for (const t of TOPICS) {
-  const n = WORDS.filter(w => w.topic === t.id).length;
+  const n = WORDS.filter((w) => w.topic === t.id).length;
   if (n < 4) bad(`topic ${t.id} has only ${n} words (lessons need 4+)`);
 }
 
@@ -177,8 +205,7 @@ for (const [pic, ids] of Object.entries(byPicture))
   if (ids.length > 1) bad(`letters ${ids.join(' and ')} share the picture ${pic}`);
 for (const [word, ids] of Object.entries(byWord))
   if (ids.length > 1) bad(`letters ${ids.join(' and ')} share the example word ${word}`);
-for (const l of LETTERS)
-  if (l.icon && !MASK_ICON_NAMES.has(l.icon)) bad(`letter ${l.id}: unknown icon "${l.icon}"`);
+for (const l of LETTERS) if (l.icon && !MASK_ICON_NAMES.has(l.icon)) bad(`letter ${l.id}: unknown icon "${l.icon}"`);
 
 // --- one spelling, one transliteration -------------------------------------
 
@@ -228,7 +255,9 @@ const AMBIGUOUS = new Set(WORDS.filter((w) => w.pronounce).map((w) => w.urdu));
 for (const s of SENTENCES) {
   const risky = s.words.filter((w) => AMBIGUOUS.has(w));
   if (risky.length && !s.pronounce)
-    bad(`sentence ${s.id} contains ${risky.join(', ')} — two words share that spelling, so it needs a pronounce reading`);
+    bad(
+      `sentence ${s.id} contains ${risky.join(', ')} — two words share that spelling, so it needs a pronounce reading`
+    );
 }
 
 // --- no system emoji in the app's own chrome --------------------------------
@@ -292,14 +321,16 @@ const stripComments = (src) =>
 
 for (const file of chromeDirs.flatMap(walk)) {
   const raw = fs.readFileSync(path.join(ROOT, file), 'utf8');
-  stripComments(raw).split('\n').forEach((line, i) => {
-    if (/audit:emoji-ok/.test(raw.split('\n')[i] || '')) return;
-    for (const ch of [...line]) {
-      if (ALLOWED_MARKS.has(ch) || !EMOJI.test(ch)) continue;
-      bad(`${file}:${i + 1} draws the system emoji ${ch} — the app has a drawn icon set`);
-      return;
-    }
-  });
+  stripComments(raw)
+    .split('\n')
+    .forEach((line, i) => {
+      if (/audit:emoji-ok/.test(raw.split('\n')[i] || '')) return;
+      for (const ch of [...line]) {
+        if (ALLOWED_MARKS.has(ch) || !EMOJI.test(ch)) continue;
+        bad(`${file}:${i + 1} draws the system emoji ${ch} — the app has a drawn icon set`);
+        return;
+      }
+    });
 }
 
 // The check tests itself: if the pattern stops matching, this fires rather than
@@ -340,8 +371,7 @@ for (const file of copyFiles) {
     const noun = what.split(' ')[0];
     const re = new RegExp(`([\\d][\\d,]*)\\s+${noun}\\b`, 'gi');
     for (const m of text.matchAll(re)) {
-      if (m[1] !== n)
-        bad(`${file} says "${m[1]} ${noun}" but there are ${n} — the copy has drifted from the course`);
+      if (m[1] !== n) bad(`${file} says "${m[1]} ${noun}" but there are ${n} — the copy has drifted from the course`);
     }
   }
 }
@@ -359,8 +389,7 @@ for (const file of copyFiles) {
  * ("heart (organ)", "nephew (brother's son)") is fine and is why this matches
  * register words specifically rather than parentheses.
  */
-const REGISTER_IN_GLOSS =
-  /\((formal|informal|polite|casual|intimate|respectful|familiar|honorific|rude|colloquial)\)/i;
+const REGISTER_IN_GLOSS = /\((formal|informal|polite|casual|intimate|respectful|familiar|honorific|rude|colloquial)\)/i;
 for (const w of WORDS) {
   if (REGISTER_IN_GLOSS.test(w.meaning))
     bad(`${w.id}: "${w.meaning}" states its register in the English — use the register field instead`);
@@ -413,8 +442,7 @@ for (const [icon, ids] of Object.entries(byBadge))
 
 // --- tracing masks cover every letter and form -----------------------------
 for (const l of LETTERS)
-  for (const p of POSITIONS)
-    if (!masks.GLYPH_MASKS[`${l.id}:${p.key}`]) bad(`no trace mask for ${l.id}:${p.key}`);
+  for (const p of POSITIONS) if (!masks.GLYPH_MASKS[`${l.id}:${p.key}`]) bad(`no trace mask for ${l.id}:${p.key}`);
 
 // --- practice ids resolve, and resolve to the SAME object ------------------
 
