@@ -11,9 +11,11 @@
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#141222"
+      "backgroundColor": "#211712"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.harf.urdu"
@@ -22,20 +24,20 @@
       "package": "com.harf.urdu",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#141222"
+        "backgroundColor": "#211712"
       },
       "edgeToEdgeEnabled": true
     },
     "web": {
       "bundler": "metro",
-      "favicon": "./assets/images/icon.png"
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-font",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#141222",
+          "backgroundColor": "#211712",
           "image": "./assets/images/splash.png",
           "imageWidth": 200
         }
