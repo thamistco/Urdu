@@ -7,10 +7,10 @@ import type { LearnTrack } from '../store/useSettingsStore';
 import { SENTENCES, PASSAGES, DIALOGUES, getPassage, getDialogue, type Sentence } from '../data/sentences';
 import { cueOf } from '../data/art';
 import { GLYPH_MASKS } from '../data/glyphMasks';
+import { shuffle } from '../lib/shuffle';
 import { Exercise, ItemRef } from './types';
 
 const rand = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
-const shuffle = <T>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
 
 function sample<T>(pool: T[], n: number, exclude: (t: T) => boolean): T[] {
   return shuffle(pool.filter((t) => !exclude(t))).slice(0, n);
@@ -48,7 +48,7 @@ function letterExercise(letter: Letter): Exercise {
   if (roll < 0.72) {
     return { kind: 'letterForm', letter, position, options: POSITIONS.map((p) => p.key) };
   }
-  const distractors = sample(LETTERS, 3, (l) => l.id === letter.id);
+  const distractors = sample(LETTERS, DISTRACTORS, (l) => l.id === letter.id);
   return { kind: 'letterPick', letter, options: shuffle([letter, ...distractors]) };
 }
 
@@ -61,13 +61,29 @@ function letterExercise(letter: Letter): Exercise {
  * words in the vocabulary share an English gloss, and a question with two right
  * answers is worse than no question.
  */
+/**
+ * How many tiles a multiple-choice question shows, counting the answer.
+ *
+ * Was four, and the placement test was as low as two. Four is a 25% guess and
+ * two is a coin flip — at that rate a learner passes questions they cannot
+ * answer often enough to be moved past material they have not learned, which is
+ * the one thing a placement test must not do. Five puts a blind guess at 20%.
+ *
+ * Not more than five: the tiles are laid out two to a row on a phone, and a
+ * sixth pushes the last one below the fold on a small screen, where it is
+ * effectively invisible and the question quietly becomes a five-option one
+ * again — for some learners and not others.
+ */
+export const OPTIONS_PER_QUESTION = 5;
+const DISTRACTORS = OPTIONS_PER_QUESTION - 1;
+
 function distractorsFor(word: Word, pool: Word[], { distinctCue = false, distinctMeaning = false } = {}): Word[] {
   const chosen: Word[] = [];
   const usedCues = new Set<string>([cueOf(word)]);
   const usedMeanings = new Set<string>([word.meaning.toLowerCase()]);
   const consider = (candidates: Word[]) => {
     for (const c of shuffle(candidates)) {
-      if (chosen.length >= 3) return;
+      if (chosen.length >= DISTRACTORS) return;
       if (c.id === word.id || chosen.some((x) => x.id === c.id)) continue;
       if (distinctCue) {
         const cue = cueOf(c);
@@ -83,15 +99,16 @@ function distractorsFor(word: Word, pool: Word[], { distinctCue = false, distinc
     }
   };
   consider(pool); // prefer same-topic distractors
-  if (chosen.length < 3) consider(WORDS); // widen if the topic is too uniform
+  if (chosen.length < DISTRACTORS) consider(WORDS); // widen if the topic is too uniform
   return chosen;
 }
 
 /**
  * How much the learner has to supply themselves.
  *
- *  meet     — recognise it: four choices, with a picture or the word in front
- *             of them. Right for a word they are seeing for the first time.
+ *  meet     — recognise it: a set of choices, with a picture or the word in
+ *             front of them. Right for a word they are seeing for the first
+ *             time. See OPTIONS_PER_QUESTION for how many.
  *  recall   — retrieve it: given only the English, choose the Urdu.
  *  produce  — write it: given only the English, type it with nothing to pick
  *             from. Reserved for words already met, or review.
@@ -119,7 +136,10 @@ function wordExercise(word: Word, pool: Word[], demand: Demand = 'meet', variant
   // of them spelled its register into its English ("yes (polite)") and so
   // compared unequal.
   const pictureOptions = distractorsFor(word, pool, { distinctCue: true, distinctMeaning: true });
-  if (pictureOptions.length < 3 && v !== 1) v = 1;
+  // A picture question needs a full set of visually distinct options; if the
+  // vocabulary cannot supply them, fall back to the text question rather than
+  // asking a narrower one.
+  if (pictureOptions.length < DISTRACTORS && v !== 1) v = 1;
 
   if (v === 1) {
     const opts = distractorsFor(word, pool, { distinctMeaning: true });

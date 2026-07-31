@@ -55,7 +55,8 @@
           }
         ],
         "complexity": ["error", 15]
-      }
+      },
+      "excludedFiles": ["**/*.test.ts"]
     },
     {
       "files": ["scripts/**/*.js"],
@@ -65,6 +66,12 @@
       "rules": {
         "no-console": "off",
         "@typescript-eslint/no-var-requires": "off"
+      }
+    },
+    {
+      "files": ["**/*.test.ts"],
+      "rules": {
+        "max-lines-per-function": "off"
       }
     }
   ]
