@@ -49,6 +49,59 @@ const { unitsForTrack } = load('src/data/units.ts');
 const { pictureIdentifies, cueOf } = load('src/data/art.ts');
 const { WORDS, glossOf } = load('src/data/words.ts');
 
+// ---- how many options, and where the answer sits --------------------------
+
+/**
+ * Two properties of a multiple-choice question that nothing was checking, and
+ * that both turned out to be broken at once.
+ *
+ * **How many.** A four-option question is a 25% guess and a two-option one is a
+ * coin flip. The placement test had questions with two.
+ *
+ * **Where the answer is.** Options are built as `[answer, ...distractors]` and
+ * shuffled, so if the shuffle is not uniform the answer has a favourite seat.
+ * The app shipped `[...arr].sort(() => Math.random() - 0.5)`, which is not a
+ * shuffle — `sort` is undefined for an inconsistent comparator, and V8's
+ * insertion sort barely moves the first element. Measured: with three options
+ * the answer was first 43.7% of the time. A learner noticed before any test
+ * did, because tapping the top tile worked far too often.
+ *
+ * Position is measured across every generated exercise rather than asserted
+ * about the shuffle in isolation, so it stays true however the options are
+ * built.
+ */
+const OPTION_FLOOR = 5;
+const optionCounts = new Map();
+const answerAt = new Map();
+let optionQuestions = 0;
+
+/**
+ * The kinds that are genuinely "pick one of these", and so have a guess rate.
+ *
+ * Named rather than inferred from the presence of an `options` array: word-
+ * building and sentence-building also carry one, but those are letter and word
+ * *tiles* to assemble, where more tiles means a harder question, not an easier
+ * one. Counting them as choices had this reporting hundreds of four-option
+ * questions that were nothing of the sort — a check measuring the wrong thing,
+ * confidently.
+ *
+ * `letterForm` is excluded too: its four options are the four joining
+ * positions, which is the entire set that exists. There is no fifth.
+ */
+const CHOICE_KINDS = new Set(['letterPick', 'multipleChoice', 'meaningPick', 'listenTap', 'wordFromMeaning']);
+
+function recordOptions(ex) {
+  if (!CHOICE_KINDS.has(ex.kind)) return;
+  if (!Array.isArray(ex.options) || !ex.options.length) return;
+  const answerId = (ex.word || ex.letter || {}).id;
+  if (!answerId) return;
+  optionCounts.set(ex.options.length, (optionCounts.get(ex.options.length) || 0) + 1);
+  const at = ex.options.findIndex((o) => o.id === answerId);
+  if (at < 0) return;
+  answerAt.set(at, (answerAt.get(at) || 0) + 1);
+  optionQuestions++;
+}
+
 const problems = [];
 const seen = new Map(); // rule → count, so one broken word does not print 400 times
 const fail = (rule, detail) => {
@@ -185,6 +238,7 @@ for (const track of TRACKS) {
         const key = `${ex.kind}/${track}`;
         kinds.set(key, (kinds.get(key) || 0) + 1);
         check(ex, track);
+        recordOptions(ex);
       }
     }
   }
@@ -272,6 +326,44 @@ for (const [key, n] of kinds) {
 }
 for (const track of TRACKS) console.log(`  ${track.padEnd(6)} ${byTrack[track].sort().join(' · ')}`);
 console.log(`\n${generated} exercises generated across ${TRACKS.length} tracks × ${PASSES} passes`);
+
+// ---- report the two option properties -------------------------------------
+
+if (optionQuestions) {
+  const sizes = [...optionCounts.entries()].sort((a, b) => a[0] - b[0]);
+  console.log(`\noptions per question: ${sizes.map(([n, c]) => `${n}\u00d7${c}`).join(' · ')}`);
+
+  for (const [size, count] of sizes) {
+    if (size < OPTION_FLOOR)
+      fail(
+        `a question offers fewer than ${OPTION_FLOOR} options`,
+        `${count} question(s) with only ${size} — a ${Math.round(100 / size)}% guess`
+      );
+  }
+
+  const positions = [...answerAt.entries()].sort((a, b) => a[0] - b[0]);
+  const expected = optionQuestions / positions.length;
+  console.log(
+    `answer position: ${positions.map(([i, c]) => `${i}:${((c / optionQuestions) * 100).toFixed(1)}%`).join('  ')}` +
+      ` (even would be ${((1 / positions.length) * 100).toFixed(1)}% each)`
+  );
+
+  /**
+   * Generous on purpose. This runs over a random sample, so it must not fail on
+   * ordinary variation — but the bias it replaced put the answer first 43.7% of
+   * the time against a fair 33.3%, half again as often as it should be, and
+   * nothing that loose gets through a 40% band.
+   */
+  for (const [position, count] of positions) {
+    const off = Math.abs(count - expected) / expected;
+    if (off > 0.4)
+      fail(
+        'the correct answer favours a position',
+        `it lands at ${position} ${((count / optionQuestions) * 100).toFixed(1)}% of the time, ` +
+          `expected about ${((1 / positions.length) * 100).toFixed(1)}% — the shuffle is not uniform`
+      );
+  }
+}
 
 if (problems.length) {
   console.log(`\n${seen.size} kinds of unanswerable question:`);

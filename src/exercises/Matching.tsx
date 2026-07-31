@@ -5,11 +5,11 @@ import { Txt, Bold } from '../components/Text';
 import { Lexeme } from '../components/Lexeme';
 import { WordArt } from '../components/Illustration';
 import { feedback } from '../lib/feedback';
+import { shuffle } from '../lib/shuffle';
 import type { ExerciseProps, Exercise } from './types';
 import { glossOf } from '../data/words';
 
 type MatchEx = Extract<Exercise, { kind: 'matching' }>;
-const shuffle = <T,>(a: T[]) => [...a].sort(() => Math.random() - 0.5);
 
 /** Drops-style matching board: pair each Urdu word with its picture. */
 export function MatchingExercise({ exercise, track, locked, onGraded }: ExerciseProps<MatchEx>) {
