@@ -412,9 +412,12 @@ function writeManifest() {
     }
   }
 
-  const total = writeManifest();
+  // writeManifest reports both voices now, so this destructures rather than
+  // interpolating the object — which printed "[object Object] clips on disk".
+  const { f: totalF, m: totalM } = writeManifest();
   console.log(
-    `\n${ok} generated · ${failed.length} failed · ${total} clips on disk` +
+    `\n${ok} generated · ${failed.length} failed · ${totalF} clips on disk` +
+      (totalM ? ` · ${totalM} in the second voice` : '') +
       (retried ? ` · ${retried} silent responses retried` : '') +
       '.'
   );
