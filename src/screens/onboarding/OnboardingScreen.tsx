@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Screen } from '../../components/Screen';
 import { Button } from '../../components/Button';
@@ -13,6 +13,7 @@ import { feedback } from '../../lib/feedback';
 import { useProgressStore, Goal, Background } from '../../store/useProgressStore';
 import { useSettingsStore, LearnTrack, VoiceGender } from '../../store/useSettingsStore';
 import { announce, setVoiceSet } from '../../lib/speech';
+import { shuffle } from '../../lib/shuffle';
 import { MALE_VOICE_AVAILABLE } from '../../lib/voiceManifest';
 import { DAILY_GOALS } from '../../data/achievements';
 import { UNITS } from '../../data/units';
@@ -80,14 +81,31 @@ const GOALS: { key: Goal; label: string; desc: string }[] = [
  * the same thing (how much Urdu do you already have?) in the alphabet the
  * learner just said they read.
  */
+/**
+ * The placement questions.
+ *
+ * Two things were wrong with these. The correct answer was written first in
+ * every single one, and they were rendered in written order — so the whole
+ * placement test could be passed by tapping the top option four times without
+ * reading a word of it. They are shuffled at render now (see `question`
+ * below), and the answers are no longer written first here either, so the file
+ * does not *look* like a key even though the shuffle is what makes it safe.
+ *
+ * And two of them were yes/no self-assessments. A learner's opinion of whether
+ * they can read a word is weaker evidence than whether they actually can, and a
+ * two-option question is a coin flip: guessing put someone a level up half the
+ * time. Every question now demonstrates something, over at least four options.
+ */
 const PLACEMENT = [
   {
-    q: 'Do you recognise this letter?',
+    q: 'Which letter is this?',
     sub: 'س',
     kind: 'script',
     options: [
-      { label: "Yes, that's seen", c: true },
-      { label: 'No idea', c: false },
+      { label: 'sheen', c: false },
+      { label: 'seen', c: true },
+      { label: 'saad', c: false },
+      { label: 'noon', c: false },
     ],
   },
   {
@@ -95,18 +113,22 @@ const PLACEMENT = [
     sub: 'پانی',
     kind: 'script',
     options: [
-      { label: 'Water', c: true },
       { label: 'Bread', c: false },
       { label: 'Fire', c: false },
+      { label: 'Water', c: true },
+      { label: 'Door', c: false },
+      { label: 'Night', c: false },
     ],
   },
   {
-    q: 'Can you read this out loud, even slowly?',
+    q: 'What does this word mean?',
     sub: 'کتاب',
     kind: 'script',
     options: [
-      { label: 'Yes, I can sound it out', c: true },
-      { label: 'Script is new to me', c: false },
+      { label: 'Chair', c: false },
+      { label: 'Book', c: true },
+      { label: 'Road', c: false },
+      { label: 'Hand', c: false },
     ],
   },
   {
@@ -114,9 +136,11 @@ const PLACEMENT = [
     sub: 'ghar',
     kind: 'roman',
     options: [
-      { label: 'House', c: true },
       { label: 'Tea', c: false },
       { label: 'Moon', c: false },
+      { label: 'House', c: true },
+      { label: 'Friend', c: false },
+      { label: 'Money', c: false },
     ],
   },
   {
@@ -124,9 +148,11 @@ const PLACEMENT = [
     sub: 'paani',
     kind: 'roman',
     options: [
-      { label: 'Water', c: true },
       { label: 'Book', c: false },
+      { label: 'Water', c: true },
       { label: 'Night', c: false },
+      { label: 'Rice', c: false },
+      { label: 'Cloth', c: false },
     ],
   },
   {
@@ -134,9 +160,10 @@ const PLACEMENT = [
     sub: 'shukriya',
     kind: 'roman',
     options: [
-      { label: 'Thank you', c: true },
       { label: 'Sorry', c: false },
       { label: 'Hello', c: false },
+      { label: 'Goodbye', c: false },
+      { label: 'Thank you', c: true },
     ],
   },
   {
@@ -144,9 +171,11 @@ const PLACEMENT = [
     sub: 'maañ',
     kind: 'roman',
     options: [
-      { label: 'Mother', c: true },
       { label: 'Father', c: false },
+      { label: 'Mother', c: true },
       { label: 'Sister', c: false },
+      { label: 'Daughter', c: false },
+      { label: 'Aunt', c: false },
     ],
   },
 ];
@@ -194,6 +223,19 @@ export function OnboardingScreen() {
   const [goal, setGoal] = useState<Goal | null>(null);
   const [track, setTrack] = useState<LearnTrack>('both');
   const [voice, setVoice] = useState<VoiceGender>('f');
+
+  /**
+   * The placement questions with their options shuffled.
+   *
+   * Memoised on the track, not computed in the render branch: shuffling there
+   * would reorder the tiles under the learner's finger on every re-render, and
+   * answering a question re-renders. Keyed on `track` because that is the only
+   * thing that changes which questions are asked.
+   */
+  const placementQuestions = useMemo(
+    () => placementFor(track).map((q) => ({ ...q, options: shuffle(q.options) })),
+    [track]
+  );
   const [background, setBackground] = useState<Background | null>(null);
   const [pIdx, setPIdx] = useState(0);
   const [pCorrect, setPCorrect] = useState(0);
@@ -477,7 +519,7 @@ export function OnboardingScreen() {
 
   // ---- placement ----
   if (step === 'placement') {
-    const questions = placementFor(track);
+    const questions = placementQuestions;
     const question = questions[pIdx];
     const pick = (label: string, correct: boolean) => {
       if (pAnswered) return;
