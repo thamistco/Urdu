@@ -122,8 +122,39 @@ if (!ffmpegAvailable())
   }
   if (uncovered.length > 40) broken.push(`… and ${uncovered.length - 40} more without a clip`);
 
+  /**
+   * The second voice is all-or-nothing.
+   *
+   * A learner who picks it and then meets a word it never recorded gets no
+   * clip, and `announce` falls through to the device's text-to-speech — which
+   * has no Urdu and reads the script aloud in English. One missing clip did
+   * exactly that for خالو, in the only voice that existed. The second set is
+   * generated in a separate run, so nothing else would notice a run that
+   * stopped halfway.
+   *
+   * So: either it does not exist, or it is complete. `MALE_VOICE_AVAILABLE` in
+   * the manifest tells the app the same thing, and this keeps that flag honest.
+   */
+  const SECOND_DIR = path.join(ROOT, 'assets', 'voice-m');
+  const secondSet = fs.existsSync(SECOND_DIR)
+    ? new Set(
+        fs
+          .readdirSync(SECOND_DIR)
+          .filter((f) => f.endsWith('.mp3'))
+          .map((f) => f.replace(/\.mp3$/, ''))
+      )
+    : new Set();
+
+  if (secondSet.size) {
+    const missingSecond = speakable.filter(([id]) => !secondSet.has(id));
+    for (const [id, what] of missingSecond.slice(0, 20))
+      broken.push(`${id}: ${what} has no clip in the second voice — a learner who picks it hears this word in English`);
+    if (missingSecond.length > 20) broken.push(`… and ${missingSecond.length - 20} more missing from the second voice`);
+  }
+
   console.log(
-    `${clips.length} clips checked · ${listed.size} in the manifest · ${speakable.length} speakable items, ${speakable.length - uncovered.length} covered`
+    `${clips.length} clips checked · ${listed.size} in the manifest · ${speakable.length} speakable items, ${speakable.length - uncovered.length} covered` +
+      (secondSet.size ? ` · second voice: ${secondSet.size}` : ' · second voice: not generated')
   );
 
   if (broken.length) {

@@ -1,6 +1,6 @@
 import * as Speech from 'expo-speech';
 import { Audio } from 'expo-av';
-import { VOICE } from './voiceManifest';
+import { MALE_VOICE_AVAILABLE, VOICE, VOICE_M } from './voiceManifest';
 
 /**
  * Pronunciation. Prefers a bundled, pre-generated voice clip (one consistent,
@@ -26,6 +26,32 @@ export function speechEpoch() {
   return epoch;
 }
 
+/**
+ * Which recorded voice the learner chose.
+ *
+ * Held here rather than read from the store on every call, for the same reason
+ * `muted` is: this module is framework-free and gets called from timers and
+ * callbacks where a hook cannot go. The settings store pushes the value in.
+ *
+ * `'m'` is honoured only when the second set was actually generated. Without
+ * that guard a learner who picked it would get no clip at all, and `announce`
+ * would fall through to the device's text-to-speech — which has no Urdu voice
+ * and would read the script aloud in English. That failure has already happened
+ * once in this app, for one missing word, and it is worth never repeating.
+ */
+let voiceSet: 'f' | 'm' = 'f';
+export function setVoiceSet(value: 'f' | 'm') {
+  voiceSet = value === 'm' && MALE_VOICE_AVAILABLE ? 'm' : 'f';
+}
+
+/** The clip table for the chosen voice. */
+const clipsFor = () => (voiceSet === 'm' ? VOICE_M : VOICE);
+
+/**
+ * Cached per voice, not per id — the same word id exists in both sets, and a
+ * single cache would hand back whichever was loaded first and go on playing the
+ * old voice after the learner changed it.
+ */
 const clipCache: Record<string, Audio.Sound> = {};
 let lastSound: Audio.Sound | null = null;
 
@@ -35,14 +61,15 @@ let lastSound: Audio.Sound | null = null;
  * follow the audio needs the duration rather than the promise.
  */
 async function playClip(id: string): Promise<number | null> {
-  const asset = VOICE[id];
+  const asset = clipsFor()[id];
   if (!asset) return null;
+  const cacheKey = `${voiceSet}:${id}`;
   try {
-    let sound = clipCache[id];
+    let sound = clipCache[cacheKey];
     if (!sound) {
       const created = await Audio.Sound.createAsync(asset, { volume: 1 });
       sound = created.sound;
-      clipCache[id] = sound;
+      clipCache[cacheKey] = sound;
     }
     lastSound = sound;
     const status = await sound.replayAsync();
