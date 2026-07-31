@@ -11,9 +11,10 @@ import { ProgressBar } from '../components/ProgressBar';
 import { Hearts } from '../components/Stats';
 import { Txt, Bold, Heading } from '../components/Text';
 import { Illustration } from '../components/Illustration';
+import { SpeakerButton } from '../exercises/common';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
-import { invalidateSpeech } from '../lib/speech';
+import { announce, invalidateSpeech } from '../lib/speech';
 import { dueQueue, dueBudget } from '../lib/srs';
 import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -74,6 +75,35 @@ function answerLabel(ex: Exercise): string {
   }
 }
 
+/**
+ * What this exercise can say out loud, if anything.
+ *
+ * Mirrors `answerLabel` above, which describes the same exercises in text. A
+ * wrong answer is the moment the pronunciation is worth most — and on a
+ * listening question it is the whole question, which until now vanished behind
+ * the feedback banner the instant it was answered wrongly. The learner heard it
+ * once, guessed, and never got to hear it again.
+ *
+ * Returns null for exercises with nothing recorded — letter *forms* are a
+ * shape, not a sound, and there is no clip for a position.
+ */
+function audioOf(ex: Exercise): { id: string; urdu: string; roman?: string } | null {
+  switch (ex.kind) {
+    case 'letterPick':
+    case 'letterTrace':
+      return { id: ex.letter.id, urdu: ex.letter.forms.isolated, roman: ex.letter.name };
+    case 'multipleChoice':
+    case 'meaningPick':
+    case 'listenTap':
+    case 'wordBuild':
+    case 'wordFromMeaning':
+    case 'typeWord':
+      return { id: ex.word.id, urdu: ex.word.urdu, roman: ex.word.roman };
+    default:
+      return null;
+  }
+}
+
 export function LessonScreen() {
   const nav = useNavigation<Nav>();
   const route = useRoute<Rt>();
@@ -130,6 +160,8 @@ export function LessonScreen() {
   const bodyRef = useRef<ScrollView>(null);
 
   const current = exercises[idx];
+  /** The clip the feedback banner offers to replay, when there is one. */
+  const replay = current ? audioOf(current) : null;
   const total = exercises.length;
 
   const onGraded = useCallback(
@@ -308,6 +340,17 @@ export function LessonScreen() {
                       <Txt className="text-xs text-paper/70">Answer: {answerLabel(current)}</Txt>
                     ) : null}
                   </View>
+                  {/* Hear it again. Only on a wrong answer, which is where it
+                      was asked for and where it is worth most: the app says the
+                      word once when the answer lands, and before this there was
+                      no way to ask for it a second time. */}
+                  {!graded && current && !isTeaching(current) && replay ? (
+                    <SpeakerButton
+                      size={38}
+                      label={`Hear ${replay.roman ?? replay.urdu} again`}
+                      onPress={() => announce(replay.id, replay.urdu, replay.roman)}
+                    />
+                  ) : null}
                 </View>
                 <Button
                   variant={isTeaching(current) ? 'primary' : graded ? 'correct' : 'incorrect'}

@@ -3,9 +3,17 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { safeStorage } from './storage';
 import { setMuted } from '../lib/sound';
 import { setHapticsEnabled } from '../lib/haptics';
-import { setSpeechMuted, setGlossEnabled } from '../lib/speech';
+import { setSpeechMuted, setGlossEnabled, setVoiceSet } from '../lib/speech';
 
 export type LearnTrack = 'script' | 'roman' | 'both';
+
+/**
+ * Which recorded voice reads the Urdu.
+ *
+ * Named for the voice, not for the learner: this is a preference about who you
+ * would rather be taught by, and it carries no assumption about who is asking.
+ */
+export type VoiceGender = 'f' | 'm';
 
 type SettingsState = {
   soundEnabled: boolean;
@@ -15,12 +23,15 @@ type SettingsState = {
   reducedMotion: boolean;
   /** after a correct answer, say the English meaning as well as the Urdu */
   speakMeaning: boolean;
+  /** Which recorded voice reads the Urdu. */
+  voiceGender: VoiceGender;
   track: LearnTrack;
   setSound: (v: boolean) => void;
   setHaptics: (v: boolean) => void;
   setShowRoman: (v: boolean) => void;
   setReducedMotion: (v: boolean) => void;
   setSpeakMeaning: (v: boolean) => void;
+  setVoiceGender: (v: VoiceGender) => void;
   setTrack: (t: LearnTrack) => void;
   syncEffects: () => void;
 };
@@ -43,6 +54,11 @@ export const useSettingsStore = create<SettingsState>()(
        * switch stays; being on for everyone who never asked for it is not.
        */
       speakMeaning: false,
+      /**
+       * The recorded voice. Defaults to the narrator every clip was made with,
+       * so an install that has never chosen sounds exactly as it always did.
+       */
+      voiceGender: 'f',
       track: 'both',
       setSound: (v) => {
         setMuted(!v);
@@ -59,6 +75,10 @@ export const useSettingsStore = create<SettingsState>()(
         setGlossEnabled(v);
         set({ speakMeaning: v });
       },
+      setVoiceGender: (v) => {
+        setVoiceSet(v);
+        set({ voiceGender: v });
+      },
       setTrack: (t) => set({ track: t, showRoman: t !== 'script' }),
       syncEffects: () => {
         const s = get();
@@ -66,6 +86,7 @@ export const useSettingsStore = create<SettingsState>()(
         setSpeechMuted(!s.soundEnabled);
         setHapticsEnabled(s.hapticsEnabled);
         setGlossEnabled(s.speakMeaning);
+        setVoiceSet(s.voiceGender);
       },
     }),
     {
@@ -84,10 +105,15 @@ export const useSettingsStore = create<SettingsState>()(
        * carried through as they were, because those the learner may well have
        * chosen on purpose.
        */
-      version: 1,
+      version: 2,
       migrate: (persisted, from) => {
-        const s = (persisted ?? {}) as Partial<SettingsState>;
-        if (from < 1) return { ...s, speakMeaning: false };
+        let s = (persisted ?? {}) as Partial<SettingsState>;
+        // v1 turned the English gloss off for everyone who already had it on.
+        if (from < 1) s = { ...s, speakMeaning: false };
+        // v2 added the voice choice. An install that predates it has no
+        // preference, and the honest default is the voice it has been hearing
+        // all along rather than a silent switch to a different narrator.
+        if (from < 2) s = { ...s, voiceGender: 'f' };
         return s;
       },
       onRehydrateStorage: () => (state) => state?.syncEffects(),

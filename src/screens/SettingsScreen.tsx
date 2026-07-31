@@ -9,12 +9,14 @@ import { Txt, Bold, Eyebrow } from '../components/Text';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { confirmAction } from '../lib/confirm';
-import { useSettingsStore } from '../store/useSettingsStore';
+import { useSettingsStore, type VoiceGender } from '../store/useSettingsStore';
 import { useProgressStore } from '../store/useProgressStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useTesterStore, TESTER_MODE_AVAILABLE } from '../store/useTesterStore';
 import { DAILY_GOALS } from '../data/achievements';
 import { TrackChooser } from '../components/TrackChooser';
+import { MALE_VOICE_AVAILABLE } from '../lib/voiceManifest';
+import { announce } from '../lib/speech';
 
 function Row({
   label,
@@ -298,6 +300,53 @@ export function SettingsScreen() {
               value={s.reducedMotion}
               onChange={s.setReducedMotion}
             />
+            {/* Only when a second set of clips exists. Offering a voice the app
+                has no recordings for would send every word to the device's own
+                text-to-speech, which has no Urdu and reads the script in
+                English — the exact complaint that removed the English gloss. */}
+            {MALE_VOICE_AVAILABLE && (
+              <>
+                <View className="my-2 h-px bg-white/5" />
+                <Bold className="mb-2 mt-1 text-sm">Reading voice</Bold>
+                <View className="flex-row gap-2">
+                  {(
+                    [
+                      { key: 'f', label: 'Woman' },
+                      { key: 'm', label: 'Man' },
+                    ] as { key: VoiceGender; label: string }[]
+                  ).map((o) => {
+                    const active = s.voiceGender === o.key;
+                    return (
+                      <Pressable
+                        key={o.key}
+                        style={{ flex: 1 }}
+                        onPress={() => {
+                          feedback.tap();
+                          s.setVoiceGender(o.key);
+                          // Change it, then say something in it — a voice
+                          // chosen from a label is not a voice chosen.
+                          announce('w-salam', 'السلام علیکم', 'assalaam-o-alaikum');
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${o.label}'s voice. Tap to select and hear it.`}
+                      >
+                        <View
+                          className="items-center rounded-xl border py-3"
+                          style={{
+                            borderColor: active ? palette.gold : withAlpha(palette.white, 0.1),
+                            backgroundColor: active ? withAlpha(palette.gold, 0.14) : palette.ink800,
+                            borderWidth: 2,
+                          }}
+                        >
+                          <Bold className="text-sm">{o.label}</Bold>
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                <Txt className="mt-2 text-[11px] text-paper/40">Tap to hear the change.</Txt>
+              </>
+            )}
           </Card>
         </Reveal>
 

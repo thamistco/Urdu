@@ -11,7 +11,9 @@ import { TrackChooser } from '../../components/TrackChooser';
 import { palette, withAlpha } from '../../theme';
 import { feedback } from '../../lib/feedback';
 import { useProgressStore, Goal, Background } from '../../store/useProgressStore';
-import { useSettingsStore, LearnTrack } from '../../store/useSettingsStore';
+import { useSettingsStore, LearnTrack, VoiceGender } from '../../store/useSettingsStore';
+import { announce, setVoiceSet } from '../../lib/speech';
+import { MALE_VOICE_AVAILABLE } from '../../lib/voiceManifest';
 import { DAILY_GOALS } from '../../data/achievements';
 import { UNITS } from '../../data/units';
 
@@ -153,16 +155,34 @@ const PLACEMENT = [
 const placementFor = (track: LearnTrack) =>
   (track === 'roman' ? PLACEMENT.filter((p) => p.kind === 'roman') : PLACEMENT).slice(0, 4);
 
-type Step = 'welcome' | 'goal' | 'track' | 'background' | 'placement' | 'daily' | 'ready';
+type Step = 'welcome' | 'goal' | 'track' | 'voice' | 'background' | 'placement' | 'daily' | 'ready';
 
-function Dots({ step, total }: { step: number; total: number }) {
+/**
+ * The steps that show progress, in order.
+ *
+ * `welcome` and `ready` are bookends and carry no dots. The voice step only
+ * exists when there is a second voice to choose, so the flow — and therefore
+ * every dot count — is derived rather than written down. Six hardcoded numbers
+ * lived here before, and adding one step silently made four of them wrong.
+ */
+const FLOW: Step[] = [
+  'goal',
+  'track',
+  ...(MALE_VOICE_AVAILABLE ? (['voice'] as Step[]) : []),
+  'background',
+  'placement',
+  'daily',
+];
+
+function Dots({ of }: { of: Step }) {
+  const at = FLOW.indexOf(of);
   return (
     <View className="mb-6 flex-row gap-1.5">
-      {Array.from({ length: total }).map((_, i) => (
+      {FLOW.map((key, i) => (
         <View
-          key={i}
+          key={key}
           className="h-1 flex-1 rounded-full"
-          style={{ backgroundColor: i <= step ? palette.gold : withAlpha(palette.white, 0.12) }}
+          style={{ backgroundColor: i <= at ? palette.gold : withAlpha(palette.white, 0.12) }}
         />
       ))}
     </View>
@@ -173,6 +193,7 @@ export function OnboardingScreen() {
   const [step, setStep] = useState<Step>('welcome');
   const [goal, setGoal] = useState<Goal | null>(null);
   const [track, setTrack] = useState<LearnTrack>('both');
+  const [voice, setVoice] = useState<VoiceGender>('f');
   const [background, setBackground] = useState<Background | null>(null);
   const [pIdx, setPIdx] = useState(0);
   const [pCorrect, setPCorrect] = useState(0);
@@ -185,6 +206,7 @@ export function OnboardingScreen() {
   const completeOnboarding = useProgressStore((s) => s.completeOnboarding);
   const setDailyGoal = useProgressStore((s) => s.setDailyGoal);
   const setTrackSetting = useSettingsStore((s) => s.setTrack);
+  const setVoiceGender = useSettingsStore((s) => s.setVoiceGender);
 
   // The placement level and what it (plus a heritage background) skips —
   // computed here rather than inline in `finish` so the "ready" screen can
@@ -228,6 +250,10 @@ export function OnboardingScreen() {
 
   const finish = () => {
     setTrackSetting(track);
+    // Committed here rather than at the moment of tapping, so backing out of
+    // onboarding leaves nothing behind. The preview during the step sets the
+    // playback voice directly; this is what persists it.
+    setVoiceGender(voice);
     setDailyGoal(daily);
     feedback.levelUp();
     completeOnboarding(goal ?? 'curious', lvl, background ?? 'new', skipIds);
@@ -260,7 +286,7 @@ export function OnboardingScreen() {
     return (
       <Screen>
         <Reveal>
-          <Dots step={0} total={5} />
+          <Dots of="goal" />
           <Heading className="mb-1 text-2xl">Why are you learning Urdu?</Heading>
           <Txt className="mb-6 text-sm text-paper/50">This shapes which words we teach first.</Txt>
           <View className="gap-3">
@@ -305,11 +331,77 @@ export function OnboardingScreen() {
     return (
       <Screen>
         <Reveal>
-          <Dots step={1} total={5} />
+          <Dots of="track" />
           <Heading className="mb-1 text-2xl">How do you want to learn?</Heading>
           <Txt className="mb-4 text-sm text-paper/50">The most important choice here.</Txt>
           <TrackChooser value={track} onChange={setTrack} />
-          <Button className="mt-6" onPress={() => setStep('background')}>
+          <Button className="mt-6" onPress={() => setStep(MALE_VOICE_AVAILABLE ? 'voice' : 'background')}>
+            Continue
+          </Button>
+        </Reveal>
+      </Screen>
+    );
+  }
+
+  // ---- voice ----
+  /**
+   * Whose voice reads the Urdu.
+   *
+   * Only reachable when the second set of clips has actually been generated —
+   * see MALE_VOICE_AVAILABLE. A questionnaire that offers a choice the app
+   * cannot honour is worse than not asking: picking the missing voice would
+   * leave every word with no clip, and the fallback is the device's own
+   * text-to-speech, which has no Urdu and reads the script in English.
+   */
+  if (step === 'voice') {
+    const OPTIONS: { key: VoiceGender; label: string; desc: string; icon: IconName }[] = [
+      { key: 'f', label: 'A woman’s voice', desc: 'The voice the course was recorded in', icon: 'woman' },
+      { key: 'm', label: 'A man’s voice', desc: 'The same words, same pace', icon: 'man' },
+    ];
+    return (
+      <Screen>
+        <Reveal>
+          <Dots of="voice" />
+          <Heading className="mb-1 text-2xl">Whose voice would you like?</Heading>
+          <Txt className="mb-4 text-sm text-paper/50">
+            Every word is read aloud by a real recorded voice. You can change this later in Settings.
+          </Txt>
+          {OPTIONS.map((o) => {
+            const active = voice === o.key;
+            return (
+              <Pressable
+                key={o.key}
+                onPress={() => {
+                  feedback.tap();
+                  setVoice(o.key);
+                  // Say something in it, so the choice is made by ear rather
+                  // than by label — which is the only way to choose a voice.
+                  setVoiceSet(o.key);
+                  announce('w-salam', 'السلام علیکم', 'assalaam-o-alaikum');
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`${o.label}. ${o.desc}. Tap to hear it.`}
+              >
+                <View
+                  className="mb-3 flex-row items-center gap-3 rounded-2xl border p-4"
+                  style={{
+                    borderColor: active ? palette.gold : withAlpha(palette.white, 0.1),
+                    backgroundColor: active ? withAlpha(palette.gold, 0.12) : palette.ink800,
+                    borderWidth: 2,
+                  }}
+                >
+                  <Illustration name={o.icon} size={44} />
+                  <View className="flex-1">
+                    <Bold className="text-[15px]">{o.label}</Bold>
+                    <Txt className="text-xs text-paper/55">{o.desc}</Txt>
+                  </View>
+                  <Illustration name="speaker" tile={false} size={20} />
+                </View>
+              </Pressable>
+            );
+          })}
+          <Txt className="mb-2 text-center text-[11px] text-paper/40">Tap either one to hear it.</Txt>
+          <Button className="mt-2" onPress={() => setStep('background')}>
             Continue
           </Button>
         </Reveal>
@@ -333,7 +425,7 @@ export function OnboardingScreen() {
     return (
       <Screen>
         <Reveal>
-          <Dots step={2} total={5} />
+          <Dots of="background" />
           <Heading className="mb-1 text-2xl">Do you already know some Urdu?</Heading>
           <Txt className="mb-6 text-sm text-paper/50">
             If you already understand it spoken, we'll skip the basic words you know and get you to the script faster.
@@ -408,7 +500,7 @@ export function OnboardingScreen() {
     return (
       <Screen>
         <Reveal key={pIdx}>
-          <Dots step={3} total={5} />
+          <Dots of="placement" />
           <Eyebrow style={{ color: palette.gold }} className="mb-3">
             Quick check · {pIdx + 1} of {questions.length}
           </Eyebrow>
@@ -454,7 +546,7 @@ export function OnboardingScreen() {
     return (
       <Screen>
         <Reveal>
-          <Dots step={4} total={5} />
+          <Dots of="daily" />
           <Heading className="mb-1 text-2xl">Set a daily goal</Heading>
           <Txt className="mb-6 text-sm text-paper/50">A gentle contract with yourself. Change it whenever.</Txt>
           <View className="gap-3">

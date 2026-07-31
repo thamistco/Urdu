@@ -320,7 +320,18 @@ const CORE_WORDS: Word[] = [
   { id: 'w-khairiyat', urdu: 'خیریت', roman: 'khairiyat', meaning: 'wellbeing', emoji: '🤗', topic: 'greetings' },
   { id: 'w-dobara2', urdu: 'دوبارہ', roman: 'dobaara', meaning: 'again', emoji: '🔁', topic: 'greetings' },
   { id: 'w-bilkul2', urdu: 'بالکل', roman: 'bilkul', meaning: 'absolutely', emoji: '✅', topic: 'greetings' },
-  { id: 'w-khudahafiz', urdu: 'خدا حافظ', roman: 'khuda haafiz', meaning: 'goodbye', emoji: '👋', topic: 'greetings' },
+  // Reported as mispronounced. Unvowelled, the engine has to guess the short
+  // vowels in both words — خدا can be read khadā or khidā, and حافظ hāfaz or
+  // hāfuz. The damma and kasra leave it nothing to guess at.
+  {
+    id: 'w-khudahafiz',
+    urdu: 'خدا حافظ',
+    roman: 'khuda haafiz',
+    meaning: 'goodbye',
+    emoji: '👋',
+    topic: 'greetings',
+    pronounce: 'خُدا حافِظ',
+  },
   {
     id: 'w-inshaallah',
     urdu: 'ان شاء اللہ',
@@ -1221,7 +1232,13 @@ export function glossOf(word: Word): string {
 export const WORDS: Word[] = [...CORE_WORDS, ...ALL_PACKS.flatMap((p) => p.words)];
 
 /** Short, high-value phrases for the "speak with family" goal. */
-export type Phrase = { id: string; urdu: string; roman: string; meaning: string };
+/**
+ * `pronounce` is the same escape hatch `Word` has: a vowelled reading fed to
+ * the voice generator when the bare spelling is not enough for it to get the
+ * word right. Urdu is written without short vowels, so a text-to-speech engine
+ * has to guess them, and on a fixed phrase it can guess wrong every time.
+ */
+export type Phrase = { id: string; urdu: string; roman: string; meaning: string; pronounce?: string };
 
 export const PHRASES: Phrase[] = [
   // greetings & courtesy
@@ -1232,7 +1249,7 @@ export const PHRASES: Phrase[] = [
   { id: 'p-5', urdu: 'شکریہ', roman: 'shukriya', meaning: 'Thank you' },
   { id: 'p-6', urdu: 'کوئی بات نہیں', roman: 'koi baat nahiñ', meaning: "You're welcome / no problem" },
   { id: 'p-7', urdu: 'معاف کیجیے', roman: 'maaf keejiye', meaning: 'Excuse me / sorry' },
-  { id: 'p-8', urdu: 'خدا حافظ', roman: 'khuda haafiz', meaning: 'Goodbye' },
+  { id: 'p-8', urdu: 'خدا حافظ', roman: 'khuda haafiz', meaning: 'Goodbye', pronounce: 'خُدا حافِظ' },
   { id: 'p-9', urdu: 'پھر ملیں گے', roman: 'phir milenge', meaning: 'See you again' },
 
   // introductions
