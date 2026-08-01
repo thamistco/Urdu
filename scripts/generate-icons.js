@@ -108,41 +108,30 @@ function chromePath() {
 const INK = '#211712'; // the app's background; the splash sits on it
 
 /**
- * Comic-book palette — yellow, blue, white, red.
+ * Comic-book palette.
  *
  * The rules of the style are not decoration, they are what makes it legible:
  * flat areas of saturated colour, a heavy black keyline around every shape, a
  * hard offset shadow instead of a soft one, and halftone dots where a printer
  * would have laid them.
  *
- * The keyline does the work the fill used to. An earlier version measured its
- * contrast as letter-against-ground, which forced the letter to be near-black —
- * a bright tile with a dark letter, handsome but quiet. With a black outline the
- * separation is outline-against-everything, so the fill is free to be the light
- * note. That is why comics can put a yellow shape on a red sky and have it read
- * from across a room.
- *
- * **The blue had to be measured, not chosen.** A comic blue wants to be deep,
- * and a deep one kills the whole design: navy #1746B0 gives the black keyline
- * 2.29:1, so the outline that carries every edge would have dissolved into the
- * background. #1D5FD8 was still only 3.33:1. This blue is 5.28:1, which is
- * inside the range the reference icons occupy (4.3:1 to 18.9:1). Bright blue
- * with a black line is a comic convention *because* it is the one that prints.
- *
- * The halftone is a deeper shade of the ground rather than a fifth colour:
- * red dots over blue would have been tonally identical (L 0.197 against 0.242)
- * and turned to mud at any size below the full 1024.
+ * The keyline is doing the work the previous version asked the *fill* to do.
+ * That version measured its contrast as letter-against-orange, which forced the
+ * letter to be near-black — a bright ground and a dark letter, handsome but
+ * quiet. With a black outline the figure/ground separation is
+ * outline-against-everything, ~15:1 both ways, so the fill is free to be the
+ * light note again. That is why comics can put a yellow shape on an orange sky
+ * and have it read from across a room.
  */
-const LINE = '#12100F'; // the keyline: every edge in the picture
-const LETTER = '#FFDD33'; // the letter, flat comic yellow
-const LETTER_SHADE = '#F2B705'; // its lower half, one hard tonal step
-const SUN = '#FFFFFF'; // the disc in its bowl
-const GROUND = '#3A86F0'; // comic blue, the base plate
-const BURST = '#F03A2E'; // red wedges radiating out of it
-const DOTS = '#1E5FC8'; // halftone: a deeper shade of the ground, not a fifth colour
-
+const LINE = '#1A0F09'; // the keyline: every edge in the picture
+const LETTER = '#FFD98A'; // the letter itself, flat gold
+const LETTER_SHADE = '#F0A93C'; // its lower half, one hard tonal step
+const SUN = '#FFF6EA';
+const GROUND = '#F2761C'; // flat, saturated — the base plate
+const BURST = '#FF9A44'; // the lighter wedges radiating out of it
+const DOTS = '#D2540E'; // halftone, printed over the ground
 /** Android flattens the adaptive icon's background to a single colour. */
-const GROUND_FLAT = '#3A86F0';
+const GROUND_FLAT = '#F2761C';
 
 /**
  * One icon as SVG.
@@ -197,15 +186,10 @@ function iconSvg({ size, transparent = false, inset = 1 }) {
     transparent
       ? ''
       : `<rect width="${s}" height="${s}" fill="${GROUND}"/>
-  <!-- Halftone first, red wedges over the top. Printed the other way round the
-       blue dots fell across the red and went muddy — blue and red sit at almost
-       the same luminance (0.24 against 0.20), so the dots stopped reading as
-       texture and started reading as dirt. This is also the order a comic is
-       actually printed in: one plate at a time, each covering the last. -->
-  <rect width="${s}" height="${s}" fill="url(#halftone)" mask="url(#dotMask)" opacity="0.9"/>
-  <g opacity="0.92">
-    ${burstWedges(c, 540, 16)}
-  </g>`
+  <g opacity="0.85">
+    ${burstWedges(c, 540)}
+  </g>
+  <rect width="${s}" height="${s}" fill="url(#halftone)" mask="url(#dotMask)" opacity="0.9"/>`
   }
   <g transform="translate(${c} ${c}) scale(${inset}) translate(${-c} ${-c})">
     <!-- The sun, keylined like everything else. -->
@@ -237,7 +221,7 @@ function iconSvg({ size, transparent = false, inset = 1 }) {
 function splashSvg(w, h) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
   <rect width="${w}" height="${h}" fill="${INK}"/>
-  <text x="${w / 2}" y="${h / 2 + 110}" text-anchor="middle" font-family="Nastaliq" font-size="300" fill="${LETTER}">حرف</text>
+  <text x="${w / 2}" y="${h / 2 + 110}" text-anchor="middle" font-family="Nastaliq" font-size="300" fill="#FF8C42">حرف</text>
 </svg>`;
 }
 
