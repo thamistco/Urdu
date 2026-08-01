@@ -31,7 +31,6 @@ module.exports = {
         // see `parchment` for that, and the note in theme/colors.ts).
         paper: {
           DEFAULT: '#FFEEDD',
-          soft: '#FFF6EA',
           dim: '#F5DFC0',
         },
         // Aged paper — the light SURFACE the script is set on.
@@ -62,18 +61,21 @@ module.exports = {
           DEFAULT: '#FF6B35',
           light: '#FF9466',
         },
-        // The misty forest the scenery is drawn in.
-        moss: {
-          deep: '#262B15',
-          dark: '#464B37',
-          charcoal: '#3F3F3F',
-          light: '#A9B39C',
-        },
-        // The warm low end of the sky ramp.
+        // The scenery, after Hopper — flat planes in a low key.
         sky: {
-          dusk: '#3A2416',
-          ember: '#4A2617',
-          glow: '#5F3018',
+          slate: '#242A28',
+          mid: '#2E332C',
+          low: '#3E3A2E',
+          warm: '#7A4E28',
+        },
+        cloud: {
+          lit: '#4F5743',
+          shade: '#31382C',
+        },
+        land: {
+          far: '#252B1C',
+          mid: '#1A1F14',
+          near: '#10140C',
         },
         // Which-one-is-it accents: stages, units. No meaning of their own.
         accent: {

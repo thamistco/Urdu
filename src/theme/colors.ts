@@ -48,7 +48,6 @@ export const palette = {
    * app. `parchment` below is the surface; this stays the text.
    */
   paper: '#FFEEDD',
-  paperSoft: '#FFF6EA',
   paperDim: '#F5DFC0',
 
   /**
@@ -99,38 +98,49 @@ export const palette = {
   accentTeal: '#6FB3B0',
 
   /**
-   * The misty-forest family — pine, moss and fog.
+   * The scenery: a landscape after Edward Hopper.
    *
-   * Sourced from a real "into the woods" reference palette. These were once a
-   * second, alternate scenery selected by a prop, which nothing ever selected;
-   * they are now the body of the one scene `LatticeBackground` draws. Warm gold
-   * light still filters through it — the point was to mix the orange into the
-   * green, not to replace one with the other.
+   * Hopper's language is hard-edged planes of flat colour, big simple masses,
+   * raking light, and one warm accent doing all the emotional work. What he is
+   * usually remembered for — high, bright daylight on a white clapboard wall —
+   * is the one thing this cannot have. The scenery sits behind body text on
+   * every screen and is held to 6:1 against it, which caps any colour here at a
+   * relative luminance of 0.1016. A sunlit white is 0.76. It is not a matter of
+   * taste; the arithmetic forbids it.
    *
-   * `mossLight` is the fog and haze colour and does most of the work here: it
-   * is what turns three stacked silhouettes into distance.
+   * So this is his *other* register — the late, low light of the road and rail
+   * paintings, where the sky has gone slate and one band near the horizon is
+   * still warm. The compositional grammar is intact; only the key is lowered.
+   *
+   * Every value below was measured, not chosen. Contrast against `paper`:
+   * slate 12.66, mid 11.19, low 9.84, warm 6.17, cloud lit 6.55, cloud shade
+   * 10.50, land 12.62 / 14.55 / 16.13. The lit cloud face is 2.43x the
+   * luminance of the shadow face, which is what makes a flat shape read as a
+   * solid lit from one side rather than as two greys.
    */
-  mossDeep: '#262B15',
-  mossDark: '#464B37',
-  mossCharcoal: '#3F3F3F',
-  mossLight: '#A9B39C',
+  skySlate: '#242A28',
+  skyMid: '#2E332C',
+  skyLow: '#3E3A2E',
+  /** The one warm note, low down. Everything else defers to it. */
+  skyWarm: '#7A4E28',
 
   /**
-   * The warm end of the sky ramp, low down where the sun is.
+   * Cloud, in two flat tones — a sunlit face and a shadowed one.
    *
-   * These were the last colours in the app written as raw hex inside a
-   * component. They are scenery rather than interface — nothing else uses them —
-   * but a palette most of the colours go through is not a palette, and the next
-   * person tuning the sky had to know to go looking inside an SVG.
-   *
-   * There were two more, `skyHorizon` and `mossNear`, left behind when the sky
-   * stopped shading orange most of the way down. An unused colour in a palette
-   * is worse than none: it reads as an available choice and is really a scrap
-   * of a version that no longer exists, so `check:theme` now fails on one.
+   * These are drawn **opaque**, which reverses the rule the soft scenery lived
+   * by: "nothing in the air has a hard edge". That rule existed because
+   * semi-transparent shapes show their own outline over a gradient, and two
+   * overlapping at alpha a composite to 2a-a², leaving a visible seam. Opaque
+   * shapes of the same colour have neither problem — they simply union. The
+   * old rule was a workaround for alpha, not a law about clouds.
    */
-  skyDusk: '#3A2416',
-  skyEmber: '#4A2617',
-  skyGlow: '#5F3018',
+  cloudLit: '#4F5743',
+  cloudShade: '#31382C',
+
+  /** Ground, in three flat planes, each darker than the one behind it. */
+  landFar: '#252B1C',
+  landMid: '#1A1F14',
+  landNear: '#10140C',
 } as const;
 
 /** Opacity-tinted helpers for RN (no `/opacity` shorthand at runtime). */
