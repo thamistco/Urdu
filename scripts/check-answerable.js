@@ -55,8 +55,9 @@ const { WORDS, glossOf } = load('src/data/words.ts');
  * Two properties of a multiple-choice question that nothing was checking, and
  * that both turned out to be broken at once.
  *
- * **How many.** A four-option question is a 25% guess and a two-option one is a
- * coin flip. The placement test had questions with two.
+ * **How many.** A two-option question is a coin flip, and the placement test
+ * had them — a learner could be moved up a level by guessing. Four is the
+ * floor; see OPTIONS_PER_QUESTION for why four and not five.
  *
  * **Where the answer is.** Options are built as `[answer, ...distractors]` and
  * shuffled, so if the shuffle is not uniform the answer has a favourite seat.
@@ -70,7 +71,7 @@ const { WORDS, glossOf } = load('src/data/words.ts');
  * about the shuffle in isolation, so it stays true however the options are
  * built.
  */
-const OPTION_FLOOR = 5;
+const OPTION_FLOOR = 4;
 const optionCounts = new Map();
 const answerAt = new Map();
 let optionQuestions = 0;
