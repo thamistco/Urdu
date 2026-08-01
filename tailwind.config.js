@@ -61,22 +61,20 @@ module.exports = {
           DEFAULT: '#FF6B35',
           light: '#FF9466',
         },
-        // The scenery, after Hopper — flat planes in a low key.
+        // The scenery, after Friedrich — aerial perspective, dissolving depth.
         sky: {
-          slate: '#242A28',
-          mid: '#2E332C',
-          low: '#3E3A2E',
-          warm: '#7A4E28',
+          high: '#1D2530',
+          mid: '#39414B',
+          pale: '#434A52',
+          warm: '#66523F',
         },
-        cloud: {
-          lit: '#4F5743',
-          shade: '#31382C',
+        mist: '#9FB0BC',
+        ridge: {
+          far: '#3A4550',
+          mid: '#2C3540',
+          near: '#1F2630',
         },
-        land: {
-          far: '#252B1C',
-          mid: '#1A1F14',
-          near: '#10140C',
-        },
+        foreground: '#0C0F14',
         // Which-one-is-it accents: stages, units. No meaning of their own.
         accent: {
           amber: '#FFC72C',
