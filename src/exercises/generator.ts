@@ -64,17 +64,21 @@ function letterExercise(letter: Letter): Exercise {
 /**
  * How many tiles a multiple-choice question shows, counting the answer.
  *
- * Was four, and the placement test was as low as two. Four is a 25% guess and
- * two is a coin flip — at that rate a learner passes questions they cannot
- * answer often enough to be moved past material they have not learned, which is
- * the one thing a placement test must not do. Five puts a blind guess at 20%.
+ * Four, because the tiles are laid out two to a row: four is a full 2×2 block
+ * and five leaves an orphan sitting alone on a third row, which looks like a
+ * mistake and pushes the last option toward the fold on a small screen.
  *
- * Not more than five: the tiles are laid out two to a row on a phone, and a
- * sixth pushes the last one below the fold on a small screen, where it is
- * effectively invisible and the question quietly becomes a five-option one
- * again — for some learners and not others.
+ * Five was tried for the lower guess rate — 20% against 25% — and the reasoning
+ * was sound but aimed at the wrong problem. What actually made questions easy
+ * was never the count: it was that the shuffle left the answer in the first
+ * position 43.7% of the time, and that the placement test asked two-option
+ * yes/no questions a coin could pass. Both of those are fixed, and with a
+ * genuinely uniform shuffle a four-option question is an honest 25%.
+ *
+ * The floor is enforced: `check:answerable` fails on any question offering
+ * fewer, which is what caught the placement test's coin flips.
  */
-export const OPTIONS_PER_QUESTION = 5;
+export const OPTIONS_PER_QUESTION = 4;
 const DISTRACTORS = OPTIONS_PER_QUESTION - 1;
 
 function distractorsFor(word: Word, pool: Word[], { distinctCue = false, distinctMeaning = false } = {}): Word[] {

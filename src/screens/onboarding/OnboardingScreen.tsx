@@ -94,7 +94,8 @@ const GOALS: { key: Goal; label: string; desc: string }[] = [
  * And two of them were yes/no self-assessments. A learner's opinion of whether
  * they can read a word is weaker evidence than whether they actually can, and a
  * two-option question is a coin flip: guessing put someone a level up half the
- * time. Every question now demonstrates something, over at least four options.
+ * time. Every question now demonstrates something, over exactly four options —
+ * four fills the two-per-row grid, where a fifth sits alone on its own line.
  */
 const PLACEMENT = [
   {
@@ -117,7 +118,6 @@ const PLACEMENT = [
       { label: 'Fire', c: false },
       { label: 'Water', c: true },
       { label: 'Door', c: false },
-      { label: 'Night', c: false },
     ],
   },
   {
@@ -140,7 +140,6 @@ const PLACEMENT = [
       { label: 'Moon', c: false },
       { label: 'House', c: true },
       { label: 'Friend', c: false },
-      { label: 'Money', c: false },
     ],
   },
   {
@@ -152,7 +151,6 @@ const PLACEMENT = [
       { label: 'Water', c: true },
       { label: 'Night', c: false },
       { label: 'Rice', c: false },
-      { label: 'Cloth', c: false },
     ],
   },
   {
@@ -175,7 +173,6 @@ const PLACEMENT = [
       { label: 'Mother', c: true },
       { label: 'Sister', c: false },
       { label: 'Daughter', c: false },
-      { label: 'Aunt', c: false },
     ],
   },
 ];
