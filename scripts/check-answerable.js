@@ -124,7 +124,7 @@ function distinct(values) {
  * into thirteen named functions it would be strictly harder to read — the value
  * of this shape is seeing all the kinds side by side, which is how you notice a
  * kind is missing. The rule is right about tangled logic and wrong about
- * dispatch tables; see rule 159 in docs/ENGINEERING_STANDARDS.md.
+ * dispatch tables; see rule 160 in docs/ENGINEERING_STANDARDS.md.
  */
 // eslint-disable-next-line max-lines-per-function, complexity
 function check(ex, track) {

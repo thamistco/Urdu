@@ -227,96 +227,101 @@ Run everything: `npm run check:all`.
     errored, exited 0, and reported "clean" while padlocks sat on every locked
     lesson.
 99. 👁 Prefer one check that measures over three that assert.
-100. 👁 Fixtures are minimal and inline. No fixture files nobody can find.
+100. 👁 **A check may not claim more than it observed.** Failing to read the
+     thing and reading a thing that disagrees are different findings, and a
+     check that reports them with one message will eventually accuse a
+     healthy system. `check:deployed` announced that a perfectly good publish
+     was broken because a sandboxed network could not reach the site at all.
+101. 👁 Fixtures are minimal and inline. No fixture files nobody can find.
 
 ---
 
 ## 8. Accessibility
 
-101. 👁 Every interactive element has an `accessibilityRole`.
-102. 👁 Every icon-only control has an `accessibilityLabel` saying what it does,
+102. 👁 Every interactive element has an `accessibilityRole`.
+103. 👁 Every icon-only control has an `accessibilityLabel` saying what it does,
      not what it looks like.
-103. 🤖 Body text clears WCAG AA (4.5:1); decoration behind text clears 6:1.
+104. 🤖 Body text clears WCAG AA (4.5:1); decoration behind text clears 6:1.
      (`check:scenery`)
-104. 👁 Touch targets are at least 44×44pt.
-105. 👁 Colour is never the only signal. Correct/incorrect carry a mark and a
+105. 👁 Touch targets are at least 44×44pt.
+106. 👁 Colour is never the only signal. Correct/incorrect carry a mark and a
      word as well as a hue.
-106. 👁 `reducedMotion` is honoured everywhere an animation runs.
-107. 👁 Urdu text is marked so bidirectional layout resolves correctly — a
+107. 👁 `reducedMotion` is honoured everywhere an animation runs.
+108. 👁 Urdu text is marked so bidirectional layout resolves correctly — a
      leading neutral character otherwise jumps to the wrong end of the line.
-108. 👁 Font sizes come from the type scale; nothing sets a raw `fontSize` for
+109. 👁 Font sizes come from the type scale; nothing sets a raw `fontSize` for
      body copy.
-109. 👁 Focus order follows reading order.
-110. 👁 Nothing conveys meaning by sound alone; audio always has a visible
+110. 👁 Focus order follows reading order.
+111. 👁 Nothing conveys meaning by sound alone; audio always has a visible
      counterpart.
 
 ---
 
 ## 9. Performance
 
-111. 👁 Measure before optimising. "Feels slow" is a hypothesis.
-112. 👁 Big content tables are module-level constants, built once, not rebuilt
+112. 👁 Measure before optimising. "Feels slow" is a hypothesis.
+113. 👁 Big content tables are module-level constants, built once, not rebuilt
      per render.
-113. 👁 Filter and sort in `useMemo` when the input is large and the work is
+114. 👁 Filter and sort in `useMemo` when the input is large and the work is
      real.
-114. 👁 Lists that can grow unbounded are virtualised.
-115. 👁 Assets are generated at build time, not computed at runtime — glyph
+115. 👁 Lists that can grow unbounded are virtualised.
+116. 👁 Assets are generated at build time, not computed at runtime — glyph
      masks, sounds and voice clips are all pre-made.
-116. 👁 Audio clips are cached after first load and replayed, not recreated.
-117. 👁 No synchronous work over the whole vocabulary on a render path.
-118. 👁 Images and SVGs are sized to their display size.
-119. 👁 Avoid re-render cascades: subscribe to the narrowest store slice that
+117. 👁 Audio clips are cached after first load and replayed, not recreated.
+118. 👁 No synchronous work over the whole vocabulary on a render path.
+119. 👁 Images and SVGs are sized to their display size.
+120. 👁 Avoid re-render cascades: subscribe to the narrowest store slice that
      works.
-120. 👁 The web bundle is watched for size; a sudden jump gets explained before
+121. 👁 The web bundle is watched for size; a sudden jump gets explained before
      it ships.
 
 ---
 
 ## 10. Security
 
-121. 🤖 **No credentials in the repository, ever** — not in code, not in a
+122. 🤖 **No credentials in the repository, ever** — not in code, not in a
      comment, not in a fixture. (`check:secrets`)
-122. 👁 Secrets reach the app through environment variables and GitHub Actions
+123. 👁 Secrets reach the app through environment variables and GitHub Actions
      secrets only.
-123. 👁 A key that has ever been committed is compromised. Rotate it at the
+124. 👁 A key that has ever been committed is compromised. Rotate it at the
      provider; deleting it from the tree does not remove it from history.
-124. 🤖 The secret scanner self-tests against a canary, so it cannot silently
+125. 🤖 The secret scanner self-tests against a canary, so it cannot silently
      stop matching.
-125. 👁 `.gitignore` covers `.env`, local config, and generated audio.
-126. 👁 Validate anything that crosses a trust boundary, including data read back
+126. 👁 `.gitignore` covers `.env`, local config, and generated audio.
+127. 👁 Validate anything that crosses a trust boundary, including data read back
      out of local storage — a persisted blob from an older build is untrusted
      input.
-127. 👁 Least privilege: the CI token gets only the permissions the job needs.
-128. 👁 Dependencies are added deliberately and kept few. Every one is a supply
+128. 👁 Least privilege: the CI token gets only the permissions the job needs.
+129. 👁 Dependencies are added deliberately and kept few. Every one is a supply
      chain.
-129. 👁 No `eval`, no `Function` constructor, on any path that can see user
+130. 👁 No `eval`, no `Function` constructor, on any path that can see user
      input.
-130. 👁 Features that ship only for testing must be compiled out of production
+131. 👁 Features that ship only for testing must be compiled out of production
      builds by a build flag, not merely hidden. Anything in a web bundle is
      readable by anyone who opens dev tools.
-131. 👁 A destructive action always confirms, and the confirmation says what will
+132. 👁 A destructive action always confirms, and the confirmation says what will
      be lost and whether it can be undone.
-132. 👁 Never log a secret, a token, or a full user record.
+133. 👁 Never log a secret, a token, or a full user record.
 
 ---
 
 ## 11. Git workflow
 
-133. 👁 Never commit directly to the default branch.
-134. 👁 Branch names describe the work: `feature-…`, `fix-…`, `experiment-…`.
-135. 👁 One logical change per commit.
-136. 👁 Subject line in plain words, imperative or descriptive, no ticket-speak.
-137. 👁 The body says **why**, and names what broke if it is a fix.
-138. 👁 Mechanical changes — formatting sweeps, renames — go in their own commit
+134. 👁 Never commit directly to the default branch.
+135. 👁 Branch names describe the work: `feature-…`, `fix-…`, `experiment-…`.
+136. 👁 One logical change per commit.
+137. 👁 Subject line in plain words, imperative or descriptive, no ticket-speak.
+138. 👁 The body says **why**, and names what broke if it is a fix.
+139. 👁 Mechanical changes — formatting sweeps, renames — go in their own commit
      so they do not bury the reasoning in a real one.
-139. 🤖 `npm run check:all` passes before pushing.
-140. 👁 Never force-push a branch someone else may have pulled.
-141. 👁 Delete branches once merged.
-142. 👁 A merged pull request is finished; follow-up work starts a new branch
+140. 🤖 `npm run check:all` passes before pushing.
+141. 👁 Never force-push a branch someone else may have pulled.
+142. 👁 Delete branches once merged.
+143. 👁 A merged pull request is finished; follow-up work starts a new branch
      from the updated default branch.
-143. 👁 Generated artefacts are not committed unless they are what ships. Voice
+144. 👁 Generated artefacts are not committed unless they are what ships. Voice
      clips are; `dist/` is not.
-144. 🤖 A file that ships must be tracked by git, not merely present on disk.
+145. 🤖 A file that ships must be tracked by git, not merely present on disk.
      One voice clip was generated locally and never added, and the deployed app
      spoke that word in the wrong language for a day. (`check:voice`)
 
@@ -324,68 +329,68 @@ Run everything: `npm run check:all`.
 
 ## 12. CI and deployment
 
-145. 🤖 Every claim the README makes has a script that fails when it stops being
+146. 🤖 Every claim the README makes has a script that fails when it stops being
      true.
-146. 🤖 CI runs the checks *before* it builds and deploys, so a broken push fails
+147. 🤖 CI runs the checks *before* it builds and deploys, so a broken push fails
      loudly rather than publishing.
-147. 🤖 `check:all` reads its step list from the workflow file rather than
+148. 🤖 `check:all` reads its step list from the workflow file rather than
      copying it, so the local and CI pipelines cannot drift.
-148. 🤖 Local builds and CI builds are the same artifact, configured by the same
+149. 🤖 Local builds and CI builds are the same artifact, configured by the same
      environment variables.
-149. 🤖 **A green pipeline is not a deploy.** The live URL is fetched and asserted
+150. 🤖 **A green pipeline is not a deploy.** The live URL is fetched and asserted
      to be serving the built commit. (`check:deployed`)
-150. 👁 Never report something as live without having checked. "The workflow said
+151. 👁 Never report something as live without having checked. "The workflow said
      success" has been wrong twice.
-151. 👁 A check that fails must say what is wrong, where, and what to do — not
+152. 👁 A check that fails must say what is wrong, where, and what to do — not
      just that something is wrong.
-152. 👁 Error messages name the *cause* where they can distinguish it. "Could not
+153. 👁 Error messages name the *cause* where they can distinguish it. "Could not
      find the background SVG" was the symptom of a bundle that never loaded.
-153. 👁 CI steps are named for what they protect, not for the command they run.
+154. 👁 CI steps are named for what they protect, not for the command they run.
 
 ---
 
 ## 13. Working with AI agents
 
-154. 👁 The agent reads `CLAUDE.md`, which points here. Keep both current.
-155. 👁 Give the agent the rule *and its reason*; a reason survives paraphrase,
+155. 👁 The agent reads `CLAUDE.md`, which points here. Keep both current.
+156. 👁 Give the agent the rule *and its reason*; a reason survives paraphrase,
      a rule alone does not.
-156. 👁 An agent must run `npm run check:all` before claiming work is done.
-157. 👁 An agent must not claim a deploy succeeded without reading the run status.
-158. 👁 An agent that writes a check must break the thing on purpose and watch it
+157. 👁 An agent must run `npm run check:all` before claiming work is done.
+158. 👁 An agent must not claim a deploy succeeded without reading the run status.
+159. 👁 An agent that writes a check must break the thing on purpose and watch it
      fail before trusting it.
-159. 👁 An agent must not silence a linter to make a build pass. Fix the code or
+160. 👁 An agent must not silence a linter to make a build pass. Fix the code or
      say why the rule is wrong.
-160. 👁 An agent must report what it did not do, and why, as plainly as what it
+161. 👁 An agent must report what it did not do, and why, as plainly as what it
      did.
-161. 👁 Generated code is held to every rule here. "The AI wrote it" is not a
+162. 👁 Generated code is held to every rule here. "The AI wrote it" is not a
      category of code.
-162. 👁 When an agent is uncertain between two readings of a request, it says so
+163. 👁 When an agent is uncertain between two readings of a request, it says so
      and picks one, rather than silently narrowing scope.
-163. 👁 Prefer many small verified steps to one large unverified one.
+164. 👁 Prefer many small verified steps to one large unverified one.
 
 ---
 
 ## 14. Code review
 
-164. 👁 Review the diff against this document, not against taste.
-165. 👁 Ask whether the change makes the *next* change easier.
-166. 👁 A comment claiming a property is not evidence of the property. Look for
+165. 👁 Review the diff against this document, not against taste.
+166. 👁 Ask whether the change makes the *next* change easier.
+167. 👁 A comment claiming a property is not evidence of the property. Look for
      the check.
-167. 👁 New magic numbers, new raw hex, and new duplication are blocking.
-168. 👁 A fix without a test that would have caught it is incomplete.
-169. 👁 If the diff is unreviewable because a formatting sweep is mixed in, ask
+168. 👁 New magic numbers, new raw hex, and new duplication are blocking.
+169. 👁 A fix without a test that would have caught it is incomplete.
+170. 👁 If the diff is unreviewable because a formatting sweep is mixed in, ask
      for it to be split.
-170. 👁 Approve the change you would be willing to debug at 3am.
+171. 👁 Approve the change you would be willing to debug at 3am.
 
 ---
 
 ## 15. The reader test
 
-171. 👁 Before calling anything done: would someone new, opening this file, know
+172. 👁 Before calling anything done: would someone new, opening this file, know
      what it does and why it is shaped that way?
-172. 👁 If explaining a piece out loud makes you hesitate, the code is the
+173. 👁 If explaining a piece out loud makes you hesitate, the code is the
      problem, not the explanation.
-173. 👁 Read the diff once as a stranger before pushing.
+174. 👁 Read the diff once as a stranger before pushing.
 
 ---
 
@@ -396,18 +401,18 @@ deploy-shaped build.
 
 | Command | Rules |
 | --- | --- |
-| `check:secrets` | 121, 124 |
+| `check:secrets` | 122, 125 |
 | `typecheck` | 32, 33 |
 | `lint` | 13, 34, 46, 47 (13 on `lib/` and `scripts/`, where logic lives) |
 | `format:check` | 62 |
 | `check:structure` | 20, 21, 71 |
 | `test` | 87 |
 | `audit` | 78, 83, 86 |
-| `check:roman`, `check:trace`, `check:answerable`, `check:srs` | 145 |
+| `check:roman`, `check:trace`, `check:answerable`, `check:srs` | 146 |
 | `check:theme` | 24, 58 |
-| `check:voice` | 144, 145 |
-| `check:stability`, `check:scenery` | 96, 103 |
-| `check:deployed` | 149 |
+| `check:voice` | 145, 146 |
+| `check:stability`, `check:scenery` | 96, 104 |
+| `check:deployed` | 150 |
 
 Everything else is a reviewer's job, and the honest count is that most of this
 document is 👁. That is not a failure of the document — it is what it means to
