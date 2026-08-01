@@ -98,49 +98,58 @@ export const palette = {
   accentTeal: '#6FB3B0',
 
   /**
-   * The scenery: a landscape after Edward Hopper.
+   * The scenery: a landscape after Caspar David Friedrich.
    *
-   * Hopper's language is hard-edged planes of flat colour, big simple masses,
-   * raking light, and one warm accent doing all the emotional work. What he is
-   * usually remembered for — high, bright daylight on a white clapboard wall —
-   * is the one thing this cannot have. The scenery sits behind body text on
-   * every screen and is held to 6:1 against it, which caps any colour here at a
-   * relative luminance of 0.1016. A sunlit white is 0.76. It is not a matter of
-   * taste; the arithmetic forbids it.
+   * The method is aerial perspective and nothing else. Depth here is not drawn,
+   * it is *dissolved*: each ridge is lighter and cooler than the one in front of
+   * it because more air stands between it and the eye, and mist lies in every
+   * gap. Only the nearest silhouette is solid; everything behind it is on its
+   * way to becoming sky.
    *
-   * So this is his *other* register — the late, low light of the road and rail
-   * paintings, where the sky has gone slate and one band near the horizon is
-   * still warm. The compositional grammar is intact; only the key is lowered.
+   * This replaced a Hopper landscape of hard-edged flat planes. The two are
+   * opposite instincts — Hopper draws the edge where light stops, Friedrich
+   * dissolves it — and it is worth being plain that the softness is the whole
+   * point rather than a lack of definition.
    *
-   * Every value below was measured, not chosen. Contrast against `paper`:
-   * slate 12.66, mid 11.19, low 9.84, warm 6.17, cloud lit 6.55, cloud shade
-   * 10.50, land 12.62 / 14.55 / 16.13. The lit cloud face is 2.43x the
-   * luminance of the shadow face, which is what makes a flat shape read as a
-   * solid lit from one side rather than as two greys.
+   * The same ceiling applies as ever: this sits behind body text at 6:1, so no
+   * colour here may exceed a relative luminance of 0.1016. That is what stops
+   * the luminous band being genuinely luminous — Friedrich's skies open onto
+   * white, and white is 1.0. The band is the brightest thing the arithmetic
+   * allows and everything else is pitched below it, which turns out to be
+   * enough, because what reads as light is the *interval* between the band and
+   * the dark it sits above, not the absolute value.
+   *
+   * Measured against `paper`: high 13.38, mid 8.95, pale 7.64, warm 6.40,
+   * ridges 8.47 / 10.76 / 13.20, foreground 16.63.
    */
-  skySlate: '#242A28',
-  skyMid: '#2E332C',
-  skyLow: '#3E3A2E',
-  /** The one warm note, low down. Everything else defers to it. */
-  skyWarm: '#7A4E28',
+  skyHigh: '#1D2530',
+  skyMid: '#39414B',
+  /** The luminous band above the horizon — the brightest tone permitted. */
+  skyPale: '#434A52',
+  /** One faint warm note inside the glow, so it reads as light and not as haze. */
+  skyWarm: '#66523F',
 
   /**
-   * Cloud, in two flat tones — a sunlit face and a shadowed one.
+   * Mist.
    *
-   * These are drawn **opaque**, which reverses the rule the soft scenery lived
-   * by: "nothing in the air has a hard edge". That rule existed because
-   * semi-transparent shapes show their own outline over a gradient, and two
-   * overlapping at alpha a composite to 2a-a², leaving a visible seam. Opaque
-   * shapes of the same colour have neither problem — they simply union. The
-   * old rule was a workaround for alpha, not a law about clouds.
+   * Deliberately far too bright to use at full strength — it exists only to be
+   * laid over the ridges at low alpha, and the composite is what the contrast
+   * check measures. Each gap gets exactly *one* band: two soft shapes at alpha
+   * `a` compose to about `2a - a²`, and stacking them is what once put the
+   * scenery under the WCAG floor while every individual value looked safe.
    */
-  cloudLit: '#4F5743',
-  cloudShade: '#31382C',
+  mist: '#9FB0BC',
 
-  /** Ground, in three flat planes, each darker than the one behind it. */
-  landFar: '#252B1C',
-  landMid: '#1A1F14',
-  landNear: '#10140C',
+  /**
+   * The ridges, far to near. Lighter with distance, which is the reverse of
+   * what looks right until you see it: the far hills are pale because there is
+   * more air in front of them, not because they are lit.
+   */
+  ridgeFar: '#3A4550',
+  ridgeMid: '#2C3540',
+  ridgeNear: '#1F2630',
+  /** The foreground silhouette — the one solid, unresolved shape. */
+  foreground: '#0C0F14',
 } as const;
 
 /** Opacity-tinted helpers for RN (no `/opacity` shorthand at runtime). */
