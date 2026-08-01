@@ -22,6 +22,37 @@ function ridge(baseY: number, lift: number, skew: number): string {
 }
 
 /**
+ * A row of firs standing on a ridge.
+ *
+ * Friedrich's foregrounds are almost always a stand of spruce or fir in
+ * silhouette, and they are the one thing in his pictures with a crisp edge —
+ * everything behind them is dissolving, which is exactly what makes them read
+ * as *near*. So these are drawn opaque and in the ridge's own colour: same
+ * colour means they union with the ridge rather than sitting on it as a
+ * separate band, and opaque means no seam where two trees overlap.
+ *
+ * `spread` is how far apart they stand and `h` how tall; both shrink with
+ * distance, which is the only perspective cue they need.
+ */
+function firs(baseY: number, h: number, spread: number, seed: number, sag: number): string {
+  const parts: string[] = [`M0,${baseY + h}`];
+  for (let x = -spread / 2; x < 400 + spread; x += spread) {
+    // A little variation in height and lean, or a row of identical triangles
+    // reads as a fence rather than as trees.
+    const n = Math.abs(Math.sin(x * 0.021 + seed));
+    const top = baseY - h * (0.55 + n * 0.75);
+    const half = spread * (0.34 + n * 0.16);
+    // The ridge it stands on is curved, so the feet follow that curve.
+    const foot = baseY + Math.sin((x / 400) * Math.PI) * -sag;
+    parts.push(`L${(x - half).toFixed(1)},${foot.toFixed(1)}`);
+    parts.push(`L${x.toFixed(1)},${top.toFixed(1)}`);
+    parts.push(`L${(x + half).toFixed(1)},${foot.toFixed(1)}`);
+  }
+  parts.push(`L400,900 L0,900 Z`);
+  return parts.join(' ');
+}
+
+/**
  * The scenery behind every screen: a landscape after Caspar David Friedrich.
  *
  * ## The method
@@ -76,7 +107,7 @@ export function LatticeBackground({ opacity = 1 }: { opacity?: number }) {
               almost always occluded, and a visible disc would make the picture
               about the sun rather than about the air. */}
           <RadialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
-            <Stop offset="0" stopColor={withAlpha(palette.skyWarm, 0.34)} />
+            <Stop offset="0" stopColor={withAlpha(palette.skyWarm, 0.3)} />
             <Stop offset="0.5" stopColor={withAlpha(palette.skyWarm, 0.14)} />
             <Stop offset="1" stopColor={withAlpha(palette.skyWarm, 0)} />
           </RadialGradient>
@@ -84,8 +115,8 @@ export function LatticeBackground({ opacity = 1 }: { opacity?: number }) {
           {/* Mist. Reaches zero alpha at the rim in every direction, so it has
               no edge of its own to show against the gradient behind it. */}
           <RadialGradient id="mist" cx="0.5" cy="0.5" r="0.5">
-            <Stop offset="0" stopColor={withAlpha(palette.mist, 0.2)} />
-            <Stop offset="0.5" stopColor={withAlpha(palette.mist, 0.09)} />
+            <Stop offset="0" stopColor={withAlpha(palette.mist, 0.14)} />
+            <Stop offset="0.5" stopColor={withAlpha(palette.mist, 0.06)} />
             <Stop offset="1" stopColor={withAlpha(palette.mist, 0)} />
           </RadialGradient>
           <RadialGradient id="mistThin" cx="0.5" cy="0.5" r="0.5">
@@ -111,16 +142,24 @@ export function LatticeBackground({ opacity = 1 }: { opacity?: number }) {
         <Ellipse cx="150" cy="566" rx="300" ry="34" fill="url(#mist)" />
 
         <Path d={ridge(636, 58, 90)} fill={palette.ridgeMid} />
+        {/* The furthest trees: small, close-packed, barely more than a texture
+            on the ridge — which is all a distant treeline ever is. */}
+        <Path d={firs(628, 15, 15, 1.7, 22)} fill={palette.ridgeMid} />
         <Ellipse cx="260" cy="644" rx="320" ry="38" fill="url(#mist)" />
 
         <Path d={ridge(716, 50, -40)} fill={palette.ridgeNear} />
+        <Path d={firs(708, 26, 24, 4.1, 18)} fill={palette.ridgeNear} />
         <Ellipse cx="140" cy="726" rx="300" ry="34" fill="url(#mistThin)" />
 
         {/* The foreground: one solid, unresolved silhouette. Friedrich puts a
             near-black repoussoir at the bottom of almost every landscape, and it
             is what gives the pale distance something to be distant *from*. */}
         <Path d={ridge(806, 42, 120)} fill={palette.foreground} />
-        <Ellipse cx="300" cy="812" rx="260" ry="26" fill="url(#mistThin)" />
+        {/* The near stand. Tall, well spaced, individually readable — the only
+            crisp thing in the picture, and what everything behind it is soft
+            *relative to*. */}
+        <Path d={firs(798, 54, 42, 0.4, 14)} fill={palette.foreground} />
+        <Ellipse cx="300" cy="826" rx="260" ry="24" fill="url(#mistThin)" />
       </Svg>
     </View>
   );
