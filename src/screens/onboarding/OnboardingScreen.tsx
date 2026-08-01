@@ -4,6 +4,7 @@ import { Screen } from '../../components/Screen';
 import { Button } from '../../components/Button';
 import { Reveal } from '../../components/Reveal';
 import { GeoDivider } from '../../components/GeoDivider';
+import { Wordmark } from '../../components/Wordmark';
 import { Display, Heading, Txt, Bold, Eyebrow, Urdu, urduGlyph } from '../../components/Text';
 import { GoalArt, Illustration } from '../../components/Illustration';
 import type { IconName } from '../../art/icons';
@@ -304,8 +305,7 @@ export function OnboardingScreen() {
       <Screen scroll={false}>
         <Reveal style={{ flex: 1 }}>
           <View className="flex-1 items-center justify-center">
-            <Urdu style={{ color: palette.gold, ...urduGlyph(76) }}>حرف</Urdu>
-            <Display className="mb-3 text-4xl">Harf</Display>
+            <Wordmark size={76} />
             <GeoDivider />
             <Txt className="mb-10 max-w-[280px] text-center text-[15px] leading-6 text-paper/70">
               Learn to read Urdu the way it's really written: every letter in all four of its faces. A few quick

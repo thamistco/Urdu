@@ -158,6 +158,44 @@ export const palette = {
   ridgeNear: '#252819',
   /** The foreground silhouette — the one solid, unresolved shape. */
   foreground: '#171A10',
+
+  /**
+   * The sun catching an edge — rim light on the skylines and treetops.
+   *
+   * The light source in the scene is a low warm sun, so the edges it rims are
+   * warm: an ember orange rather than the tube colour of a sign. This is the
+   * brightest such orange the scenery's ceiling permits, measured at 6.41:1
+   * against `paper` — warm hues are expensive here, because luminance is
+   * 0.2126R + 0.7152G + 0.0722B and orange spends heavily on red and green.
+   *
+   * An earlier pass lit these edges in electric blue, on the reasoning that
+   * blue is the only hue that survives the cap at full intensity. True, and
+   * beside the point: it made the landscape itself look like signage. Neon
+   * belongs on the name, where it is a made object; the land is lit by the sun
+   * that is in the picture.
+   */
+  rimLight: '#9B3408',
+
+  /**
+   * The sign. Only the wordmark is neon — nothing else in the app is.
+   *
+   * A real tube is not one colour, it is two: an almost-white core where the
+   * gas is hottest, and the tube's own hue blooming out around it. Rendering
+   * only the hue gives flat coloured text; rendering only the core gives white
+   * text with a halo. Both, layered, is what reads as neon.
+   *
+   * The split also settles legibility, which a coloured wordmark usually loses.
+   * The magenta carries 5.07:1 against `ink` — fine for glow, thin for reading —
+   * while the core carries 15.97:1 and is the part the eye actually resolves. So
+   * the sign can be as saturated as it likes without the name getting harder to
+   * read, because the saturation is all in the bloom.
+   *
+   * Note these are *foreground* colours and so are not bound by the scenery's
+   * 0.1044 ceiling, which applies only to what sits behind body text. The
+   * constraint here runs the other way: they need to be bright.
+   */
+  neon: '#FF2D95',
+  neonCore: '#FFF0FA',
 } as const;
 
 /** Opacity-tinted helpers for RN (no `/opacity` shorthand at runtime). */
