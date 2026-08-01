@@ -63,18 +63,18 @@ module.exports = {
         },
         // The scenery, after Friedrich — aerial perspective, dissolving depth.
         sky: {
-          high: '#1D2530',
-          mid: '#39414B',
-          pale: '#434A52',
-          warm: '#66523F',
+          high: '#2A2119',
+          mid: '#4A3722',
+          pale: '#66492B',
+          warm: '#7E5324',
         },
-        mist: '#9FB0BC',
+        mist: '#C8B79E',
         ridge: {
-          far: '#3A4550',
-          mid: '#2C3540',
-          near: '#1F2630',
+          far: '#414433',
+          mid: '#333628',
+          near: '#252819',
         },
-        foreground: '#0C0F14',
+        foreground: '#171A10',
         // Which-one-is-it accents: stages, units. No meaning of their own.
         accent: {
           amber: '#FFC72C',

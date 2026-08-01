@@ -119,15 +119,23 @@ export const palette = {
    * enough, because what reads as light is the *interval* between the band and
    * the dark it sits above, not the absolute value.
    *
-   * Measured against `paper`: high 13.38, mid 8.95, pale 7.64, warm 6.40,
-   * ridges 8.47 / 10.76 / 13.20, foreground 16.63.
+   * Warm, because the rest of the app is. An earlier pass rendered this in
+   * Friedrich's own cold blue-grey, which was faithful to him and made the
+   * scenery the only cool thing in a warm product — the orange lesson markers
+   * sang against it and nothing else agreed with it. The method is his; the
+   * key is the app's own dusk.
+   *
+   * Measured against `paper`: high 13.68, mid 9.78, pale 7.13, ridges 8.66 /
+   * 10.71 / 13.03, foreground 15.26. `skyWarm` is 5.77 at full strength and is
+   * never drawn at full strength — it exists only inside the glow gradient, so
+   * what matters is the composite, which check:scenery measures.
    */
-  skyHigh: '#1D2530',
-  skyMid: '#39414B',
+  skyHigh: '#2A2119',
+  skyMid: '#4A3722',
   /** The luminous band above the horizon — the brightest tone permitted. */
-  skyPale: '#434A52',
+  skyPale: '#66492B',
   /** One faint warm note inside the glow, so it reads as light and not as haze. */
-  skyWarm: '#66523F',
+  skyWarm: '#7E5324',
 
   /**
    * Mist.
@@ -138,18 +146,18 @@ export const palette = {
    * `a` compose to about `2a - a²`, and stacking them is what once put the
    * scenery under the WCAG floor while every individual value looked safe.
    */
-  mist: '#9FB0BC',
+  mist: '#C8B79E',
 
   /**
    * The ridges, far to near. Lighter with distance, which is the reverse of
    * what looks right until you see it: the far hills are pale because there is
    * more air in front of them, not because they are lit.
    */
-  ridgeFar: '#3A4550',
-  ridgeMid: '#2C3540',
-  ridgeNear: '#1F2630',
+  ridgeFar: '#414433',
+  ridgeMid: '#333628',
+  ridgeNear: '#252819',
   /** The foreground silhouette — the one solid, unresolved shape. */
-  foreground: '#0C0F14',
+  foreground: '#171A10',
 } as const;
 
 /** Opacity-tinted helpers for RN (no `/opacity` shorthand at runtime). */
