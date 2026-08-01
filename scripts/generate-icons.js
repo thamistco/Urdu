@@ -106,32 +106,12 @@ function chromePath() {
 }
 
 const INK = '#211712'; // the app's background; the splash sits on it
-
-/**
- * Comic-book palette.
- *
- * The rules of the style are not decoration, they are what makes it legible:
- * flat areas of saturated colour, a heavy black keyline around every shape, a
- * hard offset shadow instead of a soft one, and halftone dots where a printer
- * would have laid them.
- *
- * The keyline is doing the work the previous version asked the *fill* to do.
- * That version measured its contrast as letter-against-orange, which forced the
- * letter to be near-black — a bright ground and a dark letter, handsome but
- * quiet. With a black outline the figure/ground separation is
- * outline-against-everything, ~15:1 both ways, so the fill is free to be the
- * light note again. That is why comics can put a yellow shape on an orange sky
- * and have it read from across a room.
- */
-const LINE = '#1A0F09'; // the keyline: every edge in the picture
-const LETTER = '#FFD98A'; // the letter itself, flat gold
-const LETTER_SHADE = '#F0A93C'; // its lower half, one hard tonal step
-const SUN = '#FFF6EA';
-const GROUND = '#F2761C'; // flat, saturated — the base plate
-const BURST = '#FF9A44'; // the lighter wedges radiating out of it
-const DOTS = '#D2540E'; // halftone, printed over the ground
+const LETTER = '#2A1208'; // the letter: near-black, the darkest note
+const SUN = '#FFF6EA'; // the disc in its bowl, the one light note
+const GROUND_LIGHT = '#FF9A50';
+const GROUND_DEEP = '#F0741F';
 /** Android flattens the adaptive icon's background to a single colour. */
-const GROUND_FLAT = '#F2761C';
+const GROUND_FLAT = '#F98038';
 
 /**
  * One icon as SVG.
@@ -140,79 +120,27 @@ const GROUND_FLAT = '#F2761C';
  * which crops to a shape covering roughly the central two thirds — anything
  * outside that is not guaranteed to survive on every launcher.
  */
-/** A radiating burst: alternate wedges from the middle, comic-book sunburst. */
-function burstWedges(cx, cy, count = 20, reach = 1600) {
-  const wedges = [];
-  const step = (Math.PI * 2) / count;
-  for (let i = 0; i < count; i += 2) {
-    const a0 = i * step;
-    const a1 = (i + 1) * step;
-    const p = (a) => `${(cx + Math.cos(a) * reach).toFixed(1)},${(cy + Math.sin(a) * reach).toFixed(1)}`;
-    wedges.push(`<polygon points="${cx},${cy} ${p(a0)} ${p(a1)}" fill="${BURST}"/>`);
-  }
-  return wedges.join('\n    ');
-}
-
 function iconSvg({ size, transparent = false, inset = 1 }) {
   const s = 1024;
   const c = s / 2;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${s} ${s}">
   <defs>
-    <!-- Ben-Day dots. The cell is deliberately large: at 1024 these are a
-         texture, at 256 they are still visible, and below that they average
-         into a slightly deeper orange rather than turning to mush. A 12px cell
-         would have been more faithful to a printed comic and invisible
-         everywhere the icon is actually seen. -->
-    <pattern id="halftone" width="52" height="52" patternUnits="userSpaceOnUse">
-      <circle cx="13" cy="13" r="11" fill="${DOTS}"/>
-      <circle cx="39" cy="39" r="11" fill="${DOTS}"/>
-    </pattern>
-    <!-- The dots fade out toward the middle so they never fight the letter.
-         An SVG mask keys on *luminance*: white shows, black hides. The first
-         version ramped stop-opacity on black, which is black either way, so it
-         hid the dots everywhere — and a texture that is invisible is not a
-         subtle texture, it is an absent one. White at the rim, black in the
-         middle. -->
-    <radialGradient id="dotFade" cx="0.5" cy="0.52" r="0.66">
-      <stop offset="0" stop-color="#000"/>
-      <stop offset="0.45" stop-color="#000"/>
-      <stop offset="0.9" stop-color="#fff"/>
-    </radialGradient>
-    <mask id="dotMask">
-      <rect width="${s}" height="${s}" fill="url(#dotFade)"/>
-    </mask>
+    <!-- Light at the top-left, deep at the bottom-right, and orange throughout.
+         It never leaves the hue, so it reads as a sheen across a bright tile
+         rather than as a tile going dark at the edges. -->
+    <linearGradient id="ground" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="${GROUND_LIGHT}"/>
+      <stop offset="1" stop-color="${GROUND_DEEP}"/>
+    </linearGradient>
   </defs>
-  ${
-    transparent
-      ? ''
-      : `<rect width="${s}" height="${s}" fill="${GROUND}"/>
-  <g opacity="0.85">
-    ${burstWedges(c, 540)}
-  </g>
-  <rect width="${s}" height="${s}" fill="url(#halftone)" mask="url(#dotMask)" opacity="0.9"/>`
-  }
+  ${transparent ? '' : `<rect width="${s}" height="${s}" fill="url(#ground)"/>`}
   <g transform="translate(${c} ${c}) scale(${inset}) translate(${-c} ${-c})">
-    <!-- The sun, keylined like everything else. -->
-    <circle cx="470" cy="625" r="104" fill="${LINE}"/>
-    <circle cx="470" cy="625" r="92" fill="${SUN}"/>
-
-    <!-- The letter, three passes: a hard offset shadow, the keyline, the fill.
-         Offset down-right rather than blurred — a comic's shadow is a shape,
-         not a gradient, and a blur here would also fight the system's own
-         lighting on iOS. -->
-    <text x="530" y="732" text-anchor="middle" font-family="Nastaliq" font-size="820"
-          fill="${LINE}" stroke="${LINE}" stroke-width="64" stroke-linejoin="round"
-          opacity="0.32">ح</text>
+    <circle cx="470" cy="625" r="100" fill="${SUN}"/>
+    <!-- The stroke is the same colour as the fill: not an outline, a way of
+         thickening the hairlines an ornate script leaves behind at icon sizes.
+         See the note above for the measurement that set it. -->
     <text x="512" y="714" text-anchor="middle" font-family="Nastaliq" font-size="820"
-          fill="${LINE}" stroke="${LINE}" stroke-width="62" stroke-linejoin="round">ح</text>
-    <text x="512" y="714" text-anchor="middle" font-family="Nastaliq" font-size="820"
-          fill="${LETTER}" stroke="${LETTER}" stroke-width="14" stroke-linejoin="round">ح</text>
-    <!-- One hard tonal step across the lower half, clipped to the letter: cel
-         shading, the comic-book substitute for a gradient. -->
-    <clipPath id="letterClip">
-      <text x="512" y="714" text-anchor="middle" font-family="Nastaliq" font-size="820">ح</text>
-    </clipPath>
-    <rect x="0" y="640" width="${s}" height="${s}" fill="${LETTER_SHADE}" clip-path="url(#letterClip)"/>
+          fill="${LETTER}" stroke="${LETTER}" stroke-width="16" stroke-linejoin="round">ح</text>
   </g>
 </svg>`;
 }
