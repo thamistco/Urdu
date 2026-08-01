@@ -4,6 +4,7 @@ export { Card } from './Card';
 export { ProgressBar } from './ProgressBar';
 export { LatticeBackground } from './LatticeBackground';
 export { GeoDivider } from './GeoDivider';
+export { Wordmark } from './Wordmark';
 export { Confetti } from './Confetti';
 export { Reveal } from './Reveal';
 export { StatChip, StatBar, Hearts } from './Stats';
