@@ -5,6 +5,7 @@ import { Urdu, Txt, Bold, Eyebrow, urduLine } from '../components/Text';
 import { Button } from '../components/Button';
 import { feedback } from '../lib/feedback';
 import { announce } from '../lib/speech';
+import { withRegister } from '../data/sentences';
 import type { ExerciseProps, Exercise } from './types';
 
 type DialogueEx = Extract<Exercise, { kind: 'dialogue' }>;
@@ -87,7 +88,7 @@ export function DialogueExercise({ exercise, track, showRoman, locked, onGraded 
                 )}
                 {stage === 'answer' ? (
                   <Txt style={{ color: palette.ink }} className="mt-1 text-xs leading-4 opacity-75">
-                    {l.meaning}
+                    {withRegister(l.meaning, l.urdu)}
                   </Txt>
                 ) : null}
                 <View className={`mt-2 flex-row ${isA ? 'justify-start' : 'justify-end'}`}>

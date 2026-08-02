@@ -5,6 +5,7 @@ import { Urdu, Txt, Bold, Eyebrow, urduLine } from '../components/Text';
 import { Button } from '../components/Button';
 import { feedback } from '../lib/feedback';
 import { announce } from '../lib/speech';
+import { withRegister } from '../data/sentences';
 import type { ExerciseProps, Exercise } from './types';
 
 type BuildEx = Extract<Exercise, { kind: 'sentenceBuild' }>;
@@ -61,7 +62,11 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
       <Question>Build the sentence</Question>
       <View className="mb-4 items-center rounded-2xl bg-parchment px-5 py-4">
         <Txt style={{ color: palette.ink }} className="text-center text-[15px] font-semibold">
-          {sentence.meaning}
+          {/* تم (casual) and آپ (polite) both mean "you", and a learner has no
+              way to tell them apart from the English alone — the distinction
+              was explained once, in the pronouns grammar concept, and never
+              attached to an actual sentence that used it. */}
+          {withRegister(sentence.meaning, sentence.words)}
         </Txt>
         {/* The transliteration is the answer spelled out, so it is held back
             until the sentence has been attempted. */}
@@ -203,7 +208,7 @@ export function ReadingExercise({ exercise, track, showRoman, locked, onGraded }
               )}
               {stage === 'answer' ? (
                 <Txt style={{ color: palette.ink }} className="mt-1 text-xs leading-4 opacity-70">
-                  {l.meaning}
+                  {withRegister(l.meaning, l.urdu)}
                 </Txt>
               ) : null}
             </View>
