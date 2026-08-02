@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Pressable } from 'react-native';
-import { Choice, PromptCard, Question, palette, withAlpha } from './common';
+import { Choice, PromptCard, Question, SpeakerButton, palette, withAlpha } from './common';
 import { Txt, Bold } from '../components/Text';
 import { Lexeme } from '../components/Lexeme';
 import { WordArt, Illustration, pictureIdentifies } from '../components/Illustration';
@@ -97,8 +97,15 @@ export function MeaningPickExercise({ exercise, track, locked, onGraded }: Exerc
   const fs = len > 16 ? 26 : len > 9 ? 36 : 56;
   return (
     <View>
+      {/* The word was shown, not spoken — every other reading exercise offers
+          a way to hear the thing on screen, and this was the one that did not.
+          Safe to show before answering: hearing the pronunciation does not
+          leak which option is the meaning. */}
       <PromptCard height={len > 9 ? 170 : 150}>
         <Lexeme urdu={word.urdu} roman={word.roman} track={track} size={fs} color={palette.ink} />
+        <View className="mt-3">
+          <SpeakerButton onPress={() => announce(word.id, word.urdu, word.roman)} label={`Hear ${word.roman}`} />
+        </View>
       </PromptCard>
       <View className="h-4" />
       <Question>What does it mean?</Question>
