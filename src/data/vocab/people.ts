@@ -3,7 +3,7 @@ import { pack, type TopicPack } from './types';
 /** People: relatives, describing others, relationships, life events. */
 export const PEOPLE_PACKS: TopicPack[] = [
   pack(
-    { id: 'family-more', title: 'More Family', icon: '👪', blurb: 'Uncles, aunts, cousins and in-laws.', level: 'elementary' },
+    { id: 'family-more', title: 'More Family', icon: '👪', blurb: 'Uncles, aunts, cousins and in-laws.', level: 'beginner' },
     [
       ['w-chacha', 'چچا', 'chacha', "father's brother", '👨‍🦱'],
       ['w-mamu', 'ماموں', 'maamooñ', "mother's brother", '🧔'],
@@ -77,7 +77,6 @@ export const PEOPLE_PACKS: TopicPack[] = [
       ['w-aadat', 'عادت', 'aadat', 'habit', '🔁'],
       ['w-akhlaaq', 'اخلاق', 'akhlaaq', 'manners / ethics', '🎩'],
       ['w-sharmeela', 'شرمیلا', 'sharmeela', 'shy', '🙈'],
-      ['w-pursukoon', 'پرسکون', 'pursukoon', 'calm', '🧘'],
     ]
   ),
   pack(
@@ -97,7 +96,6 @@ export const PEOPLE_PACKS: TopicPack[] = [
       ['w-wafa', 'وفا', 'wafa', 'loyalty', '🩵'],
       ['w-ikhtilaaf', 'اختلاف', 'ikhtilaaf', 'disagreement', '↔️'],
       ['w-sulah', 'صلح', 'sulah', 'reconciliation', '🕊️'],
-      ['w-madad', 'مدد', 'madad', 'help', '🆘'],
       ['w-mashwara', 'مشورہ', 'mashwara', 'advice', '💡'],
       ['w-waada', 'وعدہ', 'waada', 'promise', '🤞'],
       ['w-raaz', 'راز', 'raaz', 'secret', '🤐'],
@@ -109,7 +107,6 @@ export const PEOPLE_PACKS: TopicPack[] = [
     { id: 'lifeevents', title: 'Life Events', icon: '🎉', blurb: 'Birth, growing up, milestones.', level: 'advanced' },
     [
       ['w-paidaish', 'پیدائش', 'paidaaish', 'birth', '👶'],
-      ['w-salgirah', 'سالگرہ', 'saalgirah', 'birthday', '🎂'],
       ['w-bachpan', 'بچپن', 'bachpan', 'childhood', '🧸'],
       ['w-jawaani', 'جوانی', 'jawaani', 'youth', '🌱'],
       ['w-burhaapa', 'بڑھاپا', 'buṛhaapa', 'old age', '🌾'],
@@ -124,7 +121,6 @@ export const PEOPLE_PACKS: TopicPack[] = [
       ['w-koshish', 'کوشش', 'koshish', 'effort / attempt', '🧗'],
       ['w-mustaqbil', 'مستقبل', 'mustaqbil', 'future', '🔮'],
       ['w-maazi', 'ماضی', 'maazi', 'past', '📜'],
-      ['w-haal', 'حال', 'haal', 'present / condition', '⏳'],
       ['w-zindagi', 'زندگی', 'zindagi', 'life', '🌟'],
       ['w-taqdeer', 'تقدیر', 'taqdeer', 'destiny', '🎴'],
       ['w-jashn', 'جشن', 'jashn', 'celebration', '🎊'],

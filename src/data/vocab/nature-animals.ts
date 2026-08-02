@@ -78,7 +78,7 @@ export const NATURE_PACKS: TopicPack[] = [
     ]
   ),
   pack(
-    { id: 'sky', title: 'Sky & Space', icon: '🌌', blurb: 'Above the horizon.', level: 'intermediate' },
+    { id: 'sky', title: 'Sky & Space', icon: '🌌', blurb: 'Above the horizon.', level: 'advanced' },
     [
       ['w-sitara', 'ستارہ', 'sitaara', 'star', '⭐'],
       ['w-sayyara', 'سیارہ', 'sayyaara', 'planet', '🪐'],

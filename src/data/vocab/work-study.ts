@@ -32,7 +32,6 @@ export const WORK_PACKS: TopicPack[] = [
     [
       ['w-jamia', 'جامعہ', 'jaamia', 'university', '🎓'],
       ['w-sabaq', 'سبق', 'sabaq', 'lesson', '📖'],
-      ['w-imtihaan', 'امتحان', 'imtihaan', 'exam', '📝'],
       ['w-jawaab', 'جواب', 'jawaab', 'answer', '✅'],
       ['w-mashq', 'مشق', 'mashq', 'exercise / practice', '✏️'],
       ['w-kaam-ghar', 'گھر کا کام', 'ghar ka kaam', 'homework', '📚'],

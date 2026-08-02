@@ -67,26 +67,26 @@ const CORE_TOPICS: Topic[] = [
     blurb: 'Open and close a conversation warmly.',
     level: 'beginner',
   },
-  { id: 'body', title: 'The Body', icon: '🖐️', blurb: 'Name yourself, head to toe.', level: 'elementary' },
-  { id: 'animals', title: 'Animals', icon: '🐐', blurb: 'Creatures at home and in the wild.', level: 'elementary' },
+  { id: 'body', title: 'The Body', icon: '🖐️', blurb: 'Name yourself, head to toe.', level: 'beginner' },
+  { id: 'animals', title: 'Animals', icon: '🐐', blurb: 'Creatures at home and in the wild.', level: 'beginner' },
   { id: 'fruits', title: 'Fruits', icon: '🥭', blurb: 'Sweet words for the fruit stall.', level: 'elementary' },
   { id: 'vegetables', title: 'Vegetables', icon: '🥕', blurb: 'Everything at the sabzi shop.', level: 'elementary' },
   { id: 'clothing', title: 'Clothing', icon: '👕', blurb: 'What you wear each day.', level: 'elementary' },
-  { id: 'school', title: 'School', icon: '🏫', blurb: 'Words for the classroom.', level: 'elementary' },
-  { id: 'time', title: 'Time & Day', icon: '⏰', blurb: 'Morning, night, today, tomorrow.', level: 'elementary' },
+  { id: 'school', title: 'School', icon: '🏫', blurb: 'Words for the classroom.', level: 'beginner' },
+  { id: 'time', title: 'Time & Day', icon: '⏰', blurb: 'Morning, night, today, tomorrow.', level: 'beginner' },
   { id: 'weather', title: 'Weather', icon: '🌦️', blurb: 'Sun, rain, heat and cold.', level: 'elementary' },
-  { id: 'places', title: 'Places', icon: '🏙️', blurb: 'Around town and beyond.', level: 'elementary' },
+  { id: 'places', title: 'Places', icon: '🏙️', blurb: 'Around town and beyond.', level: 'beginner' },
   { id: 'transport', title: 'Getting Around', icon: '🚗', blurb: 'Cars, trains and boats.', level: 'elementary' },
-  { id: 'verbs', title: 'Actions', icon: '🏃', blurb: 'The verbs you use most.', level: 'elementary' },
-  { id: 'adjectives', title: 'Describing', icon: '📏', blurb: 'Big, small, good, new…', level: 'elementary' },
-  { id: 'feelings', title: 'Feelings', icon: '😊', blurb: 'How you and others feel.', level: 'elementary' },
-  { id: 'questions', title: 'Question Words', icon: '❓', blurb: 'Who, what, where, when.', level: 'elementary' },
+  { id: 'verbs', title: 'Actions', icon: '🏃', blurb: 'The verbs you use most.', level: 'beginner' },
+  { id: 'adjectives', title: 'Describing', icon: '📏', blurb: 'Big, small, good, new…', level: 'beginner' },
+  { id: 'feelings', title: 'Feelings', icon: '😊', blurb: 'How you and others feel.', level: 'beginner' },
+  { id: 'questions', title: 'Question Words', icon: '❓', blurb: 'Who, what, where, when.', level: 'beginner' },
   // ---- intermediate ----
-  { id: 'jobs', title: 'Work & Jobs', icon: '👷', blurb: 'Professions and working life.', level: 'intermediate' },
+  { id: 'jobs', title: 'Work & Jobs', icon: '👷', blurb: 'Professions and working life.', level: 'beginner' },
   { id: 'health', title: 'Health', icon: '🩺', blurb: 'At the doctor, feeling unwell.', level: 'intermediate' },
   { id: 'money', title: 'Money & Shopping', icon: '💰', blurb: 'Prices, buying and selling.', level: 'intermediate' },
   { id: 'travel', title: 'Travel', icon: '🧳', blurb: 'Journeys, tickets and hotels.', level: 'intermediate' },
-  { id: 'city', title: 'In the City', icon: '🏛️', blurb: 'Streets, buildings and services.', level: 'intermediate' },
+  { id: 'city', title: 'In the City', icon: '🏛️', blurb: 'Streets, buildings and services.', level: 'elementary' },
   { id: 'cooking', title: 'Cooking', icon: '🍳', blurb: 'In the kitchen, making food.', level: 'intermediate' },
   {
     id: 'sports',
@@ -95,9 +95,9 @@ const CORE_TOPICS: Topic[] = [
     blurb: 'Games, hobbies and free time.',
     level: 'intermediate',
   },
-  { id: 'days', title: 'Days & Months', icon: '🗓️', blurb: 'The week and the calendar.', level: 'intermediate' },
-  { id: 'directions', title: 'Directions', icon: '🧭', blurb: 'Left, right, near and far.', level: 'intermediate' },
-  { id: 'verbs2', title: 'More Actions', icon: '🤸', blurb: 'A wider set of everyday verbs.', level: 'intermediate' },
+  { id: 'days', title: 'Days & Months', icon: '🗓️', blurb: 'The week and the calendar.', level: 'beginner' },
+  { id: 'directions', title: 'Directions', icon: '🧭', blurb: 'Left, right, near and far.', level: 'elementary' },
+  { id: 'verbs2', title: 'More Actions', icon: '🤸', blurb: 'A wider set of everyday verbs.', level: 'elementary' },
   // ---- advanced ----
   { id: 'emotions', title: 'Emotions & Mind', icon: '🧠', blurb: 'Subtler feelings and thoughts.', level: 'advanced' },
   { id: 'abstract', title: 'Ideas & Values', icon: '💭', blurb: 'Truth, freedom, justice, hope.', level: 'advanced' },
@@ -109,7 +109,7 @@ const CORE_TOPICS: Topic[] = [
     title: 'Linking Words',
     icon: '🔗',
     blurb: 'But, because, therefore, although.',
-    level: 'advanced',
+    level: 'elementary',
   },
 ];
 
@@ -544,6 +544,8 @@ const CORE_WORDS: Word[] = [
   { id: 'w-quiz', urdu: 'کوئز', roman: 'kwiz', meaning: 'quiz', emoji: '❓', topic: 'school' },
   { id: 'w-wazeefa', urdu: 'وظیفہ', roman: 'wazeefa', meaning: 'scholarship', emoji: '🎓', topic: 'school' },
   { id: 'w-diploma', urdu: 'ڈپلومہ', roman: 'ḍiploma', meaning: 'diploma', emoji: '📜', topic: 'school' },
+  { id: 'w-hisaab-subject', urdu: 'حساب', roman: 'hisaab', meaning: 'arithmetic', emoji: '🧮', topic: 'school' },
+  { id: 'w-imtihaan', urdu: 'امتحان', roman: 'imtihaan', meaning: 'exam', emoji: '📝', topic: 'school' },
 
   // time & day
   { id: 'w-din', urdu: 'دن', roman: 'din', meaning: 'day', emoji: '☀️', topic: 'time' },
@@ -763,6 +765,8 @@ const CORE_WORDS: Word[] = [
     topic: 'feelings',
   },
   { id: 'w-raahat', urdu: 'راحت', roman: 'raahat', meaning: 'relief', emoji: '😮‍💨', topic: 'feelings' },
+  { id: 'w-bhook', urdu: 'بھوک', roman: 'bhookh', meaning: 'hunger', emoji: '🍽️', topic: 'feelings' },
+  { id: 'w-pursukoon', urdu: 'پرسکون', roman: 'pursukoon', meaning: 'calm', emoji: '🧘', topic: 'feelings' },
 
   // question words
   { id: 'w-kya', urdu: 'کیا', roman: 'kya', meaning: 'what', emoji: '❓', topic: 'questions' },
@@ -778,6 +782,8 @@ const CORE_WORDS: Word[] = [
   { id: 'w-kaunsi', urdu: 'کونسی', roman: 'kaunsi', meaning: 'which (feminine)', emoji: '❓', topic: 'questions' },
   { id: 'w-kitne', urdu: 'کتنے', roman: 'kitne', meaning: 'how many', emoji: '🔢', topic: 'questions' },
   { id: 'w-sawaal', urdu: 'سوال', roman: 'sawaal', meaning: 'question', emoji: '❓', topic: 'questions' },
+  { id: 'w-kitni-door', urdu: 'کتنی دور', roman: 'kitni door', meaning: 'how far', emoji: '📏', topic: 'questions' },
+  { id: 'w-kitne-ka', urdu: 'کتنے کا', roman: 'kitne ka', meaning: 'how much for', emoji: '❓', topic: 'questions' },
 
   // ============ INTERMEDIATE ============
   // jobs
@@ -827,9 +833,11 @@ const CORE_WORDS: Word[] = [
   // money & shopping
   { id: 'w-paisa', urdu: 'پیسہ', roman: 'paisa', meaning: 'money', emoji: '💰', topic: 'first-words' },
   { id: 'w-qeemat', urdu: 'قیمت', roman: 'qeemat', meaning: 'price', emoji: '🏷️', topic: 'money' },
-  { id: 'w-sasta', urdu: 'سستا', roman: 'sasta', meaning: 'cheap', emoji: '📉', topic: 'money' },
+  { id: 'w-sasta', urdu: 'سستا', roman: 'sasta', meaning: 'cheap', emoji: '📉', topic: 'adjectives' },
   { id: 'w-mehnga', urdu: 'مہنگا', roman: 'mehnga', meaning: 'expensive', emoji: '📈', topic: 'adjectives' },
   { id: 'w-garam2', urdu: 'گرم', roman: 'garam', meaning: 'hot (temperature)', emoji: '♨️', topic: 'adjectives' },
+  { id: 'w-behtar', urdu: 'بہتر', roman: 'behtar', meaning: 'better', emoji: '⬆️', topic: 'adjectives' },
+  { id: 'w-khaas', urdu: 'خاص', roman: 'khaas', meaning: 'special', emoji: '💎', topic: 'adjectives' },
   { id: 'w-kharidna', urdu: 'خریدنا', roman: 'khareedna', meaning: 'to buy', emoji: '🛒', topic: 'money' },
   { id: 'w-bechna', urdu: 'بیچنا', roman: 'bechna', meaning: 'to sell', emoji: '🤝', topic: 'money' },
   { id: 'w-hisaab', urdu: 'حساب', roman: 'hisaab', meaning: 'bill / account', emoji: '🧮', topic: 'money' },
@@ -849,17 +857,12 @@ const CORE_WORDS: Word[] = [
 
   // travel
   { id: 'w-safar', urdu: 'سفر', roman: 'safar', meaning: 'journey', emoji: '🧳', topic: 'travel' },
-  { id: 'w-tikat', urdu: 'ٹکٹ', roman: 'ṭikaṭ', meaning: 'ticket', emoji: '🎫', topic: 'travel' },
+  { id: 'w-tikat', urdu: 'ٹکٹ', roman: 'ṭikaṭ', meaning: 'ticket', emoji: '🎫', topic: 'places' },
   { id: 'w-hotal', urdu: 'ہوٹل', roman: 'hoṭal', meaning: 'hotel', emoji: '🏨', topic: 'travel' },
-  {
-    id: 'w-samaan',
-    urdu: 'سامان',
-    roman: 'saamaan',
-    meaning: 'luggage',
-    emoji: '🎒',
-    topic: 'travel',
-    level: 'intermediate',
-  },
+  // Glossed "luggage" while filed under travel, which is the narrowest of its
+  // senses — it is the ordinary word for belongings, and "whose things are
+  // these?" is a unit-19 question long before anyone packs a suitcase.
+  { id: 'w-samaan', urdu: 'سامان', roman: 'saamaan', meaning: 'things / luggage', emoji: '🎒', topic: 'home' },
   { id: 'w-passport', urdu: 'پاسپورٹ', roman: 'paasporṭ', meaning: 'passport', emoji: '🛂', topic: 'travel' },
   { id: 'w-mulk', urdu: 'ملک', roman: 'mulk', meaning: 'country', emoji: '🌍', topic: 'travel' },
   { id: 'w-sarhad', urdu: 'سرحد', roman: 'sarhad', meaning: 'border', emoji: '🚧', topic: 'travel' },
@@ -868,6 +871,9 @@ const CORE_WORDS: Word[] = [
   { id: 'w-chhutti', urdu: 'چھٹی', roman: 'chhuṭṭi', meaning: 'holiday / leave', emoji: '🏖️', topic: 'time' },
   { id: 'w-phir2', urdu: 'پھر', roman: 'phir', meaning: 'again / then', emoji: '🔁', topic: 'time' },
   { id: 'w-roz', urdu: 'روز', roman: 'roz', meaning: 'daily', emoji: '📅', topic: 'time' },
+  { id: 'w-minute', urdu: 'منٹ', roman: 'minaṭ', meaning: 'minute', emoji: '🕐', topic: 'time' },
+  { id: 'w-aksar', urdu: 'اکثر', roman: 'aksar', meaning: 'often', emoji: '🔂', topic: 'time' },
+  { id: 'w-ab', urdu: 'اب', roman: 'ab', meaning: 'now', emoji: '⏱️', topic: 'time' },
   { id: 'w-qafla', urdu: 'قافلہ', roman: 'qaafla', meaning: 'caravan', emoji: '🐫', topic: 'travel' },
   { id: 'w-kastam2', urdu: 'کسٹم', roman: 'kasṭam', meaning: 'customs', emoji: '🛃', topic: 'travel' },
   { id: 'w-aamad2', urdu: 'آمد', roman: 'aamad', meaning: 'arrival', emoji: '🛬', topic: 'travel' },
@@ -943,7 +949,7 @@ const CORE_WORDS: Word[] = [
   { id: 'w-jeetna', urdu: 'جیتنا', roman: 'jeetna', meaning: 'to win', emoji: '🏆', topic: 'sports' },
   { id: 'w-haarna', urdu: 'ہارنا', roman: 'haarna', meaning: 'to lose', emoji: '🥈', topic: 'sports' },
   { id: 'w-shauq', urdu: 'شوق', roman: 'shauq', meaning: 'hobby / passion', emoji: '🎨', topic: 'sports' },
-  { id: 'w-gaana', urdu: 'گانا', roman: 'gaana', meaning: 'song / to sing', emoji: '🎵', topic: 'sports' },
+  { id: 'w-gaana', urdu: 'گانا', roman: 'gaana', meaning: 'song / to sing', emoji: '🎵', topic: 'verbs' },
   { id: 'w-football', urdu: 'فٹبال', roman: 'fuṭbaal', meaning: 'football', emoji: '⚽', topic: 'sports' },
   { id: 'w-hockey', urdu: 'ہاکی', roman: 'haaki', meaning: 'hockey', emoji: '🏑', topic: 'sports' },
   { id: 'w-volleyball', urdu: 'والی بال', roman: 'valeebaal', meaning: 'volleyball', emoji: '🏐', topic: 'sports' },
@@ -1004,6 +1010,8 @@ const CORE_WORDS: Word[] = [
   { id: 'w-shumaal2', urdu: 'شمال', roman: 'shumaal', meaning: 'north', emoji: '⬆️', topic: 'directions' },
   { id: 'w-junoob2', urdu: 'جنوب', roman: 'junoob', meaning: 'south', emoji: '⬇️', topic: 'directions' },
   { id: 'w-ufuq2', urdu: 'اُفق', roman: 'ufuq', meaning: 'horizon', emoji: '🌄', topic: 'directions' },
+  { id: 'w-paidal', urdu: 'پیدل', roman: 'paidal', meaning: 'on foot', emoji: '🚶', topic: 'directions' },
+  { id: 'w-peeche', urdu: 'پیچھے', roman: 'peechhe', meaning: 'behind', emoji: '⬅️', topic: 'directions' },
 
   // more verbs
   { id: 'w-sunna', urdu: 'سننا', roman: 'sunna', meaning: 'to hear', emoji: '👂', topic: 'verbs2' },
@@ -1089,6 +1097,7 @@ const CORE_WORDS: Word[] = [
 
   // culture & faith
   { id: 'w-eid', urdu: 'عید', roman: 'eid', meaning: 'Eid (festival)', emoji: '🌙', topic: 'days' },
+  { id: 'w-salgirah', urdu: 'سالگرہ', roman: 'saalgirah', meaning: 'birthday', emoji: '🎂', topic: 'days' },
   { id: 'w-shaayari', urdu: 'شاعری', roman: 'shaayari', meaning: 'poetry', emoji: '📝', topic: 'culture' },
   { id: 'w-ghazal', urdu: 'غزل', roman: 'ghazal', meaning: 'ghazal (poem)', emoji: '🎼', topic: 'culture' },
   { id: 'w-rivaayat', urdu: 'روایت', roman: 'riwaayat', meaning: 'tradition', emoji: '🏺', topic: 'culture' },
@@ -1098,7 +1107,7 @@ const CORE_WORDS: Word[] = [
   { id: 'w-roza', urdu: 'روزہ', roman: 'roza', meaning: 'fast (Ramadan)', emoji: '🌛', topic: 'culture' },
   { id: 'w-mehndi', urdu: 'مہندی', roman: 'mehndi', meaning: 'henna', emoji: '🌿', topic: 'culture' },
   { id: 'w-dastaan', urdu: 'داستان', roman: 'daastaan', meaning: 'tale / saga', emoji: '📖', topic: 'culture' },
-  { id: 'w-mousiqi', urdu: 'موسیقی', roman: 'mausiqi', meaning: 'music', emoji: '🎵', topic: 'culture' },
+  { id: 'w-mousiqi', urdu: 'موسیقی', roman: 'mausiqi', meaning: 'music', emoji: '🎵', topic: 'first-words' },
   { id: 'w-lokgeet', urdu: 'لوک گیت', roman: 'lok geet', meaning: 'folk song', emoji: '🎤', topic: 'culture' },
   { id: 'w-tehwar', urdu: 'تہوار', roman: 'tehwaar', meaning: 'festival', emoji: '🎉', topic: 'culture' },
   { id: 'w-raag', urdu: 'راگ', roman: 'raag', meaning: 'musical melody', emoji: '🎶', topic: 'culture' },
@@ -1113,12 +1122,16 @@ const CORE_WORDS: Word[] = [
   { id: 'w-computer', urdu: 'کمپیوٹر', roman: 'kampyooṭar', meaning: 'computer', emoji: '💻', topic: 'tech' },
   { id: 'w-mobile', urdu: 'موبائل', roman: 'mobaail', meaning: 'mobile phone', emoji: '📱', topic: 'tech' },
   { id: 'w-internet', urdu: 'انٹرنیٹ', roman: 'inṭarneṭ', meaning: 'internet', emoji: '🌐', topic: 'tech' },
-  { id: 'w-khabar', urdu: 'خبر', roman: 'khabar', meaning: 'news', emoji: '📰', topic: 'tech' },
-  { id: 'w-akhbaar', urdu: 'اخبار', roman: 'akhbaar', meaning: 'newspaper', emoji: '🗞️', topic: 'tech' },
+  { id: 'w-khabar', urdu: 'خبر', roman: 'khabar', meaning: 'news', emoji: '📰', topic: 'first-words' },
+  { id: 'w-akhbaar', urdu: 'اخبار', roman: 'akhbaar', meaning: 'newspaper', emoji: '🗞️', topic: 'first-words' },
+  { id: 'w-madad', urdu: 'مدد', roman: 'madad', meaning: 'help', emoji: '🆘', topic: 'first-words' },
+  { id: 'w-kahani', urdu: 'کہانی', roman: 'kahaani', meaning: 'story', emoji: '📚', topic: 'first-words' },
+  { id: 'w-film', urdu: 'فلم', roman: 'film', meaning: 'film', emoji: '🎬', topic: 'first-words' },
+  { id: 'w-haal', urdu: 'حال', roman: 'haal', meaning: 'present / condition', emoji: '⏳', topic: 'first-words' },
   { id: 'w-bijli', urdu: 'بجلی', roman: 'bijli', meaning: 'electricity', emoji: '⚡', topic: 'tech' },
   { id: 'w-machine', urdu: 'مشین', roman: 'masheen', meaning: 'machine', emoji: '⚙️', topic: 'tech' },
   { id: 'w-tasveer', urdu: 'تصویر', roman: 'tasweer', meaning: 'picture', emoji: '🖼️', topic: 'tech' },
-  { id: 'w-paighaam', urdu: 'پیغام', roman: 'paighaam', meaning: 'message', emoji: '✉️', topic: 'tech' },
+  { id: 'w-paighaam', urdu: 'پیغام', roman: 'paighaam', meaning: 'message', emoji: '✉️', topic: 'phone' },
   { id: 'w-ilaaj', urdu: 'علاج', roman: 'ilaaj', meaning: 'treatment / cure', emoji: '🏥', topic: 'tech' },
   { id: 'w-keyboard', urdu: 'کی بورڈ', roman: 'kee borḍ', meaning: 'keyboard', emoji: '⌨️', topic: 'tech' },
   { id: 'w-battery', urdu: 'بیٹری', roman: 'baiṭri', meaning: 'battery', emoji: '🔋', topic: 'tech' },

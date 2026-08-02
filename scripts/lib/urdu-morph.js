@@ -105,6 +105,15 @@ const FUNCTION_WORDS = new Set([
   'وہی',
   'بھر',
   'ہاں',
+  'جی',
+  // compound postpositions — two words that behave as one grammatical unit,
+  // and are taught by the postpositions concept rather than by any topic
+  'کے لیے',
+  'بعد میں',
+  'کے بعد',
+  'کے پاس',
+  'کے ساتھ',
+  'کے بارے میں',
 ]);
 
 /**

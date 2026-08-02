@@ -45,7 +45,6 @@ export const WORK_MIND_SOCIETY_PACKS: TopicPack[] = [
       ['w-lisaniyat', 'لسانیات', 'lisaaniyaat', 'linguistics', '💬'],
       ['w-falkiyat', 'فلکیات', 'falakiyaat', 'astronomy', '🔭'],
       ['w-arziyat', 'ارضیات', 'arziyaat', 'geology', '⛰️'],
-      ['w-hisaab-subject', 'حساب', 'hisaab', 'arithmetic', '🧮'],
       ['w-handasa', 'ہندسہ', 'handasa', 'geometry', '📐'],
       ['w-algebra', 'الجبرا', 'aljabra', 'algebra', '➗'],
       ['w-tibb-subject', 'علمِ طب', 'ilm-e-tibb', 'medical science', '⚕️'],
@@ -60,7 +59,7 @@ export const WORK_MIND_SOCIETY_PACKS: TopicPack[] = [
     ]
   ),
   pack(
-    { id: 'mind-verbs', title: 'Verbs of Mind', icon: '💡', blurb: 'Knowing, wanting, believing.', level: 'intermediate' },
+    { id: 'mind-verbs', title: 'Verbs of Mind', icon: '💡', blurb: 'Knowing, wanting, believing.', level: 'elementary' },
     [
       ['w-jaanna', 'جاننا', 'jaanna', 'to know', '🧠'],
       ['w-maanna', 'ماننا', 'maanna', 'to accept / believe', '🤝'],
@@ -85,7 +84,7 @@ export const WORK_MIND_SOCIETY_PACKS: TopicPack[] = [
     ]
   ),
   pack(
-    { id: 'speech-verbs', title: 'Verbs of Speech', icon: '🗣️', blurb: 'Saying, asking, arguing.', level: 'intermediate' },
+    { id: 'speech-verbs', title: 'Verbs of Speech', icon: '🗣️', blurb: 'Saying, asking, arguing.', level: 'elementary' },
     [
       ['w-kehna', 'کہنا', 'kehna', 'to say', '💬'],
       ['w-pukarna', 'پکارنا', 'pukaarna', 'to call out', '📣'],
@@ -110,7 +109,7 @@ export const WORK_MIND_SOCIETY_PACKS: TopicPack[] = [
     ]
   ),
   pack(
-    { id: 'motion-verbs', title: 'Verbs of Motion', icon: '🚶', blurb: 'Coming, going, moving things.', level: 'intermediate' },
+    { id: 'motion-verbs', title: 'Verbs of Motion', icon: '🚶', blurb: 'Coming, going, moving things.', level: 'elementary' },
     [
       ['w-daudna2', 'بھاگنا', 'bhaagna', 'to run away', '🏃'],
       ['w-koodna', 'کودنا', 'koodna', 'to jump', '🦘'],
@@ -162,7 +161,6 @@ export const WORK_MIND_SOCIETY_PACKS: TopicPack[] = [
   pack(
     { id: 'quality', title: 'Judgement Words', icon: '⭐', blurb: 'Evaluating and comparing.', level: 'advanced' },
     [
-      ['w-behtar', 'بہتر', 'behtar', 'better', '⬆️'],
       ['w-badtar', 'بدتر', 'badtar', 'worse', '⬇️'],
       ['w-barabar2', 'مساوی', 'musaawi', 'equivalent', '🟰'],
       ['w-mukhtalif', 'مختلف', 'mukhtalif', 'different', '↔️'],
@@ -181,7 +179,6 @@ export const WORK_MIND_SOCIETY_PACKS: TopicPack[] = [
       ['w-lazmi', 'لازمی', 'laazmi', 'compulsory', '📌'],
       ['w-ikhtiyari', 'اختیاری', 'ikhtiyaari', 'optional', '🔀'],
       ['w-aam-common', 'عام', 'aam', 'common', '🌐'],
-      ['w-khaas', 'خاص', 'khaas', 'special', '💎'],
     ]
   ),
   pack(
