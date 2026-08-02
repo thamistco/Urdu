@@ -58,30 +58,8 @@
  * Run with:  npm run check:order
  */
 
-const fs = require('fs');
-const path = require('path');
-const ts = require('typescript');
-
-const ROOT = path.join(__dirname, '..');
-const cache = new Map();
-function load(rel) {
-  const resolved = [rel, rel + '.ts', path.join(rel, 'index.ts')]
-    .map((p) => path.join(ROOT, p))
-    .find((p) => fs.existsSync(p) && fs.statSync(p).isFile());
-  if (!resolved) throw new Error(`cannot resolve ${rel}`);
-  if (cache.has(resolved)) return cache.get(resolved);
-  const js = ts.transpileModule(fs.readFileSync(resolved, 'utf8'), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2019 },
-  }).outputText;
-  const mod = { exports: {} };
-  cache.set(resolved, mod.exports);
-  const here = path.relative(ROOT, path.dirname(resolved));
-  new Function('exports', 'module', 'require', js)(mod.exports, mod, (id) =>
-    id.startsWith('.') ? load(path.join(here, id)) : require(id)
-  );
-  cache.set(resolved, mod.exports);
-  return mod.exports;
-}
+const { load } = require('./lib/load-ts');
+const { classify: classifyWord } = require('./lib/urdu-morph');
 
 const { ALL_LESSONS } = load('src/data/units.ts');
 const { WORDS, PHRASES } = load('src/data/words.ts');
@@ -107,16 +85,50 @@ for (const p of PHRASES) addTopic(p.urdu, 'phrases');
  * pedagogical sequence — see the header comment in grammar.ts) rather than
  * by a vocab topic, so they are not what this check is for and are excluded
  * rather than flagged as belonging to no topic.
+ *
+ * GRAMMAR_TRANSLIT is one source of these — it exists to romanise drill
+ * options, so it holds the forms drills actually offer — but it is maintained
+ * for that purpose and is not a closed-class inventory. The rest come from
+ * FUNCTION_WORDS in the morphology helper, which is.
  */
 const CLOSED_CLASS = new Set(Object.keys(GRAMMAR_TRANSLIT));
 
+/** The vocabulary, as surface forms, for the morphology helper to resolve against. */
+const VOCAB = new Set([...WORDS.map((w) => w.urdu), ...PHRASES.map((p) => p.urdu)]);
+
+/**
+ * Multi-word vocabulary entries, longest first. 27 of the course's 28 phrases
+ * contain a space, as do entries like گرم پانی and واپسی ٹکٹ, so splitting on
+ * whitespace before looking anything up reports both halves of a taught phrase
+ * as untaught words — السلام and علیکم were two of the loudest such findings.
+ */
+const MULTIWORD = [...VOCAB].filter((v) => v.includes(' ')).sort((a, b) => b.length - a.length);
+
 const URDU_PUNCT = /[۔،؟!]+$/;
-const tokenize = (text) =>
-  text
-    .trim()
-    .split(/\s+/)
-    .map((w) => w.replace(URDU_PUNCT, ''))
-    .filter((w) => w && !w.includes('___'));
+
+/**
+ * Split `text` into vocabulary-sized units: multi-word entries stay whole,
+ * everything else is a word.
+ */
+const tokenize = (text) => {
+  let rest = ` ${text.trim().replace(/[۔،؟!]+/g, ' ')} `;
+  const found = [];
+  for (const phrase of MULTIWORD) {
+    const padded = ` ${phrase} `;
+    while (rest.includes(padded)) {
+      found.push(phrase);
+      rest = rest.replace(padded, ' ');
+    }
+  }
+  return [
+    ...found,
+    ...rest
+      .trim()
+      .split(/\s+/)
+      .map((w) => w.replace(URDU_PUNCT, ''))
+      .filter((w) => w && !w.includes('___')),
+  ];
+};
 
 // ---- walk the real path, tracking what a vocab lesson has introduced -----
 
@@ -131,6 +143,10 @@ const levelEndTopics = new Map(); // level -> topics taught by the last lesson o
 const running = new Set();
 for (const l of ALL_LESSONS) {
   if (l.kind === 'vocab' && l.topic) running.add(l.topic);
+  // A phrases lesson carries no `topic` field — the generator hardcodes the
+  // 'phrases' pool for it (see PHRASE_WORDS in generator.ts) — so it has to be
+  // recorded by kind or every phrase reads as never taught.
+  if (l.kind === 'phrases') running.add('phrases');
   topicsByLessonId.set(l.id, new Set(running));
 }
 // A lesson's own `level` marks which CEFR level it belongs to; the topics
@@ -155,18 +171,32 @@ for (const l of ALL_LESSONS) {
   }
 }
 
-/** Classify every word in `text` against the topics taught so far. */
+/**
+ * Classify every word in `text` against the topics taught so far.
+ *
+ * A word is resolved to the vocabulary entry it is a form of before its topic
+ * is looked up: running text inflects and a word list does not, so پیتا has to
+ * find پینا and کمرے has to find کمرہ. A form that resolves to a taught entry
+ * is taught — the learner who was shown پینا can read پیتا.
+ */
 function classify(text, taught) {
   const late = [];
   const unknown = [];
   for (const w of tokenize(text)) {
     if (CLOSED_CLASS.has(w)) continue;
-    const topics = topicsOf.get(w);
+    const c = classifyWord(w, VOCAB);
+    if (c.kind === 'function' || c.kind === 'name') continue;
+    if (c.kind === 'unknown') {
+      unknown.push(w);
+      continue;
+    }
+    const topics = topicsOf.get(c.lemma);
     if (!topics) {
       unknown.push(w);
       continue;
     }
-    if (![...topics].some((t) => taught.has(t))) late.push(`${w} (${[...topics].join('/')})`);
+    const shown = c.lemma === w ? w : `${w} [${c.lemma}]`;
+    if (![...topics].some((t) => taught.has(t))) late.push(`${shown} (${[...topics].join('/')})`);
   }
   return { late, unknown };
 }
