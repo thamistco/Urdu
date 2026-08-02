@@ -231,7 +231,15 @@ export const WORD_ICON: Record<string, IconName> = {
   'w-aant': 'intestine',
 };
 
+/**
+ * One to eight used to be the whole map, so نو (9), دس (10) and صفر (0) fell
+ * through to `word.emoji` — a digit emoji — while every other number rendered
+ * an Urdu-script numeral glyph. Same category, two different icon languages
+ * side by side in one set of multiple-choice options. All eleven numbers the
+ * course teaches (0-10) are here now, so the whole category is one thing.
+ */
 export const NUMERALS: Record<string, string> = {
+  'w-sifar': '۰',
   'w-ek': '۱',
   'w-do': '۲',
   'w-teen': '۳',
@@ -240,6 +248,8 @@ export const NUMERALS: Record<string, string> = {
   'w-chhe': '۶',
   'w-saat': '۷',
   'w-aath': '۸',
+  'w-nau': '۹',
+  'w-das': '۱۰',
 };
 
 /**

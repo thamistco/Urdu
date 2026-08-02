@@ -227,7 +227,17 @@ const CORE_WORDS: Word[] = [
     topic: 'home',
   },
   { id: 'w-kunji', urdu: 'کنجی', roman: 'kunji', meaning: 'key (alt.)', emoji: '🗝️', topic: 'home' },
-  { id: 'w-bartan', urdu: 'برتن', roman: 'bartan', meaning: 'dishes / utensils', emoji: '🍽️', topic: 'home' },
+  {
+    id: 'w-bartan',
+    urdu: 'برتن',
+    roman: 'bartan',
+    meaning: 'dishes / utensils',
+    emoji: '🍽️',
+    topic: 'home',
+    // Unvowelled برتن reads ambiguously and the TTS engine picked the wrong
+    // one — damma on ب gives "burtan", which is not a word. Fatha is "bartan".
+    pronounce: 'بَرْتَن',
+  },
   { id: 'w-kunda', urdu: 'کنڈا', roman: 'kunda', meaning: 'latch', emoji: '🔒', topic: 'home' },
   { id: 'w-roshandan', urdu: 'روشندان', roman: 'roshandaan', meaning: 'skylight / vent', emoji: '🪟', topic: 'home' },
   { id: 'w-sayaban', urdu: 'سایبان', roman: 'saayabaan', meaning: 'shade / canopy', emoji: '⛱️', topic: 'home' },
