@@ -11,6 +11,36 @@
  */
 
 import type { Level } from './words';
+import type { Register } from './vocab/types';
+
+/**
+ * Whether a sentence or dialogue line uses تم (tum, casual "you") or آپ (aap,
+ * polite "you"), read off its own words rather than stored and hand-kept.
+ *
+ * This is the same call `registerOf` makes for vocabulary in `words.ts` —
+ * "marking every entry by hand is a list nobody maintains" — applied to 256
+ * sentences and every passage and dialogue line instead of 2,426 words. A
+ * stored `register` field would drift the moment a new sentence used تم or
+ * آپ and nobody remembered to tag it; reading the pronoun straight out of the
+ * text it is already authored in cannot drift, because there is nothing extra
+ * to keep in sync.
+ *
+ * Most lines use neither pronoun — third person, imperatives, questions with
+ * no "you" in them — and report no register, same as most vocabulary.
+ */
+export function registerOf(text: string | string[]): Register | undefined {
+  const words = Array.isArray(text) ? text : text.trim().split(/\s+/);
+  const bare = (w: string) => w.replace(/[۔،؟!]+$/, '');
+  if (words.some((w) => bare(w) === 'تم')) return 'casual';
+  if (words.some((w) => bare(w) === 'آپ')) return 'polite';
+  return undefined;
+}
+
+/** A meaning with its register named, the same way `glossOf` does for words. */
+export function withRegister(meaning: string, text: string | string[]): string {
+  const r = registerOf(text);
+  return r ? `${meaning} (${r})` : meaning;
+}
 
 export type Sentence = {
   id: string;

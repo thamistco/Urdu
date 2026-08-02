@@ -4,7 +4,15 @@ import { Lesson, ALL_LESSONS } from '../data/units';
 import { getGrammar, type GrammarConcept, type GrammarDrill } from '../data/grammar';
 import { romanAll } from '../lib/translit';
 import type { LearnTrack } from '../store/useSettingsStore';
-import { SENTENCES, PASSAGES, DIALOGUES, getPassage, getDialogue, type Sentence } from '../data/sentences';
+import {
+  SENTENCES,
+  PASSAGES,
+  DIALOGUES,
+  getPassage,
+  getDialogue,
+  registerOf as pronounRegisterOf,
+  type Sentence,
+} from '../data/sentences';
 import { cueOf } from '../data/art';
 import { GLYPH_MASKS } from '../data/glyphMasks';
 import { shuffle } from '../lib/shuffle';
@@ -16,7 +24,16 @@ function sample<T>(pool: T[], n: number, exclude: (t: T) => boolean): T[] {
   return shuffle(pool.filter((t) => !exclude(t))).slice(0, n);
 }
 
-/** Phrases reshaped as word-like items so they flow through the same exercises. */
+/**
+ * Phrases reshaped as word-like items so they flow through the same exercises.
+ *
+ * `register` is set from the phrase's own text — تم makes it casual, آپ makes
+ * it polite — the same pronoun read `sentences.ts` already does for sentences
+ * and dialogue lines. That lets `glossOf` (words.ts) show it automatically:
+ * register there is "the word's own, or its topic's", and a phrase's own is
+ * exactly what this computes. Nothing extra to maintain, and a phrase using
+ * "aap" or "tum" cannot silently go unmarked the way a hand-kept field would.
+ */
 const PHRASE_WORDS: Word[] = PHRASES.map((p) => ({
   id: p.id,
   urdu: p.urdu,
@@ -24,6 +41,7 @@ const PHRASE_WORDS: Word[] = PHRASES.map((p) => ({
   meaning: p.meaning,
   emoji: '💬', // audit:emoji-ok — phrases have no picture of their own
   topic: 'phrases',
+  register: pronounRegisterOf(p.urdu),
 }));
 
 const getAnyWord = (id: string): Word | undefined => getWord(id) ?? PHRASE_WORDS.find((w) => w.id === id);
