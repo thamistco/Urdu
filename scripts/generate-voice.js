@@ -22,6 +22,8 @@
  *   node scripts/generate-voice.js            generate anything not done yet
  *   node scripts/generate-voice.js --force    regenerate everything
  *   node scripts/generate-voice.js --voices   list the Urdu voices your key can use
+ *   node scripts/generate-voice.js --audition record a sample line in every candidate
+ *                                            voice, to choose a narrator by ear
  *   node scripts/generate-voice.js --manifest rebuild the manifest from disk only
  */
 const fs = require('fs');
@@ -59,17 +61,30 @@ const MANIFEST = path.join(ROOT, 'src', 'lib', 'voiceManifest.ts');
  * "kehni" left `w-kohni.mp3` sitting there still saying "kehni", and nothing
  * anywhere would have noticed.
  *
- * So the request is recorded next to the clips. A clip whose recorded text or
- * voice no longer matches the course is stale and regenerates on the next run,
- * without anyone having to remember what they touched. The voice half matters
- * as much as the text: giving a dialogue's two speakers different voices
+ * So the request is recorded next to the clips. A clip whose recorded text,
+ * voice or pace no longer matches the course is stale and regenerates on the
+ * next run, without anyone having to remember what they touched. The voice half
+ * matters as much as the text: giving a dialogue's two speakers different voices
  * changes nothing about the words, so text alone would have called every one
  * of those clips up to date.
+ *
+ * Pace is recorded for the same reason and was very nearly left out. Changing
+ * how fast a line is read changes the recording and not a character of the text,
+ * so a ledger without it would have reported every clip up to date while the
+ * course asked for a delivery none of them had — the identical failure to the
+ * کہنی one this ledger exists to prevent, one field along.
  */
 const LEDGER = path.join(OUT_DIR, 'spoken.json');
 
 /** Older ledgers stored a bare string; every one of those clips was Zephyr. */
 const FIRST_VOICE = 'ur-IN-Chirp3-HD-Zephyr';
+/**
+ * Everything recorded before pace was tracked was generated at one flat rate, so
+ * that is what a missing `pace` means. Reading it as "unknown" instead would
+ * mark all 5,786 clips stale and regenerate the entire course to change a few
+ * hundred of them.
+ */
+const LEGACY_PACE = 0.92;
 const entryOf = (v) => (typeof v === 'string' ? { text: v, voice: FIRST_VOICE } : v);
 
 const readLedger = () => {
@@ -119,15 +134,34 @@ function load(rel) {
  * understudy rather than the same voice twice, which is the case (Ahmed and
  * Bilal; Nadia and Rabia) that a naive male/female split would still get wrong.
  *
- * All four are Chirp3-HD in ur-IN, so they sit together tonally.
+ * All Chirp3-HD in ur-IN, so they sit together tonally.
+ *
+ * ## Why the male voices changed
+ *
+ * They were Puck and Fenrir, and the male narrator was reported as robotic.
+ * That was a casting mistake rather than a synthesis problem. Google publishes a
+ * character for every Chirp3-HD voice, and those two are **Upbeat** and
+ * **Excitable** — performance registers, bright and declamatory. On connected
+ * speech that merely sounds energetic; on two thousand isolated vocabulary words
+ * it is an announcer reading a list, which is exactly what "robotic" describes.
+ * Nothing about the model was wrong. It was doing an unwarm voice accurately.
+ *
+ * The replacements are chosen for the opposite quality: **Achird is
+ * "Friendly"** and **Algieba is "Smooth"** — conversational registers, which is
+ * what warmth actually is. Enceladus ("Breathy") and Umbriel ("Easy-going") are
+ * the next candidates if these still read as flat.
+ *
+ * The female side is left alone: nobody complained about it, and changing it
+ * would mean regenerating and re-listening to another two and a half thousand
+ * clips to fix something that is not broken.
  */
 const CAST = {
   // The narrator for whichever set is being generated. The dialogue cast below
   // is unchanged: a two-speaker conversation needs two distinguishable voices
   // whichever narrator the learner picked, or it stops being a conversation.
-  narrator: process.env.VOICE_NAME || (VOICE_SET === 'm' ? 'ur-IN-Chirp3-HD-Puck' : FIRST_VOICE),
+  narrator: process.env.VOICE_NAME || (VOICE_SET === 'm' ? 'ur-IN-Chirp3-HD-Achird' : FIRST_VOICE),
   f: ['ur-IN-Chirp3-HD-Zephyr', 'ur-IN-Chirp3-HD-Kore'],
-  m: ['ur-IN-Chirp3-HD-Puck', 'ur-IN-Chirp3-HD-Fenrir'],
+  m: ['ur-IN-Chirp3-HD-Achird', 'ur-IN-Chirp3-HD-Algieba'],
 };
 
 /**
@@ -147,9 +181,32 @@ const CAST = {
 const FALLBACK_VOICE = {
   'ur-IN-Chirp3-HD-Zephyr': 'ur-IN-Wavenet-A',
   'ur-IN-Chirp3-HD-Kore': 'ur-IN-Wavenet-A',
-  'ur-IN-Chirp3-HD-Puck': 'ur-IN-Wavenet-B',
-  'ur-IN-Chirp3-HD-Fenrir': 'ur-IN-Wavenet-B',
+  'ur-IN-Chirp3-HD-Achird': 'ur-IN-Wavenet-B',
+  'ur-IN-Chirp3-HD-Algieba': 'ur-IN-Wavenet-B',
 };
+
+/**
+ * How fast a thing is said, and why there are two answers.
+ *
+ * Everything used to be generated at 0.92 — a shade under natural pace, on the
+ * reasoning that these are words being learned rather than speech being listened
+ * to. That is right for a word standing on its own and wrong for everything
+ * longer, and it is the second reason the voice sounded mechanical.
+ *
+ * Prosody is what makes a voice sound human: the rise and fall across a clause,
+ * where the stress lands, where a speaker breathes. It exists only in connected
+ * speech, and slowing connected speech flattens it — the sentence stops being
+ * spoken and starts being dictated. Sentences, phrases, passages and dialogue
+ * lines therefore run at natural pace, where the model has room to perform them;
+ * single words and letters keep the deliberate reading a learner needs.
+ *
+ * The split is by *kind*, decided in `collectItems` where the kind is known. A
+ * first attempt keyed it off text length instead, which the content disproves:
+ * words run up to 24 characters and sentences start at 10, so no threshold
+ * separates them — the length rule would have caught 83 of the 427 connected
+ * items and left every short sentence dictated.
+ */
+const PACE = { citation: 0.92, connected: 1.0 };
 
 /** Which voice a dialogue's speaker gets, given who else is in the scene. */
 function castFor(dialogue, speaker) {
@@ -165,25 +222,26 @@ function collectItems() {
   const { SENTENCES, PASSAGES, DIALOGUES } = load('src/data/sentences.ts');
   const items = [];
   const seen = new Set();
-  const add = (id, text, voice = CAST.narrator) => {
+  const add = (id, text, voice = CAST.narrator, pace = PACE.citation) => {
     if (!id || !text || seen.has(id)) return;
     seen.add(id);
-    items.push({ id, text, voice });
+    items.push({ id, text, voice, pace });
   };
   // `pronounce`, when a word carries one, is a diacritic-marked reading for
   // a script that collides with another word in the course (سر head vs سر
   // musical note, and the like) — the audio should say that, not the bare
   // spelling the TTS engine would otherwise have to guess at.
   for (const w of WORDS) add(w.id, w.pronounce || w.urdu);
-  for (const p of PHRASES) add(p.id, p.pronounce || p.urdu);
+  for (const p of PHRASES) add(p.id, p.pronounce || p.urdu, CAST.narrator, PACE.connected);
   // Sentence-building and reading content is spoken too, one clip per full
   // sentence and per passage/dialogue line. Passage and dialogue lines have
   // no id of their own in the data, so the exercises and this script both
   // derive one the same way — from the line's position — rather than
   // requiring the data to carry an id nothing else needs.
-  for (const s of SENTENCES) add(s.id, s.pronounce || s.words.join(' '));
-  for (const p of PASSAGES) p.lines.forEach((l, i) => add(`${p.id}-${i}`, l.urdu));
-  for (const d of DIALOGUES) d.lines.forEach((l, i) => add(`${d.id}-${i}`, l.urdu, castFor(d, l.speaker)));
+  for (const s of SENTENCES) add(s.id, s.pronounce || s.words.join(' '), CAST.narrator, PACE.connected);
+  for (const p of PASSAGES) p.lines.forEach((l, i) => add(`${p.id}-${i}`, l.urdu, CAST.narrator, PACE.connected));
+  for (const d of DIALOGUES)
+    d.lines.forEach((l, i) => add(`${d.id}-${i}`, l.urdu, castFor(d, l.speaker), PACE.connected));
   // Letters are announced by id too, when a traced letter is accepted.
   for (const l of LETTERS) add(l.id, l.forms?.isolated || l.glyph || l.forms?.initial);
   return items;
@@ -192,7 +250,7 @@ function collectItems() {
 // ---- providers ----------------------------------------------------------
 const LANG = process.env.LANG_CODE || 'ur-IN';
 
-async function googleTTS(text, name) {
+async function googleTTS(text, name, pace = PACE.citation) {
   const key = process.env.GOOGLE_TTS_API_KEY;
   const res = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${key}`, {
     method: 'POST',
@@ -200,14 +258,116 @@ async function googleTTS(text, name) {
     body: JSON.stringify({
       input: { text },
       voice: { languageCode: LANG, name },
-      // A shade under natural pace: these are single words being learned, not
-      // speech being listened to.
-      audioConfig: { audioEncoding: 'MP3', speakingRate: 0.92 },
+      audioConfig: { audioEncoding: 'MP3', speakingRate: pace },
     }),
   });
   if (!res.ok) throw new Error(`Google TTS ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const json = await res.json();
   return Buffer.from(json.audioContent, 'base64');
+}
+
+/** Every voice this run could ask for, including the fallbacks. */
+function voicesUsedBy(items) {
+  const names = new Set(items.map((i) => i.voice));
+  for (const n of [...names]) if (FALLBACK_VOICE[n]) names.add(FALLBACK_VOICE[n]);
+  return [...names].sort();
+}
+
+/**
+ * Fail before the run, not four hundred clips into it.
+ *
+ * Voice names are strings in a config object, and a wrong one is not caught by
+ * anything until the API rejects it — by which time a long, paid, half-finished
+ * run has already happened. Recasting the male narrator is exactly the change
+ * that makes that likely, and it is the change most likely to be made by someone
+ * choosing a voice from a documentation page without checking it exists in
+ * `ur-IN`.
+ *
+ * So the cast is checked against what the key can actually see, up front, and a
+ * bad name prints the real list rather than a 400 from inside the loop.
+ */
+async function assertVoicesExist(items) {
+  const key = process.env.GOOGLE_TTS_API_KEY;
+  const res = await fetch(`https://texttospeech.googleapis.com/v1/voices?key=${key}`);
+  if (!res.ok) {
+    console.error(`Could not check the voice list — ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    process.exit(1);
+  }
+  const { voices = [] } = await res.json();
+  const available = new Set(voices.map((v) => v.name));
+  const wanted = voicesUsedBy(items);
+  const missing = wanted.filter((n) => !available.has(n));
+  if (!missing.length) {
+    console.log(`Cast checked against the API: ${wanted.join(', ')}\n`);
+    return;
+  }
+  console.error(`These voices are not available to this key:\n  ${missing.join('\n  ')}\n`);
+  const urdu = voices
+    .filter((v) => (v.languageCodes || []).some((c) => c.startsWith('ur')))
+    .map((v) => `  ${v.name.padEnd(30)} ${v.ssmlGender}`);
+  console.error(urdu.length ? `Urdu voices this key can use:\n${urdu.join('\n')}` : 'This key sees no Urdu voices.');
+  process.exit(1);
+}
+
+/**
+ * Record the same two lines in every candidate voice, so a narrator can be
+ * chosen by ear instead of from adjectives.
+ *
+ * "Warm", "kind" and "robotic" are judgements about how something *sounds*, and
+ * the only evidence that settles them is listening. Google's published character
+ * words ("Upbeat", "Friendly", "Smooth") are a reasonable place to start and
+ * they are not the same thing as hearing the voice say Urdu — the current recast
+ * away from Puck was argued entirely from those adjectives, which is the best
+ * anyone can do without ears on the audio.
+ *
+ * So this writes one short sample per voice into `assets/voice-audition/`,
+ * ignored by git and required by nothing. Play them, pick one, set it:
+ *
+ *   npm run gen:voice -- --audition
+ *   VOICE_SET=m VOICE_NAME=ur-IN-Chirp3-HD-Umbriel npm run gen:voice
+ *
+ * Two lines rather than one, and deliberately not a single word: a word cannot
+ * show you warmth, because warmth lives in the contour across a phrase. The
+ * second line is a full sentence at connected pace for exactly that reason.
+ */
+const AUDITION = [
+  { id: 'word', text: 'خدا حافظ', pace: PACE.citation },
+  { id: 'line', text: 'میں آپ سے مل کر بہت خوش ہوا۔', pace: PACE.connected },
+];
+
+async function auditionVoices(gender) {
+  const key = process.env.GOOGLE_TTS_API_KEY;
+  if (!key) {
+    console.log('Set GOOGLE_TTS_API_KEY to record auditions.');
+    process.exit(1);
+  }
+  const res = await fetch(`https://texttospeech.googleapis.com/v1/voices?key=${key}`);
+  if (!res.ok) {
+    console.error(`Could not list voices — ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    process.exit(1);
+  }
+  const { voices = [] } = await res.json();
+  const want = (gender || '').toUpperCase();
+  const urdu = voices
+    .filter((v) => (v.languageCodes || []).some((c) => c.startsWith('ur')))
+    .filter((v) => !want || String(v.ssmlGender) === want)
+    .filter((v) => v.name.includes('Chirp3-HD'));
+  if (!urdu.length) {
+    console.log('No Chirp3-HD Urdu voices available to this key.');
+    return;
+  }
+  const dir = path.join(ROOT, 'assets', 'voice-audition');
+  fs.mkdirSync(dir, { recursive: true });
+  console.log(`Recording ${urdu.length} voices × ${AUDITION.length} lines into assets/voice-audition/\n`);
+  for (const v of urdu) {
+    const short = v.name.replace('ur-IN-Chirp3-HD-', '');
+    for (const line of AUDITION) {
+      const audio = await googleTTS(line.text, v.name, line.pace);
+      fs.writeFileSync(path.join(dir, `${short}-${line.id}.mp3`), audio);
+    }
+    console.log(`  ${short.padEnd(16)} ${v.ssmlGender}`);
+  }
+  console.log(`\nPlay them, pick one, then:\n  VOICE_SET=m VOICE_NAME=ur-IN-Chirp3-HD-<name> npm run gen:voice`);
 }
 
 /** Ask Google which voices the key can actually use, rather than guessing. */
@@ -302,6 +462,7 @@ function writeManifest() {
   const args = process.argv.slice(2);
 
   if (args.includes('--voices')) return listGoogleVoices();
+  if (args.includes('--audition')) return auditionVoices(process.env.GENDER || 'MALE');
 
   if (args.includes('--manifest')) {
     {
@@ -323,6 +484,7 @@ function writeManifest() {
 
   const force = args.includes('--force');
   const all = collectItems();
+  if (provider.name === 'Google Cloud TTS') await assertVoicesExist(all);
   if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true });
 
   // Generating is idempotent: anything already on disk *that still says what
@@ -336,7 +498,7 @@ function writeManifest() {
     if (!fs.existsSync(path.join(OUT_DIR, `${i.id}.mp3`))) missing.push(i);
     else {
       const was = ledger[i.id];
-      if (was && (was.text !== i.text || was.voice !== i.voice)) stale.push(i);
+      if (was && (was.text !== i.text || was.voice !== i.voice || (was.pace ?? LEGACY_PACE) !== i.pace)) stale.push(i);
     }
   }
   const todo = force ? all : [...missing, ...stale];
@@ -348,7 +510,10 @@ function writeManifest() {
   );
   for (const s of stale.slice(0, 8)) {
     const was = ledger[s.id];
-    const what = was.text !== s.text ? `“${was.text}” \u2192 “${s.text}”` : `${was.voice} \u2192 ${s.voice}`;
+    let what;
+    if (was.text !== s.text) what = `“${was.text}” \u2192 “${s.text}”`;
+    else if (was.voice !== s.voice) what = `${was.voice} \u2192 ${s.voice}`;
+    else what = `pace ${was.pace ?? LEGACY_PACE} \u2192 ${s.pace}`;
     console.log(`    stale: ${s.id} — ${what}`);
   }
   if (!todo.length) {
@@ -363,7 +528,7 @@ function writeManifest() {
   const failed = [];
   if (!ffmpegAvailable())
     console.log('  (ffmpeg not found — clips are checked by length only; install it to catch long silences)\n');
-  for (const { id, text, voice } of todo) {
+  for (const { id, text, voice, pace } of todo) {
     try {
       // The API answers a bad synthesis with 200 and a fragment of near-silence
       // (see lib/audio.js), and every one of those succeeds on a retry — so the
@@ -377,7 +542,7 @@ function writeManifest() {
       if (fallback) attempts.push(fallback, fallback);
       for (let i = 0; i < attempts.length; i++) {
         actual = attempts[i];
-        audio = await provider.fn(text, actual);
+        audio = await provider.fn(text, actual, pace);
         problem = bufferProblem(audio, path.join(OUT_DIR, `.${id}.probe`));
         if (!problem) break;
         retried++;
@@ -396,7 +561,7 @@ function writeManifest() {
       // `actual` records what produced the file. Storing only `actual` would
       // make a fallen-back clip differ from the course's intent on every run
       // and regenerate for ever.
-      ledger[id] = actual === voice ? { text, voice } : { text, voice, actual };
+      ledger[id] = actual === voice ? { text, voice, pace } : { text, voice, pace, actual };
       writeLedger(ledger);
       ok++;
       if (ok % 100 === 0 || ok === 1) console.log(`  ${ok}/${todo.length}  ${id} “${text}”`);

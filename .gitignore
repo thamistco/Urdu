@@ -39,6 +39,11 @@ assets/voice/*.mp3
 # own text-to-speech, which has no Urdu.
 assets/voice-m/*.mp3
 
+# Voice auditions — one sample line per candidate voice, written by
+# `npm run gen:voice -- --audition`. Scratch output for choosing a narrator by
+# ear; never shipped, never required by the manifest.
+assets/voice-audition/
+
 # debug
 npm-debug.*
 yarn-debug.*
