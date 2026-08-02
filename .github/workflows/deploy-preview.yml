@@ -75,6 +75,9 @@ jobs:
       - name: Check the typed-answer matcher
         run: npm run check:roman
 
+      - name: Check Roman spellings agree with the canonical table
+        run: npm run check:translit
+
       - name: Check that tracing is passable
         run: npm run check:trace
 
