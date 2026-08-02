@@ -80,6 +80,7 @@ export const HOME_PACKS: TopicPack[] = [
   pack(
     { id: 'routine', title: 'Daily Routine', icon: '🔄', blurb: 'The shape of an ordinary day.', level: 'intermediate' },
     [
+      ['w-warzish', 'ورزش', 'warzish', 'exercise', '🏃'],
       ['w-jaagna', 'جاگنا', 'jaagna', 'to wake up', '⏰'],
       ['w-nahaana', 'نہانا', 'nahaana', 'to bathe', '🚿'],
       ['w-pehenna', 'پہننا', 'pehenna', 'to wear', '👕'],
@@ -96,7 +97,6 @@ export const HOME_PACKS: TopicPack[] = [
       ['w-tayyar', 'تیار', 'tayyaar', 'ready', '✅'],
       ['w-der', 'دیر', 'der', 'lateness / delay', '⏳'],
       ['w-jaldi', 'جلدی', 'jaldi', 'quickly / early', '⚡'],
-      ['w-roz', 'روز', 'roz', 'daily', '📅'],
       ['w-hamesha', 'ہمیشہ', 'hamesha', 'always', '♾️'],
       ['w-kabhi', 'کبھی', 'kabhi', 'sometimes / ever', '🔀'],
       ['w-abhi', 'ابھی', 'abhi', 'right now', '⏱️'],

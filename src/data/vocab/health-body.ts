@@ -49,7 +49,6 @@ export const HEALTH_PACKS: TopicPack[] = [
       ['w-thakan', 'تھکن', 'thakan', 'fatigue', '😮‍💨'],
       ['w-taaqat', 'طاقت', 'taaqat', 'strength', '🏋️'],
       ['w-ghiza', 'غذا', 'ghiza', 'nutrition', '🥗'],
-      ['w-warzish', 'ورزش', 'warzish', 'exercise', '🏃'],
     ]
   ),
   pack(

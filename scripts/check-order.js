@@ -190,12 +190,16 @@ function classify(text, taught) {
       unknown.push(w);
       continue;
     }
-    const topics = topicsOf.get(c.lemma);
-    if (!topics) {
+    // Every topic that teaches any reading of this form. Satisfied if the
+    // learner has reached any of them — the same leniency a word listed under
+    // two topics already gets, extended to a form that could be two words.
+    const topics = new Set();
+    for (const lemma of c.lemmas) for (const t of topicsOf.get(lemma) ?? []) topics.add(t);
+    if (!topics.size) {
       unknown.push(w);
       continue;
     }
-    const shown = c.lemma === w ? w : `${w} [${c.lemma}]`;
+    const shown = c.lemmas.includes(w) ? w : `${w} [${c.lemmas.join('/')}]`;
     if (![...topics].some((t) => taught.has(t))) late.push(`${shown} (${[...topics].join('/')})`);
   }
   return { late, unknown };
