@@ -3,6 +3,7 @@ import { WORDS, getWord, wordsByTopic, glossOf, Word, PHRASES } from '../data/wo
 import { Lesson, ALL_LESSONS } from '../data/units';
 import { getGrammar, type GrammarConcept, type GrammarDrill } from '../data/grammar';
 import { romanAll } from '../lib/translit';
+import { romanRevealsMeaning } from '../lib/giveaway';
 import type { LearnTrack } from '../store/useSettingsStore';
 import {
   SENTENCES,
@@ -140,7 +141,13 @@ type Demand = 'meet' | 'recall' | 'produce';
 /** Typing a five-word honorific phrase is a spelling test, not a memory test. */
 const isTypeable = (w: Word) => w.roman.replace(/[^a-z]/gi, '').length <= 12;
 
-function wordExercise(word: Word, pool: Word[], demand: Demand = 'meet', variant?: number): Exercise {
+function wordExercise(
+  word: Word,
+  pool: Word[],
+  track: LearnTrack,
+  demand: Demand = 'meet',
+  variant?: number
+): Exercise {
   if (demand === 'produce' && isTypeable(word)) {
     return { kind: 'typeWord', word };
   }
@@ -162,6 +169,25 @@ function wordExercise(word: Word, pool: Word[], demand: Demand = 'meet', variant
   // vocabulary cannot supply them, fall back to the text question rather than
   // asking a narrower one.
   if (pictureOptions.length < DISTRACTORS && v !== 1) v = 1;
+
+  // "What does it mean?" cannot be asked about a loanword on the Roman track:
+  // the prompt is the transliteration and nothing else, so پنسل reads `pencil`
+  // above an option reading "pencil". On the other tracks the script carries
+  // the question and the exercise view withholds the Roman caption instead
+  // (see romanRevealsMeaning in lib/giveaway). Here there is nothing left to
+  // withhold, so the word gets asked about a different way.
+  // Only when the vocabulary can supply a distinct picture set. Where it
+  // cannot, the easy question stands: a loanword really is easy for someone
+  // reading Roman, and swapping in an exercise that has too few options to be
+  // answerable would trade a soft question for a broken one.
+  if (
+    v === 1 &&
+    track === 'roman' &&
+    pictureOptions.length >= DISTRACTORS &&
+    romanRevealsMeaning(word.roman, word.meaning)
+  ) {
+    v = 0;
+  }
 
   if (v === 1) {
     const opts = distractorsFor(word, pool, { distinctMeaning: true });
@@ -256,14 +282,14 @@ export function buildLessonExercises(
     const contextWords = letters
       .map((l) => WORDS.find((w) => w.roman.toLowerCase().includes(l.sound[0])))
       .filter(Boolean) as Word[];
-    if (contextWords[0]) exercises.push(wordExercise(contextWords[0], WORDS, 'meet', 0));
+    if (contextWords[0]) exercises.push(wordExercise(contextWords[0], WORDS, track, 'meet', 0));
   }
 
   if (lesson.kind === 'phrases') {
     // Phrases share one icon, so picture/listen cues don't work — always show
     // the phrase and pick its meaning.
     const picks = shuffle(PHRASE_WORDS).slice(0, lesson.size);
-    for (const w of picks) exercises.push(wordExercise(w, PHRASE_WORDS, 'meet', 1));
+    for (const w of picks) exercises.push(wordExercise(w, PHRASE_WORDS, track, 'meet', 1));
   } else if (lesson.kind === 'vocab' && lesson.topic) {
     /**
      * A vocabulary lesson climbs: meet each word with a picture, come back to
@@ -278,10 +304,10 @@ export function buildLessonExercises(
     const woven = Math.min(2, reviewRefs.length);
     const newWords = Math.max(3, lesson.size - 4 - woven);
     const picks = shuffle(pool).slice(0, newWords);
-    picks.forEach((w, i) => exercises.push(wordExercise(w, pool, 'meet', i % 3)));
+    picks.forEach((w, i) => exercises.push(wordExercise(w, pool, track, 'meet', i % 3)));
 
     for (const w of shuffle(picks).slice(0, 2)) {
-      exercises.push(wordExercise(w, pool, 'recall'));
+      exercises.push(wordExercise(w, pool, track, 'recall'));
     }
 
     // Typing sits in the middle, not at the end: it is the hardest thing the
@@ -296,7 +322,7 @@ export function buildLessonExercises(
     if (buildable[0] && teachesScript) {
       exercises.push({ kind: 'wordBuild', word: buildable[0], tiles: buildTilesFor(buildable[0]) });
     } else if (buildable[0]) {
-      exercises.push(wordExercise(buildable[0], pool, 'recall'));
+      exercises.push(wordExercise(buildable[0], pool, track, 'recall'));
     }
 
     // Close with a matching board (Drops-style); its four pictures must differ.
@@ -371,7 +397,7 @@ export function buildLessonExercises(
         // Review is where the harder demands belong: a word is only here
         // because it was met before, so asking to recognise it again teaches
         // little. Most reviews retrieve; every third one asks for it typed.
-        if (w) exercises.push(wordExercise(w, poolFor(w), Math.random() < 0.35 ? 'produce' : 'recall'));
+        if (w) exercises.push(wordExercise(w, poolFor(w), track, Math.random() < 0.35 ? 'produce' : 'recall'));
       }
     }
   }
@@ -385,7 +411,7 @@ export function buildLessonExercises(
         if (l) woven.push(letterExercise(l));
       } else {
         const w = getAnyWord(ref.id);
-        if (w) woven.push(wordExercise(w, poolFor(w), 'recall'));
+        if (w) woven.push(wordExercise(w, poolFor(w), track, 'recall'));
       }
     }
     exercises.splice(1, 0, ...woven);

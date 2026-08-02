@@ -6,6 +6,7 @@ import { Lexeme } from '../components/Lexeme';
 import { WordArt, Illustration, pictureIdentifies } from '../components/Illustration';
 import { feedback } from '../lib/feedback';
 import { announce } from '../lib/speech';
+import { romanRevealsMeaning } from '../lib/giveaway';
 import type { ExerciseProps, Exercise } from './types';
 import { glossOf } from '../data/words';
 
@@ -95,14 +96,20 @@ export function MeaningPickExercise({ exercise, track, locked, onGraded }: Exerc
   // adapt to length — single words render large, phrases scale down to fit
   const len = word.urdu.length;
   const fs = len > 16 ? 26 : len > 9 ? 36 : 56;
+
+  // The transliteration is normally a decoding aid, but for a loanword it is
+  // the answer: اردو set above "urdu" above an option reading "Urdu" is not a
+  // question. Withheld for those, so the learner still has to read the script.
+  // The Roman track has nothing else to show, so it keeps it — the generator
+  // is what keeps these words off that track (see meaningPick in generator.ts).
+  const gives = track !== 'roman' && romanRevealsMeaning(word.roman, word.meaning);
+
   return (
     <View>
       {/* The word was shown, not spoken — every other reading exercise offers
-          a way to hear the thing on screen, and this was the one that did not.
-          Safe to show before answering: hearing the pronunciation does not
-          leak which option is the meaning. */}
+          a way to hear the thing on screen, and this was the one that did not. */}
       <PromptCard height={len > 9 ? 170 : 150}>
-        <Lexeme urdu={word.urdu} roman={word.roman} track={track} size={fs} color={palette.ink} />
+        <Lexeme urdu={word.urdu} roman={gives ? undefined : word.roman} track={track} size={fs} color={palette.ink} />
         <View className="mt-3">
           <SpeakerButton onPress={() => announce(word.id, word.urdu, word.roman)} label={`Hear ${word.roman}`} />
         </View>

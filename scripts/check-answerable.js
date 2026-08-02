@@ -48,6 +48,7 @@ const { buildLessonExercises } = load('src/exercises/generator.ts');
 const { unitsForTrack } = load('src/data/units.ts');
 const { pictureIdentifies, cueOf } = load('src/data/art.ts');
 const { WORDS, glossOf } = load('src/data/words.ts');
+const { romanRevealsMeaning } = load('src/lib/giveaway.ts');
 
 // ---- how many options, and where the answer sits --------------------------
 
@@ -155,6 +156,17 @@ function check(ex, track) {
       if (!distinct(ex.options.map((o) => o.meaning.toLowerCase())))
         fail('two options mean the same', `${ex.word.id} — ${ex.options.map((o) => o.meaning).join(' / ')}`);
       if (!distinct(ex.options.map((o) => o.urdu))) fail('two options are the same word', `${ex.word.id}`);
+      // The other half of answerable: a question must not answer itself. On
+      // the Roman track the prompt is the transliteration and nothing else, so
+      // asking what اردو means while printing `urdu` above an option reading
+      // "Urdu" is not a question. (On the script tracks the Nastaliq carries
+      // the prompt and the exercise view withholds the Roman caption instead —
+      // see romanRevealsMeaning in src/lib/giveaway.ts.)
+      if (roman && ex.kind === 'meaningPick' && romanRevealsMeaning(ex.word.roman, ex.word.meaning))
+        fail(
+          'the transliteration gives the answer away',
+          `${ex.word.id}: "${ex.word.roman}" is asked about against the option "${ex.word.meaning}"`
+        );
       break;
 
     case 'matching':
