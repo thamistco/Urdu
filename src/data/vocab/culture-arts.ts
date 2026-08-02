@@ -3,7 +3,7 @@ import { pack, type TopicPack } from './types';
 /** Arts, faith, festivals, literature and leisure. */
 export const CULTURE_PACKS: TopicPack[] = [
   pack(
-    { id: 'music-art', title: 'Music & Art', icon: '🎵', blurb: 'Sound, colour and craft.', level: 'intermediate' },
+    { id: 'music-art', title: 'Music & Art', icon: '🎵', blurb: 'Sound, colour and craft.', level: 'advanced' },
     [
       ['w-mausiqi', 'موسیقی', 'mausiqi', 'music', '🎵'],
       ['w-saaz', 'ساز', 'saaz', 'instrument', '🎻'],
@@ -40,7 +40,6 @@ export const CULTURE_PACKS: TopicPack[] = [
       ['w-afsana', 'افسانہ', 'afsaana', 'short story', '📖'],
       ['w-novel', 'ناول', 'naawal', 'novel', '📕'],
       ['w-kirdaar', 'کردار', 'kirdaar', 'character', '🎭'],
-      ['w-kahani', 'کہانی', 'kahaani', 'story', '📚'],
       ['w-musannif', 'مصنف', 'musannif', 'author', '✍️'],
       ['w-tarjuma', 'ترجمہ', 'tarjuma', 'translation', '🔁'],
       ['w-tanqeed', 'تنقید', 'tanqeed', 'criticism', '🔍'],
@@ -78,7 +77,7 @@ export const CULTURE_PACKS: TopicPack[] = [
     ]
   ),
   pack(
-    { id: 'festivals', title: 'Festivals', icon: '🎊', blurb: 'Days of celebration.', level: 'intermediate' },
+    { id: 'festivals', title: 'Festivals', icon: '🎊', blurb: 'Days of celebration.', level: 'advanced' },
     [
       ['w-eid-fitr', 'عید الفطر', 'eid-ul-fitr', 'Eid al-Fitr', '🌙'],
       ['w-eid-azha', 'عید الاضحیٰ', 'eid-ul-azha', 'Eid al-Adha', '🐐'],
@@ -94,7 +93,6 @@ export const CULTURE_PACKS: TopicPack[] = [
       ['w-libaas2', 'نیا لباس', 'naya libaas', 'new clothes', '👘'],
       ['w-mehmaan2', 'مہمان', 'mehmaan', 'guest', '🙋'],
       ['w-khushi', 'خوشی', 'khushi', 'joy', '😊'],
-      ['w-raunaq', 'رونق', 'raunaq', 'liveliness', '✨'],
       ['w-yaum-azadi', 'یومِ آزادی', 'yaum-e-aazaadi', 'Independence Day', '🇵🇰'],
       ['w-basant', 'بسنت', 'basant', 'kite festival', '🪁'],
       ['w-patang', 'پتنگ', 'patang', 'kite', '🪁'],
@@ -107,7 +105,6 @@ export const CULTURE_PACKS: TopicPack[] = [
     [
       ['w-tv', 'ٹیلی ویژن', 'ṭeleewizhan', 'television', '📺'],
       ['w-radio', 'ریڈیو', 'reḍiyo', 'radio', '📻'],
-      ['w-film', 'فلم', 'film', 'film', '🎬'],
       ['w-drama', 'ڈراما', 'ḍraama', 'drama / play', '🎭'],
       ['w-sahafi', 'صحافی', 'sahaafi', 'journalist', '🗞️'],
       ['w-sahafat', 'صحافت', 'sahaafat', 'journalism', '📰'],

@@ -70,7 +70,6 @@ export const FOOD_PACKS: TopicPack[] = [
       ['w-zaiqa', 'ذائقہ', 'zaaiqa', 'flavour', '👅'],
       ['w-khushbu', 'خوشبو', 'khushboo', 'fragrance', '🌸'],
       ['w-badbu', 'بدبو', 'badboo', 'bad smell', '🤢'],
-      ['w-bhook', 'بھوک', 'bhookh', 'hunger', '🍽️'],
       ['w-pait-bhara', 'پیٹ بھرا', 'peṭ bhara', 'full (stomach)', '🫄'],
     ]
   ),

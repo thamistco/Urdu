@@ -61,8 +61,8 @@
 const { load } = require('./lib/load-ts');
 const { classify: classifyWord } = require('./lib/urdu-morph');
 
-const { ALL_LESSONS } = load('src/data/units.ts');
-const { WORDS, PHRASES } = load('src/data/words.ts');
+const { ALL_LESSONS, UNITS } = load('src/data/units.ts');
+const { WORDS, PHRASES, TOPICS } = load('src/data/words.ts');
 const { GRAMMAR } = load('src/data/grammar.ts');
 const { SENTENCES, PASSAGES, DIALOGUES } = load('src/data/sentences.ts');
 const { GRAMMAR_TRANSLIT } = load('src/data/translit.ts');
@@ -168,6 +168,37 @@ for (const l of ALL_LESSONS) {
       process.exit(1);
     }
     seen.set(l.topic, l.id);
+  }
+}
+
+/**
+ * `Topic.level` must say the same thing as the path.
+ *
+ * A topic's CEFR level is written down twice: on the topic itself, where the
+ * Practice screen reads it to group topics by level, and implicitly by which
+ * unit teaches it, which is the level the learner actually meets it at. Nothing
+ * kept the two in step, and they had silently drifted apart on 11 topics —
+ * `places` and `verbs` calling themselves elementary while the path taught them
+ * at intermediate, `opposites` calling itself intermediate while the path had
+ * it at advanced. Practice offered a topic as A2 that the course would not
+ * reach for another twenty units.
+ *
+ * The path wins, because it is what a learner walks. This proves the label
+ * agrees with it, the same way check:theme proves colors.ts and the Tailwind
+ * config agree rather than trying to merge them.
+ */
+{
+  const pathLevel = new Map();
+  for (const u of UNITS) for (const l of u.lessons) if (l.kind === 'vocab' && l.topic) pathLevel.set(l.topic, u.level);
+  const drifted = TOPICS.filter((t) => pathLevel.has(t.id) && pathLevel.get(t.id) !== t.level);
+  if (drifted.length) {
+    console.error(
+      `check:order — ${drifted.length} topic(s) label themselves with a different CEFR level than the unit that teaches them:`
+    );
+    for (const t of drifted) {
+      console.error(`  ${t.id}: Topic.level is "${t.level}", but it is taught in a ${pathLevel.get(t.id)} unit.`);
+    }
+    process.exit(1);
   }
 }
 

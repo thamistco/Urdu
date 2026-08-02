@@ -28,7 +28,7 @@ export const CITY_PACKS: TopicPack[] = [
     ]
   ),
   pack(
-    { id: 'road', title: 'On the Road', icon: '🛣️', blurb: 'Driving, traffic and signs.', level: 'intermediate' },
+    { id: 'road', title: 'On the Road', icon: '🛣️', blurb: 'Driving, traffic and signs.', level: 'elementary' },
     [
       ['w-shahrah', 'شاہراہ', 'shaahraah', 'highway', '🛣️'],
       ['w-traffic', 'ٹریفک', 'ṭrafik', 'traffic', '🚦'],
@@ -87,7 +87,6 @@ export const CITY_PACKS: TopicPack[] = [
       ['w-judge', 'جج', 'jaj', 'judge', '👨‍⚖️'],
       ['w-qanoon', 'قانون', 'qaanoon', 'law', '📜'],
       ['w-tax', 'ٹیکس', 'ṭaiks', 'tax', '🧾'],
-      ['w-shanakhti-card', 'شناختی کارڈ', 'shanaakhti kaarḍ', 'identity card', '🪪'],
       ['w-darkhwast', 'درخواست', 'darkhwaast', 'application / request', '📝'],
       ['w-daftar2', 'محکمہ', 'mehkma', 'department', '🏢'],
       ['w-ijlaas', 'اجلاس', 'ijlaas', 'meeting / session', '👥'],

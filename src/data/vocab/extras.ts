@@ -30,6 +30,7 @@ export const EXTRA_PACKS: TopicPack[] = [
   pack(
     { id: 'bank', title: 'At the Bank', icon: '🏦', blurb: 'Accounts and transactions.', level: 'intermediate' },
     [
+      ['w-shanakhti-card', 'شناختی کارڈ', 'shanaakhti kaarḍ', 'identity card', '🪪'],
       ['w-khaata', 'کھاتا', 'khaata', 'account', '📒'],
       ['w-jama', 'جمع', 'jama', 'deposit', '📥'],
       ['w-nikalwana', 'رقم نکلوانا', 'raqam nikalwaana', 'to withdraw', '📤'],
@@ -80,7 +81,6 @@ export const EXTRA_PACKS: TopicPack[] = [
   pack(
     { id: 'shopping-talk', title: 'Bargaining', icon: '🛍️', blurb: 'Haggling in the bazaar.', level: 'intermediate' },
     [
-      ['w-kitne-ka', 'کتنے کا', 'kitne ka', 'how much for', '❓'],
       ['w-mol-bhao', 'مول بھاؤ', 'mol bhaao', 'bargaining', '🤝'],
       ['w-kam-karo', 'کم کرو', 'kam karo', 'reduce it', '📉'],
       ['w-aakhri-qeemat', 'آخری قیمت', 'aakhri qeemat', 'final price', '🏷️'],
@@ -112,12 +112,9 @@ export const EXTRA_PACKS: TopicPack[] = [
       ['w-pahla-mor', 'پہلا موڑ', 'pehla moṛ', 'first turning', '1️⃣'],
       ['w-chowk2', 'چوراہا', 'chauraaha', 'crossroads', '➕'],
       ['w-samne-wala', 'سامنے والا', 'saamne waala', 'the one opposite', '↔️'],
-      ['w-peeche', 'پیچھے', 'peechhe', 'behind', '⬅️'],
       ['w-bagal-mein', 'بغل میں', 'baghal meñ', 'next to', '↔️'],
       ['w-darmiyan', 'درمیان', 'darmiyaan', 'between', '⚖️'],
       ['w-kinare', 'کنارے', 'kinaare', 'at the edge', '📐'],
-      ['w-paidal', 'پیدل', 'paidal', 'on foot', '🚶'],
-      ['w-kitni-door', 'کتنی دور', 'kitni door', 'how far', '📏'],
       ['w-paanch-minute', 'پانچ منٹ', 'paañch minaṭ', 'five minutes', '⏱️'],
       ['w-nazdeek', 'نزدیک', 'nazdeek', 'nearby', '📍'],
       ['w-guzarna', 'گزرنا', 'guzarna', 'to pass by', '➡️'],
@@ -155,6 +152,7 @@ export const EXTRA_PACKS: TopicPack[] = [
   pack(
     { id: 'celebrations', title: 'Weddings & Guests', icon: '💒', blurb: 'Hosting and being hosted.', level: 'intermediate' },
     [
+      ['w-raunaq', 'رونق', 'raunaq', 'liveliness', '✨'],
       ['w-baraat', 'بارات', 'baraat', 'wedding procession', '🎉'],
       ['w-nikah', 'نکاح', 'nikaah', 'marriage contract', '📜'],
       ['w-waleema', 'ولیمہ', 'waleema', 'wedding feast', '🍛'],

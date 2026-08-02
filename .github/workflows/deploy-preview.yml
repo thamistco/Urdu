@@ -84,6 +84,9 @@ jobs:
       - name: Check that every generated question is answerable
         run: npm run check:answerable
 
+      - name: Check that words are taught before they are tested
+        run: npm run check:order
+
       - name: Check that spaced repetition does what it claims
         run: npm run check:srs
 

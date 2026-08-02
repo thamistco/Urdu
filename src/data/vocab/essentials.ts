@@ -28,7 +28,7 @@ export const ESSENTIAL_PACKS: TopicPack[] = [
     ]
   ),
   pack(
-    { id: 'quantity', title: 'Quantity', icon: '⚖️', blurb: 'How much and how many.', level: 'elementary' },
+    { id: 'quantity', title: 'Quantity', icon: '⚖️', blurb: 'How much and how many.', level: 'beginner' },
     [
       ['w-bahut', 'بہت', 'bahut', 'very / much', '🔺'],
       ['w-thora', 'تھوڑا', 'thoṛa', 'a little', '🤏'],
@@ -78,7 +78,7 @@ export const ESSENTIAL_PACKS: TopicPack[] = [
     ]
   ),
   pack(
-    { id: 'opposites', title: 'Opposites', icon: '↔️', blurb: 'Pairs that define each other.', level: 'intermediate' },
+    { id: 'opposites', title: 'Opposites', icon: '↔️', blurb: 'Pairs that define each other.', level: 'beginner' },
     [
       ['w-shuru', 'شروع', 'shuroo', 'beginning', '▶️'],
       ['w-khatam', 'ختم', 'khatam', 'end / finished', '⏹️'],
@@ -110,13 +110,10 @@ export const ESSENTIAL_PACKS: TopicPack[] = [
       ['w-dauran', 'دوران', 'dauraan', 'during', '⏸️'],
       ['w-jab', 'جب', 'jab', 'when', '🕐'],
       ['w-tab', 'تب', 'tab', 'then', '🕑'],
-      ['w-ab', 'اب', 'ab', 'now', '⏱️'],
       ['w-fauran2', 'اچانک', 'achaanak', 'suddenly', '⚡'],
-      ['w-aksar', 'اکثر', 'aksar', 'often', '🔂'],
       ['w-shaz', 'شاذ', 'shaaz', 'rarely', '🌒'],
       ['w-hameshaa2', 'مسلسل', 'musalsal', 'continuously', '➰'],
       ['w-lamha', 'لمحہ', 'lamha', 'moment', '⏳'],
-      ['w-minute', 'منٹ', 'minaṭ', 'minute', '🕐'],
       ['w-second', 'سیکنڈ', 'saikanḍ', 'second', '⏱️'],
       ['w-arsa', 'عرصہ', 'arsa', 'period of time', '📆'],
       ['w-muddat', 'مدت', 'muddat', 'duration', '⏲️'],
@@ -127,7 +124,7 @@ export const ESSENTIAL_PACKS: TopicPack[] = [
     ]
   ),
   pack(
-    { id: 'verbs3', title: 'Essential Verbs', icon: '⚡', blurb: 'The verbs you cannot do without.', level: 'intermediate' },
+    { id: 'verbs3', title: 'Essential Verbs', icon: '⚡', blurb: 'The verbs you cannot do without.', level: 'elementary' },
     [
       ['w-hona', 'ہونا', 'hona', 'to be / happen', '🌟'],
       ['w-rehna', 'رہنا', 'rehna', 'to live / stay', '🏠'],

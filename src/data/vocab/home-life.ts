@@ -3,7 +3,7 @@ import { pack, type TopicPack } from './types';
 /** The home, its rooms, contents and daily routines. */
 export const HOME_PACKS: TopicPack[] = [
   pack(
-    { id: 'rooms', title: 'Rooms', icon: '🚪', blurb: 'Every room in the house.', level: 'elementary' },
+    { id: 'rooms', title: 'Rooms', icon: '🚪', blurb: 'Every room in the house.', level: 'beginner' },
     [
       ['w-kamra2', 'کمرہ', 'kamra', 'room', '🚪'],
       ['w-baithak', 'بیٹھک', 'baiṭhak', 'sitting room', '🛋️'],
@@ -78,7 +78,7 @@ export const HOME_PACKS: TopicPack[] = [
     ]
   ),
   pack(
-    { id: 'routine', title: 'Daily Routine', icon: '🔄', blurb: 'The shape of an ordinary day.', level: 'intermediate' },
+    { id: 'routine', title: 'Daily Routine', icon: '🔄', blurb: 'The shape of an ordinary day.', level: 'elementary' },
     [
       ['w-warzish', 'ورزش', 'warzish', 'exercise', '🏃'],
       ['w-jaagna', 'جاگنا', 'jaagna', 'to wake up', '⏰'],
@@ -103,7 +103,7 @@ export const HOME_PACKS: TopicPack[] = [
     ]
   ),
   pack(
-    { id: 'garden', title: 'The Garden', icon: '🌿', blurb: 'Growing things around the house.', level: 'intermediate' },
+    { id: 'garden', title: 'The Garden', icon: '🌿', blurb: 'Growing things around the house.', level: 'elementary' },
     [
       ['w-paudha', 'پودا', 'paudha', 'plant', '🌱'],
       ['w-beej', 'بیج', 'beej', 'seed', '🫘'],
