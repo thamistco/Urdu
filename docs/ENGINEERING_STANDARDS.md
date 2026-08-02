@@ -408,7 +408,7 @@ deploy-shaped build.
 | `check:structure` | 20, 21, 71 |
 | `test` | 87 |
 | `audit` | 78, 83, 86 |
-| `check:roman`, `check:trace`, `check:answerable`, `check:srs` | 146 |
+| `check:roman`, `check:translit`, `check:trace`, `check:answerable`, `check:srs` | 146 |
 | `check:theme` | 24, 58 |
 | `check:voice` | 145, 146 |
 | `check:stability`, `check:scenery` | 96, 104 |

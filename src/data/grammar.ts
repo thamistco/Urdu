@@ -77,7 +77,7 @@ export const GRAMMAR: GrammarConcept[] = [
       ],
       rowsRoman: [
         ['main', ''],
-        ['ham', ''],
+        ['hum', ''],
         ['aap', ''],
         ['tum', ''],
         ['ye', ''],
@@ -117,7 +117,7 @@ export const GRAMMAR: GrammarConcept[] = [
     level: 'beginner',
     explain: [
       'Urdu sentences usually end with the verb. The commonest verb is ہونا (hona): "to be".',
-      'Pick the ending by who you are talking about: ہوں (hoon) after میں (main), ہے (hai) after a single person or thing, ہیں (hain) after آپ (aap), ہم (ham), and plurals.',
+      'Pick the ending by who you are talking about: ہوں (hoon) after میں (main), ہے (hai) after a single person or thing, ہیں (hain) after آپ (aap), ہم (hum), and plurals.',
       'There is no word for "a" or "an", "I am a doctor" is simply میں ڈاکٹر ہوں (main ḍākṭar hoon).',
     ],
     table: {
@@ -132,12 +132,12 @@ export const GRAMMAR: GrammarConcept[] = [
         ['main', 'hoon', 'main khush hoon (I am happy)'],
         ['tum', 'ho', 'tum khush ho (you are happy)'],
         ['ye / wo', 'hai', 'wo khush hai (he/she is happy)'],
-        ['ham / aap / wo (pl.)', 'hain', 'ham khush hain (we are happy)'],
+        ['hum / aap / wo (pl.)', 'hain', 'hum khush hain (we are happy)'],
       ],
     },
     examples: [
       { urdu: 'یہ کتاب ہے', roman: 'ye kitaab hai', meaning: 'This is a book' },
-      { urdu: 'ہم گھر میں ہیں', roman: 'ham ghar meñ hain', meaning: 'We are at home' },
+      { urdu: 'ہم گھر میں ہیں', roman: 'hum ghar meñ hain', meaning: 'We are at home' },
       { urdu: 'تم بیمار ہو', roman: 'tum bimaar ho', meaning: 'You are ill' },
     ],
     drills: [
@@ -350,7 +350,7 @@ export const GRAMMAR: GrammarConcept[] = [
     examples: [
       { urdu: 'کتاب میز پر ہے', roman: 'kitaab mez par hai', meaning: 'The book is on the table' },
       { urdu: 'میں بازار سے آیا', roman: 'main bazaar se aaya', meaning: 'I came from the market' },
-      { urdu: 'ہم گھر میں ہیں', roman: 'ham ghar meñ hain', meaning: 'We are in the house' },
+      { urdu: 'ہم گھر میں ہیں', roman: 'hum ghar meñ hain', meaning: 'We are in the house' },
     ],
     drills: [
       {
@@ -599,7 +599,7 @@ export const GRAMMAR: GrammarConcept[] = [
         ['main (f.)', 'jaati hoon', ''],
         ['wo (m.)', 'jaata hai', ''],
         ['wo (f.)', 'jaati hai', ''],
-        ['ham / wo (pl.)', 'jaate hain', ''],
+        ['hum / wo (pl.)', 'jaate hain', ''],
       ],
     },
     examples: [
@@ -620,7 +620,7 @@ export const GRAMMAR: GrammarConcept[] = [
       {
         id: 'g-pres-d2',
         prompt: 'ہم اردو بول___ ہیں',
-        promptRoman: 'ham urdu bol___ hain',
+        promptRoman: 'hum urdu bol___ hain',
         meaning: 'We speak Urdu',
         answer: 'تے',
         options: ['تے', 'تا', 'تی', 'تیں'],
@@ -683,7 +683,7 @@ export const GRAMMAR: GrammarConcept[] = [
     examples: [
       { urdu: 'وہ گھر میں تھا', roman: 'wo ghar meñ tha', meaning: 'He was at home' },
       { urdu: 'کتاب میز پر تھی', roman: 'kitaab mez par thi', meaning: 'The book was on the table' },
-      { urdu: 'ہم دوست تھے', roman: 'ham dost the', meaning: 'We were friends' },
+      { urdu: 'ہم دوست تھے', roman: 'hum dost the', meaning: 'We were friends' },
     ],
     drills: [
       {
@@ -705,12 +705,12 @@ export const GRAMMAR: GrammarConcept[] = [
     explain: [
       'The future adds ‑گا / ‑گی / ‑گے (‑ga / ‑gi / ‑ge) to the subjunctive stem: میں جاؤں گا (main jaaoon ga): "I will go".',
       'The گا (ga) part agrees with the subject, exactly like the other verb endings you have met.',
-      'Common forms: میں کروں گا (main karoon ga, I will do), وہ کرے گا (wo kare ga, he will do), ہم کریں گے (ham kareñ ge, we will do).',
+      'Common forms: میں کروں گا (main karoon ga, I will do), وہ کرے گا (wo kare ga, he will do), ہم کریں گے (hum kareñ ge, we will do).',
     ],
     examples: [
       { urdu: 'میں کل آؤں گا', roman: 'main kal aaoon ga', meaning: 'I will come tomorrow' },
       { urdu: 'وہ خط لکھے گی', roman: 'wo khat likhe gi', meaning: 'She will write a letter' },
-      { urdu: 'ہم بازار جائیں گے', roman: 'ham bazaar jaayeñ ge', meaning: 'We will go to the market' },
+      { urdu: 'ہم بازار جائیں گے', roman: 'hum bazaar jaayeñ ge', meaning: 'We will go to the market' },
     ],
     drills: [
       {
@@ -748,7 +748,7 @@ export const GRAMMAR: GrammarConcept[] = [
         ['mujh ko', 'mujhe', ''],
         ['tum ko', 'tumheñ', ''],
         ['us ko', 'use', ''],
-        ['ham ko', 'hameñ', ''],
+        ['hum ko', 'hameñ', ''],
         ['un ko', 'unheñ', ''],
       ],
     },
@@ -785,7 +785,7 @@ export const GRAMMAR: GrammarConcept[] = [
     level: 'intermediate',
     explain: [
       'Put سکنا (sakna) after the bare verb stem and everything else stays normal: میں جا سکتا ہوں (main ja sakta hoon): "I can go".',
-      'The stem never changes; سکنا (sakna) carries all the endings. میں بول سکتا ہوں (main bol sakta hoon), وہ بول سکتی ہے (wo bol sakti hai), ہم بول سکتے ہیں (ham bol sakte hain).',
+      'The stem never changes; سکنا (sakna) carries all the endings. میں بول سکتا ہوں (main bol sakta hoon), وہ بول سکتی ہے (wo bol sakti hai), ہم بول سکتے ہیں (hum bol sakte hain).',
       'For the negative, نہیں (nahiñ) goes before the pair: میں نہیں جا سکتا (main nahiñ ja sakta). To say you *managed* to do something, پانا (paana) does that job: میں نہیں جا پایا (main nahiñ ja paaya): "I couldn\'t manage to go".',
     ],
     examples: [
@@ -946,7 +946,7 @@ export const GRAMMAR: GrammarConcept[] = [
     level: 'advanced',
     explain: [
       'The subjunctive covers wishes, suggestions, doubts and "if", things not stated as fact.',
-      'Forms are the future without گا (ga): میں جاؤں (main jaaoon, that I go), وہ جائے (wo jaaye, that he go), ہم جائیں (ham jaayeñ, that we go).',
+      'Forms are the future without گا (ga): میں جاؤں (main jaaoon, that I go), وہ جائے (wo jaaye, that he go), ہم جائیں (hum jaayeñ, that we go).',
       'Use it after اگر (agar, if), شاید (shaayad, perhaps), and to suggest: چلیں؟ (chaleñ?): "shall we go?" Its negative is نہ (na), not نہیں (nahiñ).',
     ],
     examples: [

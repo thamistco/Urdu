@@ -123,7 +123,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-32',
     words: ['ہم', 'دوست', 'ہیں'],
-    roman: 'ham dost hain',
+    roman: 'hum dost hain',
     meaning: 'We are friends',
     level: 'beginner',
     concept: 'g-to-be',
@@ -271,7 +271,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-53',
     words: ['ہم', 'خوش', 'ہیں'],
-    roman: 'ham khush hain',
+    roman: 'hum khush hain',
     meaning: 'We are happy',
     level: 'beginner',
     concept: 'g-to-be',
@@ -319,7 +319,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-10',
     words: ['ہم', 'گھر', 'میں', 'ہیں'],
-    roman: 'ham ghar meñ hain',
+    roman: 'hum ghar meñ hain',
     meaning: 'We are in the house',
     level: 'elementary',
     concept: 'g-postpositions',
@@ -396,7 +396,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-62',
     words: ['ہم', 'رات', 'تک', 'کام', 'کرتے', 'ہیں'],
-    roman: 'ham raat tak kaam karte hain',
+    roman: 'hum raat tak kaam karte hain',
     meaning: 'We work until night',
     level: 'elementary',
     concept: 'g-postpositions',
@@ -677,7 +677,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-90',
     words: ['ہم', 'اردو', 'بولتے', 'ہیں'],
-    roman: 'ham urdu bolte hain',
+    roman: 'hum urdu bolte hain',
     meaning: 'We speak Urdu',
     level: 'intermediate',
     concept: 'g-present',
@@ -717,7 +717,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-95',
     words: ['ہم', 'کل', 'لاہور', 'میں', 'تھے'],
-    roman: 'ham kal Lahore meñ the',
+    roman: 'hum kal Lahore meñ the',
     meaning: 'We were in Lahore yesterday',
     level: 'intermediate',
     concept: 'g-past',
@@ -742,7 +742,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-98',
     words: ['ہم', 'اگلے', 'ہفتے', 'ملیں', 'گے'],
-    roman: 'ham agle hafte mileñ ge',
+    roman: 'hum agle hafte mileñ ge',
     meaning: 'We will meet next week',
     level: 'intermediate',
     concept: 'g-future',
@@ -973,7 +973,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-121',
     words: ['اگر', 'بارش', 'ہو', 'تو', 'ہم', 'نہ', 'جائیں'],
-    roman: 'agar baarish ho to ham na jaayeñ',
+    roman: 'agar baarish ho to hum na jaayeñ',
     meaning: "If it rains, let's not go",
     level: 'advanced',
     concept: 'g-subjunctive',
@@ -1005,7 +1005,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-125',
     words: ['ہم', 'نے', 'فلم', 'دیکھی', 'تھی'],
-    roman: 'ham ne film dekhi thi',
+    roman: 'hum ne film dekhi thi',
     meaning: 'We had watched the film',
     level: 'advanced',
     concept: 'g-perfect',
@@ -1183,7 +1183,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-146',
     words: ['بچے', 'باغ', 'میں', 'کھیل', 'رہے', 'ہیں'],
-    roman: 'bachche baagh meñ khel rahe haiñ',
+    roman: 'bachche baagh meñ khel rahe hain',
     meaning: 'The children are playing in the garden',
     level: 'elementary',
   },
@@ -1286,7 +1286,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-161',
     words: ['ہم', 'بھائی', 'ہیں'],
-    roman: 'ham bhai hain',
+    roman: 'hum bhai hain',
     meaning: 'We are brothers',
     level: 'beginner',
     concept: 'g-to-be',
@@ -1419,7 +1419,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-178',
     words: ['ہم', 'سب', 'ایک', 'ساتھ', 'ہیں'],
-    roman: 'ham sab ek saath hain',
+    roman: 'hum sab ek saath hain',
     meaning: 'We are all together',
     level: 'beginner',
     concept: 'g-pronouns',
@@ -1660,7 +1660,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-208',
     words: ['ہم', 'روز', 'ورزش', 'کرتے', 'ہیں'],
-    roman: 'ham roz warzish karte hain',
+    roman: 'hum roz warzish karte hain',
     meaning: 'We exercise every day',
     level: 'intermediate',
     concept: 'g-present',
@@ -1693,7 +1693,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-212',
     words: ['ہم', 'پچھلے', 'سال', 'کراچی', 'گئے'],
-    roman: 'ham pichhle saal Karachi gaye',
+    roman: 'hum pichhle saal Karachi gaye',
     meaning: 'We went to Karachi last year',
     level: 'intermediate',
     concept: 'g-past',
@@ -1822,7 +1822,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-228',
     words: ['ہم', 'ہر', 'سال', 'عید', 'مناتے', 'ہیں'],
-    roman: 'ham har saal Eid manaate hain',
+    roman: 'hum har saal Eid manaate hain',
     meaning: 'We celebrate Eid every year',
     level: 'intermediate',
     concept: 'g-present',
@@ -1871,7 +1871,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-234',
     words: ['ہم', 'نے', 'وہ', 'فلم', 'دیکھی'],
-    roman: 'ham ne wo film dekhi',
+    roman: 'hum ne wo film dekhi',
     meaning: 'We watched that film',
     level: 'advanced',
     concept: 'g-perfect',
@@ -2164,7 +2164,7 @@ export const PASSAGES: Passage[] = [
       { urdu: 'میرے والد ڈاکٹر ہیں۔', roman: 'mere waalid ḍākṭar hain.', meaning: 'My father is a doctor.' },
       { urdu: 'میری ماں استاد ہیں۔', roman: 'meri maañ ustaad hain.', meaning: 'My mother is a teacher.' },
       { urdu: 'میرا ایک بھائی ہے۔', roman: 'mera ek bhai hai.', meaning: 'I have one brother.' },
-      { urdu: 'ہم سب خوش ہیں۔', roman: 'ham sab khush hain.', meaning: 'We are all happy.' },
+      { urdu: 'ہم سب خوش ہیں۔', roman: 'hum sab khush hain.', meaning: 'We are all happy.' },
     ],
     question: {
       ask: 'What does the father do?',
@@ -2226,7 +2226,7 @@ export const PASSAGES: Passage[] = [
       },
       {
         urdu: 'ہم اردو اور حساب پڑھتے ہیں۔',
-        roman: 'ham urdu aur hisaab paṛhte hain.',
+        roman: 'hum urdu aur hisaab paṛhte hain.',
         meaning: 'We study Urdu and arithmetic.',
       },
       {
@@ -2296,7 +2296,7 @@ export const PASSAGES: Passage[] = [
       },
       {
         urdu: 'ہم اکثر باغ میں ملتے ہیں۔',
-        roman: 'ham aksar baagh meñ milte hain.',
+        roman: 'hum aksar baagh meñ milte hain.',
         meaning: 'We often meet in the garden.',
       },
       { urdu: 'وہ بہت مہربان ہے۔', roman: 'wo bahut meherbaan hai.', meaning: 'She is very kind.' },
@@ -2331,7 +2331,7 @@ export const PASSAGES: Passage[] = [
       },
       {
         urdu: 'شام کو ہم نے بازار میں کھانا کھایا۔',
-        roman: 'shaam ko ham ne bazaar meñ khaana khaaya.',
+        roman: 'shaam ko hum ne bazaar meñ khaana khaaya.',
         meaning: 'In the evening we ate in the market.',
       },
       { urdu: 'سفر بہت اچھا رہا۔', roman: 'safar bahut achha raha.', meaning: 'The journey was very good.' },
@@ -2362,7 +2362,7 @@ export const PASSAGES: Passage[] = [
         roman: 'bachche iskool nahiñ ja sake.',
         meaning: 'The children could not go to school.',
       },
-      { urdu: 'ہم نے گھر میں چائے پی۔', roman: 'ham ne ghar meñ chai pi.', meaning: 'We drank tea at home.' },
+      { urdu: 'ہم نے گھر میں چائے پی۔', roman: 'hum ne ghar meñ chai pi.', meaning: 'We drank tea at home.' },
       {
         urdu: 'شام کو موسم صاف ہو گیا۔',
         roman: 'shaam ko mausam saaf ho gaya.',
@@ -2521,7 +2521,7 @@ export const PASSAGES: Passage[] = [
     lines: [
       {
         urdu: 'جمعے کی شام ہم دوستوں کے ساتھ بیٹھے تھے۔',
-        roman: "jum'e ki shaam ham dostoñ ke saath baiṭhe the.",
+        roman: "jum'e ki shaam hum dostoñ ke saath baiṭhe the.",
         meaning: 'On Friday evening we were sitting with friends.',
       },
       {
@@ -2532,7 +2532,7 @@ export const PASSAGES: Passage[] = [
       { urdu: 'سب خاموش ہو گئے۔', roman: 'sab khaamosh ho gaye.', meaning: 'Everyone fell silent.' },
       {
         urdu: 'اُس شعر نے وہ بات کہہ دی جو ہم کہہ نہیں سکے۔',
-        roman: 'us sher ne wo baat keh di jo ham keh nahiñ sake.',
+        roman: 'us sher ne wo baat keh di jo hum keh nahiñ sake.',
         meaning: 'That couplet said the thing we had not been able to say.',
       },
       { urdu: 'شاعری ایسی ہی ہوتی ہے۔', roman: 'shaayari aisi hi hoti hai.', meaning: 'That is how poetry is.' },
@@ -2962,7 +2962,7 @@ export const DIALOGUES: Dialogue[] = [
         speaker: 'A',
         name: 'Nadia',
         urdu: 'ہم باغ جا رہے ہیں۔ آپ بھی آئیے۔',
-        roman: 'ham baagh ja rahe hain. aap bhi aaiye.',
+        roman: 'hum baagh ja rahe hain. aap bhi aaiye.',
         meaning: 'We are going to the garden. Do come too.',
       },
       {
