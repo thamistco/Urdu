@@ -9,7 +9,7 @@ import { Card } from '../components/Card';
 import { ProgressBar } from '../components/ProgressBar';
 import { Reveal } from '../components/Reveal';
 import { StatChip } from '../components/Stats';
-import { WordArt, Illustration, lessonIconName } from '../components/Illustration';
+import { WordArt, Illustration, LessonIcon } from '../components/Illustration';
 import { CycleMark } from '../art/icons';
 import { Display, Heading, Txt, Bold, Eyebrow } from '../components/Text';
 import { Lexeme } from '../components/Lexeme';
@@ -115,7 +115,7 @@ function LessonNode({
             <Txt style={{ fontSize: 28, color: palette.white }}>✓</Txt>
           ) : (
             <View style={{ opacity: state === 'locked' || state === 'skipped' ? 0.85 : 1 }}>
-              <Illustration name={lessonIconName(lesson.kind, lesson.topic)} tile={false} size={34} />
+              <LessonIcon kind={lesson.kind} topic={lesson.topic} size={34} />
             </View>
           )}
         </View>
@@ -412,11 +412,11 @@ export function HomeScreen() {
                   className="h-12 w-12 items-center justify-center rounded-full"
                   style={{ backgroundColor: withAlpha(palette.gold, 0.22) }}
                 >
-                  <Illustration
-                    name={finished ? 'medal' : lessonIconName(currentLesson.kind, currentLesson.topic)}
-                    tile={false}
-                    size={26}
-                  />
+                  {finished ? (
+                    <Illustration name="medal" tile={false} size={26} />
+                  ) : (
+                    <LessonIcon kind={currentLesson.kind} topic={currentLesson.topic} size={26} />
+                  )}
                 </View>
                 <View className="flex-1">
                   <Eyebrow style={{ color: palette.gold }}>
