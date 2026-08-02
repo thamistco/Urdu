@@ -263,7 +263,7 @@ const SCRIPT_WORDS = /\b(letters?|script|alphabet|nastaliq|glyphs?|handwriting|t
  * listed rather than pattern-matched around, because the pattern that would
  * exclude them would also let a real alphabet lesson through.
  */
-const CORRESPONDENCE = new Set(['r-196', 'v-232']);
+const CORRESPONDENCE = new Set(['r-4', 'v-formal']);
 
 for (const u of unitsForTrack('roman')) {
   if (SCRIPT_WORDS.test(`${u.title} ${u.subtitle}`))
