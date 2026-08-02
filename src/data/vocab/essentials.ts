@@ -72,7 +72,6 @@ export const ESSENTIAL_PACKS: TopicPack[] = [
       ['w-meter', 'میٹر', 'meṭar', 'metre', '📏'],
       ['w-kilo', 'کلو', 'kilo', 'kilogram', '⚖️'],
       ['w-inch', 'انچ', 'inch', 'inch', '📐'],
-      ['w-seedha2', 'سیدھا', 'seedha', 'straight', '⬆️'],
       ['w-terha', 'ٹیڑھا', 'ṭeṛha', 'crooked', '〰️'],
       ['w-baraabar', 'برابر', 'baraabar', 'equal', '🟰'],
     ]
@@ -116,7 +115,6 @@ export const ESSENTIAL_PACKS: TopicPack[] = [
       ['w-lamha', 'لمحہ', 'lamha', 'moment', '⏳'],
       ['w-second', 'سیکنڈ', 'saikanḍ', 'second', '⏱️'],
       ['w-arsa', 'عرصہ', 'arsa', 'period of time', '📆'],
-      ['w-muddat', 'مدت', 'muddat', 'duration', '⏲️'],
       ['w-jald', 'جلد', 'jald', 'soon', '🔜', 'جَلد'],
       ['w-der-se', 'دیر سے', 'der se', 'late', '🐌'],
       ['w-aaj-kal', 'آج کل', 'aaj kal', 'nowadays', '📅'],

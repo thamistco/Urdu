@@ -241,7 +241,6 @@ const CORE_WORDS: Word[] = [
   { id: 'w-kunda', urdu: 'کنڈا', roman: 'kunda', meaning: 'latch', emoji: '🔒', topic: 'home' },
   { id: 'w-roshandan', urdu: 'روشندان', roman: 'roshandaan', meaning: 'skylight / vent', emoji: '🪟', topic: 'home' },
   { id: 'w-sayaban', urdu: 'سایبان', roman: 'saayabaan', meaning: 'shade / canopy', emoji: '⛱️', topic: 'home' },
-  { id: 'w-chhat2', urdu: 'چھت', roman: 'chhat', meaning: 'roof', emoji: '🏠', topic: 'home' },
   { id: 'w-aangan2', urdu: 'آنگن', roman: 'aañgan', meaning: 'courtyard', emoji: '🌿', topic: 'home' },
 
   // nature
@@ -578,7 +577,6 @@ const CORE_WORDS: Word[] = [
   { id: 'w-muddat2', urdu: 'مدت', roman: 'muddat', meaning: 'duration', emoji: '⏳', topic: 'time' },
 
   // weather
-  { id: 'w-baadal', urdu: 'بادل', roman: 'baadal', meaning: 'cloud', emoji: '☁️', topic: 'weather' },
   { id: 'w-hawa', urdu: 'ہوا', roman: 'hawa', meaning: 'wind / air', emoji: '💨', topic: 'weather' },
   { id: 'w-barf', urdu: 'برف', roman: 'barf', meaning: 'snow / ice', emoji: '❄️', topic: 'weather' },
   { id: 'w-garmi', urdu: 'گرمی', roman: 'garmi', meaning: 'heat / summer', emoji: '🥵', topic: 'weather' },
@@ -587,7 +585,6 @@ const CORE_WORDS: Word[] = [
   { id: 'w-dhoop', urdu: 'دھوپ', roman: 'dhoop', meaning: 'sunshine', emoji: '🌞', topic: 'weather' },
   { id: 'w-kohra', urdu: 'کہرا', roman: 'kohra', meaning: 'fog', emoji: '🌫️', topic: 'weather' },
   { id: 'w-nam', urdu: 'نم', roman: 'nam', meaning: 'damp / moist', emoji: '💦', topic: 'weather' },
-  { id: 'w-garam', urdu: 'گرم', roman: 'garam', meaning: 'hot', emoji: '🥵', topic: 'weather' },
   { id: 'w-pala', urdu: 'پالا', roman: 'paala', meaning: 'frost', emoji: '🥶', topic: 'weather' },
   { id: 'w-silan', urdu: 'سیلن', roman: 'seelan', meaning: 'dampness / humidity', emoji: '💧', topic: 'weather' },
   { id: 'w-garaj', urdu: 'گرج', roman: 'garaj', meaning: 'thunder', emoji: '⛈️', topic: 'weather' },
@@ -856,9 +853,7 @@ const CORE_WORDS: Word[] = [
   { id: 'w-maal2', urdu: 'مال', roman: 'maal', meaning: 'goods', emoji: '📦', topic: 'money' },
 
   // travel
-  { id: 'w-safar', urdu: 'سفر', roman: 'safar', meaning: 'journey', emoji: '🧳', topic: 'travel' },
   { id: 'w-tikat', urdu: 'ٹکٹ', roman: 'ṭikaṭ', meaning: 'ticket', emoji: '🎫', topic: 'places' },
-  { id: 'w-hotal', urdu: 'ہوٹل', roman: 'hoṭal', meaning: 'hotel', emoji: '🏨', topic: 'travel' },
   // Glossed "luggage" while filed under travel, which is the narrowest of its
   // senses — it is the ordinary word for belongings, and "whose things are
   // these?" is a unit-19 question long before anyone packs a suitcase.
@@ -867,7 +862,6 @@ const CORE_WORDS: Word[] = [
   { id: 'w-mulk', urdu: 'ملک', roman: 'mulk', meaning: 'country', emoji: '🌍', topic: 'travel' },
   { id: 'w-sarhad', urdu: 'سرحد', roman: 'sarhad', meaning: 'border', emoji: '🚧', topic: 'travel' },
   { id: 'w-naqsha', urdu: 'نقشہ', roman: 'naqsha', meaning: 'map', emoji: '🗺️', topic: 'travel' },
-  { id: 'w-kamra', urdu: 'کمرہ', roman: 'kamra', meaning: 'room', emoji: '🛎️', topic: 'travel' },
   { id: 'w-chhutti', urdu: 'چھٹی', roman: 'chhuṭṭi', meaning: 'holiday / leave', emoji: '🏖️', topic: 'time' },
   { id: 'w-phir2', urdu: 'پھر', roman: 'phir', meaning: 'again / then', emoji: '🔁', topic: 'time' },
   { id: 'w-roz', urdu: 'روز', roman: 'roz', meaning: 'daily', emoji: '📅', topic: 'time' },
@@ -893,7 +887,6 @@ const CORE_WORDS: Word[] = [
   },
 
   // city
-  { id: 'w-imaarat', urdu: 'عمارت', roman: 'imaarat', meaning: 'building', emoji: '🏛️', topic: 'city' },
   { id: 'w-pul', urdu: 'پل', roman: 'pul', meaning: 'bridge', emoji: '🌉', topic: 'city', pronounce: 'پُل' },
   { id: 'w-thaana', urdu: 'تھانہ', roman: 'thaana', meaning: 'police station', emoji: '🚓', topic: 'city' },
   { id: 'w-dakkhana', urdu: 'ڈاک خانہ', roman: 'ḍaak-khaana', meaning: 'post office', emoji: '📮', topic: 'city' },
@@ -932,10 +925,6 @@ const CORE_WORDS: Word[] = [
   { id: 'w-chakki', urdu: 'چکی', roman: 'chakki', meaning: 'grinder / mill', emoji: '⚙️', topic: 'cooking' },
   { id: 'w-pyaali', urdu: 'پیالی', roman: 'pyaali', meaning: 'cup / bowl', emoji: '🥣', topic: 'cooking' },
   { id: 'w-thaali', urdu: 'تھالی', roman: 'thaali', meaning: 'platter', emoji: '🍽️', topic: 'cooking' },
-  { id: 'w-tawa2', urdu: 'توا', roman: 'tawa', meaning: 'griddle', emoji: '🫓', topic: 'cooking' },
-  { id: 'w-karahi2', urdu: 'کڑاہی', roman: 'kaṛaahi', meaning: 'wok', emoji: '🍲', topic: 'cooking' },
-  { id: 'w-choolha2', urdu: 'چولہا', roman: 'choolha', meaning: 'stove', emoji: '🔥', topic: 'cooking' },
-  { id: 'w-tandoor2', urdu: 'تندور', roman: 'tandoor', meaning: 'clay oven', emoji: '🏺', topic: 'cooking' },
 
   // sports & leisure
   { id: 'w-khel', urdu: 'کھیل', roman: 'khel', meaning: 'game / sport', emoji: '⚽', topic: 'sports' },
@@ -958,8 +947,6 @@ const CORE_WORDS: Word[] = [
   { id: 'w-tamgha', urdu: 'تمغہ', roman: 'tamgha', meaning: 'medal', emoji: '🏅', topic: 'sports' },
   { id: 'w-champion', urdu: 'چیمپئن', roman: 'champiyan', meaning: 'champion', emoji: '🏆', topic: 'sports' },
   { id: 'w-referee', urdu: 'ریفری', roman: 'raifri', meaning: 'referee', emoji: '🧑‍⚖️', topic: 'sports' },
-  { id: 'w-shatranj2', urdu: 'شطرنج', roman: 'shatranj', meaning: 'chess', emoji: '♟️', topic: 'sports' },
-  { id: 'w-taash2', urdu: 'تاش', roman: 'taash', meaning: 'playing cards', emoji: '🃏', topic: 'sports' },
 
   // days & months
   { id: 'w-peer', urdu: 'پیر', roman: 'peer', meaning: 'Monday', emoji: '1️⃣', topic: 'days' },
@@ -1004,7 +991,6 @@ const CORE_WORDS: Word[] = [
   { id: 'w-samt', urdu: 'سمت', roman: 'samt', meaning: 'direction', emoji: '🧭', topic: 'directions' },
   { id: 'w-aage', urdu: 'آگے', roman: 'aage', meaning: 'ahead / forward', emoji: '⏩', topic: 'directions' },
   { id: 'w-aaspaas', urdu: 'آس پاس', roman: 'aas-paas', meaning: 'nearby / around', emoji: '📍', topic: 'directions' },
-  { id: 'w-kona2', urdu: 'کونا', roman: 'kona', meaning: 'corner', emoji: '📐', topic: 'directions' },
   { id: 'w-mashriq2', urdu: 'مشرق', roman: 'mashriq', meaning: 'east', emoji: '🌅', topic: 'directions' },
   { id: 'w-maghrib2', urdu: 'مغرب', roman: 'maghrib', meaning: 'west', emoji: '🌇', topic: 'directions' },
   { id: 'w-shumaal2', urdu: 'شمال', roman: 'shumaal', meaning: 'north', emoji: '⬆️', topic: 'directions' },
@@ -1037,7 +1023,6 @@ const CORE_WORDS: Word[] = [
   { id: 'w-chunna', urdu: 'چننا', roman: 'chunna', meaning: 'to choose / pick', emoji: '👆', topic: 'verbs2' },
   { id: 'w-rokna', urdu: 'روکنا', roman: 'rokna', meaning: 'to stop (something)', emoji: '✋', topic: 'verbs2' },
   { id: 'w-phenkna', urdu: 'پھینکنا', roman: 'phenkna', meaning: 'to throw', emoji: '🤾', topic: 'verbs2' },
-  { id: 'w-dhona2', urdu: 'دھونا', roman: 'dhona', meaning: 'to wash', emoji: '🧼', topic: 'verbs2' },
   { id: 'w-sunaana', urdu: 'سنانا', roman: 'sunaana', meaning: 'to narrate / tell', emoji: '📢', topic: 'verbs2' },
   {
     id: 'w-sambhalna',
@@ -1057,7 +1042,6 @@ const CORE_WORDS: Word[] = [
   { id: 'w-hausla', urdu: 'حوصلہ', roman: 'hausla', meaning: 'courage', emoji: '🦁', topic: 'emotions' },
   { id: 'w-sabr', urdu: 'صبر', roman: 'sabr', meaning: 'patience', emoji: '⏳', topic: 'emotions' },
   { id: 'w-hasrat', urdu: 'حسرت', roman: 'hasrat', meaning: 'longing', emoji: '🥺', topic: 'emotions' },
-  { id: 'w-sukoon', urdu: 'سکون', roman: 'sukoon', meaning: 'peace / calm', emoji: '🕊️', topic: 'emotions' },
   { id: 'w-tanhai', urdu: 'تنہائی', roman: 'tanhaai', meaning: 'solitude', emoji: '🌘', topic: 'emotions' },
   { id: 'w-khwaab', urdu: 'خواب', roman: 'khwaab', meaning: 'dream', emoji: '💤', topic: 'emotions' },
   { id: 'w-yaad', urdu: 'یاد', roman: 'yaad', meaning: 'memory', emoji: '💭', topic: 'emotions' },
@@ -1070,7 +1054,6 @@ const CORE_WORDS: Word[] = [
   { id: 'w-qanaat', urdu: 'قناعت', roman: "qanaa'at", meaning: 'contentment', emoji: '🙏', topic: 'emotions' },
   { id: 'w-raazdaari', urdu: 'رازداری', roman: 'raazdaari', meaning: 'secrecy', emoji: '🤫', topic: 'emotions' },
   { id: 'w-iztiraab', urdu: 'اضطراب', roman: 'iztiraab', meaning: 'agitation', emoji: '😖', topic: 'emotions' },
-  { id: 'w-wafa2', urdu: 'وفا', roman: 'wafa', meaning: 'loyalty', emoji: '💞', topic: 'emotions' },
 
   // ideas & values
   { id: 'w-sach', urdu: 'سچ', roman: 'sach', meaning: 'truth', emoji: '✅', topic: 'first-words' },
@@ -1154,7 +1137,6 @@ const CORE_WORDS: Word[] = [
   // the natural world
   { id: 'w-darya', urdu: 'دریا', roman: 'darya', meaning: 'river', emoji: '🏞️', topic: 'nature2' },
   { id: 'w-sehra', urdu: 'صحرا', roman: 'sehra', meaning: 'desert', emoji: '🏜️', topic: 'nature2' },
-  { id: 'w-jangal', urdu: 'جنگل', roman: 'jangal', meaning: 'forest', emoji: '🌲', topic: 'nature2' },
   { id: 'w-jheel', urdu: 'جھیل', roman: 'jheel', meaning: 'lake', emoji: '🏔️', topic: 'nature2' },
   { id: 'w-aasmaan', urdu: 'آسمان', roman: 'aasmaan', meaning: 'sky', emoji: '🌌', topic: 'nature' },
   { id: 'w-zalzala', urdu: 'زلزلہ', roman: 'zalzala', meaning: 'earthquake', emoji: '🌋', topic: 'nature2' },
@@ -1166,8 +1148,6 @@ const CORE_WORDS: Word[] = [
   { id: 'w-barfbaari', urdu: 'برف باری', roman: 'barf-baari', meaning: 'snowfall', emoji: '❄️', topic: 'nature2' },
   { id: 'w-barq', urdu: 'برق', roman: 'barq', meaning: 'lightning', emoji: '⚡', topic: 'nature2' },
   { id: 'w-dhanak', urdu: 'دھنک', roman: 'dhanak', meaning: 'rainbow', emoji: '🌈', topic: 'nature2' },
-  { id: 'w-lehr2', urdu: 'لہر', roman: 'lehar', meaning: 'wave', emoji: '🌊', topic: 'nature2' },
-  { id: 'w-shabnam2', urdu: 'شبنم', roman: 'shabnam', meaning: 'dew', emoji: '💧', topic: 'nature2' },
   { id: 'w-waadi2', urdu: 'وادی', roman: 'waadi', meaning: 'valley', emoji: '🏞️', topic: 'nature2' },
   { id: 'w-jharna2', urdu: 'جھرنا', roman: 'jharna', meaning: 'waterfall', emoji: '🌊', topic: 'nature2' },
   { id: 'w-sailaab3', urdu: 'سیلاب', roman: 'sailaab', meaning: 'flood', emoji: '🌊', topic: 'nature2' },

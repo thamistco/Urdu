@@ -39,7 +39,7 @@ long description is for the human who has already arrived.
 | Name | 30 | `Harf: Learn Urdu` |
 | Subtitle | 30 | `Every letter, in every form` |
 | Keywords | 100 | `urdu,nastaliq,alphabet,script,read,write,pakistani,hindi,vocabulary,flashcards,tracing,phrases` |
-| Promotional text | 170 | `Urdu letters change shape depending on where they sit in a word. Harf teaches all four forms of all forty letters — then 2,426 words, spoken aloud.` |
+| Promotional text | 170 | `Urdu letters change shape depending on where they sit in a word. Harf teaches all four forms of all forty letters — then 2,246 words, spoken aloud.` |
 
 The subtitle deliberately repeats nothing from the name. "Urdu" is in the name,
 so the subtitle spends its thirty characters on the thing that makes this app
@@ -69,7 +69,7 @@ Play has no subtitle, so its title carries one keyword more than Apple's.
 > forms — 160 shapes in total — with tracing practice that checks whether you
 > actually drew the letter rather than just filled the space.
 >
-> **2,426 words across 122 topics**, from family and food to law and medicine,
+> **2,246 words across 122 topics**, from family and food to law and medicine,
 > each one recorded in a single consistent voice. 2,893 clips are bundled with
 > the app, so pronunciation works offline and sounds the same on every phone.
 >
@@ -105,7 +105,7 @@ wrong.
 | Claim | Source |
 | --- | --- |
 | 40 letters × 4 forms = 160 shapes | `LETTERS`, `POSITIONS` |
-| 2,426 words, 122 topics | `WORDS`, `TOPICS` |
+| 2,246 words, 122 topics | `WORDS`, `TOPICS` |
 | 256 sentences, 17 passages, 12 dialogues | `SENTENCES`, `PASSAGES`, `DIALOGUES` |
 | 25 grammar concepts | `GRAMMAR` |
 | 233 lessons, 35 units | `ALL_LESSONS`, `UNITS` |
