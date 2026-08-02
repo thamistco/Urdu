@@ -32,7 +32,6 @@ export const EXTRA_PACKS: TopicPack[] = [
     [
       ['w-shanakhti-card', 'شناختی کارڈ', 'shanaakhti kaarḍ', 'identity card', '🪪'],
       ['w-khaata', 'کھاتا', 'khaata', 'account', '📒'],
-      ['w-jama', 'جمع', 'jama', 'deposit', '📥'],
       ['w-nikalwana', 'رقم نکلوانا', 'raqam nikalwaana', 'to withdraw', '📤'],
       ['w-raqam', 'رقم', 'raqam', 'amount', '💵'],
       ['w-cheque', 'چیک', 'chek', 'cheque', '🧾'],
@@ -43,7 +42,6 @@ export const EXTRA_PACKS: TopicPack[] = [
       ['w-sharah', 'شرح', 'sharah', 'rate', '📊'],
       ['w-currency', 'کرنسی', 'karansi', 'currency', '💱'],
       ['w-dollar', 'ڈالر', 'ḍaalar', 'dollar', '💲'],
-      ['w-rasid', 'رسید', 'raseed', 'receipt', '🧾'],
       ['w-manager2', 'بینک منیجر', 'baink manijar', 'bank manager', '🧑‍💼'],
       ['w-form', 'فارم', 'faarm', 'form', '📋'],
       ['w-dastkhat2', 'دستخط کرنا', 'dastakhat karna', 'to sign', '✍️'],
@@ -97,7 +95,6 @@ export const EXTRA_PACKS: TopicPack[] = [
       ['w-naqli', 'نقلی', 'naqli', 'fake', '🎭'],
       ['w-sale', 'سیل', 'sel', 'sale', '🏷️'],
       ['w-riyaayat', 'رعایت', 'riaayat', 'discount', '💸'],
-      ['w-nakad', 'نقد', 'naqd', 'cash', '💵'],
       ['w-udhaar', 'ادھار', 'udhaar', 'credit / on loan', '📝'],
       ['w-dukaandar', 'دکاندار', 'dukaandaar', 'shopkeeper', '🧑‍💼'],
     ]
@@ -132,8 +129,6 @@ export const EXTRA_PACKS: TopicPack[] = [
       ['w-overtime', 'اضافی وقت', 'izaafi waqt', 'overtime', '⏰'],
       ['w-tankhwah2', 'اجرت', 'ujrat', 'wage', '💵'],
       ['w-bonus', 'بونس', 'bonas', 'bonus', '🎁'],
-      ['w-hazri', 'حاضری', 'haaziri', 'attendance', '📋'],
-      ['w-rukhsat', 'رخصت', 'rukhsat', 'leave / departure', '🚪'],
       ['w-istifa', 'استعفیٰ', 'istifaa', 'resignation', '📄'],
       ['w-tarqi2', 'ترقی ملنا', 'taraqqi milna', 'to be promoted', '📈'],
       ['w-kaam-ka-boojh', 'کام کا بوجھ', 'kaam ka bojh', 'workload', '🏋️'],
@@ -172,7 +167,6 @@ export const EXTRA_PACKS: TopicPack[] = [
       ['w-tasveer-khinchna', 'تصویر کھینچنا', 'tasweer khenchna', 'to take a photo', '📸'],
       ['w-yaadgaar', 'یادگار', 'yaadgaar', 'memorable / memento', '🖼️'],
       ['w-khush-amdeed2', 'تشریف لائیے', 'tashreef laaiye', 'please come in', '🙏'],
-      ['w-alwida', 'الوداع', 'alwidaa', 'farewell', '👋'],
     ]
   ),
   pack(
@@ -180,7 +174,6 @@ export const EXTRA_PACKS: TopicPack[] = [
     [
       ['w-rawana', 'روانہ ہونا', 'rawaana hona', 'to set off', '🚗'],
       ['w-wapas-ana', 'واپس آنا', 'waapas aana', 'to return', '↩️'],
-      ['w-manzil2', 'مقام', 'muqaam', 'place / spot', '📍'],
       ['w-raasta2', 'شارٹ کٹ', 'shaarṭ kaṭ', 'shortcut', '✂️'],
       ['w-hamsafar', 'ہم سفر', 'ham-safar', 'fellow traveller', '🧑‍🤝‍🧑'],
       ['w-rehnuma', 'رہنما کتاب', 'rahnuma kitaab', 'guidebook', '📕'],
@@ -189,12 +182,9 @@ export const EXTRA_PACKS: TopicPack[] = [
       ['w-yaadein', 'یادیں', 'yaadeñ', 'memories', '💭'],
       ['w-mausam-dekhna', 'موسم دیکھنا', 'mausam dekhna', 'to check the weather', '🌦️'],
       ['w-samaan-bandhna', 'سامان باندھنا', 'saamaan baañdhna', 'to pack', '🧳'],
-      ['w-taiyari', 'تیاری', 'taiyaari', 'preparation', '📋'],
-      ['w-thakawat', 'تھکاوٹ', 'thakaawaṭ', 'tiredness', '😩'],
       ['w-aaram-gah', 'آرام گاہ', 'aaraam-gaah', 'rest house', '🏨'],
       ['w-khoobsurat-jagah', 'خوبصورت جگہ', 'khoobsurat jagah', 'beautiful place', '🏞️'],
       ['w-tareekhi', 'تاریخی', 'taareekhi', 'historic', '🏛️'],
-      ['w-mashhoor', 'مشہور', 'mashhoor', 'famous', '⭐'],
       ['w-dekhne-layak', 'دیکھنے لائق', 'dekhne laaiq', 'worth seeing', '👀'],
       ['w-safar-kharch', 'زادِ راہ', 'zaad-e-raah', 'travel provisions', '🎒'],
       ['w-hifazat-safar', 'بحفاظت', 'ba-hifaazat', 'safely', '🛡️'],
@@ -205,7 +195,6 @@ export const EXTRA_PACKS: TopicPack[] = [
     [
       ['w-shandaar', 'شاندار', 'shaandaar', 'splendid', '✨'],
       ['w-azeem', 'عظیم', 'azeem', 'great', '🏔️'],
-      ['w-naazuk', 'نازک', 'naazuk', 'delicate', '🌸'],
       ['w-sakht2', 'سخت گیر', 'sakht-geer', 'strict', '📏'],
       ['w-narm-dil', 'نرم دل', 'naram-dil', 'tender-hearted', '💗'],
       ['w-sanjeeda2', 'متین', 'mateen', 'dignified', '🎩'],
@@ -220,7 +209,6 @@ export const EXTRA_PACKS: TopicPack[] = [
       ['w-badtareen', 'بدترین', 'badtareen', 'the worst', '🥀'],
       ['w-kaafi2', 'وافر', 'waafir', 'abundant', '🌊'],
       ['w-naadir', 'نادر', 'naadir', 'rare', '💎'],
-      ['w-qeemti', 'قیمتی', 'qeemti', 'precious', '💍'],
       ['w-bekaar', 'بیکار', 'bekaar', 'useless', '🗑️'],
       ['w-mufeed', 'مفید', 'mufeed', 'useful', '🧰'],
     ]
@@ -228,7 +216,6 @@ export const EXTRA_PACKS: TopicPack[] = [
   pack(
     { id: 'expressions', title: 'Useful Expressions', icon: '💬', blurb: 'The glue of real conversation.', level: 'intermediate' },
     [
-      ['w-bilkul', 'بالکل', 'bilkul', 'absolutely', '💯'],
       ['w-shayad', 'شاید', 'shaayad', 'perhaps', '🤔'],
       ['w-zaroor', 'ضرور', 'zaroor', 'certainly', '✅'],
       ['w-haqeeqatan', 'حقیقتاً', 'haqeeqatan', 'actually', '🔍'],
@@ -245,7 +232,6 @@ export const EXTRA_PACKS: TopicPack[] = [
       ['w-bagair', 'کے بغیر', 'ke baghair', 'without', '🚫'],
       ['w-bawajood', 'کے باوجود', 'ke baawajood', 'despite', '💪'],
       ['w-jaise-hi', 'جیسے ہی', 'jaise hi', 'as soon as', '⚡'],
-      ['w-jab-tak', 'جب تک', 'jab tak', 'as long as / until', '⏳'],
       ['w-har-haal', 'ہر حال میں', 'har haal meñ', 'in any case', '🔒'],
       ['w-akhir-kar', 'آخر کار', 'aakhir-kaar', 'finally', '🏁'],
     ]

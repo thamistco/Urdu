@@ -172,6 +172,59 @@ for (const l of ALL_LESSONS) {
 }
 
 /**
+ * A word is taught once.
+ *
+ * 179 entries used to teach a word the learner had already met, under a second
+ * topic — body and body-more shared eight, tech and digital nine, jobs and
+ * jobs-more seven. The learner is shown it as new material twice and the
+ * spaced-repetition scheduler tracks the two entries as unrelated cards, so
+ * neither reinforces the other.
+ *
+ * Homographs are the exception and are common in Urdu: سونا is both "to sleep"
+ * and "gold", کافی both "enough" and "coffee", کل both "tomorrow" and "total".
+ * Those are two words sharing a spelling and both belong. So the rule is not
+ * "no repeated spelling" but "no repeated spelling that also means the same
+ * thing" — which is what makes it safe to enforce.
+ */
+{
+  const byUrdu = new Map();
+  for (const w of WORDS) {
+    if (!byUrdu.has(w.urdu)) byUrdu.set(w.urdu, []);
+    byUrdu.get(w.urdu).push(w);
+  }
+  // A meaning is a slash-separated list of glosses; two entries mean the same
+  // thing if they share any gloss, ignoring parenthetical asides.
+  const glosses = (m) =>
+    new Set(
+      m
+        .toLowerCase()
+        .replace(/\([^)]*\)/g, '')
+        .split('/')
+        .map((s) => s.trim())
+        .filter(Boolean)
+    );
+  const repeats = [];
+  for (const [urdu, ws] of byUrdu) {
+    for (let i = 0; i < ws.length; i++) {
+      for (let j = i + 1; j < ws.length; j++) {
+        if (ws[i].topic === ws[j].topic) continue;
+        const a = glosses(ws[i].meaning);
+        if ([...glosses(ws[j].meaning)].some((g) => a.has(g))) {
+          repeats.push(`${urdu} "${ws[i].meaning}" — taught in both ${ws[i].topic} and ${ws[j].topic}`);
+        }
+      }
+    }
+  }
+  if (repeats.length) {
+    console.error(`check:order — ${repeats.length} word(s) are taught twice under the same meaning:`);
+    for (const r of repeats.slice(0, 25)) console.error(`  ${r}`);
+    if (repeats.length > 25) console.error(`  … and ${repeats.length - 25} more`);
+    console.error('  (A homograph — two words sharing a spelling — should differ in meaning, and is allowed.)');
+    process.exit(1);
+  }
+}
+
+/**
  * `Topic.level` must say the same thing as the path.
  *
  * A topic's CEFR level is written down twice: on the topic itself, where the

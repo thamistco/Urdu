@@ -16,7 +16,6 @@ export const SOCIETY_PACKS: TopicPack[] = [
       ['w-sadar', 'صدر', 'sadr', 'president', '🎖️'],
       ['w-parliament', 'پارلیمان', 'paarlimaan', 'parliament', '🏛️'],
       ['w-aaeen', 'آئین', 'aaeen', 'constitution', '📜'],
-      ['w-riyasat', 'ریاست', 'riyaasat', 'state', '🏳️'],
       ['w-shehriyat', 'شہریت', 'shehriyat', 'citizenship', '🪪'],
       ['w-haqooq', 'حقوق', 'huqooq', 'rights', '✊'],
       ['w-faraiz', 'فرائض', 'faraaiz', 'duties', '📋'],
@@ -80,7 +79,6 @@ export const SOCIETY_PACKS: TopicPack[] = [
   pack(
     { id: 'history', title: 'History', icon: '🏺', blurb: 'The past and its record.', level: 'advanced' },
     [
-      ['w-tareekh2', 'تاریخ', 'taareekh', 'history', '📜'],
       ['w-qadeem', 'قدیم', 'qadeem', 'ancient', '🏺'],
       ['w-jadeed', 'جدید', 'jadeed', 'modern', '🏙️'],
       ['w-badshah', 'بادشاہ', 'baadshaah', 'king', '👑'],
@@ -131,14 +129,9 @@ export const SOCIETY_PACKS: TopicPack[] = [
     { id: 'philosophy', title: 'Thought & Philosophy', icon: '🕯️', blurb: 'Reason, ethics and meaning.', level: 'advanced' },
     [
       ['w-falsafa', 'فلسفہ', 'falsafa', 'philosophy', '🧭'],
-      ['w-mantiq', 'منطق', 'mantiq', 'logic', '➗'],
-      ['w-daleel', 'دلیل', 'daleel', 'argument', '💬'],
       ['w-nateeja2', 'نتیجہ اخذ', 'nateeja akhz', 'conclusion', '🎯'],
-      ['w-shak', 'شک', 'shak', 'doubt', '🤨'],
       ['w-yaqeen2', 'اعتقاد', 'aitiqaad', 'conviction', '🤍'],
-      ['w-akhlaqiyat', 'اخلاقیات', 'akhlaaqiyaat', 'ethics', '⚖️'],
       ['w-maqsad', 'مقصد', 'maqsad', 'purpose', '🎯'],
-      ['w-mani', 'معنی', 'maani', 'meaning', '💭'],
       ['w-wujood', 'وجود', 'wujood', 'existence', '🌌'],
       ['w-zaat', 'ذات', 'zaat', 'self / essence', '🪞'],
       ['w-shaoor', 'شعور', 'shaoor', 'consciousness', '🧠'],
@@ -147,7 +140,6 @@ export const SOCIETY_PACKS: TopicPack[] = [
       ['w-haqeeqat2', 'اصلیت', 'asliyat', 'reality', '🔍'],
       ['w-khayaal', 'خیال', 'khayaal', 'thought / idea', '💭'],
       ['w-ilm-o-agahi', 'آگاہی', 'aagaahi', 'awareness', '👁️'],
-      ['w-hikmat', 'حکمت', 'hikmat', 'wisdom', '🦉'],
       ['w-tanqeed2', 'تجزیہ', 'tajziya', 'analysis', '🔬'],
       ['w-nazariya3', 'مکتبِ فکر', 'maktab-e-fikr', 'school of thought', '📚'],
     ]
@@ -210,7 +202,6 @@ export const SOCIETY_PACKS: TopicPack[] = [
       ['w-begum', 'بیگم', 'begum', 'lady / Mrs', '👩'],
       ['w-tashreef', 'تشریف', 'tashreef', 'honoured presence', '🪑'],
       ['w-farmaiye', 'فرمائیے', 'farmaaiye', 'please say', '💬'],
-      ['w-meherbani', 'مہربانی', 'meherbaani', 'kindness', '🤝'],
       ['w-inayat', 'عنایت', 'inaayat', 'favour', '🎁'],
       ['w-khidmat', 'خدمت', 'khidmat', 'service', '🛎️'],
       ['w-adab2', 'آداب', 'aadaab', 'salutation / etiquette', '🙇'],
