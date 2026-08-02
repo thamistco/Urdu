@@ -157,6 +157,19 @@ export function LessonScreen() {
   const [done, setDone] = useState(false);
   const [result, setResult] = useState<FinishResult | null>(null);
   const [outOfHearts, setOutOfHearts] = useState(false);
+  /**
+   * Forces `ExerciseView` to remount after a gem refill.
+   *
+   * Refilling reset `graded` to null and hid the "out of hearts" screen, but
+   * `idx` never changed, so `<ExerciseView key={idx}>` stayed mounted with the
+   * state left over from the failed attempt — `picked`/`locked` inside the
+   * exercise component itself, which every exercise's `choose()`/`check()`
+   * guards against re-firing. The learner was returned to a question with
+   * disabled inputs and no footer to press Continue on, since the footer only
+   * shows when `graded != null`. Bumping this into the key on refill is what
+   * actually gives them a clean second try at the same question.
+   */
+  const [attempt, setAttempt] = useState(0);
   const bodyRef = useRef<ScrollView>(null);
 
   const current = exercises[idx];
@@ -248,6 +261,7 @@ export function LessonScreen() {
                     feedback.correct();
                     setOutOfHearts(false);
                     setGraded(null);
+                    setAttempt((a) => a + 1);
                   }
                 }}
               >
@@ -291,7 +305,7 @@ export function LessonScreen() {
         <Screen scroll padded={false} lattice={false} scrollRef={bodyRef}>
           <View className="px-5 pb-8 pt-4">
             <ExerciseView
-              key={idx}
+              key={`${idx}-${attempt}`}
               exercise={current}
               track={track}
               showRoman={showRoman}
