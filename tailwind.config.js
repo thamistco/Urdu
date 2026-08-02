@@ -79,12 +79,6 @@ module.exports = {
         rim: {
           light: '#9B3408',
         },
-        // The sign — the wordmark and nothing else. A tube hue plus the
-        // almost-white core it burns at; see the note in theme/colors.ts.
-        neon: {
-          DEFAULT: '#FF2D95',
-          core: '#FFF0FA',
-        },
         // Which-one-is-it accents: stages, units. No meaning of their own.
         accent: {
           amber: '#FFC72C',

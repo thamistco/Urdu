@@ -177,25 +177,19 @@ export const palette = {
   rimLight: '#9B3408',
 
   /**
-   * The sign. Only the wordmark is neon — nothing else in the app is.
+   * The lit sign has no colours of its own, and that is deliberate.
    *
-   * A real tube is not one colour, it is two: an almost-white core where the
-   * gas is hottest, and the tube's own hue blooming out around it. Rendering
-   * only the hue gives flat coloured text; rendering only the core gives white
-   * text with a halo. Both, layered, is what reads as neon.
+   * It was briefly a magenta tube with a near-white core, on two bespoke tokens.
+   * The magenta was the mistake: it put the contrast on hue, so the sign argued
+   * with the landscape instead of standing in it. A sign in real woods contrasts
+   * by *category* — built, geometric, powered — not by colour.
    *
-   * The split also settles legibility, which a coloured wordmark usually loses.
-   * The magenta carries 5.07:1 against `ink` — fine for glow, thin for reading —
-   * while the core carries 15.97:1 and is the part the eye actually resolves. So
-   * the sign can be as saturated as it likes without the name getting harder to
-   * read, because the saturation is all in the bloom.
-   *
-   * Note these are *foreground* colours and so are not bound by the scenery's
-   * 0.1044 ceiling, which applies only to what sits behind body text. The
-   * constraint here runs the other way: they need to be bright.
+   * So the tube is `gold` and the filament core is `paper`, both already above.
+   * The sign is made out of the palette rather than beside it, there is no
+   * wordmark colour to keep in sync through a re-theme, and the core inherits
+   * body copy's own contrast, which is what keeps the name legible while the
+   * amber stays soft. See `components/Wordmark.tsx`.
    */
-  neon: '#FF2D95',
-  neonCore: '#FFF0FA',
 } as const;
 
 /** Opacity-tinted helpers for RN (no `/opacity` shorthand at runtime). */

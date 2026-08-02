@@ -6,21 +6,10 @@ import { palette, withAlpha } from '../theme';
 const SUN = { x: 248, y: 470 };
 
 /**
- * How the rim light breaks along a treeline.
- *
- * Backlighting does not outline a row of trees, it catches some of them: a lit
- * shoulder here, two dark ones, a bright tip. An unbroken stroke over this
- * zigzag drew the row as a saw blade — unmistakably a graphic of a forest
- * rather than light falling on one. Irregular on purpose; an even dash reads as
- * a dashed line, which is just a different drawing.
- */
-const CATCH = '4 9 7 5 3 12';
-
-/**
  * The lit edge of a ridge, as an open curve.
  *
  * Split out from `ridge` below because the rim light has to stroke *only* the
- * skyline. Stroking the filled shape would draw a neon line down both sides of
+ * skyline. Stroking the filled shape would draw a lit line down both sides of
  * the frame and along the bottom, which is not a horizon, it is a box.
  *
  * Friedrich's hills are long and low and read as *distance* rather than as
@@ -109,12 +98,35 @@ function beam(angle: number, spread: number, len: number): string {
  * every gap. Only the nearest silhouette is solid. Everything behind it is
  * partway to being sky.
  *
- * ## The cinematic layer, and what is not in it
+ * ## This is the quiet half of a two-part picture
  *
- * On top of the landscape sit four things a camera does and an eye does not:
- * shafts of light made visible by haze, an anamorphic flare off the sun, rim
- * light picking out the edges that face it, and a grade that falls off top and
- * bottom. All of them are warm, because all of them are this sun's light.
+ * The lit sign in `components/Wordmark.tsx` is the made, hard-edged, powered
+ * thing. This is what it stands in front of, and its job is to stay soft enough
+ * that the sign is unmistakably the only object of that kind in the frame.
+ *
+ * That is why the anamorphic flare that used to cross the sky is gone. It was a
+ * good effect and it was the wrong one twice over: a lens streak is *also*
+ * artificial, so it competed with the sign for the only role the composition
+ * has going spare, and being a hard horizontal bar at a fixed height it sliced
+ * through whatever paragraph happened to sit there.
+ *
+ * What is left — shafts through haze, rim light on the ridge crest, a grade
+ * falling off top and bottom — is all light behaving like light, and all of it
+ * warm, because all of it is the one sun in the picture.
+ *
+ * ## Why only the crest is rimmed, and never the treelines
+ *
+ * The treelines were rimmed too, and it failed twice. An unbroken stroke over
+ * the zigzag drew the row as a saw blade — a graphic of a forest rather than
+ * light on one. Breaking it into irregular catches is closer to how backlighting
+ * really behaves, and it read as *random highlights scattered through the
+ * trees*: lit fragments at a dozen different heights with nothing to tell the
+ * eye they belonged to a single edge.
+ *
+ * A rim needs one continuous edge to run along before it reads as light rather
+ * than as specks. The smooth crest is such an edge; a row of firs is dozens of
+ * short unrelated ones. So the rim stays on the crest and the forest stays dark,
+ * which is also what a forest looks like at dusk.
  *
  * There is deliberately **no neon here**. A pass that rimmed these skylines in
  * electric blue is worth recording because it was defensible and still wrong:
@@ -124,10 +136,6 @@ function beam(angle: number, spread: number, len: number): string {
  * 0.37 — which makes blue the only *available* neon. It rendered cleanly and
  * measured fine, and it turned the landscape into signage: a lit wireframe of
  * hills rather than hills.
- *
- * Neon is a made object and belongs on the made object. It lives on the
- * wordmark now (`components/Wordmark.tsx`); the land is lit by the sun that is
- * actually in the picture.
  *
  * ## The alpha discipline, which has not relaxed
  *
@@ -182,20 +190,6 @@ export function LatticeBackground({ opacity = 1 }: { opacity?: number }) {
             <Stop offset="1" stopColor={withAlpha(palette.skyWarm, 0)} />
           </LinearGradient>
 
-          {/* The anamorphic streak: the horizontal flare a wide cine lens throws
-              off a bright source. It is the most recognisable "shot on film"
-              artefact there is. Warm, because it is this sun's light bent by
-              glass, not a colour of its own. Narrow in the middle and gone well
-              before the frame edge — a streak that reaches both edges stops
-              being a flare and becomes a rule. */}
-          <LinearGradient id="streak" x1="0" y1="0" x2="1" y2="0">
-            <Stop offset="0" stopColor={withAlpha(palette.rimLight, 0)} />
-            <Stop offset="0.36" stopColor={withAlpha(palette.rimLight, 0.3)} />
-            <Stop offset="0.5" stopColor={withAlpha(palette.rimLight, 0.95)} />
-            <Stop offset="0.64" stopColor={withAlpha(palette.rimLight, 0.3)} />
-            <Stop offset="1" stopColor={withAlpha(palette.rimLight, 0)} />
-          </LinearGradient>
-
           {/* Rim light. A gradient rather than a flat stroke, so the edge is lit
               only where it faces the sun and dies away fast — a rim of even
               brightness all the way across reads as an outline, and an outline
@@ -205,13 +199,6 @@ export function LatticeBackground({ opacity = 1 }: { opacity?: number }) {
               vector art: a continuous line tracing every ridge and every tree,
               which is a wireframe of the landscape rather than light on it. The
               pool is now tight and falls to nothing well inside the frame. */}
-          <LinearGradient id="rimNear" x1="0" y1="0" x2="1" y2="0">
-            <Stop offset="0" stopColor={withAlpha(palette.rimLight, 0)} />
-            <Stop offset="0.34" stopColor={withAlpha(palette.rimLight, 0.16)} />
-            <Stop offset="0.52" stopColor={withAlpha(palette.rimLight, 1)} />
-            <Stop offset="0.7" stopColor={withAlpha(palette.rimLight, 0.2)} />
-            <Stop offset="1" stopColor={withAlpha(palette.rimLight, 0)} />
-          </LinearGradient>
           <LinearGradient id="rimFar" x1="0" y1="0" x2="1" y2="0">
             <Stop offset="0" stopColor={withAlpha(palette.rimLight, 0)} />
             <Stop offset="0.36" stopColor={withAlpha(palette.rimLight, 0.12)} />
@@ -247,14 +234,6 @@ export function LatticeBackground({ opacity = 1 }: { opacity?: number }) {
         <Path d={beam(20, 5, 580)} fill="url(#ray)" />
         <Path d={beam(46, 8, 600)} fill="url(#ray)" />
 
-        {/* The flare: three passes at widening scale — atmospheric haze, then
-            bloom, then the filament. A single stroke of any width reads as a
-            drawn line; it is the falloff between the passes that reads as light
-            blooming inside glass. */}
-        <Ellipse cx={SUN.x} cy={SUN.y} rx="290" ry="34" fill="url(#streak)" opacity="0.1" />
-        <Ellipse cx={SUN.x} cy={SUN.y} rx="270" ry="9" fill="url(#streak)" opacity="0.22" />
-        <Ellipse cx={SUN.x} cy={SUN.y} rx="250" ry="1.5" fill="url(#streak)" opacity="0.8" />
-
         {/*
           Four ridges, far to near, each darker than the last, and each with the
           sun catching its skyline. Rim first, then the mist band — so the mist
@@ -274,28 +253,10 @@ export function LatticeBackground({ opacity = 1 }: { opacity?: number }) {
         {/* The furthest trees: small, close-packed, barely more than a texture
             on the ridge — which is all a distant treeline ever is. */}
         <Path d={firs(628, 15, 15, 1.7, 22)} fill={palette.ridgeMid} />
-        <Path d={firsEdge(628, 15, 15, 1.7, 22)} stroke="url(#rimFar)" strokeWidth="7" fill="none" opacity="0.1" />
-        <Path
-          d={firsEdge(628, 15, 15, 1.7, 22)}
-          stroke="url(#rimFar)"
-          strokeWidth="0.8"
-          strokeDasharray={CATCH}
-          fill="none"
-          opacity="0.5"
-        />
         <Ellipse cx="260" cy="644" rx="320" ry="38" fill="url(#mist)" />
 
         <Path d={ridge(716, 50, -40)} fill={palette.ridgeNear} />
         <Path d={firs(708, 26, 24, 4.1, 18)} fill={palette.ridgeNear} />
-        <Path d={firsEdge(708, 26, 24, 4.1, 18)} stroke="url(#rimNear)" strokeWidth="9" fill="none" opacity="0.11" />
-        <Path
-          d={firsEdge(708, 26, 24, 4.1, 18)}
-          stroke="url(#rimNear)"
-          strokeWidth="1"
-          strokeDasharray={CATCH}
-          fill="none"
-          opacity="0.6"
-        />
         <Ellipse cx="140" cy="726" rx="300" ry="34" fill="url(#mistThin)" />
 
         {/* The foreground: one solid, unresolved silhouette. Friedrich puts a
@@ -305,15 +266,6 @@ export function LatticeBackground({ opacity = 1 }: { opacity?: number }) {
             edge the eye is meant to land on. */}
         <Path d={ridge(806, 42, 120)} fill={palette.foreground} />
         <Path d={firs(798, 54, 42, 0.4, 14)} fill={palette.foreground} />
-        <Path d={firsEdge(798, 54, 42, 0.4, 14)} stroke="url(#rimNear)" strokeWidth="12" fill="none" opacity="0.1" />
-        <Path
-          d={firsEdge(798, 54, 42, 0.4, 14)}
-          stroke="url(#rimNear)"
-          strokeWidth="1.2"
-          strokeDasharray={CATCH}
-          fill="none"
-          opacity="0.7"
-        />
         <Ellipse cx="300" cy="826" rx="260" ry="24" fill="url(#mistThin)" />
 
         {/* The grade, last and over everything. */}

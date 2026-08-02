@@ -3,7 +3,6 @@ import { View, Pressable, ActivityIndicator } from 'react-native';
 import { Screen } from '../components/Screen';
 import { Button } from '../components/Button';
 import { Reveal } from '../components/Reveal';
-import { GeoDivider } from '../components/GeoDivider';
 import { Wordmark } from '../components/Wordmark';
 import { Txt, Bold, Eyebrow } from '../components/Text';
 import { palette, withAlpha } from '../theme';
@@ -54,7 +53,6 @@ export function LoginScreen() {
         <Reveal>
           <View className="items-center">
             <Wordmark size={64} />
-            <GeoDivider />
             <Txt className="mb-10 max-w-[300px] text-center text-[15px] leading-6 text-paper/70">
               Learn to read Urdu: every letter in all four of its faces. Sign in to keep your streak and progress safe
               across devices.
