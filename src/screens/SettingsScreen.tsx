@@ -367,7 +367,6 @@ export function SettingsScreen() {
                 s.setTrack(t);
                 force((n) => n + 1);
               }}
-              compact
             />
           </Card>
         </Reveal>

@@ -16,9 +16,33 @@ import type { LearnTrack } from '../store/useSettingsStore';
  * start" has no way to know either of those things, and will find out by being
  * surprised.
  *
- * So each option says what it gives, what it costs, and who it is for, in that
- * order — and the numbers are read from the path itself rather than typed in,
- * so they cannot drift away from the truth.
+ * So each option still says what it gives, what it costs and who it is for, and
+ * the numbers are read from the path itself rather than typed in, so they cannot
+ * drift away from the truth.
+ *
+ * ## Why only one option is open at a time
+ *
+ * All of that used to be on screen at once: three cards, each with a summary,
+ * two or three ticks, one or two costs and a "best if" line — around twenty
+ * lines of small text before a first-time learner could make one choice. Every
+ * line was worth saying and the wall of them was still the wrong way to say it,
+ * because a person choosing between three things reads the headings, not the
+ * paragraphs, and a screen that looks like work gets skimmed rather than read.
+ *
+ * So a card that is not selected shows its name and one line. The detail belongs
+ * to the option you are actually considering, and selecting one is exactly the
+ * moment you want it — the trade-off appears under your thumb, before Continue,
+ * rather than being buried in a block you already scrolled past. Nothing was
+ * deleted; it is the same words, revealed when they are the answer to a question
+ * you are asking.
+ *
+ * The recommended track is selected by default, so the course's own advice is
+ * the thing already open when the screen first appears.
+ *
+ * Screen readers are not paced this way, so each card's accessibility label
+ * carries the summary, the costs and the "best if" line whether it is open or
+ * not — collapsing is a visual measure, and it must not quietly hide the
+ * warning that Roman cannot read Urdu writing from someone listening.
  */
 
 type Option = {
@@ -79,22 +103,15 @@ function Bullet({ text, kind }: { text: string; kind: 'gain' | 'cost' }) {
   );
 }
 
-export function TrackChooser({
-  value,
-  onChange,
-  /** the compact form used in Settings, where the choice has already been made once */
-  compact = false,
-}: {
-  value: LearnTrack;
-  onChange: (t: LearnTrack) => void;
-  compact?: boolean;
-}) {
+export function TrackChooser({ value, onChange }: { value: LearnTrack; onChange: (t: LearnTrack) => void }) {
   return (
     <View>
+      {/* Two facts, one line each: this really does change the course, and it is
+          not a decision you are stuck with. The long version said the same thing
+          in three clauses and was the first wall of text on the screen. */}
       <Txt className="mb-4 text-xs leading-5 text-paper/55">
-        This changes what the course teaches, not just how it looks: the {TOTAL_LESSON_COUNT}
-        -lesson path is rebuilt around your answer. You can switch whenever you like, in Settings; nothing you have
-        already learned is lost.
+        All {TOTAL_LESSON_COUNT} lessons are built around this. You can change it any time in Settings — nothing you
+        have learned is lost.
       </Txt>
 
       <View className="gap-3">
@@ -105,7 +122,7 @@ export function TrackChooser({
               key={t.key}
               accessibilityRole="radio"
               accessibilityState={{ selected: sel }}
-              accessibilityLabel={`${t.label}. ${t.summary} ${t.forWhom}`}
+              accessibilityLabel={[t.label, t.summary, ...t.gains, ...t.costs, t.forWhom].join('. ')}
               onPress={() => {
                 feedback.tap();
                 onChange(t.key);
@@ -135,9 +152,8 @@ export function TrackChooser({
 
                 <Txt className="text-xs leading-5 text-paper/70">{t.summary}</Txt>
 
-                {/* The detail is only worth the space on the screen where the
-                    decision is actually being made for the first time. */}
-                {compact && !sel ? null : (
+                {/* The detail belongs to the option you are considering. */}
+                {!sel ? null : (
                   <View className="mt-2">
                     {t.gains.map((g) => (
                       <Bullet key={g} text={g} kind="gain" />
