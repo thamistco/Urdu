@@ -131,7 +131,50 @@ function makeRng(seed) {
   return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
 }
 
+/**
+ * One pass down the middle — what a hand actually does.
+ *
+ * `centreline` above returns the union of two midline families: the midpoint of
+ * every horizontal run and of every vertical run. In a thick stroke those are
+ * two paths a few cells apart, and walking both of them is colouring the stroke
+ * in, not tracing it. Driving the simulation from that union was the same flaw
+ * this file was written to fix, one level up: the test traced the exact target
+ * it was scored against, so it passed while a person drawing one line did not.
+ *
+ * This takes a single family — whichever yields the longer path, since a
+ * vertical stroke is naturally traced by its horizontal midpoints and a
+ * horizontal one by its vertical midpoints — and that is the grade that has to
+ * pass for the exercise to be about shape rather than thickness.
+ */
+function singlePass(mask) {
+  const at = (x, y) => mask[y * MASK_GRID + x];
+  const byRow = [];
+  for (let y = 0; y < MASK_GRID; y++) {
+    let run = [];
+    for (let x = 0; x <= MASK_GRID; x++) {
+      if (x < MASK_GRID && at(x, y)) run.push(x);
+      else if (run.length) {
+        byRow.push({ x: run[(run.length / 2) | 0], y });
+        run = [];
+      }
+    }
+  }
+  const byCol = [];
+  for (let x = 0; x < MASK_GRID; x++) {
+    let run = [];
+    for (let y = 0; y <= MASK_GRID; y++) {
+      if (y < MASK_GRID && at(x, y)) run.push(y);
+      else if (run.length) {
+        byCol.push({ x, y: run[(run.length / 2) | 0] });
+        run = [];
+      }
+    }
+  }
+  return byRow.length >= byCol.length ? byRow : byCol;
+}
+
 const GRADES = [
+  { name: 'one pass down the middle', jitter: 0.4, want: 'pass', single: true },
   { name: 'careful trace', jitter: 0.4, want: 'pass' },
   { name: 'sloppy trace', jitter: 1.1, want: 'pass' },
   { name: 'half the letter', jitter: 0.4, want: 'fail', half: true },
@@ -149,11 +192,21 @@ for (const grade of GRADES) {
   for (const [key, entry] of Object.entries(GLYPH_MASKS)) {
     const mask = decodeMask(entry[0], MASK_GRID);
     const targets = traceTargets(mask, MASK_GRID);
-    let pts = centreline(mask);
-    if (grade.half) pts = pts.slice(0, Math.ceil(pts.length / 2));
+    let pts = grade.single ? singlePass(mask) : centreline(mask);
+    // Half a letter means half of it *spatially*. Slicing the point list in two
+    // did not do that: `centreline` emits every row midpoint before every column
+    // midpoint, so the first half was one complete midline family — a full,
+    // honest single-pass trace. It only ever failed because the old scoring
+    // demanded both families, so this grade was quietly asserting the very thing
+    // that made the exercise about thickness.
+    if (grade.half) {
+      const ys = pts.map((p) => p.y);
+      const mid = (Math.min(...ys) + Math.max(...ys)) / 2;
+      pts = pts.filter((p) => p.y <= mid);
+    }
     if (pts.length < 3) continue;
     const strokes = toStrokes(pts, grade.jitter, rng);
-    const r = scoreTrace(strokes, SIDE, MASK_GRID, targets.reachable, targets.tolerant);
+    const r = scoreTrace(strokes, SIDE, MASK_GRID, targets.skeleton, targets.tolerant);
     n++;
     if (r.pass) passed++;
     if (grade.want === 'pass' && r.coverage < worstCov) {
@@ -165,7 +218,7 @@ for (const grade of GRADES) {
   const ok = grade.want === 'pass' ? rate >= 95 : rate <= 5;
   if (!ok) failures++;
   console.log(
-    `${grade.name.padEnd(18)} ${passed}/${n} pass (${rate.toFixed(0)}%)  ` +
+    `${grade.name.padEnd(24)} ${passed}/${n} pass (${rate.toFixed(0)}%)  ` +
       `want ${grade.want === 'pass' ? '≥95%' : '≤5%'}  ${ok ? 'ok' : 'PROBLEM'}` +
       (grade.want === 'pass' ? `   worst: ${worstKey} at ${(worstCov * 100).toFixed(0)}% coverage` : '')
   );
@@ -182,11 +235,11 @@ for (const grade of GRADES) {
     const xs = row % 2 ? [SIDE - 4, 4] : [4, SIDE - 4];
     for (let t = 0; t <= 1; t += 0.05) stroke.push({ x: xs[0] + (xs[1] - xs[0]) * t, y });
   }
-  const r = scoreTrace([stroke], SIDE, MASK_GRID, targets.reachable, targets.tolerant);
+  const r = scoreTrace([stroke], SIDE, MASK_GRID, targets.skeleton, targets.tolerant);
   const ok = !r.pass;
   if (!ok) failures++;
   console.log(
-    `${'scribble'.padEnd(18)} coverage ${(r.coverage * 100).toFixed(0)}% · ` +
+    `${'scribble'.padEnd(24)} coverage ${(r.coverage * 100).toFixed(0)}% · ` +
       `precision ${(r.precision * 100).toFixed(0)}% → ${r.pass ? 'PASSES (PROBLEM)' : 'refused, ok'}`
   );
 }
