@@ -421,7 +421,28 @@ export const useProgressStore = create<ProgressState>()(
     {
       name: 'harf-progress',
       storage: createJSONStorage(() => safeStorage),
-      version: 1,
+      version: 2,
+      /**
+       * v1 → v2: lesson ids stopped being positional.
+       *
+       * They used to be counted along the path (`v-12`), so they named a slot
+       * rather than a lesson; they are now derived from the content a lesson
+       * teaches (`v-colours`). Only the two lesson-keyed maps are affected, and
+       * neither can be translated — the old key genuinely does not say which
+       * lesson it meant, because that depended on a path layout that no longer
+       * exists. They are dropped.
+       *
+       * Everything that represents actual learning survives: `srs`, `srsType`,
+       * `learnedWords` and `learnedLetters` are keyed by word and letter ids,
+       * which never moved, and XP, streak, gems and achievements are scalars.
+       * So a learner loses their ticked-off lessons and keeps their review
+       * schedule, their streak and their level.
+       */
+      migrate: (persisted, from) => {
+        if (from >= 2) return persisted as ProgressState;
+        const s = persisted as Partial<ProgressState>;
+        return { ...s, completedLessons: {}, skippedLessons: {} } as ProgressState;
+      },
     }
   )
 );

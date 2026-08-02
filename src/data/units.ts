@@ -66,13 +66,35 @@ export type Unit = {
 const lettersOfGroup = (g: number) => LETTERS.filter((l) => l.group === g).map((l) => l.id);
 
 // ---- small builders keep the path declarative and readable ----------------
-let n = 0;
-const uid = (p: string) => `${p}-${++n}`;
+
+/**
+ * A lesson's id is derived from what it teaches, never from where it sits.
+ *
+ * `completedLessons` in useProgressStore is persisted keyed by lesson id, so a
+ * positional id (`v-12`, counted along the path) means that inserting one
+ * lesson silently reassigns every later lesson's progress to different
+ * content: a learner who finished "Colours" comes back to find "Numbers"
+ * ticked instead. The course is going to be re-sequenced more than once, and
+ * every one of those edits would corrupt saved progress.
+ *
+ * Keying on the topic, concept or passage the lesson draws from makes the id
+ * survive re-ordering, because it names the content rather than the position.
+ * The counter below is only a tie-break for the few lessons that legitimately
+ * share a key — two letter lessons drilling the same group, several sentence
+ * lessons at one level — and it is stable as long as those stay in the same
+ * relative order, which re-sequencing whole topics does not disturb.
+ */
+const seen = new Map<string, number>();
+const uid = (key: string) => {
+  const n = (seen.get(key) ?? 0) + 1;
+  seen.set(key, n);
+  return n === 1 ? key : `${key}-${n}`;
+};
 
 // A vocabulary lesson needs room for its closing run — recall, build, type and
 // the matching board — on top of the words it introduces; see the generator.
 const V = (topic: string, title: string, subtitle: string, xp = 18, size = 9): Lesson => ({
-  id: uid('v'),
+  id: uid(`v-${topic}`),
   title,
   subtitle,
   icon: '✨',
@@ -82,7 +104,7 @@ const V = (topic: string, title: string, subtitle: string, xp = 18, size = 9): L
   size,
 });
 const L = (group: number, title: string, subtitle: string, xp = 20, size = 7): Lesson => ({
-  id: uid('l'),
+  id: uid(`l-${group}`),
   title,
   subtitle,
   icon: '🔤',
@@ -92,7 +114,7 @@ const L = (group: number, title: string, subtitle: string, xp = 20, size = 7): L
   size,
 });
 const G = (conceptId: string, title: string, subtitle: string, xp = 25, size = 6): Lesson => ({
-  id: uid('g'),
+  id: uid(conceptId),
   title,
   subtitle,
   icon: '📐',
@@ -102,7 +124,7 @@ const G = (conceptId: string, title: string, subtitle: string, xp = 25, size = 6
   size,
 });
 const S = (level: Level, title: string, subtitle: string, xp = 20, size = 5): Lesson => ({
-  id: uid('s'),
+  id: uid(`s-${level}`),
   title,
   subtitle,
   icon: '🧩',
@@ -112,7 +134,7 @@ const S = (level: Level, title: string, subtitle: string, xp = 20, size = 5): Le
   size,
 });
 const R = (passageId: string, title: string, subtitle: string, xp = 25, size = 1): Lesson => ({
-  id: uid('r'),
+  id: uid(passageId),
   title,
   subtitle,
   icon: '📖',
@@ -122,7 +144,7 @@ const R = (passageId: string, title: string, subtitle: string, xp = 25, size = 1
   size,
 });
 const D = (dialogueId: string, title: string, subtitle: string, xp = 25, size = 1): Lesson => ({
-  id: uid('d'),
+  id: uid(dialogueId),
   title,
   subtitle,
   icon: '💬',
@@ -132,7 +154,7 @@ const D = (dialogueId: string, title: string, subtitle: string, xp = 25, size = 
   size,
 });
 const P = (title: string, subtitle: string, xp = 20, size = 6): Lesson => ({
-  id: uid('p'),
+  id: uid('phrases'),
   title,
   subtitle,
   icon: '💬',
@@ -140,8 +162,14 @@ const P = (title: string, subtitle: string, xp = 20, size = 6): Lesson => ({
   xp,
   size,
 });
-const REV = (title = 'Unit review', subtitle = 'Mixed practice', xp = 30, size = 9): Lesson => ({
-  id: uid('rev'),
+/**
+ * A review closes a unit and draws on everything up to it, so unlike every
+ * other lesson it has no content of its own to be named after. It takes the
+ * unit's slug instead — the one id here that has to be written out rather
+ * than derived.
+ */
+const REV = (slug: string, title = 'Unit review', subtitle = 'Mixed practice', xp = 30, size = 9): Lesson => ({
+  id: uid(`rev-${slug}`),
   title,
   subtitle,
   icon: '🌙',
@@ -174,7 +202,7 @@ export const UNITS: Unit[] = [
       V('first-words', 'First words', 'Everyday vocabulary', 15, 7),
       L(1, 'Position practice', 'Alone · start · middle · end'),
       V('greetings', 'Greetings', 'Say hello and thank you'),
-      REV(),
+      REV('first-faces'),
     ],
   },
   {
@@ -191,7 +219,7 @@ export const UNITS: Unit[] = [
       G('g-pronouns', 'Pronouns', 'I, you, he, we, they'),
       G('g-to-be', 'Am, is, are', 'The verb "to be"'),
       S('beginner', 'Build a sentence', 'Put the words in order'),
-      REV(),
+      REV('hooks-and-throats'),
     ],
   },
   {
@@ -208,7 +236,7 @@ export const UNITS: Unit[] = [
       V('colours', 'Colours', 'Describe what you see'),
       G('g-gender', 'Gender & number', 'Masculine and feminine'),
       S('beginner', 'More sentences', 'Say what something is'),
-      REV(),
+      REV('the-non-joiners'),
     ],
   },
   {
@@ -224,7 +252,7 @@ export const UNITS: Unit[] = [
       V('numbers', 'Numbers', 'Zero to ten'),
       L(5, 'Deep sounds', 'to’e · zo’e · ain · ghain'),
       V('home', 'Around the home', 'Everyday objects'),
-      REV(),
+      REV('teeth-and-emphasis'),
     ],
   },
   {
@@ -242,7 +270,7 @@ export const UNITS: Unit[] = [
       L(8, 'The h family', 'the two he’s, hamza and ye'),
       P('Everyday phrases', 'Speak, don’t just read'),
       {
-        ...REV('Script review', 'Every letter so far', 40, 12),
+        ...REV('building-words', 'Script review', 'Every letter so far', 40, 12),
         romanTitle: 'Unit review',
         romanSubtitle: 'Everything so far',
       },
@@ -263,7 +291,7 @@ export const UNITS: Unit[] = [
       R('r-7', 'Reading: Colours around me', 'Naming what you see'),
       D('d-2', 'Talk: Tea or coffee?', 'Being offered something'),
       {
-        ...REV('Beginner review', 'Script, words and sentences', 40, 12),
+        ...REV('your-first-readings', 'Beginner review', 'Script, words and sentences', 40, 12),
         romanSubtitle: 'Words, grammar and sentences',
       },
     ],
@@ -282,7 +310,7 @@ export const UNITS: Unit[] = [
       V('feelings', 'Feelings', 'Happy, tired, hungry'),
       G('g-possess', 'Possession', 'کا، کی، کے, my, your, his'),
       S('elementary', 'Sentence building', 'Say where things are'),
-      REV(),
+      REV('you-and-your-body'),
     ],
   },
   {
@@ -297,7 +325,7 @@ export const UNITS: Unit[] = [
       V('family-more', 'More family', 'Uncles, aunts, in-laws'),
       V('household', 'Household items', 'Broom, bucket, key'),
       G('g-postpositions', 'Postpositions', 'in, on, from, after the noun'),
-      REV(),
+      REV('home-and-family'),
     ],
   },
   {
@@ -314,7 +342,7 @@ export const UNITS: Unit[] = [
       G('g-negation', 'Saying no', 'نہیں · نہ · مت'),
       D('d-3', 'Talk: Where do you live?', 'Small talk that goes somewhere'),
       R('r-8', 'Reading: At school', 'A morning and an afternoon'),
-      REV(),
+      REV('kitchen-and-bath'),
     ],
   },
   {
@@ -329,7 +357,7 @@ export const UNITS: Unit[] = [
       V('wildlife', 'Wild animals', 'Bear, deer, camel'),
       V('garden', 'The garden', 'Plants, seeds and leaves'),
       G('g-oblique', 'The oblique case', 'Nouns change before postpositions'),
-      REV(),
+      REV('the-living-world'),
     ],
   },
   {
@@ -345,7 +373,7 @@ export const UNITS: Unit[] = [
       V('meals', 'Meals & dishes', 'Biryani, daal, naan'),
       D('d-4', 'Talk: At the fruit stall', 'Asking a price, and haggling'),
       R('r-1', 'Reading: My house', 'Your first passage'),
-      REV(),
+      REV('at-the-table'),
     ],
   },
   {
@@ -363,7 +391,7 @@ export const UNITS: Unit[] = [
       V('adjectives', 'Describing', 'Big, small, good, new'),
       V('questions', 'Question words', 'Who, what, where, when'),
       G('g-questions', 'Asking questions', 'who · what · where · when'),
-      REV(),
+      REV('days-and-things'),
     ],
   },
   {
@@ -379,7 +407,7 @@ export const UNITS: Unit[] = [
       R('r-9', 'Reading: The garden behind the house', 'A quiet place'),
       R('r-10', 'Reading: My friend Sara', 'Talking about someone'),
       S('elementary', 'Sentence practice', 'Longer, joined-up sentences'),
-      REV('Elementary review', 'Everything so far', 40, 12),
+      REV('people-and-play', 'Elementary review', 'Everything so far', 40, 12),
     ],
   },
 
@@ -397,7 +425,7 @@ export const UNITS: Unit[] = [
       V('verbs2', 'More actions', 'Hear, think, give, take'),
       G('g-continuous', 'Present continuous', 'What you are doing now'),
       R('r-3', 'Reading: My daily routine', 'A day from start to end'),
-      REV(),
+      REV('every-day'),
     ],
   },
   {
@@ -412,7 +440,7 @@ export const UNITS: Unit[] = [
       V('mind-verbs', 'Verbs of mind', 'Knowing, wanting, believing'),
       V('speech-verbs', 'Verbs of speech', 'Saying, asking, arguing'),
       S('intermediate', 'Sentence building', 'Put verbs to work'),
-      REV(),
+      REV('the-verbs-you-need'),
     ],
   },
   {
@@ -428,7 +456,7 @@ export const UNITS: Unit[] = [
       V('transport', 'Getting around', 'Car, bus, train, boat'),
       V('road', 'On the road', 'Traffic and driving'),
       S('intermediate', 'Sentence building', 'Say what you did and will do'),
-      REV(),
+      REV('out-and-about'),
     ],
   },
   {
@@ -444,7 +472,7 @@ export const UNITS: Unit[] = [
       V('expressions', 'Useful expressions', 'The glue of real conversation'),
       D('d-6', 'Talk: On the phone', 'Taking a message'),
       R('r-11', 'Reading: A trip to Lahore', 'Telling a story in the past'),
-      REV(),
+      REV('finding-your-way'),
     ],
   },
   {
@@ -459,7 +487,7 @@ export const UNITS: Unit[] = [
       G('g-past', 'Past tense', 'تھا، تھی, was and were'),
       V('grains', 'Grains & staples', 'The pantry basics'),
       R('r-2', 'Reading: A day at the market', 'Shopping in Urdu'),
-      REV(),
+      REV('money-and-shopping'),
     ],
   },
   {
@@ -475,7 +503,7 @@ export const UNITS: Unit[] = [
       G('g-comparative', 'Comparing things', 'Bigger than, the biggest'),
       D('d-8', 'Talk: Booking a room', 'Checking in somewhere'),
       S('intermediate', 'Sentence practice', 'Weigh one thing against another'),
-      REV(),
+      REV('bank-and-bargain'),
     ],
   },
   {
@@ -491,7 +519,7 @@ export const UNITS: Unit[] = [
       V('office', 'The office', 'Working life'),
       D('d-7', 'Talk: At the doctor', 'Describing a symptom'),
       G('g-future', 'Future tense', 'What you will do'),
-      REV(),
+      REV('health-and-work'),
     ],
   },
   {
@@ -506,7 +534,7 @@ export const UNITS: Unit[] = [
       V('education', 'Education', 'Study, exams and learning'),
       G('g-obligation', 'Have to & should', 'چاہیے · ہے · پڑنا'),
       R('r-13', 'Reading: At the doctor', 'Describing what is wrong'),
-      REV(),
+      REV('working-life'),
     ],
   },
   {
@@ -522,7 +550,7 @@ export const UNITS: Unit[] = [
       V('days', 'Days & months', 'The week and the year'),
       V('timewords', 'Time words', 'Before, after, often'),
       G('g-ability', 'Can & could', 'سکنا, being able to'),
-      REV(),
+      REV('travel-and-time'),
     ],
   },
   {
@@ -539,7 +567,7 @@ export const UNITS: Unit[] = [
       V('farm', 'Farm & field', 'Agriculture and livestock'),
       V('cooking', 'Cooking', 'In the kitchen, making food'),
       R('r-12', 'Reading: The rainy day', 'When the weather decides'),
-      REV(),
+      REV('house-and-field'),
     ],
   },
   {
@@ -555,7 +583,7 @@ export const UNITS: Unit[] = [
       V('sealife', 'Sea & insects', 'Water creatures and small crawlers'),
       V('sports', 'Sports & leisure', 'Games, hobbies and free time'),
       V('clothing-more', 'More clothing', 'Garments and adornment'),
-      REV(),
+      REV('senses-and-seasons'),
     ],
   },
   {
@@ -571,7 +599,7 @@ export const UNITS: Unit[] = [
       D('d-9', 'Talk: Weekend plans', 'Making and accepting a plan'),
       R('r-14', 'Reading: Eid at home', 'A festival morning'),
       S('intermediate', 'Sentence practice', 'Speak about people politely'),
-      REV('Intermediate review', 'Everything so far', 45, 12),
+      REV('together', 'Intermediate review', 'Everything so far', 45, 12),
     ],
   },
 
@@ -589,7 +617,7 @@ export const UNITS: Unit[] = [
       V('opposites', 'Opposites', 'Pairs that define each other'),
       D('d-10', 'Talk: A late arrival', 'Apologising, and waving it off'),
       G('g-imperative', 'Requests & commands', 'Asking politely'),
-      REV(),
+      REV('describing-people'),
     ],
   },
   {
@@ -603,7 +631,7 @@ export const UNITS: Unit[] = [
       V('quality', 'Judgement words', 'Evaluating and comparing'),
       V('measure-time', 'Measures & order', 'Sequence, rank and amount'),
       S('advanced', 'Complex sentences', 'Shade your meaning'),
-      REV(),
+      REV('fine-description'),
     ],
   },
   {
@@ -618,7 +646,7 @@ export const UNITS: Unit[] = [
       G('g-subjunctive', 'The subjunctive', 'Maybe, should, if'),
       V('connectors', 'Linking words', 'But, because, although'),
       S('advanced', 'Complex sentences', 'Join ideas together'),
-      REV(),
+      REV('mind-and-feeling'),
     ],
   },
   {
@@ -633,7 +661,7 @@ export const UNITS: Unit[] = [
       G('g-relative', 'Relative clauses', 'جو … وہ, matched pairs'),
       V('idioms', 'Idioms & sayings', 'Phrases that mean more than their words'),
       R('r-16', 'Reading: Work and rest', 'An argument, gently made'),
-      REV(),
+      REV('thought-and-belief'),
     ],
   },
   {
@@ -648,7 +676,7 @@ export const UNITS: Unit[] = [
       V('literature', 'Literature', 'Poets, verse and story'),
       V('music-art', 'Music & art', 'Sound, colour and craft'),
       R('r-4', 'Reading: A letter to a friend', 'Formal written Urdu'),
-      REV(),
+      REV('culture-and-faith'),
     ],
   },
   {
@@ -664,7 +692,7 @@ export const UNITS: Unit[] = [
       D('d-11', 'Talk: About a book', 'Disagreeing gently'),
       R('r-17', 'Reading: An evening of poetry', 'Why one couplet silences a room'),
       S('advanced', 'Complex sentences', 'Write the way Urdu writes'),
-      REV(),
+      REV('poetry-and-story'),
     ],
   },
   {
@@ -681,7 +709,7 @@ export const UNITS: Unit[] = [
       V('science', 'Science', 'Enquiry and discovery'),
       D('d-12', 'Talk: Leaving a job', 'A difficult thing, said well'),
       G('g-perfect', 'Completed actions', 'The نے construction'),
-      REV(),
+      REV('the-modern-world'),
     ],
   },
   {
@@ -697,7 +725,7 @@ export const UNITS: Unit[] = [
       V('history', 'History', 'The past and its record'),
       G('g-passive', 'The passive', 'When the doer disappears'),
       R('r-15', 'Reading: The old bookseller', 'A character sketch'),
-      REV(),
+      REV('state-and-society'),
     ],
   },
   {
@@ -712,7 +740,7 @@ export const UNITS: Unit[] = [
       V('emergency', 'Emergencies', 'Urgent help and safety'),
       V('services', 'Public services', 'Government and law'),
       G('g-causative', 'Causatives', 'Do it · make someone do it'),
-      REV(),
+      REV('body-and-medicine'),
     ],
   },
   {
@@ -729,7 +757,7 @@ export const UNITS: Unit[] = [
       V('travel-more', 'Journeys', 'Planning and describing trips'),
       V('lifeevents', 'Life events', 'Birth, success, destiny'),
       V('formal', 'Formal & written', 'Letters, notices and officialese'),
-      REV('Grand review', 'Everything you know', 60, 15),
+      REV('the-wider-world', 'Grand review', 'Everything you know', 60, 15),
     ],
   },
 ];
