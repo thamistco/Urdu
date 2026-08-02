@@ -45,7 +45,7 @@ function load(rel) {
 const { newCard, review, dueQueue, dueCount, isDue, strength, dueBudget } = load('src/lib/srs.ts');
 const { buildLessonExercises } = load('src/exercises/generator.ts');
 const { ALL_LESSONS } = load('src/data/units.ts');
-const { WORDS } = load('src/data/words.ts');
+const { WORDS, wordsByTopic } = load('src/data/words.ts');
 
 const problems = [];
 const ok = [];
@@ -150,6 +150,47 @@ const NOW = Date.UTC(2026, 0, 1);
     'a review lesson asks about due items, not the general pool',
     asked.length > 0 && fromQueue === asked.length,
     `${fromQueue} of ${asked.length} questions came from the due queue (${reviewLesson.id})`
+  );
+}
+
+// ---- a review with nothing due yet still only asks about words seen ------
+
+/**
+ * The one a learner actually hit. Before this, a review reached with nothing
+ * due fell back to `wordsByTopic(topic)` for every topic touched so far — the
+ * whole category, not the handful of words a single vocab lesson actually
+ * shows. Colours alone is 19 words against a lesson that introduces well under
+ * ten, so most early reviews could ask about a colour nobody had been taught.
+ *
+ * This reproduces exactly that shape without depending on which lesson the
+ * path currently positions where: take a topic bigger than any one lesson
+ * could cover, pretend the learner has only ever been graded on three of its
+ * words, and demand a review generated with nothing due never asks about a
+ * fourth.
+ */
+{
+  const reviewLesson = ALL_LESSONS.filter((l) => l.kind === 'review').pop();
+  const colours = wordsByTopic('colours');
+  check('the fixture topic is bigger than a single lesson could teach', colours.length > 10, `${colours.length}`);
+
+  const known = new Set(colours.slice(0, 3).map((w) => w.id));
+  const heldOut = new Set(colours.slice(3).map((w) => w.id));
+
+  // `n` deliberately exceeds the entire corpus. `fallbackReviewRefs` takes
+  // `shuffle(pool).slice(0, n)`, so a small `n` against the real course-wide
+  // pool only has a modest chance of drawing any specific held-out word — a
+  // held-out id could fail to come up by chance and the test would pass
+  // whether or not the filtering it exists to catch was actually happening.
+  // A huge `n` forces the whole pool into the slice regardless of shuffle
+  // order, which is what makes this deterministic rather than a coin flip.
+  const hugeReviewLesson = { ...reviewLesson, size: 5000 };
+  const exercises = buildLessonExercises(hugeReviewLesson, [], 'both', known);
+  const asked = exercises.map((ex) => ex.word?.id).filter(Boolean);
+  const untaught = asked.filter((id) => heldOut.has(id));
+  check(
+    'a review with nothing due never asks about a word outside what the learner has been graded on',
+    untaught.length === 0,
+    untaught.length ? `asked about ${untaught.join(', ')}, never graded` : `${asked.length} questions, all known`
   );
 }
 

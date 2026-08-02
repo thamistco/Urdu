@@ -215,7 +215,14 @@ function grammarDrillExercise(concept: GrammarConcept, drill: GrammarDrill, trac
 export function buildLessonExercises(
   lesson: Lesson,
   reviewRefs: ItemRef[] = [],
-  track: LearnTrack = 'both'
+  track: LearnTrack = 'both',
+  /**
+   * Every letter and word id the learner has ever actually been graded on —
+   * `Object.keys(srs)` from the progress store. Used only by the review
+   * fallback below, to keep a topic/lesson-order guess honest against what
+   * was truly shown.
+   */
+  known: ReadonlySet<string> = new Set()
 ): Exercise[] {
   const exercises: Exercise[] = [];
   // On the Roman track the learner has said they are not learning the
@@ -336,7 +343,7 @@ export function buildLessonExercises(
   }
 
   if (lesson.kind === 'review') {
-    const refs = reviewRefs.length ? reviewRefs : fallbackReviewRefs(lesson.size, teachesScript, lesson.id);
+    const refs = reviewRefs.length ? reviewRefs : fallbackReviewRefs(lesson.size, teachesScript, lesson.id, known);
     for (const ref of refs.slice(0, lesson.size)) {
       if (ref.type === 'letter') {
         const l = teachesScript ? getLetter(ref.id) : undefined;
@@ -378,7 +385,15 @@ export function buildLessonExercises(
  *
  * Walks the real lesson order and collects the letters and topics introduced
  * strictly before this lesson, plus this lesson's own unit-mates, so a review
- * can only ever ask about material the learner has already been shown.
+ * draws only from units the learner has reached.
+ *
+ * This is an *upper bound*, not a record of what was shown. A vocab lesson
+ * introduces a random handful of its topic — `Math.max(3, lesson.size - 4 -
+ * woven)` words, typically well under ten — but this pushes every word
+ * `wordsByTopic` returns for that topic, which for something like colours
+ * (nineteen words) is most of the category. `fallbackReviewRefs` below narrows
+ * this against `known` before using it; nothing downstream of this function
+ * should treat its output as "the learner has seen these".
  */
 function taughtUpTo(lessonId: string): { letters: string[]; words: string[] } {
   const letters: string[] = [];
@@ -400,15 +415,49 @@ function taughtUpTo(lessonId: string): { letters: string[]; words: string[] } {
  * 3 and letters not yet introduced: material the learner had never seen, in a
  * lesson whose whole job is to bring back what they had.
  *
- * It is now drawn strictly from what the path has taught up to this lesson.
+ * It was then drawn from `taughtUpTo`, which fixed the *unit* being wrong but
+ * not the *word*: a vocab lesson only ever shows a handful of its topic's
+ * words, while `taughtUpTo` counts the whole topic as taught the moment any
+ * lesson touches it. A review reached before spaced repetition has scheduled
+ * anything — which in practice means most early reviews, since a freshly
+ * graded word is not due again for at least a day — fell all the way through
+ * to this fallback and could pull any of a topic's words, including ones this
+ * specific lesson never happened to pick.
+ *
+ * `known` closes that gap: it is `Object.keys(srs)` from the progress store,
+ * so it is not a guess about the order content was authored in, it is every
+ * id the learner has actually been graded on, in any lesson, in any order —
+ * true regardless of whether they took the path in sequence or jumped ahead.
+ * Intersecting the two keeps the unit-level guardrail from `taughtUpTo` and
+ * replaces its topic-wide guess with the one thing that is not a guess.
  */
-function fallbackReviewRefs(n: number, withLetters = true, lessonId?: string): ItemRef[] {
+function fallbackReviewRefs(
+  n: number,
+  withLetters = true,
+  lessonId?: string,
+  known: ReadonlySet<string> = new Set()
+): ItemRef[] {
   const taught = lessonId ? taughtUpTo(lessonId) : null;
+  const seen = (ids: string[]) => ids.filter((id) => known.has(id));
   // No lesson context (practice review, say) falls back to the foundational
   // material, which is the old behaviour and correct there — practice review is
-  // not positioned anywhere on the path.
-  const wordPool = taught && taught.words.length ? taught.words : WORDS.slice(0, 120).map((w) => w.id);
-  const letterPool = taught && taught.letters.length ? taught.letters : LETTERS.slice(0, 20).map((l) => l.id);
+  // not positioned anywhere on the path. Within a real lesson, prefer words
+  // actually known; only widen to the whole topic if the learner has somehow
+  // graded none of it yet (e.g. the very first review reachable from a unit).
+  const taughtWords = taught?.words ?? [];
+  const knownWords = seen(taughtWords);
+  const wordPool = knownWords.length
+    ? knownWords
+    : taughtWords.length
+      ? taughtWords
+      : WORDS.slice(0, 120).map((w) => w.id);
+  const taughtLetters = taught?.letters ?? [];
+  const knownLetters = seen(taughtLetters);
+  const letterPool = knownLetters.length
+    ? knownLetters
+    : taughtLetters.length
+      ? taughtLetters
+      : LETTERS.slice(0, 20).map((l) => l.id);
 
   if (!withLetters) {
     return shuffle(wordPool)
