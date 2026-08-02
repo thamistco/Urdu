@@ -183,7 +183,6 @@ export const OBJECT_PACKS: TopicPack[] = [
       ['w-sargoshi', 'سرگوشی', 'sargoshi', 'whisper', '🤫'],
       ['w-chikh', 'چیخ', 'cheekh', 'scream', '😱'],
       ['w-hansi', 'ہنسی', 'hañsi', 'laughter', '😂'],
-      ['w-rona', 'رونا', 'rona', 'crying', '😭'],
       ['w-khamoshi', 'خاموشی', 'khaamoshi', 'silence', '🤐'],
       ['w-taali', 'تالی', 'taali', 'clap', '👏'],
       ['w-seeti', 'سیٹی', 'seeṭi', 'whistle', '😗'],

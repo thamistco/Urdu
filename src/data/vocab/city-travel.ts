@@ -66,7 +66,6 @@ export const CITY_PACKS: TopicPack[] = [
       ['w-shehri', 'شہری', 'shehri', 'citizen / urban', '🏙️'],
       ['w-qaum', 'قوم', 'qaum', 'nation / people', '👥'],
       ['w-zabaan2', 'زبان', 'zabaan', 'language', '💬'],
-      ['w-urdu', 'اردو', 'urdu', 'Urdu', '📜'],
       ['w-angrezi', 'انگریزی', 'angrezi', 'English', '🔤'],
       ['w-paayatakht', 'دارالحکومت', 'daar-ul-hukoomat', 'capital city', '🏛️'],
       ['w-jhanda', 'جھنڈا', 'jhanḍa', 'flag', '🚩'],

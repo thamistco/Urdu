@@ -265,14 +265,21 @@ function lemmaCandidates(word) {
 }
 
 /**
- * The first candidate `known` recognises, or undefined.
+ * Every candidate `known` recognises, not just the first.
  * `known` is anything with a `.has()` — a Set of Urdu surface forms.
+ *
+ * All of them, because a surface form is often genuinely ambiguous and taking
+ * the first match picks a reading rather than reporting one. کرتا is both the
+ * garment (a kurta) and "does" — a form of کرنا — and returning only the
+ * identity match reads "I work every day" as needing a clothing lesson. پکا is
+ * both "ripe" and a form of پکانا, "to cook".
+ *
+ * Returning the set lets the caller apply the same rule it already applies to a
+ * word listed under two topics: if any reading has been taught, the learner can
+ * read the word.
  */
 function resolve(word, known) {
-  for (const c of lemmaCandidates(word)) {
-    if (known.has(c)) return c;
-  }
-  return undefined;
+  return lemmaCandidates(word).filter((c) => known.has(c));
 }
 
 /**
@@ -281,7 +288,7 @@ function resolve(word, known) {
  *
  *   'function' — closed-class, taught by grammar, owned by no topic
  *   'name'     — a proper noun, never taught
- *   'lemma'    — vocabulary; `.lemma` is the entry to look the topic up under
+ *   'lemma'    — vocabulary; `.lemmas` are the entries it could be a form of
  *   'unknown'  — not in the vocabulary under any form this can derive
  *
  * Callers should use this rather than the pieces, because the order matters:
@@ -291,8 +298,8 @@ function resolve(word, known) {
 function classify(word, known) {
   if (FUNCTION_WORDS.has(word)) return { kind: 'function' };
   if (PROPER_NOUNS.has(word)) return { kind: 'name' };
-  const lemma = resolve(word, known);
-  return lemma ? { kind: 'lemma', lemma } : { kind: 'unknown' };
+  const lemmas = resolve(word, known);
+  return lemmas.length ? { kind: 'lemma', lemmas } : { kind: 'unknown' };
 }
 
 module.exports = { lemmaCandidates, resolve, classify, FUNCTION_WORDS, PROPER_NOUNS, IRREGULAR };

@@ -111,7 +111,6 @@ export const ESSENTIAL_PACKS: TopicPack[] = [
       ['w-jab', 'جب', 'jab', 'when', '🕐'],
       ['w-tab', 'تب', 'tab', 'then', '🕑'],
       ['w-ab', 'اب', 'ab', 'now', '⏱️'],
-      ['w-phir2', 'پھر', 'phir', 'again / then', '🔁'],
       ['w-fauran2', 'اچانک', 'achaanak', 'suddenly', '⚡'],
       ['w-aksar', 'اکثر', 'aksar', 'often', '🔂'],
       ['w-shaz', 'شاذ', 'shaaz', 'rarely', '🌒'],
@@ -132,7 +131,6 @@ export const ESSENTIAL_PACKS: TopicPack[] = [
     [
       ['w-hona', 'ہونا', 'hona', 'to be / happen', '🌟'],
       ['w-rehna', 'رہنا', 'rehna', 'to live / stay', '🏠'],
-      ['w-lana', 'لانا', 'laana', 'to bring', '📥'],
       ['w-le-jana', 'لے جانا', 'le jaana', 'to take away', '📤'],
       ['w-kholna', 'کھولنا', 'kholna', 'to open', '🔓'],
       ['w-band-karna', 'بند کرنا', 'band karna', 'to close', '🔒'],
