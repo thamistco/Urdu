@@ -306,7 +306,6 @@ export function OnboardingScreen() {
         <Reveal style={{ flex: 1 }}>
           <View className="flex-1 items-center justify-center">
             <Wordmark size={76} />
-            <GeoDivider />
             <Txt className="mb-10 max-w-[280px] text-center text-[15px] leading-6 text-paper/70">
               Learn to read Urdu the way it's really written: every letter in all four of its faces. A few quick
               questions first, so we start you in the right place.
