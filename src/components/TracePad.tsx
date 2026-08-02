@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { View, PanResponder, LayoutChangeEvent } from 'react-native';
+import { View, PanResponder, LayoutChangeEvent, Platform, ViewStyle } from 'react-native';
 import Svg, { Polyline, Rect } from 'react-native-svg';
 import { Urdu, Txt, Bold } from './Text';
 import { Button } from './Button';
@@ -10,6 +10,31 @@ import { GLYPH_MASKS, MASK_GRID, FONT_ASCENT, FONT_DESCENT } from '../data/glyph
 import { decodeMask, traceTargets, scoreTrace, type Pt } from '../lib/trace';
 
 export type TraceResult = { pass: boolean; coverage: number };
+
+/**
+ * Keep the drawing surface out of the phone's own gesture strip.
+ *
+ * `Screen` already insets content by 20px, and Android's back gesture claims
+ * roughly the outer 24px of each edge — so the left and right sides of a
+ * full-width card sat *inside* the system's territory. A stroke that began or
+ * strayed there was taken as a swipe and navigated away from the lesson. Twelve
+ * more points puts the whole card clear of it, and costs nothing: the glyph is
+ * centred and never reached the edge anyway.
+ */
+const EDGE_GUARD = 12;
+
+/**
+ * Stop the browser treating a drawn stroke as a scroll.
+ *
+ * On the web build the pad lives inside a `ScrollView`, which is a scrolling div.
+ * A vertical drag over it is a page scroll before it is ever a drawing, so
+ * anything with an up-or-down component either moved the page or was cut in
+ * half; `touch-action: none` is what tells the browser this element handles its
+ * own pointer gestures. There is no React Native style for it because it is a
+ * web concept, hence the cast — it is applied on web only, where it is real.
+ */
+const OWN_THE_GESTURE =
+  Platform.OS === 'web' ? ({ touchAction: 'none', userSelect: 'none' } as unknown as ViewStyle) : null;
 
 /**
  * The tracing surface: a sheet of paper with the letter faint beneath it, and
@@ -50,6 +75,16 @@ export function TracePad({
       PanResponder.create({
         onStartShouldSetPanResponder: () => result == null && !locked,
         onMoveShouldSetPanResponder: () => result == null && !locked,
+        // The capture pair is what actually wins the gesture. Without them the
+        // enclosing ScrollView sees the touch first and claims any drag with a
+        // vertical component — which is most of an Urdu letter — so the pad
+        // received the start of a stroke and then lost it to a scroll.
+        onStartShouldSetPanResponderCapture: () => result == null && !locked,
+        onMoveShouldSetPanResponderCapture: () => result == null && !locked,
+        // And these are what keep it: a responder that grants termination on
+        // request hands the stroke over mid-line the moment the scroll view asks.
+        onPanResponderTerminationRequest: () => false,
+        onShouldBlockNativeResponder: () => true,
         onPanResponderGrant: (e) => {
           current.current = [{ x: e.nativeEvent.locationX, y: e.nativeEvent.locationY }];
           setStrokes((s) => [...s, current.current]);
@@ -68,7 +103,7 @@ export function TracePad({
   const check = () => {
     if (result != null || locked || !targets || !side) return;
 
-    const { coverage, precision, pass } = scoreTrace(strokes, side, MASK_GRID, targets.reachable, targets.tolerant);
+    const { coverage, precision, pass } = scoreTrace(strokes, side, MASK_GRID, targets.skeleton, targets.tolerant);
     void precision;
 
     const r = { pass, coverage };
@@ -108,61 +143,63 @@ export function TracePad({
 
   return (
     <View>
-      <View
-        className="mb-4 self-center overflow-hidden rounded-2xl bg-parchment"
-        style={{ width: '100%', aspectRatio: 1, borderWidth: 2, borderColor: palette.ink }}
-        onLayout={(e: LayoutChangeEvent) => setSide(e.nativeEvent.layout.width)}
-        // A drawing surface cannot be operated without a pointer, but it should
-        // at least announce itself rather than being a silent rectangle.
-        accessible
-        accessibilityLabel={`Drawing area. Trace ${letter.name} in its ${positionLabel.toLowerCase()} form over the faint model.`}
-        {...responder.panHandlers}
-      >
-        {side > 0 && (
-          <>
-            <Urdu
-              style={{
-                position: 'absolute',
-                left: 0,
-                right: 0,
-                top: 0,
-                fontSize,
-                lineHeight,
-                textAlign: 'center',
-                color: withAlpha(palette.ink, result ? 0.3 : 0.14),
-                transform: [{ translateX }, { translateY }],
-              }}
-            >
-              {letter.forms[position]}
-            </Urdu>
+      <View style={{ paddingHorizontal: EDGE_GUARD }}>
+        <View
+          className="mb-4 self-center overflow-hidden rounded-2xl bg-parchment"
+          style={[{ width: '100%', aspectRatio: 1, borderWidth: 2, borderColor: palette.ink }, OWN_THE_GESTURE]}
+          onLayout={(e: LayoutChangeEvent) => setSide(e.nativeEvent.layout.width)}
+          // A drawing surface cannot be operated without a pointer, but it should
+          // at least announce itself rather than being a silent rectangle.
+          accessible
+          accessibilityLabel={`Drawing area. Trace ${letter.name} in its ${positionLabel.toLowerCase()} form over the faint model.`}
+          {...responder.panHandlers}
+        >
+          {side > 0 && (
+            <>
+              <Urdu
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  fontSize,
+                  lineHeight,
+                  textAlign: 'center',
+                  color: withAlpha(palette.ink, result ? 0.3 : 0.14),
+                  transform: [{ translateX }, { translateY }],
+                }}
+              >
+                {letter.forms[position]}
+              </Urdu>
 
-            <Svg width={side} height={side} style={{ position: 'absolute' }}>
-              <Rect width={side} height={side} fill="transparent" />
-              {strokes.map((stroke, i) =>
-                stroke.length > 1 ? (
-                  <Polyline
-                    key={i}
-                    points={stroke.map((p) => `${p.x},${p.y}`).join(' ')}
-                    fill="none"
-                    stroke={result == null ? palette.ink : result.pass ? palette.jadeDark : palette.roseDark}
-                    strokeWidth={Math.max(8, side * 0.045)}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                ) : null
-              )}
-            </Svg>
-          </>
-        )}
+              <Svg width={side} height={side} style={{ position: 'absolute' }}>
+                <Rect width={side} height={side} fill="transparent" />
+                {strokes.map((stroke, i) =>
+                  stroke.length > 1 ? (
+                    <Polyline
+                      key={i}
+                      points={stroke.map((p) => `${p.x},${p.y}`).join(' ')}
+                      fill="none"
+                      stroke={result == null ? palette.ink : result.pass ? palette.jadeDark : palette.roseDark}
+                      strokeWidth={Math.max(8, side * 0.045)}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  ) : null
+                )}
+              </Svg>
+            </>
+          )}
 
-        {strokes.length === 0 && result == null && (
-          // sits at the foot of the card so it never covers the letter itself
-          <View className="absolute inset-x-0 bottom-3 items-center" pointerEvents="none">
-            <Txt style={{ color: withAlpha(palette.ink, 0.4) }} className="text-xs">
-              draw over the grey letter
-            </Txt>
-          </View>
-        )}
+          {strokes.length === 0 && result == null && (
+            // sits at the foot of the card so it never covers the letter itself
+            <View className="absolute inset-x-0 bottom-3 items-center" pointerEvents="none">
+              <Txt style={{ color: withAlpha(palette.ink, 0.4) }} className="text-xs">
+                draw over the grey letter
+              </Txt>
+            </View>
+          )}
+        </View>
       </View>
 
       {result == null ? (

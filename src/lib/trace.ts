@@ -5,14 +5,23 @@
  * below are not guesses — `npm run check:trace` simulates a good-faith trace of
  * all 160 letter forms and reports what actually passes.
  *
- * The first version of this scored the single grid cell under the path, and
- * asked for 55% of the glyph's ink to be covered. Both were wrong, in the same
- * way: a person traces the *centreline* of a stroke, while the mask describes
- * its whole *area*. A perfect trace of a thick Nastaliq stroke touches maybe a
- * third of the cells it contains, so a perfect trace failed.
+ * The first version scored the single grid cell under the path and asked for 55%
+ * of the glyph's ink. Both were wrong the same way: a person traces the
+ * *centreline* of a stroke while the mask describes its whole *area*, so a
+ * perfect trace of a thick Nastaliq letter touched maybe a third of it and
+ * failed. The finger became a disc, and coverage moved to the centreline.
  *
- * So: the finger paints a disc, not a point, and coverage is measured against
- * what a centreline can reach.
+ * That was most of the way there and still asked for the thickness, which is
+ * what a learner reported: it was easier to pass by colouring a stroke in than
+ * by drawing its shape. The reason is that the centreline is the union of two
+ * midline families — the middle of every horizontal run of ink and of every
+ * vertical run — and in a heavy stroke those are two paths a few cells apart.
+ * Scoring cell against cell asked for both of them.
+ *
+ * So the drawing is grown rather than the target, and coverage asks whether a
+ * line came *within* `NEAR_CELLS` of each part of the skeleton. Offset across a
+ * stroke is forgiven; a missing limb or dot is not. Shape is what is left, which
+ * is what the exercise was always meant to teach.
  */
 
 export type Pt = { x: number; y: number };
@@ -37,16 +46,26 @@ export function decodeMask(bits: string, grid: number): Uint8Array {
   return cells;
 }
 
-/** Grow a mask by `radius` cells in every direction. */
+/**
+ * Grow a mask by `radius` cells in every direction.
+ *
+ * The offsets step in whole cells while the distance test uses the real radius,
+ * so a fractional radius means what it says. Stepping `dy` by the radius itself
+ * looked equivalent and was not: at 1.5 the offsets became -1.5, -0.5, 0.5, 1.5,
+ * every index landed between cells, and the function quietly returned an empty
+ * mask. Nothing that shipped used a fraction, but `NEAR_CELLS` is a dial someone
+ * will reasonably turn to 2.5 one day.
+ */
 export function dilate(mask: Uint8Array, grid: number, radius: number): Uint8Array {
   if (radius <= 0) return mask;
   const out = new Uint8Array(mask.length);
   const r2 = radius * radius;
+  const step = Math.ceil(radius);
   for (let y = 0; y < grid; y++) {
     for (let x = 0; x < grid; x++) {
       if (!mask[y * grid + x]) continue;
-      for (let dy = -radius; dy <= radius; dy++) {
-        for (let dx = -radius; dx <= radius; dx++) {
+      for (let dy = -step; dy <= step; dy++) {
+        for (let dx = -step; dx <= step; dx++) {
           if (dx * dx + dy * dy > r2) continue;
           const ny = y + dy,
             nx = x + dx;
@@ -66,14 +85,43 @@ export function dilate(mask: Uint8Array, grid: number, radius: number): Uint8Arr
 export const BRUSH_CELLS = 1.6;
 
 /**
+ * How far from the letter's skeleton a line still counts as being on it.
+ *
+ * This is the number that decides whether the exercise is about **shape** or
+ * about **thickness**, and it used to be effectively zero.
+ *
+ * The skeleton is built from the midpoint of every horizontal run of ink and
+ * every vertical run. In a thick Nastaliq stroke those are two different paths a
+ * few cells apart, so scoring cell-by-cell asked the learner to travel both of
+ * them — which is to say, to colour the stroke in. One honest line down the
+ * middle of a stroke covered about half of what was demanded of it.
+ *
+ * Measuring "is there a drawn line within `NEAR_CELLS` of this part of the
+ * skeleton" separates the two ideas. Perpendicular offset inside a stroke is
+ * forgiven, because both midlines are within reach of one pass. Missing a limb,
+ * a dot or the far end of a curve is not, because nothing drawn is anywhere near
+ * those cells. Shape is what remains.
+ *
+ * On a 40x40 grid, 2 is about half the thickness of a heavy stroke. It was
+ * chosen by sweeping it against `NEED_COVERAGE` over all 160 forms: it is the
+ * only pairing where one pass down the middle passes (97%) and half a letter
+ * still fails (3%). Wider forgives a half-drawn letter; narrower goes back to
+ * demanding the thickness. `check:trace` fails if either end of that moves.
+ */
+export const NEAR_CELLS = 2;
+
+/**
  * Pass marks.
  *
- * `coverage` is measured against the glyph thinned to what a centreline can
- * reach, so 0.6 means "you went along most of the letter", not "you coloured
- * most of it in". `precision` is measured against the glyph plus a margin, so
- * ordinary wobble is free and only drawing somewhere else costs.
+ * `coverage` is the share of the letter's skeleton the drawing came near, so 0.7
+ * means "you went along most of the letter", not "you coloured most of it in".
+ * It reads as a stricter number than the 0.6 it replaces and is far easier to
+ * meet, because what is being counted changed: distance to the skeleton, rather
+ * than exact overlap with a doubled midline.
+ * `precision` is measured against the glyph plus a margin, so ordinary wobble is
+ * free and only drawing somewhere else costs.
  */
-export const NEED_COVERAGE = 0.6;
+export const NEED_COVERAGE = 0.7;
 export const NEED_PRECISION = 0.5;
 
 /** Cells a stroke set paints, given a brush radius. */
@@ -132,27 +180,44 @@ export type TraceScore = {
 /**
  * Score a trace.
  *
- * `reachable` is the glyph reduced to the cells a centreline can plausibly
- * touch; `tolerant` is the glyph with a margin around it. Both are derived
- * from the shipped mask by `traceTargets` below, once per glyph.
+ * `skeleton` is the glyph thinned to the path through the middle of its strokes;
+ * `tolerant` is the glyph with a margin around it. Both are derived from the
+ * shipped mask by `traceTargets` below, once per glyph.
+ *
+ * The two questions are deliberately asymmetric. Coverage asks *of the letter*,
+ * "was something drawn near here" — so it is measured by growing the drawing and
+ * intersecting it with the skeleton. Precision asks *of the drawing*, "was this
+ * on the letter" — measured the other way round. Coverage alone would pass a
+ * scribble; precision alone would pass one confident line down the middle.
  */
 export function scoreTrace(
   strokes: Pt[][],
   side: number,
   grid: number,
-  reachable: Uint8Array,
+  skeleton: Uint8Array,
   tolerant: Uint8Array
 ): TraceScore {
   const painted = paintedCells(strokes, side, grid);
 
+  // Grow the drawing, not the target: a line has to pass *near* each part of the
+  // skeleton, not through the exact cells of both of its midlines.
+  const drawn = new Uint8Array(grid * grid);
+  painted.forEach((i) => (drawn[i] = 1));
+  const near = dilate(drawn, grid, NEAR_CELLS);
+
   let reached = 0;
+  let total = 0;
+  for (let i = 0; i < skeleton.length; i++) {
+    if (!skeleton[i]) continue;
+    total++;
+    if (near[i]) reached++;
+  }
+
   let onGlyph = 0;
   painted.forEach((i) => {
-    if (reachable[i]) reached++;
     if (tolerant[i]) onGlyph++;
   });
 
-  const total = reachable.reduce((n, v) => n + v, 0);
   const coverage = total ? reached / total : 0;
   const precision = painted.size ? onGlyph / painted.size : 0;
   const pass = painted.size > 12 && coverage >= NEED_COVERAGE && precision >= NEED_PRECISION;
@@ -163,19 +228,23 @@ export function scoreTrace(
 /**
  * The two targets a trace is scored against.
  *
- * `reachable` — the glyph's centreline: the middle of each horizontal and each
- * vertical run of ink. This is the part a finger actually travels through, and
- * measuring coverage against it is the whole fix. Measured against the inked
- * *area* instead, a flawless trace of a thick Nastaliq stroke scored about a
- * third, and — worse — a sloppier trace scored higher than a careful one,
- * because wobbling painted more cells.
+ * `skeleton` — the glyph thinned to the middle of its strokes. This is the shape
+ * of the letter with its weight taken off, and it is what coverage is measured
+ * against. Measured against the inked *area* instead, a flawless trace of a
+ * thick Nastaliq stroke scored about a third, and — worse — a sloppier trace
+ * scored higher than a careful one, because wobbling painted more cells.
+ *
+ * It is passed un-dilated now. It used to be grown by a cell, which sounds
+ * forgiving and was the opposite: growing the *target* adds cells that must be
+ * covered, so a thicker target is a stricter one. The tolerance belongs on the
+ * drawing instead — see `NEAR_CELLS`.
  *
  * `tolerant` — the glyph plus a margin, for judging whether the drawing was in
  * the right place at all. Wobble is free; drawing somewhere else is not.
  */
 export function traceTargets(mask: Uint8Array, grid: number) {
   return {
-    reachable: dilate(centreline(mask, grid), grid, 1),
+    skeleton: centreline(mask, grid),
     tolerant: dilate(mask, grid, 2),
   };
 }
