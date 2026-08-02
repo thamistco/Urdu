@@ -147,7 +147,11 @@ export function LessonScreen() {
     // every kind of lesson was quietly defeating spaced repetition.
     const want = dueBudget(lesson.kind, lesson.size);
     const due = dueQueue(srs, want).map((id) => ({ id, type: srsType[id] ?? ('word' as const) }));
-    return buildLessonExercises(lesson, due, track);
+    // Every id the learner has ever been graded on — see the doc comment on
+    // `fallbackReviewRefs` for why a review with nothing due yet needs this
+    // rather than trusting a topic's word list to mean "shown".
+    const known = new Set(Object.keys(srs));
+    return buildLessonExercises(lesson, due, track, known);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lesson.id, track]);
 
