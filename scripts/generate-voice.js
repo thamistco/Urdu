@@ -29,7 +29,7 @@
 const fs = require('fs');
 const path = require('path');
 const ts = require('typescript');
-const { bufferProblem, ffmpegAvailable } = require('./lib/audio');
+const { bufferProblem, ffmpegAvailable, BYTES_PER_SECOND } = require('./lib/audio');
 
 const ROOT = path.join(__dirname, '..');
 /**
@@ -50,6 +50,8 @@ const ROOT = path.join(__dirname, '..');
 const VOICE_SET = process.env.VOICE_SET === 'm' ? 'm' : 'f';
 const SET_DIR = { f: 'voice', m: 'voice-m' };
 const OUT_DIR = path.join(ROOT, 'assets', SET_DIR[VOICE_SET]);
+/** The other voice's directory: its clip for the same id speaks identical text. */
+const TWIN_DIR = path.join(ROOT, 'assets', SET_DIR[VOICE_SET === 'm' ? 'f' : 'm']);
 const MANIFEST = path.join(ROOT, 'src', 'lib', 'voiceManifest.ts');
 
 /**
@@ -86,6 +88,19 @@ const FIRST_VOICE = 'ur-IN-Chirp3-HD-Zephyr';
  */
 const LEGACY_PACE = 0.92;
 const entryOf = (v) => (typeof v === 'string' ? { text: v, voice: FIRST_VOICE } : v);
+
+/**
+ * How long the other voice takes over the same words, or 0 if it has no clip
+ * yet. At a constant 32 kbps the file size is the duration, so this costs a
+ * stat rather than a decode.
+ */
+function twinSeconds(id) {
+  try {
+    return fs.statSync(path.join(TWIN_DIR, `${id}.mp3`)).size / BYTES_PER_SECOND;
+  } catch {
+    return 0;
+  }
+}
 
 const readLedger = () => {
   try {
@@ -517,7 +532,8 @@ function writeManifest() {
     console.log(`    stale: ${s.id} — ${what}`);
   }
   if (!todo.length) {
-    console.log(`Nothing to generate. Manifest: ${writeManifest()} clips.`);
+    const n = writeManifest();
+    console.log(`Nothing to generate. Manifest: ${n.f} clips, ${n.m} in the second voice.`);
     return;
   }
   console.log(`Generating ${todo.length} clips with ${provider.name} (${chars} characters)…\n`);
@@ -543,7 +559,7 @@ function writeManifest() {
       for (let i = 0; i < attempts.length; i++) {
         actual = attempts[i];
         audio = await provider.fn(text, actual, pace);
-        problem = bufferProblem(audio, path.join(OUT_DIR, `.${id}.probe`));
+        problem = bufferProblem(audio, path.join(OUT_DIR, `.${id}.probe`), twinSeconds(id));
         if (!problem) break;
         retried++;
         const next = attempts[i + 1];

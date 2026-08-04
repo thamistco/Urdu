@@ -33,6 +33,31 @@ const MIN_PEAK_DB = -25;
  * measured without a decoder.
  */
 const MIN_SECONDS = 0.45;
+
+/**
+ * Is this clip far shorter than the same words in the other voice?
+ *
+ * Both voice sets are generated from identical text, so the twin is the one
+ * reference available without asking the API twice — and it is a much better
+ * one than any absolute floor. The female سلام was 0.648s against the male's
+ * 1.248s: past the 0.45s floor, audible at -3 dB, and less than half of what
+ * the same text takes to say. It shipped, and a learner reported that the
+ * woman "doesn't say salam".
+ *
+ * A length floor cannot separate that from a word the model genuinely says
+ * quickly — measured across the corpus, real short clips reach 0.44x of their
+ * length-bucket median and the truncated one sat at 0.48x, so the two overlap.
+ * The twin does separate them: when a word is simply short, it is short in
+ * both voices and the ratio stays near 1.
+ *
+ * Used at generation time only, where the answer is one more API call. Not a
+ * CI gate — see the note in check-voice.js.
+ */
+const TWIN_RATIO = 0.6;
+const twinTooShort = (seconds, twinSeconds) =>
+  twinSeconds > 0.05 && seconds / twinSeconds < TWIN_RATIO
+    ? `only ${seconds.toFixed(2)}s against ${twinSeconds.toFixed(2)}s for the same words in the other voice`
+    : null;
 const BYTES_PER_SECOND = 4000; // 32 kbps CBR, as the API returns it
 
 let ffmpegChecked = false;
@@ -101,11 +126,14 @@ function clipProblem(file) {
 }
 
 /** Same test against a buffer that has not been written yet. */
-function bufferProblem(buffer, tmpPath) {
+function bufferProblem(buffer, tmpPath, twinSeconds) {
   if (!buffer || !buffer.length) return 'empty response';
   fs.writeFileSync(tmpPath, buffer);
   try {
-    return clipProblem(tmpPath);
+    const problem = clipProblem(tmpPath);
+    if (problem) return problem;
+    if (twinSeconds) return twinTooShort(fs.statSync(tmpPath).size / BYTES_PER_SECOND, twinSeconds);
+    return null;
   } finally {
     try {
       fs.unlinkSync(tmpPath);
@@ -162,4 +190,13 @@ function clipProblemAsync(file) {
   });
 }
 
-module.exports = { clipProblem, bufferProblem, findProblems, ffmpegAvailable, MIN_PEAK_DB, MIN_SECONDS };
+module.exports = {
+  BYTES_PER_SECOND,
+  clipProblem,
+  bufferProblem,
+  findProblems,
+  ffmpegAvailable,
+  twinTooShort,
+  MIN_PEAK_DB,
+  MIN_SECONDS,
+};
