@@ -838,7 +838,12 @@ const CORE_WORDS: Word[] = [
   { id: 'w-kharidna', urdu: 'خریدنا', roman: 'khareedna', meaning: 'to buy', emoji: '🛒', topic: 'money' },
   { id: 'w-bechna', urdu: 'بیچنا', roman: 'bechna', meaning: 'to sell', emoji: '🤝', topic: 'money' },
   { id: 'w-hisaab', urdu: 'حساب', roman: 'hisaab', meaning: 'bill / account', emoji: '🧮', topic: 'money' },
-  { id: 'w-rupya', urdu: 'روپیہ', roman: 'rupya', meaning: 'rupee', emoji: '💵', topic: 'money' },
+  // Filed under quantity rather than money, which is where it used to sit, and
+  // where the learner would not reach it until lesson 120. The fruit-stall
+  // dialogue quotes a price at lesson 98 — "دو سو روپے کلو" — and a currency
+  // unit is what "how much" gets answered in, so this is the topic that already
+  // needed it. (Nothing noticed while روپے failed to resolve to روپیہ at all.)
+  { id: 'w-rupya', urdu: 'روپیہ', roman: 'rupya', meaning: 'rupee', emoji: '💵', topic: 'quantity' },
   { id: 'w-bank', urdu: 'بینک', roman: 'bank', meaning: 'bank', emoji: '🏦', topic: 'money' },
   { id: 'w-tohfa', urdu: 'تحفہ', roman: 'tohfa', meaning: 'gift', emoji: '🎁', topic: 'money' },
   { id: 'w-karobar', urdu: 'کاروبار', roman: 'kaarobaar', meaning: 'business / trade', emoji: '💼', topic: 'money' },
@@ -1197,6 +1202,73 @@ const CORE_WORDS: Word[] = [
     emoji: '✅',
     topic: 'connectors',
   },
+
+  // ---------------------------------------------------------------------------
+  // Words the course was already using and had never taught
+  //
+  // `check:order` reports every word that appears in a sentence, passage,
+  // dialogue or grammar example with no vocabulary entry behind it. It found
+  // forty, and پسند alone was on screen eleven times — a learner met "I like
+  // music" with no lesson anywhere that had taught the word for "like".
+  //
+  // They are one block rather than filed into the topics above because they
+  // arrived as one backlog and the note explaining them is worth more than the
+  // adjacency. Each one's `topic` is still the topic it belongs to, which is
+  // what the path and the check actually read; and each topic here is taught
+  // *before* the first place the word is used, which is the constraint that
+  // made the placement rather than taste. فون sits in `home` and not in `phone`
+  // for exactly that reason: the phone topic comes at lesson 114 and "I'll call
+  // you" is drilled at 65.
+  // ---------------------------------------------------------------------------
+
+  // adjectives — بند and مہربان are both used in beginner sentences at lesson 20
+  { id: 'w-band2', urdu: 'بند', roman: 'band', meaning: 'closed / shut', emoji: '🚪', topic: 'adjectives' },
+  { id: 'w-meherbaan', urdu: 'مہربان', roman: 'meherbaan', meaning: 'kind', emoji: '🤗', topic: 'adjectives' },
+  {
+    id: 'w-kharaab',
+    urdu: 'خراب',
+    roman: 'kharaab',
+    meaning: 'spoiled / out of order',
+    emoji: '🛠️',
+    topic: 'adjectives',
+  },
+
+  // question words
+  { id: 'w-kaisa', urdu: 'کیسا', roman: 'kaisa', meaning: 'how / what kind', emoji: '❓', topic: 'questions' },
+  { id: 'w-kidhar', urdu: 'کدھر', roman: 'kidhar', meaning: 'which way', emoji: '🧭', topic: 'questions' },
+
+  // people and places
+  { id: 'w-waalidain', urdu: 'والدین', roman: 'waalidain', meaning: 'parents', emoji: '👨‍👩‍👦', topic: 'family' },
+  { id: 'w-shakhs', urdu: 'شخص', roman: 'shakhs', meaning: 'individual', emoji: '🧍', topic: 'first-words' },
+  { id: 'w-jagah', urdu: 'جگہ', roman: 'jagah', meaning: 'place', emoji: '📍', topic: 'places' },
+  { id: 'w-fon', urdu: 'فون', roman: 'fon', meaning: 'phone', emoji: '☎️', topic: 'home' },
+  { id: 'w-baje', urdu: 'بجے', roman: 'baje', meaning: "o'clock", emoji: '🕙', topic: 'time' },
+
+  // things said
+  { id: 'w-hello', urdu: 'ہیلو', roman: 'hello', meaning: 'hello (on the phone)', emoji: '📞', topic: 'greetings' },
+  { id: 'w-maafi', urdu: 'معافی', roman: 'maafi', meaning: 'pardon', emoji: '🙏', topic: 'greetings' },
+  { id: 'w-pasand', urdu: 'پسند', roman: 'pasand', meaning: 'liking', emoji: '💗', topic: 'feelings' },
+
+  // verbs the course inflects but never introduces
+  { id: 'w-lagna', urdu: 'لگنا', roman: 'lagna', meaning: 'to feel / to seem', emoji: '🌡️', topic: 'verbs2' },
+  { id: 'w-manaana', urdu: 'منانا', roman: 'manaana', meaning: 'to celebrate', emoji: '🎉', topic: 'verbs2' },
+  {
+    id: 'w-machaana',
+    urdu: 'مچانا',
+    roman: 'machaana',
+    meaning: 'to kick up (a racket)',
+    emoji: '📣',
+    topic: 'verbs2',
+  },
+  { id: 'w-thakna', urdu: 'تھکنا', roman: 'thakna', meaning: 'to grow tired', emoji: '😮‍💨', topic: 'verbs2' },
+  { id: 'w-sakna', urdu: 'سکنا', roman: 'sakna', meaning: 'to be able to', emoji: '💪', topic: 'verbs2' },
+
+  // urban life, roads and weather
+  { id: 'w-rush', urdu: 'رش', roman: 'rush', meaning: 'rush / press of people', emoji: '🚸', topic: 'city' },
+  { id: 'w-raah', urdu: 'راہ', roman: 'raah', meaning: 'path', emoji: '🛤️', topic: 'road' },
+  { id: 'w-thand', urdu: 'ٹھنڈ', roman: 'ṭhanḍ', meaning: 'the cold', emoji: '🥶', topic: 'weather' },
+  { id: 'w-takleef', urdu: 'تکلیف', roman: 'takleef', meaning: 'discomfort / trouble', emoji: '😣', topic: 'health' },
+  { id: 'w-afsos', urdu: 'افسوس', roman: 'afsos', meaning: 'regret', emoji: '😔', topic: 'emotions' },
 ];
 
 /** Core topics plus every modular vocabulary pack. */
@@ -1204,7 +1276,7 @@ export const TOPICS: Topic[] = [...CORE_TOPICS, ...ALL_PACKS.map((p) => p.topic)
 /**
  * Topics whose vocabulary is register-bound as a whole.
  *
- * Marking 2,426 words by hand would be a list nobody maintains, and most words
+ * Marking 2,281 words by hand would be a list nobody maintains, and most words
  * have no register worth marking — a chair is a chair to your grandmother and
  * to your friend. But a whole topic can be register-defined, and two of them
  * are: "Formal & Written" exists precisely because that Urdu is not what you

@@ -291,7 +291,7 @@ function classify(text, taught) {
 
 const positionFindings = [];
 const levelFindings = [];
-const unknownWords = new Set();
+const unknownWords = new Map();
 
 for (const lesson of ALL_LESSONS) {
   const taught = topicsByLessonId.get(lesson.id);
@@ -312,7 +312,7 @@ for (const lesson of ALL_LESSONS) {
     for (const sen of SENTENCES.filter((s) => s.concept === c.id)) {
       const text = sen.words.join(' ');
       const { late, unknown } = classify(text, taught);
-      unknown.forEach((u) => unknownWords.add(u));
+      unknown.forEach((u) => unknownWords.set(u, (unknownWords.get(u) ?? 0) + 1));
       if (late.length) positionFindings.push(`grammar ${lesson.id} (${c.id}): "${text}" uses ${late.join(', ')}`);
     }
   }
@@ -322,7 +322,7 @@ for (const lesson of ALL_LESSONS) {
     if (d) {
       for (const l of d.lines) {
         const { late, unknown } = classify(l.urdu, taught);
-        unknown.forEach((u) => unknownWords.add(u));
+        unknown.forEach((u) => unknownWords.set(u, (unknownWords.get(u) ?? 0) + 1));
         if (late.length) positionFindings.push(`dialogue ${lesson.id} (${d.id}): "${l.urdu}" uses ${late.join(', ')}`);
       }
     }
@@ -333,7 +333,7 @@ for (const lesson of ALL_LESSONS) {
     if (p) {
       for (const l of p.lines) {
         const { late, unknown } = classify(l.urdu, taught);
-        unknown.forEach((u) => unknownWords.add(u));
+        unknown.forEach((u) => unknownWords.set(u, (unknownWords.get(u) ?? 0) + 1));
         if (late.length) positionFindings.push(`reading ${lesson.id} (${p.id}): "${l.urdu}" uses ${late.join(', ')}`);
       }
     }
@@ -358,7 +358,7 @@ for (const level of LEVELS) {
   for (const sen of pool) {
     const text = sen.words.join(' ');
     const { late, unknown } = classify(text, taught);
-    unknown.forEach((u) => unknownWords.add(u));
+    unknown.forEach((u) => unknownWords.set(u, (unknownWords.get(u) ?? 0) + 1));
     if (late.length) levelFindings.push(`sentence ${sen.id} (level ${level}): "${text}" uses ${late.join(', ')}`);
   }
 }
@@ -396,10 +396,14 @@ if (levelUniq.length) {
 }
 
 if (unknownWords.size) {
+  // Listed in full and by frequency rather than truncated. This is a backlog —
+  // the words the course *uses* and never teaches — and the first version
+  // printed thirty of them in whatever order a Set happened to hold, which is
+  // neither the whole list nor the part worth doing first.
+  const ranked = [...unknownWords].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
   console.log(`\n-- words used in sentences/passages/dialogues/grammar with no matching vocabulary entry --`);
-  console.log(
-    `${unknownWords.size} distinct: ${[...unknownWords].slice(0, 30).join(', ')}${unknownWords.size > 30 ? ', …' : ''}`
-  );
+  console.log(`${unknownWords.size} distinct, ${ranked.reduce((n, [, c]) => n + c, 0)} uses in all:`);
+  console.log(`  ${ranked.map(([w, c]) => `${w}${c > 1 ? ` ×${c}` : ''}`).join(', ')}`);
 }
 
 console.log('');

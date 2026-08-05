@@ -147,6 +147,8 @@ export const WORK_MIND_SOCIETY_PACKS: TopicPack[] = [
     { id: 'quality', title: 'Judgement Words', icon: '⭐', blurb: 'Evaluating and comparing.', level: 'advanced' },
     [
       ['w-badtar', 'بدتر', 'badtar', 'worse', '⬇️'],
+      ['w-adhoora', 'ادھورا', 'adhoora', 'incomplete', '🧩'],
+      ['w-sachaai', 'سچائی', 'sachaai', 'truthfulness', '⚖️'],
       ['w-barabar2', 'مساوی', 'musaawi', 'equivalent', '🟰'],
       ['w-mukhtalif', 'مختلف', 'mukhtalif', 'different', '↔️'],
       ['w-yaksan', 'یکساں', 'yaksaañ', 'identical', '👯'],
@@ -170,6 +172,7 @@ export const WORK_MIND_SOCIETY_PACKS: TopicPack[] = [
     { id: 'measure-time', title: 'Measures & Order', icon: '⏳', blurb: 'Sequence, rank and amount.', level: 'advanced' },
     [
       ['w-teesra', 'تیسرا', 'teesra', 'third', '3️⃣'],
+      ['w-baar', 'بار', 'baar', 'time / occasion', '🔁'],
       ['w-chautha', 'چوتھا', 'chautha', 'fourth', '4️⃣'],
       ['w-nisf', 'نصف', 'nisf', 'half', '◐'],
       ['w-chauthai', 'چوتھائی', 'chauthaai', 'quarter', '🍕'],

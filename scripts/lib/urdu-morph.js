@@ -227,9 +227,19 @@ const VERB_SUFFIXES = [
  * and چھوٹے are both چھوٹا, and کمرے is کمرہ.
  */
 const NOMINAL = [
-  // feminine / oblique / plural of a masculine -ا or -ہ word
+  // feminine / oblique / plural of a masculine -ا or -ہ word.
+  //
+  // -یہ is on the second row because a masculine noun in -یہ takes -ے in the
+  // plural and nowhere else does that ی survive: روپیہ -> روپے. Without it the
+  // course's own word for "rupee" was reported untaught every time a price was
+  // quoted in one, since روپے only ever generated روپا and روپہ.
   { from: 'ی', to: ['ا', 'ہ'] },
-  { from: 'ے', to: ['ا', 'ہ'] },
+  { from: 'ے', to: ['ا', 'ہ', 'یہ'] },
+  // oblique of a masculine -ایاں word: دایاں -> دائیں, بایاں -> بائیں. Written
+  // out because the ی turns into a hamza-carrier and no general rule here
+  // rebuilds that; "turn right" is the only place the course needs it, and the
+  // course does teach دایاں.
+  { from: 'ائیں', to: ['ایاں'] },
   { from: 'وں', to: ['ا', 'ہ', ''] },
   // plural of a feminine -ی word: کرسی -> کرسیاں
   { from: 'یاں', to: ['ی'] },
