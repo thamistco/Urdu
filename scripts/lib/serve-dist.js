@@ -32,6 +32,7 @@ const MIME = {
   '.js': 'text/javascript',
   '.css': 'text/css',
   '.json': 'application/json',
+  '.webmanifest': 'application/manifest+json',
   '.ico': 'image/x-icon',
   '.ttf': 'font/ttf',
   '.woff2': 'font/woff2',
