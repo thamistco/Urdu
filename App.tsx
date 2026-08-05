@@ -48,7 +48,7 @@ const navTheme = {
 const HOME_ROUTES = new Set(['Onboarding', 'Login', 'Home', 'Main']);
 const DOCUMENT_TITLE = {
   formatter: (_options: unknown, route?: { name?: string }) =>
-    route?.name && !HOME_ROUTES.has(route.name) ? `Harf · ${route.name}` : 'Harf · Learn to Read Urdu',
+    route?.name && !HOME_ROUTES.has(route.name) ? `Harf · ${route.name}` : 'Harf · Learn Urdu',
 };
 
 export default function App() {

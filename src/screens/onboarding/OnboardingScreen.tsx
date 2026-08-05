@@ -19,8 +19,8 @@ import { MALE_VOICE_AVAILABLE } from '../../lib/voiceManifest';
 import { DAILY_GOALS } from '../../data/achievements';
 import { UNITS } from '../../data/units';
 import { WORDS } from '../../data/words';
-import { SENTENCES } from '../../data/sentences';
-import { LETTERS, POSITIONS } from '../../data/letters';
+import { GRAMMAR } from '../../data/grammar';
+import { LETTERS } from '../../data/letters';
 
 /**
  * What the welcome screen promises, counted rather than typed.
@@ -41,20 +41,21 @@ const n = (x: number) => x.toLocaleString('en-US');
  * the one moment a person is deciding whether to bother. It listed features
  * where it needed to make a case.
  *
- * A number is the shortest possible argument: 160 shapes says the thing the
- * paragraph took four lines to explain, and it says it before anyone has
- * decided to read. The rest of the course — grammar, readings, review — is one
- * line under the button, because it reassures rather than persuades and does
- * not need to be read to work.
+ * A number is the shortest possible argument, and these three are chosen to
+ * trace the course rather than to boast: letters, then words, then grammar is
+ * the shape of learning a language, and a person can see in one glance that
+ * this goes all the way. An earlier version led with 160 — forty letters across
+ * four joining forms — which is the better hook and the worse promise: it is
+ * the first unit of the course standing in for the whole of it, and someone who
+ * wants to *speak* Urdu reads that and correctly leaves.
  *
- * `160` is the whole reason this app exists, so it is counted rather than
- * typed: forty letters across four positions, from the same two tables the
- * letter lessons are built out of.
+ * Sentences, readings and review sit on one line under the button. They
+ * reassure rather than persuade, and do not need to be read to work.
  */
 const STATS = [
-  { value: n(LETTERS.length * POSITIONS.length), label: 'letter shapes' },
+  { value: n(LETTERS.length), label: 'letters' },
   { value: n(WORDS.length), label: 'spoken words' },
-  { value: n(SENTENCES.length), label: 'sentences' },
+  { value: n(GRAMMAR.length), label: 'grammar' },
 ];
 
 /**
@@ -350,12 +351,12 @@ export function OnboardingScreen() {
                 paragraph explaining Nastaliq, then six bullets, then a
                 footnote. A person on a welcome screen is deciding whether to
                 bother, and prose asks them to have decided already. */}
-            <Display className="mt-7 text-center text-[27px] leading-9">Read Urdu for real.</Display>
-            <Txt className="mb-8 mt-2 max-w-[290px] text-center text-[14px] leading-5 text-paper/60">
-              The script itself — not a transliteration of it.
+            <Display className="mt-7 text-center text-[27px] leading-9">Learn Urdu properly.</Display>
+            <Txt className="mb-8 mt-2 max-w-[300px] text-center text-[14px] leading-5 text-paper/60">
+              From the first letter to a real conversation.
             </Txt>
 
-            <View className="mb-9 w-full max-w-[330px] flex-row justify-between">
+            <View className="mb-9 w-full max-w-[330px] flex-row justify-between gap-2">
               {STATS.map((s) => (
                 <View key={s.label} className="flex-1 items-center">
                   <Display className="text-[26px] leading-8" style={{ color: palette.gold }}>
@@ -383,7 +384,7 @@ export function OnboardingScreen() {
                 track is the answer to "so this is only for script learners",
                 which is the one objection this screen provokes. */}
             <Txt className="mt-5 max-w-[300px] text-center text-[11.5px] leading-5 text-paper/40">
-              Grammar · Readings · Review · Roman track · Free
+              Sentences · Readings · Review · Roman track · Free
             </Txt>
           </View>
         </Reveal>

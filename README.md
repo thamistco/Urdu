@@ -1,11 +1,13 @@
 # Harf · حرف
 
-**Learn to read Urdu the way it is really written.**
+**Learn Urdu properly — from the first letter to a real conversation.**
 
-حرف means "letter", which is the whole idea. Urdu is written in Nastaliq, and
-every letter changes shape depending on where it sits in a word — ب at the start
-of a word looks nothing like ب at the end. Most courses teach the isolated forms,
-hand you a transliteration, and leave you unable to read a shop sign.
+حرف means "letter", and the letters are where this starts rather than where it
+stops. Urdu is written in Nastaliq, and every letter changes shape depending on
+where it sits in a word — ب at the start of a word looks nothing like ب at the
+end. Most courses teach the isolated forms, hand you a transliteration, and
+leave you unable to read a shop sign. Harf teaches the script and then keeps
+going: vocabulary, grammar, sentences, reading and conversation.
 
 Harf teaches all forty letters in all four of their joining forms, then 2,281
 words spoken aloud, 256 sentences you assemble right-to-left yourself, 25 grammar
@@ -19,8 +21,9 @@ is taught in transliteration instead.
 Free, no advertisements, no account required. Store copy and the reasoning behind
 the name live in [docs/store-listing.md](docs/store-listing.md).
 
-> Core thesis: every Urdu letter has **four faces** — alone, at the start, in the
-> middle, at the end. Most apps teach one. Harf teaches all four.
+> Core thesis: a full Urdu course that does not skip the script. Every Urdu
+> letter has **four faces** — alone, at the start, in the middle, at the end.
+> Most apps teach one, then move on to phrases you cannot read.
 
 ---
 
