@@ -135,34 +135,39 @@ export function EveningScene() {
 }
 
 /**
- * The same evening, out of focus.
+ * The same view, an hour later.
  *
  * `EveningScene` above only works where the layout can be built around its two
  * dark bands. A screen with a heading, three figures, a button and two lines of
  * small print has text down its whole middle, and the middle of that picture is
  * the sun — 1.04:1. There is no arrangement of those elements that avoids it.
  *
- * So this is the picture with its detail taken out rather than its colour: a
- * heavy blur, then darkened, baked into the asset instead of stacked at runtime.
- * Blur is what makes the darkening cheap — once there is no edge to compete
- * with, the eye reads it as depth and atmosphere rather than as a photograph
- * someone has dimmed. Sharp, this image needed a 72% ink veil to carry text
- * anywhere, which is not a picture any more. Blurred, it needs none: the file
- * measures **9.49:1** against body copy at its brightest point, everywhere.
+ * The first attempt at this blurred the picture heavily and darkened it, on the
+ * theory that removing the detail removes the fight with the text. It did, and
+ * it also removed the picture: what was left was a soft blue-violet wash,
+ * because the sky this image starts from is blue at the top and a saturation
+ * boost pulled the whole frame that way. Detail and warmth were exactly what
+ * was worth keeping.
  *
- * It is 38 KB, which is smaller than the sharp one by a wide margin — blur
- * removes exactly the high-frequency detail JPEG spends its bytes on.
+ * So nothing is blurred. Every pixel is composited toward `palette.ink` — the
+ * app's own warm espresso — which lowers luminance while leaving every edge in
+ * place. The clouds, the ridge line, the treeline and the path down the valley
+ * are all still there; the scene simply reads as later in the evening rather
+ * than as a photograph someone dimmed. Compositing toward a warm dark also
+ * keeps the sunset red where a blur averaged it into mauve.
  *
- * The floor it sets for anything drawn on it: text must be at least 65% opaque
- * paper to clear WCAG AA against the rose glow at its centre. Nothing on this
- * screen goes below 70%.
+ * At 72% ink it measures **6.65:1** against body copy at its brightest point,
+ * everywhere, so no part of the screen is off-limits. 58 KB.
+ *
+ * The floor it sets: text must be at least 75% opaque paper to clear WCAG AA
+ * against the last of the horizon glow. Nothing on this screen goes below that.
  */
-export function SoftEveningScene() {
+export function DuskScene() {
   return (
     <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
       <Image
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        source={require('../../assets/images/evening-soft.jpg')}
+        source={require('../../assets/images/evening-dusk.jpg')}
         style={{ width: '100%', height: '100%' }}
         resizeMode="cover"
         accessibilityRole="image"

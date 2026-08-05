@@ -3,7 +3,7 @@ export { Button } from './Button';
 export { Card } from './Card';
 export { ProgressBar } from './ProgressBar';
 export { LatticeBackground } from './LatticeBackground';
-export { EveningScene, SoftEveningScene, SAFE_TOP, SAFE_BOTTOM } from './EveningScene';
+export { EveningScene, DuskScene, SAFE_TOP, SAFE_BOTTOM } from './EveningScene';
 export { GeoDivider } from './GeoDivider';
 export { Wordmark } from './Wordmark';
 export { Confetti } from './Confetti';

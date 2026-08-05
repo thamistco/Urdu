@@ -63,13 +63,13 @@ const TEXT = [0xff, 0xee, 0xdd];
  *
  * Two screens now stand on a photograph rather than the drawn scenery, and they
  * fail in different ways: sign-in keeps its text inside two dark bands of a
- * sharp picture, and the welcome screen puts text down the middle of a blurred
- * one. Measuring what is behind each run of text covers both without either
+ * sharp picture, and the welcome screen puts text anywhere it likes on a
+ * darkened one. Measuring what is behind each run of text covers both without either
  * needing to know how the other is built.
  */
 const SCENES = [
   { name: 'sign-in', selector: 'img[src*="/evening."]', minRuns: 6 },
-  { name: 'welcome', selector: 'img[src*="/evening-soft."]', minRuns: 8 },
+  { name: 'welcome', selector: 'img[src*="/evening-dusk."]', minRuns: 8 },
 ];
 
 /**
@@ -266,10 +266,10 @@ async function textBoxes(page, sceneSelector) {
       await fail(
         `on the ${scene.name} screen, "${r.at.label}" sits on a background of ${worst}:1, under the ${FLOOR}:1 floor.\n` +
           `  worst pixel ${r.at.hex} at ${r.at.x},${r.at.y} of the 412x900 frame\n` +
-          `  The sharp picture is legible only inside the bands it declares (SAFE_TOP and\n` +
-          `  SAFE_BOTTOM in src/components/EveningScene.tsx); the blurred one is legible\n` +
-          `  everywhere but only because it is dark. Either text moved onto the sunset, or\n` +
-          `  an asset was replaced with a brighter one.`
+          `  The bright picture is legible only inside the bands it declares (SAFE_TOP\n` +
+          `  and SAFE_BOTTOM in src/components/EveningScene.tsx); the dusk one is legible\n` +
+          `  everywhere but only because it is darkened. Either text moved onto the sunset,\n` +
+          `  or an asset was replaced with a brighter one.`
       );
     }
     photo.push({ name: scene.name, worst, runs: boxes.length });
