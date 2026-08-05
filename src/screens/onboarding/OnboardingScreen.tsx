@@ -19,7 +19,9 @@ import { MALE_VOICE_AVAILABLE } from '../../lib/voiceManifest';
 import { DAILY_GOALS } from '../../data/achievements';
 import { UNITS } from '../../data/units';
 import { WORDS } from '../../data/words';
-import { SENTENCES } from '../../data/sentences';
+import { SENTENCES, PASSAGES, DIALOGUES } from '../../data/sentences';
+import { GRAMMAR } from '../../data/grammar';
+import { LETTERS } from '../../data/letters';
 
 /**
  * What the welcome screen promises, counted rather than typed.
@@ -30,10 +32,25 @@ import { SENTENCES } from '../../data/sentences';
  * app cannot be allowed to do that: it is the one version a learner reads while
  * the real answer is one import away.
  */
-const COUNTS = {
-  words: WORDS.length.toLocaleString('en-US'),
-  sentences: SENTENCES.length.toLocaleString('en-US'),
-};
+const n = (x: number) => x.toLocaleString('en-US');
+
+/**
+ * The course, in the six lines it takes to say what is actually in it.
+ *
+ * This screen used to carry one sentence about the alphabet and nothing else,
+ * so a person deciding whether to start had no way to know there was grammar in
+ * here, or audio, or reading, or review — the entire course past the letters was
+ * invisible at the only moment it mattered. Each line is a pillar, in the order
+ * a learner meets it.
+ */
+const PILLARS = [
+  `All ${LETTERS.length} letters, in all four joining forms`,
+  `${n(WORDS.length)} words, every one spoken aloud`,
+  `${n(SENTENCES.length)} sentences you build right to left`,
+  `${GRAMMAR.length} grammar ideas, explained then drilled`,
+  `${PASSAGES.length} readings and ${DIALOGUES.length} conversations`,
+  'Review that returns what you are forgetting',
+];
 
 /**
  * Lessons a learner who already speaks Urdu doesn't need to be *taught* —
@@ -318,9 +335,13 @@ export function OnboardingScreen() {
   // ---- welcome ----
   if (step === 'welcome') {
     return (
-      <Screen scroll={false}>
-        <Reveal style={{ flex: 1 }}>
-          <View className="flex-1 items-center justify-center">
+      <Screen>
+        {/* Scrolls, where it used to be a fixed centred column. Six pillars,
+            a paragraph and a button do not fit a 640pt phone at any type size
+            worth reading, and a welcome screen that silently crops its own
+            last line is worse than one a thumb has to move. */}
+        <Reveal>
+          <View className="items-center pt-6">
             <Wordmark size={68} />
             {/* The pitch, and the only place in the app that makes one.
                 What it used to say was "learn to read Urdu the way it's really
@@ -329,21 +350,25 @@ export function OnboardingScreen() {
                 Nastaliq does not know that a letter has four faces, so the line
                 landed as decoration and the screen said nothing a learner could
                 weigh. This states the fact first and the promise second. */}
-            <Txt className="mb-5 mt-6 max-w-[320px] text-center text-[15px] leading-6 text-paper/80">
+            <Txt className="mb-6 mt-7 max-w-[330px] text-center text-[15px] leading-6 text-paper/80">
               Urdu is written in Nastaliq, where every letter changes shape depending on where it sits in a word. Most
               courses teach the isolated forms, hand you a transliteration, and leave you unable to read a sign.
             </Txt>
-            <View className="mb-8 max-w-[320px] gap-1.5">
-              <Txt className="text-center text-[13px] leading-5 text-paper/55">
-                Forty letters, in all four of their joining forms.
-              </Txt>
-              <Txt className="text-center text-[13px] leading-5 text-paper/55">
-                {COUNTS.words} words, every one spoken aloud.
-              </Txt>
-              <Txt className="text-center text-[13px] leading-5 text-paper/55">
-                {COUNTS.sentences} sentences you assemble yourself, right to left.
-              </Txt>
+
+            <View className="mb-6 w-full max-w-[300px] gap-2.5">
+              {PILLARS.map((line) => (
+                <View key={line} className="flex-row items-center gap-3">
+                  <View className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: palette.gold }} />
+                  <Txt className="flex-1 text-[13.5px] leading-5 text-paper/70">{line}</Txt>
+                </View>
+              ))}
             </View>
+
+            <Txt className="mb-7 max-w-[330px] text-center text-[12.5px] leading-5 text-paper/45">
+              Not learning the script? Choose the Roman track and the whole course is taught in transliteration instead.
+              Free, no advertisements, no account needed.
+            </Txt>
+
             <Button className="w-full max-w-[300px]" onPress={() => setStep('goal')}>
               Let's start
             </Button>

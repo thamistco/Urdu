@@ -7,19 +7,9 @@ import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
-import {
-  Fraunces_600SemiBold,
-  Fraunces_900Black,
-} from '@expo-google-fonts/fraunces';
-import {
-  PublicSans_400Regular,
-  PublicSans_500Medium,
-  PublicSans_700Bold,
-} from '@expo-google-fonts/public-sans';
-import {
-  NotoNastaliqUrdu_400Regular,
-  NotoNastaliqUrdu_700Bold,
-} from '@expo-google-fonts/noto-nastaliq-urdu';
+import { Fraunces_600SemiBold, Fraunces_900Black } from '@expo-google-fonts/fraunces';
+import { PublicSans_400Regular, PublicSans_500Medium, PublicSans_700Bold } from '@expo-google-fonts/public-sans';
+import { NotoNastaliqUrdu_400Regular, NotoNastaliqUrdu_700Bold } from '@expo-google-fonts/noto-nastaliq-urdu';
 
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { initSound } from './src/lib/sound';
@@ -32,7 +22,33 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 
 const navTheme = {
   ...DefaultTheme,
-  colors: { ...DefaultTheme.colors, background: palette.ink, card: palette.ink, text: palette.cream, primary: palette.gold, border: 'transparent' },
+  colors: {
+    ...DefaultTheme.colors,
+    background: palette.ink,
+    card: palette.ink,
+    text: palette.cream,
+    primary: palette.gold,
+    border: 'transparent',
+  },
+};
+
+/**
+ * What the browser tab, the bookmark and an installed shortcut are called.
+ *
+ * React Navigation names the document after the active route by default, which
+ * meant the app introduced itself as **Onboarding** — the internal name of a
+ * screen — in the tab strip, in history, and on the home screen of anyone who
+ * installed it from the browser. A route name is a thing this codebase says to
+ * itself, and it had ended up being the first thing the product said to a user.
+ *
+ * The name leads, because that is what a person scans a tab strip for, and the
+ * screen follows it only where it tells them something. Onboarding, sign-in and
+ * the path are all just "Harf": they are the app opening, not a place inside it.
+ */
+const HOME_ROUTES = new Set(['Onboarding', 'Login', 'Home', 'Main']);
+const DOCUMENT_TITLE = {
+  formatter: (_options: unknown, route?: { name?: string }) =>
+    route?.name && !HOME_ROUTES.has(route.name) ? `Harf · ${route.name}` : 'Harf · Learn to Read Urdu',
 };
 
 export default function App() {
@@ -75,7 +91,7 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.ink }}>
       <SafeAreaProvider>
-        <NavigationContainer theme={navTheme} onReady={onReady}>
+        <NavigationContainer theme={navTheme} onReady={onReady} documentTitle={DOCUMENT_TITLE}>
           <StatusBar style="light" />
           <RootNavigator />
         </NavigationContainer>
