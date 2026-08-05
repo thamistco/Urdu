@@ -5,6 +5,7 @@ import { Button } from '../../components/Button';
 import { Reveal } from '../../components/Reveal';
 import { GeoDivider } from '../../components/GeoDivider';
 import { Wordmark } from '../../components/Wordmark';
+import { SoftEveningScene } from '../../components/EveningScene';
 import { Display, Heading, Txt, Bold, Eyebrow, Urdu, urduGlyph } from '../../components/Text';
 import { GoalArt, Illustration } from '../../components/Illustration';
 import type { IconName } from '../../art/icons';
@@ -19,7 +20,7 @@ import { MALE_VOICE_AVAILABLE } from '../../lib/voiceManifest';
 import { DAILY_GOALS } from '../../data/achievements';
 import { UNITS } from '../../data/units';
 import { WORDS } from '../../data/words';
-import { GRAMMAR } from '../../data/grammar';
+import { ALL_LESSONS } from '../../data/units';
 import { LETTERS } from '../../data/letters';
 
 /**
@@ -49,13 +50,21 @@ const n = (x: number) => x.toLocaleString('en-US');
  * the first unit of the course standing in for the whole of it, and someone who
  * wants to *speak* Urdu reads that and correctly leaves.
  *
- * Sentences, readings and review sit on one line under the button. They
- * reassure rather than persuade, and do not need to be read to work.
+ * The third figure was "25 grammar" for one release, which is not a phrase in
+ * English — a count of a mass noun, left over from shortening "grammar ideas"
+ * to stop it wrapping. Fixing the wrap had broken the sense, which is the wrong
+ * trade every time. Lessons reads cleanly at any width, is the plainest measure
+ * of how much course there is, and leaves grammar to the line below where it
+ * can be a sentence.
+ *
+ * Everything else sits under the button in two plain sentences rather than a
+ * row of words separated by dots. Dots are a spec sheet; this screen is meeting
+ * someone.
  */
 const STATS = [
   { value: n(LETTERS.length), label: 'letters' },
   { value: n(WORDS.length), label: 'spoken words' },
-  { value: n(GRAMMAR.length), label: 'grammar' },
+  { value: n(ALL_LESSONS.length), label: 'lessons' },
 ];
 
 /**
@@ -340,10 +349,16 @@ export function OnboardingScreen() {
 
   // ---- welcome ----
   if (step === 'welcome') {
+    // Scrolls, and centres itself when there is room to. `scroll={false}` held
+    // this screen while it was a headline and three numbers; two sentences of
+    // small print later it was cropping the wordmark off the top and the last
+    // line off the bottom of a 568pt phone. `grow` on the scroll content is
+    // what keeps it centred on a tall screen while still letting a short one
+    // move.
     return (
-      <Screen scroll={false}>
-        <Reveal style={{ flex: 1 }}>
-          <View className="flex-1 items-center justify-center">
+      <Screen backdrop={<SoftEveningScene />} contentClassName="grow justify-center">
+        <Reveal>
+          <View className="items-center">
             <Wordmark size={62} />
 
             {/* The case, in eleven words. Everything this screen has said
@@ -351,14 +366,24 @@ export function OnboardingScreen() {
                 paragraph explaining Nastaliq, then six bullets, then a
                 footnote. A person on a welcome screen is deciding whether to
                 bother, and prose asks them to have decided already. */}
-            <Display className="mt-7 text-center text-[27px] leading-9">Learn Urdu properly.</Display>
-            <Txt className="mb-8 mt-2 max-w-[300px] text-center text-[14px] leading-5 text-paper/60">
+            <Display accessibilityRole="header" className="mt-7 text-center text-[27px] leading-9">
+              Learn Urdu properly.
+            </Display>
+            <Txt className="mb-8 mt-2 max-w-[300px] text-center text-[14px] leading-5 text-paper/80">
               From the first letter to a real conversation.
             </Txt>
 
             <View className="mb-9 w-full max-w-[330px] flex-row justify-between gap-2">
               {STATS.map((s) => (
-                <View key={s.label} className="flex-1 items-center">
+                /* Grouped and labelled, so a screen reader says "40 letters"
+                   rather than reading a bare number and its caption as two
+                   unrelated things several stops apart. */
+                <View
+                  key={s.label}
+                  accessible
+                  accessibilityLabel={`${s.value} ${s.label}`}
+                  className="flex-1 items-center"
+                >
                   <Display className="text-[26px] leading-8" style={{ color: palette.gold }}>
                     {s.value}
                   </Display>
@@ -367,7 +392,7 @@ export function OnboardingScreen() {
                       this narrow, leaving one stat sitting a line lower than
                       the other two. */}
                   <Txt
-                    className="mt-1.5 text-center text-[10px] uppercase text-paper/50"
+                    className="mt-1.5 text-center text-[11px] uppercase text-paper/70"
                     style={{ letterSpacing: 0.6 }}
                   >
                     {s.label}
@@ -379,12 +404,23 @@ export function OnboardingScreen() {
             <Button className="w-full max-w-[300px]" onPress={() => setStep('goal')}>
               Let's start
             </Button>
-            {/* The reassurances, not the pitch. Grammar and review do not win
-                anyone over, but their absence would be noticed — and the Roman
-                track is the answer to "so this is only for script learners",
-                which is the one objection this screen provokes. */}
-            <Txt className="mt-5 max-w-[300px] text-center text-[11.5px] leading-5 text-paper/40">
-              Sentences · Readings · Review · Roman track · Free
+            {/* The reassurances, not the pitch — and sentences rather than a
+                dotted list, because "Roman track" told nobody anything. It is
+                this project's own word for a setting, and a person who has
+                never opened the app cannot know it names the one thing that
+                decides whether the course is for them. Said plainly, it is the
+                answer to "so this is only for people learning the script".
+
+                Nothing here goes below 70% paper: on the soft scene's rose
+                glow, 65% is the WCAG AA floor, and the old value was 40% —
+                which was under AA even on flat ink, at 3.51:1. */}
+            <Txt className="mt-6 max-w-[320px] text-center text-[12.5px] leading-5 text-paper/75">
+              Grammar, readings and conversations, with review that brings a word back just before you forget it. Always
+              free.
+            </Txt>
+            <Txt className="mt-2.5 max-w-[320px] text-center text-[12.5px] leading-5 text-paper/70">
+              New to the Urdu script? Learn the whole course in English letters instead — and switch over whenever
+              you're ready.
             </Txt>
           </View>
         </Reveal>

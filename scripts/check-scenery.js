@@ -58,16 +58,19 @@ const FLOOR = 6;
 /** The body text colour this is measured against — palette.paper. */
 const TEXT = [0xff, 0xee, 0xdd];
 
-/** How pass two finds the picture it is measuring against. */
-const SCENE = 'img[src*="/evening."]';
-
 /**
- * The sign-in screen has eleven runs of text on the picture — four glow copies
- * of حرف and four of "Harf", the tagline, "or", and the guest button — plus the
- * sign-in note when auth is unconfigured. The floor is well under that on
- * purpose: it is here to catch *nothing to measure*, not to pin the copy.
+ * How pass two finds the picture it is measuring against, per screen.
+ *
+ * Two screens now stand on a photograph rather than the drawn scenery, and they
+ * fail in different ways: sign-in keeps its text inside two dark bands of a
+ * sharp picture, and the welcome screen puts text down the middle of a blurred
+ * one. Measuring what is behind each run of text covers both without either
+ * needing to know how the other is built.
  */
-const MIN_RUNS = 6;
+const SCENES = [
+  { name: 'sign-in', selector: 'img[src*="/evening."]', minRuns: 6 },
+  { name: 'welcome', selector: 'img[src*="/evening-soft."]', minRuns: 8 },
+];
 
 /**
  * Skipping is for a developer who has not built the web bundle. In CI it would
@@ -228,36 +231,48 @@ async function textBoxes(page, sceneSelector) {
 
   // ── Pass two, first, because sign-in is where the app opens ──────────────
   //
-  // The picture behind this screen fails pass one's rule by a mile and is meant
-  // to: what is checked is that no line of text sits on the part that does.
-  await page.goto(url);
-  await page.waitForTimeout(2500);
-  const boxes = await textBoxes(page, SCENE);
-  if (!boxes) {
-    await fail(
-      `the sign-in picture is not on the screen — nothing matched ${SCENE}.\n` +
-        `  Either the app did not boot, or EveningScene no longer renders assets/images/evening.jpg.` +
-        (errors.length ? `\n  page errors: ${errors.slice(0, 3).join(' | ')}` : '')
-    );
-  }
-  if (boxes.length < MIN_RUNS) {
-    await fail(
-      `only found ${boxes.length} runs of text on the sign-in screen, where there should be at least ${MIN_RUNS}.\n` +
-        `  A check with nothing to measure passes, so this is a failure rather than a clear result.` +
-        (errors.length ? `\n  page errors: ${errors.slice(0, 3).join(' | ')}` : '')
-    );
-  }
-  const signIn = await worstPixel(page, await page.screenshot(), TEXT, boxes);
-  const signInWorst = Math.round(signIn.worst * 100) / 100;
-  if (signInWorst < FLOOR) {
-    await fail(
-      `on the sign-in screen, "${signIn.at.label}" sits on a background of ${signInWorst}:1, under the ${FLOOR}:1 floor.\n` +
-        `  worst pixel ${signIn.at.hex} at ${signIn.at.x},${signIn.at.y} of the 412x900 frame\n` +
-        `  EveningScene is legible only where the text keeps to the safe bands it declares —\n` +
-        `  SAFE_TOP and SAFE_BOTTOM in src/components/EveningScene.tsx. Something on this\n` +
-        `  screen has grown into the sunset between them, or a band was widened past what\n` +
-        `  the picture measures.`
-    );
+  // Both pictures fail pass one's rule and are meant to: what is checked is
+  // that no line of text sits on the part of either that does.
+  const photo = [];
+  for (const scene of SCENES) {
+    await page.goto(url);
+    await page.waitForTimeout(2500);
+    // The welcome screen is one guest tap past sign-in.
+    if (scene.name === 'welcome') {
+      const guest = page.locator('text=/CONTINUE AS A GUEST/i').first();
+      if (await guest.count()) {
+        await guest.click();
+        await page.waitForTimeout(1500);
+      }
+    }
+    const boxes = await textBoxes(page, scene.selector);
+    if (!boxes) {
+      await fail(
+        `the ${scene.name} picture is not on the screen — nothing matched ${scene.selector}.\n` +
+          `  Either the app did not boot, or that screen no longer renders the image it should.` +
+          (errors.length ? `\n  page errors: ${errors.slice(0, 3).join(' | ')}` : '')
+      );
+    }
+    if (boxes.length < scene.minRuns) {
+      await fail(
+        `only found ${boxes.length} runs of text on the ${scene.name} screen, where there should be at least ${scene.minRuns}.\n` +
+          `  A check with nothing to measure passes, so this is a failure rather than a clear result.` +
+          (errors.length ? `\n  page errors: ${errors.slice(0, 3).join(' | ')}` : '')
+      );
+    }
+    const r = await worstPixel(page, await page.screenshot(), TEXT, boxes);
+    const worst = Math.round(r.worst * 100) / 100;
+    if (worst < FLOOR) {
+      await fail(
+        `on the ${scene.name} screen, "${r.at.label}" sits on a background of ${worst}:1, under the ${FLOOR}:1 floor.\n` +
+          `  worst pixel ${r.at.hex} at ${r.at.x},${r.at.y} of the 412x900 frame\n` +
+          `  The sharp picture is legible only inside the bands it declares (SAFE_TOP and\n` +
+          `  SAFE_BOTTOM in src/components/EveningScene.tsx); the blurred one is legible\n` +
+          `  everywhere but only because it is dark. Either text moved onto the sunset, or\n` +
+          `  an asset was replaced with a brighter one.`
+      );
+    }
+    photo.push({ name: scene.name, worst, runs: boxes.length });
   }
 
   // ── Pass one: the drawn scenery, which every other screen stands on ──────
@@ -305,7 +320,10 @@ async function textBoxes(page, sceneSelector) {
   }
   console.log(
     `check:scenery — brightest point of the drawn scenery is ${worst}:1 against the body text (floor ${FLOOR}:1).\n` +
-      `  sign-in screen: worst backdrop under any of its ${boxes.length} runs of text is ${signInWorst}:1. Clear.`
+      photo
+        .map((p) => `  ${p.name}: worst backdrop under any of its ${p.runs} runs of text is ${p.worst}:1.`)
+        .join('\n') +
+      `\n  Clear.`
   );
 })().catch((e) => {
   console.error('check:scenery — ' + e.message);
