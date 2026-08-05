@@ -5,7 +5,7 @@ import { Button } from '../../components/Button';
 import { Reveal } from '../../components/Reveal';
 import { GeoDivider } from '../../components/GeoDivider';
 import { Wordmark } from '../../components/Wordmark';
-import { SoftEveningScene } from '../../components/EveningScene';
+import { DuskScene } from '../../components/EveningScene';
 import { Display, Heading, Txt, Bold, Eyebrow, Urdu, urduGlyph } from '../../components/Text';
 import { GoalArt, Illustration } from '../../components/Illustration';
 import type { IconName } from '../../art/icons';
@@ -356,7 +356,7 @@ export function OnboardingScreen() {
     // what keeps it centred on a tall screen while still letting a short one
     // move.
     return (
-      <Screen backdrop={<SoftEveningScene />} contentClassName="grow justify-center">
+      <Screen backdrop={<DuskScene />} contentClassName="grow justify-center">
         <Reveal>
           <View className="items-center">
             <Wordmark size={62} />
@@ -369,7 +369,7 @@ export function OnboardingScreen() {
             <Display accessibilityRole="header" className="mt-7 text-center text-[27px] leading-9">
               Learn Urdu properly.
             </Display>
-            <Txt className="mb-8 mt-2 max-w-[300px] text-center text-[14px] leading-5 text-paper/80">
+            <Txt className="mb-8 mt-2 max-w-[300px] text-center text-[14px] leading-5 text-paper/85">
               From the first letter to a real conversation.
             </Txt>
 
@@ -392,7 +392,7 @@ export function OnboardingScreen() {
                       this narrow, leaving one stat sitting a line lower than
                       the other two. */}
                   <Txt
-                    className="mt-1.5 text-center text-[11px] uppercase text-paper/70"
+                    className="mt-1.5 text-center text-[11px] uppercase text-paper/80"
                     style={{ letterSpacing: 0.6 }}
                   >
                     {s.label}
@@ -411,14 +411,14 @@ export function OnboardingScreen() {
                 decides whether the course is for them. Said plainly, it is the
                 answer to "so this is only for people learning the script".
 
-                Nothing here goes below 70% paper: on the soft scene's rose
-                glow, 65% is the WCAG AA floor, and the old value was 40% —
-                which was under AA even on flat ink, at 3.51:1. */}
-            <Txt className="mt-6 max-w-[320px] text-center text-[12.5px] leading-5 text-paper/75">
+                Nothing here goes below 80% paper: on the dusk scene's
+                horizon glow, 75% is the WCAG AA floor, and the old value was
+                40% — under AA even on flat ink, at 3.51:1. */}
+            <Txt className="mt-6 max-w-[320px] text-center text-[12.5px] leading-5 text-paper/80">
               Grammar, readings and conversations, with review that brings a word back just before you forget it. Always
               free.
             </Txt>
-            <Txt className="mt-2.5 max-w-[320px] text-center text-[12.5px] leading-5 text-paper/70">
+            <Txt className="mt-2.5 max-w-[320px] text-center text-[12.5px] leading-5 text-paper/80">
               New to the Urdu script? Learn the whole course in English letters instead — and switch over whenever
               you're ready.
             </Txt>
