@@ -6,7 +6,7 @@ it. Every number here is counted from the data by `npm run audit`, not estimated
 
 ---
 
-## The name stays: Harf
+## The name: Harf on the phone, `Harf: Learn to Read Urdu` in the stores
 
 **حرف means "letter".** The app's whole thesis is that Urdu is written in
 Nastaliq, that every letter changes shape depending on where it sits in a word,
@@ -16,12 +16,30 @@ means "letter" is not decoration; it is the product. The icon is the letter ح.
 Checked for collisions: the only app of that name is *Harf Avcısı*, a Turkish
 word puzzle — different language, different category, different market. Low risk.
 
-**The problem was never the brand.** It was that nothing anywhere — not the app
-name, not a description, because there wasn't one — contained the word "Urdu".
-Nobody searches for "Harf". Tens of thousands of people a month search for
-"learn Urdu". That is a *title* problem, and the fix is the format every large
-app already uses: brand, then what it does. Duolingo's real App Store title is
-"Duolingo - Language Lessons", not "Duolingo".
+**These are two different names, and they should be.** The home-screen label is
+set by `expo.name` in `app.json` and stays **Harf**: a launcher truncates at
+about twelve characters, and the icon beside it is already the letter ح, so
+anything longer is a name nobody finishes reading. The store name is a separate
+field in App Store Connect and the Play Console, it is the single strongest
+ranking signal either store has, and there **Harf** alone is close to useless —
+nobody searches for it, while tens of thousands a month search for "learn Urdu".
+
+So the store name is brand-then-function, the format every large app in the
+category uses: Duolingo's real App Store title is "Duolingo - Language Lessons",
+not "Duolingo".
+
+**Why "Learn to Read Urdu" and not "Learn Urdu".** Both stores tokenise, so
+"learn to read Urdu" still matches a search for "learn Urdu" — the extra words
+cost no reach and add *read*, which is what people type when transliteration has
+already failed them. It is also the only claim in the category that is not
+interchangeable: a dozen apps teach Urdu phrases, and the thing this one does
+that they do not is get you reading the script. The name, the wordmark and the
+first line of the app now all say the same sentence.
+
+The risk, stated: "read" can undersell a course that is also 25 grammar
+concepts, spoken vocabulary and sentence building. That is what the subtitle and
+the first paragraph of the description are for, and why the subtitle spends its
+thirty characters on breadth rather than repeating a keyword.
 
 ---
 
@@ -36,8 +54,8 @@ long description is for the human who has already arrived.
 
 | Field | Limit | Copy |
 | --- | --- | --- |
-| Name | 30 | `Harf: Learn Urdu` |
-| Subtitle | 30 | `Every letter, in every form` |
+| Name | 30 | `Harf: Learn to Read Urdu` |
+| Subtitle | 30 | `Every letter in all four forms` |
 | Keywords | 100 | `urdu,nastaliq,alphabet,script,read,write,pakistani,hindi,vocabulary,flashcards,tracing,phrases` |
 | Promotional text | 170 | `Urdu letters change shape depending on where they sit in a word. Harf teaches all four forms of all forty letters — then 2,281 words, spoken aloud.` |
 
@@ -49,10 +67,13 @@ different from every other one in the category.
 
 | Field | Limit | Copy |
 | --- | --- | --- |
-| Title | 30 | `Harf: Learn Urdu & Script` |
-| Short description | 80 | `Read Urdu the way it is really written — every letter, in every joining form.` |
+| Title | 30 | `Harf: Learn to Read Urdu` |
+| Short description | 80 | `Urdu letters change shape as they join. Learn all four forms — and the words.` |
 
-Play has no subtitle, so its title carries one keyword more than Apple's.
+Play has no subtitle, so the short description carries the breadth that Apple's
+subtitle carries. The title is identical on both stores on purpose: it is the
+name people will say out loud and search for again, and two spellings of it is a
+brand paying twice for one word.
 
 ---
 
@@ -70,7 +91,7 @@ Play has no subtitle, so its title carries one keyword more than Apple's.
 > actually drew the letter rather than just filled the space.
 >
 > **2,281 words across 122 topics**, from family and food to law and medicine,
-> each one recorded in a single consistent voice. 2,893 clips are bundled with
+> each one recorded in a single consistent voice. 2,748 clips are bundled with
 > the app, so pronunciation works offline and sounds the same on every phone.
 >
 > **Sentences you build yourself.** 256 sentences, assembled word by word,
@@ -109,7 +130,7 @@ wrong.
 | 256 sentences, 17 passages, 12 dialogues | `SENTENCES`, `PASSAGES`, `DIALOGUES` |
 | 25 grammar concepts | `GRAMMAR` |
 | 237 lessons, 39 units | `ALL_LESSONS`, `UNITS` |
-| 2,893 recorded clips, one voice, offline | `assets/voice/`, `npm run check:voice` |
+| 2,748 recorded clips, one voice, offline | `assets/voice/`, `npm run check:voice` |
 | Two voices in dialogues | `Dialogue.voices`, `scripts/generate-voice.js` |
 | Spaced repetition | `src/lib/srs.ts`, `npm run check:srs` |
 | Roman track | `unitsForTrack`, `npm run check:answerable` |

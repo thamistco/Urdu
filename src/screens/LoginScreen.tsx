@@ -6,7 +6,7 @@ import { Button } from '../components/Button';
 import { Reveal } from '../components/Reveal';
 import { Wordmark } from '../components/Wordmark';
 import { EveningScene, SAFE_TOP, SAFE_BOTTOM } from '../components/EveningScene';
-import { Txt, Bold, Eyebrow } from '../components/Text';
+import { Txt, Bold } from '../components/Text';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { useAuthStore } from '../store/useAuthStore';
@@ -92,8 +92,17 @@ export function LoginScreen() {
 
         <View style={{ height: bottomBand, paddingBottom: Math.max(insets.bottom, 8) }} className="justify-center px-5">
           <Reveal delay={80}>
+            {/* Two lines, where there was one that assumed its own point.
+                "Every letter, in all four of its faces" means nothing to
+                someone who has not yet seen that a letter has faces, and this
+                is the screen where nobody has. The fact comes first now.
+
+                The room came from the "or" rule that used to sit between the
+                providers and the guest button: a band this tight can afford
+                decoration or it can afford saying what the app is, and the
+                ghost button is already distinct enough to separate itself. */}
             <Txt className="mb-3 text-center text-[13px] leading-5 text-paper/70">
-              Read Urdu: every letter, in all four of its faces.
+              Urdu letters change shape as they join. Harf teaches all four forms — then the words, spoken aloud.
             </Txt>
             <View className="gap-2.5">
               <ProviderButton
@@ -102,11 +111,6 @@ export function LoginScreen() {
                 loading={busy === 'google'}
               />
               <ProviderButton label="Continue with Apple" onPress={() => handle('apple')} loading={busy === 'apple'} />
-              <View className="flex-row items-center gap-3">
-                <View className="h-px flex-1" style={{ backgroundColor: withAlpha(palette.cream, 0.12) }} />
-                <Eyebrow className="text-paper/35">or</Eyebrow>
-                <View className="h-px flex-1" style={{ backgroundColor: withAlpha(palette.cream, 0.12) }} />
-              </View>
               <Button variant="ghost" onPress={continueAsGuest}>
                 Continue as a guest
               </Button>

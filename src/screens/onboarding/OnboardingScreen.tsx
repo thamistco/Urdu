@@ -18,6 +18,22 @@ import { shuffle } from '../../lib/shuffle';
 import { MALE_VOICE_AVAILABLE } from '../../lib/voiceManifest';
 import { DAILY_GOALS } from '../../data/achievements';
 import { UNITS } from '../../data/units';
+import { WORDS } from '../../data/words';
+import { SENTENCES } from '../../data/sentences';
+
+/**
+ * What the welcome screen promises, counted rather than typed.
+ *
+ * Every other place the course describes itself — the README, the store
+ * listing, the app description — holds these numbers as literals, and all of
+ * them had drifted from the content by the time anyone checked. Copy inside the
+ * app cannot be allowed to do that: it is the one version a learner reads while
+ * the real answer is one import away.
+ */
+const COUNTS = {
+  words: WORDS.length.toLocaleString('en-US'),
+  sentences: SENTENCES.length.toLocaleString('en-US'),
+};
 
 /**
  * Lessons a learner who already speaks Urdu doesn't need to be *taught* —
@@ -305,14 +321,35 @@ export function OnboardingScreen() {
       <Screen scroll={false}>
         <Reveal style={{ flex: 1 }}>
           <View className="flex-1 items-center justify-center">
-            <Wordmark size={76} />
-            <Txt className="mb-10 max-w-[280px] text-center text-[15px] leading-6 text-paper/70">
-              Learn to read Urdu the way it's really written: every letter in all four of its faces. A few quick
-              questions first, so we start you in the right place.
+            <Wordmark size={68} />
+            {/* The pitch, and the only place in the app that makes one.
+                What it used to say was "learn to read Urdu the way it's really
+                written: every letter in all four of its faces" — which asserts
+                the insight instead of giving it. Someone who has never seen
+                Nastaliq does not know that a letter has four faces, so the line
+                landed as decoration and the screen said nothing a learner could
+                weigh. This states the fact first and the promise second. */}
+            <Txt className="mb-5 mt-6 max-w-[320px] text-center text-[15px] leading-6 text-paper/80">
+              Urdu is written in Nastaliq, where every letter changes shape depending on where it sits in a word. Most
+              courses teach the isolated forms, hand you a transliteration, and leave you unable to read a sign.
             </Txt>
+            <View className="mb-8 max-w-[320px] gap-1.5">
+              <Txt className="text-center text-[13px] leading-5 text-paper/55">
+                Forty letters, in all four of their joining forms.
+              </Txt>
+              <Txt className="text-center text-[13px] leading-5 text-paper/55">
+                {COUNTS.words} words, every one spoken aloud.
+              </Txt>
+              <Txt className="text-center text-[13px] leading-5 text-paper/55">
+                {COUNTS.sentences} sentences you assemble yourself, right to left.
+              </Txt>
+            </View>
             <Button className="w-full max-w-[300px]" onPress={() => setStep('goal')}>
               Let's start
             </Button>
+            <Txt className="mt-4 max-w-[280px] text-center text-[12px] leading-5 text-paper/40">
+              A few quick questions first, so we start you in the right place.
+            </Txt>
           </View>
         </Reveal>
       </Screen>
