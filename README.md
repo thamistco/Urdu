@@ -7,7 +7,7 @@ every letter changes shape depending on where it sits in a word — ب at the st
 of a word looks nothing like ب at the end. Most courses teach the isolated forms,
 hand you a transliteration, and leave you unable to read a shop sign.
 
-Harf teaches all forty letters in all four of their joining forms, then 2,246
+Harf teaches all forty letters in all four of their joining forms, then 2,281
 words spoken aloud, 256 sentences you assemble right-to-left yourself, 25 grammar
 ideas one at a time, and 17 readings. A four-stage course (Beginner →
 Elementary → Intermediate → Advanced) with spaced repetition underneath, so what
@@ -28,12 +28,12 @@ the name live in [docs/store-listing.md](docs/store-listing.md).
 
 | | |
 | --- | --- |
-| **Vocabulary** | **2,246 words** across **122 themed topics**, each with script, Roman transliteration, meaning and a picture cue |
+| **Vocabulary** | **2,281 words** across **122 themed topics**, each with script, Roman transliteration, meaning and a picture cue |
 | **Script** | All **40 letters** with every position form, connector vs. non-connector behaviour, and a teaching note apiece |
 | **Grammar** | **25 concepts** — pronouns, "to be", gender, plurals, possession, postpositions, oblique case, negation, questions, conjunctions, the four tenses, dative subjects, ability, obligation, comparatives, imperative, subjunctive, perfective, relative clauses, compound verbs, the passive and causatives — each with explanation, paradigm table, examples and drills |
-| **Sentences** | **140** word-order builders + 28 everyday phrases |
+| **Sentences** | **256** word-order builders + 28 everyday phrases |
 | **Reading** | **17 graded passages** and **12 two-speaker conversations**, all with comprehension questions |
-| **Course** | **35 units · 233 lessons** across four CEFR-style stages (A1 → B2) |
+| **Course** | **39 units · 237 lessons** across four CEFR-style stages (A1 → B2) |
 | **Exercises** | 15 types: letter-position ID, letter pick, **letter tracing**, picture→word, word→meaning, **meaning→word**, **typing from memory**, listen-&-tap, word build, matching board, grammar teach, grammar drill, sentence build, reading, conversation |
 
 ### Learning design
