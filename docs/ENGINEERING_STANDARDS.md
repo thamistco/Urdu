@@ -242,7 +242,9 @@ Run everything: `npm run check:all`.
 103. 👁 Every icon-only control has an `accessibilityLabel` saying what it does,
      not what it looks like.
 104. 🤖 Body text clears WCAG AA (4.5:1); decoration behind text clears 6:1.
-     (`check:scenery`)
+     A picture that cannot clear it everywhere may still be used, if the text is
+     laid out against the parts of it that do and the placement is measured
+     rather than eyeballed. (`check:scenery`)
 105. 👁 Touch targets are at least 44×44pt.
 106. 👁 Colour is never the only signal. Correct/incorrect carry a mark and a
      word as well as a hue.

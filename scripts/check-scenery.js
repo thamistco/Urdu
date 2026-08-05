@@ -23,6 +23,24 @@
  * this file had its own naive copy of the server, which 404'd every asset once
  * CI baked the deploy's base path into the export, and so failed with "could
  * not find the background SVG" while passing locally. It blocked two deploys.
+ *
+ * ## Two passes, because there are two kinds of background
+ *
+ * The rule above — *the brightest pixel anywhere must clear the floor* — is the
+ * right rule for a backdrop that arbitrary text lands on, and the only rule
+ * that can be stated without knowing where the text is.
+ *
+ * It is the wrong rule for a picture. `EveningScene` on the sign-in screen has
+ * a sun in it, and its brightest pixel is 1.04:1: as a general backdrop that is
+ * hopeless, and dimming it until it passes turns the sunset brown. What makes
+ * it legible is not that the picture is dark but that the *text* is placed in
+ * the bands of it that are. Pass one cannot see that distinction, so pass two
+ * measures the thing that actually matters — the pixels behind each line of
+ * text — and lets the sun alone.
+ *
+ * Pass two is the stronger check of the two. It is only not used everywhere
+ * because on a scrolling screen the text moves and the guarantee has to hold
+ * for wherever it lands.
  */
 
 const fs = require('fs');
@@ -39,6 +57,17 @@ const PORT = 8199;
 const FLOOR = 6;
 /** The body text colour this is measured against — palette.paper. */
 const TEXT = [0xff, 0xee, 0xdd];
+
+/** How pass two finds the picture it is measuring against. */
+const SCENE = 'img[src*="/evening."]';
+
+/**
+ * The sign-in screen has eleven runs of text on the picture — four glow copies
+ * of حرف and four of "Harf", the tagline, "or", and the guest button — plus the
+ * sign-in note when auth is unconfigured. The floor is well under that on
+ * purpose: it is here to catch *nothing to measure*, not to pin the copy.
+ */
+const MIN_RUNS = 6;
 
 /**
  * Skipping is for a developer who has not built the web bundle. In CI it would
@@ -63,6 +92,119 @@ try {
   missing('playwright-core is not installed');
 }
 
+/**
+ * Worst contrast against the body text, over the whole frame or a set of boxes.
+ *
+ * Runs inside the page rather than over a decoded PNG here because the frame is
+ * already a data URL on that side and canvas gives the pixels for free.
+ */
+async function worstPixel(page, shot, text, regions) {
+  return page.evaluate(
+    async ({ dataUrl, text, regions }) => {
+      const img = new Image();
+      await new Promise((r) => {
+        img.onload = r;
+        img.src = dataUrl;
+      });
+      const c = document.createElement('canvas');
+      c.width = img.width;
+      c.height = img.height;
+      const g = c.getContext('2d');
+      g.drawImage(img, 0, 0);
+      const d = g.getImageData(0, 0, c.width, c.height).data;
+      const lin = (v) => {
+        v /= 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      };
+      const L = (r, gg, bb) => 0.2126 * lin(r) + 0.7152 * lin(gg) + 0.0722 * lin(bb);
+      const Lt = L(text[0], text[1], text[2]);
+      // The screenshot is in device pixels and the boxes came from CSS ones.
+      const scale = c.width / window.innerWidth;
+      const areas = regions ?? [{ x: 0, y: 0, w: c.width / scale, h: c.height / scale, label: null }];
+      let worst = Infinity;
+      let at = null;
+      for (const a of areas) {
+        const x0 = Math.max(0, Math.floor(a.x * scale));
+        const y0 = Math.max(0, Math.floor(a.y * scale));
+        const x1 = Math.min(c.width, Math.ceil((a.x + a.w) * scale));
+        const y1 = Math.min(c.height, Math.ceil((a.y + a.h) * scale));
+        for (let y = y0; y < y1; y++) {
+          for (let x = x0; x < x1; x++) {
+            const i = (y * c.width + x) * 4;
+            const ratio = (Lt + 0.05) / (L(d[i], d[i + 1], d[i + 2]) + 0.05);
+            if (ratio < worst) {
+              worst = ratio;
+              at = {
+                x: Math.round(x / scale),
+                y: Math.round(y / scale),
+                hex: '#' + [d[i], d[i + 1], d[i + 2]].map((v) => v.toString(16).padStart(2, '0')).join(''),
+                label: a.label,
+              };
+            }
+          }
+        }
+      }
+      return { worst, at };
+    },
+    { dataUrl: 'data:image/png;base64,' + shot.toString('base64'), text, regions }
+  );
+}
+
+/**
+ * Every run of text on the screen whose backdrop is the picture itself.
+ *
+ * Text on an opaque surface — the cream sign-in buttons, any card — is excluded,
+ * because what is behind that surface has nothing to do with whether the label
+ * on it can be read. Including it would fail the screen for a bright pixel no
+ * one can see, which is how a check teaches people to ignore it.
+ *
+ * "Opaque" is only asked of the ancestors *between* the text and the picture,
+ * and that qualifier is the whole of it. The first version walked to `body` and
+ * found the app's own ink ground on the way — which is opaque, and is the thing
+ * the picture is painted on — so every string on the screen looked covered and
+ * the check reported nothing to measure. A check with an empty subject passes.
+ *
+ * The elements are then hidden, so the pixels measured in their boxes are the
+ * background rather than the text itself. `visibility: hidden` and not `display:
+ * none`, or the boxes just collected would all move.
+ *
+ * Returns null if the picture is not on the screen at all, which is its own
+ * failure and not something to measure around.
+ */
+async function textBoxes(page, sceneSelector) {
+  return page.evaluate((sel) => {
+    const scene = document.querySelector(sel);
+    if (!scene) return null;
+    const opaque = (el) => {
+      const m = getComputedStyle(el).backgroundColor.match(/rgba?\(([^)]+)\)/);
+      if (!m) return false;
+      const p = m[1].split(',').map(Number);
+      return (p.length < 4 ? 1 : p[3]) > 0.5;
+    };
+    const found = [];
+    for (const el of document.querySelectorAll('*')) {
+      if (![...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) continue;
+      const s = getComputedStyle(el);
+      if (s.visibility === 'hidden' || s.display === 'none' || Number(s.opacity) === 0) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width < 1 || r.height < 1 || r.bottom < 0 || r.top > window.innerHeight) continue;
+      let n = el;
+      let covered = false;
+      while (n && !n.contains(scene)) {
+        if (opaque(n)) {
+          covered = true;
+          break;
+        }
+        n = n.parentElement;
+      }
+      if (covered) continue;
+      found.push({ x: r.x, y: r.y, w: r.width, h: r.height, label: el.textContent.trim().slice(0, 44) });
+      el.style.visibility = 'hidden';
+    }
+    return found;
+  }, sceneSelector);
+}
+
 (async () => {
   const exe = findChromium();
   if (!exe) missing('no Chromium found');
@@ -84,6 +226,41 @@ try {
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
 
+  // ── Pass two, first, because sign-in is where the app opens ──────────────
+  //
+  // The picture behind this screen fails pass one's rule by a mile and is meant
+  // to: what is checked is that no line of text sits on the part that does.
+  await page.goto(url);
+  await page.waitForTimeout(2500);
+  const boxes = await textBoxes(page, SCENE);
+  if (!boxes) {
+    await fail(
+      `the sign-in picture is not on the screen — nothing matched ${SCENE}.\n` +
+        `  Either the app did not boot, or EveningScene no longer renders assets/images/evening.jpg.` +
+        (errors.length ? `\n  page errors: ${errors.slice(0, 3).join(' | ')}` : '')
+    );
+  }
+  if (boxes.length < MIN_RUNS) {
+    await fail(
+      `only found ${boxes.length} runs of text on the sign-in screen, where there should be at least ${MIN_RUNS}.\n` +
+        `  A check with nothing to measure passes, so this is a failure rather than a clear result.` +
+        (errors.length ? `\n  page errors: ${errors.slice(0, 3).join(' | ')}` : '')
+    );
+  }
+  const signIn = await worstPixel(page, await page.screenshot(), TEXT, boxes);
+  const signInWorst = Math.round(signIn.worst * 100) / 100;
+  if (signInWorst < FLOOR) {
+    await fail(
+      `on the sign-in screen, "${signIn.at.label}" sits on a background of ${signInWorst}:1, under the ${FLOOR}:1 floor.\n` +
+        `  worst pixel ${signIn.at.hex} at ${signIn.at.x},${signIn.at.y} of the 412x900 frame\n` +
+        `  EveningScene is legible only where the text keeps to the safe bands it declares —\n` +
+        `  SAFE_TOP and SAFE_BOTTOM in src/components/EveningScene.tsx. Something on this\n` +
+        `  screen has grown into the sunset between them, or a band was widened past what\n` +
+        `  the picture measures.`
+    );
+  }
+
+  // ── Pass one: the drawn scenery, which every other screen stands on ──────
   await enterAsGuest(page, url);
 
   // Hide everything above the scenery, so what is measured is the background a
@@ -111,42 +288,7 @@ try {
   }
   await page.waitForTimeout(400);
 
-  const shot = await page.screenshot();
-  const result = await page.evaluate(
-    async ({ dataUrl, text }) => {
-      const img = new Image();
-      await new Promise((r) => {
-        img.onload = r;
-        img.src = dataUrl;
-      });
-      const c = document.createElement('canvas');
-      c.width = img.width;
-      c.height = img.height;
-      const g = c.getContext('2d');
-      g.drawImage(img, 0, 0);
-      const d = g.getImageData(0, 0, c.width, c.height).data;
-      const lin = (v) => {
-        v /= 255;
-        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
-      };
-      const L = (r, gg, bb) => 0.2126 * lin(r) + 0.7152 * lin(gg) + 0.0722 * lin(bb);
-      const Lt = L(text[0], text[1], text[2]);
-      let worst = Infinity;
-      let at = null;
-      for (let y = 0; y < c.height; y++) {
-        for (let x = 0; x < c.width; x++) {
-          const i = (y * c.width + x) * 4;
-          const ratio = (Lt + 0.05) / (L(d[i], d[i + 1], d[i + 2]) + 0.05);
-          if (ratio < worst) {
-            worst = ratio;
-            at = { x, y, hex: '#' + [d[i], d[i + 1], d[i + 2]].map((v) => v.toString(16).padStart(2, '0')).join('') };
-          }
-        }
-      }
-      return { worst, at };
-    },
-    { dataUrl: 'data:image/png;base64,' + shot.toString('base64'), text: TEXT }
-  );
+  const result = await worstPixel(page, await page.screenshot(), TEXT, null);
 
   await browser.close();
   server.close();
@@ -162,7 +304,8 @@ try {
     process.exit(1);
   }
   console.log(
-    `check:scenery — brightest point of the scenery is ${worst}:1 against the body text (floor ${FLOOR}:1). Clear.`
+    `check:scenery — brightest point of the drawn scenery is ${worst}:1 against the body text (floor ${FLOOR}:1).\n` +
+      `  sign-in screen: worst backdrop under any of its ${boxes.length} runs of text is ${signInWorst}:1. Clear.`
   );
 })().catch((e) => {
   console.error('check:scenery — ' + e.message);

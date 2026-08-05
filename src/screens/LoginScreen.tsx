@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { View, Pressable, ActivityIndicator } from 'react-native';
+import { View, Pressable, ActivityIndicator, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Screen } from '../components/Screen';
 import { Button } from '../components/Button';
 import { Reveal } from '../components/Reveal';
 import { Wordmark } from '../components/Wordmark';
+import { EveningScene, SAFE_TOP, SAFE_BOTTOM } from '../components/EveningScene';
 import { Txt, Bold, Eyebrow } from '../components/Text';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
@@ -19,8 +21,8 @@ function ProviderButton({ label, onPress, loading }: { label: string; onPress: (
       style={({ pressed }) => ({ transform: [{ translateY: pressed ? 2 : 0 }] })}
     >
       <View
-        className="flex-row items-center justify-center gap-3 rounded-2xl py-4"
-        style={{ backgroundColor: palette.parchment, marginBottom: 4 }}
+        className="flex-row items-center justify-center gap-3 rounded-2xl py-3.5"
+        style={{ backgroundColor: palette.parchment }}
       >
         {loading ? (
           <ActivityIndicator color={palette.ink} />
@@ -34,12 +36,35 @@ function ProviderButton({ label, onPress, loading }: { label: string; onPress: (
   );
 }
 
+/**
+ * The front door.
+ *
+ * This is the one screen that stands on `EveningScene` rather than the drawn
+ * landscape, and the whole layout is built around the two bands of that picture
+ * that are dark enough to carry text. The name goes in the top band, the
+ * controls in the bottom one, and the middle — the sunset — is left alone.
+ *
+ * That is why the two zones are fixed heights taken from the window rather than
+ * `flex` around a centred column, which is what this screen used to be. A
+ * centred column puts a paragraph and three buttons straight across the sun,
+ * where the background measures 1.04:1 against the text on it. The top inset is
+ * taken out of the top band because the bands are fractions of the *window* —
+ * the picture spans the whole of it, while this content starts below the notch.
+ *
+ * The copy is short for the same reason. There is 28% of the screen below the
+ * sunset and everything has to live in it, so the tagline is a line rather than
+ * a paragraph. `check:scenery` measures what is actually behind each line of
+ * text on this screen, so a stack that grows back up into the sun fails there
+ * rather than shipping.
+ */
 export function LoginScreen() {
   const signIn = useAuthStore((s) => s.signIn);
   const continueAsGuest = useAuthStore((s) => s.continueAsGuest);
   const busy = useAuthStore((s) => s.busy);
   const authConfigured = useAuthStore((s) => s.authConfigured);
   const [note, setNote] = useState<string | null>(null);
+  const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
 
   const handle = async (provider: 'google' | 'apple') => {
     setNote(null);
@@ -47,52 +72,66 @@ export function LoginScreen() {
     if (!res.ok && res.message) setNote(res.message);
   };
 
+  const topBand = Math.max(height * SAFE_TOP - insets.top, 0);
+  // The band keeps its full height and the inset becomes padding inside it, so
+  // the content lifts off the home indicator rather than the band shrinking away
+  // from a bottom edge it was already sitting on.
+  const bottomBand = height * (1 - SAFE_BOTTOM);
+
   return (
-    <Screen scroll={false}>
-      <View className="flex-1 justify-center">
-        <Reveal>
-          <View className="items-center">
-            <Wordmark size={64} />
-            <Txt className="mb-10 max-w-[300px] text-center text-[15px] leading-6 text-paper/70">
-              Learn to read Urdu: every letter in all four of its faces. Sign in to keep your streak and progress safe
-              across devices.
-            </Txt>
-          </View>
-        </Reveal>
-
-        <Reveal delay={80}>
-          <View className="gap-3">
-            <ProviderButton label="Continue with Google" onPress={() => handle('google')} loading={busy === 'google'} />
-            <ProviderButton label="Continue with Apple" onPress={() => handle('apple')} loading={busy === 'apple'} />
-            <View className="my-1 flex-row items-center gap-3">
-              <View className="h-px flex-1" style={{ backgroundColor: withAlpha(palette.cream, 0.12) }} />
-              <Eyebrow className="text-paper/35">or</Eyebrow>
-              <View className="h-px flex-1" style={{ backgroundColor: withAlpha(palette.cream, 0.12) }} />
-            </View>
-            <Button variant="ghost" onPress={continueAsGuest}>
-              Continue as a guest
-            </Button>
-          </View>
-        </Reveal>
-
-        {note && (
+    <Screen scroll={false} padded={false} backdrop={<EveningScene />}>
+      <View className="flex-1">
+        <View style={{ height: topBand }} className="items-center justify-end">
           <Reveal>
-            <View
-              className="mt-5 rounded-xl border-l-2 p-3"
-              style={{ borderLeftColor: palette.gold, backgroundColor: withAlpha(palette.gold, 0.08) }}
-            >
-              <Txt className="text-xs leading-5 text-paper/75">{note}</Txt>
+            <Wordmark size={52} />
+          </Reveal>
+        </View>
+
+        {/* The picture. Nothing may be placed here. */}
+        <View className="flex-1" />
+
+        <View style={{ height: bottomBand, paddingBottom: Math.max(insets.bottom, 8) }} className="justify-center px-5">
+          <Reveal delay={80}>
+            <Txt className="mb-3 text-center text-[13px] leading-5 text-paper/70">
+              Read Urdu: every letter, in all four of its faces.
+            </Txt>
+            <View className="gap-2.5">
+              <ProviderButton
+                label="Continue with Google"
+                onPress={() => handle('google')}
+                loading={busy === 'google'}
+              />
+              <ProviderButton label="Continue with Apple" onPress={() => handle('apple')} loading={busy === 'apple'} />
+              <View className="flex-row items-center gap-3">
+                <View className="h-px flex-1" style={{ backgroundColor: withAlpha(palette.cream, 0.12) }} />
+                <Eyebrow className="text-paper/35">or</Eyebrow>
+                <View className="h-px flex-1" style={{ backgroundColor: withAlpha(palette.cream, 0.12) }} />
+              </View>
+              <Button variant="ghost" onPress={continueAsGuest}>
+                Continue as a guest
+              </Button>
             </View>
           </Reveal>
-        )}
 
-        {!authConfigured && !note && (
-          <Reveal delay={160}>
-            <Txt className="mt-5 text-center text-[11px] leading-5 text-paper/35">
-              Sign-in isn't available just yet. Continue as a guest and your progress stays right here on this device.
-            </Txt>
-          </Reveal>
-        )}
+          {note && (
+            <Reveal>
+              <View
+                className="mt-3 rounded-xl border-l-2 p-2.5"
+                style={{ borderLeftColor: palette.gold, backgroundColor: withAlpha(palette.gold, 0.08) }}
+              >
+                <Txt className="text-[11px] leading-4 text-paper/75">{note}</Txt>
+              </View>
+            </Reveal>
+          )}
+
+          {!authConfigured && !note && (
+            <Reveal delay={160}>
+              <Txt className="mt-3 text-center text-[11px] leading-4 text-paper/40">
+                Sign-in isn't ready — your progress stays on this device.
+              </Txt>
+            </Reveal>
+          )}
+        </View>
       </View>
     </Screen>
   );

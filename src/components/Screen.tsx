@@ -26,6 +26,7 @@ export function Screen({
   children,
   scroll = true,
   lattice = true,
+  backdrop,
   padded = true,
   contentClassName = '',
   scrollRef,
@@ -33,6 +34,11 @@ export function Screen({
   children: ReactNode;
   scroll?: boolean;
   lattice?: boolean;
+  /** Something else to stand behind the content instead of the drawn landscape.
+   *  It renders outside the safe-area inset, so it spans the whole window and a
+   *  child positioned by a fraction of the screen lands where it says it does —
+   *  which is what `EveningScene`'s safe bands depend on. */
+  backdrop?: ReactNode;
   padded?: boolean;
   contentClassName?: string;
   /** For callers that need to move the view themselves — the lesson scrolls to
@@ -44,7 +50,7 @@ export function Screen({
   return (
     <View className="flex-1 bg-ink">
       <StatusBar barStyle="light-content" />
-      {lattice && <LatticeBackground />}
+      {lattice && (backdrop ?? <LatticeBackground />)}
       <SafeAreaView className="flex-1" edges={['top', 'left', 'right']}>
         {scroll ? (
           <ScrollView

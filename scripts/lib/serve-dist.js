@@ -38,6 +38,8 @@ const MIME = {
   '.woff': 'font/woff',
   '.mp3': 'audio/mpeg',
   '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
   '.svg': 'image/svg+xml',
 };
 
