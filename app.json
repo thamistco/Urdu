@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Harf",
-    "description": "Urdu letters change shape depending on where they sit in a word, and most courses skip it. Harf teaches all four forms of all forty letters, then 2,281 words spoken aloud, 256 sentences you build yourself, and spaced repetition that brings back what you are about to forget.",
+    "description": "A full Urdu course, not a phrasebook: the alphabet in all four of its joining forms, 2,281 words spoken aloud, 25 grammar ideas, 256 sentences you build yourself, readings and conversations, and spaced repetition that brings back what you are about to forget.",
     "slug": "harf",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -46,7 +46,7 @@
       "typedRoutes": false
     },
     "extra": {
-      "storeName": "Harf: Learn to Read Urdu"
+      "storeName": "Harf: Learn Urdu"
     }
   }
 }
