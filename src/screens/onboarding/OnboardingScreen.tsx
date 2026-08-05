@@ -19,9 +19,8 @@ import { MALE_VOICE_AVAILABLE } from '../../lib/voiceManifest';
 import { DAILY_GOALS } from '../../data/achievements';
 import { UNITS } from '../../data/units';
 import { WORDS } from '../../data/words';
-import { SENTENCES, PASSAGES, DIALOGUES } from '../../data/sentences';
-import { GRAMMAR } from '../../data/grammar';
-import { LETTERS } from '../../data/letters';
+import { SENTENCES } from '../../data/sentences';
+import { LETTERS, POSITIONS } from '../../data/letters';
 
 /**
  * What the welcome screen promises, counted rather than typed.
@@ -35,21 +34,27 @@ import { LETTERS } from '../../data/letters';
 const n = (x: number) => x.toLocaleString('en-US');
 
 /**
- * The course, in the six lines it takes to say what is actually in it.
+ * Three numbers, because nobody reads a fourth.
  *
- * This screen used to carry one sentence about the alphabet and nothing else,
- * so a person deciding whether to start had no way to know there was grammar in
- * here, or audio, or reading, or review — the entire course past the letters was
- * invisible at the only moment it mattered. Each line is a pillar, in the order
- * a learner meets it.
+ * The version before this one was six bullets, a four-line paragraph and a
+ * three-line footnote — everything true about the course, and a wall of text at
+ * the one moment a person is deciding whether to bother. It listed features
+ * where it needed to make a case.
+ *
+ * A number is the shortest possible argument: 160 shapes says the thing the
+ * paragraph took four lines to explain, and it says it before anyone has
+ * decided to read. The rest of the course — grammar, readings, review — is one
+ * line under the button, because it reassures rather than persuades and does
+ * not need to be read to work.
+ *
+ * `160` is the whole reason this app exists, so it is counted rather than
+ * typed: forty letters across four positions, from the same two tables the
+ * letter lessons are built out of.
  */
-const PILLARS = [
-  `All ${LETTERS.length} letters, in all four joining forms`,
-  `${n(WORDS.length)} words, every one spoken aloud`,
-  `${n(SENTENCES.length)} sentences you build right to left`,
-  `${GRAMMAR.length} grammar ideas, explained then drilled`,
-  `${PASSAGES.length} readings and ${DIALOGUES.length} conversations`,
-  'Review that returns what you are forgetting',
+const STATS = [
+  { value: n(LETTERS.length * POSITIONS.length), label: 'letter shapes' },
+  { value: n(WORDS.length), label: 'spoken words' },
+  { value: n(SENTENCES.length), label: 'sentences' },
 ];
 
 /**
@@ -335,45 +340,50 @@ export function OnboardingScreen() {
   // ---- welcome ----
   if (step === 'welcome') {
     return (
-      <Screen>
-        {/* Scrolls, where it used to be a fixed centred column. Six pillars,
-            a paragraph and a button do not fit a 640pt phone at any type size
-            worth reading, and a welcome screen that silently crops its own
-            last line is worse than one a thumb has to move. */}
-        <Reveal>
-          <View className="items-center pt-6">
-            <Wordmark size={68} />
-            {/* The pitch, and the only place in the app that makes one.
-                What it used to say was "learn to read Urdu the way it's really
-                written: every letter in all four of its faces" — which asserts
-                the insight instead of giving it. Someone who has never seen
-                Nastaliq does not know that a letter has four faces, so the line
-                landed as decoration and the screen said nothing a learner could
-                weigh. This states the fact first and the promise second. */}
-            <Txt className="mb-6 mt-7 max-w-[330px] text-center text-[15px] leading-6 text-paper/80">
-              Urdu is written in Nastaliq, where every letter changes shape depending on where it sits in a word. Most
-              courses teach the isolated forms, hand you a transliteration, and leave you unable to read a sign.
+      <Screen scroll={false}>
+        <Reveal style={{ flex: 1 }}>
+          <View className="flex-1 items-center justify-center">
+            <Wordmark size={62} />
+
+            {/* The case, in eleven words. Everything this screen has said
+                across three rewrites was true and none of it was read: a
+                paragraph explaining Nastaliq, then six bullets, then a
+                footnote. A person on a welcome screen is deciding whether to
+                bother, and prose asks them to have decided already. */}
+            <Display className="mt-7 text-center text-[27px] leading-9">Read Urdu for real.</Display>
+            <Txt className="mb-8 mt-2 max-w-[290px] text-center text-[14px] leading-5 text-paper/60">
+              The script itself — not a transliteration of it.
             </Txt>
 
-            <View className="mb-6 w-full max-w-[300px] gap-2.5">
-              {PILLARS.map((line) => (
-                <View key={line} className="flex-row items-center gap-3">
-                  <View className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: palette.gold }} />
-                  <Txt className="flex-1 text-[13.5px] leading-5 text-paper/70">{line}</Txt>
+            <View className="mb-9 w-full max-w-[330px] flex-row justify-between">
+              {STATS.map((s) => (
+                <View key={s.label} className="flex-1 items-center">
+                  <Display className="text-[26px] leading-8" style={{ color: palette.gold }}>
+                    {s.value}
+                  </Display>
+                  {/* Not `Eyebrow`: its 2px tracking is right for a section
+                      label and wraps "spoken words" onto two lines in a column
+                      this narrow, leaving one stat sitting a line lower than
+                      the other two. */}
+                  <Txt
+                    className="mt-1.5 text-center text-[10px] uppercase text-paper/50"
+                    style={{ letterSpacing: 0.6 }}
+                  >
+                    {s.label}
+                  </Txt>
                 </View>
               ))}
             </View>
 
-            <Txt className="mb-7 max-w-[330px] text-center text-[12.5px] leading-5 text-paper/45">
-              Not learning the script? Choose the Roman track and the whole course is taught in transliteration instead.
-              Free, no advertisements, no account needed.
-            </Txt>
-
             <Button className="w-full max-w-[300px]" onPress={() => setStep('goal')}>
               Let's start
             </Button>
-            <Txt className="mt-4 max-w-[280px] text-center text-[12px] leading-5 text-paper/40">
-              A few quick questions first, so we start you in the right place.
+            {/* The reassurances, not the pitch. Grammar and review do not win
+                anyone over, but their absence would be noticed — and the Roman
+                track is the answer to "so this is only for script learners",
+                which is the one objection this screen provokes. */}
+            <Txt className="mt-5 max-w-[300px] text-center text-[11.5px] leading-5 text-paper/40">
+              Grammar · Readings · Review · Roman track · Free
             </Txt>
           </View>
         </Reveal>
