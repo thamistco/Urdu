@@ -1,8 +1,8 @@
 /**
  * Content audit — the checks that a typechecker cannot make.
  *
- * The course is now 2,426 words, 25 grammar concepts, 256 sentences, 17
- * passages, 12 conversations and 233 lessons wired together by string ids.
+ * The course is now 2,281 words, 25 grammar concepts, 256 sentences, 17
+ * passages, 12 conversations and 237 lessons wired together by string ids.
  * TypeScript will not tell you that a lesson points at a topic that no longer
  * exists, that a question's answer is missing from its own options, that a
  * dialogue has the same person speaking twice in a row, or that a topic has
@@ -344,7 +344,7 @@ if (!EMOJI.test('🔒') || !EMOJI.test('🗣') || EMOJI.test('a'))
  * Numbers in a README go stale the moment someone adds a word.
  *
  * The store listing and the README both make countable claims — forty letters,
- * 2,426 words, 256 sentences — and copy like that is written once and never
+ * 2,281 words, 256 sentences — and copy like that is written once and never
  * revisited, so it quietly becomes a lie the first time the vocabulary grows.
  * Anyone who then quotes it in an app store is making a false claim to a
  * shopper, which is a worse failure than a stale comment.
