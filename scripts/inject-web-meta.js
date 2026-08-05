@@ -67,6 +67,61 @@ if (origin) {
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
+/**
+ * The name an installed shortcut is given.
+ *
+ * There was no manifest at all, so "Add to home screen" had nothing to read and
+ * Chrome fell back to `document.title` — which React Navigation rewrites on
+ * every navigation. Whoever installed the app while sitting on the first screen
+ * got a shortcut called **Onboarding**, permanently: Android captures the label
+ * once, at creation, and never revisits it.
+ *
+ * A manifest takes that decision away from whatever route happened to be open.
+ * `short_name` is what actually appears under the icon — a launcher gives it
+ * about twelve characters — and `name` is the longer form used in the install
+ * prompt and the app switcher.
+ *
+ * Both are read from the config rather than written here, so the phone, the
+ * stores and the browser cannot drift apart.
+ *
+ * Note this cannot rename a shortcut that already exists. Anyone holding an
+ * "Onboarding" icon has to remove it and add it again.
+ */
+const MANIFEST_NAME = 'manifest.webmanifest';
+const ICON_NAME = 'app-icon.png';
+let manifestWritten = false;
+{
+  const icon = path.join(ROOT, 'assets', 'images', 'icon.png');
+  const icons = [];
+  if (fs.existsSync(icon)) {
+    fs.copyFileSync(icon, path.join(DIST, ICON_NAME));
+    // `purpose: any maskable` lets Android crop it to the launcher's own shape
+    // instead of dropping the square onto a white plate.
+    icons.push({ src: `${baseUrl}/${ICON_NAME}`, sizes: '1024x1024', type: 'image/png', purpose: 'any maskable' });
+  }
+  const background = (expo.splash && expo.splash.backgroundColor) || '#211712';
+  fs.writeFileSync(
+    path.join(DIST, MANIFEST_NAME),
+    JSON.stringify(
+      {
+        name: (expo.extra && expo.extra.storeName) || name,
+        short_name: name,
+        description,
+        start_url: `${baseUrl}/`,
+        scope: `${baseUrl}/`,
+        display: 'standalone',
+        orientation: 'portrait',
+        background_color: background,
+        theme_color: background,
+        icons,
+      },
+      null,
+      2
+    )
+  );
+  manifestWritten = true;
+}
+
 const tags = [
   description && `<meta name="description" content="${esc(description)}" />`,
   `<meta property="og:type" content="website" />`,
@@ -81,6 +136,11 @@ const tags = [
   description && `<meta name="twitter:description" content="${esc(description)}" />`,
   iconUrl && `<meta name="twitter:image" content="${esc(iconUrl)}" />`,
   `<meta name="theme-color" content="${esc((expo.splash && expo.splash.backgroundColor) || '#211712')}" />`,
+  // Without this the manifest is a file nobody asks for. It is what stops an
+  // installed shortcut being named after whichever route was open at the time.
+  manifestWritten && `<link rel="manifest" href="${esc(baseUrl)}/${MANIFEST_NAME}" />`,
+  // iOS ignores the manifest's short_name for home-screen labels and reads this.
+  `<meta name="apple-mobile-web-app-title" content="${esc(name)}" />`,
   // The commit this bundle was built from. Not decoration: `check:deployed`
   // fetches the live page and asserts this matches, which is the only way to
   // know a deploy actually published rather than merely reporting success.
@@ -99,6 +159,8 @@ html = html.replace('</title>', `</title>${block}`);
 fs.writeFileSync(INDEX, html);
 
 console.log(`Injected ${tags.length} meta tags into ${path.relative(ROOT, INDEX)}`);
+if (manifestWritten)
+  console.log(`  wrote ${MANIFEST_NAME} — installs as "${expo.extra?.storeName || name}", labelled "${name}"`);
 if (!origin) console.log('  (SITE_ORIGIN not set — share-image tags skipped, since a relative og:image never renders)');
 else if (!iconUrl) console.log('  (assets/images/icon.png missing — share-image tags skipped)');
 else console.log(`  share card copied to ${SHARE_NAME}, served at ${iconUrl}`);

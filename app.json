@@ -44,6 +44,9 @@
     ],
     "experiments": {
       "typedRoutes": false
+    },
+    "extra": {
+      "storeName": "Harf: Learn to Read Urdu"
     }
   }
 }
