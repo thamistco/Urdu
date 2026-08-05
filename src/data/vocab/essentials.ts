@@ -125,6 +125,17 @@ export const ESSENTIAL_PACKS: TopicPack[] = [
     { id: 'verbs3', title: 'Essential Verbs', icon: '⚡', blurb: 'The verbs you cannot do without.', level: 'elementary' },
     [
       ['w-hona', 'ہونا', 'hona', 'to be / happen', '🌟'],
+      // The five causatives below are what the g-causative concept drills, and
+      // none of them had an entry: a learner met پڑھایا in a sentence-build with
+      // nothing anywhere that had taught پڑھانا. Urdu derives them regularly —
+      // پڑھنا "read" → پڑھانا "make read" → پڑھوانا "have read" — so they are
+      // filed with the base verbs rather than given a topic of their own.
+      ['w-paana', 'پانا', 'paana', 'to obtain / find', '🎁'],
+      ['w-parhaana', 'پڑھانا', 'paṛhaana', 'to teach / make read', '👩‍🏫'],
+      ['w-pehnaana', 'پہنانا', 'pehnaana', 'to dress someone', '👗'],
+      ['w-khilaana', 'کھلانا', 'khilaana', 'to feed', '🍼'],
+      ['w-karwaana', 'کروانا', 'karwaana', 'to have done', '🧾'],
+      ['w-silwaana', 'سلوانا', 'silwaana', 'to have sewn', '🧵'],
       ['w-rehna', 'رہنا', 'rehna', 'to live / stay', '🏠'],
       ['w-le-jana', 'لے جانا', 'le jaana', 'to take away', '📤'],
       ['w-kholna', 'کھولنا', 'kholna', 'to open', '🔓'],

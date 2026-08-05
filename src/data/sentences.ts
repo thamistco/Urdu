@@ -19,7 +19,7 @@ import type { Register } from './vocab/types';
  *
  * This is the same call `registerOf` makes for vocabulary in `words.ts` —
  * "marking every entry by hand is a list nobody maintains" — applied to 256
- * sentences and every passage and dialogue line instead of 2,426 words. A
+ * sentences and every passage and dialogue line instead of 2,281 words. A
  * stored `register` field would drift the moment a new sentence used تم or
  * آپ and nobody remembered to tag it; reading the pronoun straight out of the
  * text it is already authored in cannot drift, because there is nothing extra

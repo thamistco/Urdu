@@ -148,6 +148,8 @@ export const EXTRA_PACKS: TopicPack[] = [
     { id: 'celebrations', title: 'Weddings & Guests', icon: '💒', blurb: 'Hosting and being hosted.', level: 'intermediate' },
     [
       ['w-raunaq', 'رونق', 'raunaq', 'liveliness', '✨'],
+      ['w-siwaiyan', 'سویاں', 'siwaiyaañ', 'sweet vermicelli', '🍜'],
+      ['w-eidi', 'عیدی', 'eidi', 'Eid money gift', '🧧'],
       ['w-baraat', 'بارات', 'baraat', 'wedding procession', '🎉'],
       ['w-nikah', 'نکاح', 'nikaah', 'marriage contract', '📜'],
       ['w-waleema', 'ولیمہ', 'waleema', 'wedding feast', '🍛'],

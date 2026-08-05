@@ -148,6 +148,7 @@ export const SOCIETY_PACKS: TopicPack[] = [
     { id: 'idioms', title: 'Idioms & Sayings', icon: '🗝️', blurb: 'Phrases that mean more than their words.', level: 'advanced' },
     [
       ['w-muhawra', 'محاورہ', 'muhaawra', 'idiom', '🗝️'],
+      ['w-jaan-boojh-kar', 'جان بوجھ کر', 'jaan boojh kar', 'deliberately', '🎯'],
       ['w-zarbulmasal', 'ضرب المثل', 'zarb-ul-masal', 'proverb', '📜'],
       ['w-kahawat', 'کہاوت', 'kahaawat', 'saying', '💬'],
       ['w-dil-lagana', 'دل لگانا', 'dil lagaana', 'to apply oneself', '❤️'],
