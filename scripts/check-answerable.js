@@ -46,7 +46,26 @@ function load(rel) {
 
 const { buildLessonExercises } = load('src/exercises/generator.ts');
 const { unitsForTrack } = load('src/data/units.ts');
-const { pictureIdentifies, cueOf } = load('src/data/art.ts');
+const { pictureIdentifies, cueOf, VERDICT_CUES } = load('src/data/art.ts');
+
+/**
+ * No tile in a grid may be a tick or a cross.
+ *
+ * Those are the interface's own words for right and wrong, so on an option
+ * tile they stop depicting anything and start pointing. A listening question
+ * offering Truth, Light, Present and Man showed a green tick beside Truth,
+ * which a learner follows without hearing the audio; and when the tick is not
+ * the answer, it is a lie told in the app's own voice.
+ *
+ * Found by playing the app rather than by any check, which is why it is one now.
+ */
+function verdictFree(ex, where) {
+  for (const o of ex.options ?? []) {
+    if (VERDICT_CUES.has(cueOf(o))) {
+      fail(`${where}: an option is cued with a tick or a cross`, `${o.id} (${o.meaning}) shows ${cueOf(o)}`);
+    }
+  }
+}
 const { WORDS, glossOf } = load('src/data/words.ts');
 const { romanRevealsMeaning } = load('src/lib/giveaway.ts');
 
@@ -149,6 +168,7 @@ function check(ex, track) {
       if (!distinct(ex.options.map((o) => o.meaning.toLowerCase())))
         fail('listen: two options mean the same', `${ex.word.id}`);
       if (!distinct(ex.options.map(cueOf))) fail('listen: two options share a picture', `${ex.word.id}`);
+      verdictFree(ex, 'listen');
       break;
 
     case 'meaningPick':
@@ -171,6 +191,7 @@ function check(ex, track) {
 
     case 'matching':
       if (!distinct(ex.words.map(cueOf))) fail('matching board shares a picture', ex.words.map((w) => w.id).join(','));
+      verdictFree({ options: ex.words }, 'matching board');
       // What the tile shows, not the raw meaning: the board prints the gloss
       // with its register, so "yes" and "yes (polite)" really are two tiles.
       if (!distinct(ex.words.map((w) => glossOf(w).toLowerCase())))
