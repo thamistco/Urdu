@@ -289,7 +289,7 @@ export function SettingsScreen() {
                 warning that the second one was coming. */}
             <Row
               label="Read the meaning in English"
-              hint="After a correct answer, your device's English voice reads the translation. It is off by default, because the Urdu is a recorded voice and this one is not."
+              hint="After a correct answer, your device’s English voice reads the translation. It is off by default, because the Urdu is a recorded voice and this one is not."
               value={s.speakMeaning}
               onChange={s.setSpeakMeaning}
             />
@@ -301,7 +301,7 @@ export function SettingsScreen() {
               onChange={s.setReducedMotion}
             />
             {/* Only when a second set of clips exists. Offering a voice the app
-                has no recordings for would send every word to the device's own
+                has no recordings for would send every word to the device’s own
                 text-to-speech, which has no Urdu and reads the script in
                 English — the exact complaint that removed the English gloss. */}
             {MALE_VOICE_AVAILABLE && (

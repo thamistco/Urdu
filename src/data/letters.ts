@@ -92,7 +92,7 @@ export const LETTERS: Letter[] = [
     meaning: 'mango',
     emoji: '🥭',
     group: 1,
-    note: 'Alif wearing a wavy hat (madda). It starts a word with a long "aa", alif alone cannot do that at the beginning.',
+    note: 'Alif wearing a wavy hat (madda). It starts a word with a long “aa”, alif alone cannot do that at the beginning.',
   },
   {
     id: 'be',
@@ -144,7 +144,7 @@ export const LETTERS: Letter[] = [
     meaning: 'tomato',
     emoji: '🍅',
     group: 1,
-    note: 'A small mark above, shaped like ط (to\'e), marks the retroflex "hard" t. Curl the tongue back.',
+    note: 'A small mark above, shaped like ط (to’e), marks the retroflex “hard” t. Curl the tongue back.',
   },
 
   // ---- Group 2 -----------------------------------------------------------
@@ -159,7 +159,7 @@ export const LETTERS: Letter[] = [
     meaning: 'fruit',
     emoji: '🍇',
     group: 2,
-    note: "Three dots above. In Urdu it sounds exactly like seen, one of three letters spelling the same 's'.",
+    note: 'Three dots above. In Urdu it sounds exactly like seen, one of three letters spelling the same “s”.',
   },
   {
     id: 'jeem',
@@ -185,7 +185,7 @@ export const LETTERS: Letter[] = [
     meaning: 'moon',
     emoji: '🌙',
     group: 2,
-    note: 'The jeem shape with three dots. Say "ch" as in chair.',
+    note: 'The jeem shape with three dots. Say “ch” as in chair.',
   },
   {
     id: 'baRi-he',
@@ -211,7 +211,7 @@ export const LETTERS: Letter[] = [
     meaning: 'letter (mail)',
     emoji: '✉️',
     group: 2,
-    note: 'One dot above the ح (baṛī he) curve. A raspy "kh", like clearing the throat gently.',
+    note: 'One dot above the ح (baṛī he) curve. A raspy “kh”, like clearing the throat gently.',
   },
 
   // ---- Group 3: the non-joiners -----------------------------------------
@@ -252,7 +252,7 @@ export const LETTERS: Letter[] = [
     meaning: 'a little',
     emoji: '🤏',
     group: 3,
-    note: 'Daal with one dot above. Another of the "z" family.',
+    note: 'Daal with one dot above. Another of the “z” family.',
   },
   {
     id: 're',
@@ -291,7 +291,7 @@ export const LETTERS: Letter[] = [
     meaning: 'earth / land',
     emoji: '🌍',
     group: 3,
-    note: 'Re with one dot above. The everyday "z".',
+    note: 'Re with one dot above. The everyday “z”.',
   },
   {
     id: 'zhe',
@@ -304,7 +304,7 @@ export const LETTERS: Letter[] = [
     meaning: 'hail',
     emoji: '🧊',
     group: 3,
-    note: 'Re with three dots, a rare "zh" sound, like the s in "measure".',
+    note: 'Re with three dots, a rare “zh” sound, like the s in “measure”.',
   },
 
   // ---- Group 4 -----------------------------------------------------------
@@ -332,7 +332,7 @@ export const LETTERS: Letter[] = [
     meaning: 'lion',
     emoji: '🦁',
     group: 4,
-    note: 'Seen with three dots above the teeth. Say "sh".',
+    note: 'Seen with three dots above the teeth. Say “sh”.',
   },
   {
     id: 'swaad',
@@ -358,7 +358,7 @@ export const LETTERS: Letter[] = [
     meaning: 'multiply / strike',
     emoji: '✖️',
     group: 4,
-    note: "Swaad with one dot above. In Urdu it sounds like ze, one of four letters spelling 'z'.",
+    note: 'Swaad with one dot above. In Urdu it sounds like ze, one of four letters spelling “z”.',
   },
 
   // ---- Group 5 -----------------------------------------------------------
@@ -386,7 +386,7 @@ export const LETTERS: Letter[] = [
     meaning: 'vessel',
     emoji: '🏺',
     group: 5,
-    note: "To’e with one dot above. Another of the four ways Urdu spells 'z'.",
+    note: 'To’e with one dot above. Another of the four ways Urdu spells “z”.',
   },
   {
     id: 'ain',
@@ -412,7 +412,7 @@ export const LETTERS: Letter[] = [
     meaning: 'balloon',
     emoji: '🎈',
     group: 5,
-    note: 'Ain with one dot above. A gargled "gh", like a French r.',
+    note: 'Ain with one dot above. A gargled “gh”, like a French r.',
   },
 
   // ---- Group 6 -----------------------------------------------------------
@@ -427,7 +427,7 @@ export const LETTERS: Letter[] = [
     meaning: 'phone',
     emoji: '📱',
     group: 6,
-    note: 'A small head with one dot above and a tail. Straightforward "f".',
+    note: 'A small head with one dot above and a tail. Straightforward “f”.',
   },
   {
     id: 'qaaf',
@@ -440,7 +440,7 @@ export const LETTERS: Letter[] = [
     meaning: 'pen',
     emoji: '🖊️',
     group: 6,
-    note: 'Two dots above a deep bowl. A "q" made further back than k.',
+    note: 'Two dots above a deep bowl. A “q” made further back than k.',
   },
   {
     id: 'kaaf',
@@ -466,7 +466,7 @@ export const LETTERS: Letter[] = [
     meaning: 'house',
     emoji: '🏠',
     group: 6,
-    note: 'Kaaf with a second stroke on top, the tell for a hard "g".',
+    note: 'Kaaf with a second stroke on top, the tell for a hard “g”.',
   },
 
   // ---- Group 7: the finishers -------------------------------------------
@@ -481,7 +481,7 @@ export const LETTERS: Letter[] = [
     meaning: 'boy',
     emoji: '👦',
     group: 7,
-    note: 'A tall stroke curving into a bowl at the end. Clear "l".',
+    note: 'A tall stroke curving into a bowl at the end. Clear “l”.',
   },
   {
     id: 'meem',
@@ -549,7 +549,7 @@ export const LETTERS: Letter[] = [
     meaning: 'elephant',
     emoji: '🐘',
     group: 8,
-    note: 'The "small" h. Its four faces look remarkably different, watch them shift.',
+    note: 'The “small” h. Its four faces look remarkably different, watch them shift.',
   },
   {
     id: 'do-chashmi-he',
@@ -593,7 +593,7 @@ export const LETTERS: Letter[] = [
     meaning: 'memory',
     emoji: '💭',
     group: 8,
-    note: 'Serves as "y" and the long vowel "ee". Two dots below appear in some styles.',
+    note: 'Serves as “y” and the long vowel “ee”. Two dots below appear in some styles.',
   },
   {
     id: 'baRi-ye',
@@ -612,7 +612,7 @@ export const LETTERS: Letter[] = [
     emoji: '🪑',
     icon: 'table',
     group: 8,
-    note: 'The "big" ye, a wide sweeping tail used at the end of words for the "e/ai" sound.',
+    note: 'The “big” ye, a wide sweeping tail used at the end of words for the “e/ai” sound.',
   },
 ];
 

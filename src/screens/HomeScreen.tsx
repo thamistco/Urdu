@@ -444,7 +444,7 @@ export function HomeScreen() {
           <View className="mb-5 flex-row gap-3">
             <Card paper className="flex-1" style={{ paddingVertical: 14 }}>
               <Eyebrow style={{ color: withAlpha(palette.ink, 0.5) }} className="mb-2">
-                Today's word
+                Today’s word
               </Eyebrow>
               <View className="flex-row items-center justify-between gap-2">
                 <View className="flex-1">

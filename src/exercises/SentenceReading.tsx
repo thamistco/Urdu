@@ -230,7 +230,7 @@ export function ReadingExercise({ exercise, track, showRoman, locked, onGraded }
             setStage('answer');
           }}
         >
-          I've read it
+          I’ve read it
         </Button>
       ) : (
         <>

@@ -131,7 +131,7 @@ export function LoginScreen() {
           {!authConfigured && !note && (
             <Reveal delay={160}>
               <Txt className="mt-3 text-center text-[11px] leading-4 text-paper/70">
-                Signing in isn't ready yet. Your progress stays on this device.
+                Signing in isn’t ready yet. Your progress stays on this device.
               </Txt>
             </Reveal>
           )}

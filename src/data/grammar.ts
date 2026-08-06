@@ -112,7 +112,7 @@ export const GRAMMAR: GrammarConcept[] = [
   },
   {
     id: 'g-to-be',
-    title: 'The verb "to be"',
+    title: 'The verb “to be”',
     summary: 'hoon · hai · hain: am, is, are',
     level: 'beginner',
     explain: [
@@ -274,7 +274,7 @@ export const GRAMMAR: GrammarConcept[] = [
   {
     id: 'g-possess',
     title: 'Possession: ka, ki, ke',
-    summary: "Urdu's way of saying whose",
+    summary: 'Urdu’s way of saying whose',
     level: 'elementary',
     explain: [
       'To say "X\'s Y", put کا (ka) between them: علی کا گھر (Ali ka ghar): "Ali\'s house".',
@@ -297,7 +297,7 @@ export const GRAMMAR: GrammarConcept[] = [
     examples: [
       { urdu: 'میرا نام علی ہے', roman: 'mera naam Ali hai', meaning: 'My name is Ali' },
       { urdu: 'یہ میری کتاب ہے', roman: 'ye meri kitaab hai', meaning: 'This is my book' },
-      { urdu: 'استاد کا کمرہ', roman: 'ustaad ka kamra', meaning: "the teacher's room" },
+      { urdu: 'استاد کا کمرہ', roman: 'ustaad ka kamra', meaning: 'the teacher’s room' },
     ],
     drills: [
       {
@@ -307,13 +307,13 @@ export const GRAMMAR: GrammarConcept[] = [
         meaning: 'This is my book',
         answer: 'ی',
         options: ['ی', 'ا', 'ے', 'وں'],
-        because: 'کتاب (kitaab) is feminine, so "my" becomes میری (meri).',
+        because: 'کتاب (kitaab) is feminine, so “my” becomes میری (meri).',
       },
       {
         id: 'g-poss-d2',
         prompt: 'علی ___ گھر بڑا ہے',
         promptRoman: 'Ali ___ ghar baṛa hai',
-        meaning: "Ali's house is big",
+        meaning: 'Ali’s house is big',
         answer: 'کا',
         options: ['کا', 'کی', 'کے', 'کو'],
         because: 'گھر (ghar) is masculine singular → کا (ka).',
@@ -323,7 +323,7 @@ export const GRAMMAR: GrammarConcept[] = [
   {
     id: 'g-postpositions',
     title: 'Postpositions',
-    summary: 'Urdu puts "in, on, to" AFTER the noun',
+    summary: 'Urdu puts “in, on, to” AFTER the noun',
     level: 'elementary',
     explain: [
       'English says "in the house"; Urdu says گھر میں (ghar meñ): house-in. These little words come after the noun, so they are called postpositions.',
@@ -360,7 +360,7 @@ export const GRAMMAR: GrammarConcept[] = [
         meaning: 'The book is on the table',
         answer: 'پر',
         options: ['پر', 'میں', 'سے', 'تک'],
-        because: 'پر (par) means "on".',
+        because: 'پر (par) means “on”.',
       },
       {
         id: 'g-post-d2',
@@ -369,7 +369,7 @@ export const GRAMMAR: GrammarConcept[] = [
         meaning: 'He goes to school',
         answer: 'کو',
         options: ['کو', 'پر', 'سے', 'میں'],
-        because: 'کو (ko) marks the destination "to".',
+        because: 'کو (ko) marks the destination “to”.',
       },
     ],
   },
@@ -421,7 +421,7 @@ export const GRAMMAR: GrammarConcept[] = [
     explain: [
       'نہیں (nahiñ) is the everyday "not". It goes immediately before the verb: میں نہیں جاتا (main nahiñ jaata): "I do not go".',
       'In a simple "X is Y" sentence, نہیں (nahiñ) usually swallows the ہے (hai): وہ ڈاکٹر نہیں (wo ḍākṭar nahiñ): "he is not a doctor". Adding ہے (hai) is not wrong, just heavier.',
-      'مت (mat) is only for telling someone not to do something: مت جاؤ (mat jaao): "don\'t go". نہ (na) is the quiet one, used with the subjunctive and in pairs: نہ یہ نہ وہ (na ye na wo): "neither this nor that".',
+      'مت (mat) is only for telling someone not to do something: مت جاؤ (mat jaao): "don’t go". نہ (na) is the quiet one, used with the subjunctive and in pairs: نہ یہ نہ وہ (na ye na wo): "neither this nor that".',
     ],
     table: {
       heading: ['Word', 'Use', 'Example'],
@@ -432,14 +432,14 @@ export const GRAMMAR: GrammarConcept[] = [
       ],
       rowsRoman: [
         ['nahiñ', '', 'main nahiñ jaaoon ga (I will not go)'],
-        ['mat', '', "mat bolo (don't speak)"],
-        ['na', '', "shaayad wo na aaye (perhaps he won't come)"],
+        ['mat', '', 'mat bolo (don’t speak)'],
+        ['na', '', 'shaayad wo na aaye (perhaps he won’t come)'],
       ],
     },
     examples: [
-      { urdu: 'مجھے یہ پسند نہیں', roman: 'mujhe ye pasand nahiñ', meaning: "I don't like this" },
+      { urdu: 'مجھے یہ پسند نہیں', roman: 'mujhe ye pasand nahiñ', meaning: 'I don’t like this' },
       { urdu: 'وہ گھر میں نہیں تھا', roman: 'wo ghar meñ nahiñ tha', meaning: 'He was not at home' },
-      { urdu: 'یہاں مت بیٹھو', roman: 'yahaañ mat baiṭho', meaning: "Don't sit here" },
+      { urdu: 'یہاں مت بیٹھو', roman: 'yahaañ mat baiṭho', meaning: 'Don’t sit here' },
     ],
     drills: [
       {
@@ -455,7 +455,7 @@ export const GRAMMAR: GrammarConcept[] = [
         id: 'g-neg-d2',
         prompt: 'دروازہ ___ کھولو',
         promptRoman: 'darwaaza ___ kholo',
-        meaning: "Don't open the door",
+        meaning: 'Don’t open the door',
         answer: 'مت',
         options: ['مت', 'نہیں', 'نہ', 'کبھی'],
         because: 'A command told *not* to do something uses مت (mat).',
@@ -801,14 +801,14 @@ export const GRAMMAR: GrammarConcept[] = [
         meaning: 'I can do this work',
         answer: 'سکتا',
         options: ['سکتا', 'سکتی', 'سکتے', 'سکنا'],
-        because: 'سکنا (sakna) takes the endings; a masculine "I" gives سکتا ہوں (sakta hoon).',
+        because: 'سکنا (sakna) takes the endings; a masculine “I” gives سکتا ہوں (sakta hoon).',
       },
     ],
   },
   {
     id: 'g-obligation',
     title: 'Have to & should',
-    summary: 'chaahiye · hai · paṛna: three strengths of "must"',
+    summary: 'chaahiye · hai · paṛna: three strengths of “must”',
     level: 'intermediate',
     explain: [
       'All three use the infinitive (the ‑نا, ‑na form) with the person in the کو (ko) form: مجھے (mujhe), آپ کو (aap ko), اُسے (use).',
@@ -841,7 +841,7 @@ export const GRAMMAR: GrammarConcept[] = [
         meaning: 'You should take the medicine',
         answer: 'چاہیے',
         options: ['چاہیے', 'ہے', 'پڑا', 'ہوں'],
-        because: 'چاہیے (chaahiye) is the "should" of advice.',
+        because: 'چاہیے (chaahiye) is the “should” of advice.',
       },
     ],
   },
@@ -893,7 +893,7 @@ export const GRAMMAR: GrammarConcept[] = [
         meaning: 'He is the best player of all',
         answer: 'سب',
         options: ['سب', 'بہت', 'زیادہ', 'کچھ'],
-        because: 'سب سے (sab se, "than all") makes the superlative.',
+        because: 'سب سے (sab se, “than all”) makes the superlative.',
       },
     ],
   },
@@ -907,7 +907,7 @@ export const GRAMMAR: GrammarConcept[] = [
     explain: [
       'Politeness lives in the verb ending. To آپ (aap), add ‑یے (‑iye): بیٹھیے (baiṭhiye, "please sit"). To تم (tum), use the bare stem + و (‑o): بیٹھو (baiṭho).',
       'For an extra-gentle request, ‑یے گا (‑iye ga): آئیے گا (aaiye ga): "do come".',
-      'Make it negative with مت (mat, for commands) or نہ (na): مت جاؤ (mat jaao): "don\'t go".',
+      'Make it negative with مت (mat, for commands) or نہ (na): مت جاؤ (mat jaao): "don’t go".',
     ],
     table: {
       heading: ['To whom', 'Ending', 'Example'],
@@ -925,7 +925,7 @@ export const GRAMMAR: GrammarConcept[] = [
     examples: [
       { urdu: 'اندر تشریف لائیے', roman: 'andar tashreef laaiye', meaning: 'Please come in' },
       { urdu: 'ذرا آہستہ بولیے', roman: 'zara aahista boliye', meaning: 'Please speak slowly' },
-      { urdu: 'یہاں مت بیٹھو', roman: 'yahaañ mat baiṭho', meaning: "Don't sit here" },
+      { urdu: 'یہاں مت بیٹھو', roman: 'yahaañ mat baiṭho', meaning: 'Don’t sit here' },
     ],
     drills: [
       {
@@ -942,7 +942,7 @@ export const GRAMMAR: GrammarConcept[] = [
   {
     id: 'g-subjunctive',
     title: 'The subjunctive',
-    summary: 'Maybe, should, if: the "unreal" mood',
+    summary: 'Maybe, should, if: the “unreal” mood',
     level: 'advanced',
     explain: [
       'The subjunctive covers wishes, suggestions, doubts and "if", things not stated as fact.',
@@ -1181,7 +1181,7 @@ export const GRAMMAR: GrammarConcept[] = [
         meaning: 'The teacher teaches the children',
         answer: 'پڑھاتے',
         options: ['پڑھاتے', 'پڑھتے', 'پڑھواتے', 'پڑھے'],
-        because: 'پڑھنا (paṛhna) is "to read"; the causative پڑھانا (paṛhaana) is "to teach".',
+        because: 'پڑھنا (paṛhna) is “to read”; the causative پڑھانا (paṛhaana) is “to teach”.',
       },
     ],
   },
