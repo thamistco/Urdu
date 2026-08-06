@@ -925,7 +925,7 @@ export const SENTENCES: Sentence[] = [
     id: 's-25',
     words: ['وہ', 'محنتی', 'ہے', 'لیکن', 'خاموش', 'ہے'],
     roman: 'wo mehnati hai lekin khaamosh hai',
-    meaning: 'He is hard-working but quiet',
+    meaning: 'He is hardworking but quiet',
     level: 'advanced',
   },
   {

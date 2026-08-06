@@ -1,7 +1,7 @@
 {
   "name": "harf",
   "version": "1.0.0",
-  "description": "Harf — learn to read and speak Urdu, script first.",
+  "description": "Harf \u2014 learn to read and speak Urdu, script first.",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
@@ -12,6 +12,7 @@
     "gen:sounds": "node scripts/generate-sounds.js",
     "gen:voice": "node scripts/generate-voice.js",
     "check:roman": "node scripts/check-roman.js",
+    "check:writing": "node scripts/check-writing.js",
     "check:translit": "node scripts/check-translit.js",
     "gen:masks": "node scripts/generate-glyph-masks.js",
     "audit": "node scripts/audit-content.js",

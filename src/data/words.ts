@@ -178,9 +178,16 @@ const CORE_WORDS: Word[] = [
     topic: 'family',
   },
   { id: 'w-biwi2', urdu: 'بیگم', roman: 'begum', meaning: 'wife', register: 'polite', emoji: '👰', topic: 'family' },
-  { id: 'w-susraal', urdu: 'سسرال', roman: 'susraal', meaning: "in-laws' home", emoji: '🏠', topic: 'family' },
-  { id: 'w-saas', urdu: 'ساس', roman: 'saas', meaning: 'mother-in-law', emoji: '👵', topic: 'family' },
-  { id: 'w-sasur', urdu: 'سسر', roman: 'sasur', meaning: 'father-in-law', emoji: '👴', topic: 'family' },
+  {
+    id: 'w-susraal',
+    urdu: 'سسرال',
+    roman: 'susraal',
+    meaning: 'the family home you marry into',
+    emoji: '🏠',
+    topic: 'family',
+  },
+  { id: 'w-saas', urdu: 'ساس', roman: 'saas', meaning: "spouse's mother", emoji: '👵', topic: 'family' },
+  { id: 'w-sasur', urdu: 'سسر', roman: 'sasur', meaning: "spouse's father", emoji: '👴', topic: 'family' },
   { id: 'w-bahnoi', urdu: 'بہنوئی', roman: 'bahnoi', meaning: "sister's husband", emoji: '🤵', topic: 'family' },
 
   // food
@@ -284,7 +291,7 @@ const CORE_WORDS: Word[] = [
   { id: 'w-qirmizi', urdu: 'قرمزی', roman: 'qirmizi', meaning: 'crimson / scarlet', emoji: '🩷', topic: 'colours' },
   { id: 'w-zeetooni', urdu: 'زیتونی', roman: 'zeetooni', meaning: 'olive', emoji: '🫒', topic: 'colours' },
   { id: 'w-syaah', urdu: 'سیاہ', roman: 'syaah', meaning: 'jet black', emoji: '⬛', topic: 'colours' },
-  { id: 'w-pyaazi', urdu: 'پیازی', roman: 'pyaazi', meaning: 'onion-pink', emoji: '🌸', topic: 'colours' },
+  { id: 'w-pyaazi', urdu: 'پیازی', roman: 'pyaazi', meaning: 'onion pink', emoji: '🌸', topic: 'colours' },
   { id: 'w-firozi', urdu: 'فیروزی', roman: 'firozi', meaning: 'turquoise', emoji: '🩵', topic: 'colours' },
 
   // numbers

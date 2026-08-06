@@ -166,7 +166,7 @@ export const GRAMMAR: GrammarConcept[] = [
         meaning: 'Where are you?',
         answer: 'ہیں',
         options: ['ہیں', 'ہے', 'ہوں', 'ہو'],
-        because: 'آپ (aap) takes the plural-polite ہیں (hain).',
+        because: 'آپ (aap) takes the plural polite form ہیں (hain).',
       },
     ],
   },
@@ -204,7 +204,7 @@ export const GRAMMAR: GrammarConcept[] = [
         meaning: 'a good girl',
         answer: 'اچھی',
         options: ['اچھی', 'اچھا', 'اچھے', 'اچھو'],
-        because: 'لڑکی (laṛki) is feminine, so the adjective ends in ‑ی (‑i).',
+        because: 'لڑکی (laṛki) is feminine, so the adjective ends in ی (i).',
       },
       {
         id: 'g-gender-d2',
@@ -213,7 +213,7 @@ export const GRAMMAR: GrammarConcept[] = [
         meaning: 'a big house',
         answer: 'بڑا',
         options: ['بڑا', 'بڑی', 'بڑے', 'بڑیاں'],
-        because: 'گھر (ghar) is masculine singular, so the adjective ends in ‑ا (‑a).',
+        because: 'گھر (ghar) is masculine singular, so the adjective ends in ا (a).',
       },
     ],
   },
@@ -256,7 +256,7 @@ export const GRAMMAR: GrammarConcept[] = [
         meaning: 'I have two books',
         answer: 'کتابیں',
         options: ['کتابیں', 'کتاب', 'کتابوں', 'کتابیاں'],
-        because: 'کتاب (kitaab) is feminine and ends in a consonant, so the plural adds ‑یں (‑eñ).',
+        because: 'کتاب (kitaab) is feminine and ends in a consonant, so the plural adds یں (eñ).',
       },
       {
         id: 'g-plur-d2',
@@ -265,7 +265,7 @@ export const GRAMMAR: GrammarConcept[] = [
         meaning: 'There are three boys in the garden',
         answer: 'لڑکے',
         options: ['لڑکے', 'لڑکا', 'لڑکی', 'لڑکوں'],
-        because: 'Masculine nouns ending in ‑ا (‑a) take ‑ے (‑e) in the plural.',
+        because: 'Masculine nouns ending in ا (a) take ے (e) in the plural.',
       },
     ],
   },
@@ -274,7 +274,7 @@ export const GRAMMAR: GrammarConcept[] = [
   {
     id: 'g-possess',
     title: 'Possession: ka, ki, ke',
-    summary: "Urdu's version of apostrophe-s",
+    summary: "Urdu's way of saying whose",
     level: 'elementary',
     explain: [
       'To say "X\'s Y", put کا (ka) between them: علی کا گھر (Ali ka ghar): "Ali\'s house".',
@@ -465,7 +465,7 @@ export const GRAMMAR: GrammarConcept[] = [
   {
     id: 'g-questions',
     title: 'Asking questions',
-    summary: 'The k- words: who, what, where, when, why',
+    summary: 'The question words: who, what, where, when, why',
     level: 'elementary',
     explain: [
       'Almost every Urdu question word begins with k‑, which makes them easy to spot: کون (kaun, who), کیا (kya, what), کہاں (kahaañ, where), کب (kab, when), کیوں (kyoñ, why), کیسے (kaise, how), کتنا (kitna, how much), کون سا (kaun sa, which).',
@@ -558,7 +558,7 @@ export const GRAMMAR: GrammarConcept[] = [
       {
         urdu: 'وہ محنتی ہے لیکن خاموش ہے',
         roman: 'wo mehnati hai lekin khaamosh hai',
-        meaning: 'He is hard-working but quiet',
+        meaning: 'He is hardworking but quiet',
       },
     ],
     drills: [
@@ -615,7 +615,7 @@ export const GRAMMAR: GrammarConcept[] = [
         meaning: 'She reads a book every day',
         answer: 'تی',
         options: ['تی', 'تا', 'تے', 'تیں'],
-        because: 'The subject is feminine singular → ‑تی (‑ti).',
+        because: 'The subject is feminine singular, so the verb ends in تی (ti).',
       },
       {
         id: 'g-pres-d2',
@@ -624,7 +624,7 @@ export const GRAMMAR: GrammarConcept[] = [
         meaning: 'We speak Urdu',
         answer: 'تے',
         options: ['تے', 'تا', 'تی', 'تیں'],
-        because: 'Plural subjects take ‑تے (‑te) with ہیں (hain).',
+        because: 'Plural subjects take تے (te) with ہیں (hain).',
       },
     ],
   },
@@ -720,7 +720,7 @@ export const GRAMMAR: GrammarConcept[] = [
         meaning: 'She will come tomorrow',
         answer: 'گی',
         options: ['گی', 'گا', 'گے', 'گیں'],
-        because: 'A feminine subject takes ‑گی (‑gi).',
+        because: 'A feminine subject takes گی (gi).',
       },
     ],
   },
@@ -935,7 +935,7 @@ export const GRAMMAR: GrammarConcept[] = [
         meaning: 'Please listen (polite)',
         answer: 'یے',
         options: ['یے', 'و', 'تا', 'گا'],
-        because: 'The polite imperative for آپ (aap) ends in ‑یے (‑iye).',
+        because: 'The polite imperative for آپ (aap) ends in یے (iye).',
       },
     ],
   },

@@ -144,7 +144,7 @@ export const LETTERS: Letter[] = [
     meaning: 'tomato',
     emoji: '🍅',
     group: 1,
-    note: 'A small ط (to\'e)-like mark above marks the retroflex "hard" t, curl the tongue back.',
+    note: 'A small mark above, shaped like ط (to\'e), marks the retroflex "hard" t. Curl the tongue back.',
   },
 
   // ---- Group 2 -----------------------------------------------------------
@@ -226,7 +226,7 @@ export const LETTERS: Letter[] = [
     meaning: 'heart',
     emoji: '❤️',
     group: 3,
-    note: 'A soft angled stroke. Non-joining, the next letter starts fresh.',
+    note: 'A soft angled stroke. It never joins forward, so the next letter starts fresh.',
   },
   {
     id: 'Daal',
@@ -239,7 +239,7 @@ export const LETTERS: Letter[] = [
     meaning: 'box',
     emoji: '📦',
     group: 3,
-    note: 'Daal with the retroflex mark, the hard, curled-tongue d.',
+    note: 'Daal with the retroflex mark, the hard d made with the tongue curled back.',
   },
   {
     id: 'zaal',
@@ -399,7 +399,7 @@ export const LETTERS: Letter[] = [
     meaning: 'glasses',
     emoji: '👓',
     group: 5,
-    note: 'A shape-shifter, its four forms look very different. In Urdu it is not a throat sound: it usually just carries a vowel, or is silent.',
+    note: 'It shifts shape completely, so its four forms look very different. In Urdu it is not a throat sound: it usually just carries a vowel, or is silent.',
   },
   {
     id: 'ghain',
@@ -534,7 +534,7 @@ export const LETTERS: Letter[] = [
     meaning: 'time',
     emoji: '⏰',
     group: 7,
-    note: 'A round head with a tail. Non-joining, and doubles as the vowels o and u.',
+    note: 'A round head with a tail. It never joins forward, and doubles as the vowels o and u.',
   },
 
   // ---- Group 8: the h family & vowely ends ------------------------------
@@ -553,7 +553,7 @@ export const LETTERS: Letter[] = [
   },
   {
     id: 'do-chashmi-he',
-    name: 'do-chashmī he',
+    name: 'do chashmī he',
     sound: 'h (aspirate)',
     connects: true,
     forms: connector('ھ'),
@@ -562,7 +562,7 @@ export const LETTERS: Letter[] = [
     meaning: 'food',
     emoji: '🍲',
     group: 8,
-    note: 'The "two-eyed" h. It never stands alone in meaning, it aspirates the letter before it (k→kh, b→bh).',
+    note: 'The h with two eyes. It never stands alone in meaning, it aspirates the letter before it (k→kh, b→bh).',
   },
   {
     id: 'hamza',

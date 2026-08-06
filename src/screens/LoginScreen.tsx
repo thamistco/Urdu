@@ -102,7 +102,7 @@ export function LoginScreen() {
                 decoration or it can afford saying what the app is, and the
                 ghost button is already distinct enough to separate itself. */}
             <Txt className="mb-3 text-center text-[13px] leading-5 text-paper/70">
-              The whole language, not a phrasebook — the alphabet, the words, the grammar and the sound of it.
+              The whole language, not a phrasebook. The alphabet, the words, the grammar and the sound of it.
             </Txt>
             <View className="gap-2.5">
               <ProviderButton
@@ -130,8 +130,8 @@ export function LoginScreen() {
 
           {!authConfigured && !note && (
             <Reveal delay={160}>
-              <Txt className="mt-3 text-center text-[11px] leading-4 text-paper/40">
-                Sign-in isn't ready — your progress stays on this device.
+              <Txt className="mt-3 text-center text-[11px] leading-4 text-paper/70">
+                Signing in isn't ready yet. Your progress stays on this device.
               </Txt>
             </Reveal>
           )}
