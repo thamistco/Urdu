@@ -110,7 +110,7 @@ export function TrackChooser({ value, onChange }: { value: LearnTrack; onChange:
           not a decision you are stuck with. The long version said the same thing
           in three clauses and was the first wall of text on the screen. */}
       <Txt className="mb-4 text-xs leading-5 text-paper/55">
-        All {TOTAL_LESSON_COUNT} lessons are built around this. You can change it any time in Settings — nothing you
+        All {TOTAL_LESSON_COUNT} lessons are built around this. You can change it any time in Settings, and nothing you
         have learned is lost.
       </Txt>
 

@@ -128,20 +128,48 @@ for (const file of walk(SRC)) {
 
   // ---- JSX text nodes: the words between the tags ------------------------
   //
-  // A text node here is a run between `>` and `<` that holds at least one
-  // letter and no braces. The brace test is what keeps `{value}` and every
-  // other expression out; the letter test drops punctuation-only runs.
+  // A text node is a run between `>` and `<`. Interpolations are cut out of it
+  // before the run is judged, rather than the run being thrown away for
+  // containing one: the first version required no braces at all, so
+  // "All {TOTAL_LESSON_COUNT} lessons are built around this. You can change it
+  // any time in Settings — nothing you have learned is lost." was not a
+  // sentence as far as this check was concerned. A single `{}` anywhere hid
+  // the whole paragraph.
   //
   // Only `.tsx`. Run against plain TypeScript it matches arrow functions and
   // comparisons instead — `w.roman.replace(/[^a-z]/gi, '').length` was reported
   // as a line of prose, because `>` … `<` is also just two operators.
-  const jsxNodes = file.endsWith('.tsx') ? src.matchAll(/>([^<>{}]*[A-Za-z][^<>{}]*)</g) : [];
+  const jsxNodes = file.endsWith('.tsx') ? src.matchAll(/>([^<>]*)</g) : [];
   for (const m of jsxNodes) {
-    const text = m[1];
+    const text = m[1].replace(/\{[^{}]*\}/g, ' ');
     if (!DASH.test(text)) continue;
     // A run of only whitespace and a dash is a divider, not a sentence.
     if (!/[A-Za-z]{2}/.test(text)) continue;
+    // …and code is not prose. Dropping the no-braces rule above let this match
+    // TypeScript as well: `Ref<ScrollView>` and every generic in the file put a
+    // `>` and a `<` around ordinary source. A sentence in this app never
+    // contains a semicolon, an equals sign, a bracket or a backtick, and every
+    // run of code longer than a few characters contains one of them.
+    if (/[;=[\]`]/.test(text)) continue;
     add(file, lineOf(src, m.index), 'jsx', text);
+  }
+
+  // ---- named copy props: label="…" and hint="…" ---------------------------
+  //
+  // The third place copy lives, and the one this check was blind to for its
+  // first run. A settings row takes its words as attributes rather than as
+  // children, so `hint="Off by default — the Urdu is a recorded voice"` sat in
+  // plain sight through a green pipeline. It was found by looking at the
+  // screen, which is the thing a check is supposed to make unnecessary.
+  //
+  // Both quoting styles: `hint="…"` and `hint={'…'}`.
+  if (file.endsWith('.tsx')) {
+    for (const m of src.matchAll(/(\w+)=\{?\s*(['"`])((?:\\.|(?!\2)[^\\])*)\2\s*\}?/g)) {
+      const [, key, , value] = m;
+      if (!COPY_KEYS.has(key)) continue;
+      if (!DASH.test(value)) continue;
+      add(file, lineOf(src, m.index), `${key}=`, value);
+    }
   }
 
   // ---- named copy fields -------------------------------------------------
