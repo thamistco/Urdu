@@ -289,7 +289,7 @@ export function SettingsScreen() {
                 warning that the second one was coming. */}
             <Row
               label="Read the meaning in English"
-              hint="After a correct answer, your device's English voice reads the translation. Off by default — the Urdu is a recorded voice, this one is not."
+              hint="After a correct answer, your device's English voice reads the translation. It is off by default, because the Urdu is a recorded voice and this one is not."
               value={s.speakMeaning}
               onChange={s.setSpeakMeaning}
             />

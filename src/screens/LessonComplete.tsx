@@ -83,7 +83,7 @@ export function LessonComplete({
                   }}
                 >
                   <Illustration name="flame" tile={false} size={26} />
-                  <Bold style={{ color: palette.flameLight }}>{result.streak}-day streak. Keep it alight!</Bold>
+                  <Bold style={{ color: palette.flameLight }}>{result.streak} days in a row. Keep it alight!</Bold>
                 </View>
               </Reveal>
             )}
