@@ -223,8 +223,13 @@ for (const t of tokens) {
  *
  *   ground            /40     /50     /55     /60
  *   ink               3.51✗   4.74✓   5.47✓   6.27✓
- *   card ink800       3.43✗   4.57✓   5.22✓   5.94✓
- *   card ink700       3.23✗   4.20✗   4.75✓   5.35✓
+ *   card ink800       3.43✗   4.57✓   5.23✓   5.94✓
+ *   card ink700       3.24✗   4.21✗   4.76✓   5.36✓
+ *
+ * Re-measured after the card surfaces were rotated onto the background
+ * photograph's hue: the rotation was solved to hold each token's luminance, and
+ * the whole table moved by at most a hundredth. That is what "luminance matched"
+ * buys — the colour of the app changed and none of its legibility did.
  *
  * 55 is the lowest step that clears 4.5:1 on all three, so it is the floor. It
  * was set by finding 57 strings below it, in seventeen files, every one of them

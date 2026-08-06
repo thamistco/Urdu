@@ -29,10 +29,37 @@
 export const palette = {
   // base — a warm espresso-black, the ground just after the sun drops.
   // Chosen over the deep purple it replaces specifically to avoid violet.
+  //
+  // `ink` stays exactly here. It is not only a colour any more: `evening-dusk.jpg`
+  // is baked with every pixel composited toward this hex, and the runtime scrims
+  // tint toward it too. Move it and the picture and the scrim over it stop being
+  // the same dark.
   ink: '#211712',
-  ink800: '#2C1F17',
-  ink700: '#3D2A1E',
-  ink600: '#523822',
+
+  /**
+   * The card surfaces, in the photograph's own hue.
+   *
+   * These were orange-brown — hue 23 to 28 at around half saturation — from
+   * before the background was a photograph. Once the picture went behind
+   * everything the mismatch was visible rather than theoretical: the composited
+   * backdrop behind a card measures hue 349 at 28% saturation, a dusty
+   * plum-rose, so a card sitting on it was a different material rather than a
+   * lit part of the same one.
+   *
+   * So the ramp was rotated onto the picture, to hue 350 at 32%: close enough to
+   * belong to it, a little warmer and a little stronger so a card still reads as
+   * a surface and not as a patch of sky. The result is oxblood, which is where
+   * the note above always said this palette shades dark through.
+   *
+   * The rotation is luminance matched. Each new value was solved for the
+   * relative luminance of the one it replaces, so the largest move is 0.6% and
+   * every contrast figure measured against these surfaces — the legibility floor
+   * table in `check-theme.js`, the exercise chips, the 6:1 scenery rule — is
+   * still the number it was. Hue changed; nothing about legibility did.
+   */
+  ink800: '#2C1E20',
+  ink700: '#3C292C',
+  ink600: '#50373B',
 
   /**
    * `paper` is a *text* colour: the light ink used for body copy on the dark
