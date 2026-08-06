@@ -152,19 +152,19 @@ const CORE_WORDS: Word[] = [
   { id: 'w-dadi', urdu: 'دادی', roman: 'daadi', meaning: 'grandmother', emoji: '👵', topic: 'family' },
   { id: 'w-beta', urdu: 'بیٹا', roman: 'beṭa', meaning: 'son', emoji: '🧒', topic: 'family' },
   { id: 'w-beti', urdu: 'بیٹی', roman: 'beṭi', meaning: 'daughter', emoji: '👧', topic: 'family' },
-  { id: 'w-chachi', urdu: 'چچی', roman: 'chachi', meaning: "father's brother's wife", emoji: '👩', topic: 'family' },
+  { id: 'w-chachi', urdu: 'چچی', roman: 'chachi', meaning: 'father’s brother’s wife', emoji: '👩', topic: 'family' },
   {
     id: 'w-phupa',
     urdu: 'پھوپھا',
     roman: 'phoopha',
-    meaning: "father's sister's husband",
+    meaning: 'father’s sister’s husband',
     emoji: '👨',
     topic: 'family',
   },
-  { id: 'w-mami', urdu: 'ممانی', roman: 'mumaani', meaning: "mother's brother's wife", emoji: '👩', topic: 'family' },
+  { id: 'w-mami', urdu: 'ممانی', roman: 'mumaani', meaning: 'mother’s brother’s wife', emoji: '👩', topic: 'family' },
   // خالو completes the set: the course taught all four blood aunts and uncles but
   // only three of their spouses, so خالہ was the one aunt whose husband had no name.
-  { id: 'w-khalu', urdu: 'خالو', roman: 'khaaloo', meaning: "mother's sister's husband", emoji: '🧑‍🦰', topic: 'family' },
+  { id: 'w-khalu', urdu: 'خالو', roman: 'khaaloo', meaning: 'mother’s sister’s husband', emoji: '🧑‍🦰', topic: 'family' },
   { id: 'w-cousin-m', urdu: 'کزن', roman: 'kazin', meaning: 'cousin', emoji: '🧑', topic: 'family' },
   { id: 'w-parivaar', urdu: 'خاندان', roman: 'khaandaan', meaning: 'family', emoji: '👪', topic: 'family' },
   { id: 'w-bacche', urdu: 'بچے', roman: 'bachche', meaning: 'children', emoji: '🧒', topic: 'family' },
@@ -186,9 +186,9 @@ const CORE_WORDS: Word[] = [
     emoji: '🏠',
     topic: 'family',
   },
-  { id: 'w-saas', urdu: 'ساس', roman: 'saas', meaning: "spouse's mother", emoji: '👵', topic: 'family' },
-  { id: 'w-sasur', urdu: 'سسر', roman: 'sasur', meaning: "spouse's father", emoji: '👴', topic: 'family' },
-  { id: 'w-bahnoi', urdu: 'بہنوئی', roman: 'bahnoi', meaning: "sister's husband", emoji: '🤵', topic: 'family' },
+  { id: 'w-saas', urdu: 'ساس', roman: 'saas', meaning: 'spouse’s mother', emoji: '👵', topic: 'family' },
+  { id: 'w-sasur', urdu: 'سسر', roman: 'sasur', meaning: 'spouse’s father', emoji: '👴', topic: 'family' },
+  { id: 'w-bahnoi', urdu: 'بہنوئی', roman: 'bahnoi', meaning: 'sister’s husband', emoji: '🤵', topic: 'family' },
 
   // food
   { id: 'w-roti', urdu: 'روٹی', roman: 'roṭi', meaning: 'bread', emoji: '🫓', topic: 'food' },
@@ -1249,7 +1249,7 @@ const CORE_WORDS: Word[] = [
   { id: 'w-shakhs', urdu: 'شخص', roman: 'shakhs', meaning: 'individual', emoji: '🧍', topic: 'first-words' },
   { id: 'w-jagah', urdu: 'جگہ', roman: 'jagah', meaning: 'place', emoji: '📍', topic: 'places' },
   { id: 'w-fon', urdu: 'فون', roman: 'fon', meaning: 'phone', emoji: '☎️', topic: 'home' },
-  { id: 'w-baje', urdu: 'بجے', roman: 'baje', meaning: "o'clock", emoji: '🕙', topic: 'time' },
+  { id: 'w-baje', urdu: 'بجے', roman: 'baje', meaning: 'o’clock', emoji: '🕙', topic: 'time' },
 
   // things said
   { id: 'w-hello', urdu: 'ہیلو', roman: 'hello', meaning: 'hello (on the phone)', emoji: '📞', topic: 'greetings' },
@@ -1338,13 +1338,13 @@ export const PHRASES: Phrase[] = [
   { id: 'p-3', urdu: 'آپ کیسے ہیں؟', roman: 'aap kaise hain?', meaning: 'How are you?' },
   { id: 'p-4', urdu: 'میں ٹھیک ہوں', roman: 'main ṭheek hoon', meaning: 'I am well' },
   { id: 'p-5', urdu: 'شکریہ', roman: 'shukriya', meaning: 'Thank you' },
-  { id: 'p-6', urdu: 'کوئی بات نہیں', roman: 'koi baat nahiñ', meaning: "You're welcome / no problem" },
+  { id: 'p-6', urdu: 'کوئی بات نہیں', roman: 'koi baat nahiñ', meaning: 'You’re welcome / no problem' },
   { id: 'p-7', urdu: 'معاف کیجیے', roman: 'maaf keejiye', meaning: 'Excuse me / sorry' },
   { id: 'p-8', urdu: 'خدا حافظ', roman: 'khuda haafiz', meaning: 'Goodbye', pronounce: 'خُدا حافِظ' },
   { id: 'p-9', urdu: 'پھر ملیں گے', roman: 'phir milenge', meaning: 'See you again' },
 
   // introductions
-  { id: 'p-10', urdu: 'آپ کا نام کیا ہے؟', roman: 'aap ka naam kya hai?', meaning: "What's your name?" },
+  { id: 'p-10', urdu: 'آپ کا نام کیا ہے؟', roman: 'aap ka naam kya hai?', meaning: 'What’s your name?' },
   { id: 'p-11', urdu: 'میرا نام ... ہے', roman: 'mera naam ... hai', meaning: 'My name is ...' },
   { id: 'p-12', urdu: 'آپ سے مل کر خوشی ہوئی', roman: 'aap se mil kar khushi hui', meaning: 'Nice to meet you' },
   { id: 'p-13', urdu: 'آپ کہاں سے ہیں؟', roman: 'aap kahaañ se hain?', meaning: 'Where are you from?' },
@@ -1354,7 +1354,7 @@ export const PHRASES: Phrase[] = [
   { id: 'p-15', urdu: 'یہ کیا ہے؟', roman: 'ye kya hai?', meaning: 'What is this?' },
   { id: 'p-16', urdu: 'یہ کتنے کا ہے؟', roman: 'ye kitne ka hai?', meaning: 'How much is this?' },
   { id: 'p-17', urdu: 'مجھے یہ چاہیے', roman: 'mujhe ye chaahiye', meaning: 'I need / want this' },
-  { id: 'p-18', urdu: 'مجھے سمجھ نہیں آئی', roman: 'mujhe samajh nahiñ aayi', meaning: "I don't understand" },
+  { id: 'p-18', urdu: 'مجھے سمجھ نہیں آئی', roman: 'mujhe samajh nahiñ aayi', meaning: 'I don’t understand' },
   { id: 'p-19', urdu: 'دوبارہ کہیں', roman: 'dobaara kaheñ', meaning: 'Please say it again' },
   { id: 'p-20', urdu: 'آہستہ بولیں', roman: 'aahista boleñ', meaning: 'Please speak slowly' },
   { id: 'p-21', urdu: 'بیت الخلا کہاں ہے؟', roman: 'bait-ul-khala kahaañ hai?', meaning: 'Where is the toilet?' },

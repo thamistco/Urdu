@@ -50,6 +50,20 @@ const SRC = path.join(ROOT, 'src');
 const DASH = /[-‑‒–—―]/;
 
 /**
+ * Typewriter quotes, where the app has already chosen typographic ones.
+ *
+ * This is a consistency rule rather than a taste one. The copy was using curly
+ * quotation marks for quoting — `sounds like “aa”` — and straight apostrophes
+ * for contractions in the same sentence, which is the one combination that
+ * looks like a mistake rather than a style. `letters.ts` had both forms of the
+ * same transliteration three lines apart: `to’e` in one entry and `to\'e` in
+ * another.
+ *
+ * So: ’ for apostrophes, “ ” for quotes, everywhere a learner reads.
+ */
+const TYPEWRITER = /['"]/;
+
+/**
  * Object keys whose values a learner reads.
  *
  * Listed rather than inferred, because the alternative — checking every string
@@ -142,7 +156,8 @@ for (const file of walk(SRC)) {
   const jsxNodes = file.endsWith('.tsx') ? src.matchAll(/>([^<>]*)</g) : [];
   for (const m of jsxNodes) {
     const text = m[1].replace(/\{[^{}]*\}/g, ' ');
-    if (!DASH.test(text)) continue;
+    const bad = DASH.test(text) ? 'dash' : TYPEWRITER.test(text) ? 'quote' : null;
+    if (!bad) continue;
     // A run of only whitespace and a dash is a divider, not a sentence.
     if (!/[A-Za-z]{2}/.test(text)) continue;
     // …and code is not prose. Dropping the no-braces rule above let this match
@@ -151,7 +166,11 @@ for (const file of walk(SRC)) {
     // contains a semicolon, an equals sign, a bracket or a backtick, and every
     // run of code longer than a few characters contains one of them.
     if (/[;=[\]`]/.test(text)) continue;
-    add(file, lineOf(src, m.index), 'jsx', text);
+    // A brace left over after the balanced ones were stripped means the run
+    // straddles an expression rather than containing one: `{visible.has('x') &&`
+    // is the opening half of a conditional, not a sentence with a quote in it.
+    if (/[{}]/.test(text)) continue;
+    add(file, lineOf(src, m.index), `jsx ${bad}`, text);
   }
 
   // ---- named copy props: label="…" and hint="…" ---------------------------
@@ -165,35 +184,40 @@ for (const file of walk(SRC)) {
   // Both quoting styles: `hint="…"` and `hint={'…'}`.
   if (file.endsWith('.tsx')) {
     for (const m of src.matchAll(/(\w+)=\{?\s*(['"`])((?:\\.|(?!\2)[^\\])*)\2\s*\}?/g)) {
-      const [, key, , value] = m;
+      const [, key, , raw] = m;
       if (!COPY_KEYS.has(key)) continue;
-      if (!DASH.test(value)) continue;
-      add(file, lineOf(src, m.index), `${key}=`, value);
+      const value = raw.replace(/\\(['"])/g, '$1');
+      const bad = DASH.test(value) ? 'dash' : TYPEWRITER.test(value) ? 'quote' : null;
+      if (!bad) continue;
+      add(file, lineOf(src, m.index), `${key}= ${bad}`, value);
     }
   }
 
   // ---- named copy fields -------------------------------------------------
   if (KEYS_NOT_COPY.some((d) => file.includes(d))) continue;
   for (const m of src.matchAll(/(\w+)\s*:\s*(['"`])((?:\\.|(?!\2)[^\\])*)\2/g)) {
-    const [, key, , value] = m;
+    const [, key, , raw] = m;
     if (!COPY_KEYS.has(key)) continue;
-    if (!DASH.test(value)) continue;
-    add(file, lineOf(src, m.index), key, value);
+    const value = raw.replace(/\\(['"])/g, '$1');
+    const bad = DASH.test(value) ? 'dash' : TYPEWRITER.test(value) ? 'quote' : null;
+    if (!bad) continue;
+    add(file, lineOf(src, m.index), `${key} ${bad}`, value);
   }
 }
 
 if (!findings.length) {
-  console.log(`check:writing — no dashes in any user-facing string.`);
+  console.log(`check:writing — no dashes and no typewriter quotes in any user-facing string.`);
   process.exit(0);
 }
 
-console.error(`check:writing — ${findings.length} user-facing string(s) contain a dash:\n`);
+console.error(`check:writing — ${findings.length} user-facing string(s) break the house style:\n`);
 for (const f of findings.slice(0, 60)) {
   console.error(`  ${f.file}:${f.line}  [${f.kind}]  ${f.text}`);
 }
 if (findings.length > 60) console.error(`  … and ${findings.length - 60} more`);
 console.error(
-  `\n  Rewrite them. A dash stands in for whichever of a comma, a colon, a semicolon\n` +
-    `  or a full stop the sentence actually needed; choosing one is the fix.`
+  `\n  A dash stands in for whichever of a comma, a colon, a semicolon or a full stop\n` +
+    `  the sentence actually needed; choosing one is the fix. A straight quote should be\n` +
+    `  ’ for an apostrophe and “ ” for a quotation, which is what the rest of the copy uses.`
 );
 process.exit(1);

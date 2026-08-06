@@ -120,7 +120,7 @@ export function LessonComplete({
 
           <Reveal delay={420}>
             <Txt className="mb-4 text-center text-xs text-paper/55">
-              Come back tomorrow. We'll bring back what you missed first.
+              Come back tomorrow. We’ll bring back what you missed first.
             </Txt>
             <Button onPress={onHome}>Continue</Button>
           </Reveal>

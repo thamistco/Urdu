@@ -116,7 +116,7 @@ const GOALS: { key: Goal; label: string; desc: string }[] = [
   { key: 'family', label: 'Speak with family', desc: 'Parents, grandparents, relatives back home' },
   { key: 'read', label: 'Read & write it', desc: 'The script itself: Nastaliq' },
   { key: 'heritage', label: 'Reconnect with heritage', desc: 'Culture, faith, identity' },
-  { key: 'curious', label: "I'm just curious", desc: 'No particular reason' },
+  { key: 'curious', label: 'I’m just curious', desc: 'No particular reason' },
 ];
 
 /**
@@ -181,7 +181,7 @@ const PLACEMENT = [
     ],
   },
   {
-    q: 'What does "ghar" mean?',
+    q: 'What does “ghar” mean?',
     sub: 'ghar',
     kind: 'roman',
     options: [
@@ -192,7 +192,7 @@ const PLACEMENT = [
     ],
   },
   {
-    q: 'What does "paani" mean?',
+    q: 'What does “paani” mean?',
     sub: 'paani',
     kind: 'roman',
     options: [
@@ -203,7 +203,7 @@ const PLACEMENT = [
     ],
   },
   {
-    q: 'What does "shukriya" mean?',
+    q: 'What does “shukriya” mean?',
     sub: 'shukriya',
     kind: 'roman',
     options: [
@@ -214,7 +214,7 @@ const PLACEMENT = [
     ],
   },
   {
-    q: 'What does "maañ" mean?',
+    q: 'What does “maañ” mean?',
     sub: 'maañ',
     kind: 'roman',
     options: [
@@ -402,7 +402,7 @@ export function OnboardingScreen() {
             </View>
 
             <Button className="w-full max-w-[300px]" onPress={() => setStep('goal')}>
-              Let's start
+              Let’s start
             </Button>
             {/* The reassurances, not the pitch — and sentences rather than a
                 dotted list, because "Roman track" told nobody anything. It is
@@ -419,7 +419,7 @@ export function OnboardingScreen() {
               free.
             </Txt>
             <Txt className="mt-2.5 max-w-[320px] text-center text-[12.5px] leading-5 text-paper/80">
-              New to the Urdu script? Learn the whole course in English letters instead, and switch over whenever you're
+              New to the Urdu script? Learn the whole course in English letters instead, and switch over whenever you’re
               ready.
             </Txt>
           </View>
@@ -561,11 +561,11 @@ export function OnboardingScreen() {
     // Drawn art, like every other choice in the app. These two were the last
     // raw emoji on the screen a learner sees first.
     const OPTIONS: { key: Background; label: string; desc: string; icon: IconName }[] = [
-      { key: 'new', label: "I'm starting from scratch", desc: 'Urdu is new to me, spoken and written', icon: 'sprout' },
+      { key: 'new', label: 'I’m starting from scratch', desc: 'Urdu is new to me, spoken and written', icon: 'sprout' },
       {
         key: 'speaker',
         label: 'I already speak or understand it',
-        desc: "I grew up around it, but I can't read the script",
+        desc: 'I grew up around it, but I can’t read the script',
         icon: 'speechBubble',
       },
     ];
@@ -575,7 +575,7 @@ export function OnboardingScreen() {
           <Dots of="background" />
           <Heading className="mb-1 text-2xl">Do you already know some Urdu?</Heading>
           <Txt className="mb-6 text-sm text-paper/55">
-            If you already understand it spoken, we'll skip the basic words you know and get you to the script faster.
+            If you already understand it spoken, we’ll skip the basic words you know and get you to the script faster.
           </Txt>
           <View className="gap-3">
             {OPTIONS.map((o) => {
@@ -747,7 +747,7 @@ export function OnboardingScreen() {
       <Reveal style={{ flex: 1 }}>
         <View className="flex-1 items-center justify-center">
           <Illustration name="crescent" tile={false} size={64} />
-          <Display className="mb-2 mt-4 text-3xl">You're all set</Display>
+          <Display className="mb-2 mt-4 text-3xl">You’re all set</Display>
           <GeoDivider />
           <View
             className="my-4 w-full rounded-2xl border p-5"
@@ -758,7 +758,7 @@ export function OnboardingScreen() {
             </Eyebrow>
             <Bold className="text-lg">{lvlName}</Bold>
             <Txt className="mt-1 text-sm text-paper/60">
-              We'll begin exactly where you are, and the words you miss will come back first.
+              We’ll begin exactly where you are, and the words you miss will come back first.
             </Txt>
           </View>
           {basicsSkips.length > 0 && (

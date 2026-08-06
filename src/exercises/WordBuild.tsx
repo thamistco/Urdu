@@ -38,7 +38,7 @@ function diagnoseBuild(assembled: string[], target: string[]): string | null {
     if (ai === assembled.length && missing.length > 0) {
       const names = missing.map((c) => LETTER_NAME[c] ?? c).join(', ');
       const glyphs = missing.join('');
-      return `Missing ${glyphs} (${names}): without ${missing.length === 1 ? 'it' : 'them'}, this doesn't spell the word.`;
+      return `Missing ${glyphs} (${names}): without ${missing.length === 1 ? 'it' : 'them'}, this doesn’t spell the word.`;
     }
   }
 
