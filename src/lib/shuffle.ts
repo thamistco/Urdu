@@ -37,6 +37,50 @@ export function shuffle<T>(items: readonly T[]): T[] {
   return out;
 }
 
+/**
+ * The same shuffle, but the same every time for a given key.
+ *
+ * There are two different jobs here that both looked like "shuffle" and were
+ * both served by the random one above, which is right for exactly one of them.
+ *
+ *  - **Presentation** — the order of the options under a question. This must be
+ *    random, and the note above is about how badly it goes when it is not.
+ *  - **Content** — *which* words a lesson teaches. This must be fixed, and it
+ *    was not: `shuffle(pool).slice(0, n)` reran on every visit, so a lesson
+ *    showed a different handful each time it was opened. A learner who finished
+ *    "First words" and came back found words they had never seen, in a lesson
+ *    the app had already marked complete. The lesson was not teaching more, it
+ *    was teaching *different*.
+ *
+ * So content selection goes through here instead, keyed on something stable
+ * about the lesson. It is still Fisher-Yates and still uniform across keys; it
+ * is simply drawn from a generator that starts in the same place every time.
+ *
+ * mulberry32, seeded with a 32 bit FNV-1a hash of the key. Both are chosen for
+ * being short enough to read rather than for statistical strength: nothing here
+ * needs to resist an adversary, it needs to give the same lesson twice.
+ */
+export function seededShuffle<T>(items: readonly T[], key: string): T[] {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < key.length; i++) {
+    h ^= key.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  let a = h >>> 0;
+  const next = () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(next() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
 /** One item, uniformly. Returns undefined for an empty list rather than NaN. */
 export function pickOne<T>(items: readonly T[]): T | undefined {
   if (!items.length) return undefined;
