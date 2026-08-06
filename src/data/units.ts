@@ -226,7 +226,7 @@ export const UNITS: Unit[] = [
     id: 'u3',
     level: 'beginner',
     color: ROSE,
-    title: 'Unit 3 · The Non-Joiners',
+    title: 'Unit 3 · The Letters That Never Join',
     subtitle: 'Letters that break the flow, and what people do',
     romanTitle: 'Unit 3 · Work & School',
     romanSubtitle: 'Jobs, the classroom, and how much of things',

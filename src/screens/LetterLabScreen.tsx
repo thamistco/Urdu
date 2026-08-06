@@ -75,7 +75,7 @@ export function LetterLabScreen() {
             </Eyebrow>
             {!letter.connects && (
               <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: withAlpha(palette.rose, 0.2) }}>
-                <Eyebrow style={{ color: palette.roseLight, fontSize: 8 }}>Non-joining</Eyebrow>
+                <Eyebrow style={{ color: palette.roseLight, fontSize: 8 }}>Never joins forward</Eyebrow>
               </View>
             )}
           </View>

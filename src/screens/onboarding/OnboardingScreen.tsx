@@ -419,8 +419,8 @@ export function OnboardingScreen() {
               free.
             </Txt>
             <Txt className="mt-2.5 max-w-[320px] text-center text-[12.5px] leading-5 text-paper/80">
-              New to the Urdu script? Learn the whole course in English letters instead — and switch over whenever
-              you're ready.
+              New to the Urdu script? Learn the whole course in English letters instead, and switch over whenever you're
+              ready.
             </Txt>
           </View>
         </Reveal>
@@ -765,7 +765,7 @@ export function OnboardingScreen() {
               style={{ borderColor: withAlpha(palette.jade, 0.3), backgroundColor: withAlpha(palette.jade, 0.08) }}
             >
               <Eyebrow style={{ color: palette.jade }} className="mb-1">
-                Fast-tracked
+                Moved ahead
               </Eyebrow>
               <Txt className="mt-1 text-sm text-paper/60">
                 The basic words you already showed you know are marked done, so your path leads straight to the script

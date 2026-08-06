@@ -3,7 +3,7 @@ import { pack, type TopicPack } from './types';
 /** People: relatives, describing others, relationships, life events. */
 export const PEOPLE_PACKS: TopicPack[] = [
   pack(
-    { id: 'family-more', title: 'More Family', icon: '👪', blurb: 'Uncles, aunts, cousins and in-laws.', level: 'beginner' },
+    { id: 'family-more', title: 'More Family', icon: '👪', blurb: 'Uncles, aunts, cousins and the family you marry into.', level: 'beginner' },
     [
       ['w-chacha', 'چچا', 'chacha', "father's brother", '👨‍🦱'],
       ['w-mamu', 'ماموں', 'maamooñ', "mother's brother", '🧔'],

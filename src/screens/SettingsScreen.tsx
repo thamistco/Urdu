@@ -150,8 +150,8 @@ function TesterPanel() {
           }}
         >
           <Txt className="text-xs" style={{ color: palette.gold }}>
-            Tester mode is on — this is not what a learner sees. Turn both off to get the real hearts and locked path
-            back.
+            Tester mode is on, so this is not what a learner sees. Turn both off to get the real hearts and the locked
+            path back.
           </Txt>
         </View>
       )}

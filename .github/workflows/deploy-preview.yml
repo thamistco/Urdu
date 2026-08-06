@@ -78,6 +78,9 @@ jobs:
       - name: Check Roman spellings agree with the canonical table
         run: npm run check:translit
 
+      - name: Check the writing has no dashes in it
+        run: npm run check:writing
+
       - name: Check that tracing is passable
         run: npm run check:trace
 
