@@ -404,21 +404,21 @@ export function OnboardingScreen() {
             <Button className="w-full max-w-[300px]" onPress={() => setStep('goal')}>
               Let’s start
             </Button>
-            {/* The reassurances, not the pitch — and sentences rather than a
-                dotted list, because "Roman track" told nobody anything. It is
-                this project's own word for a setting, and a person who has
+            {/* One line under the button, not two. The other one listed
+                grammar, readings, conversations and review, which is what the
+                three figures above already stand for: a welcome screen that
+                says a thing twice is asking to be skipped twice.
+
+                This one stays because it is not a feature list. "Roman track"
+                is this project's own word for a setting, and a person who has
                 never opened the app cannot know it names the one thing that
                 decides whether the course is for them. Said plainly, it is the
                 answer to "so this is only for people learning the script".
 
-                Nothing here goes below 80% paper: on the dusk scene's
-                horizon glow, 75% is the WCAG AA floor, and the old value was
-                40% — under AA even on flat ink, at 3.51:1. */}
+                Nothing here goes below 80% paper: on the dusk scene's horizon
+                glow, 75% is the WCAG AA floor, and the old value was 40%,
+                under AA even on flat ink at 3.51:1. */}
             <Txt className="mt-6 max-w-[320px] text-center text-[12.5px] leading-5 text-paper/80">
-              Grammar, readings and conversations, with review that brings a word back just before you forget it. Always
-              free.
-            </Txt>
-            <Txt className="mt-2.5 max-w-[320px] text-center text-[12.5px] leading-5 text-paper/80">
               New to the Urdu script? Learn the whole course in English letters instead, and switch over whenever you’re
               ready.
             </Txt>
