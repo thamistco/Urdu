@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { View, Pressable, ActivityIndicator, useWindowDimensions } from 'react-native';
+import { View, Pressable, ActivityIndicator, useWindowDimensions, LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Screen } from '../components/Screen';
 import { Button } from '../components/Button';
 import { Reveal } from '../components/Reveal';
 import { Wordmark } from '../components/Wordmark';
-import { EveningScene, SAFE_TOP, SAFE_BOTTOM } from '../components/EveningScene';
+import { EveningScene, SAFE_TOP, SAFE_TOP_LIMIT, SAFE_BOTTOM } from '../components/EveningScene';
 import { Txt, Bold } from '../components/Text';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
@@ -72,25 +72,65 @@ export function LoginScreen() {
     if (!res.ok && res.message) setNote(res.message);
   };
 
-  const topBand = Math.max(height * SAFE_TOP - insets.top, 0);
-  // The band keeps its full height and the inset becomes padding inside it, so
-  // the content lifts off the home indicator rather than the band shrinking away
-  // from a bottom edge it was already sitting on.
-  const bottomBand = height * (1 - SAFE_BOTTOM);
+  /**
+   * The name is sized to its band, and the band grows if the name needs it.
+   *
+   * At a fixed 52 the wordmark was taller than the band on every phone shorter
+   * than about 900pt, so it overflowed upward and the ح was sliced off by the
+   * top of the screen.
+   *
+   * Two attempts failed here by assuming the block scales with its font size. It
+   * does not: rendered at 46 it is 152pt tall and at 52 it is 164, so 2pt of it
+   * follow the font and 60 do not. Those 60 are the divider and the gaps around
+   * it, and on a 568pt screen they are most of an 18% band on their own, which
+   * is why a proportional shrink kept clipping however small the multiplier got.
+   *
+   * So the band takes what the mark needs, up to the point where the picture
+   * stops being dark (`SAFE_TOP_LIMIT`), and the mark is solved for the band
+   * rather than scaled toward it.
+   */
+  const MARK_FIXED = 60;
+  const MARK_PER_PT = 2;
+  const MARK_MAX = 52;
+  const bandLimit = Math.max(height * SAFE_TOP_LIMIT - insets.top, 0);
+  const topBand = Math.max(height * SAFE_TOP - insets.top, Math.min(bandLimit, MARK_PER_PT * MARK_MAX + MARK_FIXED));
+  const markSize = Math.round(Math.max(22, Math.min(MARK_MAX, (topBand - MARK_FIXED) / MARK_PER_PT)));
+
+  /**
+   * How much of the screen the controls actually need, measured rather than
+   * assumed, and handed to the picture so its scrim can come up to meet them.
+   *
+   * `1 - SAFE_BOTTOM` is 28% of the height, which is generous at 900pt and not
+   * nearly enough at 568, where this stack ran off the bottom of the screen.
+   * Until the first layout pass reports a height there is nothing to measure,
+   * so it starts at the constant and settles on the real number immediately.
+   */
+  const [stackHeight, setStackHeight] = useState(0);
+  const onStack = (e: LayoutChangeEvent) => {
+    const h = Math.ceil(e.nativeEvent.layout.height);
+    if (h && h !== stackHeight) setStackHeight(h);
+  };
+  const needed = stackHeight + Math.max(insets.bottom, 8) + 16;
+  const safeBottom = stackHeight ? Math.max(0.4, Math.min(SAFE_BOTTOM, 1 - needed / height)) : SAFE_BOTTOM;
+  const bottomBand = height * (1 - safeBottom);
 
   return (
-    <Screen scroll={false} padded={false} backdrop={<EveningScene />}>
+    <Screen scroll={false} padded={false} backdrop={<EveningScene safeBottom={safeBottom} />}>
       <View className="flex-1">
         <View style={{ height: topBand }} className="items-center justify-end">
           <Reveal>
-            <Wordmark size={52} />
+            <Wordmark size={markSize} />
           </Reveal>
         </View>
 
         {/* The picture. Nothing may be placed here. */}
         <View className="flex-1" />
 
-        <View style={{ height: bottomBand, paddingBottom: Math.max(insets.bottom, 8) }} className="justify-center px-5">
+        <View
+          onLayout={onStack}
+          style={{ minHeight: bottomBand, paddingBottom: Math.max(insets.bottom, 8) }}
+          className="justify-center px-5"
+        >
           <Reveal delay={80}>
             {/* Two lines, where there was one that assumed its own point.
                 "Every letter, in all four of its faces" means nothing to
