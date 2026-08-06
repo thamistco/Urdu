@@ -2,16 +2,17 @@
 /**
  * Measure the scenery's contrast against the text that sits on it.
  *
- * `LatticeBackground` is behind *every* screen — lessons, grammar tables, whole
- * reading passages — so it is the one decorative thing in the app that can make
- * body copy unreadable. The file has always carried a comment promising every
- * part of it clears 6:1 against the cream text colour. Nothing checked that.
+ * Something is behind *every* screen — lessons, grammar tables, whole reading
+ * passages — so the backdrop is the one decorative thing in the app that can
+ * make body copy unreadable. Whatever it is, it carries a comment promising it
+ * clears 6:1 against the cream text colour, and for a long time nothing checked.
  *
- * It was not true. Three warm layers stack where the low cloud crosses the sun —
- * two cloud bodies and a lit crown — and alpha compositing is not additive in a
- * way anyone estimates correctly by eye: at their first values the pile-up came
- * to 4.47:1, under even the WCAG AA floor of 4.5, on a background whose comment
- * said 6. The picture looked fine. The maths was never done.
+ * It was not true of the drawn landscape this replaced. Three warm layers
+ * stacked where the low cloud crossed the sun — two cloud bodies and a lit crown
+ * — and alpha compositing is not additive in a way anyone estimates correctly by
+ * eye: the pile-up came to 4.47:1, under even the WCAG AA floor of 4.5, on a
+ * background whose comment said 6. The picture looked fine. The maths was never
+ * done.
  *
  * So this does the only thing that settles it: renders the real exported app,
  * hides every layer above the background, and reads the actual pixels.
@@ -59,13 +60,21 @@ const FLOOR = 6;
 const TEXT = [0xff, 0xee, 0xdd];
 
 /**
+ * The backdrop behind every screen that is not the front door.
+ *
+ * This used to be `svg[viewBox="0 0 400 900"]` — the drawn landscape — and when
+ * that was replaced this check failed rather than passing over a screen it
+ * could no longer see, which is the behaviour its own error message promised.
+ */
+const INTERIOR = 'img[src*="/evening-dusk."]';
+
+/**
  * How pass two finds the picture it is measuring against, per screen.
  *
- * Two screens now stand on a photograph rather than the drawn scenery, and they
- * fail in different ways: sign-in keeps its text inside two dark bands of a
- * sharp picture, and the welcome screen puts text anywhere it likes on a
- * darkened one. Measuring what is behind each run of text covers both without either
- * needing to know how the other is built.
+ * The two front screens fail in different ways: sign-in keeps its text inside
+ * two dark bands of a picture at full brightness, and the welcome screen puts
+ * text anywhere it likes on a darkened one. Measuring what is behind each run
+ * of text covers both without either needing to know how the other is built.
  */
 const SCENES = [
   { name: 'sign-in', selector: 'img[src*="/evening."]', minRuns: 6 },
@@ -275,21 +284,21 @@ async function textBoxes(page, sceneSelector) {
     photo.push({ name: scene.name, worst, runs: boxes.length });
   }
 
-  // ── Pass one: the drawn scenery, which every other screen stands on ──────
+  // ── Pass one: the scenery every other screen stands on ──────────────────
   await enterAsGuest(page, url);
 
   // Hide everything above the scenery, so what is measured is the background a
   // paragraph would actually be set on rather than whatever card covers it here.
-  const found = await page.evaluate(() => {
-    const svg = document.querySelector('svg[viewBox="0 0 400 900"]');
-    if (!svg) return false;
-    let n = svg.parentElement;
+  const found = await page.evaluate((sel) => {
+    const scene = document.querySelector(sel);
+    if (!scene) return false;
+    let n = scene.parentElement;
     while (n && n !== document.body) {
       for (const sib of Array.from(n.parentElement.children)) if (sib !== n) sib.style.visibility = 'hidden';
       n = n.parentElement;
     }
     return true;
-  });
+  }, INTERIOR);
   if (!found) {
     const syntax = errors.find((e) => /Unexpected token '<'|Failed to fetch|SyntaxError/.test(e));
     await fail(
@@ -297,7 +306,8 @@ async function textBoxes(page, sceneSelector) {
         ? `the app bundle never loaded — ${syntax}\n` +
             `  This is the base-path failure: the export asks for /<base>/_expo/... and the\n` +
             `  server is not serving it. lib/serve-dist.js is meant to handle that; check it.`
-        : 'could not find the background SVG. The scene may have been restructured; update the selector.' +
+        : `could not find the scenery behind Home — nothing matched ${INTERIOR}.\n` +
+            `  The scene may have been restructured; update the selector.` +
             (errors.length ? `\n  page errors: ${errors.slice(0, 3).join(' | ')}` : '')
     );
   }
@@ -314,12 +324,13 @@ async function textBoxes(page, sceneSelector) {
       `check:scenery — the brightest point of the scenery is ${worst}:1 against the body text, under the ${FLOOR}:1 floor.\n` +
         `  worst pixel ${result.at.hex} at ${result.at.x},${result.at.y} of the 412x900 frame\n` +
         `  ${worst < 4.5 ? 'This is below WCAG AA (4.5:1) — body copy on it is failing outright.' : 'Still clears WCAG AA, but decoration should not be scraping the floor that text has to clear.'}\n` +
-        `  Lower the alpha where layers stack; two soft shapes at alpha a composite to about 2a-a², not a.`
+        `  The backdrop is a photograph now, so the fix is the asset or INTERIOR_DIM in\n` +
+        `  src/components/EveningScene.tsx, not an alpha inside a drawing.`
     );
     process.exit(1);
   }
   console.log(
-    `check:scenery — brightest point of the drawn scenery is ${worst}:1 against the body text (floor ${FLOOR}:1).\n` +
+    `check:scenery — brightest point of the scenery is ${worst}:1 against the body text (floor ${FLOOR}:1).\n` +
       photo
         .map((p) => `  ${p.name}: worst backdrop under any of its ${p.runs} runs of text is ${p.worst}:1.`)
         .join('\n') +

@@ -66,13 +66,22 @@ the name live in [docs/store-listing.md](docs/store-listing.md).
 - **Jump ahead** — any lesson is tappable; locked ones stay marked.
 
 ## Design language
-Behind every screen is a **misty forest at dusk** — three ridges carrying tree
-lines, fog lying in the valleys between them, layered cloud, and the sun as a
-warm bloom behind the weather rather than a disc in the middle of the picture.
-It is decoration that has to lose to legibility, so its brightest point is held
-to 6:1 against the body text and measured, not estimated (`npm run
-check:scenery`) — the stacked cloud layers were at 4.47:1, under WCAG AA, while
-the comment above them claimed 6.
+Behind every screen is **one evening**, and the app moves through it. Sign-in
+gets the sunset at full strength, with the name and the controls laid out inside
+the two bands of the picture dark enough to carry text and nothing at all across
+the sun. The welcome screen is the same view an hour later. Everything past it
+is later still, so the landscape reads as air behind the interface rather than a
+view competing with it.
+
+It is decoration that has to lose to legibility, so it is measured rather than
+estimated (`npm run check:scenery`), two ways: the brightest point of the
+interior backdrop against body text, and — on the two screens whose picture is
+too bright for that rule — the actual pixels behind every single run of text.
+The drawn landscape this replaced was caught by the first of those at 4.47:1,
+under WCAG AA, while the comment above it claimed 6.
+
+The cost, stated plainly: the background is a photograph, so it does not
+re-theme. Everything else does.
 
 The palette is defined once in `src/theme/colors.ts` and mirrored in
 `tailwind.config.js`. That mirror is now enforced (`npm run check:theme`),

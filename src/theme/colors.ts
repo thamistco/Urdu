@@ -98,83 +98,13 @@ export const palette = {
   accentTeal: '#6FB3B0',
 
   /**
-   * The scenery: a landscape after Caspar David Friedrich.
-   *
-   * The method is aerial perspective and nothing else. Depth here is not drawn,
-   * it is *dissolved*: each ridge is lighter and cooler than the one in front of
-   * it because more air stands between it and the eye, and mist lies in every
-   * gap. Only the nearest silhouette is solid; everything behind it is on its
-   * way to becoming sky.
-   *
-   * This replaced a Hopper landscape of hard-edged flat planes. The two are
-   * opposite instincts — Hopper draws the edge where light stops, Friedrich
-   * dissolves it — and it is worth being plain that the softness is the whole
-   * point rather than a lack of definition.
-   *
-   * The same ceiling applies as ever: this sits behind body text at 6:1, so no
-   * colour here may exceed a relative luminance of 0.1016. That is what stops
-   * the luminous band being genuinely luminous — Friedrich's skies open onto
-   * white, and white is 1.0. The band is the brightest thing the arithmetic
-   * allows and everything else is pitched below it, which turns out to be
-   * enough, because what reads as light is the *interval* between the band and
-   * the dark it sits above, not the absolute value.
-   *
-   * Warm, because the rest of the app is. An earlier pass rendered this in
-   * Friedrich's own cold blue-grey, which was faithful to him and made the
-   * scenery the only cool thing in a warm product — the orange lesson markers
-   * sang against it and nothing else agreed with it. The method is his; the
-   * key is the app's own dusk.
-   *
-   * Measured against `paper`: high 13.68, mid 9.78, pale 7.13, ridges 8.66 /
-   * 10.71 / 13.03, foreground 15.26. `skyWarm` is 5.77 at full strength and is
-   * never drawn at full strength — it exists only inside the glow gradient, so
-   * what matters is the composite, which check:scenery measures.
+   * The scenery used to live here: a drawn landscape after Caspar David
+   * Friedrich, in eleven tokens — four sky tones, mist, three ridges, a
+   * foreground silhouette and a rim light. It was replaced by a photograph
+   * (`DuskScene`), and a token nothing uses is the most invisible kind of dead
+   * code there is, so they went with it. `git log` has them if the drawing is
+   * ever wanted back.
    */
-  skyHigh: '#2A2119',
-  skyMid: '#4A3722',
-  /** The luminous band above the horizon — the brightest tone permitted. */
-  skyPale: '#66492B',
-  /** One faint warm note inside the glow, so it reads as light and not as haze. */
-  skyWarm: '#7E5324',
-
-  /**
-   * Mist.
-   *
-   * Deliberately far too bright to use at full strength — it exists only to be
-   * laid over the ridges at low alpha, and the composite is what the contrast
-   * check measures. Each gap gets exactly *one* band: two soft shapes at alpha
-   * `a` compose to about `2a - a²`, and stacking them is what once put the
-   * scenery under the WCAG floor while every individual value looked safe.
-   */
-  mist: '#C8B79E',
-
-  /**
-   * The ridges, far to near. Lighter with distance, which is the reverse of
-   * what looks right until you see it: the far hills are pale because there is
-   * more air in front of them, not because they are lit.
-   */
-  ridgeFar: '#414433',
-  ridgeMid: '#333628',
-  ridgeNear: '#252819',
-  /** The foreground silhouette — the one solid, unresolved shape. */
-  foreground: '#171A10',
-
-  /**
-   * The sun catching an edge — rim light on the skylines and treetops.
-   *
-   * The light source in the scene is a low warm sun, so the edges it rims are
-   * warm: an ember orange rather than the tube colour of a sign. This is the
-   * brightest such orange the scenery's ceiling permits, measured at 6.41:1
-   * against `paper` — warm hues are expensive here, because luminance is
-   * 0.2126R + 0.7152G + 0.0722B and orange spends heavily on red and green.
-   *
-   * An earlier pass lit these edges in electric blue, on the reasoning that
-   * blue is the only hue that survives the cap at full intensity. True, and
-   * beside the point: it made the landscape itself look like signage. Neon
-   * belongs on the name, where it is a made object; the land is lit by the sun
-   * that is in the picture.
-   */
-  rimLight: '#9B3408',
 
   /**
    * The lit sign has no colours of its own, and that is deliberate.

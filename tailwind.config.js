@@ -61,24 +61,6 @@ module.exports = {
           DEFAULT: '#FF6B35',
           light: '#FF9466',
         },
-        // The scenery, after Friedrich — aerial perspective, dissolving depth.
-        sky: {
-          high: '#2A2119',
-          mid: '#4A3722',
-          pale: '#66492B',
-          warm: '#7E5324',
-        },
-        mist: '#C8B79E',
-        ridge: {
-          far: '#414433',
-          mid: '#333628',
-          near: '#252819',
-        },
-        foreground: '#171A10',
-        // The sun catching an edge in the scenery.
-        rim: {
-          light: '#9B3408',
-        },
         // Which-one-is-it accents: stages, units. No meaning of their own.
         accent: {
           amber: '#FFC72C',
