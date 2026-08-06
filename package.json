@@ -24,6 +24,7 @@
     "check:stability": "node scripts/check-stability.js",
     "check:theme": "node scripts/check-theme.js",
     "check:scenery": "node scripts/check-scenery.js",
+    "check:sizes": "node scripts/check-sizes.js",
     "check:all": "node scripts/check-all.js",
     "build:web": "expo export --platform web --output-dir dist",
     "check:deployed": "node scripts/check-deployed.js",

@@ -48,7 +48,13 @@ export function Screen({
   const pad = padded ? 'px-5 pb-10 pt-2' : '';
   const column = { width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' } as const;
   return (
-    <View className="flex-1 bg-ink">
+    // `overflow-hidden` so decoration cannot push the window sideways. The
+    // wordmark throws a 96pt halo past each of its edges, which is the point of
+    // it, and on a 320pt screen that reached 16pt beyond the right edge and gave
+    // the sign-in screen a horizontal scrollbar. Nothing should be visible
+    // outside the screen in any case, so clipping at its boundary costs nothing
+    // and stops the next decorative overhang doing the same thing.
+    <View className="flex-1 overflow-hidden bg-ink">
       <StatusBar barStyle="light-content" />
       {lattice && (backdrop ?? <DuskScene dim={INTERIOR_DIM} />)}
       <SafeAreaView className="flex-1" edges={['top', 'left', 'right']}>

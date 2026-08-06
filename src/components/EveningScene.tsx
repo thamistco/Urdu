@@ -68,6 +68,17 @@ export const SAFE_TOP = 0.18;
 export const SAFE_BOTTOM = 0.72;
 
 /**
+ * How far the top band may be stretched when the content will not fit 18%.
+ *
+ * The row scan of the shipped JPEG puts the dark top of the picture at 28.6%
+ * before the sky starts to glow, and 0 to 28% measures 6.51:1 at full width and
+ * 7.07:1 on a phone crop. So 28% is the real edge, and `SAFE_TOP` is the
+ * comfortable placement inside it. On a short screen the wordmark needs the
+ * difference.
+ */
+export const SAFE_TOP_LIMIT = 0.28;
+
+/**
  * The scrim under the bottom band: ink, absent at `FADE_TOP`, holding at
  * `SCRIM` from `SAFE_BOTTOM` down.
  *
@@ -100,9 +111,21 @@ const SCRIM = 0.7;
  * The cost is that a wide window gets ink either side of a portrait panel. On a
  * phone, which is what this ships to, the picture is full-bleed.
  */
-export function EveningScene() {
+export function EveningScene({ safeBottom = SAFE_BOTTOM }: { safeBottom?: number }) {
   const { height } = useWindowDimensions();
   const width = Math.round(height * ASPECT);
+  // The scrim follows the content rather than the content following the scrim.
+  //
+  // `SAFE_BOTTOM` is where the controls start on a tall phone. On a short one
+  // they need a bigger share of the screen than 28%, and the first version of
+  // this simply let them overflow: at 320x568 the button stack ran off the
+  // bottom edge and the wordmark was cut off at the top, because both bands
+  // were fractions tuned against a 900pt screen. Even a 390x844 iPhone clipped.
+  //
+  // So the caller measures its own stack and says where its text really begins,
+  // and the scrim moves up to meet it. The sunset keeps whatever is left, which
+  // on a small screen is less. Legibility is not the thing that gives way.
+  const fadeTop = Math.max(0.32, Math.min(FADE_TOP, safeBottom - 0.12));
 
   return (
     <View
@@ -127,8 +150,8 @@ export function EveningScene() {
         <Defs>
           <LinearGradient id="eveningScrim" x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor={withAlpha(palette.ink, 0)} />
-            <Stop offset={FADE_TOP} stopColor={withAlpha(palette.ink, 0)} />
-            <Stop offset={SAFE_BOTTOM} stopColor={withAlpha(palette.ink, SCRIM)} />
+            <Stop offset={fadeTop} stopColor={withAlpha(palette.ink, 0)} />
+            <Stop offset={safeBottom} stopColor={withAlpha(palette.ink, SCRIM)} />
             <Stop offset="1" stopColor={withAlpha(palette.ink, SCRIM)} />
           </LinearGradient>
         </Defs>

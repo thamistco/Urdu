@@ -169,6 +169,14 @@ jobs:
           CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
             npm run check:scenery
 
+      # Every other browser check runs at one viewport. This one opens eight,
+      # because the sign-in layout was tuned against 900pt and clipped its own
+      # wordmark on an iPhone 14 while every check stayed green.
+      - name: Check the app fits every screen size
+        run: |
+          CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
+            npm run check:sizes
+
       - name: SPA fallback + disable Jekyll
         run: |
           cp dist/index.html dist/404.html
