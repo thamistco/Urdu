@@ -169,7 +169,7 @@ export function LetterLabScreen() {
 
           {/* living in a word */}
           <View className="mb-4 rounded-2xl border border-white/10 bg-ink-700 p-5">
-            <Eyebrow className="mb-3 text-paper/40">Living in a word</Eyebrow>
+            <Eyebrow className="mb-3 text-paper/55">Living in a word</Eyebrow>
             <View className="flex-row items-center justify-between">
               <View>
                 <Urdu style={{ fontSize: 32, lineHeight: urduLine(32) }}>{letter.word}</Urdu>
@@ -199,7 +199,7 @@ export function LetterLabScreen() {
                 ← Previous
               </Bold>
             </Pressable>
-            <Txt className="text-xs text-paper/40">
+            <Txt className="text-xs text-paper/55">
               {idx + 1} / {LETTERS.length}
             </Txt>
             <Pressable

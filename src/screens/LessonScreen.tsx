@@ -297,7 +297,7 @@ export function LessonScreen() {
               nav.navigate('Main');
             }}
           >
-            <Txt className="text-2xl text-paper/50">✕</Txt>
+            <Txt className="text-2xl text-paper/55">✕</Txt>
           </Pressable>
           <View className="flex-1">
             <ProgressBar progress={(idx + (graded != null ? 1 : 0)) / total} color={palette.jade} height={12} />

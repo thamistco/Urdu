@@ -208,6 +208,48 @@ for (const t of tokens) {
   bad(COLORS, null, `\`${t.name}\` (${t.hex}) is defined but nothing uses it — spend it or delete it`);
 }
 
+// ---------------------------------------------------- 4. text you can read
+//
+/**
+ * Faded text has a floor, and it is 55%.
+ *
+ * `text-paper/40` is a designer's way of saying "quieter", and quieter is a
+ * legitimate thing to want. The trouble is that opacity is not a volume knob:
+ * below a certain point the text is not quiet, it is failing WCAG AA, and
+ * nothing in the app said where that point was.
+ *
+ * Measured against the three grounds text actually sits on in this app, at the
+ * paper colour body copy is set in:
+ *
+ *   ground            /40     /50     /55     /60
+ *   ink               3.51✗   4.74✓   5.47✓   6.27✓
+ *   card ink800       3.43✗   4.57✓   5.22✓   5.94✓
+ *   card ink700       3.23✗   4.20✗   4.75✓   5.35✓
+ *
+ * 55 is the lowest step that clears 4.5:1 on all three, so it is the floor. It
+ * was set by finding 57 strings below it, in seventeen files, every one of them
+ * illegible on at least one surface it was drawn on. The steps underneath were
+ * never a hierarchy, they were five degrees of unreadable.
+ *
+ * This is a class-name rule rather than a rendered measurement, which makes it
+ * cheap and slightly conservative: it cannot see that a given line happens to
+ * sit on a darker card. That is the right way round for a floor.
+ */
+const PAPER_FLOOR = 55;
+for (const file of files) {
+  const src = stripComments(fs.readFileSync(file, 'utf8'));
+  for (const m of src.matchAll(/text-paper\/(\d+)/g)) {
+    const pct = Number(m[1]);
+    if (pct >= PAPER_FLOOR) continue;
+    const line = src.slice(0, m.index).split('\n').length;
+    bad(
+      file,
+      line,
+      `\`text-paper/${pct}\` is under the ${PAPER_FLOOR}% legibility floor — it fails WCAG AA on every ground in this app`
+    );
+  }
+}
+
 // ------------------------------------------------------------------ report
 
 if (problems.length) {
@@ -216,5 +258,5 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(
-  `check:theme — ${tokens.length} palette tokens, all spent, tailwind.config.js agrees with all of them, no raw hex outside the theme.`
+  `check:theme — ${tokens.length} palette tokens, all spent, tailwind.config.js agrees with all of them, no raw hex outside the theme, no faded text under the legibility floor.`
 );

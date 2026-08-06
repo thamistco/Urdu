@@ -111,7 +111,7 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
       >
         {placed.length === 0 ? (
           <View className="flex-1 items-center justify-center">
-            <Txt className="text-sm text-paper/30">Tap letters below…</Txt>
+            <Txt className="text-sm text-paper/55">Tap the letters below</Txt>
           </View>
         ) : (
           <>

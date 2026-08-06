@@ -27,7 +27,7 @@ function StatBox({ icon, value, label }: { icon: IconName; value: string | numbe
     <View className="w-[31%] items-center rounded-2xl border border-white/10 bg-ink-700 py-4">
       <Illustration name={icon} tile={false} size={24} />
       <Display className="mt-1 text-xl">{value}</Display>
-      <Eyebrow className="mt-0.5 text-paper/45" style={{ fontSize: 9 }}>
+      <Eyebrow className="mt-0.5 text-paper/55" style={{ fontSize: 9 }}>
         {label}
       </Eyebrow>
     </View>
@@ -47,7 +47,7 @@ function WeekChart() {
   if (values.every((v) => v === 0)) {
     return (
       <View className="items-center justify-center" style={{ height: 96 }}>
-        <Txt className="text-center text-xs leading-5 text-paper/45">
+        <Txt className="text-center text-xs leading-5 text-paper/55">
           Finish a lesson and your week starts filling in here.
         </Txt>
       </View>
@@ -70,7 +70,7 @@ function WeekChart() {
                 backgroundColor: isToday ? palette.gold : withAlpha(palette.gold, 0.35),
               }}
             />
-            <Txt className="mt-1.5 text-[10px] text-paper/45">{labels[dow]}</Txt>
+            <Txt className="mt-1.5 text-[10px] text-paper/55">{labels[dow]}</Txt>
           </View>
         );
       })}
@@ -107,7 +107,7 @@ export function ProfileScreen() {
               <Eyebrow style={{ color: palette.gold }}>{levelTitle(level)}</Eyebrow>
               <View className="mt-3 w-full px-6">
                 <ProgressBar progress={ratio} height={8} />
-                <Txt className="mt-1 text-center text-[11px] text-paper/45">
+                <Txt className="mt-1 text-center text-[11px] text-paper/55">
                   {into} / {span} XP to level {level + 1}
                 </Txt>
               </View>
@@ -132,7 +132,7 @@ export function ProfileScreen() {
         {/* weekly activity */}
         <Reveal delay={140}>
           <Card className="mb-4">
-            <Eyebrow className="mb-3 text-paper/50">This week</Eyebrow>
+            <Eyebrow className="mb-3 text-paper/55">This week</Eyebrow>
             <WeekChart />
           </Card>
         </Reveal>
@@ -149,7 +149,7 @@ export function ProfileScreen() {
                 <Bold className="text-[15px]">{league.name} League</Bold>
                 <Txt className="text-xs text-paper/55">{s.weeklyXp} XP this week · tap to see standings</Txt>
               </View>
-              <Txt className="text-paper/40">›</Txt>
+              <Txt className="text-paper/55">›</Txt>
             </View>
           </Pressable>
         </Reveal>
@@ -168,7 +168,7 @@ export function ProfileScreen() {
                   {unlockedAch} of {ACHIEVEMENTS.length} unlocked
                 </Txt>
               </View>
-              <Txt className="text-paper/40">›</Txt>
+              <Txt className="text-paper/55">›</Txt>
             </View>
           </Pressable>
         </Reveal>
@@ -185,7 +185,7 @@ export function ProfileScreen() {
                 <Bold className="text-[15px]">Settings</Bold>
                 <Txt className="text-xs text-paper/55">Sound, haptics, script & Roman, daily goal</Txt>
               </View>
-              <Txt className="text-paper/40">›</Txt>
+              <Txt className="text-paper/55">›</Txt>
             </View>
           </Pressable>
         </Reveal>

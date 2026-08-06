@@ -46,7 +46,7 @@ export function LetterFormExercise({ exercise, locked, onGraded }: ExerciseProps
               className="mb-3 w-[48%]"
             >
               <Bold className="text-base">{p.label}</Bold>
-              <Txt className="mt-1 text-xs text-paper/50">{p.hint}</Txt>
+              <Txt className="mt-1 text-xs text-paper/55">{p.hint}</Txt>
             </Choice>
           );
         })}

@@ -32,7 +32,7 @@ export function TopBar({
       {title ? (
         <Bold className="text-base">{title}</Bold>
       ) : label ? (
-        <Eyebrow className="text-paper/40">{label}</Eyebrow>
+        <Eyebrow className="text-paper/55">{label}</Eyebrow>
       ) : (
         <View />
       )}

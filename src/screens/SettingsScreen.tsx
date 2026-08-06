@@ -33,7 +33,7 @@ function Row({
     <View className="flex-row items-center justify-between py-3">
       <View className="flex-1 pr-4">
         <Bold className="text-[15px]">{label}</Bold>
-        {hint ? <Txt className="text-xs text-paper/50">{hint}</Txt> : null}
+        {hint ? <Txt className="text-xs text-paper/55">{hint}</Txt> : null}
       </View>
       <Switch
         value={value}
@@ -64,7 +64,7 @@ function TesterPanel() {
   if (!t.unlocked) {
     return (
       <Card className="mb-5">
-        <Txt className="mb-3 text-xs text-paper/50">For testing only. Nothing here changes what a learner sees.</Txt>
+        <Txt className="mb-3 text-xs text-paper/55">For testing only. Nothing here changes what a learner sees.</Txt>
         <TextInput
           value={user}
           onChangeText={(v) => {
@@ -196,7 +196,7 @@ function TesterPanel() {
         }}
         accessibilityRole="button"
       >
-        <Txt className="mt-3 text-center text-xs text-paper/40">Lock tester mode</Txt>
+        <Txt className="mt-3 text-center text-xs text-paper/55">Lock tester mode</Txt>
       </Pressable>
     </Card>
   );
@@ -238,12 +238,12 @@ export function SettingsScreen() {
         <TopBar onBack={() => nav.goBack()} title="Settings" />
 
         <Reveal>
-          <Eyebrow className="mb-2 text-paper/50">Account</Eyebrow>
+          <Eyebrow className="mb-2 text-paper/55">Account</Eyebrow>
           <Card className="mb-5">
             <View className="flex-row items-center justify-between">
               <View className="flex-1 pr-3">
                 <Bold className="text-[15px]">{email ?? 'Guest'}</Bold>
-                <Txt className="text-xs text-paper/50">
+                <Txt className="text-xs text-paper/55">
                   {email ? 'Progress is saved to your account' : 'Progress is saved on this device'}
                 </Txt>
               </View>
@@ -266,7 +266,7 @@ export function SettingsScreen() {
         </Reveal>
 
         <Reveal delay={40}>
-          <Eyebrow className="mb-2 text-paper/50">Feedback</Eyebrow>
+          <Eyebrow className="mb-2 text-paper/55">Feedback</Eyebrow>
           <Card className="mb-5">
             <Row
               label="Sound effects"
@@ -344,14 +344,14 @@ export function SettingsScreen() {
                     );
                   })}
                 </View>
-                <Txt className="mt-2 text-[11px] text-paper/40">Tap to hear the change.</Txt>
+                <Txt className="mt-2 text-[11px] text-paper/55">Tap to hear the change.</Txt>
               </>
             )}
           </Card>
         </Reveal>
 
         <Reveal delay={60}>
-          <Eyebrow className="mb-2 text-paper/50">Script</Eyebrow>
+          <Eyebrow className="mb-2 text-paper/55">Script</Eyebrow>
           <Card className="mb-5">
             <Row
               label="Show Roman Urdu"
@@ -372,7 +372,7 @@ export function SettingsScreen() {
         </Reveal>
 
         <Reveal delay={120}>
-          <Eyebrow className="mb-2 text-paper/50">Daily goal</Eyebrow>
+          <Eyebrow className="mb-2 text-paper/55">Daily goal</Eyebrow>
           <Card className="mb-5">
             <View className="flex-row flex-wrap gap-2">
               {DAILY_GOALS.map((g) => {
@@ -408,14 +408,14 @@ export function SettingsScreen() {
         </Reveal>
 
         <Reveal delay={180}>
-          <Eyebrow className="mb-2 text-paper/50">Data</Eyebrow>
+          <Eyebrow className="mb-2 text-paper/55">Data</Eyebrow>
           <Pressable onPress={confirmReset}>
             <View
               className="rounded-2xl border p-4"
               style={{ borderColor: withAlpha(palette.rose, 0.3), backgroundColor: withAlpha(palette.rose, 0.08) }}
             >
               <Bold style={{ color: palette.roseLight }}>Reset all progress</Bold>
-              <Txt className="mt-0.5 text-xs text-paper/50">Clears streak, XP, gems and memory. Cannot be undone.</Txt>
+              <Txt className="mt-0.5 text-xs text-paper/55">Clears streak, XP, gems and memory. Cannot be undone.</Txt>
             </View>
           </Pressable>
         </Reveal>
@@ -423,13 +423,13 @@ export function SettingsScreen() {
         {TESTER_MODE_AVAILABLE && (
           <Reveal delay={200}>
             <View className="mt-5">
-              <Eyebrow className="mb-2 text-paper/50">Tester</Eyebrow>
+              <Eyebrow className="mb-2 text-paper/55">Tester</Eyebrow>
               <TesterPanel />
             </View>
           </Reveal>
         )}
 
-        <Txt className="mb-8 mt-8 text-center text-xs text-paper/30">Harf · حرف · v1.0</Txt>
+        <Txt className="mb-8 mt-8 text-center text-xs text-paper/55">Harf · حرف · v1.0</Txt>
       </Screen>
     </View>
   );
