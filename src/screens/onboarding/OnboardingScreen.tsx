@@ -435,7 +435,7 @@ export function OnboardingScreen() {
         <Reveal>
           <Dots of="goal" />
           <Heading className="mb-1 text-2xl">Why are you learning Urdu?</Heading>
-          <Txt className="mb-6 text-sm text-paper/50">This shapes which words we teach first.</Txt>
+          <Txt className="mb-6 text-sm text-paper/55">This shapes which words we teach first.</Txt>
           <View className="gap-3">
             {GOALS.map((g) => {
               const sel = goal === g.key;
@@ -480,7 +480,7 @@ export function OnboardingScreen() {
         <Reveal>
           <Dots of="track" />
           <Heading className="mb-1 text-2xl">How do you want to learn?</Heading>
-          <Txt className="mb-4 text-sm text-paper/50">The most important choice here.</Txt>
+          <Txt className="mb-4 text-sm text-paper/55">The most important choice here.</Txt>
           <TrackChooser value={track} onChange={setTrack} />
           <Button className="mt-6" onPress={() => setStep(MALE_VOICE_AVAILABLE ? 'voice' : 'background')}>
             Continue
@@ -510,7 +510,7 @@ export function OnboardingScreen() {
         <Reveal>
           <Dots of="voice" />
           <Heading className="mb-1 text-2xl">Whose voice would you like?</Heading>
-          <Txt className="mb-4 text-sm text-paper/50">
+          <Txt className="mb-4 text-sm text-paper/55">
             Every word is read aloud by a real recorded voice. You can change this later in Settings.
           </Txt>
           {OPTIONS.map((o) => {
@@ -547,7 +547,7 @@ export function OnboardingScreen() {
               </Pressable>
             );
           })}
-          <Txt className="mb-2 text-center text-[11px] text-paper/40">Tap either one to hear it.</Txt>
+          <Txt className="mb-2 text-center text-[11px] text-paper/55">Tap either one to hear it.</Txt>
           <Button className="mt-2" onPress={() => setStep('background')}>
             Continue
           </Button>
@@ -574,7 +574,7 @@ export function OnboardingScreen() {
         <Reveal>
           <Dots of="background" />
           <Heading className="mb-1 text-2xl">Do you already know some Urdu?</Heading>
-          <Txt className="mb-6 text-sm text-paper/50">
+          <Txt className="mb-6 text-sm text-paper/55">
             If you already understand it spoken, we'll skip the basic words you know and get you to the script faster.
           </Txt>
           <View className="gap-3">
@@ -680,7 +680,7 @@ export function OnboardingScreen() {
               );
             })}
           </View>
-          <Txt className="mt-6 text-center text-xs text-paper/30">
+          <Txt className="mt-6 text-center text-xs text-paper/55">
             No wrong answers here: this just finds your starting point.
           </Txt>
         </Reveal>
@@ -695,7 +695,9 @@ export function OnboardingScreen() {
         <Reveal>
           <Dots of="daily" />
           <Heading className="mb-1 text-2xl">Set a daily goal</Heading>
-          <Txt className="mb-6 text-sm text-paper/50">A gentle contract with yourself. Change it whenever.</Txt>
+          <Txt className="mb-6 text-sm text-paper/55">
+            A gentle contract with yourself. You can change it whenever you like.
+          </Txt>
           <View className="gap-3">
             {DAILY_GOALS.map((g) => {
               const sel = daily === g.id;
@@ -810,12 +812,12 @@ export function OnboardingScreen() {
                       }}
                     >
                       <Bold className="text-sm">{o.t}</Bold>
-                      <Txt className="text-xs text-paper/50">{o.d}</Txt>
+                      <Txt className="text-xs text-paper/55">{o.d}</Txt>
                     </View>
                   </Pressable>
                 );
               })}
-              <Txt className="text-[11px] text-paper/35">Either way you can tap ahead to any lesson later.</Txt>
+              <Txt className="text-[11px] text-paper/55">Either way you can tap ahead to any lesson later.</Txt>
             </View>
           )}
           <Button className="mt-4 w-full" onPress={finish}>

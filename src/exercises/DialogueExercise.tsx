@@ -39,7 +39,7 @@ export function DialogueExercise({ exercise, track, showRoman, locked, onGraded 
       <Eyebrow style={{ color: palette.gold }} className="mb-1 text-center">
         Conversation · {dialogue.title}
       </Eyebrow>
-      <Txt className="mb-4 text-center text-xs text-paper/50">{dialogue.setting}</Txt>
+      <Txt className="mb-4 text-center text-xs text-paper/55">{dialogue.setting}</Txt>
 
       <View className="mb-4 gap-3">
         {dialogue.lines.map((l, i) => {

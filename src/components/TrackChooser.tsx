@@ -161,7 +161,7 @@ export function TrackChooser({ value, onChange }: { value: LearnTrack; onChange:
                     {t.costs.map((c) => (
                       <Bullet key={c} text={c} kind="cost" />
                     ))}
-                    <Txt className="mt-2 text-[11px] italic leading-4 text-paper/45">{t.forWhom}</Txt>
+                    <Txt className="mt-2 text-[11px] italic leading-4 text-paper/55">{t.forWhom}</Txt>
                   </View>
                 )}
               </View>

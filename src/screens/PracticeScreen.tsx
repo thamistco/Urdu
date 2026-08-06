@@ -251,14 +251,14 @@ export function PracticeScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Clear search"
               >
-                <Txt className="text-paper/45">✕</Txt>
+                <Txt className="text-paper/55">✕</Txt>
               </Pressable>
             )}
           </View>
         </Reveal>
 
         {empty && (
-          <Txt className="mb-6 mt-2 text-center text-sm text-paper/45">
+          <Txt className="mb-6 mt-2 text-center text-sm text-paper/55">
             Nothing matches “{query}”. Try a shorter word.
           </Txt>
         )}
@@ -291,7 +291,7 @@ export function PracticeScreen() {
                       {g.summary}
                     </Txt>
                   </View>
-                  <Txt className="text-paper/35">›</Txt>
+                  <Txt className="text-paper/55">›</Txt>
                 </View>
               </Pressable>
             ))}
@@ -326,7 +326,7 @@ export function PracticeScreen() {
                       {p.kind === 'conversation' ? 'Conversation' : 'Passage'} · {p.lines} lines
                     </Txt>
                   </View>
-                  <Txt className="text-paper/35">›</Txt>
+                  <Txt className="text-paper/55">›</Txt>
                 </View>
               </Pressable>
             ))}
@@ -346,7 +346,7 @@ export function PracticeScreen() {
                   <Bold style={{ color: meta.color }} className="text-xs uppercase tracking-wider">
                     {meta.tag} · {meta.title}
                   </Bold>
-                  <Txt className="text-[11px] text-paper/35">{levelTopics.length} sets</Txt>
+                  <Txt className="text-[11px] text-paper/55">{levelTopics.length} sets</Txt>
                 </View>
                 <View className="flex-row flex-wrap justify-between">
                   {levelTopics.map((t, i) => {
@@ -365,7 +365,7 @@ export function PracticeScreen() {
                             <Bold className="mt-2 text-sm" numberOfLines={1}>
                               {t.title}
                             </Bold>
-                            <Txt className="mt-0.5 text-[11px] text-paper/50">
+                            <Txt className="mt-0.5 text-[11px] text-paper/55">
                               {known}/{words.length} words
                             </Txt>
                             <View className="mt-2">

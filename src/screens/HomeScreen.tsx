@@ -332,7 +332,7 @@ export function HomeScreen() {
               <View className="flex-1">
                 <ProgressBar progress={dailyRatio} color={palette.jade} height={8} />
               </View>
-              <Txt className="text-[11px] text-paper/50">
+              <Txt className="text-[11px] text-paper/55">
                 {dailyRatio >= 1 ? 'Goal met ✓' : `${Math.round(dailyRatio * 100)}%`}
               </Txt>
             </View>
@@ -535,11 +535,11 @@ export function HomeScreen() {
                     </View>
                     <View className="flex-1">
                       <Heading className="text-lg">{meta.title}</Heading>
-                      <Txt className="text-xs text-paper/50">
+                      <Txt className="text-xs text-paper/55">
                         {(track === 'roman' && meta.romanBlurb) || meta.blurb}
                       </Txt>
                     </View>
-                    <Txt className="text-[11px] text-paper/45">
+                    <Txt className="text-[11px] text-paper/55">
                       {done}/{total}
                     </Txt>
                     <Txt style={{ color: withAlpha(palette.cream, 0.5), fontSize: 15 }}>{isOpen(lvl) ? '⌃' : '⌄'}</Txt>
@@ -548,7 +548,7 @@ export function HomeScreen() {
                     <ProgressBar progress={total ? done / total : 0} color={meta.color} height={6} spring={false} />
                   </View>
                   {!isOpen(lvl) && (
-                    <Txt className="mt-2 text-[11px] text-paper/40">{levelUnits.length} units · tap to open</Txt>
+                    <Txt className="mt-2 text-[11px] text-paper/55">{levelUnits.length} units · tap to open</Txt>
                   )}
                 </Pressable>
               </Reveal>
@@ -559,7 +559,7 @@ export function HomeScreen() {
                       <View className="h-2 w-2 rounded-full" style={{ backgroundColor: unit.color }} />
                       <View className="flex-1">
                         <Eyebrow style={{ color: unit.color }}>{unit.title}</Eyebrow>
-                        <Txt className="text-xs text-paper/45">{unit.subtitle}</Txt>
+                        <Txt className="text-xs text-paper/55">{unit.subtitle}</Txt>
                       </View>
                     </View>
                     <View className="mt-3 pl-2">
@@ -590,7 +590,7 @@ export function HomeScreen() {
           );
         })}
 
-        <Txt className="mb-4 mt-6 text-center text-xs leading-5 text-paper/40">
+        <Txt className="mb-4 mt-6 text-center text-xs leading-5 text-paper/55">
           Every letter has four faces. Most apps teach one.
         </Txt>
       </Screen>

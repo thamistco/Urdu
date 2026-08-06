@@ -90,7 +90,7 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
         }}
       >
         {placed.length === 0 ? (
-          <Txt className="text-sm text-paper/30">Tap the words below…</Txt>
+          <Txt className="text-sm text-paper/55">Tap the words below</Txt>
         ) : (
           placed.map((i, order) => (
             <Pressable
@@ -143,7 +143,7 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
       )}
       {graded === false && (
         <View className="items-center">
-          <Txt className="mb-1 text-xs text-paper/50">Correct order:</Txt>
+          <Txt className="mb-1 text-xs text-paper/55">Correct order:</Txt>
           {roman ? (
             <Bold style={{ fontSize: 19, textAlign: 'center' }}>{sentence.roman}</Bold>
           ) : (

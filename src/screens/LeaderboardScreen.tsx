@@ -59,7 +59,7 @@ export function LeaderboardScreen() {
             <Heading className="mt-2 text-2xl" style={{ color: league.color }}>
               {league.name} League
             </Heading>
-            <Txt className="mt-1 text-center text-xs text-paper/50">
+            <Txt className="mt-1 text-center text-xs text-paper/55">
               Top 5 rise to {getLeague(promote(leagueId)).name} · bottom 3 fall to {getLeague(demote(leagueId)).name}.
               Resets weekly.
             </Txt>
@@ -103,13 +103,13 @@ export function LeaderboardScreen() {
         <View className="mt-5 flex-row items-center justify-center gap-4">
           <View className="flex-row items-center gap-1.5">
             <View className="h-3 w-3 rounded-full" style={{ backgroundColor: palette.jade }} />
-            <Eyebrow className="text-paper/50" style={{ fontSize: 9 }}>
+            <Eyebrow className="text-paper/55" style={{ fontSize: 9 }}>
               Promotion
             </Eyebrow>
           </View>
           <View className="flex-row items-center gap-1.5">
             <View className="h-3 w-3 rounded-full" style={{ backgroundColor: palette.rose }} />
-            <Eyebrow className="text-paper/50" style={{ fontSize: 9 }}>
+            <Eyebrow className="text-paper/55" style={{ fontSize: 9 }}>
               Demotion
             </Eyebrow>
           </View>

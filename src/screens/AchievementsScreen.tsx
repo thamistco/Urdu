@@ -106,7 +106,7 @@ export function AchievementsScreen() {
                       height={7}
                       spring={false}
                     />
-                    <Txt className="mt-1 text-right text-[11px] text-paper/45">
+                    <Txt className="mt-1 text-right text-[11px] text-paper/55">
                       {isMax ? `${value} · complete` : `${value} / ${nextThreshold}`}
                     </Txt>
                   </View>

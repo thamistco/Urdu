@@ -195,7 +195,7 @@ export function TracePad({
             // sits at the foot of the card so it never covers the letter itself
             <View className="absolute inset-x-0 bottom-3 items-center" pointerEvents="none">
               <Txt style={{ color: withAlpha(palette.ink, 0.4) }} className="text-xs">
-                draw over the grey letter
+                Draw over the grey letter
               </Txt>
             </View>
           )}
@@ -220,7 +220,7 @@ export function TracePad({
           <Bold style={{ color: result.pass ? palette.jade : palette.rose }}>
             {result.pass ? 'That is the shape ✓' : 'Follow the grey letter more closely'}
           </Bold>
-          <Txt className="mt-1 text-xs text-paper/50">{Math.round(result.coverage * 100)}% of the letter covered</Txt>
+          <Txt className="mt-1 text-xs text-paper/55">{Math.round(result.coverage * 100)}% of the letter covered</Txt>
         </View>
       )}
     </View>
