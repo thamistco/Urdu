@@ -70,7 +70,6 @@ export const palette = {
   jadeLight: '#7DDBAB',
   jadeDark: '#2E8F63',
   /** For large filled panels, where the full-strength green shouts. */
-  jadeDeep: '#3AA876',
   rose: '#FF5A5F',
   roseLight: '#FF8A8E',
   roseDark: '#C7383D',

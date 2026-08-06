@@ -135,14 +135,24 @@ export function PracticeScreen() {
           >
             <View
               className="mb-4 mt-5 overflow-hidden rounded-2xl p-6"
-              // Muted rather than the full mint: this is a whole card-sized
-              // area of colour, and at that size jadeDeep was the most
-              // saturated thing on any screen in the app — it read as a
-              // notification pasted over the scenery rather than part of it.
+              // Gold, and the same gold the primary button uses.
+              //
+              // This was green, muted down from a fuller mint because at
+              // card size it was the most saturated thing on any screen and
+              // read as a notification pasted over the scenery. Muting it
+              // treated the symptom. The colour was the problem: the palette
+              // reserves gold for reward and primary actions, and starting
+              // the daily review is the primary action of this screen, so
+              // green was borrowing an accent that means something else.
+              //
+              // It also never meant anything here. Green reads as correct
+              // everywhere else in the app, and this card was green whether
+              // there was nothing due or forty things due. Against the
+              // evening it was the one cold surface in a warm picture.
               style={{
-                backgroundColor: withAlpha(palette.jadeDeep, 0.9),
+                backgroundColor: palette.gold,
                 borderWidth: 1,
-                borderColor: withAlpha(palette.jadeLight, 0.35),
+                borderColor: palette.goldDark,
               }}
             >
               <View className="flex-row items-center justify-between">

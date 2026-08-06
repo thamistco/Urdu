@@ -48,7 +48,6 @@ module.exports = {
           DEFAULT: '#4FBF8B',
           light: '#7DDBAB',
           dark: '#2E8F63',
-          deep: '#3AA876',
         },
         // Coral red — incorrect
         rose: {
