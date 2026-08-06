@@ -363,6 +363,43 @@ const SYMBOLIC_WORDS = new Set([
   'w-waqt',
 ]);
 
+/**
+ * Pictures that read as a verdict rather than as a thing.
+ *
+ * A tick and a cross are the interface's own words for right and wrong: the
+ * feedback banner, the correct and incorrect button variants, the colour of a
+ * graded answer. Put one of them on a tile in a grid of four and it stops
+ * depicting anything. In a listening question offering Truth, Light, Present
+ * and Man, the green tick beside Truth is not a picture of truth, it is a
+ * pointer at the answer, and a learner will follow it without hearing a word.
+ *
+ * It cuts the other way too. When the tick is not the answer, it is a lie told
+ * in the interface's own voice.
+ *
+ * The words themselves are fine and their pictures are fine on a word card,
+ * where there is nothing to choose between. What is banned is the tile: the
+ * generator refuses to build a picture question from a word cued this way, and
+ * refuses to offer one as a distractor. See `verdictCue` in generator.ts.
+ *
+ * `w-haan` and `w-nahi` are the awkward pair, because yes and no really are
+ * best drawn as a tick and a cross. They keep them, and are asked about in
+ * words instead.
+ */
+export const VERDICT_CUES = new Set([
+  'ico:check',
+  'ico:cross',
+  'emo:✅',
+  'emo:✔️',
+  'emo:✔',
+  'emo:☑️',
+  'emo:❌',
+  'emo:✖️',
+  'emo:❎',
+  'emo:👍',
+  'emo:👎',
+  'emo:🆗',
+]);
+
 /** The picture a word shows: illustration, numeral, swatch, or its emoji. */
 export function cueOf(word: Word): string {
   if (NUMERALS[word.id]) return `num:${NUMERALS[word.id]}`;

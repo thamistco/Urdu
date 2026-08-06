@@ -14,7 +14,7 @@ import {
   registerOf as pronounRegisterOf,
   type Sentence,
 } from '../data/sentences';
-import { cueOf } from '../data/art';
+import { cueOf, VERDICT_CUES } from '../data/art';
 import { GLYPH_MASKS } from '../data/glyphMasks';
 import { shuffle } from '../lib/shuffle';
 import { Exercise, ItemRef } from './types';
@@ -110,7 +110,7 @@ function distractorsFor(word: Word, pool: Word[], { distinctCue = false, distinc
       if (c.id === word.id || chosen.some((x) => x.id === c.id)) continue;
       if (distinctCue) {
         const cue = cueOf(c);
-        if (usedCues.has(cue)) continue;
+        if (usedCues.has(cue) || VERDICT_CUES.has(cue)) continue;
         usedCues.add(cue);
       }
       if (distinctMeaning) {
@@ -188,6 +188,14 @@ function wordExercise(
   ) {
     v = 0;
   }
+
+  // A word whose picture is a tick or a cross cannot be asked about in
+  // pictures, because the tile stops depicting the word and starts pointing at
+  // the answer in the interface's own voice. Distractors cued that way are
+  // already filtered out above; this is the other half, when the *answer* is
+  // the one carrying the tick. It is asked about in words instead, which is
+  // always available and never gives itself away.
+  if (v !== 1 && VERDICT_CUES.has(cueOf(word))) v = 1;
 
   if (v === 1) {
     const opts = distractorsFor(word, pool, { distinctMeaning: true });
@@ -341,7 +349,7 @@ export function buildLessonExercises(
       if (board.some((b) => b.id === w.id)) continue;
       const cue = cueOf(w);
       const gloss = glossOf(w).toLowerCase();
-      if (boardCues.has(cue) || boardGlosses.has(gloss)) continue;
+      if (boardCues.has(cue) || boardGlosses.has(gloss) || VERDICT_CUES.has(cue)) continue;
       boardCues.add(cue);
       boardGlosses.add(gloss);
       board.push(w);
