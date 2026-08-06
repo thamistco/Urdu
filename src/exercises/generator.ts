@@ -16,7 +16,7 @@ import {
 } from '../data/sentences';
 import { cueOf, VERDICT_CUES } from '../data/art';
 import { GLYPH_MASKS } from '../data/glyphMasks';
-import { shuffle } from '../lib/shuffle';
+import { shuffle, seededShuffle } from '../lib/shuffle';
 import { Exercise, ItemRef } from './types';
 
 const rand = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
@@ -296,7 +296,7 @@ export function buildLessonExercises(
   if (lesson.kind === 'phrases') {
     // Phrases share one icon, so picture/listen cues don't work — always show
     // the phrase and pick its meaning.
-    const picks = shuffle(PHRASE_WORDS).slice(0, lesson.size);
+    const picks = seededShuffle(PHRASE_WORDS, lesson.id).slice(0, lesson.size);
     for (const w of picks) exercises.push(wordExercise(w, PHRASE_WORDS, track, 'meet', 1));
   } else if (lesson.kind === 'vocab' && lesson.topic) {
     /**
@@ -311,17 +311,17 @@ export function buildLessonExercises(
     // items — which are the ones at the end.
     const woven = Math.min(2, reviewRefs.length);
     const newWords = Math.max(3, lesson.size - 4 - woven);
-    const picks = shuffle(pool).slice(0, newWords);
+    const picks = seededShuffle(pool, lesson.id).slice(0, newWords);
     picks.forEach((w, i) => exercises.push(wordExercise(w, pool, track, 'meet', i % 3)));
 
-    for (const w of shuffle(picks).slice(0, 2)) {
+    for (const w of seededShuffle(picks, `${lesson.id}:recall`).slice(0, 2)) {
       exercises.push(wordExercise(w, pool, track, 'recall'));
     }
 
     // Typing sits in the middle, not at the end: it is the hardest thing the
     // lesson asks for, and finishing on it makes a session feel like an exam.
     const typeable = picks.filter(isTypeable);
-    if (typeable[0]) exercises.push({ kind: 'typeWord', word: rand(typeable) });
+    if (typeable[0]) exercises.push({ kind: 'typeWord', word: seededShuffle(typeable, `${lesson.id}:type`)[0] });
 
     // Building a word from letter tiles is a spelling exercise in Nastaliq, so
     // it belongs only to a learner who is reading it. The Roman track gets
@@ -344,7 +344,7 @@ export function buildLessonExercises(
     const board: Word[] = [];
     const boardCues = new Set<string>();
     const boardGlosses = new Set<string>();
-    for (const w of [...picks, ...shuffle(pool)]) {
+    for (const w of [...picks, ...seededShuffle(pool, `${lesson.id}:board`)]) {
       if (board.length === 4) break;
       if (board.some((b) => b.id === w.id)) continue;
       const cue = cueOf(w);
@@ -367,7 +367,7 @@ export function buildLessonExercises(
         if (ex) exercises.push(ex);
       }
       const related = SENTENCES.filter((x) => x.concept === c.id);
-      for (const sen of shuffle(related).slice(0, 2)) {
+      for (const sen of seededShuffle(related, lesson.id).slice(0, 2)) {
         const ex = sentenceExercise(sen, track);
         if (ex) exercises.push(ex);
       }
@@ -376,7 +376,7 @@ export function buildLessonExercises(
 
   if (lesson.kind === 'sentences') {
     const pool = lesson.level ? SENTENCES.filter((x) => x.level === lesson.level) : SENTENCES;
-    for (const sen of shuffle(pool.length ? pool : SENTENCES).slice(0, lesson.size)) {
+    for (const sen of seededShuffle(pool.length ? pool : SENTENCES, lesson.id).slice(0, lesson.size)) {
       const ex = sentenceExercise(sen, track);
       if (ex) exercises.push(ex);
     }
@@ -384,13 +384,13 @@ export function buildLessonExercises(
 
   if (lesson.kind === 'dialogue') {
     const d = lesson.dialogueId ? getDialogue(lesson.dialogueId) : undefined;
-    const chosen = d ?? shuffle(DIALOGUES)[0];
+    const chosen = d ?? seededShuffle(DIALOGUES, lesson.id)[0];
     if (chosen) exercises.push({ kind: 'dialogue', dialogue: chosen });
   }
 
   if (lesson.kind === 'reading') {
     const p = lesson.passageId ? getPassage(lesson.passageId) : undefined;
-    const chosen = p ?? shuffle(PASSAGES)[0];
+    const chosen = p ?? seededShuffle(PASSAGES, lesson.id)[0];
     if (chosen) exercises.push({ kind: 'reading', passage: chosen });
   }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { pickOne, sample, shuffle } from './shuffle';
+import { pickOne, sample, seededShuffle, shuffle } from './shuffle';
 
 /**
  * The property that matters is *uniformity*, and it is the one a shuffle can
@@ -124,5 +124,57 @@ describe('sample', () => {
 
   it('treats a negative count as none, rather than slicing from the end', () => {
     expect(sample([1, 2, 3], -2)).toEqual([]);
+  });
+});
+
+/**
+ * The bug this exists to prevent: a lesson that shows different words each time
+ * it is opened. `shuffle(pool).slice(0, n)` did exactly that, so a learner who
+ * finished a lesson and came back met words they had never seen, in a lesson the
+ * app had already marked complete.
+ *
+ * Note what is *not* asserted here: that a given key produces some particular
+ * order. Pinning the output would make this a transcription of mulberry32 and
+ * would fail the moment the generator was swapped for an equally good one. What
+ * the app depends on is the property — same key, same order; different key,
+ * different order — so that is what is measured.
+ */
+describe('seededShuffle', () => {
+  const pool = Array.from({ length: 40 }, (_, i) => i);
+
+  it('returns the same order every time for the same key', () => {
+    const first = seededShuffle(pool, 'v-first-words');
+    for (let i = 0; i < 50; i++) {
+      expect(seededShuffle(pool, 'v-first-words')).toEqual(first);
+    }
+  });
+
+  it('returns a different order for a different key', () => {
+    // Across many distinct keys, essentially all should differ from each other.
+    // Two colliding is a coincidence; a constant order would collide every time.
+    const seen = new Set(Array.from({ length: 200 }, (_, i) => seededShuffle(pool, `v-topic-${i}`).join(',')));
+    expect(seen.size).toBeGreaterThan(195);
+  });
+
+  it('is a permutation, not a subset or a resampling', () => {
+    const got = seededShuffle(pool, 'anything');
+    expect(got).toHaveLength(pool.length);
+    expect([...got].sort((a, b) => a - b)).toEqual(pool);
+  });
+
+  it('does not leave the first item in place, which is the failure mode of a bad shuffle', () => {
+    // The answer sits at index 0 in every multiple choice question, so a shuffle
+    // that barely moves it is the one that matters. Over many keys, item 0 should
+    // land near-uniformly rather than staying put.
+    let stayed = 0;
+    const N = 4000;
+    for (let i = 0; i < N; i++) if (seededShuffle(pool, `k${i}`)[0] === 0) stayed++;
+    expect(stayed / N).toBeLessThan(0.06); // fair is 1/40 = 0.025
+  });
+
+  it('handles the degenerate inputs a real pool can be', () => {
+    expect(seededShuffle([], 'k')).toEqual([]);
+    expect(seededShuffle([7], 'k')).toEqual([7]);
+    expect(seededShuffle(pool, '')).toHaveLength(pool.length);
   });
 });
