@@ -7,16 +7,20 @@ import { palette, withAlpha } from '../theme';
  *
  * ## Why this one is a raster
  *
- * Everything else in the app that looks like a picture is drawn — the scenery
- * behind every screen is `LatticeBackground`, an SVG built out of the palette,
- * and that is the right default: it re-themes for free, it scales to any
- * screen, and `check:theme` can read its colours. This does none of that.
+ * The scenery behind every screen used to be drawn — an SVG built out of the
+ * palette, which re-themed for free, scaled to any screen, and whose colours
+ * `check:theme` could read. This does none of that, and the whole app stands on
+ * it now.
  *
- * It is here anyway because it is a better picture than the drawn one, and a
- * front door is the one place in an app where that is worth paying for. The
- * price is stated plainly: it does not re-theme, it is 122 KB, and its colours
- * are outside the palette's reach. That is why it appears on exactly one
- * screen and why `LatticeBackground` still stands behind all the others.
+ * The price is worth stating plainly, because it is permanent: the background
+ * no longer re-themes. Change `colors.ts` and every surface, every accent and
+ * every piece of text moves; the landscape does not. Re-theming it means
+ * re-exporting two JPEGs. That was an acceptable trade for one screen and it is
+ * a deliberate one for all of them — the picture is better than the drawing was,
+ * and a language course is not a product anyone re-themes twice a year.
+ *
+ * The drawn landscape and its eleven palette tokens were deleted rather than
+ * left unrendered. `git log` has them.
  *
  * ## Why it cannot simply be the background everywhere
  *
@@ -162,7 +166,7 @@ export function EveningScene() {
  * The floor it sets: text must be at least 75% opaque paper to clear WCAG AA
  * against the last of the horizon glow. Nothing on this screen goes below that.
  */
-export function DuskScene() {
+export function DuskScene({ dim = 0 }: { dim?: number }) {
   return (
     <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
       <Image
@@ -173,6 +177,34 @@ export function DuskScene() {
         accessibilityRole="image"
         accessibilityLabel=""
       />
+      {dim > 0 && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: withAlpha(palette.ink, dim),
+          }}
+        />
+      )}
     </View>
   );
 }
+
+/**
+ * How much further into the night the app's interior screens go.
+ *
+ * The welcome screen holds a name, a line, three figures and a button, and the
+ * picture behind it is the picture. A lesson list is forty rows of icon, title
+ * and subtitle stacked down the whole frame, and behind that the same landscape
+ * stops being scenery and starts being noise: the horizon runs straight through
+ * the middle of the list and its glow lands under the labels.
+ *
+ * It is the same place either way — that is the point of continuing the theme —
+ * just later, so it reads as air behind the interface rather than as a view
+ * competing with it. The drawn scenery this replaces made the same move by
+ * dissolving its own ridges into mist; this does it with light.
+ */
+export const INTERIOR_DIM = 0.45;

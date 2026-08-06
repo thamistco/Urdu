@@ -1,7 +1,7 @@
 import { ReactNode, Ref } from 'react';
 import { View, ScrollView, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LatticeBackground } from './LatticeBackground';
+import { DuskScene, INTERIOR_DIM } from './EveningScene';
 
 /**
  * The widest the content column is allowed to get.
@@ -50,7 +50,7 @@ export function Screen({
   return (
     <View className="flex-1 bg-ink">
       <StatusBar barStyle="light-content" />
-      {lattice && (backdrop ?? <LatticeBackground />)}
+      {lattice && (backdrop ?? <DuskScene dim={INTERIOR_DIM} />)}
       <SafeAreaView className="flex-1" edges={['top', 'left', 'right']}>
         {scroll ? (
           <ScrollView
