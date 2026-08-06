@@ -20,12 +20,13 @@ module.exports = {
       // any difference, in either direction. That is what keeps this honest —
       // not the comment above it, which is what was here last time.
       colors: {
-        // A warm espresso-black — the ground just after the sun drops.
+        // A warm espresso-black ground; the card surfaces above it carry the
+        // background photograph's own hue. See the note in theme/colors.ts.
         ink: {
           DEFAULT: '#211712',
-          800: '#2C1F17',
-          700: '#3D2A1E',
-          600: '#523822',
+          800: '#2C1E20',
+          700: '#3C292C',
+          600: '#50373B',
         },
         // Warm sand — the light TEXT colour on the dark ground (not a surface;
         // see `parchment` for that, and the note in theme/colors.ts).
