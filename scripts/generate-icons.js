@@ -41,28 +41,43 @@
  * brightness where they met. Moving the sun down into the open part of the bowl,
  * where no stroke crosses it, fixed that.
  *
- * **The ground is bright.** The draft before this one put the letter on a sky
- * that fell away to near-black at the corners, and set against two dozen icons
- * of the kind people actually keep on a home screen it was the dullest thing
- * there — a brown smudge among saturated flat colour. Measuring those icons'
- * backgrounds explains it: their median saturation is 0.84, and not one of them
- * fades to black at its corners. Depth in an icon has to come from somewhere
- * other than darkness.
+ * **The ground is dark, and it was bright until the app caught up with it.**
  *
- * So the ground is the app's own orange, carrying a slight diagonal shift from
- * light to deep — but staying inside the orange the whole way. That is the
- * distinction the first draft missed: a gradient *within a hue* reads as a
- * sheen, and a gradient *toward black* reads as dirt.
+ * This tile was orange for a good, measured reason, and the reason is worth
+ * keeping written down because it is the risk this version runs. An earlier
+ * draft put the letter on a sky that fell away to near-black at the corners, and
+ * set against two dozen icons of the kind people actually keep on a home screen
+ * it was the dullest thing there — a brown smudge among saturated flat colour.
+ * Those icons' backgrounds have a median saturation of 0.84 and not one of them
+ * fades to black at its corners. So the ground became the app's own orange and
+ * the letter became the dark note, which took the glyph to 6.7:1.
  *
- * **The letter is the dark note, not the light one.** A cream letter on that
- * bright ground was tried first and measured 1.95:1, with over half its outline
- * below 3:1 — worse than every icon in the reference set, whose figure-to-ground
- * contrast runs from 4.3:1 to 18.9:1 with a median near 15:1 and *nothing* under
- * 3:1. Two light values cannot both be bright. Inverting it — near-black letter,
- * cream disc, bright orange ground — keeps the tile at the top of the brightness
- * range and takes contrast to 6.7:1, with 4% of the outline under 3:1. Bright
- * and legible turned out not to be a trade at all; the first attempt had simply
- * put the wrong element in the light.
+ * Two things changed. The app's surfaces were rotated onto the background
+ * photograph's hue, so the interior is a dark plum evening throughout; and a
+ * bright orange tile opening into that is a promise the product does not keep.
+ * The icon is the first thing anyone sees and it was describing a different app.
+ *
+ * So the ground is now the card ramp itself — `ink600` at the top left down to
+ * `ink800` at the bottom right — and the letter is the light note in `paper`,
+ * with the sun in `gold`. That is the wordmark's own relationship (a paper core
+ * inside a gold light) applied to a tile, and it makes the icon the only piece
+ * of the identity that was still quoting the old palette.
+ *
+ * The inversion is not a legibility cost, it is a legibility gain: measured six
+ * pixels out from the glyph all the way round its outline, the median goes from
+ * **6.86:1 to 12.48:1**, with 0.3% of the outline under 3:1. The dark ground has
+ * more room above it than the bright one had below it.
+ *
+ * The gradient rule survives the inversion unchanged: it shifts *within* the
+ * plum from light to deep and never heads for black, because a gradient within a
+ * hue reads as a sheen and a gradient toward black reads as dirt.
+ *
+ * What this version genuinely risks is the finding above — a dark tile among
+ * saturated neighbours. The bet is that the finding was about *dullness* rather
+ * than darkness: what failed was a low-contrast brown with a dim figure, where
+ * this is a held plum carrying a near-white letter at 12:1. If it ever reads as
+ * drab on a real home screen, that is the thing to re-measure, and `git log` has
+ * the bright version intact.
  *
  * The hairlines were the other measured problem, and the one an ornate script
  * was always going to have. Nastaliq is built on extreme stroke contrast: the
@@ -105,13 +120,21 @@ function chromePath() {
   return path.join(base, dir, 'chrome-linux', 'chrome');
 }
 
-const INK = '#211712'; // the app's background; the splash sits on it
-const LETTER = '#2A1208'; // the letter: near-black, the darkest note
-const SUN = '#FFF6EA'; // the disc in its bowl, the one light note
-const GROUND_LIGHT = '#FF9A50';
-const GROUND_DEEP = '#F0741F';
-/** Android flattens the adaptive icon's background to a single colour. */
-const GROUND_FLAT = '#F98038';
+// Every value here is a palette token rather than a colour picked for the icon.
+// The tile used to run on four bespoke hexes, which is how it stayed orange
+// through a re-theme that moved everything else: nothing tied it to the app.
+const INK = '#211712'; // palette.ink — the app's base; the splash sits on it
+const LETTER = '#FFEEDD'; // palette.paper — the letter, the light note
+const SUN = '#FF8C42'; // palette.gold — the disc in its bowl
+const GROUND_LIGHT = '#50373B'; // palette.ink600
+const GROUND_DEEP = '#2C1E20'; // palette.ink800
+/**
+ * Android flattens the adaptive icon's background to a single colour, so it gets
+ * the middle of the ramp rather than either end. Keep it in step with
+ * `android.adaptiveIcon.backgroundColor` in app.json, which is where it is
+ * actually read from — this constant only documents it.
+ */
+const GROUND_FLAT = '#3C292C'; // palette.ink700
 
 /**
  * One icon as SVG.
