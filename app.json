@@ -23,7 +23,7 @@
       "package": "com.harf.urdu",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#F98038"
+        "backgroundColor": "#3C292C"
       },
       "edgeToEdgeEnabled": true
     },
