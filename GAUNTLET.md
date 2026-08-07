@@ -93,7 +93,11 @@ HARD RULES
 - You have no MCP connector tools. No GitHub API, so you cannot open a
   pull request and must not waste turns trying. Everything you need is
   git, npm and the filesystem. Pushing the branch is the deliverable.
-- Never push to main. Only claude/-prefixed branches.
+- Only ever push the claude/gauntlet-<slug> branch you created in STEP 2.
+  Be careful: this repo's default branch is itself called
+  claude/language-learning-android-app-yu2gzz, so "it starts with claude/"
+  is NOT a safe test and would let you push straight to the trunk. Never
+  push to the branch you started the run on.
 - Never edit or delete a test to make it pass. If a test looks wrong,
   record that in the ledger and move the item to blocked/.
 - Never add a dependency not already in package.json without recording
