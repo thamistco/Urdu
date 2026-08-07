@@ -35,6 +35,9 @@
  *     tappable row that costs a learner a session and returns nothing.
  *  4. **Lesson ids are unique.** Progress is persisted by id, so a collision
  *     silently marks one lesson complete when the learner finishes the other.
+ *  5. **Nothing is shown before it is taught.** No sentence or grammar lesson
+ *     puts a word on screen ahead of the lesson that introduces it. Measured on
+ *     what the generator emits, not on the pools it draws from.
  *
  * Point 1 is the one that would have caught the original bug on the day it was
  * written, and it is deliberately stated over the corpus rather than over the
@@ -49,6 +52,7 @@ const { load } = require('./lib/load-ts');
 
 const { ALL_LESSONS } = load('src/data/units.ts');
 const { WORDS, getTopic } = load('src/data/words.ts');
+const { buildLessonExercises } = load('src/exercises/generator.ts');
 
 const problems = [];
 const bad = (msg) => problems.push(msg);
@@ -139,6 +143,59 @@ if (collisions.length) {
   );
 }
 
+// -------------------------------------- 5. nothing is shown before it is taught
+//
+/**
+ * A sentence lesson may not put a word on screen before the lesson that teaches
+ * it.
+ *
+ * This was measurable only once coverage was exhaustive. While a vocabulary
+ * lesson showed a random handful of its topic, "has the learner met this word"
+ * had no answer — so a beginner sentence lesson drew on words the learner had
+ * roughly a one in five chance of ever having been shown, and nothing could say
+ * so. Making every word belong to exactly one lesson turned that into 116 word
+ * forms of 1,665 appearing before they were taught.
+ *
+ * Measured on what the generator actually emits rather than on the pools it
+ * draws from, because the filter that fixes this lives in the generator, and a
+ * check that reads the pools would pass whether or not that filter still works.
+ */
+{
+  const pos = new Map();
+  ALL_LESSONS.forEach((l, i) => {
+    for (const id of l.wordIds ?? []) if (!pos.has(id)) pos.set(id, i);
+  });
+  const formPos = new Map();
+  for (const w of WORDS) {
+    const p = pos.get(w.id);
+    if (p === undefined) continue;
+    const c = formPos.get(w.urdu);
+    if (c === undefined || p < c) formPos.set(w.urdu, p);
+  }
+  const early = [];
+  ALL_LESSONS.forEach((l, i) => {
+    if (l.kind !== 'sentences' && l.kind !== 'grammar') return;
+    for (const track of ['both', 'roman']) {
+      for (const ex of buildLessonExercises(l, [], track)) {
+        for (const form of (ex.sentence && ex.sentence.words) || []) {
+          const p = formPos.get(form);
+          if (p !== undefined && p > i) early.push({ form, at: i, lesson: l.id, taught: p });
+        }
+      }
+    }
+  });
+  if (early.length) {
+    const uniq = [...new Map(early.map((e) => [`${e.lesson}|${e.form}`, e])).values()];
+    bad(
+      `${uniq.length} word form${uniq.length === 1 ? ' is' : 's are'} shown before the lesson that teaches them:\n` +
+        uniq
+          .slice(0, 8)
+          .map((e) => `      "${e.form}" in ${e.lesson} (position ${e.at}) but taught at ${e.taught}`)
+          .join('\n')
+    );
+  }
+}
+
 // ------------------------------------------------------------------- report
 
 if (problems.length) {
@@ -156,5 +213,6 @@ if (problems.length) {
 const perLesson = vocab.map((l) => l.wordIds.length);
 console.log(
   `check:coverage — all ${WORDS.length} words are taught, each by exactly one of ${vocab.length} vocabulary lessons ` +
-    `(${Math.min(...perLesson)} to ${Math.max(...perLesson)} words each). ${ALL_LESSONS.length} lessons, no id used twice.`
+    `(${Math.min(...perLesson)} to ${Math.max(...perLesson)} words each). ${ALL_LESSONS.length} lessons, no id used twice, ` +
+    `and no sentence puts a word on screen before the lesson that teaches it.`
 );

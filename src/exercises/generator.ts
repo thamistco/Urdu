@@ -262,6 +262,54 @@ function grammarDrillExercise(concept: GrammarConcept, drill: GrammarDrill, trac
   return { kind: 'grammarDrill', concept, drill, romanOptions };
 }
 
+/**
+ * The word forms a learner has met by the time they reach a given lesson.
+ *
+ * Built from `taughtUpTo`, which is now a real record rather than an upper
+ * bound, so this is genuinely "what is readable here" and not a guess.
+ */
+const readableFormsAt = (lessonId: string): Set<string> => {
+  const taught = new Set(taughtUpTo(lessonId).words);
+  const forms = new Set<string>();
+  for (const w of WORDS) if (taught.has(w.id)) forms.add(w.urdu);
+  return forms;
+};
+
+/**
+ * Only show a sentence the learner can actually read.
+ *
+ * A sentence lesson used to take everything at its CEFR level, and a grammar
+ * concept everything tagged with it, regardless of whether the vocabulary in
+ * them had been taught yet. Measured after topics were spread across enough
+ * lessons to cover them, 116 of 1,665 word forms in these lessons appeared
+ * before the lesson that teaches them: "میز" is used by the beginner sentence
+ * lesson at path position 58 and taught at 61.
+ *
+ * That was not caused by the split — before it, those same sentences drew on
+ * words a learner had roughly a one in five chance of ever having been shown,
+ * so the exposure was worse and simply unmeasurable. The split is what turned
+ * it into a number, and a number is fixable.
+ *
+ * A word with no teaching position at all is left alone rather than treated as
+ * unknown: proper nouns and inflected forms that no vocabulary entry owns would
+ * otherwise disqualify most of the corpus.
+ *
+ * The unfiltered pool is the fallback, because a lesson with nothing in it is
+ * worse than a lesson with one hard word. Measured across all 37 sentence and
+ * grammar lessons on the path, the fallback is never reached — every one of
+ * them has more fully readable sentences than it needs.
+ */
+function readableSentences(pool: Sentence[], lessonId: string): Sentence[] {
+  const forms = readableFormsAt(lessonId);
+  const taughtAnywhere = TAUGHT_FORMS;
+  const ok = pool.filter((s) => (s.words ?? []).every((f: string) => !taughtAnywhere.has(f) || forms.has(f)));
+  return ok.length ? ok : pool;
+}
+
+/** Every word form the course teaches anywhere, so an untaught-by-anyone form
+ *  (a name, an inflection) is not mistaken for one the learner has not reached. */
+const TAUGHT_FORMS = new Set(WORDS.map((w) => w.urdu));
+
 // ---- lesson composition --------------------------------------------------
 
 export function buildLessonExercises(
@@ -378,7 +426,10 @@ export function buildLessonExercises(
         const ex = grammarDrillExercise(c, d, track);
         if (ex) exercises.push(ex);
       }
-      const related = SENTENCES.filter((x) => x.concept === c.id);
+      const related = readableSentences(
+        SENTENCES.filter((x) => x.concept === c.id),
+        lesson.id
+      );
       for (const sen of seededShuffle(related, lesson.id).slice(0, 2)) {
         const ex = sentenceExercise(sen, track);
         if (ex) exercises.push(ex);
@@ -388,7 +439,10 @@ export function buildLessonExercises(
 
   if (lesson.kind === 'sentences') {
     const pool = lesson.level ? SENTENCES.filter((x) => x.level === lesson.level) : SENTENCES;
-    for (const sen of seededShuffle(pool.length ? pool : SENTENCES, lesson.id).slice(0, lesson.size)) {
+    for (const sen of seededShuffle(readableSentences(pool.length ? pool : SENTENCES, lesson.id), lesson.id).slice(
+      0,
+      lesson.size
+    )) {
       const ex = sentenceExercise(sen, track);
       if (ex) exercises.push(ex);
     }

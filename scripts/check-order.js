@@ -30,21 +30,24 @@
  * across enough lessons to cover them, and the exact word taught at each point
  * on the path is known.
  *
- * So word-level is now *possible*, and it is not yet *true*: measured across
- * every sentence and grammar lesson, 116 of 1,665 word forms (7.0%) appear
- * before the lesson that teaches them — "میز" is used at path position 58 and
- * taught at 227.
+ * So word-level became possible, and measuring it found 116 of 1,665 word forms
+ * appearing before the lesson that teaches them — "میز" used by the beginner
+ * sentence lesson at path position 58 and taught at 61.
  *
- * That is a real finding and it is not a regression. Before the split those same
- * sentences drew on words the learner had a roughly one in five chance of ever
- * having been shown, so the exposure was worse and merely unmeasurable. Making
- * coverage exhaustive is what turned it into a number.
+ * That was never a regression. Before the split those same sentences drew on
+ * words a learner had roughly a one in five chance of ever having been shown, so
+ * the exposure was worse and simply unmeasurable; making coverage exhaustive is
+ * what turned it into a number.
  *
- * Fixing it means resequencing content — moving words earlier within their
- * topics, or moving sentences later — which is a curriculum job rather than a
- * checking one, and doing it under cover of a coverage change would bury it. So
- * this stays at topic level, which is what the course still honestly promises:
- * reach the topic, and you are inside the material this draws on.
+ * It is fixed, in the generator rather than here: `readableSentences` filters a
+ * sentence lesson's pool to sentences whose vocabulary the learner has met, and
+ * `check:coverage` holds it at zero against what the generator actually emits.
+ * All 37 sentence and grammar lessons have more readable sentences than they
+ * need, so nothing was starved to achieve it.
+ *
+ * This check stays at topic level anyway, and now for a plain reason rather than
+ * a limitation: word-level ordering is owned by `check:coverage`, and two checks
+ * asserting one property is how they drift apart.
  *
  * Two kinds of finding are reported separately, because they call for
  * different responses. A word whose topic comes *later* on the path is an
