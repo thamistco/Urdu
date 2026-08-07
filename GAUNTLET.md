@@ -14,6 +14,8 @@ A self-restarting autonomous work loop. Two layers:
 ```
 .claude/settings.json    effort and permissions for cloud runs
 gauntlet/QUEUE.md        ordered backlog, top item is next up
+gauntlet/ROLES.md        the lead, and the four critics that judge it
+gauntlet/BENCHMARKS.md   measured targets, and where the numbers came from
 gauntlet/LEDGER.md       append only run log, the loop's only memory
 gauntlet/blocked/        items that failed three times, with notes
 gauntlet/done/           completed item specs, for audit
@@ -67,7 +69,29 @@ Set this goal and work it:
 
   /goal <the item's Definition of Done>, proven by <the item's verify
   command> exiting 0, with no other test file modified — or stop after
-  12 turns and record why
+  16 turns and record why
+
+STEP 3.5 — CRITIQUE (you may not pass your own work)
+Read gauntlet/ROLES.md. Dispatch, as parallel subagents via the Task
+tool, the critics whose domain this item touches. Give each one the
+item, your diff, and its brief from ROLES.md verbatim.
+
+  THE CRITIC            always, on every item, no exceptions
+  CURRICULUM CRITIC     anything touching lessons, words, order or
+                        gauntlet/BENCHMARKS.md targets
+  DESIGN CRITIC         anything that changes a screen; it must attach
+                        screenshots
+  PLAYER                anything that changes what a lesson does; it
+                        runs npm run soak and reports the seed
+
+Paste every verdict into the ledger, including the ones you disagree
+with. Fix everything BLOCKING before STEP 4 — a BLOCKING finding is not
+a follow up item and cannot be deferred. Record MAJOR findings as new
+queue items. If you overrule a critic, write the finding first and your
+reason second.
+
+Record which critics you dispatched and why. "I judged it did not need
+review" is the sentence that precedes a bad merge.
 
 STEP 4 — VERIFY
 Run the item's verify command. Paste the actual output into the ledger.
@@ -102,8 +126,11 @@ HARD RULES
   record that in the ledger and move the item to blocked/.
 - Never add a dependency not already in package.json without recording
   why in the ledger.
-- Keep to 12 turns. Stopping early with clean state beats finishing
-  dirty.
+- Keep to 16 turns. Critique costs turns and is not the thing to cut: a
+  run that ships one item reviewed beats one that ships two unreviewed.
+  If the budget is nearly gone, stop and leave the item claimed rather
+  than skipping STEP 3.5. Stopping early with clean state always beats
+  finishing dirty.
 - `npm run check:all` is the gate for anything touching shipped code. It
   reads its step list out of the deploy workflow, so it cannot drift from
   what CI runs.
@@ -116,6 +143,13 @@ HARD RULES
   Record the induced failure output in the ledger.
 - Read docs/ENGINEERING_STANDARDS.md before writing code. It is the
   constitution of this repo and it is not optional.
+- You may not record an item PASSED without at least one critic verdict
+  in the ledger. A lead that passes its own work has broken the loop.
+- Never weaken check:coverage, check:order or check:answerable to make a
+  curriculum item pass. All 2,281 words stay taught by exactly one
+  lesson, nothing is shown before it is taught, and every question stays
+  answerable from what is on screen. Those are settled; the shape of the
+  lessons around them is what is in play.
 - Measure, do not estimate. Contrast ratios, file sizes and render counts
   get measured on the real built artifact, never inferred.
 ```
@@ -150,7 +184,7 @@ this before turning the routine on.
 
 **There is no quota API.** A run cannot see how much of the window is left, so
 "stop just short of the limit" is not literally achievable. Cap each run at
-about 12 turns so no single run drains a window, and let rejection be the brake.
+about 16 turns so no single run drains a window, and let rejection be the brake.
 If a run is cut off mid-work, the branch and the ledger are the recovery point,
 which is what Step 6 is for.
 

@@ -19,7 +19,58 @@ inventing work to justify it.
 reads its step list out of `.github/workflows/deploy-preview.yml`, so it cannot
 drift from what CI runs.
 
+`npm run check:shape` is the exception: it fails today, on purpose, and is
+deliberately not in check:all. It states the curriculum target in a form a
+machine can settle. Wire it into the workflow on the commit that makes it pass.
+
+Items are dispatched to critics before they can be recorded PASSED; see
+gauntlet/ROLES.md. The measured targets the curriculum critic holds you to, and
+where they came from, are in gauntlet/BENCHMARKS.md.
+
 ---
+
+## URD-A01 — Give every topic a category
+attempts: 0
+files: src/data/words.ts, src/data/vocab/, scripts/check-shape.js
+definition of done: `Topic` carries a `category` from a declared taxonomy, every
+  one of the 122 topics has one, and `check:shape` no longer reports the
+  uncategorised failure. Today a topic has a title, an icon, a blurb and a CEFR
+  level, and nothing that says what kind of thing it is: nothing groups "Food &
+  drink" with "At the restaurant" and separates both from "Formal & written".
+  Start from the taxonomy in check-shape.js (survival, people, world, doing,
+  abstract, formal), change it if a better one survives contact with the real
+  122, and say in the ledger why.
+verify: npm run check:shape
+notes: First of the curriculum items because everything after it wants to group
+  by something. Dispatch the curriculum critic: the taxonomy is a pedagogical
+  claim about what a learner is doing, not a filing decision. Note that
+  check:shape will still fail on the other four counts until URD-A02 lands, so
+  for this item alone, pass means the categorisation failure is gone from its
+  output.
+
+## URD-A02 — Make a lesson a sitting
+attempts: 0
+files: src/data/units.ts, src/exercises/generator.ts, scripts/check-shape.js
+definition of done: `npm run check:shape` exits 0, then is wired into
+  .github/workflows/deploy-preview.yml so check:all picks it up. Measured today:
+  a Harf lesson is 1.3 minutes and 4.6 new words, each word met 1.8 times, with
+  topics broken into up to 7 parts and 493 vocabulary lessons in total. Drops
+  caps a session at 5 minutes; Duolingo runs 5 to 10. See gauntlet/BENCHMARKS.md.
+verify: npm run check:shape
+notes: The trap is fixing this by raising the word count alone. Neither
+  benchmark gets to five minutes with volume — Duolingo introduces a handful of
+  new words in a ten minute lesson and repeats each four to six times. Harf
+  repeats 1.8 times. Both dials move together or the lesson gets longer and
+  teaches worse.
+
+  Do NOT weaken check:coverage to get there. Every one of the 2,281 words stays
+  taught by exactly one lesson; this is about how they are grouped, not how many
+  survive. And expect this to move learner progress a second time, so it lands
+  with URD-003 or immediately after it, never before.
+
+  Dispatch the curriculum critic and THE CRITIC. This item is a rewrite of the
+  decision made in 35fa67a, by the same hand that made it, which is exactly the
+  situation the critics exist for.
 
 ## URD-001 — Lint clean at zero warnings
 attempts: 0
