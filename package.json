@@ -26,6 +26,7 @@
     "check:scenery": "node scripts/check-scenery.js",
     "check:sizes": "node scripts/check-sizes.js",
     "check:all": "node scripts/check-all.js",
+    "soak": "node scripts/soak.js",
     "build:web": "expo export --platform web --output-dir dist",
     "check:deployed": "node scripts/check-deployed.js",
     "lint": "eslint 'src/**/*.{ts,tsx}' 'scripts/**/*.js'",
