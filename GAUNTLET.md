@@ -25,8 +25,27 @@ the loop has amnesia and redoes work it already did.
 
 ## The routine prompt
 
-Create at [claude.ai/code/routines](https://claude.ai/code/routines), or `/schedule`
-in the CLI. Hourly.
+**The live routine already exists**: "Harf gauntlet",
+`trig_01A1PR5M8aYv8f2dLyeDFHn5`, hourly at :40 UTC, firing a fresh session each
+time into the Default environment, notifications off. It was created from a
+Claude Code session rather than the web UI. The prompt below is what it runs; if
+you edit one, edit the other, or the doc starts lying.
+
+To change it without the UI: `update_trigger` for the prompt or schedule,
+`fire_trigger` to run it now, `list_triggers` to find it again.
+
+### A routine has no connectors
+
+Routines created this way store no MCP connectors, so a fired session runs
+without any `mcp__*` tool. That includes the GitHub API, which is how pull
+requests get opened here. Pushing still works, because that is git over https
+through the proxy rather than a connector.
+
+So the loop pushes its branch and records the name, and a human opens the PR.
+The first version of the prompt ended with "open a PR" and would have failed on
+its last instruction every single run. If you want PRs opened automatically,
+recreate the routine from the claude.ai routines UI with the GitHub connector
+attached.
 
 ```
 You are running one iteration of the Harf gauntlet. Harf is an Urdu course
@@ -54,7 +73,8 @@ STEP 4 — VERIFY
 Run the item's verify command. Paste the actual output into the ledger.
 Never mark an item done on the basis of your own reasoning — only on a
 command exiting 0. If it passes: move the item spec to gauntlet/done/,
-remove it from QUEUE.md, commit, push the claude/ branch, open a PR.
+remove it from QUEUE.md, commit, and push the claude/ branch. Record the
+branch name in the ledger so a human can open the pull request.
 
 STEP 5 — ON FAILURE
 Append a FAILED entry with the real error output and your diagnosis.
@@ -70,6 +90,9 @@ with uncommitted work is a lost run. Append a DONE-FOR-NOW entry
 summarising what changed and what the next run should pick up.
 
 HARD RULES
+- You have no MCP connector tools. No GitHub API, so you cannot open a
+  pull request and must not waste turns trying. Everything you need is
+  git, npm and the filesystem. Pushing the branch is the deliverable.
 - Never push to main. Only claude/-prefixed branches.
 - Never edit or delete a test to make it pass. If a test looks wrong,
   record that in the ledger and move the item to blocked/.
