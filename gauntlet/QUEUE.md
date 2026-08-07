@@ -121,18 +121,7 @@ notes: Exactly the shape of the verdict-cue bug already fixed there: a question
   that cannot be answered from what is visible. Extend that check rather than
   writing a new one.
 
-## URD-008 — Mark synthesised audio as synthesised
-attempts: 0
-files: src/lib/voiceManifest.ts, src/components/, scripts/check-voice.js
-definition of done: Every clip records whether it is a recording or synthesised,
-  per clip rather than globally, so native recordings can replace TTS one at a
-  time without a data migration. The UI says which it is wherever a learner is
-  asked to imitate it. `check:voice` fails if any clip lacks the flag.
-verify: npm run check:voice
-notes: Urdu text to speech is not good enough to pass silently as a native
-  speaker, and a learner copying a bad synthesis learns a bad pronunciation.
-
-## URD-009 — Logical direction properties in Urdu-bearing components
+## URD-008 — Logical direction properties in Urdu-bearing components
 attempts: 0
 files: src/components/, src/screens/, src/exercises/
 definition of done: The 8 remaining physical direction properties (`ml-`, `mr-`,
