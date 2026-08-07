@@ -178,9 +178,14 @@ What that turned up, and what it says about where this app actually is:
   item does touch one of them, it names the check it must not weaken on the way
   past.
 - **What is genuinely missing is narrower than a generic list suggests.** Four
-  letters that sound identical and so cannot be tested by ear, audio that does
-  not say when it is synthesised, a first-run lockout with no way out and no
-  explanation, 20 typed `any`s, and 8 physical direction properties.
+  letters that sound identical and so cannot be tested by ear, a first-run
+  lockout with no way out and no explanation, 20 typed `any`s, and 8 physical
+  direction properties.
+
+  A generic list would also queue "mark synthesised audio as synthesised". Every
+  clip in Harf is synthesised, so a per-clip flag would be a constant, and a
+  check on it would assert nothing. If the app should disclose that its audio is
+  synthetic, that is one sentence somewhere, not a data model.
 
 ## Two adaptations to the original spec
 
