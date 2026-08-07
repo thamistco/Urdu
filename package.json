@@ -36,7 +36,8 @@
     "test": "vitest run",
     "check:structure": "node scripts/check-structure.js",
     "check:order": "node scripts/check-order.js",
-    "check:coverage": "node scripts/check-coverage.js"
+    "check:coverage": "node scripts/check-coverage.js",
+    "check:shape": "node scripts/check-shape.js"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "^0.2.3",
