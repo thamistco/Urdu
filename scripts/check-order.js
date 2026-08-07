@@ -21,12 +21,30 @@
  * runs them through the real sentenceBuild exercise (decoy tiles, no gloss
  * shown), same as a "sentences" lesson.
  *
- * "Topic", not "word" — a vocab lesson only ever shows a random handful of
- * its topic (see the doc comment on `taughtUpTo` in generator.ts), so word-
- * level tracking would need to know which specific words a specific
- * playthrough happened to draw, which nothing records. Topic-level is the
- * same granularity the review fallback already uses, and it is what the
- * course actually promises: reach the lesson, and its topic is available.
+ * "Topic", not "word", and the reason has changed — so this says the real one
+ * rather than the one that used to be true.
+ *
+ * It used to be that word-level was impossible: a vocab lesson showed a random
+ * handful of its topic, and nothing recorded which handful a given playthrough
+ * drew. That is no longer so. Lessons now carry `wordIds`, topics are spread
+ * across enough lessons to cover them, and the exact word taught at each point
+ * on the path is known.
+ *
+ * So word-level is now *possible*, and it is not yet *true*: measured across
+ * every sentence and grammar lesson, 116 of 1,665 word forms (7.0%) appear
+ * before the lesson that teaches them — "میز" is used at path position 58 and
+ * taught at 227.
+ *
+ * That is a real finding and it is not a regression. Before the split those same
+ * sentences drew on words the learner had a roughly one in five chance of ever
+ * having been shown, so the exposure was worse and merely unmeasurable. Making
+ * coverage exhaustive is what turned it into a number.
+ *
+ * Fixing it means resequencing content — moving words earlier within their
+ * topics, or moving sentences later — which is a curriculum job rather than a
+ * checking one, and doing it under cover of a coverage change would bury it. So
+ * this stays at topic level, which is what the course still honestly promises:
+ * reach the topic, and you are inside the material this draws on.
  *
  * Two kinds of finding are reported separately, because they call for
  * different responses. A word whose topic comes *later* on the path is an
@@ -156,18 +174,38 @@ for (const l of ALL_LESSONS) {
   if (l.level) levelEndTopics.set(l.level, new Set(topicsByLessonId.get(l.id)));
 }
 
-// One vocab topic must map to exactly one lesson — the invariant everything
-// above assumes. If it ever stopped holding, "taught by this lesson" would
-// stop meaning anything.
+/**
+ * A topic is taught by a run of consecutive lessons, and every word in it by
+ * exactly one of them.
+ *
+ * This used to assert one topic, one lesson, and exit if it ever found two. That
+ * held right up until topics were spread across enough lessons to cover their
+ * vocabulary — First words is seven lessons now — so what is checked here is the
+ * property that replaced it: the parts of a topic sit together, so "the learner
+ * has reached this topic" still names a single place on the path rather than a
+ * scattering.
+ *
+ * The stronger statement, that each word is taught exactly once by exactly one
+ * lesson, is `check:coverage`, which owns it.
+ */
 {
-  const seen = new Map();
-  for (const l of ALL_LESSONS) {
-    if (l.kind !== 'vocab' || !l.topic) continue;
-    if (seen.has(l.topic)) {
-      console.error(`check:order — topic "${l.topic}" is taught by both ${seen.get(l.topic)} and ${l.id}.`);
+  const firstAt = new Map();
+  const lastAt = new Map();
+  ALL_LESSONS.forEach((l, i) => {
+    if (l.kind !== 'vocab' || !l.topic) return;
+    if (!firstAt.has(l.topic)) firstAt.set(l.topic, i);
+    lastAt.set(l.topic, i);
+  });
+  for (const [topic, first] of firstAt) {
+    const span = lastAt.get(topic) - first + 1;
+    const parts = ALL_LESSONS.filter((l) => l.topic === topic && l.kind === 'vocab').length;
+    if (span !== parts) {
+      console.error(
+        `check:order — the ${parts} lessons teaching "${topic}" are spread over ${span} places on the path.\n` +
+          `  A topic's parts have to stay together, or "taught by here" stops naming one point.`
+      );
       process.exit(1);
     }
-    seen.set(l.topic, l.id);
   }
 }
 

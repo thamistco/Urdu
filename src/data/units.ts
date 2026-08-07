@@ -12,6 +12,7 @@
 import { LETTERS } from './letters';
 import { GRAMMAR } from './grammar';
 import { PASSAGES, DIALOGUES } from './sentences';
+import { wordsByTopic } from './words';
 import type { Level } from './words';
 import type { LearnTrack } from '../store/useSettingsStore';
 import { palette } from '../theme';
@@ -28,6 +29,19 @@ export type Lesson = {
   letterIds?: string[];
   /** vocabulary topic for word lessons */
   topic?: string;
+  /**
+   * Exactly which words this lesson introduces.
+   *
+   * Set for every vocabulary lesson in the path by `coverTopics` below. It is
+   * the whole point of that expansion: a lesson used to name only its *topic*
+   * and let the generator take a handful at random, so most of a topic was
+   * never taught by anything and the app still ticked the lesson off. Naming
+   * the words makes the lesson answerable for them.
+   *
+   * Absent on the synthetic practice lessons, which deliberately draw from a
+   * whole topic rather than teaching a fixed part of it.
+   */
+  wordIds?: string[];
   /** grammar concept id */
   conceptId?: string;
   /** reading passage id */
@@ -187,7 +201,7 @@ const GOLD = palette.gold,
   ROSE = palette.roseLight,
   BLUE = palette.accentTeal;
 
-export const UNITS: Unit[] = [
+const PLANNED_UNITS: Unit[] = [
   // ══════════════ BEGINNER ══════════════
   {
     id: 'u1',
@@ -807,6 +821,88 @@ export const UNITS: Unit[] = [
     ],
   },
 ];
+
+/**
+ * How many new words one vocabulary lesson introduces.
+ *
+ * Five, chosen against the shape of the corpus rather than picked round: topic
+ * pools run from 11 to 32 words with a median of 19, so five gives most topics
+ * four parts and none of them a part so short it is not worth opening. The
+ * lesson around those five is unchanged — meet each word, come back to two from
+ * the English side, type one, build one, close on a matching board — which is
+ * about ten exercises, and that was already the length that felt right.
+ */
+const NEW_WORDS_PER_LESSON = 5;
+
+/**
+ * Split a topic's words into parts of nearly equal size.
+ *
+ * Fixed size chunks would be simpler and worse: nineteen words in fives is
+ * 5, 5, 5, 4 either way, but seventeen is 5, 5, 5, 2 chunked and 5, 4, 4, 4
+ * balanced, and a two word lesson sitting at the end of a topic reads like the
+ * course ran out rather than finished.
+ */
+function balancedParts<T>(items: readonly T[], per: number): T[][] {
+  const n = Math.max(1, Math.ceil(items.length / per));
+  const out: T[][] = [];
+  let start = 0;
+  for (let i = 0; i < n; i++) {
+    const take = Math.round((items.length - start) / (n - i));
+    out.push(items.slice(start, start + take));
+    start += take;
+  }
+  return out;
+}
+
+/**
+ * Turn every vocabulary lesson into as many lessons as its topic needs.
+ *
+ * The course used to name a topic and stop there. The generator then took
+ * `Math.max(3, size - 4 - woven)` of that topic's words at random — three of
+ * the thirty two in First words — marked the lesson complete, and moved on. A
+ * full playthrough of the entire path introduced at most 608 of the 2,281
+ * words in it. The other three quarters were written, translated, given
+ * pictures and recorded, and no learner could ever be shown them.
+ *
+ * It also meant "finished" was not true in the way a learner reads it, which is
+ * how this surfaced: they completed First words, came back, and met words they
+ * had never seen in a lesson already ticked off.
+ *
+ * So a topic is spread across parts here, at authoring time, and each part
+ * carries the ids of the words it owns. Coverage becomes a property of the path
+ * rather than a hope about a sampler, and `check:coverage` holds it there.
+ *
+ * Ids: the first part keeps the topic's original id, so progress saved against
+ * the lesson learners have already finished still lands on it. Later parts
+ * suffix `-pN`. That is the same rule as the note on `uid` above — an id names
+ * the content, never the position.
+ */
+function coverTopics(units: Unit[]): Unit[] {
+  return units.map((u) => ({
+    ...u,
+    lessons: u.lessons.flatMap((l) => {
+      if (l.kind !== 'vocab' || !l.topic) return [l];
+      const parts = balancedParts(wordsByTopic(l.topic), NEW_WORDS_PER_LESSON);
+      return parts.map((words, i) => ({
+        ...l,
+        id: i === 0 ? l.id : `${l.id}-p${i + 1}`,
+        // The counter goes on the subtitle rather than the title so the path
+        // still reads as one topic broken into sittings, rather than as a
+        // dozen lessons that happen to share a name.
+        subtitle: parts.length > 1 ? `${l.subtitle} · ${i + 1} of ${parts.length}` : l.subtitle,
+        romanSubtitle:
+          l.romanSubtitle && parts.length > 1 ? `${l.romanSubtitle} · ${i + 1} of ${parts.length}` : l.romanSubtitle,
+        wordIds: words.map((w) => w.id),
+        // The closing run — two recalls, a type, a build and the board — needs
+        // its own slots on top of the words, or the lesson is trimmed and it is
+        // the hardest exercises at the end that get cut.
+        size: words.length + 4,
+      }));
+    }),
+  }));
+}
+
+export const UNITS: Unit[] = coverTopics(PLANNED_UNITS);
 
 export const ALL_LESSONS: Lesson[] = UNITS.flatMap((u) => u.lessons);
 export const findLesson = (id: string) => ALL_LESSONS.find((l) => l.id === id);
