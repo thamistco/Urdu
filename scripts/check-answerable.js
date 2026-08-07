@@ -298,11 +298,26 @@ const SCRIPT_WORDS = /\b(letters?|script|alphabet|nastaliq|glyphs?|handwriting|t
  */
 const CORRESPONDENCE = new Set(['r-4', 'v-formal']);
 
+/**
+ * A topic is several lessons now, so an exemption has to survive the split.
+ *
+ * `v-formal` became `v-formal`, `v-formal-p2`, `v-formal-p3`, `v-formal-p4` when
+ * topics were spread across enough lessons to cover their vocabulary, and this
+ * check promptly failed on three of them: same subtitle, same content, ids the
+ * allowlist had never heard of. The exemption is about what the lesson teaches,
+ * and every part teaches the same topic, so it is keyed on the topic's lesson
+ * rather than on the part.
+ *
+ * `-pN` is only ever the part suffix — `uid` in units.ts breaks ties with a bare
+ * `-2` — so stripping it cannot swallow an unrelated lesson.
+ */
+const withoutPart = (id) => id.replace(/-p\d+$/, '');
+
 for (const u of unitsForTrack('roman')) {
   if (SCRIPT_WORDS.test(`${u.title} ${u.subtitle}`))
     fail('a Roman-track unit is still named after the alphabet', `${u.id}: ${u.title} — ${u.subtitle}`);
   for (const l of u.lessons) {
-    if (!CORRESPONDENCE.has(l.id) && SCRIPT_WORDS.test(`${l.title} ${l.subtitle}`))
+    if (!CORRESPONDENCE.has(withoutPart(l.id)) && SCRIPT_WORDS.test(`${l.title} ${l.subtitle}`))
       fail('a Roman-track lesson is still named after the alphabet', `${l.id}: ${l.title} — ${l.subtitle}`);
   }
 }

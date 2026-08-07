@@ -306,12 +306,24 @@ export function buildLessonExercises(
      * twice, and the second sighting always asks for more than the first.
      */
     const pool = wordsByTopic(lesson.topic);
-    // Budget the lesson exactly: the four closing exercises and any woven-in
-    // review both take slots, and a truncated lesson would lose the hardest
-    // items — which are the ones at the end.
-    const woven = Math.min(2, reviewRefs.length);
-    const newWords = Math.max(3, lesson.size - 4 - woven);
-    const picks = seededShuffle(pool, lesson.id).slice(0, newWords);
+    /**
+     * The lesson says which words it teaches, and this teaches those.
+     *
+     * It used to decide for itself: `Math.max(3, size - 4 - woven)` words taken
+     * from the topic at random. That number is the reason most of the corpus was
+     * unreachable — three words of the thirty two in First words — and because
+     * the choice lived here rather than in the path, nothing could see which
+     * words a lesson was responsible for, so nothing could notice the rest were
+     * never taught anywhere.
+     *
+     * `wordIds` comes from `coverTopics` in units.ts, which spreads each topic
+     * across enough lessons to cover it. The fallback is for the synthetic
+     * practice lessons, which have no fixed slice by design: a topic drill is
+     * meant to range over the whole topic.
+     */
+    const picks = lesson.wordIds
+      ? (lesson.wordIds.map(getWord).filter(Boolean) as Word[])
+      : seededShuffle(pool, lesson.id).slice(0, Math.max(3, lesson.size - 4 - Math.min(2, reviewRefs.length)));
     picks.forEach((w, i) => exercises.push(wordExercise(w, pool, track, 'meet', i % 3)));
 
     for (const w of seededShuffle(picks, `${lesson.id}:recall`).slice(0, 2)) {
@@ -439,20 +451,28 @@ export function buildLessonExercises(
  * strictly before this lesson, plus this lesson's own unit-mates, so a review
  * draws only from units the learner has reached.
  *
- * This is an *upper bound*, not a record of what was shown. A vocab lesson
- * introduces a random handful of its topic — `Math.max(3, lesson.size - 4 -
- * woven)` words, typically well under ten — but this pushes every word
- * `wordsByTopic` returns for that topic, which for something like colours
- * (nineteen words) is most of the category. `fallbackReviewRefs` below narrows
- * this against `known` before using it; nothing downstream of this function
- * should treat its output as "the learner has seen these".
+ * This used to be an *upper bound* rather than a record, and said so: a vocab
+ * lesson showed a random handful of its topic while this counted the whole
+ * topic taught the moment any lesson touched it. Nineteen words claimed for a
+ * lesson that had shown three.
+ *
+ * That is no longer a gap, because the gap it was describing is gone. A
+ * vocabulary lesson now carries `wordIds` — exactly the words it introduces —
+ * and the topics are spread across enough lessons to cover them, so this walks
+ * the same list the learner actually saw. It is now what its name says.
+ *
+ * The fallback matters for the same reason it always did: a lesson without
+ * `wordIds` is a synthetic practice drill, which ranges over a whole topic by
+ * design, so for those the topic really is the honest answer.
  */
 function taughtUpTo(lessonId: string): { letters: string[]; words: string[] } {
   const letters: string[] = [];
   const words: string[] = [];
   for (const l of ALL_LESSONS) {
     if (l.kind === 'letters' && l.letterIds) letters.push(...l.letterIds);
-    if (l.kind === 'vocab' && l.topic) words.push(...wordsByTopic(l.topic).map((w) => w.id));
+    if (l.kind === 'vocab' && l.topic) {
+      words.push(...(l.wordIds ?? wordsByTopic(l.topic).map((w) => w.id)));
+    }
     if (l.id === lessonId) break;
   }
   return { letters, words };
