@@ -29,7 +29,9 @@ Create at [claude.ai/code/routines](https://claude.ai/code/routines), or `/sched
 in the CLI. Hourly.
 
 ```
-You are running one iteration of the Urdu app gauntlet. You are unattended.
+You are running one iteration of the Harf gauntlet. Harf is an Urdu course
+(Expo / React Native / react-native-web) deployed to GitHub Pages. You are
+unattended.
 Nobody will answer questions. Never ask; decide and record the decision.
 
 STEP 1 — ORIENT
@@ -78,6 +80,17 @@ HARD RULES
 - `npm run check:all` is the gate for anything touching shipped code. It
   reads its step list out of the deploy workflow, so it cannot drift from
   what CI runs.
+- Never weaken an existing check to make an item pass. Several items name
+  a check they must not relax on the way past; that is the whole point of
+  them. Fix the code, or disable at the site with a sentence saying why
+  the rule is wrong there.
+- A new check you add must be broken on purpose once, and seen to fail,
+  before you trust it. A check that has never failed is a hypothesis.
+  Record the induced failure output in the ledger.
+- Read docs/ENGINEERING_STANDARDS.md before writing code. It is the
+  constitution of this repo and it is not optional.
+- Measure, do not estimate. Contrast ratios, file sizes and render counts
+  get measured on the real built artifact, never inferred.
 ```
 
 ## Queue items
@@ -86,13 +99,15 @@ Every item needs a machine-checkable gate. An item with no verify command is a
 drift generator: it will be marked done wrongly, and stay wrongly done.
 
 ```markdown
-## URD-014 — Ligature safe truncation
+## URD-004 — Make the top level titles reachable
 attempts: 0
-files: src/components/UrduText.tsx, src/components/urdu-text.test.ts
-definition of done: Urdu strings truncate at grapheme cluster boundaries,
-  never mid ligature, and never orphan a diacritic from its base letter.
-verify: npm test -- src/components/urdu-text.test.ts
-notes: Nastaliq joins aggressively; slicing by code unit splits ligatures.
+files: src/lib/gamification.ts, src/lib/gamification.test.ts
+definition of done: The highest level title is attainable by finishing the
+  course. Measured: the whole path is roughly 11,552 XP, which is level 20
+  on xpForLevel(n) = 30(n-1)n. "Master" is level 25 and needs 18,000.
+verify: npm test -- src/lib/gamification.test.ts
+notes: Derive the course total in the test rather than hardcoding it, so it
+  stays true the next time the path grows.
 ```
 
 `verify` may name a script that does not exist yet — creating it is part of the
@@ -131,23 +146,52 @@ A green run status means the session started and exited without an
 infrastructure error. It does not mean the task succeeded. Trust the ledger and
 the PRs.
 
-## Where this was adapted to the repo
+## Where the queue comes from
 
-Two things in the original spec would have failed on the first run here, and are
-changed in the committed files rather than left to be discovered at 3am:
+The queue is not a list of things Urdu apps generally need. Every item in it was
+found by measuring this repo, and each carries the number that found it, so a
+run can tell whether the item is still real before starting work. If a
+measurement no longer reproduces, the honest move is to close the item in the
+ledger, not to invent work that justifies it.
+
+What that turned up, and what it says about where this app actually is:
+
+- **Its own recent work is the biggest risk.** Splitting topics across enough
+  lessons to cover their vocabulary took the path from 174 lessons to 608. The
+  learn screen maps every lesson of every unit inside a plain `ScrollView`, so
+  all 608 rows mount at once, and a returning learner's unit percentages fell
+  without them doing anything. Neither is caught by any existing check. Both are
+  near the top of the queue.
+- **The gamification numbers were tuned for a shorter course.** Finishing
+  everything now yields about 11,552 XP, which is level 20; the top title sits
+  at level 25 and needs 18,000. Nobody reaches it by playing.
+- **The tools have gaps too, and they count.** The soak added in `e3e0546` only
+  ever exercises two of the nine exercise kinds, because it starts at lesson one
+  and the first units are alphabet lessons. A soak that never reaches
+  `sentenceBuild` is not soaking the part of the app most likely to break.
+- **Several things a generic list would queue are already done here.** The
+  Nastaliq font is loaded and subset, `check:srs` holds the scheduler,
+  `check:roman` holds transliteration against a canonical table, `check:voice`
+  holds every clip audible, `check:order` holds teaching order, and
+  `check:coverage` holds every one of the 2,281 words to exactly one lesson.
+  Queueing those again would burn runs proving what is already proven. Where an
+  item does touch one of them, it names the check it must not weaken on the way
+  past.
+- **What is genuinely missing is narrower than a generic list suggests.** Four
+  letters that sound identical and so cannot be tested by ear, audio that does
+  not say when it is synthesised, a first-run lockout with no way out and no
+  explanation, 20 typed `any`s, and 8 physical direction properties.
+
+## Two adaptations to the original spec
+
+Both would have failed on the first unattended run, so they are fixed in the
+committed files rather than discovered at 3am:
 
 - **`git push` was missing from the allow list** while Steps 4 and 6 both
-  require it. An unattended run would have stopped to ask for permission that
-  nobody was there to give. `Bash(git push:*)` is allowed; the force variants
-  stay denied. Branch creation (`checkout`, `switch`, `branch`) was missing for
-  the same reason and is allowed too.
+  require it. An unattended run would have stopped to ask for permission nobody
+  was there to give. `Bash(git push:*)` is allowed; the force variants stay
+  denied. Branch creation was missing for the same reason and is allowed too.
 - **The build script here is `npm run build:web`**, not `npm run build`, and the
   checks are `npm run check:*`. The allow list names the commands this repo
-  actually has, so the loop does not stall on a script that does not exist.
-
-The starter queue was rewritten against this codebase for the same reason. The
-original items assumed a `test/` directory and `npm test -- test/...`; tests here
-live beside their source as `src/**/*.test.ts`. Several of the suggested items
-were also already done — fonts are loaded and subset, `check:srs` exists,
-`check:voice` exists — so the queued items are the parts genuinely still missing,
-with the existing checks named as the things not to weaken on the way past.
+  actually has, so the loop cannot stall on a script that does not exist. Tests
+  live beside their source as `src/**/*.test.ts`; there is no `test/` directory.
