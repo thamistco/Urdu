@@ -411,12 +411,45 @@ export function buildLessonExercises(
      * sightings and put the lesson back under the floor for exactly the words
      * that are hardest.
      */
-    for (const w of seededShuffle(picks, `${lesson.id}:produce`)) {
+    seededShuffle(picks, `${lesson.id}:produce`).forEach((w, i) => {
       const canBuild = Array.from(w.urdu).length <= 5 && teachesScript;
-      if (isTypeable(w)) exercises.push({ kind: 'typeWord', word: w });
-      else if (canBuild) exercises.push({ kind: 'wordBuild', word: w, tiles: buildTilesFor(w) });
-      else exercises.push(wordExercise(w, pool, track, 'recall'));
-    }
+      const canType = isTypeable(w);
+      /**
+       * Building comes first for a learner reading the script, and that order is
+       * the whole finding.
+       *
+       * Testing `isTypeable` first looks harmless and silently killed the
+       * exercise: 1,621 of the 2,281 words are five Urdu characters or fewer and
+       * every one of them is also typeable, so the build branch was unreachable
+       * for the entire corpus. Measured, `wordBuild` went 465 to 0 and
+       * WordBuild.tsx became dead code.
+       *
+       * It matters because typing accepts Roman — `roman.ts` counts kitab,
+       * kitaab and کتاب alike — so building letter tiles was the only vocabulary
+       * exercise that made a script learner produce Urdu characters at all. With
+       * it gone, someone could finish all 233 vocabulary lessons of a script
+       * course without writing a single letter of the script.
+       *
+       * Alternating also keeps the last third of a lesson from being nine to
+       * fourteen typing prompts in a row, which is what the note above the meet
+       * pass has always warned against.
+       */
+      const preferBuild = i % 2 === 0;
+      if (canBuild && (preferBuild || !canType)) {
+        exercises.push({ kind: 'wordBuild', word: w, tiles: buildTilesFor(w) });
+      } else if (canType) {
+        exercises.push({ kind: 'typeWord', word: w });
+      } else if (canBuild) {
+        exercises.push({ kind: 'wordBuild', word: w, tiles: buildTilesFor(w) });
+      } else {
+        // Neither typeable nor buildable: a five word honorific, a long
+        // compound. These are the hardest items in the corpus and they get the
+        // least demanding third sighting, which is a real weakness and is
+        // recorded as such rather than hidden. Nothing else in the exercise set
+        // asks for production of a word this long.
+        exercises.push(wordExercise(w, pool, track, 'recall'));
+      }
+    });
 
     // Close with a matching board (Drops-style); its four pictures must differ.
     // Short lessons introduce fewer than four words, so the board is topped up
