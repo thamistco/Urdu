@@ -49,14 +49,16 @@ export type Word = {
  */
 export const TOPIC_CATEGORIES = [
   'foundations', // the scaffolding of any sentence: numbers, time, colours, greetings
-  'people', // family, the body, character, feeling, relationships
+  'people', // family, the body, health, character, feeling, relationships
   'home', // the house, its objects, clothes, the shape of a day
   'food', // eating, cooking, ingredients, ordering
   'nature', // animals, plants, weather, land and sky
-  'travel', // getting about, the city, money, countries, going wrong abroad
-  'work', // jobs, school, office, study, health and medicine
+  'travel', // getting from one place to another
+  'everyday', // the dealings of ordinary life: money, the bazaar, the phone, going wrong
+  'work', // jobs, school, office, study
+  'leisure', // what you do for pleasure: sport, play, music, poetry, festivals
   'language', // grouped by word class rather than subject
-  'culture', // faith, festivals, the arts, history, politics, technology, ideas
+  'culture', // faith, history, politics, the written register, ideas
 ] as const;
 
 export type TopicCategory = (typeof TOPIC_CATEGORIES)[number];
@@ -1317,8 +1319,15 @@ const CORE_WORDS: Word[] = [
  * Deliberately a map rather than a field on each topic literal: the 122 topics
  * are authored across `words.ts` and ten files under `data/vocab/`, and a field
  * spread over eleven files is a field that gets forgotten on the next addition.
- * Here, a new topic without a category is a TypeScript error at this map and a
- * `check:shape` failure, in that order.
+ * `check:shape` is the ONLY thing enforcing this, and the enforcement is
+ * therefore only as good as somebody running it. An earlier version of this
+ * comment claimed a topic missing from the map was "a TypeScript error at this
+ * map and a check:shape failure, in that order". That was false and was caught
+ * by review: `noUncheckedIndexedAccess` is not set, so `TOPIC_CATEGORY[t.id]`
+ * is typed `TopicCategory` while being `undefined` at runtime, and tsc exits 0.
+ * There are also two `Topic` types — `data/vocab/types.ts` has no `category`
+ * field at all — so a pack author cannot reach a type error here even in
+ * principle. Do not restore the claim without making it true.
  */
 const TOPIC_CATEGORY: Record<string, TopicCategory> = {
   // the scaffolding of any sentence
@@ -1334,12 +1343,16 @@ const TOPIC_CATEGORY: Record<string, TopicCategory> = {
   shapes: 'foundations',
   'measure-time': 'foundations',
 
-  // people, and what happens to them
+  // people, their bodies, and what happens to them. The clinical topics sit
+  // here rather than under work: a learner at a doctor's surgery needs organs,
+  // symptoms and treatment in one breath, and splitting them across two
+  // categories is the exact failure this axis was added to prevent.
   family: 'people',
   'family-more': 'people',
   body: 'people',
   'body-more': 'people',
   organs: 'people',
+  senses: 'people',
   appearance: 'people',
   personality: 'people',
   relationships: 'people',
@@ -1348,7 +1361,9 @@ const TOPIC_CATEGORY: Record<string, TopicCategory> = {
   lifeevents: 'people',
   social: 'people',
   celebrations: 'people',
-  senses: 'people',
+  health: 'people',
+  illness: 'people',
+  medicine: 'people',
 
   // the house and the shape of a day
   home: 'home',
@@ -1365,7 +1380,6 @@ const TOPIC_CATEGORY: Record<string, TopicCategory> = {
   containers: 'home',
   materials: 'home',
   tools: 'home',
-  toys: 'home',
 
   // food
   food: 'food',
@@ -1392,7 +1406,7 @@ const TOPIC_CATEGORY: Record<string, TopicCategory> = {
   environment: 'nature',
   farm: 'nature',
 
-  // getting about, and what you need when you are away
+  // getting from one place to another, and only that
   places: 'travel',
   city: 'travel',
   transport: 'travel',
@@ -1404,14 +1418,21 @@ const TOPIC_CATEGORY: Record<string, TopicCategory> = {
   airport: 'travel',
   hotel: 'travel',
   countries: 'travel',
-  money: 'travel',
-  bank: 'travel',
-  'shopping-talk': 'travel',
-  phone: 'travel',
-  services: 'travel',
-  emergency: 'travel',
 
-  // work, study and the body's upkeep
+  // the dealings of ordinary life. These were under travel, which is only true
+  // for a tourist; Harf's likelier learner lives there, and meets money at the
+  // shop rather than at an airport bureau de change. `emergency` is here for
+  // the same reason it deserved its own heading in the first draft: it is the
+  // most consequence-bearing vocabulary in the course and does not belong
+  // filed beside hotels.
+  money: 'everyday',
+  bank: 'everyday',
+  'shopping-talk': 'everyday',
+  phone: 'everyday',
+  services: 'everyday',
+  emergency: 'everyday',
+
+  // work and study
   jobs: 'work',
   'jobs-more': 'work',
   school: 'work',
@@ -1422,12 +1443,22 @@ const TOPIC_CATEGORY: Record<string, TopicCategory> = {
   economy: 'work',
   subjects: 'work',
   science: 'work',
-  medicine: 'work',
-  health: 'work',
-  illness: 'work',
-  sports: 'work',
 
-  // grouped by word class rather than by subject
+  // done for pleasure. `sports` was under work, whose own blurb reads "Games,
+  // hobbies and free time" — a category a learner could falsify by reading the
+  // topic card. `toys` was under home. Two leisure topics, two categories,
+  // neither of them leisure.
+  sports: 'leisure',
+  toys: 'leisure',
+  'music-art': 'leisure',
+  poetry: 'leisure',
+  literature: 'leisure',
+  festivals: 'leisure',
+
+  // grouped by word class rather than by subject, and nothing else. Register
+  // and set phrases moved out to culture: how Urdu encodes social distance is
+  // subject matter, not a part of speech, and `REGISTER_BY_TOPIC` below already
+  // treats those two topics that way.
   verbs: 'language',
   verbs2: 'language',
   verbs3: 'language',
@@ -1440,17 +1471,10 @@ const TOPIC_CATEGORY: Record<string, TopicCategory> = {
   questions: 'language',
   connectors: 'language',
   opposites: 'language',
-  expressions: 'language',
-  idioms: 'language',
-  formal: 'language',
-  honorifics: 'language',
 
   // what a language carries besides its words
   culture: 'culture',
   faith: 'culture',
-  literature: 'culture',
-  poetry: 'culture',
-  'music-art': 'culture',
   history: 'culture',
   philosophy: 'culture',
   abstract: 'culture',
@@ -1459,6 +1483,10 @@ const TOPIC_CATEGORY: Record<string, TopicCategory> = {
   media: 'culture',
   digital: 'culture',
   tech: 'culture',
+  formal: 'culture',
+  honorifics: 'culture',
+  expressions: 'culture',
+  idioms: 'culture',
 };
 
 export const TOPICS: Topic[] = [...CORE_TOPICS, ...ALL_PACKS.map((p) => p.topic)].map((t) => ({

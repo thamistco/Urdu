@@ -29,24 +29,25 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-A01 — Give every topic a category
+## URD-A03 — Give culture a door a beginner can walk through
 attempts: 0
-files: src/data/words.ts, src/data/vocab/, scripts/check-shape.js
-definition of done: `Topic` carries a `category` from a declared taxonomy, every
-  one of the 122 topics has one, and `check:shape` no longer reports the
-  uncategorised failure. Today a topic has a title, an icon, a blurb and a CEFR
-  level, and nothing that says what kind of thing it is: nothing groups "Food &
-  drink" with "At the restaurant" and separates both from "Formal & written".
-  Start from the taxonomy in check-shape.js (survival, people, world, doing,
-  abstract, formal), change it if a better one survives contact with the real
-  122, and say in the ledger why.
+files: src/data/vocab/culture-arts.ts, src/data/words.ts, src/data/units.ts
+definition of done: The `culture` category contains at least one beginner or
+  elementary topic, and `check:shape` gains a rule that no category is confined
+  to a single CEFR level. Measured at URD-A01: culture was 14 of 14 advanced,
+  every topic first met in units 32 to 37 of 39. Splitting `leisure` out helped
+  and did not fix it, because the cause is content rather than labelling: the
+  course has no beginner cultural material to categorise.
 verify: npm run check:shape
-notes: First of the curriculum items because everything after it wants to group
-  by something. Dispatch the curriculum critic: the taxonomy is a pedagogical
-  claim about what a learner is doing, not a filing decision. Note that
-  check:shape will still fail on the other four counts until URD-A02 lands, so
-  for this item alone, pass means the categorisation failure is gone from its
-  output.
+notes: Raised by the curriculum critic on URD-A01, and its reasoning is the
+  reason this is not cosmetic. Someone who picks Urdu over Hindi often comes for
+  the ghazal, for family, or for faith. Gating all of that behind the last third
+  of the course tells them the thing they came for is not for them yet. A first
+  festival, a first couplet, the names of the Islamic months: small, concrete,
+  and beginner reachable.
+
+  Do not fix this by relabelling an advanced topic as beginner. The check that
+  lands with it should make that impossible to pass.
 
 ## URD-A02 — Make a lesson a sitting
 attempts: 0
