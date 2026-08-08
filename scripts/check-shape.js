@@ -50,6 +50,8 @@
  * Run with:  npm run check:shape
  */
 
+const fs = require('fs');
+const path = require('path');
 const { load } = require('./lib/load-ts');
 
 const { ALL_LESSONS, UNITS } = load('src/data/units.ts');
@@ -166,39 +168,72 @@ if (oddUnits.length) {
 // ---------------------------------------------- 5. does every topic have a home?
 //
 // The organisation question: a learner opening the app should be able to say
-// what kind of thing each topic is. `Topic` carries id, title, icon, blurb and
-// level, and nothing that groups "Food & drink" with "At the restaurant" and
-// apart from "Grammar of the oblique". Until that axis exists this reports
-// rather than fails, because there is nothing yet to be wrong.
+// what kind of thing each topic is.
+//
+// This is the ONLY enforcement of the category axis. Review established that
+// there is no type-level guarantee behind it: `noUncheckedIndexedAccess` is not
+// set, so a topic missing from `TOPIC_CATEGORY` is `undefined` at runtime while
+// `tsc` exits 0, and `data/vocab/types.ts` declares a second `Topic` without the
+// field at all. So this section carries the whole weight, and it is written to
+// catch the ways the map actually rots rather than only the obvious one.
+//
+// It also proved it: the first delivery commit of URD-A01 was missing
+// `festivals` and nothing but this said so.
 
-// Read from the source of truth rather than restated here, so the taxonomy
-// cannot drift between the type and the check that enforces it.
 const { TOPIC_CATEGORIES } = load('src/data/words.ts');
 const CATEGORIES = [...TOPIC_CATEGORIES];
+
 const uncategorised = TOPICS.filter((t) => !t.category);
-if (uncategorised.length === TOPICS.length) {
+if (uncategorised.length) {
   bad(
-    `no topic carries a category. All ${TOPICS.length} of them have a title, an icon and a\n` +
-      `      level, and nothing that says what kind of thing they are. A learner cannot\n` +
-      `      see why "Food & drink" and "At the restaurant" belong together, and neither\n` +
-      `      can the path. Add \`category\` to \`Topic\` from: ${CATEGORIES.join(', ')}.`
+    `${uncategorised.length} topic${uncategorised.length === 1 ? ' has' : 's have'} no category: ` +
+      uncategorised
+        .slice(0, 8)
+        .map((t) => t.id)
+        .join(', ') +
+      `\n      Every topic needs one of: ${CATEGORIES.join(', ')}.` +
+      `\n      Nothing but this check will tell you. See the note in words.ts.`
   );
-} else if (uncategorised.length) {
+}
+
+// A key naming a topic that no longer exists. Rename a topic id and you get a
+// dead key *and* an uncategorised topic; without this, only the second half is
+// reported and the stale key sits there looking like coverage.
+const topicIds = new Set(TOPICS.map((t) => t.id));
+const dead = Object.keys(categoryMapKeys()).filter((k) => !topicIds.has(k));
+if (dead.length) {
   bad(
-    `${uncategorised.length} topics have no category: ${uncategorised
-      .slice(0, 6)
-      .map((t) => t.id)
-      .join(', ')}`
+    `${dead.length} categor${dead.length === 1 ? 'y names a topic that does' : 'ies name topics that do'} not exist: ${dead.join(', ')}\n` +
+      `      A dead key is not coverage. It usually means a topic was renamed and\n` +
+      `      its new id was never categorised.`
   );
-} else {
-  const wrong = TOPICS.filter((t) => !CATEGORIES.includes(t.category));
-  if (wrong.length)
-    bad(
-      `${wrong.length} topics carry a category outside the taxonomy: ${wrong
-        .map((t) => `${t.id}=${t.category}`)
-        .slice(0, 6)
-        .join(', ')}`
-    );
+}
+
+// A category declared but never used is either a gap in the course or a
+// category that should not exist. Either way somebody should say which.
+const used = new Set(TOPICS.map((t) => t.category).filter(Boolean));
+const unused = CATEGORIES.filter((c) => !used.has(c));
+if (unused.length) {
+  bad(`${unused.length} declared categories are used by no topic: ${unused.join(', ')}`);
+}
+
+/**
+ * The map is not exported, so read its keys off the source.
+ *
+ * Exporting it purely to be checked would widen the module's surface for the
+ * benefit of one script. Parsing is the smaller cost, and it fails loudly if the
+ * shape of the literal ever changes rather than silently reporting zero keys.
+ */
+function categoryMapKeys() {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src/data/words.ts'), 'utf8');
+  const m = src.match(/const TOPIC_CATEGORY: Record<string, TopicCategory> = \{([\s\S]*?)\n\};/);
+  if (!m) {
+    bad('could not find TOPIC_CATEGORY in words.ts — this check has stopped checking anything');
+    return {};
+  }
+  const keys = {};
+  for (const km of m[1].matchAll(/(?:^|[,{]\s*)'?([a-zA-Z][\w-]*)'?\s*:/g)) keys[km[1]] = true;
+  return keys;
 }
 
 // ------------------------------------------------------------------- report
