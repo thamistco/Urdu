@@ -106,3 +106,24 @@ $ npm run check:all
   Run after the final edit, not before it.
 
 branch: claude/gauntlet-topic-categories
+
+## BLOCKED · URD-A03 · 2026-08-08T08:50Z
+Cannot be done by an agent session. The item needs new beginner cultural words;
+`check:voice` requires a clip per speakable word in both voices, and generating
+clips needs the Google TTS key, which this session does not hold and should not.
+
+    scripts/check-voice.js:120
+      `${id}: ${what} has no clip — the app would speak it with the device voice`
+
+Moved to blocked/ on attempt 1 rather than 3, as a recorded lead decision: the
+blocker is a missing credential, not something a retry resolves, and leaving it
+at the top would stall every following run behind an identical failure.
+
+Checked before claiming rather than after working, which is the only reason this
+cost minutes instead of a whole run.
+
+## CLAIMED · URD-A02 · 2026-08-08T08:52Z
+Make a lesson a sitting.
+verify: `npm run check:shape`
+branch: claude/gauntlet-lesson-sitting, cut from claude/gauntlet-topic-categories
+because check:shape's category rule landed there and this item needs it.

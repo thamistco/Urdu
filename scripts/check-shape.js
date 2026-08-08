@@ -56,6 +56,46 @@ const { load } = require('./lib/load-ts');
 
 const { ALL_LESSONS, UNITS } = load('src/data/units.ts');
 const { WORDS, TOPICS } = load('src/data/words.ts');
+const { buildLessonExercises } = load('src/exercises/generator.ts');
+
+/**
+ * How many exercises a lesson really produces.
+ *
+ * Not `lesson.size`, which is the budget the path author wrote down. A budget is
+ * a claim, and a check that reads it proves only that somebody typed a number:
+ * the generator could emit half of them and this would still pass. So every
+ * lesson is generated and counted, the way `check:answerable` already drives the
+ * real generator rather than reasoning about it.
+ *
+ * Measured on the tracks the lesson is actually on, and the shorter one wins. A
+ * Roman track learner is shown neither letter tracing nor word building, so
+ * their lesson is the shorter of the two and a floor that only holds for the
+ * script track is not a floor.
+ *
+ * Letter lessons are the exception, and getting this wrong reported `l-1` at
+ * zero exercises: the Roman track does not contain them at all, `unitsForTrack`
+ * filters them out, and a lesson nobody on that track can open has no length to
+ * be short. It is measured on the script track only.
+ */
+const emitted = (lesson) => {
+  const script = buildLessonExercises(lesson, [], 'both').length;
+  if (lesson.kind === 'letters') return script;
+  return Math.min(script, buildLessonExercises(lesson, [], 'roman').length);
+};
+
+/**
+ * Which lessons a session length even applies to.
+ *
+ * A reading lesson is one passage and a dialogue is one conversation. Both are a
+ * single long-form piece, and nine seconds per exercise does not model them:
+ * counted that way a passage is 0.15 minutes, which says nothing about how long
+ * a learner spends on it. Timing those honestly needs a reading speed for
+ * Nastaliq and a word count, which is a different measurement and not this one.
+ *
+ * Exempted rather than fudged, and named here so the exemption is visible rather
+ * than hidden inside a threshold.
+ */
+const HAS_SESSION_LENGTH = (l) => l.kind !== 'reading' && l.kind !== 'dialogue';
 
 /**
  * Seconds per exercise.
@@ -84,20 +124,21 @@ const MAX_LESSONS_PER_UNIT = 12;
 
 const problems = [];
 const bad = (msg) => problems.push(msg);
-const mins = (lesson) => (lesson.size * SECS_PER_EXERCISE) / 60;
+const mins = (lesson) => (emitted(lesson) * SECS_PER_EXERCISE) / 60;
 
 const vocab = ALL_LESSONS.filter((l) => l.kind === 'vocab');
 
 // ------------------------------------------------------- 1. is it a sitting?
 
-const tooShort = ALL_LESSONS.filter((l) => mins(l) < MIN_MINUTES);
-const tooLong = ALL_LESSONS.filter((l) => mins(l) > MAX_MINUTES);
+const timed = ALL_LESSONS.filter(HAS_SESSION_LENGTH);
+const tooShort = timed.filter((l) => mins(l) < MIN_MINUTES);
+const tooLong = timed.filter((l) => mins(l) > MAX_MINUTES);
 
 if (tooShort.length) {
   const worst = [...tooShort].sort((a, b) => mins(a) - mins(b))[0];
   bad(
-    `${tooShort.length} of ${ALL_LESSONS.length} lessons are under ${MIN_MINUTES} minutes.\n` +
-      `      shortest: ${worst.id} at ${mins(worst).toFixed(1)} min (${worst.size} exercises)\n` +
+    `${tooShort.length} of ${timed.length} timed lessons are under ${MIN_MINUTES} minutes.\n` +
+      `      shortest: ${worst.id} at ${mins(worst).toFixed(1)} min (${emitted(worst)} exercises)\n` +
       `      Drops caps a session at 5 minutes and Duolingo runs 5 to 10. A lesson\n` +
       `      this short is an interruption rather than a sitting.`
   );
@@ -106,7 +147,7 @@ if (tooLong.length) {
   const worst = [...tooLong].sort((a, b) => mins(b) - mins(a))[0];
   bad(
     `${tooLong.length} lessons are over ${MAX_MINUTES} minutes.\n` +
-      `      longest: ${worst.id} at ${mins(worst).toFixed(1)} min (${worst.size} exercises)`
+      `      longest: ${worst.id} at ${mins(worst).toFixed(1)} min (${emitted(worst)} exercises)`
   );
 }
 
@@ -118,7 +159,7 @@ if (tooLong.length) {
 for (const l of vocab) {
   const n = (l.wordIds || []).length;
   if (!n) continue;
-  const sightings = l.size / n;
+  const sightings = emitted(l) / n;
   if (sightings < MIN_SIGHTINGS) {
     bad(
       `${l.id} shows each of its ${n} words about ${sightings.toFixed(1)} times; the floor is ${MIN_SIGHTINGS}.\n` +
@@ -128,7 +169,7 @@ for (const l of vocab) {
     break; // one is enough to make the point; the count follows below
   }
 }
-const underDrilled = vocab.filter((l) => (l.wordIds || []).length && l.size / l.wordIds.length < MIN_SIGHTINGS);
+const underDrilled = vocab.filter((l) => (l.wordIds || []).length && emitted(l) / l.wordIds.length < MIN_SIGHTINGS);
 if (underDrilled.length > 1) {
   bad(`${underDrilled.length} of ${vocab.length} vocabulary lessons are under the ${MIN_SIGHTINGS} sightings floor.`);
 }
@@ -244,7 +285,7 @@ const avgWords = vocab.reduce((s, l) => s + (l.wordIds || []).length, 0) / (voca
 console.log(
   `check:shape — ${ALL_LESSONS.length} lessons, ${vocab.length} of them vocabulary.\n` +
     `  mean lesson ${(totalMin / ALL_LESSONS.length).toFixed(1)} min · ${avgWords.toFixed(1)} new words · ` +
-    `${(ALL_LESSONS.reduce((s, l) => s + l.size, 0) / ALL_LESSONS.length).toFixed(1)} exercises\n` +
+    `${(ALL_LESSONS.reduce((s, l) => s + emitted(l), 0) / ALL_LESSONS.length).toFixed(1)} exercises emitted\n` +
     `  whole course ${(totalMin / 60).toFixed(1)} hours\n` +
     `  targets: ${MIN_MINUTES} to ${MAX_MINUTES} min per lesson, ${MIN_SIGHTINGS}+ sightings per new word,\n` +
     `           at most ${MAX_PARTS_PER_TOPIC} parts per topic, ${MIN_LESSONS_PER_UNIT} to ${MAX_LESSONS_PER_UNIT} lessons per unit\n`
