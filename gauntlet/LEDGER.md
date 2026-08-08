@@ -21,3 +21,13 @@ Rules that keep this worth reading:
   straight; the diffs only tell you what it typed.
 
 ---
+
+## CLAIMED · URD-A01 · 2026-08-08T08:12Z
+Give every topic a category.
+verify: `npm run check:shape`
+branch: claude/gauntlet-topic-categories
+run: by hand from an interactive session, not the routine. The routine
+(trig_01A1PR5M8aYv8f2dLyeDFHn5) is disabled: a routine fired session gets an
+empty working directory because create_trigger has no way to name a repository.
+Confirmed by probe session_01HJWQQgf9fVGsH91Bach9bZ, which reported
+"empty /home/user, no git, no gauntlet/QUEUE.md". Two fires produced nothing.

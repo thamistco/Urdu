@@ -150,7 +150,9 @@ if (shattered.length) {
 
 // ------------------------------------------------------ 4. is a unit a chapter?
 
-const oddUnits = UNITS.filter((u) => u.lessons.length < MIN_LESSONS_PER_UNIT || u.lessons.length > MAX_LESSONS_PER_UNIT);
+const oddUnits = UNITS.filter(
+  (u) => u.lessons.length < MIN_LESSONS_PER_UNIT || u.lessons.length > MAX_LESSONS_PER_UNIT
+);
 if (oddUnits.length) {
   bad(
     `${oddUnits.length} of ${UNITS.length} units are outside ${MIN_LESSONS_PER_UNIT} to ${MAX_LESSONS_PER_UNIT} lessons.\n` +
@@ -169,7 +171,10 @@ if (oddUnits.length) {
 // apart from "Grammar of the oblique". Until that axis exists this reports
 // rather than fails, because there is nothing yet to be wrong.
 
-const CATEGORIES = ['survival', 'people', 'world', 'doing', 'abstract', 'formal'];
+// Read from the source of truth rather than restated here, so the taxonomy
+// cannot drift between the type and the check that enforces it.
+const { TOPIC_CATEGORIES } = load('src/data/words.ts');
+const CATEGORIES = [...TOPIC_CATEGORIES];
 const uncategorised = TOPICS.filter((t) => !t.category);
 if (uncategorised.length === TOPICS.length) {
   bad(
@@ -187,7 +192,13 @@ if (uncategorised.length === TOPICS.length) {
   );
 } else {
   const wrong = TOPICS.filter((t) => !CATEGORIES.includes(t.category));
-  if (wrong.length) bad(`${wrong.length} topics carry a category outside the taxonomy: ${wrong.map((t) => `${t.id}=${t.category}`).slice(0, 6).join(', ')}`);
+  if (wrong.length)
+    bad(
+      `${wrong.length} topics carry a category outside the taxonomy: ${wrong
+        .map((t) => `${t.id}=${t.category}`)
+        .slice(0, 6)
+        .join(', ')}`
+    );
 }
 
 // ------------------------------------------------------------------- report

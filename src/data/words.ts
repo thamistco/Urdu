@@ -32,15 +32,46 @@ export type Word = {
   register?: Register;
 };
 
+/**
+ * What kind of thing a topic is.
+ *
+ * The corpus mixes two axes and this admits it rather than pretending
+ * otherwise: most topics are subjects ("Food & Drink", "At the Airport"), but
+ * several group by part of speech instead ("Verbs of Motion", "Linking Words").
+ * A taxonomy that allowed only subjects would need a junk drawer for the second
+ * kind, and a junk drawer is how a category axis stops meaning anything. So
+ * `language` is a real category: topics whose members are related by word class
+ * rather than by what they are about.
+ *
+ * Nine, derived from the 122 topics that exist rather than chosen first and
+ * forced onto them. The test of one of these is whether a learner could guess
+ * which category a topic is in without being told.
+ */
+export const TOPIC_CATEGORIES = [
+  'foundations', // the scaffolding of any sentence: numbers, time, colours, greetings
+  'people', // family, the body, character, feeling, relationships
+  'home', // the house, its objects, clothes, the shape of a day
+  'food', // eating, cooking, ingredients, ordering
+  'nature', // animals, plants, weather, land and sky
+  'travel', // getting about, the city, money, countries, going wrong abroad
+  'work', // jobs, school, office, study, health and medicine
+  'language', // grouped by word class rather than subject
+  'culture', // faith, festivals, the arts, history, politics, technology, ideas
+] as const;
+
+export type TopicCategory = (typeof TOPIC_CATEGORIES)[number];
+
 export type Topic = {
   id: string;
   title: string;
   icon: string;
   blurb: string;
   level: Level;
+  /** Set for every topic by `TOPIC_CATEGORY` below; `check:shape` proves it. */
+  category: TopicCategory;
 };
 
-const CORE_TOPICS: Topic[] = [
+const CORE_TOPICS: Omit<Topic, 'category'>[] = [
   {
     id: 'first-words',
     title: 'First Words',
@@ -1279,7 +1310,161 @@ const CORE_WORDS: Word[] = [
 ];
 
 /** Core topics plus every modular vocabulary pack. */
-export const TOPICS: Topic[] = [...CORE_TOPICS, ...ALL_PACKS.map((p) => p.topic)];
+
+/**
+ * Every topic's category, in one place.
+ *
+ * Deliberately a map rather than a field on each topic literal: the 122 topics
+ * are authored across `words.ts` and ten files under `data/vocab/`, and a field
+ * spread over eleven files is a field that gets forgotten on the next addition.
+ * Here, a new topic without a category is a TypeScript error at this map and a
+ * `check:shape` failure, in that order.
+ */
+const TOPIC_CATEGORY: Record<string, TopicCategory> = {
+  // the scaffolding of any sentence
+  'first-words': 'foundations',
+  greetings: 'foundations',
+  numbers: 'foundations',
+  'numbers-more': 'foundations',
+  quantity: 'foundations',
+  colours: 'foundations',
+  days: 'foundations',
+  time: 'foundations',
+  timewords: 'foundations',
+  shapes: 'foundations',
+  'measure-time': 'foundations',
+
+  // people, and what happens to them
+  family: 'people',
+  'family-more': 'people',
+  body: 'people',
+  'body-more': 'people',
+  organs: 'people',
+  appearance: 'people',
+  personality: 'people',
+  relationships: 'people',
+  feelings: 'people',
+  emotions: 'people',
+  lifeevents: 'people',
+  social: 'people',
+  celebrations: 'people',
+  senses: 'people',
+
+  // the house and the shape of a day
+  home: 'home',
+  rooms: 'home',
+  furniture: 'home',
+  household: 'home',
+  kitchen: 'home',
+  bathroom: 'home',
+  routine: 'home',
+  garden: 'home',
+  clothing: 'home',
+  'clothing-more': 'home',
+  appliances: 'home',
+  containers: 'home',
+  materials: 'home',
+  tools: 'home',
+  toys: 'home',
+
+  // food
+  food: 'food',
+  fruits: 'food',
+  vegetables: 'food',
+  drinks: 'food',
+  meals: 'food',
+  tastes: 'food',
+  restaurant: 'food',
+  grains: 'food',
+  cooking: 'food',
+
+  // the world outside
+  nature: 'nature',
+  nature2: 'nature',
+  animals: 'nature',
+  birds: 'nature',
+  wildlife: 'nature',
+  sealife: 'nature',
+  sky: 'nature',
+  landscape: 'nature',
+  weather: 'nature',
+  'weather-more': 'nature',
+  environment: 'nature',
+  farm: 'nature',
+
+  // getting about, and what you need when you are away
+  places: 'travel',
+  city: 'travel',
+  transport: 'travel',
+  road: 'travel',
+  directions: 'travel',
+  'directions-more': 'travel',
+  travel: 'travel',
+  'travel-more': 'travel',
+  airport: 'travel',
+  hotel: 'travel',
+  countries: 'travel',
+  money: 'travel',
+  bank: 'travel',
+  'shopping-talk': 'travel',
+  phone: 'travel',
+  services: 'travel',
+  emergency: 'travel',
+
+  // work, study and the body's upkeep
+  jobs: 'work',
+  'jobs-more': 'work',
+  school: 'work',
+  education: 'work',
+  office: 'work',
+  'work-life': 'work',
+  business: 'work',
+  economy: 'work',
+  subjects: 'work',
+  science: 'work',
+  medicine: 'work',
+  health: 'work',
+  illness: 'work',
+  sports: 'work',
+
+  // grouped by word class rather than by subject
+  verbs: 'language',
+  verbs2: 'language',
+  verbs3: 'language',
+  'mind-verbs': 'language',
+  'speech-verbs': 'language',
+  'motion-verbs': 'language',
+  adjectives: 'language',
+  'describing-more': 'language',
+  quality: 'language',
+  questions: 'language',
+  connectors: 'language',
+  opposites: 'language',
+  expressions: 'language',
+  idioms: 'language',
+  formal: 'language',
+  honorifics: 'language',
+
+  // what a language carries besides its words
+  culture: 'culture',
+  faith: 'culture',
+  literature: 'culture',
+  poetry: 'culture',
+  'music-art': 'culture',
+  history: 'culture',
+  philosophy: 'culture',
+  abstract: 'culture',
+  politics: 'culture',
+  law: 'culture',
+  media: 'culture',
+  digital: 'culture',
+  tech: 'culture',
+};
+
+export const TOPICS: Topic[] = [...CORE_TOPICS, ...ALL_PACKS.map((p) => p.topic)].map((t) => ({
+  ...t,
+  category: TOPIC_CATEGORY[t.id],
+}));
 /**
  * Topics whose vocabulary is register-bound as a whole.
  *
