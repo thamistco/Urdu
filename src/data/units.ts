@@ -823,16 +823,48 @@ const PLANNED_UNITS: Unit[] = [
 ];
 
 /**
- * How many new words one vocabulary lesson introduces.
+ * How many new words a vocabulary lesson aims at.
  *
- * Five, chosen against the shape of the corpus rather than picked round: topic
- * pools run from 11 to 32 words with a median of 19, so five gives most topics
- * four parts and none of them a part so short it is not worth opening. The
- * lesson around those five is unchanged — meet each word, come back to two from
- * the English side, type one, build one, close on a matching board — which is
- * about ten exercises, and that was already the length that felt right.
+ * Ten, and it is a target rather than a ceiling: a topic near ten words is one
+ * lesson, a topic of thirty two is three.
+ *
+ * The first version of this was five, which fixed coverage and broke the shape
+ * of the course. Five words at two sightings each is about nine exercises, which
+ * is 1.3 minutes. Drops caps a session at five minutes and Duolingo runs five to
+ * ten; a 1.3 minute lesson is not a sitting, it is an interruption, and 493 of
+ * them made "First words 6 of 7" read as the app padding its lesson count.
+ *
+ * Ten falls out of three constraints that have to hold at once rather than from
+ * taste. No topic may break into more than three parts, or it stops reading as
+ * one topic. Every new word must be met at least three times inside its own
+ * lesson, because that is where the length should come from. And a lesson must
+ * land between three and eight minutes.
+ *
+ * Measured on what the generator actually emits: 233 vocabulary lessons of seven
+ * to fourteen words, 3.07 sightings at the floor, 3.3 to 6.5 minutes each, none
+ * outside the band.
+ *
+ * `check:shape` measures what the generator actually emits rather than trusting
+ * the budget recorded on the lesson, so these numbers cannot quietly drift.
  */
-const NEW_WORDS_PER_LESSON = 5;
+const WORDS_PER_LESSON_IDEAL = 10;
+
+/** No topic may be broken into more pieces than this and still read as one. */
+const MAX_PARTS_PER_TOPIC = 3;
+
+/**
+ * How many times a new word is met inside the lesson that introduces it.
+ *
+ * This is the dial that actually matters and the one it is tempting to leave
+ * alone. Neither benchmark reaches five minutes by front loading vocabulary:
+ * Duolingo introduces a handful of new words in a ten minute lesson and repeats
+ * each of them four to six times. Raising the word count without raising this
+ * produces a longer lesson that teaches worse.
+ */
+const SIGHTINGS_PER_WORD = 3;
+
+/** The closing run: a matching board and the woven review around it. */
+const CLOSING_EXERCISES = 4;
 
 /**
  * Split a topic's words into parts of nearly equal size.
@@ -843,7 +875,13 @@ const NEW_WORDS_PER_LESSON = 5;
  * course ran out rather than finished.
  */
 function balancedParts<T>(items: readonly T[], per: number): T[][] {
-  const n = Math.max(1, Math.ceil(items.length / per));
+  // Rounded, not ceiled. Ceiling divides a twelve word topic into two lessons of
+  // six, and six words at three sightings is 2.9 minutes — back under the floor
+  // this whole change exists to clear. Rounding keeps twelve as one lesson of
+  // twelve. There is deliberately no hard ceiling on words per lesson: the cap
+  // that matters is minutes, a fourteen word topic left whole is 6.5 of them,
+  // and a constant nothing enforces is a comment pretending to be a rule.
+  const n = Math.min(MAX_PARTS_PER_TOPIC, Math.max(1, Math.round(items.length / per)));
   const out: T[][] = [];
   let start = 0;
   for (let i = 0; i < n; i++) {
@@ -882,7 +920,7 @@ function coverTopics(units: Unit[]): Unit[] {
     ...u,
     lessons: u.lessons.flatMap((l) => {
       if (l.kind !== 'vocab' || !l.topic) return [l];
-      const parts = balancedParts(wordsByTopic(l.topic), NEW_WORDS_PER_LESSON);
+      const parts = balancedParts(wordsByTopic(l.topic), WORDS_PER_LESSON_IDEAL);
       return parts.map((words, i) => ({
         ...l,
         id: i === 0 ? l.id : `${l.id}-p${i + 1}`,
@@ -893,10 +931,10 @@ function coverTopics(units: Unit[]): Unit[] {
         romanSubtitle:
           l.romanSubtitle && parts.length > 1 ? `${l.romanSubtitle} · ${i + 1} of ${parts.length}` : l.romanSubtitle,
         wordIds: words.map((w) => w.id),
-        // The closing run — two recalls, a type, a build and the board — needs
-        // its own slots on top of the words, or the lesson is trimmed and it is
-        // the hardest exercises at the end that get cut.
-        size: words.length + 4,
+        // Three sightings of every new word, plus the closing run. This is the
+        // budget the generator fills; `check:shape` measures what it actually
+        // emits rather than trusting this number.
+        size: SIGHTINGS_PER_WORD * words.length + CLOSING_EXERCISES,
       }));
     }),
   }));

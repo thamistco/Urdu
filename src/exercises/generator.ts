@@ -372,25 +372,50 @@ export function buildLessonExercises(
     const picks = lesson.wordIds
       ? (lesson.wordIds.map(getWord).filter(Boolean) as Word[])
       : seededShuffle(pool, lesson.id).slice(0, Math.max(3, lesson.size - 4 - Math.min(2, reviewRefs.length)));
+    /**
+     * Every word three times, each time asking for more.
+     *
+     * The lesson used to meet each word once, come back to two of them, type
+     * one and build one. That is about two sightings per word averaged out, and
+     * it is why a lesson was 1.3 minutes: length was coming from the number of
+     * words rather than from the work done on each.
+     *
+     * Neither benchmark builds a session that way. Duolingo introduces a handful
+     * of new words in a ten minute lesson and meets each four to six times;
+     * Drops repeats a word through several different micro games inside one five
+     * minute session. So the climb is now per word rather than per lesson:
+     *
+     *   meet     recognise it, with a picture or the word in front of you
+     *   recall   retrieve it from the English alone, from four options
+     *   produce  supply it yourself: type it, or build it out of letter tiles
+     *
+     * The three passes are emitted as three blocks rather than three exercises
+     * per word in a row, so a word is met, then met again after the others have
+     * intervened. Massed repetition inside ten seconds is not what the second
+     * sighting is for.
+     */
     picks.forEach((w, i) => exercises.push(wordExercise(w, pool, track, 'meet', i % 3)));
 
-    for (const w of seededShuffle(picks, `${lesson.id}:recall`).slice(0, 2)) {
+    for (const w of seededShuffle(picks, `${lesson.id}:recall`)) {
       exercises.push(wordExercise(w, pool, track, 'recall'));
     }
 
-    // Typing sits in the middle, not at the end: it is the hardest thing the
-    // lesson asks for, and finishing on it makes a session feel like an exam.
-    const typeable = picks.filter(isTypeable);
-    if (typeable[0]) exercises.push({ kind: 'typeWord', word: seededShuffle(typeable, `${lesson.id}:type`)[0] });
-
-    // Building a word from letter tiles is a spelling exercise in Nastaliq, so
-    // it belongs only to a learner who is reading it. The Roman track gets
-    // another retrieval instead, rather than one exercise fewer.
-    const buildable = picks.filter((w) => Array.from(w.urdu).length <= 5);
-    if (buildable[0] && teachesScript) {
-      exercises.push({ kind: 'wordBuild', word: buildable[0], tiles: buildTilesFor(buildable[0]) });
-    } else if (buildable[0]) {
-      exercises.push(wordExercise(buildable[0], pool, track, 'recall'));
+    /**
+     * The third pass asks the learner to produce the word with nothing to pick
+     * from, and falls back rather than skipping.
+     *
+     * Typing suits a short word; building from letter tiles suits one of five
+     * characters or fewer and belongs only to a learner reading the script. A
+     * word that is neither — a five word honorific, a long compound — gets
+     * another retrieval instead. Skipping it would quietly drop that word to two
+     * sightings and put the lesson back under the floor for exactly the words
+     * that are hardest.
+     */
+    for (const w of seededShuffle(picks, `${lesson.id}:produce`)) {
+      const canBuild = Array.from(w.urdu).length <= 5 && teachesScript;
+      if (isTypeable(w)) exercises.push({ kind: 'typeWord', word: w });
+      else if (canBuild) exercises.push({ kind: 'wordBuild', word: w, tiles: buildTilesFor(w) });
+      else exercises.push(wordExercise(w, pool, track, 'recall'));
     }
 
     // Close with a matching board (Drops-style); its four pictures must differ.
