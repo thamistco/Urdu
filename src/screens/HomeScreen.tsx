@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Screen } from '../components/Screen';
 import { Card } from '../components/Card';
+import { Button } from '../components/Button';
 import { ProgressBar } from '../components/ProgressBar';
 import { Reveal } from '../components/Reveal';
 import { StatChip } from '../components/Stats';
@@ -19,7 +20,8 @@ import { confirmAction } from '../lib/confirm';
 import { levelProgress, levelTitle } from '../lib/gamification';
 import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
-import { Lesson, unitsForTrack, findLesson } from '../data/units';
+import { Lesson, unitsForTrack, findLesson, ALL_LESSONS } from '../data/units';
+import { pathMoveNotice } from '../lib/progress';
 import { LEVEL_META, LEVEL_ORDER, type Level, glossOf } from '../data/words';
 import { WORDS } from '../data/words';
 import { DAILY_GOALS } from '../data/achievements';
@@ -181,6 +183,16 @@ export function HomeScreen() {
   // The path as this learner's track sees it: someone who chose Roman is not
   // shown — or blocked by — the thirteen lessons of alphabet.
   const units = useMemo(() => unitsForTrack(track), [track]);
+  const pathNotice = useMemo(
+    () =>
+      pathMoveNotice({
+        completed: store.completedLessons,
+        skipped: store.skippedLessons,
+        known: new Set(ALL_LESSONS.map((l) => l.id)),
+        seen: store.pathNoticeSeen,
+      }),
+    [store.completedLessons, store.skippedLessons, store.pathNoticeSeen]
+  );
   const order = useMemo(() => units.flatMap((u) => u.lessons.map((l) => l.id)), [units]);
 
   // The one next thing to do: the first lesson on the path not yet finished
@@ -309,6 +321,48 @@ export function HomeScreen() {
             </View>
           </SafeAreaView>
         </Reveal>
+
+        {/* Why the numbers moved.
+            The path has been rebuilt underneath people twice: once splitting
+            each topic across enough lessons to cover its vocabulary, and once
+            regrouping those into sittings. Both times a finished lesson kept its
+            id where it could, so what a returning learner sees is not a lost
+            tick but a unit percentage that fell overnight — which reads as lost
+            progress, and lost progress is the thing most likely to make somebody
+            stop opening the app.
+
+            Measured against the whole path rather than the learner's track. On
+            the Roman track `units` excludes the letter lessons, so a learner who
+            traced letters before switching would be told those had vanished when
+            they are simply not on their path.
+
+            Shown once. `dismissPathNotice` is what makes it once, and it fires
+            on the tap rather than on the render, so a notice drawn and never
+            read is still owed the next time. */}
+        {pathNotice && (
+          <Reveal delay={30}>
+            <Card className="mb-4" accent={palette.gold}>
+              <Bold className="text-sm">Your place on the path moved</Bold>
+              <Txt className="mt-2 text-xs leading-5 text-paper/70">
+                Lessons were regrouped into longer sittings, so {pathNotice.gone} of the {pathNotice.ticked} you had
+                finished are now part of other lessons. Nothing you learned was lost: your streak, your level and
+                everything the app remembers about your words are untouched. There are simply fewer, longer lessons than
+                before, so the percentages start lower.
+              </Txt>
+              <View className="mt-3 flex-row">
+                <Button
+                  variant="secondary"
+                  onPress={() => {
+                    feedback.tap();
+                    store.dismissPathNotice();
+                  }}
+                >
+                  Got it
+                </Button>
+              </View>
+            </Card>
+          </Reveal>
+        )}
 
         {/* level + daily goal */}
         <Reveal delay={60}>
