@@ -174,7 +174,102 @@ if (underDrilled.length > 1) {
   bad(`${underDrilled.length} of ${vocab.length} vocabulary lessons are under the ${MIN_SIGHTINGS} sightings floor.`);
 }
 
-// ------------------------------------------------- 3. does a topic stay a topic?
+// --------------------------------- 3. does a lesson vary, on the track you are on?
+//
+// The rule that was missing, and the reason it is here rather than in a comment:
+// the first attempt at making a lesson a sitting emitted its three passes as
+// three whole-lesson blocks, and every check in the repo passed. Every word was
+// taught once, nothing was shown early, every question was answerable, the
+// lengths were in band. What a learner actually got was eleven identical
+// questions in a row.
+//
+// Two thresholds, both measured on the real generated output of both tracks.
+
+/**
+ * The most identical exercise kinds a lesson may emit back to back.
+ *
+ * Three, because three is what the pipeline's drain costs and no more. The
+ * staggered passes in `generator.ts` take the script track to a longest run of
+ * two with no lesson above it; the Roman track hits three in 59 lessons, at the
+ * very end, where only the produce pass is still running and produce is
+ * `typeWord` for nearly every word on a track that does not build Nastaliq. Set
+ * to 3 so that residual passes and a fourth in a row does not.
+ *
+ * Before the pipeline the longest run was 14, and 199 of 233 vocabulary lessons
+ * had a run of 9 or more.
+ */
+const MAX_RUN = 3;
+
+/**
+ * The largest share of one lesson any single exercise kind may take.
+ *
+ * A second net under MAX_RUN, for the failure that spaces itself out: a kind
+ * that is half the lesson is still a lesson about that kind, however evenly it
+ * is spread. Worst today is 32.6% (`wordFromMeaning` in v-motion-verbs), so 40
+ * is headroom rather than a line drawn around the current number.
+ */
+const MAX_SHARE = 0.4;
+
+/**
+ * Both tracks, separately, and that is the whole point of this section.
+ *
+ * The check used to compare the tracks by exercise *count* only — via `emitted`
+ * taking the minimum — and the counts are identical for all 233 vocabulary
+ * lessons, so it was structurally blind to what the tracks actually differ on.
+ * A fix that landed only on the script track measured as no change at all: the
+ * Roman track kept 14 consecutive `typeWord` in 162 lessons and nothing said so.
+ */
+const TRACKS = ['both', 'roman'];
+
+const longestRun = (ex) => {
+  let run = 0,
+    prev = null,
+    max = 0,
+    at = null;
+  for (const e of ex) {
+    run = e.kind === prev ? run + 1 : 1;
+    prev = e.kind;
+    if (run > max) {
+      max = run;
+      at = e.kind;
+    }
+  }
+  return { n: max, kind: at };
+};
+
+for (const track of TRACKS) {
+  const runs = [];
+  const hogs = [];
+  for (const l of ALL_LESSONS) {
+    const ex = buildLessonExercises(l, [], track);
+    if (ex.length < 6) continue; // a dialogue is one exercise; a run is not a concept there
+    const r = longestRun(ex);
+    if (r.n > MAX_RUN) runs.push({ id: l.id, ...r });
+    const counts = {};
+    for (const e of ex) counts[e.kind] = (counts[e.kind] || 0) + 1;
+    const [kind, n] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+    if (n / ex.length > MAX_SHARE) hogs.push({ id: l.id, kind, share: n / ex.length });
+  }
+  if (runs.length) {
+    const worst = [...runs].sort((a, b) => b.n - a.n)[0];
+    bad(
+      `${runs.length} lessons emit more than ${MAX_RUN} identical exercises in a row on the ${track} track.\n` +
+        `      worst: ${worst.id} — ${worst.n} consecutive ${worst.kind}\n` +
+        `      A learner does not experience a lesson as a set of passes, they\n` +
+        `      experience it as a sequence. Nine of the same question in a row is\n` +
+        `      the same content and a different lesson.`
+    );
+  }
+  if (hogs.length) {
+    const worst = [...hogs].sort((a, b) => b.share - a.share)[0];
+    bad(
+      `${hogs.length} lessons are more than ${(MAX_SHARE * 100).toFixed(0)}% one exercise kind on the ${track} track.\n` +
+        `      worst: ${worst.id} — ${(worst.share * 100).toFixed(0)}% ${worst.kind}`
+    );
+  }
+}
+
+// ------------------------------------------------- 4. does a topic stay a topic?
 
 const parts = new Map();
 for (const l of vocab) parts.set(l.topic, (parts.get(l.topic) || 0) + 1);
@@ -191,7 +286,7 @@ if (shattered.length) {
   );
 }
 
-// ------------------------------------------------------ 4. is a unit a chapter?
+// ------------------------------------------------------ 5. is a unit a chapter?
 
 const oddUnits = UNITS.filter(
   (u) => u.lessons.length < MIN_LESSONS_PER_UNIT || u.lessons.length > MAX_LESSONS_PER_UNIT
@@ -206,7 +301,7 @@ if (oddUnits.length) {
   );
 }
 
-// ---------------------------------------------- 5. does every topic have a home?
+// ---------------------------------------------- 6. does every topic have a home?
 //
 // The organisation question: a learner opening the app should be able to say
 // what kind of thing each topic is.
