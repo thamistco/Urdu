@@ -867,6 +867,24 @@ const SIGHTINGS_PER_WORD = 3;
 const CLOSING_EXERCISES = 4;
 
 /**
+ * How much of a unit its review revisits, and the floor and ceiling on that.
+ *
+ * A unit review was a flat nine questions wherever it sat, which is 1.4 minutes
+ * against a three minute floor — a lesson icon on the path that resolves in the
+ * time it takes to read its title. It was also the same nine whether the unit
+ * behind it taught 20 words or 90.
+ *
+ * So it is derived from the unit it closes. A third of the new words is the
+ * share, because a review is a sample of the unit rather than a re-run of it,
+ * and the clamp keeps a small unit's review a sitting and a large unit's review
+ * from becoming a second course. 22 to 40 exercises is 3.3 to 6.0 minutes at
+ * nine seconds each, inside the same band every other lesson is held to.
+ */
+const REVIEW_SHARE_OF_UNIT = 1 / 3;
+const REVIEW_MIN = 22;
+const REVIEW_MAX = 40;
+
+/**
  * Split a topic's words into parts of nearly equal size.
  *
  * Fixed size chunks would be simpler and worse: nineteen words in fives is
@@ -916,27 +934,38 @@ function balancedParts<T>(items: readonly T[], per: number): T[][] {
  * the content, never the position.
  */
 function coverTopics(units: Unit[]): Unit[] {
-  return units.map((u) => ({
-    ...u,
-    lessons: u.lessons.flatMap((l) => {
-      if (l.kind !== 'vocab' || !l.topic) return [l];
-      const parts = balancedParts(wordsByTopic(l.topic), WORDS_PER_LESSON_IDEAL);
-      return parts.map((words, i) => ({
-        ...l,
-        id: i === 0 ? l.id : `${l.id}-p${i + 1}`,
-        // The counter goes on the subtitle rather than the title so the path
-        // still reads as one topic broken into sittings, rather than as a
-        // dozen lessons that happen to share a name.
-        subtitle: parts.length > 1 ? `${l.subtitle} · ${i + 1} of ${parts.length}` : l.subtitle,
-        romanSubtitle:
-          l.romanSubtitle && parts.length > 1 ? `${l.romanSubtitle} · ${i + 1} of ${parts.length}` : l.romanSubtitle,
-        wordIds: words.map((w) => w.id),
-        // Three sightings of every new word, plus the closing run. This is the
-        // budget the generator fills; `check:shape` measures what it actually
-        // emits rather than trusting this number.
-        size: SIGHTINGS_PER_WORD * words.length + CLOSING_EXERCISES,
-      }));
-    }),
+  return units.map((u) => {
+    const expanded = u.lessons.flatMap((l) => expandLesson(l));
+    // A review closes a unit, so it can only be sized once the lessons in front
+    // of it are known. Counted over the whole unit rather than only the lessons
+    // above it, because a unit's review sits at its end.
+    const newWords = expanded.reduce((n, l) => n + (l.wordIds?.length ?? 0), 0);
+    const reviewSize = Math.min(REVIEW_MAX, Math.max(REVIEW_MIN, Math.round(newWords * REVIEW_SHARE_OF_UNIT)));
+    return {
+      ...u,
+      lessons: expanded.map((l) => (l.kind === 'review' ? { ...l, size: reviewSize } : l)),
+    };
+  });
+}
+
+/** One planned vocabulary lesson becomes as many lessons as its topic needs. */
+function expandLesson(l: Lesson): Lesson[] {
+  if (l.kind !== 'vocab' || !l.topic) return [l];
+  const parts = balancedParts(wordsByTopic(l.topic), WORDS_PER_LESSON_IDEAL);
+  return parts.map((words, i) => ({
+    ...l,
+    id: i === 0 ? l.id : `${l.id}-p${i + 1}`,
+    // The counter goes on the subtitle rather than the title so the path
+    // still reads as one topic broken into sittings, rather than as a
+    // dozen lessons that happen to share a name.
+    subtitle: parts.length > 1 ? `${l.subtitle} · ${i + 1} of ${parts.length}` : l.subtitle,
+    romanSubtitle:
+      l.romanSubtitle && parts.length > 1 ? `${l.romanSubtitle} · ${i + 1} of ${parts.length}` : l.romanSubtitle,
+    wordIds: words.map((w) => w.id),
+    // Three sightings of every new word, plus the closing run. This is the
+    // budget the generator fills; `check:shape` measures what it actually
+    // emits rather than trusting this number.
+    size: SIGHTINGS_PER_WORD * words.length + CLOSING_EXERCISES,
   }));
 }
 

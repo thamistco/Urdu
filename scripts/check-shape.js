@@ -77,11 +77,42 @@ const { buildLessonExercises } = load('src/exercises/generator.ts');
  * filters them out, and a lesson nobody on that track can open has no length to
  * be short. It is measured on the script track only.
  */
-const emitted = (lesson) => {
-  const script = buildLessonExercises(lesson, [], 'both').length;
-  if (lesson.kind === 'letters') return script;
-  return Math.min(script, buildLessonExercises(lesson, [], 'roman').length);
-};
+const emitted = (lesson) => Math.min(...variants(lesson).map((ex) => ex.length));
+
+/**
+ * Every version of this lesson a learner could actually be handed.
+ *
+ * Both tracks, and for a review lesson every state its due queue can be in.
+ * Measuring review with `reviewRefs = []` alone measured the one state a review
+ * lesson is almost never in, and it hid a real defect: the generator preferred
+ * the due queue when there was one, so a learner with a single item due opened
+ * their unit review and got a one question lesson. `rev-first-faces` emitted 1
+ * exercise against a queue of one and 9 against an empty queue. The check could
+ * not see it because it only ever asked for the empty case.
+ *
+ * The queues are built from the words the path teaches before the lesson, taken
+ * in order, so they are representative and deterministic — a check that samples
+ * randomly reports a different number every run and cannot be trusted to have
+ * failed for the reason it says.
+ */
+function variants(lesson) {
+  const tracks = lesson.kind === 'letters' ? ['both'] : ['both', 'roman'];
+  const queues = lesson.kind === 'review' ? dueQueues(lesson) : [[]];
+  const out = [];
+  for (const track of tracks) for (const refs of queues) out.push(buildLessonExercises(lesson, refs, track));
+  return out;
+}
+
+/** Nothing due, one item due, and more due than the lesson can hold. */
+function dueQueues(lesson) {
+  const before = [];
+  for (const l of ALL_LESSONS) {
+    if (l.id === lesson.id) break;
+    for (const id of l.wordIds || []) before.push({ id, type: 'word' });
+  }
+  const full = before.slice(-(lesson.size + 5));
+  return [[], full.slice(0, 1), full];
+}
 
 /**
  * Which lessons a session length even applies to.
@@ -122,15 +153,28 @@ const MAX_PARTS_PER_TOPIC = 3;
 const MIN_LESSONS_PER_UNIT = 4;
 const MAX_LESSONS_PER_UNIT = 12;
 
+/**
+ * Which lesson kinds this run judges.
+ *
+ * `--kind=review` narrows the length, run and share rules to review lessons, so
+ * an item that owns one kind can be verified on its own while the rest of the
+ * course is still failing. The unfiltered run is the gate and the only thing
+ * that may ever be wired into check:all; a filtered run is a working tool and
+ * says so in its output, so a green filtered run can never be mistaken for a
+ * green check.
+ */
+const ONLY = (process.argv.find((a) => a.startsWith('--kind=')) || '').split('=')[1] || null;
+const judged = (l) => !ONLY || l.kind === ONLY;
+
 const problems = [];
 const bad = (msg) => problems.push(msg);
 const mins = (lesson) => (emitted(lesson) * SECS_PER_EXERCISE) / 60;
 
-const vocab = ALL_LESSONS.filter((l) => l.kind === 'vocab');
+const vocab = ALL_LESSONS.filter((l) => l.kind === 'vocab').filter(judged);
 
 // ------------------------------------------------------- 1. is it a sitting?
 
-const timed = ALL_LESSONS.filter(HAS_SESSION_LENGTH);
+const timed = ALL_LESSONS.filter(HAS_SESSION_LENGTH).filter(judged);
 const tooShort = timed.filter((l) => mins(l) < MIN_MINUTES);
 const tooLong = timed.filter((l) => mins(l) > MAX_MINUTES);
 
@@ -240,7 +284,7 @@ const longestRun = (ex) => {
 for (const track of TRACKS) {
   const runs = [];
   const hogs = [];
-  for (const l of ALL_LESSONS) {
+  for (const l of ALL_LESSONS.filter(judged)) {
     const ex = buildLessonExercises(l, [], track);
     if (ex.length < 6) continue; // a dialogue is one exercise; a run is not a concept there
     const r = longestRun(ex);
@@ -288,7 +332,7 @@ if (shattered.length) {
 
 // ------------------------------------------------------ 5. is a unit a chapter?
 
-const oddUnits = UNITS.filter(
+const oddUnits = (ONLY ? [] : UNITS).filter(
   (u) => u.lessons.length < MIN_LESSONS_PER_UNIT || u.lessons.length > MAX_LESSONS_PER_UNIT
 );
 if (oddUnits.length) {
@@ -319,7 +363,7 @@ if (oddUnits.length) {
 const { TOPIC_CATEGORIES } = load('src/data/words.ts');
 const CATEGORIES = [...TOPIC_CATEGORIES];
 
-const uncategorised = TOPICS.filter((t) => !t.category);
+const uncategorised = (ONLY ? [] : TOPICS).filter((t) => !t.category);
 if (uncategorised.length) {
   bad(
     `${uncategorised.length} topic${uncategorised.length === 1 ? ' has' : 's have'} no category: ` +
@@ -336,7 +380,7 @@ if (uncategorised.length) {
 // dead key *and* an uncategorised topic; without this, only the second half is
 // reported and the stale key sits there looking like coverage.
 const topicIds = new Set(TOPICS.map((t) => t.id));
-const dead = Object.keys(categoryMapKeys()).filter((k) => !topicIds.has(k));
+const dead = (ONLY ? [] : Object.keys(categoryMapKeys())).filter((k) => !topicIds.has(k));
 if (dead.length) {
   bad(
     `${dead.length} categor${dead.length === 1 ? 'y names a topic that does' : 'ies name topics that do'} not exist: ${dead.join(', ')}\n` +
@@ -348,7 +392,7 @@ if (dead.length) {
 // A category declared but never used is either a gap in the course or a
 // category that should not exist. Either way somebody should say which.
 const used = new Set(TOPICS.map((t) => t.category).filter(Boolean));
-const unused = CATEGORIES.filter((c) => !used.has(c));
+const unused = (ONLY ? [] : CATEGORIES).filter((c) => !used.has(c));
 if (unused.length) {
   bad(`${unused.length} declared categories are used by no topic: ${unused.join(', ')}`);
 }
@@ -385,6 +429,8 @@ console.log(
     `  targets: ${MIN_MINUTES} to ${MAX_MINUTES} min per lesson, ${MIN_SIGHTINGS}+ sightings per new word,\n` +
     `           at most ${MAX_PARTS_PER_TOPIC} parts per topic, ${MIN_LESSONS_PER_UNIT} to ${MAX_LESSONS_PER_UNIT} lessons per unit\n`
 );
+
+if (ONLY) console.log(`  scoped to --kind=${ONLY}. This is a working tool, not the gate.\n`);
 
 if (problems.length) {
   console.error(`check:shape — ${problems.length} problem${problems.length === 1 ? '' : 's'}\n`);
