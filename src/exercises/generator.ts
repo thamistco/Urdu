@@ -670,10 +670,16 @@ export function buildLessonExercises(
      */
     const resolvable = (ref: ItemRef) =>
       ref.type === 'letter' ? teachesScript && !!getLetter(ref.id) : !!getAnyWord(ref.id);
+    // Keyed on type and id together, not id alone. Letter ids and word ids do
+    // not collide anywhere in the current data, but nothing enforces that they
+    // never will, and an id-only key would silently drop a word the moment one
+    // did — a due letter and an unrelated due word for the same string looking
+    // like a duplicate of each other.
+    const key = (r: ItemRef) => `${r.type}:${r.id}`;
     const due = reviewRefs.filter(resolvable);
-    const seenIds = new Set(due.map((r) => r.id));
+    const seenIds = new Set(due.map(key));
     const filler = fallbackReviewRefs(lesson.size, teachesScript, lesson.id, known)
-      .filter((r) => !seenIds.has(r.id))
+      .filter((r) => !seenIds.has(key(r)))
       .filter(resolvable);
     const refs = [...due, ...filler];
 
@@ -697,9 +703,9 @@ export function buildLessonExercises(
      * queue itself is built on.
      */
     if (refs.length < lesson.size) {
-      const have = new Set(refs.map((r) => r.id));
+      const have = new Set(refs.map(key));
       const more = fallbackReviewRefs(lesson.size * 2, false, lesson.id, known)
-        .filter((r) => !have.has(r.id))
+        .filter((r) => !have.has(key(r)))
         .filter(resolvable);
       refs.push(...more.slice(0, lesson.size - refs.length));
     }
