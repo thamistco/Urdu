@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { pickOne, sample, seededShuffle, shuffle } from './shuffle';
+import { ALL_LESSONS } from '../data/units';
+import { buildLessonExercises } from '../exercises/generator';
 
 /**
  * The property that matters is *uniformity*, and it is the one a shuffle can
@@ -176,5 +178,54 @@ describe('seededShuffle', () => {
     expect(seededShuffle([], 'k')).toEqual([]);
     expect(seededShuffle([7], 'k')).toEqual([7]);
     expect(seededShuffle(pool, '')).toHaveLength(pool.length);
+  });
+});
+
+/**
+ * URD-013: a letter lesson used to call `letterExercise`, which rolls
+ * `Math.random()` to choose trace, form or pick — so the same lesson id
+ * generated a different sequence of exercise kinds on every visit, and every
+ * check that counted kinds over letter lessons reported a different number run
+ * to run. Measured before the fix: `letterPick` moved between 65 and 77 across
+ * consecutive runs of the same check on unchanged content.
+ *
+ * The fix does not go through `seededShuffle` — `letterExerciseAt` in
+ * generator.ts picks the kind by the letter's turn number instead, which is
+ * deterministic for the same reason a seeded shuffle is: no `Math.random()` in
+ * the decision. This test is here rather than in a generator test file because
+ * it is the same property `seededShuffle`'s tests above hold content selection
+ * to, now held for exercise choice: same input, same output; something inside
+ * still varies.
+ */
+describe('a letter lesson regenerates the same sequence of exercise kinds', () => {
+  it('is identical in kind across repeated generations, for every letter lesson', () => {
+    const letterLessons = ALL_LESSONS.filter((l) => l.kind === 'letters');
+    expect(letterLessons.length).toBeGreaterThan(0); // the premise this test needs
+
+    for (const lesson of letterLessons) {
+      const kinds = () => buildLessonExercises(lesson, [], 'both').map((e) => e.kind);
+      const first = kinds();
+      for (let i = 0; i < 5; i++) {
+        expect(kinds(), `${lesson.id}, generation ${i}`).toEqual(first);
+      }
+    }
+  });
+
+  it('still varies option order — the choice of exercise is fixed, not the whole lesson', () => {
+    const lesson = ALL_LESSONS.find((l) => l.kind === 'letters' && l.letterIds && l.letterIds.length >= 4);
+    expect(lesson).toBeTruthy();
+    if (!lesson) return;
+
+    const orders = new Set<string>();
+    for (let i = 0; i < 30; i++) {
+      const ex = buildLessonExercises(lesson, [], 'both');
+      for (const e of ex) {
+        if (e.kind === 'letterPick') orders.add(e.options.map((o) => o.id).join(','));
+      }
+    }
+    // A fixed kind sequence with a fixed option order too would mean the whole
+    // question is memorisable rather than just its shape. Several distinct
+    // orders across 30 generations is the signal that only the kind is pinned.
+    expect(orders.size).toBeGreaterThan(1);
   });
 });

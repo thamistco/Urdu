@@ -73,17 +73,27 @@ function letterExercise(letter: Letter): Exercise {
 
 /**
  * The same three forms `letterExercise` offers, chosen by position rather than
- * `Math.random()`. Review only.
+ * `Math.random()`.
  *
- * `letterExercise` itself keeps its random pick — it also drives the letter
- * lessons that teach the alphabet, and making those deterministic is a wider
- * change than this one, already queued as URD-013. Review needed its own fix
- * sooner: a due queue this app can genuinely hand a learner right after they
- * finish the alphabet unit is mostly letters, and a run of random picks over
- * three kinds streaks by chance — measured, five consecutive `letterPick` in a
- * row on an all-letters due queue. Position by index instead, so a review with
- * many letters in a row rotates through the three forms instead of gambling on
- * them, the same fix already applied to the word side of review.
+ * Two callers, added at different times for different reasons, both landing on
+ * the same fix. Review needed it first: a due queue this app can genuinely hand
+ * a learner right after they finish the alphabet unit is mostly letters, and a
+ * run of random picks over three kinds streaks by chance — measured, five
+ * consecutive `letterPick` in a row on an all-letters due queue.
+ *
+ * The letter-teaching lessons needed it for a different reason (URD-013): a
+ * lesson generated at render time rather than fixed content means a learner who
+ * leaves and comes back gets a different lesson, and every check that counts
+ * exercise kinds over letter lessons reports a different number on every run —
+ * measured, `letterPick` moved between 65 and 77 across consecutive runs of the
+ * same check, before either caller existed. Position by index instead: the same
+ * lesson, letter and turn always choose the same kind, so a learner returns to
+ * what they left and a check gets an answer that holds still.
+ *
+ * `letterExercise` still exists and still calls `Math.random()`, for the one
+ * caller left on it — weaving up to two due items into an unrelated lesson,
+ * which is not "a letter lesson" in the sense either of the above cares about
+ * and is deliberately out of scope for both.
  */
 function letterExerciseAt(letter: Letter, i: number): Exercise {
   const position = POSITIONS[i % POSITIONS.length].key as PositionKey;
@@ -186,6 +196,18 @@ const buildableLetters = (w: Word) => Array.from(w.urdu).filter((c) => c.trim().
  * Nastaliq rather than accept its transliteration.
  */
 const MAX_BUILD_TILES = 8;
+
+/**
+ * How many times a letter is met inside the lesson that teaches it.
+ *
+ * The real letter groups run 4 to 7 letters (`lettersOfGroup` in letters.ts).
+ * Six sightings puts the smallest group at 24 exercises (3.6 min) and the
+ * largest at 42 (6.3 min), both comfortably inside the 3 to 8 minute band
+ * without either end needing its own case. Chosen the same way
+ * `SIGHTINGS_PER_WORD` was in units.ts: the smallest real group sets the floor,
+ * not a round number picked first and checked after.
+ */
+const SIGHTINGS_PER_LETTER = 6;
 
 function wordExercise(
   word: Word,
@@ -416,7 +438,22 @@ export function buildLessonExercises(
 
   if (lesson.kind === 'letters' && lesson.letterIds && teachesScript) {
     const letters = lesson.letterIds.map(getLetter).filter(Boolean) as Letter[];
-    for (const l of letters) exercises.push(letterExercise(l));
+    /**
+     * Every letter met `SIGHTINGS_PER_LETTER` times, in rounds rather than one
+     * letter drilled through all its forms before the next begins.
+     *
+     * It used to be one exercise per letter — a four-letter lesson was five
+     * exercises, 0.8 minutes, an interruption rather than a sitting. The fix is
+     * the same one vocabulary got: meet the same content more than once, in
+     * different shapes, rather than meeting more content once. `letterExerciseAt`
+     * already rotates trace/form/pick by index, so round `r` for letter `l`
+     * uses `r + idx` — offsetting by the letter's position so two letters in the
+     * same round land on different forms, the same reason the review pipeline
+     * staggers rather than blocks.
+     */
+    letters.forEach((l, idx) => {
+      for (let r = 0; r < SIGHTINGS_PER_LETTER; r++) exercises.push(letterExerciseAt(l, r + idx));
+    });
     // one word that features these letters, for context
     const contextWords = letters
       .map((l) => WORDS.find((w) => w.roman.toLowerCase().includes(l.sound[0])))

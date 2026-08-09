@@ -117,16 +117,30 @@ const V = (topic: string, title: string, subtitle: string, xp = 18, size = 9): L
   xp,
   size,
 });
-const L = (group: number, title: string, subtitle: string, xp = 20, size = 7): Lesson => ({
-  id: uid(`l-${group}`),
-  title,
-  subtitle,
-  icon: '🔤',
-  kind: 'letters',
-  letterIds: lettersOfGroup(group),
-  xp,
-  size,
-});
+/**
+ * Six sightings per letter, plus one context word — the same budget the
+ * generator fills; `check:shape` measures what it actually emits rather than
+ * trusting this number. Kept in this file rather than imported from the
+ * generator for the same reason `SIGHTINGS_PER_WORD` is: content shape belongs
+ * with content, and the two are cross-referenced by comment, not by a shared
+ * constant, so a change to one is a change someone has to notice and make to
+ * the other rather than one that silently drifts underneath both.
+ */
+const SIGHTINGS_PER_LETTER = 6;
+
+const L = (group: number, title: string, subtitle: string, xp = 20): Lesson => {
+  const letterIds = lettersOfGroup(group);
+  return {
+    id: uid(`l-${group}`),
+    title,
+    subtitle,
+    icon: '🔤',
+    kind: 'letters',
+    letterIds,
+    xp,
+    size: letterIds.length * SIGHTINGS_PER_LETTER + 1,
+  };
+};
 const G = (conceptId: string, title: string, subtitle: string, xp = 25, size = 6): Lesson => ({
   id: uid(conceptId),
   title,
