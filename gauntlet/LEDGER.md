@@ -247,3 +247,142 @@ the queue at attempt 1 with its scope split in the notes.
 - The PLAYER was not dispatched on an item that changes what a lesson does.
 - The previous commit fixed one track and said so in neither its message nor
   its comment, which is what let B3 live.
+
+## CLAIMED · URD-003 · 2026-08-09T04:20Z
+Tell a returning learner why their progress moved.
+verify: `npm test -- src/lib/progress.test.ts`
+branch: claude/gauntlet-progress-moved, cut from claude/gauntlet-lesson-sitting.
+Moved to the top of the queue by URD-A02's own critique, which found that item
+had landed before this one when its notes said never before.
+
+## CRITIQUE · URD-003 · 2026-08-09T05:05Z
+Dispatched THE CRITIC (always) and the DESIGN CRITIC (it adds a card to the
+Learn screen). Not the curriculum critic: no lesson, word or order changed. Not
+the PLAYER: the soak drives lessons, and this is a launch-time notice a soak run
+would dismiss without noticing, which is a limitation of the soak rather than a
+judgement that the item is safe. Recorded as skipped, not as unneeded.
+
+Both critics independently found the same first defect from opposite directions,
+which is the strongest signal this loop has produced so far.
+
+### THE CRITIC — BLOCKING
+B1. The notice never fires for the learner the item is about. Detection was by
+    missing lesson id, and `coverTopics` gives a topic's first part the topic's
+    own id on purpose, so the ids survive. The critic dumped UNITS at 9792f8a
+    and at HEAD: **0 of 237** pre-split ids are absent today. A pre-split learner
+    with 60 lessons finished goes beginner 55/55 (100%) to 55/81 (68%), overall
+    25.3% to 17.2%, ten units fall, and the app says nothing while
+    `npm test -- src/lib/progress.test.ts` is 10/10 green. Accepted in full. This
+    is the item's central design error and it was mine.
+B2. The copy said "the percentages start lower". Measured over every triggering
+    prefix profile (K=1..608, old path at 46dc8a3 against HEAD): overall
+    percentage is the same or higher in **466 of 604** triggering states, and per
+    unit rose 241, fell 295, unchanged 12,341. Two profiles driven in the browser
+    were shown the false sentence while the screen behind the card contradicted
+    it. Accepted: under the severity rule, the app lying is blocking.
+
+### DESIGN CRITIC — BLOCKING
+D1. The notice is rendered and never seen. `HomeScreen` auto-scrolls to the
+    current lesson 500ms after mount whenever its pageY exceeds 420, which is
+    always true once four cards sit above the path, and the notice is at the top
+    of that same ScrollView. Measured landing offsets: the card sits 646 to
+    **4,597 px** above the viewport, `fullyVisible: false` in all eight sampled
+    profiles. Because dismissal is on tap and not on render, it is never
+    dismissed either, so it re-renders unseen forever.
+
+    It also caught the lead's own false claim, which is recorded here in full:
+    the previous commit message said "verified against the real built app … is
+    shown the notice". It is *rendered* at 412x900. It is not *shown*. The
+    verification scrolled the card into view, which no learner does. That is
+    CLAUDE.md non-negotiable #1, from the hand that wrote the rule down.
+
+### All three fixed in 9136f1e, before STEP 4
+Detection is now by the size of the path the learner last saw against the path
+in front of them, with null meaning a profile written before that was recorded.
+The direction claim and the count are both gone from the copy. The auto-scroll
+waits until the notice is dismissed.
+
+### THE CRITIC — MAJOR
+M1. The verify command could not fail on the bug: the suite only exercised the
+    pure function against hand-built profiles, and all ten stayed green while the
+    named learner got silence. Fixed rather than queued, because it is the
+    repo's non-negotiable #3. Reinstating the missing-id detection behind the new
+    signature now fails 6 of 10, including that learner.
+M2. "1 of the 1 you had finished are now part of other lessons" at gone === 1,
+    which is the commonest returning profile there is, plus a missing noun. Fixed
+    by removing the count entirely.
+M3. `pathNoticeSeen` recorded "told", not "told about which move", so the notice
+    was single use and the next regroup would silently re-incur the debt. Fixed:
+    dismissal records the path size, so the next move re-arms it with no version
+    bump. Verified live.
+
+### DESIGN CRITIC — MAJOR
+D2. At 320x568 the card was 297 px of a 568 px viewport, pushing Continue and
+    Today's word below the fold. Partly fixed: the copy went from four sentences
+    of 12px fine print to two at body size. It still fills the small phone.
+    OVERRULED in part, finding first and reason second: on the one launch this
+    appears, the notice *is* the screen's subject, and the auto-scroll fix means
+    the learner lands on it rather than past it. Continue returns the moment it
+    is dismissed, which is now a single tap away rather than a scroll up. A
+    notice small enough to share the fold with the CTA is a notice that competes
+    with the CTA and loses.
+D3. The Got it button was the brightest thing on the screen — mean luminance
+    0.623 against 0.044 for the Continue card, 10.38:1 against its own card —
+    wearing the primary CTA costume for an action whose only job is to make a
+    message go away. Fixed: ghost variant.
+D4. 52 words of 12px caption type carrying the only message in the app a learner
+    has to read. Fixed: 2 sentences at text-sm/leading-6.
+
+### MINOR
+m1 (CRITIC). A v0 or v1 profile is wiped by the older migration and then told
+   nothing, because it has no ticks left. Pre-existing wipe; the new code passes
+   straight through it. → new URD-014.
+m2 (CRITIC). The notice was not announced to a screen reader. Fixed: `Card`
+   takes an accessibility role and the notice is an alert with its body as label.
+m3 (CRITIC). A 348-id Set rebuilt on every completion, on the screen URD-002
+   exists to lighten. Fixed: module scope, and it is a count now rather than a
+   Set.
+m4 (DESIGN). 23 px of tap-through: the band under the finger becomes the
+   Continue card the instant the notice is removed, with no exit transition.
+   → new URD-015.
+
+### What both critics checked and passed
+Zustand's migrate/merge semantics read from node_modules rather than memory, and
+confirmed live: a seeded v2 profile returns as v3 with the migrated value intact
+and the initialiser's default not overriding it. `known` being the whole path
+rather than the learner's track is right, so a Roman learner is not told their
+traced letters vanished. `resetAll` cannot leave a stale notice. Onboarding
+skips are drawn from the current path so a heritage learner is not falsely
+notified. Body contrast measured from rendered pixels at 6.72:1, heading 11.99:1,
+tap target 102x57. The claim that a fourth guard in progress.ts was dead code was
+independently verified as accurate.
+
+## PASSED · URD-003 · 2026-08-09T05:40Z
+$ npm test -- src/lib/progress.test.ts
+   Test Files  1 passed (1)
+        Tests  10 passed (10)
+
+$ npm run check:all
+  check:all — all 24 steps pass against a deploy-shaped build.
+  Run alone on a still tree, after the last edit.
+
+Induced failure, per the rule that a check which has never failed is a
+hypothesis. Missing-id detection reinstated behind the new signature:
+  × tells a learner whose lessons all still exist but whose path grew
+  × tells a learner whose path changed size under them
+  × says nothing to a learner who has finished nothing
+  × counts a lesson skipped at onboarding as a place on the path
+  × fires once — the second launch is silent
+  × re-arms when the path moves again
+   Tests  6 failed | 4 passed (10)
+
+Driven in the built bundle at 412x900 and 320x568, with no scrolling:
+  survivors-only (the cohort B1 missed)  rendered=true landed_in_view=true top=134
+  survivors-only (small phone)           rendered=true landed_in_view=true top=170
+  608-era, dead ids                      rendered=true landed_in_view=true top=134
+  nothing finished (fresh)               rendered=false
+  after dismiss / after reload           rendered=false
+  persisted v3 pathNoticeSeen=true pathSize=348 ticks kept=40
+  re-armed after another move            rendered=true
+
+branch: claude/gauntlet-progress-moved
