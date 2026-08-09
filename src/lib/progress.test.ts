@@ -1,111 +1,113 @@
 import { describe, expect, it } from 'vitest';
 
 import { ALL_LESSONS } from '../data/units';
-import { pathMoveNotice } from './progress';
+import { needsPathMoveNotice } from './progress';
 
 /**
- * The rule is "exactly once, and never to somebody it is not true of".
+ * The rule is "once per move, and never to somebody it is not true of".
  *
  * Both halves have teeth. A notice that fires twice is worse than none, because
  * the second one teaches the learner that the app's messages are noise. A notice
  * that fires for a new learner is a false statement about their account on their
  * first session.
  *
- * The lesson ids here are derived from the real path rather than typed out. A
- * test that hardcodes `v-first-words-p4` passes forever after that id stops
- * being the example, and the thing it is guarding — that the path moves — is
- * precisely the thing that will invalidate a hardcoded id.
+ * The first version of these tests was ten green assertions over a function that
+ * could not see the learner the feature was written for, because both the
+ * function and the tests asked the same wrong question — which of your ticked
+ * lesson ids no longer exists. Review measured the answer for the pre-split
+ * path: zero of its 237 ids are missing today, so that learner was silently
+ * excluded while the suite passed. The first test below is that learner, and it
+ * is the reason this file exists in this shape.
  */
 
-const KNOWN = new Set(ALL_LESSONS.map((l) => l.id));
-
-/** Ids from a path that no longer exists.
- *
- *  `coverTopics` caps a topic at 3 parts and numbers them `-p2`, `-p3`, so a
- *  `-p4` suffix names a lesson from the 608-lesson era by construction rather
- *  than by assumption. Asserted below rather than assumed, because "by
- *  construction" is how a test quietly stops testing. */
-const preSplit = (n: number) =>
-  ALL_LESSONS.filter((l) => l.kind === 'vocab')
-    .slice(0, n)
-    .map((l) => `${l.id}-p4`);
-
+const PATH = ALL_LESSONS.length;
 const profile = (ids: string[]) => Object.fromEntries(ids.map((id) => [id, { best: 100, done: 1 }]));
 
-describe('the ids this test is built on', () => {
-  it('really are absent from the path', () => {
-    // If this fails, every "gone" assertion below is vacuous.
-    for (const id of preSplit(5)) expect(KNOWN.has(id)).toBe(false);
-  });
+/** A learner whose every finished lesson still exists under the same id. This
+ *  is not an edge case; it is the majority, because `coverTopics` gives a
+ *  topic's first part the topic's own id. */
+const survivor = profile(ALL_LESSONS.slice(0, 40).map((l) => l.id));
 
-  it('really are present for the ids taken straight from the path', () => {
-    for (const l of ALL_LESSONS.slice(0, 5)) expect(KNOWN.has(l.id)).toBe(true);
+describe('the premise these tests rest on', () => {
+  it('the surviving profile really has nothing missing', () => {
+    // If this fails, the first test below is passing for the wrong reason.
+    const known = new Set(ALL_LESSONS.map((l) => l.id));
+    for (const id of Object.keys(survivor)) expect(known.has(id)).toBe(true);
   });
 });
 
-describe('telling a learner their progress moved', () => {
+describe('telling a learner their place on the path moved', () => {
+  it('tells a learner whose lessons all still exist but whose path grew', () => {
+    // The whole finding. Their ticks are live, their denominators are not.
+    expect(
+      needsPathMoveNotice({ completed: survivor, skipped: {}, pathSize: PATH, seen: false, lastPathSize: null })
+    ).toBe(true);
+  });
+
+  it('tells a learner whose path changed size under them', () => {
+    expect(
+      needsPathMoveNotice({ completed: survivor, skipped: {}, pathSize: PATH, seen: false, lastPathSize: 608 })
+    ).toBe(true);
+    expect(
+      needsPathMoveNotice({ completed: survivor, skipped: {}, pathSize: PATH, seen: false, lastPathSize: 174 })
+    ).toBe(true);
+  });
+
+  it('says nothing to a learner who was last here on this same path', () => {
+    expect(
+      needsPathMoveNotice({ completed: survivor, skipped: {}, pathSize: PATH, seen: false, lastPathSize: PATH })
+    ).toBe(false);
+  });
+
   it('says nothing to a learner who has finished nothing', () => {
-    expect(pathMoveNotice({ completed: {}, skipped: {}, known: KNOWN, seen: false })).toBeNull();
+    // A fresh profile. It has never seen a path, so no path moved under it.
+    expect(needsPathMoveNotice({ completed: {}, skipped: {}, pathSize: PATH, seen: false, lastPathSize: null })).toBe(
+      false
+    );
   });
 
-  it('says nothing to a learner whose finished lessons all still exist', () => {
-    const completed = profile(ALL_LESSONS.slice(0, 12).map((l) => l.id));
-    expect(pathMoveNotice({ completed, skipped: {}, known: KNOWN, seen: false })).toBeNull();
+  it('counts a lesson skipped at onboarding as a place on the path', () => {
+    // A heritage learner ticks lessons without attempting them. Their unit
+    // percentages fall the same way, so they are owed the same sentence.
+    expect(
+      needsPathMoveNotice({
+        completed: {},
+        skipped: { 'v-first-words': true, 'v-colours': true },
+        pathSize: PATH,
+        seen: false,
+        lastPathSize: null,
+      })
+    ).toBe(true);
   });
 
-  it('tells a learner whose finished lessons were regrouped away', () => {
-    const completed = profile([...ALL_LESSONS.slice(0, 8).map((l) => l.id), ...preSplit(4)]);
-    const notice = pathMoveNotice({ completed, skipped: {}, known: KNOWN, seen: false });
-    expect(notice).not.toBeNull();
-    expect(notice?.gone).toBe(4);
-    expect(notice?.ticked).toBe(12);
-  });
-
-  it('counts a lesson skipped at onboarding as progress that can move', () => {
-    // A heritage learner ticks lessons without attempting them. Their
-    // percentage falls the same way, so they are owed the same sentence.
-    const notice = pathMoveNotice({
-      completed: {},
-      skipped: Object.fromEntries(preSplit(3).map((id) => [id, true])),
-      known: KNOWN,
-      seen: false,
-    });
-    expect(notice?.gone).toBe(3);
-    expect(notice?.ticked).toBe(3);
-  });
-
-  it('counts a lesson in both maps once', () => {
-    const ids = preSplit(2);
-    const notice = pathMoveNotice({
-      completed: profile(ids),
-      skipped: Object.fromEntries(ids.map((id) => [id, true])),
-      known: KNOWN,
-      seen: false,
-    });
-    expect(notice?.ticked).toBe(2);
-    expect(notice?.gone).toBe(2);
-  });
-
-  it('fires exactly once — the second launch is silent', () => {
-    const completed = profile(preSplit(6));
-    const first = pathMoveNotice({ completed, skipped: {}, known: KNOWN, seen: false });
-    expect(first).not.toBeNull();
-
+  it('fires once — the second launch is silent', () => {
+    const args = { completed: survivor, skipped: {}, pathSize: PATH, lastPathSize: null };
+    expect(needsPathMoveNotice({ ...args, seen: false })).toBe(true);
     // `seen` is what dismissal sets. Nothing else about the profile changes,
     // which is the case that matters: the learner has not done a lesson since.
-    const second = pathMoveNotice({ completed, skipped: {}, known: KNOWN, seen: true });
-    expect(second).toBeNull();
+    expect(needsPathMoveNotice({ ...args, seen: true })).toBe(false);
   });
 
   it('stays silent through every later launch, not just the second', () => {
-    const completed = profile(preSplit(6));
     for (let launch = 0; launch < 20; launch++) {
-      expect(pathMoveNotice({ completed, skipped: {}, known: KNOWN, seen: true })).toBeNull();
+      expect(
+        needsPathMoveNotice({ completed: survivor, skipped: {}, pathSize: PATH, seen: true, lastPathSize: null })
+      ).toBe(false);
     }
   });
 
-  it('says nothing when handed an empty path rather than claiming it all vanished', () => {
-    const completed = profile(ALL_LESSONS.slice(0, 5).map((l) => l.id));
-    expect(pathMoveNotice({ completed, skipped: {}, known: new Set(), seen: false })).toBeNull();
+  it('re-arms when the path moves again', () => {
+    // Dismissal records the path size as well as the flag, so the *next*
+    // regroup is announced without anyone remembering to bump a version. This
+    // is the difference between a fix and a fix that only works once.
+    const dismissed = { completed: survivor, skipped: {}, pathSize: PATH, seen: true, lastPathSize: PATH };
+    expect(needsPathMoveNotice(dismissed)).toBe(false);
+    expect(needsPathMoveNotice({ ...dismissed, seen: false, pathSize: PATH + 60 })).toBe(true);
+  });
+
+  it('says nothing when handed an empty path rather than claiming it all changed', () => {
+    expect(
+      needsPathMoveNotice({ completed: survivor, skipped: {}, pathSize: 0, seen: false, lastPathSize: null })
+    ).toBe(false);
   });
 });

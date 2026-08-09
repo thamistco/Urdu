@@ -21,7 +21,7 @@ import { levelProgress, levelTitle } from '../lib/gamification';
 import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { Lesson, unitsForTrack, findLesson, ALL_LESSONS } from '../data/units';
-import { pathMoveNotice } from '../lib/progress';
+import { needsPathMoveNotice } from '../lib/progress';
 import { LEVEL_META, LEVEL_ORDER, type Level, glossOf } from '../data/words';
 import { WORDS } from '../data/words';
 import { DAILY_GOALS } from '../data/achievements';
@@ -30,6 +30,16 @@ import { dueCount } from '../lib/srs';
 import { testerFlags } from '../store/useTesterStore';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
+
+/** How many lessons the course holds, across both tracks. Module scope: it is a
+ *  constant of the build, and rebuilding a 348-entry structure on the screen
+ *  URD-002 exists to make lighter is the wrong place to put it. */
+const PATH_SIZE = ALL_LESSONS.length;
+
+/** Said once, so it lives once. Also read aloud by the notice's own
+ *  accessibility label, which is why it is a string rather than JSX. */
+const NOTICE_BODY =
+  'Short lessons were merged into fewer, longer ones, so your units hold a different number of lessons than when you were last here. Nothing you learned was lost: your streak, your level and everything the app remembers about your words are untouched.';
 
 const GREETING: Record<string, string> = {
   family: 'Speak with them',
@@ -183,16 +193,30 @@ export function HomeScreen() {
   // The path as this learner's track sees it: someone who chose Roman is not
   // shown — or blocked by — the thirteen lessons of alphabet.
   const units = useMemo(() => unitsForTrack(track), [track]);
-  const pathNotice = useMemo(
-    () =>
-      pathMoveNotice({
-        completed: store.completedLessons,
-        skipped: store.skippedLessons,
-        known: new Set(ALL_LESSONS.map((l) => l.id)),
-        seen: store.pathNoticeSeen,
-      }),
-    [store.completedLessons, store.skippedLessons, store.pathNoticeSeen]
-  );
+  /**
+   * Measured against the whole path rather than this learner's track. On the
+   * Roman track `units` drops the thirteen alphabet lessons, so a track switch
+   * would otherwise register as the course changing size underneath them.
+   */
+  const pathNotice = needsPathMoveNotice({
+    completed: store.completedLessons,
+    skipped: store.skippedLessons,
+    pathSize: PATH_SIZE,
+    seen: store.pathNoticeSeen,
+    lastPathSize: store.pathSize,
+  });
+
+  /**
+   * A learner who is owed nothing has still *seen* this path, and needs to be
+   * recorded as having seen it — otherwise the next regroup cannot tell them
+   * apart from someone who was last here two paths ago. Runs on the launches
+   * where nothing is shown; the dismissal records it on the launches where
+   * something is.
+   */
+  const notePathSize = useProgressStore((s) => s.notePathSize);
+  useEffect(() => {
+    if (!pathNotice && store.pathSize !== PATH_SIZE) notePathSize(PATH_SIZE);
+  }, [pathNotice, store.pathSize, notePathSize]);
   const order = useMemo(() => units.flatMap((u) => u.lessons.map((l) => l.id)), [units]);
 
   // The one next thing to do: the first lesson on the path not yet finished
@@ -219,12 +243,19 @@ export function HomeScreen() {
    * Fires once per mount, and only when the current lesson is far enough down
    * to be off-screen; scrolling the app out from under someone who is already
    * looking at the right thing is worse than not scrolling at all.
+   *
+   * And not at all while the path-moved notice is up. Review measured this
+   * landing the learner between 646 and 4,597 pixels below a notice that sits at
+   * the top of this same ScrollView — rendered on every launch, scrolled past on
+   * every launch, and dismissed on tap rather than on render, so never dismissed
+   * either. The notice is the one thing on the screen that has to be read before
+   * anything else makes sense; the scroll runs when it is gone.
    */
   const pathRef = useRef<ScrollView>(null);
   const currentNode = useRef<View>(null);
   const didAutoScroll = useRef(false);
   useEffect(() => {
-    if (didAutoScroll.current) return;
+    if (didAutoScroll.current || pathNotice) return;
     const t = setTimeout(() => {
       // `measure` reports pageY — position on screen. The list has not been
       // scrolled yet at this point, so pageY is also the content offset we
@@ -239,7 +270,7 @@ export function HomeScreen() {
       });
     }, 500);
     return () => clearTimeout(t);
-  }, [currentId]);
+  }, [currentId, pathNotice]);
 
   // The course is long. Only the stage you are on is expanded; the others
   // collapse to a progress line you can open when you want to look ahead.
@@ -322,39 +353,48 @@ export function HomeScreen() {
           </SafeAreaView>
         </Reveal>
 
-        {/* Why the numbers moved.
-            The path has been rebuilt underneath people twice: once splitting
-            each topic across enough lessons to cover its vocabulary, and once
-            regrouping those into sittings. Both times a finished lesson kept its
-            id where it could, so what a returning learner sees is not a lost
-            tick but a unit percentage that fell overnight — which reads as lost
-            progress, and lost progress is the thing most likely to make somebody
-            stop opening the app.
+        {/* Why the unit counts moved.
+            The path has been rebuilt underneath people twice and will move
+            again: once splitting each topic across enough lessons to cover its
+            vocabulary, once regrouping those into sittings. What a returning
+            learner sees is not a lost tick, because a topic's first part keeps
+            its id, but a unit that read 55 of 55 now reading 55 of 81. That is
+            indistinguishable from lost progress from the inside, and lost
+            progress is the thing most likely to make somebody stop opening it.
 
-            Measured against the whole path rather than the learner's track. On
-            the Roman track `units` excludes the letter lessons, so a learner who
-            traced letters before switching would be told those had vanished when
-            they are simply not on their path.
+            Two sentences, at body size rather than caption size, and no numbers.
+            The first draft was four sentences of 12px fine print carrying the
+            only message in the app a learner has to actually read, and its
+            concrete count was true only of the minority whose lesson ids died —
+            rendering "1 of the 1 you had finished are now part of other
+            lessons" for the commonest returning profile there is.
 
-            Shown once. `dismissPathNotice` is what makes it once, and it fires
-            on the tap rather than on the render, so a notice drawn and never
-            read is still owed the next time. */}
+            It also does not say which way the percentages went. The first draft
+            said they start lower; measured across every profile that triggers
+            this, they are the same or higher in 466 of 604 cases and unchanged
+            in the overwhelming majority of units. A reassurance the learner can
+            disprove by looking at the screen behind it is worse than silence.
+
+            `dismissPathNotice` is what makes it once, and it fires on the tap
+            rather than on the render, so a notice drawn and never read is still
+            owed. It records the path size with the flag, so the next regroup
+            re-arms this without anyone bumping the persist version. */}
         {pathNotice && (
           <Reveal delay={30}>
-            <Card className="mb-4" accent={palette.gold}>
-              <Bold className="text-sm">Your place on the path moved</Bold>
-              <Txt className="mt-2 text-xs leading-5 text-paper/70">
-                Lessons were regrouped into longer sittings, so {pathNotice.gone} of the {pathNotice.ticked} you had
-                finished are now part of other lessons. Nothing you learned was lost: your streak, your level and
-                everything the app remembers about your words are untouched. There are simply fewer, longer lessons than
-                before, so the percentages start lower.
-              </Txt>
+            <Card
+              className="mb-4"
+              accent={palette.gold}
+              accessibilityRole="alert"
+              accessibilityLabel={`Lessons were regrouped. ${NOTICE_BODY}`}
+            >
+              <Bold className="text-base">Lessons were regrouped</Bold>
+              <Txt className="mt-2 text-sm leading-6 text-paper/75">{NOTICE_BODY}</Txt>
               <View className="mt-3 flex-row">
                 <Button
-                  variant="secondary"
+                  variant="ghost"
                   onPress={() => {
                     feedback.tap();
-                    store.dismissPathNotice();
+                    store.dismissPathNotice(PATH_SIZE);
                   }}
                 >
                   Got it

@@ -115,6 +115,13 @@ type ProgressState = {
    *  Set on dismissal rather than on render, so a notice that was drawn and
    *  never read is still owed. See lib/progress.ts for who is owed one. */
   pathNoticeSeen: boolean;
+  /** How many lessons the path held when this learner last opened the app.
+   *  `null` means a profile written before this was recorded, which is the
+   *  evidence that the path has moved since. Re-recorded on dismissal, so the
+   *  next regroup announces itself without anyone bumping the persist version:
+   *  detecting the move by which lesson ids died could not see the learner it
+   *  mattered to, because a topic's first part keeps the topic's own id. */
+  pathSize: number | null;
 
   // ---- actions ----
   completeOnboarding: (goal: Goal, startLevel: number, background: Background, skipLessonIds: string[]) => void;
@@ -131,7 +138,12 @@ type ProgressState = {
   }) => FinishResult;
   setDailyGoal: (id: string) => void;
   useFreeze: () => void;
-  dismissPathNotice: () => void;
+  /** Dismiss the path-moved notice and record the path it was about. */
+  dismissPathNotice: (pathSize: number) => void;
+  /** Record the path this learner has seen without showing them anything.
+   *  For the launches where nothing is owed, so a learner is never told about
+   *  a move they lived through. */
+  notePathSize: (pathSize: number) => void;
   addGems: (n: number) => void;
   resetAll: () => void;
 
@@ -184,9 +196,10 @@ export const useProgressStore = create<ProgressState>()(
       xpHistory: {},
       achieved: {},
       // A profile created now has nothing to be told: it starts on the path as
-      // it is. `pathMoveNotice` reaches the same answer from the empty lesson
-      // maps, so this default is belt and braces rather than the guard.
+      // it is. `needsPathMoveNotice` reaches the same answer from the empty
+      // lesson maps, so this default is belt and braces rather than the guard.
       pathNoticeSeen: true,
+      pathSize: null,
 
       completeOnboarding: (goal, startLevel, background, skipLessonIds) =>
         set({
@@ -383,7 +396,8 @@ export const useProgressStore = create<ProgressState>()(
       },
       addGems: (n) => set((s) => ({ gems: s.gems + n })),
 
-      dismissPathNotice: () => set({ pathNoticeSeen: true }),
+      dismissPathNotice: (pathSize: number) => set({ pathNoticeSeen: true, pathSize }),
+      notePathSize: (pathSize: number) => set({ pathSize }),
 
       resetAll: () =>
         set({
@@ -417,6 +431,7 @@ export const useProgressStore = create<ProgressState>()(
           // Whatever this profile was owed, it no longer has the progress the
           // notice would be about.
           pathNoticeSeen: true,
+          pathSize: null,
         }),
 
       metrics: () => {
@@ -462,16 +477,22 @@ export const useProgressStore = create<ProgressState>()(
        * one that did not is simply absent — which is what `pathMoveNotice` reads.
        * The only change is that this learner is now owed a sentence about it.
        *
-       * `pathNoticeSeen: false` rather than a stored message, because whether
-       * there is anything to say depends on which lessons *this* profile ticked,
-       * and that is a question about the current path rather than about the
-       * upgrade. A profile that finished nothing, or finished only lessons that
-       * survived, is migrated the same way and told nothing.
+       * `pathNoticeSeen: false` and `pathSize: null` rather than a stored
+       * message, because whether there is anything to say depends on whether
+       * *this* profile has a place on the path at all, which is a question about
+       * the profile rather than about the upgrade. A profile that finished
+       * nothing is migrated the same way and told nothing.
+       *
+       * `pathSize: null` is also what makes this the last migration that has to
+       * think about the notice. From here the size of the path is recorded as
+       * the learner sees it, so the next regroup is detected by the path
+       * changing rather than by somebody remembering to bump this number.
        */
       migrate: (persisted, from) => {
         const s = persisted as Partial<ProgressState>;
-        if (from >= 2) return { ...s, pathNoticeSeen: false } as ProgressState;
-        return { ...s, completedLessons: {}, skippedLessons: {}, pathNoticeSeen: false } as ProgressState;
+        const owed = { pathNoticeSeen: false, pathSize: null };
+        if (from >= 2) return { ...s, ...owed } as ProgressState;
+        return { ...s, completedLessons: {}, skippedLessons: {}, ...owed } as ProgressState;
       },
     }
   )

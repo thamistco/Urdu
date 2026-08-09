@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Pressable, View, ViewStyle } from 'react-native';
+import { Pressable, View, ViewStyle, AccessibilityRole } from 'react-native';
 import { feedback } from '../lib/feedback';
 
 /** Raised surface. Optional left accent stripe + tap behaviour. */
@@ -10,6 +10,8 @@ export function Card({
   className = '',
   style,
   paper = false,
+  accessibilityRole,
+  accessibilityLabel,
 }: {
   children: ReactNode;
   onPress?: () => void;
@@ -17,12 +19,19 @@ export function Card({
   className?: string;
   style?: ViewStyle;
   paper?: boolean;
+  /** For a card that is an announcement rather than a surface — a screen reader
+   *  otherwise reaches it only by traversing past content the learner is
+   *  already looking at. */
+  accessibilityRole?: AccessibilityRole;
+  accessibilityLabel?: string;
 }) {
   const base = paper ? 'bg-parchment' : 'bg-ink-700';
   const inner = (
     <View
       className={`rounded-2xl border border-white/10 p-5 ${base} ${className}`}
       style={[accent ? { borderLeftWidth: 4, borderLeftColor: accent } : null, style]}
+      accessibilityRole={accessibilityRole}
+      accessibilityLabel={accessibilityLabel}
     >
       {children}
     </View>
