@@ -16,6 +16,7 @@ import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { announce, invalidateSpeech } from '../lib/speech';
 import { dueQueue, dueBudget } from '../lib/srs';
+import { shouldUpdateSrs } from '../lib/sessionGrading';
 import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { resolveLesson } from '../data/units';
@@ -176,6 +177,27 @@ export function LessonScreen() {
   const [attempt, setAttempt] = useState(0);
   const bodyRef = useRef<ScrollView>(null);
 
+  /**
+   * Which items this lesson visit has already updated SRS state for.
+   *
+   * A lesson can meet the same word or letter more than once by design — the
+   * whole point of the staggered pipelines in `generator.ts` — but every
+   * exercise grades independently, and until `shouldUpdateSrs` existed, every
+   * sighting of an item called `gradeItem`, walking its `SrsCard` through
+   * SM-2 as if each were a separate day's review. A letter met 6 times
+   * correctly in one sitting pushed its next due date out 98 days from a
+   * single 5 minute lesson. See the doc comment on `shouldUpdateSrs` for the
+   * full measurement.
+   *
+   * Reset whenever `exercises` changes — a new lesson visit, including the
+   * same lesson opened again — rather than once at mount, so it cannot
+   * outlive the session it is scoped to.
+   */
+  const gradedThisSession = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    gradedThisSession.current = new Set();
+  }, [exercises]);
+
   const current = exercises[idx];
   /** The clip the feedback banner offers to replay, when there is one. */
   const replay = current ? audioOf(current) : null;
@@ -191,7 +213,8 @@ export function LessonScreen() {
       if (!result.correct) {
         setTimeout(() => bodyRef.current?.scrollToEnd({ animated: true }), 120);
       }
-      // update SRS memory for each item touched.
+      // update SRS memory for each item touched — but only the first sighting
+      // of it this lesson visit. See the doc comment on `gradedThisSession`.
       //
       // Every answer used to be graded `good` or `again`, which left the
       // scheduler's `easy` branch dead: recalling a word from nothing but its
@@ -199,7 +222,9 @@ export function LessonScreen() {
       // out by exactly the same amount. They are not the same evidence, so a
       // correct answer on an exercise that supplied no options counts as easy.
       const grade = !result.correct ? 'again' : demandOf(exercises[idx]) === 'produce' ? 'easy' : 'good';
-      result.items.forEach((it) => gradeItem(it.id, it.type, grade));
+      result.items.forEach((it) => {
+        if (shouldUpdateSrs(gradedThisSession.current, it)) gradeItem(it.id, it.type, grade);
+      });
       if (result.correct) {
         setCorrectCount((c) => c + 1);
       } else if (!isTeaching(exercises[idx])) {

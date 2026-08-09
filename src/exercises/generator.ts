@@ -16,7 +16,7 @@ import {
 } from '../data/sentences';
 import { cueOf, VERDICT_CUES } from '../data/art';
 import { GLYPH_MASKS } from '../data/glyphMasks';
-import { shuffle, seededShuffle } from '../lib/shuffle';
+import { shuffle, seededShuffle, hashSeed } from '../lib/shuffle';
 import { Exercise, ItemRef } from './types';
 
 const rand = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
@@ -94,14 +94,25 @@ function letterExercise(letter: Letter): Exercise {
  * caller left on it — weaving up to two due items into an unrelated lesson,
  * which is not "a letter lesson" in the sense either of the above cares about
  * and is deliberately out of scope for both.
+ *
+ * `turn` and `positionIndex` are separate parameters rather than one combined
+ * index split by two different moduli. They were combined once, as `i`, with
+ * `turn = i % 3` and `position = i % 4`; a caller trying to hold `turn` fixed
+ * across several letters while still varying `position` per letter had to
+ * construct `i` as `turn + 3 * idx`, and because 6 is a multiple of 3, that
+ * construction silently repeated the same `i` — same turn *and* same position
+ * — every three rounds, for reasons that took longer to find than to fix.
+ * Two independent parameters make each caller's intent an argument rather
+ * than an assumption about how they interact.
  */
-function letterExerciseAt(letter: Letter, i: number): Exercise {
-  const position = POSITIONS[i % POSITIONS.length].key as PositionKey;
-  const turn = i % 3;
-  if (turn === 0 && GLYPH_MASKS[`${letter.id}:${position}`]) {
+function letterExerciseAt(letter: Letter, turn: number, positionIndex: number): Exercise {
+  const position = POSITIONS[((positionIndex % POSITIONS.length) + POSITIONS.length) % POSITIONS.length]
+    .key as PositionKey;
+  const t = ((turn % 3) + 3) % 3;
+  if (t === 0 && GLYPH_MASKS[`${letter.id}:${position}`]) {
     return { kind: 'letterTrace', letter, position };
   }
-  if (turn !== 2) {
+  if (t !== 2) {
     return { kind: 'letterForm', letter, position, options: POSITIONS.map((p) => p.key) };
   }
   const distractors = sample(LETTERS, DISTRACTORS, (l) => l.id === letter.id);
@@ -439,21 +450,47 @@ export function buildLessonExercises(
   if (lesson.kind === 'letters' && lesson.letterIds && teachesScript) {
     const letters = lesson.letterIds.map(getLetter).filter(Boolean) as Letter[];
     /**
-     * Every letter met `SIGHTINGS_PER_LETTER` times, in rounds rather than one
-     * letter drilled through all its forms before the next begins.
+     * Every letter met `SIGHTINGS_PER_LETTER` times, in rounds: round 0 shows
+     * every letter once, then round 1 shows every letter again, and so on.
      *
-     * It used to be one exercise per letter — a four-letter lesson was five
-     * exercises, 0.8 minutes, an interruption rather than a sitting. The fix is
-     * the same one vocabulary got: meet the same content more than once, in
-     * different shapes, rather than meeting more content once. `letterExerciseAt`
-     * already rotates trace/form/pick by index, so round `r` for letter `l`
-     * uses `r + idx` — offsetting by the letter's position so two letters in the
-     * same round land on different forms, the same reason the review pipeline
-     * staggers rather than blocks.
+     * The first version of this got the loop backwards — letter-outer,
+     * round-inner — so it pushed all six sightings of the first letter before
+     * the second letter ever appeared. The doc comment on that version said
+     * "in rounds rather than one letter drilled through all its forms before
+     * the next begins", which was the intent and not what the code did; review
+     * generated the real output and found six `daal` in a row, then six
+     * `Daal`, on every letter lesson. Round-major, as below, is what the
+     * comment described.
+     *
+     * `turn` (which of trace/form/pick) is `(round + lessonOffset) % 3`, the
+     * same for every letter within a round — a learner sees one kind of
+     * question at a time across the whole lesson, which is also what makes
+     * round 0 read as a pass over the alphabet rather than a grab bag.
+     * `position` is offset by the letter's own place in the group, so two
+     * letters in the same round are not both shown at "isolated".
+     *
+     * `turnOffset`/`posOffset` are the fix for a second thing review found:
+     * two lessons built from the same letter group (`l-1` "Meet the letters"
+     * and `l-1-2` "Position practice" deliberately share their six letters)
+     * produced the exact same exercises in the exact same order, because the
+     * sequence depended only on the letter and its position in the array,
+     * never on which lesson was asking.
+     *
+     * One hash rotating only `turn` was tried first and rejected: `turn` has
+     * just 3 values, so a second lesson sharing a letter group has a 1 in 3
+     * chance of hashing to the same rotation — and `l-1`/`l-1-2` did, on the
+     * first attempt, which is what this comment is now warning about instead
+     * of repeating. Two hashes, one for each independent axis, cuts a full
+     * collision to 1 in 12; `':pos'` appended to the key is enough to decorrelate
+     * them, the same way a different key gives `seededShuffle` an unrelated order.
      */
-    letters.forEach((l, idx) => {
-      for (let r = 0; r < SIGHTINGS_PER_LETTER; r++) exercises.push(letterExerciseAt(l, r + idx));
-    });
+    const turnOffset = hashSeed(lesson.id) % 3;
+    const posOffset = hashSeed(`${lesson.id}:pos`) % POSITIONS.length;
+    for (let round = 0; round < SIGHTINGS_PER_LETTER; round++) {
+      letters.forEach((l, idx) => {
+        exercises.push(letterExerciseAt(l, round + turnOffset, round + idx + posOffset));
+      });
+    }
     // one word that features these letters, for context
     const contextWords = letters
       .map((l) => WORDS.find((w) => w.roman.toLowerCase().includes(l.sound[0])))
@@ -751,7 +788,7 @@ export function buildLessonExercises(
     refs.forEach((ref, i) => {
       if (ref.type === 'letter') {
         const l = teachesScript ? getLetter(ref.id) : undefined;
-        if (l) exercises.push(letterExerciseAt(l, i));
+        if (l) exercises.push(letterExerciseAt(l, i, i));
       } else {
         const w = getAnyWord(ref.id);
         // Review is where the harder demands belong: a word is only here
