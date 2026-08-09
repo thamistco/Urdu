@@ -64,19 +64,31 @@ notes: The trap is fixing this by raising the word count alone. Neither
   rules that catch that, measured per track.
 
   WHAT IS LEFT, and it is the whole reason this is still here. URD-010
-  landed and closed the review row below — 39 short review lessons to 0 — so
-  this is 47 of 319 now, re-measured at daca650:
+  closed the review row and URD-013 closed the letters row — 39 and 9 short
+  lessons to 0 — so this is 38 of 319 now, re-measured at 2d6cc5a:
 
     grammar   25   a concept has as many drills as it has
     sentences 12   `lesson.size` sentences and no repetition pass
-    letters    9   and non-deterministic, see URD-013
     phrases    1   and 100% meaningPick, see URD-012
 
-  Review is not fully done, only long enough: it still samples the wrong
-  material (URD-016), never lets a letter share fall off after the alphabet
-  (URD-017), and never asks for meaning in the reading direction (URD-018).
-  None of the three is a length problem, so none blocks this item — but do
-  not read "0 short review lessons" as "review is finished".
+  Neither review nor letters is fully done, only long enough. Review still
+  samples the wrong material (URD-016), never lets a letter share fall off
+  after the alphabet (URD-017), and never asks for meaning in the reading
+  direction (URD-018). Letters is 96.8% isolated-glyph recognition against
+  reading-in-context (URD-020), its one context word touches at most 1 of a
+  group's 4-7 letters (URD-021), and drills visually confusable letters
+  (daal/Daal) with no separation (URD-022). None of the five is a length
+  problem, so none blocks this item — but do not read "0 short lessons" as
+  "review and letters are finished".
+
+  URD-013 also cost four rounds of critique before its length fix alone was
+  right: two critics found three separate blocking defects across the
+  first two commits, and fixing the second-round finding narrowly
+  reproduced a different violation of the same rule it was fixing, twice.
+  Read gauntlet/LEDGER.md's URD-013 entries before touching grammar or
+  sentences next — the pattern (verify one property, ship, have review find
+  a different property broke) is the thing to not repeat, not just the
+  specific bugs.
 
   Plus 2 units over the 12 lesson ceiling: u27 has 13, u39 has 15.
 
@@ -244,23 +256,6 @@ notes: Found by the rules added in d778928 failing on data that item never
   the meaning and asking for the phrase from the meaning; that is two kinds, and
   two is enough to break a run of six.
 
-## URD-013 — A letter lesson must be the same lesson twice
-attempts: 0
-files: src/exercises/generator.ts, src/lib/shuffle.ts
-definition of done: `letterExercise` calls `Math.random()` per exercise, so a
-  letter lesson is regenerated differently every time it is opened and every
-  count taken over letter lessons differs run to run — measured, letterPick
-  moved between 65 and 77 across consecutive runs of the same check. Seed it the
-  way the vocabulary selection was seeded in `seededShuffle`, keyed on the lesson
-  and letter id. Option order must stay random; it is the *choice of exercise*
-  that must be stable. A test asserts two generations of the same letter lesson
-  are identical in kind sequence and differ in option order.
-verify: npm test -- src/lib/shuffle.test.ts
-notes: Pre-existing, not caused by URD-A02, found while measuring it. It is the
-  same bug class as the vocabulary sampling fixed in 35fa67a: content chosen at
-  render time cannot be reasoned about by any check, and a learner who leaves a
-  lesson and comes back is somewhere else.
-
 ## URD-014 — A wiped profile deserves a different sentence
 attempts: 0
 files: src/store/useProgressStore.ts, src/lib/progress.ts, src/lib/progress.test.ts
@@ -350,3 +345,80 @@ notes: Found by the CURRICULUM CRITIC on URD-010. The three-demand ladder
   (recall, listen, produce) is defensible as retrieval-first, but all three
   read the same direction; this is the one missing rung, not a reason to
   rebuild the ladder.
+
+## URD-019 — Grade a lesson's own improvement, not just its first guess
+attempts: 0
+files: src/lib/sessionGrading.ts, src/lib/sessionGrading.test.ts, src/screens/LessonScreen.tsx
+definition of done: `shouldUpdateSrs` caps SRS advancement to the first
+  sighting of an item per lesson visit, which fixed a real bug (six correct
+  sightings walking a letter's interval to 98 days) but chose the wrong
+  sighting to trust: a learner who answers wrong, then right five times
+  running in the same sitting, leaves with identical SRS state to one who
+  answered wrong six times, because the first grade is the one that sticks.
+  Grade on the *last* sighting of an item in the session instead, still
+  capped to one `gradeItem` call per item per visit. A test asserts a
+  wrong-then-five-right sequence and an all-wrong sequence produce different
+  SRS states for the same item.
+verify: npm test -- src/lib/sessionGrading.test.ts
+notes: Found by the CURRICULUM CRITIC reviewing URD-013, who also gave the
+  fix: overwrite-and-defer rather than gate-and-skip, so the value stored is
+  always the most recent grade and `gradeItem` still fires once, after the
+  lesson's last sighting of that item rather than its first. Not blocking
+  when found — the scheduler-defeating bug is fixed, this is a policy
+  disagreement, not a broken promise — but it discards the strongest signal
+  a teaching lesson produces.
+
+## URD-020 — Letter lessons are almost entirely isolated-glyph recognition
+attempts: 0
+files: src/exercises/generator.ts
+definition of done: Across all 9 letter lessons, `letterTrace` + `letterForm`
+  + `letterPick` account for 276 of 285 exercises (96.8%); the remaining 9
+  are one context word per lesson. A learner meeting a completely new script
+  spends nearly all of their first hours on isolated glyphs and almost none
+  reading them inside real words. Raise the share of exercises that show a
+  letter inside an actual word — more than one context word per lesson, or a
+  dedicated "spot the letter in this word" exercise kind — without raising
+  total lesson length past the 3-8 minute band check:shape already holds
+  letter lessons to.
+verify: npm run check:shape -- --kind=letters
+notes: Found by the CURRICULUM CRITIC across two review rounds of URD-013,
+  confirmed unchanged by every fix in that item (the ratio was identical
+  before and after, since none of the three critique rounds touched exercise
+  *kind* composition, only ordering and scheduling). The interleaving fix
+  made the same lopsided material better *spread*, not less lopsided.
+
+## URD-021 — A letter group's context word should touch more than its first letter
+attempts: 0
+files: src/exercises/generator.ts
+definition of done: `contextWords[0]` in the letters-teaching branch keeps
+  only the first hit from mapping every letter in the group to a candidate
+  word, so a 7-letter lesson's one context word reinforces exactly 1 of the
+  7 letters just taught — verified for all 9 lessons, e.g. `l-3`'s context
+  word ("dil") only touches `daal`. The match itself is also weak: a single
+  character (`letter.sound[0]`) tested with `.includes`, so the word is
+  chosen for containing a letter somewhere, not for demonstrating its sound.
+  Either show one context word per letter (budget permitting) or pick a
+  single word that covers more of the group, with a real match rather than a
+  one-character substring test.
+verify: npm run check:shape -- --kind=letters
+notes: Found by the CURRICULUM CRITIC and independently by THE CRITIC while
+  reviewing URD-013; neither round of that item's fixes touched it, since
+  both were scoped to ordering, duplication and scheduling.
+
+## URD-022 — Letters that look alike should not be drilled as if they don't
+attempts: 0
+files: src/exercises/generator.ts, src/data/letters.ts
+definition of done: `l-3` teaches `daal`/`Daal` and `re`/`Re`/`ze`/`zhe` —
+  dot-pairs distinguished only by a diacritic — with no ordering or
+  weighting that references visual similarity anywhere in the pipeline
+  (confirmed: no reference to confusability in letters.ts, units.ts or
+  generator.ts). Drilling visually confusable letters back to back with
+  identical weight risks teaching the confusion rather than resolving it.
+  Either separate confusable pairs within a lesson's rounds, or give them
+  extra sightings relative to visually distinctive letters in the same
+  group.
+verify: npm run check:shape -- --kind=letters
+notes: Found by the CURRICULUM CRITIC reviewing URD-013. Recommended over
+  URD-021 as the higher-priority pick if only one of the two is taken next,
+  because it actively works against the letters just taught rather than
+  merely under-using them.
