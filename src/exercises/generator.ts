@@ -16,7 +16,7 @@ import {
 } from '../data/sentences';
 import { cueOf, VERDICT_CUES } from '../data/art';
 import { GLYPH_MASKS } from '../data/glyphMasks';
-import { shuffle, seededShuffle, hashSeed } from '../lib/shuffle';
+import { shuffle, seededShuffle } from '../lib/shuffle';
 import { Exercise, ItemRef } from './types';
 
 const rand = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
@@ -488,21 +488,32 @@ export function buildLessonExercises(
      * `l-1-2` "Position practice" deliberately share their six letters)
      * produced the exact same exercises in the exact same order, because the
      * sequence depended only on the letter and its position in the array,
-     * never on which lesson was asking. Verified: `l-1` and `l-1-2` now
-     * differ in 24 of 36 exercises.
+     * never on which lesson was asking.
      *
-     * The two offsets are not a proven-independent pair — review found that a
-     * single hash used for both axes collided for exactly this case (1 in 3
-     * odds, and it happened), and separately that `hashSeed` of a base id and
-     * that same id with a literal suffix (`l-1` vs the `l-1-3` a third lesson
-     * on this group would get from `uid`'s tie-break) are *not* independent
-     * draws, because a suffix continues the same hash state rather than
-     * starting a fresh one — measured at 33.55% collision for one suffix,
-     * against 8.22% for genuinely unrelated ids. No currently defined lesson
-     * hits that case; nothing here proves no future one will. See URD-021.
+     * Two hash-based attempts at this were tried and both reproduced a
+     * version of the bug they were meant to fix. One hash for both axes
+     * collided outright — `l-1` and `l-1-2` came out byte-identical (1 in 3
+     * odds, and it happened). Two independent hashes fixed `position` but
+     * left `turn` on its own single hash, which collided *again* on the same
+     * pair: `hashSeed('l-1') % 3 === hashSeed('l-1-2') % 3`, so every `kind`
+     * in the two lessons matched even though enough `position`s differed to
+     * pass a per-exercise diff count — the check counted the wrong thing.
+     * Hashing an id can only ever change the odds of two lessons colliding,
+     * never rule it out, and it kept finding the unlucky draw.
+     *
+     * So this is not a hash. `siblingIndex` is which lesson, in path order,
+     * this is among every lesson built from this exact sequence of letters —
+     * 0 for the first, 1 for the second. Two siblings always get different
+     * indices by construction, not probably different ones, so `turnOffset`
+     * and `posOffset` are guaranteed to differ between any two lessons that
+     * share a letter group, for as many siblings as this course ever has.
      */
-    const turnOffset = hashSeed(lesson.id) % 3;
-    const posOffset = hashSeed(`pos:${lesson.id}`) % POSITIONS.length;
+    const sameLetters = (a: string[], b: string[]) => a.length === b.length && a.every((id, i) => id === b[i]);
+    const siblingIndex = ALL_LESSONS.filter(
+      (l) => l.kind === 'letters' && l.letterIds && sameLetters(l.letterIds, lesson.letterIds!)
+    ).findIndex((l) => l.id === lesson.id);
+    const turnOffset = siblingIndex;
+    const posOffset = siblingIndex * 3; // a step size coprime with POSITIONS.length (4), so it still cycles
     for (let round = 0; round < SIGHTINGS_PER_LETTER; round++) {
       letters.forEach((l, idx) => {
         exercises.push(letterExerciseAt(l, round + idx + turnOffset, round + idx + posOffset));
