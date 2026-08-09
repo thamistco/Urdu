@@ -60,13 +60,26 @@ export function shuffle<T>(items: readonly T[]): T[] {
  * being short enough to read rather than for statistical strength: nothing here
  * needs to resist an adversary, it needs to give the same lesson twice.
  */
-export function seededShuffle<T>(items: readonly T[], key: string): T[] {
+
+/**
+ * A 32 bit FNV-1a hash of a string, exported so anything that needs a stable
+ * per-key integer — not a shuffled array — can derive one without
+ * reimplementing this. `letterExerciseAt` in the exercise generator uses it to
+ * vary which exercise a letter lesson opens with, so two lessons built from the
+ * same letters (a letter group taught once, then drilled again from a
+ * different angle) do not generate byte-identical content.
+ */
+export function hashSeed(key: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < key.length; i++) {
     h ^= key.charCodeAt(i);
     h = Math.imul(h, 0x01000193);
   }
-  let a = h >>> 0;
+  return h >>> 0;
+}
+
+export function seededShuffle<T>(items: readonly T[], key: string): T[] {
+  let a = hashSeed(key);
   const next = () => {
     a = (a + 0x6d2b79f5) | 0;
     let t = Math.imul(a ^ (a >>> 15), 1 | a);
