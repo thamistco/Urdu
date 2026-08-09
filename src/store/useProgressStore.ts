@@ -111,6 +111,11 @@ type ProgressState = {
   // achievement tiers already reached (for "new unlock" detection)
   achieved: Record<string, number>;
 
+  /** Whether this learner has been told that the path was regrouped under them.
+   *  Set on dismissal rather than on render, so a notice that was drawn and
+   *  never read is still owed. See lib/progress.ts for who is owed one. */
+  pathNoticeSeen: boolean;
+
   // ---- actions ----
   completeOnboarding: (goal: Goal, startLevel: number, background: Background, skipLessonIds: string[]) => void;
   regenHearts: () => void;
@@ -126,6 +131,7 @@ type ProgressState = {
   }) => FinishResult;
   setDailyGoal: (id: string) => void;
   useFreeze: () => void;
+  dismissPathNotice: () => void;
   addGems: (n: number) => void;
   resetAll: () => void;
 
@@ -177,6 +183,10 @@ export const useProgressStore = create<ProgressState>()(
       srsType: {},
       xpHistory: {},
       achieved: {},
+      // A profile created now has nothing to be told: it starts on the path as
+      // it is. `pathMoveNotice` reaches the same answer from the empty lesson
+      // maps, so this default is belt and braces rather than the guard.
+      pathNoticeSeen: true,
 
       completeOnboarding: (goal, startLevel, background, skipLessonIds) =>
         set({
@@ -373,6 +383,8 @@ export const useProgressStore = create<ProgressState>()(
       },
       addGems: (n) => set((s) => ({ gems: s.gems + n })),
 
+      dismissPathNotice: () => set({ pathNoticeSeen: true }),
+
       resetAll: () =>
         set({
           onboarded: false,
@@ -402,6 +414,9 @@ export const useProgressStore = create<ProgressState>()(
           srsType: {},
           xpHistory: {},
           achieved: {},
+          // Whatever this profile was owed, it no longer has the progress the
+          // notice would be about.
+          pathNoticeSeen: true,
         }),
 
       metrics: () => {
@@ -421,7 +436,7 @@ export const useProgressStore = create<ProgressState>()(
     {
       name: 'harf-progress',
       storage: createJSONStorage(() => safeStorage),
-      version: 2,
+      version: 3,
       /**
        * v1 → v2: lesson ids stopped being positional.
        *
@@ -438,10 +453,25 @@ export const useProgressStore = create<ProgressState>()(
        * So a learner loses their ticked-off lessons and keeps their review
        * schedule, their streak and their level.
        */
+      /**
+       * v2 → v3: the path was regrouped twice and the learner was not told.
+       *
+       * Nothing is dropped here. Splitting each topic across enough lessons to
+       * cover its vocabulary kept the first part's id, and regrouping those into
+       * sittings kept it again, so a ticked lesson that survived stays ticked and
+       * one that did not is simply absent — which is what `pathMoveNotice` reads.
+       * The only change is that this learner is now owed a sentence about it.
+       *
+       * `pathNoticeSeen: false` rather than a stored message, because whether
+       * there is anything to say depends on which lessons *this* profile ticked,
+       * and that is a question about the current path rather than about the
+       * upgrade. A profile that finished nothing, or finished only lessons that
+       * survived, is migrated the same way and told nothing.
+       */
       migrate: (persisted, from) => {
-        if (from >= 2) return persisted as ProgressState;
         const s = persisted as Partial<ProgressState>;
-        return { ...s, completedLessons: {}, skippedLessons: {} } as ProgressState;
+        if (from >= 2) return { ...s, pathNoticeSeen: false } as ProgressState;
+        return { ...s, completedLessons: {}, skippedLessons: {}, pathNoticeSeen: false } as ProgressState;
       },
     }
   )
