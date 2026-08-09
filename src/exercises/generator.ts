@@ -462,33 +462,50 @@ export function buildLessonExercises(
      * `Daal`, on every letter lesson. Round-major, as below, is what the
      * comment described.
      *
-     * `turn` (which of trace/form/pick) is `(round + lessonOffset) % 3`, the
-     * same for every letter within a round — a learner sees one kind of
-     * question at a time across the whole lesson, which is also what makes
-     * round 0 read as a pass over the alphabet rather than a grab bag.
-     * `position` is offset by the letter's own place in the group, so two
-     * letters in the same round are not both shown at "isolated".
+     * `turn` (which of trace/form/pick) depends on both `round` and the
+     * letter's own place in the group (`idx`), not on round alone.
      *
-     * `turnOffset`/`posOffset` are the fix for a second thing review found:
-     * two lessons built from the same letter group (`l-1` "Meet the letters"
-     * and `l-1-2` "Position practice" deliberately share their six letters)
+     * Round alone was tried first and rejected: it makes every letter in a
+     * round share one kind, which does read as a clean pass over the
+     * alphabet — and also means every letter in that round is `letterTrace`,
+     * or every one is `letterPick`, back to back, group-size (4 to 7) times
+     * running. Review generated the real output and ran `check:shape`: `l-3`
+     * emitted 7 consecutive `letterPick`, and every one of the 9 lessons
+     * failed the run rule the same way, on the identical axis that rule
+     * exists to catch — the fix for one repetition problem became the
+     * shape of the next one. `idx` breaks it: turn increments by one from
+     * letter to letter within a round, so two letters next to each other
+     * never share a kind, and a letter's own six sightings still cycle
+     * through all three kinds because the increment wraps every three
+     * letters, not every three rounds.
+     *
+     * `position` is offset the same way — by the letter's own place in the
+     * group — so two letters in the same round are not both shown at
+     * "isolated" either.
+     *
+     * `turnOffset`/`posOffset` exist for a second thing review found: two
+     * lessons built from the same letter group (`l-1` "Meet the letters" and
+     * `l-1-2` "Position practice" deliberately share their six letters)
      * produced the exact same exercises in the exact same order, because the
      * sequence depended only on the letter and its position in the array,
-     * never on which lesson was asking.
+     * never on which lesson was asking. Verified: `l-1` and `l-1-2` now
+     * differ in 24 of 36 exercises.
      *
-     * One hash rotating only `turn` was tried first and rejected: `turn` has
-     * just 3 values, so a second lesson sharing a letter group has a 1 in 3
-     * chance of hashing to the same rotation — and `l-1`/`l-1-2` did, on the
-     * first attempt, which is what this comment is now warning about instead
-     * of repeating. Two hashes, one for each independent axis, cuts a full
-     * collision to 1 in 12; `':pos'` appended to the key is enough to decorrelate
-     * them, the same way a different key gives `seededShuffle` an unrelated order.
+     * The two offsets are not a proven-independent pair — review found that a
+     * single hash used for both axes collided for exactly this case (1 in 3
+     * odds, and it happened), and separately that `hashSeed` of a base id and
+     * that same id with a literal suffix (`l-1` vs the `l-1-3` a third lesson
+     * on this group would get from `uid`'s tie-break) are *not* independent
+     * draws, because a suffix continues the same hash state rather than
+     * starting a fresh one — measured at 33.55% collision for one suffix,
+     * against 8.22% for genuinely unrelated ids. No currently defined lesson
+     * hits that case; nothing here proves no future one will. See URD-021.
      */
     const turnOffset = hashSeed(lesson.id) % 3;
-    const posOffset = hashSeed(`${lesson.id}:pos`) % POSITIONS.length;
+    const posOffset = hashSeed(`pos:${lesson.id}`) % POSITIONS.length;
     for (let round = 0; round < SIGHTINGS_PER_LETTER; round++) {
       letters.forEach((l, idx) => {
-        exercises.push(letterExerciseAt(l, round + turnOffset, round + idx + posOffset));
+        exercises.push(letterExerciseAt(l, round + idx + turnOffset, round + idx + posOffset));
       });
     }
     // one word that features these letters, for context
