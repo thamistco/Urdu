@@ -141,6 +141,25 @@ type Demand = 'meet' | 'recall' | 'produce';
 /** Typing a five-word honorific phrase is a spelling test, not a memory test. */
 const isTypeable = (w: Word) => w.roman.replace(/[^a-z]/gi, '').length <= 12;
 
+/**
+ * How many tiles building this word would need — the same non-space split
+ * `buildTilesFor` and `WordBuild` use, so the cap counts what the learner sees.
+ * Counting `w.urdu.length` instead counts the space in a two word phrase as a
+ * tile that is never rendered and never has to be placed.
+ */
+const buildableLetters = (w: Word) => Array.from(w.urdu).filter((c) => c.trim().length > 0).length;
+
+/**
+ * The longest word that can be built from letter tiles.
+ *
+ * Five was the original cap and it excluded 438 words the tray handles fine:
+ * eight tiles plus the two decoys `buildTilesFor` adds is ten, which is the size
+ * `sentenceBuild` already lays out. Raising it matters most on the script track,
+ * where building is the only vocabulary exercise that makes a learner produce
+ * Nastaliq rather than accept its transliteration.
+ */
+const MAX_BUILD_TILES = 8;
+
 function wordExercise(
   word: Word,
   pool: Word[],
@@ -389,16 +408,38 @@ export function buildLessonExercises(
      *   recall   retrieve it from the English alone, from four options
      *   produce  supply it yourself: type it, or build it out of letter tiles
      *
-     * The three passes are emitted as three blocks rather than three exercises
-     * per word in a row, so a word is met, then met again after the others have
-     * intervened. Massed repetition inside ten seconds is not what the second
-     * sighting is for.
+     * ## Why this is a pipeline rather than three blocks
+     *
+     * The first version of this emitted the three passes as three whole-lesson
+     * blocks: every word met, then every word recalled, then every word
+     * produced. It read well and it was measurably wrong. A recall exercise is
+     * always `wordFromMeaning`, so an eleven word lesson emitted eleven
+     * identical questions in a row; review found a run of fourteen, and 199 of
+     * the 233 vocabulary lessons had a run of nine or more. On the Roman track
+     * the produce block was worse still — `wordBuild` is script-only, so the
+     * whole block collapsed to `typeWord` and 162 of 233 Roman lessons ended in
+     * nine to fourteen consecutive spelling prompts.
+     *
+     * So the passes run staggered, in groups of `GROUP` words. In one cycle the
+     * learner meets group g, recalls group g-1 and produces group g-2, taken a
+     * word at a time so the kinds alternate:
+     *
+     *   meet g[0]  recall g-1[0]  produce g-2[0]  meet g[1]  recall g-1[1]  ...
+     *
+     * Two consequences, and both are the point. Consecutive exercises are never
+     * the same kind, on either track. And a word's second sighting lands about
+     * `3 * GROUP` exercises after its first rather than immediately after the
+     * block boundary, which is what a second sighting is for — massed repetition
+     * inside ten seconds is not spacing.
+     *
+     * The three passes share one order rather than three shuffles. Shuffling
+     * each pass independently would let a word be recalled in an early cycle and
+     * met in a late one, which is `check:order`'s whole complaint applied inside
+     * a single lesson.
      */
-    picks.forEach((w, i) => exercises.push(wordExercise(w, pool, track, 'meet', i % 3)));
-
-    for (const w of seededShuffle(picks, `${lesson.id}:recall`)) {
-      exercises.push(wordExercise(w, pool, track, 'recall'));
-    }
+    const GROUP = 2;
+    const groups: Word[][] = [];
+    for (let i = 0; i < picks.length; i += GROUP) groups.push(picks.slice(i, i + GROUP));
 
     /**
      * The third pass asks the learner to produce the word with nothing to pick
@@ -410,46 +451,91 @@ export function buildLessonExercises(
      * another retrieval instead. Skipping it would quietly drop that word to two
      * sightings and put the lesson back under the floor for exactly the words
      * that are hardest.
+     *
+     * Building comes first for a learner reading the script, and that order is
+     * a finding rather than a preference. Testing `isTypeable` first looks
+     * harmless and silently killed the exercise: 1,621 of the 2,281 words are
+     * five Urdu characters or fewer and every one of them is also typeable, so
+     * the build branch was unreachable for the entire corpus. Measured,
+     * `wordBuild` went 465 to 0 and WordBuild.tsx became dead code. It matters
+     * because typing accepts Roman — `roman.ts` counts kitab, kitaab and کتاب
+     * alike — so building letter tiles is the only vocabulary exercise that
+     * makes a script learner produce Urdu characters at all.
+     *
+     * A Roman learner gets `typeWord` for nearly every word here, because there
+     * is no Roman equivalent of building Nastaliq out of tiles and inventing one
+     * is not this change. Stated plainly rather than hidden: the two tracks
+     * agree on exercise *count* and deliberately differ on the mix, and
+     * `check:shape` compares the mix precisely so that difference stays a choice
+     * somebody made instead of a bug nobody could see.
      */
-    seededShuffle(picks, `${lesson.id}:produce`).forEach((w, i) => {
-      const canBuild = Array.from(w.urdu).length <= 5 && teachesScript;
+    const produceExercise = (w: Word, i: number): Exercise => {
+      const canBuild = buildableLetters(w) <= MAX_BUILD_TILES && teachesScript;
       const canType = isTypeable(w);
-      /**
-       * Building comes first for a learner reading the script, and that order is
-       * the whole finding.
-       *
-       * Testing `isTypeable` first looks harmless and silently killed the
-       * exercise: 1,621 of the 2,281 words are five Urdu characters or fewer and
-       * every one of them is also typeable, so the build branch was unreachable
-       * for the entire corpus. Measured, `wordBuild` went 465 to 0 and
-       * WordBuild.tsx became dead code.
-       *
-       * It matters because typing accepts Roman — `roman.ts` counts kitab,
-       * kitaab and کتاب alike — so building letter tiles was the only vocabulary
-       * exercise that made a script learner produce Urdu characters at all. With
-       * it gone, someone could finish all 233 vocabulary lessons of a script
-       * course without writing a single letter of the script.
-       *
-       * Alternating also keeps the last third of a lesson from being nine to
-       * fourteen typing prompts in a row, which is what the note above the meet
-       * pass has always warned against.
-       */
-      const preferBuild = i % 2 === 0;
-      if (canBuild && (preferBuild || !canType)) {
-        exercises.push({ kind: 'wordBuild', word: w, tiles: buildTilesFor(w) });
-      } else if (canType) {
-        exercises.push({ kind: 'typeWord', word: w });
-      } else if (canBuild) {
-        exercises.push({ kind: 'wordBuild', word: w, tiles: buildTilesFor(w) });
-      } else {
-        // Neither typeable nor buildable: a five word honorific, a long
-        // compound. These are the hardest items in the corpus and they get the
-        // least demanding third sighting, which is a real weakness and is
-        // recorded as such rather than hidden. Nothing else in the exercise set
-        // asks for production of a word this long.
-        exercises.push(wordExercise(w, pool, track, 'recall'));
+      if (canBuild && (i % 2 === 0 || !canType)) {
+        return { kind: 'wordBuild', word: w, tiles: buildTilesFor(w) };
       }
-    });
+      if (canType) return { kind: 'typeWord', word: w };
+      if (canBuild) return { kind: 'wordBuild', word: w, tiles: buildTilesFor(w) };
+      /**
+       * Neither typeable nor buildable — 82 words of the 2,281, and they bunch:
+       * six of the ten in `v-hotel` are phrases like کمرے کی صفائی. These are the
+       * hardest items in the corpus and they get the least demanding third
+       * sighting, which is a real weakness and is recorded as such rather than
+       * hidden. Nothing in the exercise set asks for production of a phrase this
+       * long.
+       *
+       * It asks for the meaning rather than repeating the recall question, and
+       * the difference is not cosmetic. Recall is `wordFromMeaning`, so a
+       * fallback of `wordFromMeaning` made the second and third sightings the
+       * same kind, and in a topic where most words fall back that produced eight
+       * identical questions in a row — the run this pipeline exists to prevent,
+       * reintroduced by its own fallback. `meaningPick` shows the word and asks
+       * what it means, needs only the distinct-meaning distractors that
+       * `wordFromMeaning` already needs, and goes through `wordExercise`'s
+       * guards, so the Roman-loanword and verdict-cue cases stay handled.
+       */
+      return wordExercise(w, pool, track, 'meet', 1);
+    };
+
+    const passes: ((w: Word, i: number) => Exercise)[] = [
+      (w, i) => wordExercise(w, pool, track, 'meet', i % 3),
+      (w) => wordExercise(w, pool, track, 'recall'),
+      produceExercise,
+    ];
+
+    for (let cycle = 0; cycle < groups.length + passes.length - 1; cycle++) {
+      // Which group each pass is working on this cycle. Ordered by pass, so a
+      // slot emits meet, then recall, then produce.
+      const active = passes
+        .map((make, stage) => ({ make, g: cycle - stage }))
+        .filter(({ g }) => g >= 0 && g < groups.length);
+      /**
+       * Flip the order of the passes on alternate cycles.
+       *
+       * Measured, not decorative. Without it every cycle boundary puts `produce`
+       * next to `produce`, and the drain cycle at the end — where only produce
+       * is still running — closed 209 of the 233 Roman lessons with three
+       * `typeWord` in a row, because produce is `typeWord` for nearly every word
+       * on a track that cannot build Nastaliq. Flipping takes the script track
+       * to a longest run of two with no lesson above it, and the Roman track to
+       * three in 59 lessons: the residual is the two word drain at the very end,
+       * and `MAX_RUN` in check:shape is set to hold exactly that and no worse.
+       *
+       * Keying the flip off the previous cycle's last pass instead — which reads
+       * more principled — measured worse on both tracks (130 Roman lessons, and
+       * 4 script lessons where parity has none), so parity it is.
+       */
+      if (cycle % 2 === 1) active.reverse();
+      const width = Math.max(...active.map(({ g }) => groups[g].length));
+      for (let slot = 0; slot < width; slot++) {
+        for (const { make, g } of active) {
+          const w = groups[g][slot];
+          if (!w) continue;
+          exercises.push(make(w, g * GROUP + slot));
+        }
+      }
+    }
 
     // Close with a matching board (Drops-style); its four pictures must differ.
     // Short lessons introduce fewer than four words, so the board is topped up
