@@ -34,26 +34,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-003 — Tell a returning learner why their progress moved
-attempts: 0
-files: src/store/useProgressStore.ts, src/screens/HomeScreen.tsx, src/lib/progress.test.ts
-definition of done: Splitting topics across lessons kept the first part's id, so
-  a learner who had finished "First words" still has that lesson ticked — but it
-  is now 1 of 7, and their unit percentage fell without them doing anything
-  wrong. On first launch after the change, the app says so once, plainly, and
-  does not say it again. A test asserts the notice fires exactly once for a
-  profile with pre-split completions and never for a fresh one.
-verify: npm test -- src/lib/progress.test.ts
-notes: Nothing was lost and the denominator became honest, but a learner cannot
-  see that from inside the app. Silence here reads as lost progress, which is
-  the single thing most likely to make someone stop using it.
-
-
-  MOVED TO THE TOP after URD-A02 attempt 1 landed before it, which URD-A02's own
-  notes forbade. 260 of the 608 old lesson ids no longer exist, so a returning
-  learner's percentage has now moved twice with nothing said. This is the debt
-  from that, and it is owed now rather than later.
-
 ## URD-A02 — Make a lesson a sitting
 attempts: 1
 files: src/data/units.ts, src/exercises/generator.ts, scripts/check-shape.js
@@ -289,3 +269,33 @@ notes: Pre-existing, not caused by URD-A02, found while measuring it. It is the
   same bug class as the vocabulary sampling fixed in 35fa67a: content chosen at
   render time cannot be reasoned about by any check, and a learner who leaves a
   lesson and comes back is somewhere else.
+
+## URD-014 — A wiped profile deserves a different sentence
+attempts: 0
+files: src/store/useProgressStore.ts, src/lib/progress.ts, src/lib/progress.test.ts
+definition of done: A profile persisted at version 0 or 1 has its
+  `completedLessons` and `skippedLessons` emptied by the v1 to v2 migration,
+  because positional lesson ids could not be translated. That learner genuinely
+  did lose their ticks, and the path-moved notice says nothing to them, because
+  the migration has already removed the evidence that they had any. Either the
+  migration records what it dropped, or a second notice covers the case. A test
+  asserts a v1 profile with completions is told something.
+verify: npm test -- src/lib/progress.test.ts
+notes: Found by THE CRITIC on URD-003 as MINOR. The wipe is pre-existing and
+  correct — the old ids really do not say which lesson they meant — but "we threw
+  your ticks away and said nothing" is a worse silence than the one URD-003 just
+  fixed, not a better one.
+
+## URD-015 — Nothing should change under a finger that is already moving
+attempts: 0
+files: src/screens/HomeScreen.tsx, src/components/Reveal.tsx
+definition of done: Dismissing the path-moved notice removes 275 px of content
+  instantly, so the 23 px band at y 294 to 317 changes from "dismiss" to "start a
+  lesson" between the press and the release. Give the card an exit, or hold the
+  layout until the touch is over. A check drives the built app, taps Got it, and
+  asserts nothing tappable occupies the released point within the tap window.
+verify: npm run check:stability
+notes: Found by the DESIGN CRITIC on URD-003, measured at +120ms and +1s: the
+  card simply vanishes. Extend `check:stability`, which already owns the property
+  that answering a question does not move it, rather than writing a new check.
+
