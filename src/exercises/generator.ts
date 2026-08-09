@@ -72,6 +72,33 @@ function letterExercise(letter: Letter): Exercise {
 }
 
 /**
+ * The same three forms `letterExercise` offers, chosen by position rather than
+ * `Math.random()`. Review only.
+ *
+ * `letterExercise` itself keeps its random pick — it also drives the letter
+ * lessons that teach the alphabet, and making those deterministic is a wider
+ * change than this one, already queued as URD-013. Review needed its own fix
+ * sooner: a due queue this app can genuinely hand a learner right after they
+ * finish the alphabet unit is mostly letters, and a run of random picks over
+ * three kinds streaks by chance — measured, five consecutive `letterPick` in a
+ * row on an all-letters due queue. Position by index instead, so a review with
+ * many letters in a row rotates through the three forms instead of gambling on
+ * them, the same fix already applied to the word side of review.
+ */
+function letterExerciseAt(letter: Letter, i: number): Exercise {
+  const position = POSITIONS[i % POSITIONS.length].key as PositionKey;
+  const turn = i % 3;
+  if (turn === 0 && GLYPH_MASKS[`${letter.id}:${position}`]) {
+    return { kind: 'letterTrace', letter, position };
+  }
+  if (turn !== 2) {
+    return { kind: 'letterForm', letter, position, options: POSITIONS.map((p) => p.key) };
+  }
+  const distractors = sample(LETTERS, DISTRACTORS, (l) => l.id === letter.id);
+  return { kind: 'letterPick', letter, options: shuffle([letter, ...distractors]) };
+}
+
+/**
  * Pick three distractors.
  *
  * `distinctCue` — the options must all *look* different: a picture question is
@@ -628,16 +655,60 @@ export function buildLessonExercises(
      * Due items keep their place at the front, because they are the ones the
      * scheduler says are slipping. The top up is deduped against them so a word
      * that is both due and in the taught pool is not asked twice.
+     *
+     * `due` is filtered to refs that will actually render before it is capped
+     * to size, and that filter is what the first version of this got wrong.
+     * `srs` is global, not per track, so a real due queue can contain a letter
+     * while the learner is on the Roman track, or an id a content rename has
+     * left behind — both render nothing. Capping first and filtering after, as
+     * the first version did, let those slots go to waste: a due queue of five
+     * letters on the Roman track rendered 17 exercises against a floor of 22,
+     * the exact truncation this comment says the top-up exists to prevent, just
+     * reintroduced for the one queue shape nothing had checked. Filtering
+     * before the cap means every slot in `refs` is a slot that renders, so the
+     * lesson always reaches `lesson.size` when the combined pool can supply it.
      */
-    const due = reviewRefs.slice(0, lesson.size);
+    const resolvable = (ref: ItemRef) =>
+      ref.type === 'letter' ? teachesScript && !!getLetter(ref.id) : !!getAnyWord(ref.id);
+    const due = reviewRefs.filter(resolvable);
     const seenIds = new Set(due.map((r) => r.id));
-    const filler = fallbackReviewRefs(lesson.size, teachesScript, lesson.id, known).filter((r) => !seenIds.has(r.id));
-    const refs = [...due, ...filler].slice(0, lesson.size);
+    const filler = fallbackReviewRefs(lesson.size, teachesScript, lesson.id, known)
+      .filter((r) => !seenIds.has(r.id))
+      .filter(resolvable);
+    const refs = [...due, ...filler];
+
+    /**
+     * Letters can run out where words never do.
+     *
+     * `fallbackReviewRefs` always asks for half letters, half words, and early
+     * in the course that half can be thinner than it looks: `l-1-2`
+     * ("Position practice") deliberately re-teaches `l-1`'s six letters in
+     * their joining forms rather than introducing new ones, so the earliest
+     * review's entire letter pool really is those same six. A due queue that
+     * already contains most of them leaves almost nothing left to draw for the
+     * fallback split, and unlike a letter, a word is never in short supply — the
+     * course has taught 54 of them by the same point. Measured directly: five
+     * real due letters at this position produced 18 of 22 exercises even after
+     * the filter-before-cap fix above, because the shortfall was never in what
+     * got capped, it was in what existed to fill the gap.
+     *
+     * So the remainder is topped up from words alone, which is always possible
+     * this early and is the same "more topping up, not less" principle the due
+     * queue itself is built on.
+     */
+    if (refs.length < lesson.size) {
+      const have = new Set(refs.map((r) => r.id));
+      const more = fallbackReviewRefs(lesson.size * 2, false, lesson.id, known)
+        .filter((r) => !have.has(r.id))
+        .filter(resolvable);
+      refs.push(...more.slice(0, lesson.size - refs.length));
+    }
+    refs.length = Math.min(refs.length, lesson.size);
 
     refs.forEach((ref, i) => {
       if (ref.type === 'letter') {
         const l = teachesScript ? getLetter(ref.id) : undefined;
-        if (l) exercises.push(letterExercise(l));
+        if (l) exercises.push(letterExerciseAt(l, i));
       } else {
         const w = getAnyWord(ref.id);
         // Review is where the harder demands belong: a word is only here
@@ -664,15 +735,25 @@ export function buildLessonExercises(
   }
 
   // Weave up to two due review items in near the front of a normal lesson.
+  //
+  // Filtered to refs that will actually render before the `.slice(0, 2)`, the
+  // same fix as the review branch above and for the same reason: an unfiltered
+  // `.slice(0, 2)` can spend both slots on a due letter the Roman track cannot
+  // show, weaving in nothing while the two real due items behind it are never
+  // reached. Less severe here than in a review lesson — an ordinary lesson has
+  // no floor keyed to this count — but it is the same unguarded assumption and
+  // is fixed with it rather than left for whoever notices next.
   if (lesson.kind !== 'review' && reviewRefs.length) {
     const woven: Exercise[] = [];
-    for (const ref of reviewRefs.slice(0, 2)) {
+    const weavable = (ref: ItemRef) =>
+      ref.type === 'letter' ? teachesScript && !!getLetter(ref.id) : !!getAnyWord(ref.id);
+    for (const ref of reviewRefs.filter(weavable).slice(0, 2)) {
       if (ref.type === 'letter') {
-        const l = teachesScript ? getLetter(ref.id) : undefined;
-        if (l) woven.push(letterExercise(l));
+        const l = getLetter(ref.id) as Letter;
+        woven.push(letterExercise(l));
       } else {
-        const w = getAnyWord(ref.id);
-        if (w) woven.push(wordExercise(w, poolFor(w), track, 'recall'));
+        const w = getAnyWord(ref.id) as Word;
+        woven.push(wordExercise(w, poolFor(w), track, 'recall'));
       }
     }
     exercises.splice(1, 0, ...woven);

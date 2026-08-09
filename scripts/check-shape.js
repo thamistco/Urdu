@@ -79,6 +79,13 @@ const { buildLessonExercises } = load('src/exercises/generator.ts');
  */
 const emitted = (lesson) => Math.min(...variants(lesson).map((ex) => ex.length));
 
+/** Which tracks a lesson's shape rules apply to. A letter lesson does not
+ *  exist on the Roman track at all, so a floor that only holds on script is
+ *  not a floor. */
+function tracksFor(lesson) {
+  return lesson.kind === 'letters' ? ['both'] : ['both', 'roman'];
+}
+
 /**
  * Every version of this lesson a learner could actually be handed.
  *
@@ -89,29 +96,50 @@ const emitted = (lesson) => Math.min(...variants(lesson).map((ex) => ex.length))
  * their unit review and got a one question lesson. `rev-first-faces` emitted 1
  * exercise against a queue of one and 9 against an empty queue. The check could
  * not see it because it only ever asked for the empty case.
- *
- * The queues are built from the words the path teaches before the lesson, taken
- * in order, so they are representative and deterministic — a check that samples
- * randomly reports a different number every run and cannot be trusted to have
- * failed for the reason it says.
  */
 function variants(lesson) {
-  const tracks = lesson.kind === 'letters' ? ['both'] : ['both', 'roman'];
-  const queues = lesson.kind === 'review' ? dueQueues(lesson) : [[]];
   const out = [];
-  for (const track of tracks) for (const refs of queues) out.push(buildLessonExercises(lesson, refs, track));
+  for (const track of tracksFor(lesson))
+    for (const refs of dueQueues(lesson)) out.push(buildLessonExercises(lesson, refs, track));
   return out;
 }
 
-/** Nothing due, one item due, and more due than the lesson can hold. */
+/**
+ * Nothing due, one item due, more due than the lesson holds — plus two states
+ * added after THE CRITIC found the first three were not enough.
+ *
+ * `srs` is not per track: a learner can do letter lessons on the script track,
+ * switch to Roman, and open a review with letters still in their due queue. On
+ * Roman a due letter renders nothing, and a fixed-size `refs` array capped
+ * before generation spent a slot on it anyway, truncating the lesson below its
+ * own floor — reproduced directly: five due letters on Roman rendered 17 of 22
+ * exercises. A due queue naming an id the current content no longer has is the
+ * same failure by a different door — a stale `srs` key from a content rename —
+ * and rendered 0 of 22. Both are queue shapes a learner can actually reach, and
+ * neither is a word taken in order from the taught pool, which is all the first
+ * three states were.
+ *
+ * All five are built from real path data or a single unresolvable id, taken in
+ * order rather than sampled, so they are representative and deterministic — a
+ * check that samples randomly reports a different number every run and cannot
+ * be trusted to have failed for the reason it says.
+ */
 function dueQueues(lesson) {
-  const before = [];
+  if (lesson.kind !== 'review') return [[]];
+  const words = [];
+  const letters = [];
   for (const l of ALL_LESSONS) {
     if (l.id === lesson.id) break;
-    for (const id of l.wordIds || []) before.push({ id, type: 'word' });
+    for (const id of l.wordIds || []) words.push({ id, type: 'word' });
+    for (const id of l.letterIds || []) letters.push({ id, type: 'letter' });
   }
-  const full = before.slice(-(lesson.size + 5));
-  return [[], full.slice(0, 1), full];
+  const wordQueue = words.slice(-(lesson.size + 5));
+  // Falls back to a handful of words if the alphabet unit is behind this
+  // review already, so the state still exercises *a* due queue rather than
+  // reducing to the empty-queue case it is meant to be distinct from.
+  const allLetters = (letters.length ? letters : words.slice(0, 5)).slice(0, lesson.size);
+  const staleId = [{ id: '__id-a-rename-left-behind__', type: 'word' }];
+  return [[], wordQueue.slice(0, 1), wordQueue, allLetters, staleId];
 }
 
 /**
@@ -282,32 +310,43 @@ const longestRun = (ex) => {
 };
 
 for (const track of TRACKS) {
-  const runs = [];
-  const hogs = [];
+  // Keyed by lesson id and kept at its worst instance, not pushed once per
+  // due-queue state: a review lesson has five states on this track and a
+  // finding should count the lesson once, at whichever state is worst, not
+  // once per state it happens to fail in.
+  const runs = new Map();
+  const hogs = new Map();
   for (const l of ALL_LESSONS.filter(judged)) {
-    const ex = buildLessonExercises(l, [], track);
-    if (ex.length < 6) continue; // a dialogue is one exercise; a run is not a concept there
-    const r = longestRun(ex);
-    if (r.n > MAX_RUN) runs.push({ id: l.id, ...r });
-    const counts = {};
-    for (const e of ex) counts[e.kind] = (counts[e.kind] || 0) + 1;
-    const [kind, n] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
-    if (n / ex.length > MAX_SHARE) hogs.push({ id: l.id, kind, share: n / ex.length });
+    if (!tracksFor(l).includes(track)) continue;
+    for (const refs of dueQueues(l)) {
+      const ex = buildLessonExercises(l, refs, track);
+      if (ex.length < 6) continue; // a dialogue is one exercise; a run is not a concept there
+      const r = longestRun(ex);
+      if (r.n > MAX_RUN && (!runs.has(l.id) || r.n > runs.get(l.id).n)) runs.set(l.id, { id: l.id, ...r });
+      const counts = {};
+      for (const e of ex) counts[e.kind] = (counts[e.kind] || 0) + 1;
+      const [kind, n] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+      const share = n / ex.length;
+      if (share > MAX_SHARE && (!hogs.has(l.id) || share > hogs.get(l.id).share))
+        hogs.set(l.id, { id: l.id, kind, share });
+    }
   }
-  if (runs.length) {
-    const worst = [...runs].sort((a, b) => b.n - a.n)[0];
+  if (runs.size) {
+    const worst = [...runs.values()].sort((a, b) => b.n - a.n)[0];
     bad(
-      `${runs.length} lessons emit more than ${MAX_RUN} identical exercises in a row on the ${track} track.\n` +
+      `${runs.size} lessons emit more than ${MAX_RUN} identical exercises in a row on the ${track} track,\n` +
+        `      in at least one due-queue state.\n` +
         `      worst: ${worst.id} — ${worst.n} consecutive ${worst.kind}\n` +
         `      A learner does not experience a lesson as a set of passes, they\n` +
         `      experience it as a sequence. Nine of the same question in a row is\n` +
         `      the same content and a different lesson.`
     );
   }
-  if (hogs.length) {
-    const worst = [...hogs].sort((a, b) => b.share - a.share)[0];
+  if (hogs.size) {
+    const worst = [...hogs.values()].sort((a, b) => b.share - a.share)[0];
     bad(
-      `${hogs.length} lessons are more than ${(MAX_SHARE * 100).toFixed(0)}% one exercise kind on the ${track} track.\n` +
+      `${hogs.size} lessons are more than ${(MAX_SHARE * 100).toFixed(0)}% one exercise kind on the ${track} track,\n` +
+        `      in at least one due-queue state.\n` +
         `      worst: ${worst.id} — ${(worst.share * 100).toFixed(0)}% ${worst.kind}`
     );
   }
