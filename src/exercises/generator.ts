@@ -329,6 +329,43 @@ function readableSentences(pool: Sentence[], lessonId: string): Sentence[] {
  *  (a name, an inflection) is not mistaken for one the learner has not reached. */
 const TAUGHT_FORMS = new Set(WORDS.map((w) => w.urdu));
 
+/**
+ * The third sighting: supply the word with nothing to pick from.
+ *
+ * Module scope because review needs it too. Review used to call
+ * `wordExercise(..., 'produce')` directly, which silently degrades to
+ * `wordFromMeaning` for anything untypeable — the same collision this function
+ * exists to avoid, and it pushed four Roman review lessons past 40% one kind.
+ */
+function produceExercise(w: Word, pool: Word[], track: LearnTrack, teachesScript: boolean, i: number): Exercise {
+  const canBuild = buildableLetters(w) <= MAX_BUILD_TILES && teachesScript;
+  const canType = isTypeable(w);
+  if (canBuild && (i % 2 === 0 || !canType)) {
+    return { kind: 'wordBuild', word: w, tiles: buildTilesFor(w) };
+  }
+  if (canType) return { kind: 'typeWord', word: w };
+  if (canBuild) return { kind: 'wordBuild', word: w, tiles: buildTilesFor(w) };
+  /**
+   * Neither typeable nor buildable — 82 words of the 2,281, and they bunch:
+   * six of the ten in `v-hotel` are phrases like کمرے کی صفائی. These are the
+   * hardest items in the corpus and they get the least demanding third
+   * sighting, which is a real weakness and is recorded as such rather than
+   * hidden. Nothing in the exercise set asks for production of a phrase this
+   * long.
+   *
+   * It asks for the meaning rather than repeating the recall question, and
+   * the difference is not cosmetic. Recall is `wordFromMeaning`, so a
+   * fallback of `wordFromMeaning` made the second and third sightings the
+   * same kind, and in a topic where most words fall back that produced eight
+   * identical questions in a row — the run this pipeline exists to prevent,
+   * reintroduced by its own fallback. `meaningPick` shows the word and asks
+   * what it means, needs only the distinct-meaning distractors that
+   * `wordFromMeaning` already needs, and goes through `wordExercise`'s
+   * guards, so the Roman-loanword and verdict-cue cases stay handled.
+   */
+  return wordExercise(w, pool, track, 'meet', 1);
+}
+
 // ---- lesson composition --------------------------------------------------
 
 export function buildLessonExercises(
@@ -469,39 +506,11 @@ export function buildLessonExercises(
      * `check:shape` compares the mix precisely so that difference stays a choice
      * somebody made instead of a bug nobody could see.
      */
-    const produceExercise = (w: Word, i: number): Exercise => {
-      const canBuild = buildableLetters(w) <= MAX_BUILD_TILES && teachesScript;
-      const canType = isTypeable(w);
-      if (canBuild && (i % 2 === 0 || !canType)) {
-        return { kind: 'wordBuild', word: w, tiles: buildTilesFor(w) };
-      }
-      if (canType) return { kind: 'typeWord', word: w };
-      if (canBuild) return { kind: 'wordBuild', word: w, tiles: buildTilesFor(w) };
-      /**
-       * Neither typeable nor buildable — 82 words of the 2,281, and they bunch:
-       * six of the ten in `v-hotel` are phrases like کمرے کی صفائی. These are the
-       * hardest items in the corpus and they get the least demanding third
-       * sighting, which is a real weakness and is recorded as such rather than
-       * hidden. Nothing in the exercise set asks for production of a phrase this
-       * long.
-       *
-       * It asks for the meaning rather than repeating the recall question, and
-       * the difference is not cosmetic. Recall is `wordFromMeaning`, so a
-       * fallback of `wordFromMeaning` made the second and third sightings the
-       * same kind, and in a topic where most words fall back that produced eight
-       * identical questions in a row — the run this pipeline exists to prevent,
-       * reintroduced by its own fallback. `meaningPick` shows the word and asks
-       * what it means, needs only the distinct-meaning distractors that
-       * `wordFromMeaning` already needs, and goes through `wordExercise`'s
-       * guards, so the Roman-loanword and verdict-cue cases stay handled.
-       */
-      return wordExercise(w, pool, track, 'meet', 1);
-    };
 
     const passes: ((w: Word, i: number) => Exercise)[] = [
       (w, i) => wordExercise(w, pool, track, 'meet', i % 3),
       (w) => wordExercise(w, pool, track, 'recall'),
-      produceExercise,
+      (w, i) => produceExercise(w, pool, track, teachesScript, i),
     ];
 
     for (let cycle = 0; cycle < groups.length + passes.length - 1; cycle++) {
@@ -605,8 +614,27 @@ export function buildLessonExercises(
   }
 
   if (lesson.kind === 'review') {
-    const refs = reviewRefs.length ? reviewRefs : fallbackReviewRefs(lesson.size, teachesScript, lesson.id, known);
-    for (const ref of refs.slice(0, lesson.size)) {
+    /**
+     * Due first, then topped up to the lesson's size.
+     *
+     * It used to be one or the other: the due queue if there was one, the
+     * taught-so-far pool if there was not. So a learner with a single item due
+     * opened their unit review and got a one question lesson — the branch read
+     * as "prefer real data", and what it actually did was let a short queue
+     * truncate a sitting to nothing. `rev-first-faces` measured at 1 exercise
+     * with a real queue against 9 with an empty one, which is backwards: the
+     * learner with fewer items due needs *more* topping up, not less.
+     *
+     * Due items keep their place at the front, because they are the ones the
+     * scheduler says are slipping. The top up is deduped against them so a word
+     * that is both due and in the taught pool is not asked twice.
+     */
+    const due = reviewRefs.slice(0, lesson.size);
+    const seenIds = new Set(due.map((r) => r.id));
+    const filler = fallbackReviewRefs(lesson.size, teachesScript, lesson.id, known).filter((r) => !seenIds.has(r.id));
+    const refs = [...due, ...filler].slice(0, lesson.size);
+
+    refs.forEach((ref, i) => {
       if (ref.type === 'letter') {
         const l = teachesScript ? getLetter(ref.id) : undefined;
         if (l) exercises.push(letterExercise(l));
@@ -615,9 +643,24 @@ export function buildLessonExercises(
         // Review is where the harder demands belong: a word is only here
         // because it was met before, so asking to recognise it again teaches
         // little. Most reviews retrieve; every third one asks for it typed.
-        if (w) exercises.push(wordExercise(w, poolFor(w), track, Math.random() < 0.35 ? 'produce' : 'recall'));
+        //
+        // Every third by position, not by a coin flip. `Math.random() < 0.35`
+        // said the same thing in the comment and did something else: it made a
+        // review lesson a different lesson each time it was opened, and made
+        // every measurement over review lessons differ run to run.
+        //
+        // Three demands on rotation rather than two. Recall alone is
+        // `wordFromMeaning` every time, and with letters off the Roman track a
+        // review came out 73% one question — a screen of identical prompts
+        // scrolling past. The middle turn hears the word instead, which is the
+        // one modality a review of things you have already read does not
+        // otherwise use.
+        const turn = i % 3;
+        if (w && turn === 2) exercises.push(produceExercise(w, poolFor(w), track, teachesScript, i));
+        else if (w && turn === 1) exercises.push(wordExercise(w, poolFor(w), track, 'meet', 2));
+        else if (w) exercises.push(wordExercise(w, poolFor(w), track, 'recall'));
       }
-    }
+    });
   }
 
   // Weave up to two due review items in near the front of a normal lesson.
@@ -730,17 +773,26 @@ function fallbackReviewRefs(
       : LETTERS.slice(0, 20).map((l) => l.id);
 
   if (!withLetters) {
-    return shuffle(wordPool)
+    return seededShuffle(wordPool, `${lessonId ?? 'review'}:words`)
       .slice(0, n)
-      .map((id) => ({ id, type: 'word' }));
+      .map((id) => ({ id, type: 'word' as const }));
   }
-  const letters: ItemRef[] = shuffle(letterPool)
+  const letters: ItemRef[] = seededShuffle(letterPool, `${lessonId ?? 'review'}:letters`)
     .slice(0, Math.ceil(n / 2))
-    .map((id) => ({ id, type: 'letter' }));
-  const words: ItemRef[] = shuffle(wordPool)
+    .map((id) => ({ id, type: 'letter' as const }));
+  const words: ItemRef[] = seededShuffle(wordPool, `${lessonId ?? 'review'}:words`)
     .slice(0, Math.floor(n / 2))
-    .map((id) => ({ id, type: 'word' }));
-  return shuffle([...letters, ...words]);
+    .map((id) => ({ id, type: 'word' as const }));
+  // Interleaved rather than shuffled together. Shuffling clustered them — four
+  // consecutive letter exercises inside a mixed review — and did it differently
+  // on every generation, so the review a learner reopened was a different
+  // lesson and no measurement over review lessons held still.
+  const mixed: ItemRef[] = [];
+  for (let i = 0; i < Math.max(letters.length, words.length); i++) {
+    if (letters[i]) mixed.push(letters[i]);
+    if (words[i]) mixed.push(words[i]);
+  }
+  return mixed;
 }
 
 /** Map an exercise to the item(s) it exercises, for SRS grading. */
