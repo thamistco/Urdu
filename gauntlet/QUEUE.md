@@ -63,15 +63,20 @@ notes: The trap is fixing this by raising the word count alone. Neither
   identical questions, and check:shape gained the run and single-kind-share
   rules that catch that, measured per track.
 
-  WHAT IS LEFT, and it is the whole reason this is still here. 86 of 319 timed
-  lessons are under 3 minutes and not one of them is a vocabulary lesson:
+  WHAT IS LEFT, and it is the whole reason this is still here. URD-010
+  landed and closed the review row below — 39 short review lessons to 0 — so
+  this is 47 of 319 now, re-measured at daca650:
 
-    review    39   length depends on the due queue; see URD-010, which has to
-                   land first or this is measuring the wrong thing
     grammar   25   a concept has as many drills as it has
     sentences 12   `lesson.size` sentences and no repetition pass
     letters    9   and non-deterministic, see URD-013
     phrases    1   and 100% meaningPick, see URD-012
+
+  Review is not fully done, only long enough: it still samples the wrong
+  material (URD-016), never lets a letter share fall off after the alphabet
+  (URD-017), and never asks for meaning in the reading direction (URD-018).
+  None of the three is a length problem, so none blocks this item — but do
+  not read "0 short review lessons" as "review is finished".
 
   Plus 2 units over the 12 lesson ceiling: u27 has 13, u39 has 15.
 
@@ -207,20 +212,6 @@ notes: Found by THE CRITIC on URD-A02, which is the pattern worth noticing: a
   curriculum change moved a number three files away and nothing connected them.
   Deriving the rate is what stops that happening the next time the path moves.
 
-## URD-010 — Measure a review lesson against a real due queue
-attempts: 0
-files: scripts/check-shape.js
-definition of done: `emitted()` in check-shape.js passes `reviewRefs = []`, so
-  every review lesson is measured in its nothing-due fallback — which is the one
-  state a review lesson is almost never in. 39 of the 86 lessons failing the
-  length rule are review lessons measured that way. `rev-first-faces` returns 1
-  exercise empty and a full lesson with a due queue. Build a representative queue
-  from the path and measure against it. The check must still be deterministic.
-verify: npm run check:shape
-notes: Blocks the review third of URD-A02: until this lands, that work would be
-  aimed at a number that does not describe anything a learner sees. Found by
-  THE CRITIC on URD-A02.
-
 ## URD-011 — Stop check:shape recomputing the same lesson
 attempts: 0
 files: scripts/check-shape.js, src/data/units.ts
@@ -299,3 +290,63 @@ notes: Found by the DESIGN CRITIC on URD-003, measured at +120ms and +1s: the
   card simply vanishes. Extend `check:stability`, which already owns the property
   that answering a question does not move it, rather than writing a new check.
 
+## URD-016 — A review should mostly review the unit it closes
+attempts: 0
+files: src/exercises/generator.ts, src/data/units.ts
+definition of done: `fallbackReviewRefs` in generator.ts draws uniformly from
+  every word and letter taught up to the review, with no weighting toward the
+  unit it is attached to. Measured on real generated output with nothing due:
+  rev-gender-and-number (u6) draws 0-5% of its words from u6; rev-the-wider-
+  world (u39) draws 3-5% from u39. A review should draw mostly from its own
+  unit, falling back to the wider course only when the unit cannot fill it —
+  which happens: rev-your-first-readings closes a unit with zero vocabulary
+  lessons and needs the fallback for all of it. A test asserts a review whose
+  unit has enough taught words draws at least half of them from that unit.
+verify: npm test -- src/lib/review.test.ts
+notes: Found by the CURRICULUM CRITIC on URD-010, independently confirmed by
+  THE CRITIC from a different angle: two-thirds of reviews (26 of 39) are
+  governed purely by REVIEW_MIN rather than by the unit's actual size, because
+  most units don't teach 66 words. That is the same problem URD-010's commit
+  set out to fix — a flat number wherever the review sits — relocated from a
+  flat 9 to a flat 22. Scoping selection to the closing unit and sizing the
+  review off what the unit can actually supply are the same piece of work;
+  do not fix one without the other. Also carries the curriculum critic's
+  MINOR finding that letter/word alternation is now a rigid fixed cadence,
+  worth a second look while this is open.
+
+## URD-017 — A review's letter share should decay once the alphabet is behind it
+attempts: 0
+files: src/exercises/generator.ts
+definition of done: `fallbackReviewRefs` splits every review's fallback
+  ceil(n/2) letters, floor(n/2) words, unconditionally, independent of how
+  many units separate the review from the alphabet. Measured u10 through u39
+  (script track): 367 letter exercises against 360 word exercises, 50.5%
+  letters. A review at u30, thirty units after the alphabet finished, spends
+  half its questions re-tracing glyphs. The letter share should fall as the
+  course moves further from the alphabet units, reaching near zero by the
+  units this measurement covers. A test asserts the letter share at a review
+  early in the course is higher than the letter share at one late in it.
+verify: npm test -- src/lib/review.test.ts
+notes: Found by the CURRICULUM CRITIC on URD-010. Right near unit 2, wrong by
+  unit 30 — the code applies the identical ratio at both positions with no
+  decay. Shares a file and a home with URD-016; consider one item if the fix
+  turns out to be the same change.
+
+## URD-018 — Review should sometimes ask for a word's meaning, not just its form
+attempts: 0
+files: src/exercises/generator.ts
+definition of done: Across all 39 review lessons on both tracks (1,856
+  exercises measured), `meaningPick` — the only exercise that shows Urdu and
+  asks what it means — appears 16 times, 0.86%, only as the produce
+  fallback for words that are neither typeable nor buildable. Every other
+  review exercise is English-or-audio-in, Urdu-out. Review is the lesson
+  explicitly meant to consolidate what has been read, and it never asks the
+  learner to read something and say what it means. Give the middle turn (or
+  another turn) a real chance at `meaningPick` rather than reserving it for
+  the produce-demand's edge case. A test asserts a review of typeable words
+  still contains at least one meaning-direction question.
+verify: npm test -- src/lib/review.test.ts
+notes: Found by the CURRICULUM CRITIC on URD-010. The three-demand ladder
+  (recall, listen, produce) is defensible as retrieval-first, but all three
+  read the same direction; this is the one missing rung, not a reason to
+  rebuild the ladder.

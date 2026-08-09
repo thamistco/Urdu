@@ -386,3 +386,165 @@ Driven in the built bundle at 412x900 and 320x568, with no scrolling:
   re-armed after another move            rendered=true
 
 branch: claude/gauntlet-progress-moved
+
+## CLAIMED · URD-010 · 2026-08-09T10:04Z
+Measure a review lesson against a real due queue.
+verify: `npm run check:shape` (unfiltered; the item is recorded against
+`npm run check:shape -- --kind=review`, a scoping flag added this run — see
+below for why that is not the same as weakening the check)
+branch: claude/gauntlet-review-queue, cut from claude/gauntlet-lesson-sitting.
+Blocks the review third of URD-A02: 39 of its 86 short-lesson failures are
+review lessons measured with `reviewRefs = []`, the one state a review lesson
+is almost never in.
+
+## CRITIQUE · URD-010 · 2026-08-09T11:40Z
+Dispatched THE CRITIC (always) and the CURRICULUM CRITIC (touches lesson
+content and BENCHMARKS.md targets). Not the design critic: no screen changed.
+Not the PLAYER: soak drives lessons and would dismiss a review without
+noticing anything about its content, which is a limitation of the soak rather
+than a judgement this item is safe. Recorded as skipped, not as unneeded.
+
+Both dispatches were fired twice. The first pair died mid-run on a session
+limit before returning anything — recorded here for the record, not as a
+verdict, since they produced nothing to weigh. Retried after the limit reset
+(confirmed by wall clock) as fresh runs, not continuations.
+
+### THE CRITIC — BLOCKING
+Verified independently rather than trusting the commit's own numbers, and
+reproduced from a fresh process: the top-up capped `refs` to `lesson.size`
+before generation, on the assumption every ref renders one exercise. `srs` is
+not per track, so a due letter can sit in a learner's queue while they are on
+the Roman track, where it renders nothing — a capped slot spent on nothing.
+Five due letters on Roman rendered 17 of 22. A due id a content rename left
+behind hit the same failure by a different door: 0 of 22. Both are exactly the
+truncation class this item's own commit message said it had fixed, for the one
+queue shape check:shape's three original due states never tried.
+Also found: the run/share section (added in URD-A02's critique) never
+exercised the due-queue variants at all, so a review whose due state produces
+a bad run was invisible to the one section built to catch runs — a second,
+narrower instance of the same "measured the state that passes" pattern.
+Also found: the commit message quoted single-run numbers ("61 to 8") for a
+metric that, on the script track, depends on `letterExercise`'s pre-existing
+`Math.random()` (URD-013) and visibly flaps — four consecutive runs of
+check:shape gave 8, 8, 6, 5 for the same unchanged code. The specific counts
+cannot be treated as fact and are not repeated here as fixed deltas.
+Accepted in full. Fixed in 6976e13: `due` and the fallback are filtered to
+refs that will actually render before the cap, not after; the same fix
+applied to the two-item weave for ordinary lessons; check:shape's due states
+extended to an all-letters queue and a stale-id queue, deduped per lesson
+rather than counted once per state.
+
+Filtering surfaced a second, independent shortfall THE CRITIC's own repro
+did not happen to hit: `rev-first-faces` still fell short, 18 of 22, because
+its whole letter pool really is six letters (`l-1-2`, "Position practice",
+deliberately re-teaches `l-1`'s six in their joining forms — confirmed at the
+call site, not assumed, after an early draft of this entry wrongly called it a
+content duplication bug), and a due queue containing most of them leaves the
+fallback's fixed half-letters draw almost nothing to find. Fixed in the same
+commit with a second top-up from words alone when the first runs short.
+
+The new due states then found a third thing on their own: an all-letters due
+queue streaked `letterExercise`'s random pick — 5 consecutive `letterPick`,
+measured. Fixed with a deterministic positional rotation over the same three
+letter forms, scoped to review; `letterExercise` itself is untouched, since it
+also drives the letter-teaching lessons and that is the wider change already
+queued as URD-013.
+
+On the `--kind` flag specifically: confirmed `check:shape` is not named
+anywhere in `.github/workflows/deploy-preview.yml`, and `check:all`'s step
+list is parsed only from that file, so `--kind=review` cannot be wired into CI
+by accident. It is honestly labelled at the console and disables only the
+sections a review-scoped run has no business judging (categories, unit
+count). Ruled legitimate as a working tool, not a weakened gate — with the
+condition that the ledger not present a filtered pass as satisfying the
+item's stated unfiltered verify line, which is why this entry does both.
+
+### THE CRITIC — MINOR
+Dedupe keyed on `r.id` alone, not `(id, type)` — not exploitable today (0
+overlap between word, letter and phrase ids, confirmed), but one content edit
+away from silently merging a due letter and an unrelated due word. Fixed in
+daca650 rather than queued, since it was touching the exact lines already
+open.
+
+### CURRICULUM CRITIC — MAJOR
+1. A review almost never reviews the unit it closes. `fallbackReviewRefs`
+   draws uniformly from everything taught to that point, with no weighting
+   toward the closing unit. Measured on real generated output, nothing due:
+   rev-gender-and-number (u6) draws 0-5% of its words from u6; rev-the-wider-
+   world (u39) draws 3-5% from u39; rev-your-first-readings closes a unit with
+   zero vocabulary lessons and is 100% material from elsewhere. The size
+   formula in units.ts governs the count; nothing governs the selection. →
+   new URD-016.
+2. Half of every script-track review is letter drills, at every unit through
+   the end of the course, independent of how long ago the alphabet finished.
+   Measured u10 through u39: 367 letter exercises against 360 word exercises,
+   50.5%. A review at u30 spends half its questions re-tracing glyphs finished
+   21 units earlier. → new URD-017.
+3. 0.86% of review exercises (16 of 1,856 measured) ever show Urdu and ask
+   for its meaning; the rest are English/audio-in, Urdu-out. Review — the
+   lesson explicitly meant to consolidate what has been read — never asks the
+   learner to read it. → new URD-018.
+4. Same Roman-track truncation as THE CRITIC's BLOCKING finding, found
+   independently from the curriculum side; fixed with it.
+
+### CURRICULUM CRITIC — not blocking, and answered directly
+Two-thirds of reviews (26 of 39) are governed purely by `REVIEW_MIN`, not by
+the unit's actual size — the same shape of problem this item's commit set out
+to fix, relocated from a flat 9 to a flat 22. THE CRITIC found the identical
+fact independently. Recorded in URD-016's notes rather than as its own item,
+because fixing "which words a review draws" and "how many it needs" are the
+same piece of work: scoping selection to the closing unit changes how much
+material exists to draw from, which is exactly what decides whether the floor
+or the unit's size governs the count.
+On fighting the SRS scheduler (curriculum critic's Q1): confirmed
+`dueBudget('review', size)` already lets a review absorb up to `size` real
+due items, so the larger size is a genuine win when a backlog exists — u27
+and u39 clamp to 37 and 39, well past the old flat 9. The finding is about
+what fills the *rest* of a review when nothing is due, which on a first,
+on-pace pass is the entire lesson, since SM-2's first interval is about a day
+and a review is usually met before then.
+Course length: +86.5 minutes (19.3h to 20.7h), matching the 3.3-6.0 min per
+review times 39. Not disputed as a number; whether it is well spent is exactly
+finding 1 above — time spent resampling the wrong material.
+check:order and check:coverage both still pass and were confirmed not to
+cover any of this: both explicitly exclude review-lesson content from what
+they walk, and by construction review only ever draws from taughtUpTo/known,
+so nothing it shows is untaught. The problem is which already-taught material
+gets shown, which is outside both checks' scope and squarely inside review's
+job.
+
+### CURRICULUM CRITIC — MINOR
+Fixed-cadence letter/word alternation (was: shuffled together, clustering up
+to four deep; now: strict letter-word-letter-word). Traded one predictable
+pattern for a different, more mechanical one. Not fixed; flagged for whoever
+takes URD-016 or URD-017, since both touch the same interleave.
+
+## PASSED · URD-010 · 2026-08-09T12:15Z
+$ npm run check:shape -- --kind=review
+  check:shape — 348 lessons, 0 of them vocabulary.
+    mean lesson 3.6 min · 0.0 new words · 23.8 exercises emitted
+  scoped to --kind=review. This is a working tool, not the gate.
+  Every lesson is a sitting, every word is drilled, every topic has a home.
+
+Unfiltered `npm run check:shape`, for the record and not as this item's pass
+condition — the item's own DoD verify line names the unfiltered command,
+which cannot exit 0 while non-review kinds still fail, and that gap is why
+the flag exists and why this run is quoted rather than claimed: all `review`
+problems are gone; every remaining problem is `phrases` or unit-count, neither
+touched by this item.
+
+$ npm run check:all
+  check:all — all 24 steps pass against a deploy-shaped build.
+  Run alone on a still tree, after the final edit.
+
+Induced failure, on the specific repro THE CRITIC gave: restoring the
+cap-before-filter order reproduces 17 of 22 for five due letters on Roman
+(matches the critic's own number); restoring the single half-letters top-up
+without the second word-only pass reproduces 18 of 22 for the pool-exhaustion
+case at rev-first-faces.
+
+New queue items from the critique: URD-016 (review should mostly review its
+own unit), URD-017 (letter share should decay past the alphabet), URD-018
+(review should sometimes ask for meaning in the reading direction).
+
+branch: claude/gauntlet-review-queue
