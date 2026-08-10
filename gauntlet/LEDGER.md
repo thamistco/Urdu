@@ -719,3 +719,111 @@ first letter), URD-022 (letters: no confusability-aware ordering for
 visually similar letters).
 
 branch: claude/gauntlet-shape-cleanup
+
+## CLAIMED · URD-012 · 2026-08-09T16:40Z
+A phrase lesson is not six of the same question, the smallest contained
+slice of URD-A02's remaining backlog (grammar/sentences/phrases).
+verify: `npm run check:shape -- --kind=phrases` (unfiltered check:shape
+still fails on grammar, sentences and unit-count, all out of this item's
+declared scope)
+branch: claude/gauntlet-phrases-grammar, cut from claude/gauntlet-shape-cleanup.
+
+## CRITIQUE · URD-012 · 2026-08-09T18:20Z
+Dispatched THE CRITIC only, across three rounds. Not the curriculum critic:
+nothing about which phrases are taught, their order, or session length
+changed — only the mix of exercise kinds asking about the same fixed set.
+Not the design critic: no screen changed. Not the PLAYER: no lesson behaviour
+a soak run would notice changed either. Recorded as skipped, not as unneeded.
+
+### ROUND 1 — commit 307365a
+`phrases` was 100% meaningPick, 6 in a row, because phrases share one icon
+and `wordExercise`'s own picture-availability guard silently folds any
+attempt at multipleChoice/listenTap back to meaningPick. Fixed with a greedy
+bucket-fill: each phrase assigned to whichever eligible kind (meet, recall,
+or produce for typeable phrases) currently has the fewest, tie-broken toward
+the scarcer kind. Verified against the real 6-phrase draw: 2/2/2, no run
+over 1, both tracks.
+
+### THE CRITIC — round 1
+BLOCKING. Two phrases in the corpus ("My name is ...", "I am from ...") are
+literal fill-in-the-blank templates. `isTypeable` counted the letters around
+the `...` as short enough, so the new produce path could route either to
+`typeWord` with no answer `matchesWord`'s exact-skeleton comparison would
+accept — filling the blank with a real name adds letters the target
+doesn't have. Not reachable before this item, since phrases could never
+reach `produce` at all.
+MAJOR. The greedy bucket-fill's doc comment claimed it "bounds every kind
+close to a third regardless of how the shuffle happens to sort" typeable and
+untypeable phrases. False: fed `[T,T,T,F,F,F]` (produce-eligible clustered
+first) at the real size of 6, it lands 1/3/2, 50% on one kind — the greedy
+choice at each phrase commits ahead of what the back of the list needs.
+Also confirmed: check:answerable and check:voice passing was not evidence
+the new typeWord-for-phrases path is answerable — check:answerable has zero
+references to typeWord or matchesWord and structurally cannot see this.
+Confirmed g-to-be's 50% grammarDrill share is genuinely a length problem
+(0.9 min) rather than something this item's technique could fix — grammar's
+exercise kinds are fixed by concept data and a hardcoded cap, not a free
+per-item choice the way meet/recall/produce are for a phrase.
+
+### ROUND 2 — commit 7d9d269
+Both fixed. Template phrases excluded from `produce` eligibility by
+checking for a literal `...` in either script. The greedy per-phrase choice
+replaced with a target computed from the whole draw first —
+`produceCount = min(eligible, ceil(size/3))` — which removes order
+dependence for any draw with 2 or more typeable phrases.
+That investigation surfaced a narrower, real residual: below 2 typeable
+phrases in the draw, no reassignment can clear 40% at this size — worked
+out by hand, confirmed by brute force. Documented rather than solved, and
+queued (URD-023). A `P()` size guard added, rejecting sizes 4 and 7 —
+`Math.ceil(size/3)/size` exceeds 0.4 there regardless of content.
+
+### THE CRITIC — round 2
+No BLOCKING. Both round-1 findings verified fixed independently: 35,000
+synthetic draws with zero template-phrase-to-typeWord routings; the exact
+adversarial ordering now lands 2/2/2. Confirmed the degenerate <2-typeable
+case degrades gracefully (a complete, answerable, duplicate-free lesson
+that just fails the share check, not a crash) across 22,000 stress-test
+draws.
+Two MINOR findings, both the same species as round 1's MAJOR — a comment
+claiming more than the code delivers: `P()`'s hardcoded `size===4||size===7`
+missed sizes 1 and 2, which the stated formula also fails (unreachable
+today, only call site uses the default). And the "no clean fix, needs a
+fourth kind or bigger lessons" framing overlooked a cheaper lever the
+critic named directly: the uniform draw itself has no floor on how many
+typeable phrases it contains, so biasing the draw would remove the residual
+for every future draw rather than only documenting it. Also recomputed the
+residual rate exactly (hypergeometric): 8.24%, against the round-2 comment's
+sampled "about 7.6%".
+
+### ROUND 3 — commit b98bda2
+Both MINORs fixed immediately rather than only queued, since they were
+cheap and directly in the code just written. `P()` now checks the
+inequality directly instead of two hardcoded numbers. The residual-risk
+comment corrected to the exact 8.24% and now names sampling-bias as the
+first, cheapest fix option, not a narrowed list of two costlier ones.
+
+## PASSED · URD-012 · 2026-08-09T18:45Z
+$ npm run check:shape -- --kind=phrases
+  0 run/share problems. (Length is out of scope for this item and stays
+  open — the phrases lesson is 0.9 min, folding into URD-A02's remaining
+  backlog alongside grammar and sentences.)
+
+$ npm run check:answerable
+  every generated exercise is answerable from what it puts on screen
+
+$ npm run check:voice
+  every clip is audible
+
+$ npm run check:all
+  check:all — all 24 steps pass against a deploy-shaped build.
+  Run alone on a still tree, after the final edit.
+
+Induced failure: reverted to the single-meaningPick-variant version and
+confirmed check:shape reports the original 6-consecutive/100% failure
+again, before restoring.
+
+New queue item: URD-023 (phrases: guarantee enough typeable phrases at
+draw time, not just reassign after drawing — three options named, cheapest
+first).
+
+branch: claude/gauntlet-phrases-grammar
