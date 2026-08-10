@@ -181,15 +181,34 @@ const D = (dialogueId: string, title: string, subtitle: string, xp = 25, size = 
   xp,
   size,
 });
-const P = (title: string, subtitle: string, xp = 20, size = 6): Lesson => ({
-  id: uid('phrases'),
-  title,
-  subtitle,
-  icon: '💬',
-  kind: 'phrases',
-  xp,
-  size,
-});
+const P = (title: string, subtitle: string, xp = 20, size = 6): Lesson => {
+  /**
+   * A phrases lesson has exactly three exercise kinds available to it (see
+   * the generator's `lesson.kind === 'phrases'` branch — phrases share one
+   * icon, so no picture-based kind is answerable). Three kinds can only ever
+   * hold check:shape's 40% single-kind-share floor when the most-populated
+   * kind still fits: `Math.ceil(size / 3) / size <= 0.4`. That is true for
+   * every size except 4 and 7, where the best possible split — 2 of 4 and 3
+   * of 7 — is 50% and 42.9%. No rebalancing inside the generator can get under
+   * the floor at those sizes; it is a fact about dividing by three, not a bug
+   * a smarter assignment fixes. Asserted here, at the one place a size is
+   * chosen, rather than left to be found again by check:shape.
+   */
+  if (size === 4 || size === 7) {
+    throw new Error(
+      `phrases lesson "${title}" has size ${size}; 4 and 7 cannot be split three ways under check:shape's 40% share floor — pick a different size.`
+    );
+  }
+  return {
+    id: uid('phrases'),
+    title,
+    subtitle,
+    icon: '💬',
+    kind: 'phrases',
+    xp,
+    size,
+  };
+};
 /**
  * A review closes a unit and draws on everything up to it, so unlike every
  * other lesson it has no content of its own to be named after. It takes the

@@ -538,37 +538,75 @@ export function buildLessonExercises(
      *
      * Two more kinds are genuinely available without a picture: `recall`
      * (`wordFromMeaning`, show the English, pick the phrase) always works,
-     * and `produce` (`typeWord`) works for whichever phrases are short
-     * enough to type — 16 of 28 in the current corpus.
+     * and `produce` (`typeWord`) works for whichever phrases are both short
+     * enough to type and have a real answer to type — see `producible`
+     * below.
      *
-     * A fixed rotation across three kinds does not by itself keep any one
-     * kind under check:shape's 40% share: with only 6 phrases and produce
-     * eligible for roughly half of them, a naive "produce when typeable,
-     * meet otherwise" rule can land every ineligible phrase on `meet` and
-     * push it past 40% on an unlucky draw — the corpus this ships with does
-     * exactly that if produce isn't budgeted deliberately. So each phrase is
-     * assigned to whichever eligible kind currently has the fewest phrases,
-     * with ties broken toward the scarcer kind first (`produce`, since not
-     * every phrase can take it; then `recall` over `meet`, since `meet` is
-     * always available as the fallback and so is the safest one to end up
-     * lopsided). That bounds every kind close to a third regardless of how
-     * the shuffle happens to sort typeable and untypeable phrases together.
+     * Assignment is computed as a target up front, not decided phrase by
+     * phrase as the shuffle happens to present them. A first version did the
+     * latter — greedily giving each phrase whichever eligible kind had the
+     * fewest so far — and it reads as though it should bound every kind near
+     * a third no matter the order, but it does not: fed `[T, T, T, F, F, F]`
+     * (produce-eligible phrases clustered first) at this lesson's real size
+     * of 6, it lands on 1 produce / 3 recall / 2 meet, 50% on one kind. The
+     * greedy choice at each phrase only ever looks at counts so far, so a
+     * clustered run at the front commits ahead of what the back of the list
+     * will need. Computing `produceCount` from the whole pool first and
+     * splitting everything else in half removes that order dependence: for
+     * any order of the same 6 phrases with 2 or more of them typeable, it
+     * lands 2 produce / 2 meet / 2 recall.
      *
-     * Assigning in shuffle order and emitting in that same order is what
-     * keeps runs short too: it does not sort phrases by kind before
-     * emitting them, so kinds interleave as a side effect of nothing forcing
-     * them not to.
+     * "2 or more typeable" is doing real work in that sentence, and this is
+     * the part with no clean fix. At this lesson's size, only `produceCount
+     * === 2` clears the 40% floor at all — worked out by hand and confirmed
+     * by brute force: 0 produced is 3/3 on meet/recall (50%), 1 produced
+     * still forces an odd 3/2 split of the other five (50%), and there is no
+     * fourth kind to absorb the slack. So when fewer than 2 of the 6 sampled
+     * phrases are typeable, no reassignment here — greedy, target-based, or
+     * otherwise — can bring the lesson under the floor; it is a fact about
+     * dividing six things three ways with only two producible, not a bug in
+     * how they are divided. Measured against 3,000 synthetic lesson ids over
+     * the real 28-phrase pool: about 7.6% draw fewer than 2 typeable phrases
+     * and fail this way. The one lesson that actually ships draws 3 typeable
+     * (checked directly), clearing it with room, but that is this lesson's
+     * luck, not a property this function guarantees for a different one.
+     * Queued as URD-023 rather than solved here: fixing it for every future
+     * draw needs either a fourth kind that does not depend on typeability,
+     * or enough phrases per lesson that the law of large numbers does the
+     * work instead of a single unlucky draw. Three kinds cannot split any
+     * lesson size under 40% each either way — `Math.ceil(size / 3) / size`
+     * clears 0.4 for every size except 4 and 7 — which is guarded in `P()`
+     * (units.ts) so that half of the problem cannot recur silently.
      */
     const picks = seededShuffle(PHRASE_WORDS, lesson.id).slice(0, lesson.size);
-    type PhraseDemand = 'meet' | 'recall' | 'produce';
-    const SCARCITY: Record<PhraseDemand, number> = { produce: 2, recall: 1, meet: 0 };
-    const counts: Record<PhraseDemand, number> = { meet: 0, recall: 0, produce: 0 };
+    /**
+     * Typeable, and not a fill-in-the-blank template. Two phrases in the
+     * corpus ("My name is ...", "I am from ...") are literally templates —
+     * `isTypeable` counted the letters around the `...` and called them
+     * short enough, so the first version of this could hand a learner a
+     * `typeWord` prompt reading "My name is ..." with no way to answer it
+     * that `matchesWord`'s exact-skeleton comparison (`lib/roman.ts`) would
+     * accept: typing your own name adds letters the target doesn't have, and
+     * omitting the blank is not what the English asks for either. Neither
+     * failure mode existed before this change, because `phrases` could never
+     * reach `produce` at all.
+     */
+    const producible = (w: Word) => isTypeable(w) && !w.roman.includes('...') && !w.urdu.includes('...');
+    const produceEligible = picks.filter(producible);
+    const produceCount = Math.min(produceEligible.length, Math.ceil(picks.length / 3));
+    const produceIds = new Set(produceEligible.slice(0, produceCount).map((w) => w.id));
+
+    let meetTurn = 0;
     picks.forEach((w) => {
-      const eligible: PhraseDemand[] = isTypeable(w) ? ['meet', 'recall', 'produce'] : ['meet', 'recall'];
-      const demand = eligible.slice().sort((a, b) => counts[a] - counts[b] || SCARCITY[b] - SCARCITY[a])[0];
-      counts[demand]++;
-      if (demand === 'produce') exercises.push({ kind: 'typeWord', word: w });
-      else exercises.push(wordExercise(w, PHRASE_WORDS, track, demand === 'meet' ? 'meet' : 'recall', 1));
+      if (produceIds.has(w.id)) {
+        exercises.push({ kind: 'typeWord', word: w });
+        return;
+      }
+      // Alternates by a counter of its own, not by position in `picks` — a
+      // run of consecutive produce picks (removed above) would otherwise
+      // desync a plain `i % 2` from what actually still needs assigning.
+      const demand = meetTurn++ % 2 === 0 ? 'meet' : 'recall';
+      exercises.push(wordExercise(w, PHRASE_WORDS, track, demand, 1));
     });
   } else if (lesson.kind === 'vocab' && lesson.topic) {
     /**
