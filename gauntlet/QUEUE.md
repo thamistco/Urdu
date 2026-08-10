@@ -64,22 +64,29 @@ notes: The trap is fixing this by raising the word count alone. Neither
   rules that catch that, measured per track.
 
   WHAT IS LEFT, and it is the whole reason this is still here. URD-010
-  closed the review row and URD-013 closed the letters row — 39 and 9 short
-  lessons to 0 — so this is 38 of 319 now, re-measured at 2d6cc5a:
+  closed the review row, URD-013 closed the letters row, URD-012 closed the
+  phrases share/run problem — but phrases was never a length problem and
+  still isn't, so it stays in the table below at 38 of 319, re-measured at
+  b98bda2:
 
     grammar   25   a concept has as many drills as it has
     sentences 12   `lesson.size` sentences and no repetition pass
-    phrases    1   and 100% meaningPick, see URD-012
+    phrases    1   and 0.9 min, 6 exercises — length only; run/share is done
 
-  Neither review nor letters is fully done, only long enough. Review still
-  samples the wrong material (URD-016), never lets a letter share fall off
-  after the alphabet (URD-017), and never asks for meaning in the reading
-  direction (URD-018). Letters is 96.8% isolated-glyph recognition against
-  reading-in-context (URD-020), its one context word touches at most 1 of a
-  group's 4-7 letters (URD-021), and drills visually confusable letters
-  (daal/Daal) with no separation (URD-022). None of the five is a length
-  problem, so none blocks this item — but do not read "0 short lessons" as
-  "review and letters are finished".
+  None of review, letters or phrases is fully closed, only their length or
+  run/share half is. Review still samples the wrong material (URD-016),
+  never lets a letter share fall off after the alphabet (URD-017), and never
+  asks for meaning in the reading direction (URD-018). Letters is 96.8%
+  isolated-glyph recognition against reading-in-context (URD-020), its one
+  context word touches at most 1 of a group's 4-7 letters (URD-021), and
+  drills visually confusable letters (daal/Daal) with no separation
+  (URD-022). Phrases can still fail its own run/share rule on an unlucky
+  future draw — 8.24% of them, computed exactly — because the fix reassigns
+  after a uniform draw rather than guaranteeing the draw itself has enough
+  typeable phrases (URD-023). None of the six is a length problem except
+  phrases' own remaining 0.9 minutes, so none of the other five blocks this
+  item — but do not read "0 short lessons for review/letters" or "phrases
+  run/share is clean" as either being finished.
 
   URD-013 also cost four rounds of critique before its length fix alone was
   right: two critics found three separate blocking defects across the
@@ -238,23 +245,6 @@ notes: Both found by THE CRITIC on URD-A02 as MINOR. Paired because they are the
   same file and the same sitting. Do not memoise across tracks by accident — the
   tracks emit different exercises for the same lesson and that difference is
   what the run and share rules exist to see.
-
-## URD-012 — A phrase lesson is not six of the same question
-attempts: 0
-files: src/exercises/generator.ts, scripts/check-shape.js
-definition of done: The run and single-kind-share rules in check:shape pass for
-  lessons that are not vocabulary. Today `phrases` is 100% meaningPick with 6 in
-  a row (phrases share one icon, so picture and listen cues do not work, which is
-  why it was written that way), `rev-your-first-readings` emits 9 consecutive
-  wordFromMeaning, and 20 script and 41 Roman lessons are over 40% one kind. The
-  vocabulary pipeline in `buildLessonExercises` already solves this shape; the
-  work is applying it where the cue constraints differ.
-verify: npm run check:shape
-notes: Found by the rules added in d778928 failing on data that item never
-  touched, which is how those rules earned their keep. A phrase is typically too
-  long to build from tiles, so the alternation available here is between asking
-  the meaning and asking for the phrase from the meaning; that is two kinds, and
-  two is enough to break a run of six.
 
 ## URD-014 — A wiped profile deserves a different sentence
 attempts: 0
@@ -422,3 +412,29 @@ notes: Found by the CURRICULUM CRITIC reviewing URD-013. Recommended over
   URD-021 as the higher-priority pick if only one of the two is taken next,
   because it actively works against the letters just taught rather than
   merely under-using them.
+
+## URD-023 — Guarantee a phrases lesson has enough typeable phrases, not just reassign after drawing
+attempts: 0
+files: src/exercises/generator.ts
+definition of done: The phrases branch draws 6 phrases uniformly from all 28
+  with no floor on how many are typeable, then assigns exercise kinds among
+  whatever it drew. When fewer than 2 of the 6 are typeable — 8.24% of draws,
+  computed exactly (hypergeometric, 14 of 28 typeable, 6 drawn) — no
+  reassignment can keep any kind under check:shape's 40% share, which is a
+  fact about dividing six things three ways with two producible, not
+  something the assignment logic can fix after the fact. The lesson that
+  ships today draws 3 typeable and clears it, but that is this draw's luck.
+  Fix it at the draw, not the reassignment: bias `seededShuffle`'s pick so at
+  least `produceCount` of the drawn phrases are typeable, then fill the rest
+  freely. A test asserts every one of many synthetic lesson ids at size 6
+  clears the 40% share floor, not just the one that ships.
+verify: npm run check:shape -- --kind=phrases
+notes: Found by THE CRITIC reviewing URD-012, across two review rounds. The
+  first round's fix (target-based reassignment instead of greedy) closed the
+  ordering-dependence half of the problem; this is the other half, and
+  cheaper than the two alternatives named when it was first found — a fourth
+  exercise kind that doesn't depend on typeability, or growing the lesson
+  size so the law of large numbers does the work. check:shape does not catch
+  this today only because the one real lesson happens not to trigger it;
+  it would catch a future one before it shipped, which is why this is MAJOR
+  and not BLOCKING.
