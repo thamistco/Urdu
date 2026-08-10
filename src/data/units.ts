@@ -187,16 +187,24 @@ const P = (title: string, subtitle: string, xp = 20, size = 6): Lesson => {
    * the generator's `lesson.kind === 'phrases'` branch — phrases share one
    * icon, so no picture-based kind is answerable). Three kinds can only ever
    * hold check:shape's 40% single-kind-share floor when the most-populated
-   * kind still fits: `Math.ceil(size / 3) / size <= 0.4`. That is true for
-   * every size except 4 and 7, where the best possible split — 2 of 4 and 3
-   * of 7 — is 50% and 42.9%. No rebalancing inside the generator can get under
-   * the floor at those sizes; it is a fact about dividing by three, not a bug
-   * a smarter assignment fixes. Asserted here, at the one place a size is
-   * chosen, rather than left to be found again by check:shape.
+   * kind still fits: `Math.ceil(size / 3) / size <= 0.4`. That fails at
+   * sizes 1, 2, 4 and 7 — the best possible split is 1 of 1, 1 of 2, 2 of 4
+   * and 3 of 7, all over 40%. No rebalancing inside the generator can get
+   * under the floor at those sizes; it is a fact about dividing by three, not
+   * a bug a smarter assignment fixes.
+   *
+   * Computed from the formula rather than a hardcoded list of bad sizes. An
+   * earlier version named 4 and 7 explicitly and missed 1 and 2 — the same
+   * "the comment claims more than the code checks" mistake this file's
+   * generator-side sibling was written to stop making, caught by review in
+   * the same sitting it was introduced. Checking the inequality directly
+   * means there is nothing to remember to keep in sync as the reasoning
+   * changes.
    */
-  if (size === 4 || size === 7) {
+  if (Math.ceil(size / 3) / size > 0.4) {
     throw new Error(
-      `phrases lesson "${title}" has size ${size}; 4 and 7 cannot be split three ways under check:shape's 40% share floor — pick a different size.`
+      `phrases lesson "${title}" has size ${size}; the most any single exercise kind can hold at this size is ` +
+        `${Math.ceil((Math.ceil(size / 3) / size) * 1000) / 10}%, over check:shape's 40% share floor — pick a different size.`
     );
   }
   return {

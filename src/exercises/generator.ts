@@ -557,26 +557,33 @@ export function buildLessonExercises(
      * lands 2 produce / 2 meet / 2 recall.
      *
      * "2 or more typeable" is doing real work in that sentence, and this is
-     * the part with no clean fix. At this lesson's size, only `produceCount
-     * === 2` clears the 40% floor at all — worked out by hand and confirmed
-     * by brute force: 0 produced is 3/3 on meet/recall (50%), 1 produced
-     * still forces an odd 3/2 split of the other five (50%), and there is no
-     * fourth kind to absorb the slack. So when fewer than 2 of the 6 sampled
-     * phrases are typeable, no reassignment here — greedy, target-based, or
-     * otherwise — can bring the lesson under the floor; it is a fact about
-     * dividing six things three ways with only two producible, not a bug in
-     * how they are divided. Measured against 3,000 synthetic lesson ids over
-     * the real 28-phrase pool: about 7.6% draw fewer than 2 typeable phrases
-     * and fail this way. The one lesson that actually ships draws 3 typeable
-     * (checked directly), clearing it with room, but that is this lesson's
-     * luck, not a property this function guarantees for a different one.
-     * Queued as URD-023 rather than solved here: fixing it for every future
-     * draw needs either a fourth kind that does not depend on typeability,
-     * or enough phrases per lesson that the law of large numbers does the
-     * work instead of a single unlucky draw. Three kinds cannot split any
-     * lesson size under 40% each either way — `Math.ceil(size / 3) / size`
-     * clears 0.4 for every size except 4 and 7 — which is guarded in `P()`
-     * (units.ts) so that half of the problem cannot recur silently.
+     * the part with no clean fix *at this stage*. At this lesson's size,
+     * only `produceCount === 2` clears the 40% floor at all — worked out by
+     * hand and confirmed by brute force: 0 produced is 3/3 on meet/recall
+     * (50%), 1 produced still forces an odd 3/2 split of the other five
+     * (50%), and there is no fourth kind to absorb the slack. So once six
+     * phrases have been drawn with fewer than two of them typeable, no
+     * *reassignment* — greedy, target-based, or otherwise — can bring the
+     * lesson under the floor. Computed exactly (hypergeometric, 14 of the 28
+     * phrases typeable, 6 drawn without replacement): 8.24% of draws land
+     * fewer than 2 typeable. The one lesson that actually ships draws 3
+     * typeable (checked directly), clearing it with room, but that is this
+     * draw's luck, not a property this function guarantees for a different
+     * one — and `check:shape` is the backstop that would catch an unlucky
+     * one before it shipped, not this comment.
+     *
+     * "No clean fix" is about reassignment specifically, and it is
+     * narrower than the first version of this comment claimed: the pick
+     * itself, two lines up, draws uniformly from all 28 phrases with no
+     * floor on how many are typeable. Biasing that draw — guarantee at
+     * least `produceCount` typeable phrases, fill the rest freely — would
+     * remove the residual for every future draw rather than only this one,
+     * and is the cheapest of the three ways to actually close this, not a
+     * fourth kind or a bigger lesson. Queued as URD-023 with that option
+     * named explicitly, after review found the first version of this
+     * comment had quietly narrowed to the two costlier fixes. Three kinds
+     * cannot split any lesson size under 40% each regardless — guarded in
+     * `P()` (units.ts) so that half of this problem cannot recur silently.
      */
     const picks = seededShuffle(PHRASE_WORDS, lesson.id).slice(0, lesson.size);
     /**
