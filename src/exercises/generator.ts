@@ -45,11 +45,39 @@ const PHRASE_WORDS: Word[] = PHRASES.map((p) => ({
   register: pronounRegisterOf(p.urdu),
 }));
 
-const getAnyWord = (id: string): Word | undefined => getWord(id) ?? PHRASE_WORDS.find((w) => w.id === id);
+/**
+ * Sentences reshaped as word-like items, the same move as `PHRASE_WORDS`
+ * above and for the same reason: `sentenceBuild` was the only exercise kind
+ * a sentence could appear in, which meant a sentences lesson could not be
+ * lengthened into a sitting without becoming 100% one kind the moment it
+ * passed six exercises — the exact failure `check:shape`'s share rule
+ * catches, and the one letters and phrases both had before their own fixes.
+ *
+ * `id` is the sentence's own id, not a new one, which matters beyond
+ * consistency: `check:voice`'s speakable list already includes every
+ * `Sentence`, so the "hear it" button on a `meaningPick`/`wordFromMeaning`
+ * exercise resolves to a clip that already exists. Nothing new needed
+ * generating or auditing.
+ */
+const SENTENCE_WORDS: Word[] = SENTENCES.map((s) => ({
+  id: s.id,
+  urdu: s.words.join(' '),
+  roman: s.roman,
+  meaning: s.meaning,
+  emoji: '📝', // audit:emoji-ok — a sentence has no picture of its own
+  topic: 'sentences',
+  level: s.level,
+  register: pronounRegisterOf(s.words.join(' ')),
+}));
 
-/** Distractors for a review item. Phrases are not in WORDS, so `wordsByTopic`
- *  returns nothing for them and they would be offered against random nouns. */
-const poolFor = (w: Word): Word[] => (w.topic === 'phrases' ? PHRASE_WORDS : wordsByTopic(w.topic));
+const getAnyWord = (id: string): Word | undefined =>
+  getWord(id) ?? PHRASE_WORDS.find((w) => w.id === id) ?? SENTENCE_WORDS.find((w) => w.id === id);
+
+/** Distractors for a review item. Phrases and sentences are not in WORDS, so
+ *  `wordsByTopic` returns nothing for them and they would be offered against
+ *  random nouns. */
+const poolFor = (w: Word): Word[] =>
+  w.topic === 'phrases' ? PHRASE_WORDS : w.topic === 'sentences' ? SENTENCE_WORDS : wordsByTopic(w.topic);
 
 // ---- per-item exercise builders -----------------------------------------
 
@@ -805,12 +833,63 @@ export function buildLessonExercises(
 
   if (lesson.kind === 'sentences') {
     const pool = lesson.level ? SENTENCES.filter((x) => x.level === lesson.level) : SENTENCES;
-    for (const sen of seededShuffle(readableSentences(pool.length ? pool : SENTENCES, lesson.id), lesson.id).slice(
+    const picks = seededShuffle(readableSentences(pool.length ? pool : SENTENCES, lesson.id), lesson.id).slice(
       0,
       lesson.size
-    )) {
-      const ex = sentenceExercise(sen, track);
-      if (ex) exercises.push(ex);
+    );
+    /**
+     * Every sentence met three times — recognise its meaning, retrieve it
+     * from the meaning, then build it from tiles — the same meet-recall-
+     * produce climb `vocab` uses, and for the same reason `sentenceBuild`
+     * alone was: one exercise per sentence at the default size of 5 is 0.8
+     * minutes, an interruption rather than a sitting.
+     *
+     * `sentenceExercise` (the `produce` sighting) was the *only* kind a
+     * sentence could ever appear in, so simply asking for more sentences
+     * could not fix the length without also fixing the shape: past six
+     * exercises, a lesson built entirely from it is 100% one kind, exactly
+     * what `check:shape`'s share rule exists to catch — the same trap
+     * letters and phrases were both in before their own fixes. `meaningPick`
+     * (show the sentence, ask its meaning) and `wordFromMeaning` (show the
+     * meaning, ask for the sentence) are the two more kinds available
+     * without new UI, the same move `PHRASE_WORDS` made for phrases: reshape
+     * the content as a `Word` and let it flow through the exercises that
+     * already exist for one.
+     *
+     * Round-major, offset by the sentence's own position — the same
+     * structure letters landed on after shipping the wrong one first:
+     * locking the kind to the round alone put every sentence in a round
+     * through the identical kind, back to back, sentences-per-lesson times
+     * running. `turn = (round + idx) % 3` instead means every sentence still
+     * visits all three kinds across its three sightings (adding 0, 1, 2 to a
+     * fixed `idx` mod 3 is a permutation of the three), it just starts at a
+     * different one, so two CONSECUTIVE sentences within one round never
+     * share a kind.
+     *
+     * That guarantee stops at the round boundary, on purpose rather than by
+     * oversight: the last sentence of one round and the first of the next
+     * can land on the same turn (measured: `idx` 7 of an 8-sentence lesson
+     * closes round 0 on `recall`, and `idx` 0 opens round 1 on `recall`
+     * too), so the real worst case is two in a row, not zero. Left as is —
+     * two is under check:shape's MAX_RUN of 3 with room, and the fix for it
+     * (offsetting the round itself, the same lesson-to-lesson trick used for
+     * letters) buys uniformity the check does not ask for at the cost of
+     * complexity that would need its own re-verification.
+     */
+    const sentencePool = SENTENCE_WORDS.filter((w) => !lesson.level || w.level === lesson.level);
+    for (let round = 0; round < 3; round++) {
+      picks.forEach((sen, idx) => {
+        const turn = (round + idx) % 3;
+        const w = SENTENCE_WORDS.find((x) => x.id === sen.id);
+        if (!w) return;
+        if (turn === 2) {
+          const ex = sentenceExercise(sen, track);
+          if (ex) exercises.push(ex);
+        } else {
+          const ex = wordExercise(w, sentencePool, track, turn === 0 ? 'meet' : 'recall', 1);
+          exercises.push(ex);
+        }
+      });
     }
   }
 
@@ -955,7 +1034,15 @@ export function buildLessonExercises(
   // build, match — so trimming it to `size` would cut the closing run, which is
   // the hardest and most valuable part. Every other kind is a flat list where
   // trimming is the right way to hit the intended length.
-  return lesson.kind === 'vocab' ? exercises : exercises.slice(0, lesson.size);
+  //
+  // Sentences joins vocab in the exemption for a different reason: `size`
+  // means *sentences*, not exercises, since the meet-recall-produce climb
+  // below meets each one three times. Trimming to `lesson.size` here cut a
+  // 24-exercise lesson back down to the 8 that used to be the whole thing —
+  // measured as the first version of this shipped: `size` was raised to
+  // widen the lesson, and this line quietly put it back.
+  const composed = lesson.kind === 'vocab' || lesson.kind === 'sentences';
+  return composed ? exercises : exercises.slice(0, lesson.size);
 }
 
 /**
