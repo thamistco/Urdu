@@ -151,7 +151,16 @@ const G = (conceptId: string, title: string, subtitle: string, xp = 25, size = 6
   xp,
   size,
 });
-const S = (level: Level, title: string, subtitle: string, xp = 20, size = 5): Lesson => ({
+/**
+ * `size` is the number of sentences, not the number of exercises — the
+ * generator meets each one three times (recognise its meaning, retrieve it,
+ * build it), so 8 sentences is 24 exercises, about 3.6 minutes. Was 5
+ * sentences and one exercise each: 5 exercises, 0.8 minutes, an
+ * interruption rather than a sitting; check:shape measures the real output
+ * rather than trusting this number, same as everywhere else `size` is a
+ * budget and not a count.
+ */
+const S = (level: Level, title: string, subtitle: string, xp = 20, size = 8): Lesson => ({
   id: uid(`s-${level}`),
   title,
   subtitle,
