@@ -527,10 +527,49 @@ export function buildLessonExercises(
   }
 
   if (lesson.kind === 'phrases') {
-    // Phrases share one icon, so picture/listen cues don't work — always show
-    // the phrase and pick its meaning.
+    /**
+     * Phrases share one icon, so a picture question is unanswerable: every
+     * option would show the same speech bubble, and `distinctCue` silently
+     * folds any attempt at `multipleChoice` or `listenTap` back to
+     * `meaningPick` anyway (see `wordExercise`'s `pictureOptions.length <
+     * DISTRACTORS` guard). That left exactly one kind reachable, so the
+     * lesson was `meaningPick`, every time — 100% one kind, 6 in a row,
+     * both failures `check:shape`'s run and share rules exist to catch.
+     *
+     * Two more kinds are genuinely available without a picture: `recall`
+     * (`wordFromMeaning`, show the English, pick the phrase) always works,
+     * and `produce` (`typeWord`) works for whichever phrases are short
+     * enough to type — 16 of 28 in the current corpus.
+     *
+     * A fixed rotation across three kinds does not by itself keep any one
+     * kind under check:shape's 40% share: with only 6 phrases and produce
+     * eligible for roughly half of them, a naive "produce when typeable,
+     * meet otherwise" rule can land every ineligible phrase on `meet` and
+     * push it past 40% on an unlucky draw — the corpus this ships with does
+     * exactly that if produce isn't budgeted deliberately. So each phrase is
+     * assigned to whichever eligible kind currently has the fewest phrases,
+     * with ties broken toward the scarcer kind first (`produce`, since not
+     * every phrase can take it; then `recall` over `meet`, since `meet` is
+     * always available as the fallback and so is the safest one to end up
+     * lopsided). That bounds every kind close to a third regardless of how
+     * the shuffle happens to sort typeable and untypeable phrases together.
+     *
+     * Assigning in shuffle order and emitting in that same order is what
+     * keeps runs short too: it does not sort phrases by kind before
+     * emitting them, so kinds interleave as a side effect of nothing forcing
+     * them not to.
+     */
     const picks = seededShuffle(PHRASE_WORDS, lesson.id).slice(0, lesson.size);
-    for (const w of picks) exercises.push(wordExercise(w, PHRASE_WORDS, track, 'meet', 1));
+    type PhraseDemand = 'meet' | 'recall' | 'produce';
+    const SCARCITY: Record<PhraseDemand, number> = { produce: 2, recall: 1, meet: 0 };
+    const counts: Record<PhraseDemand, number> = { meet: 0, recall: 0, produce: 0 };
+    picks.forEach((w) => {
+      const eligible: PhraseDemand[] = isTypeable(w) ? ['meet', 'recall', 'produce'] : ['meet', 'recall'];
+      const demand = eligible.slice().sort((a, b) => counts[a] - counts[b] || SCARCITY[b] - SCARCITY[a])[0];
+      counts[demand]++;
+      if (demand === 'produce') exercises.push({ kind: 'typeWord', word: w });
+      else exercises.push(wordExercise(w, PHRASE_WORDS, track, demand === 'meet' ? 'meet' : 'recall', 1));
+    });
   } else if (lesson.kind === 'vocab' && lesson.topic) {
     /**
      * A vocabulary lesson climbs: meet each word with a picture, come back to
