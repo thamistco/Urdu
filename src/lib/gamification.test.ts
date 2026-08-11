@@ -104,9 +104,17 @@ describe('level titles', () => {
   it('the top title is reachable by finishing the course', () => {
     const topTitle = 'Master';
     // The lowest level carrying the top title — levelTitle's own thresholds,
-    // not a number copied out of gamification.ts by hand.
+    // not a number copied out of gamification.ts by hand. Capped: THE CRITIC
+    // found that a future rename of the top tier's string (no level ever
+    // producing "Master" again) turns this from a failing assertion into an
+    // uncapped loop that hangs the whole run, past what vitest's own timeout
+    // can interrupt since it depends on the same event loop. Failing loudly
+    // inside this test is exactly what a test is for; hanging the suite is not.
     let topTitleLevel = 1;
-    while (levelTitle(topTitleLevel) !== topTitle) topTitleLevel++;
+    while (levelTitle(topTitleLevel) !== topTitle) {
+      topTitleLevel++;
+      if (topTitleLevel > 1000) throw new Error(`no level up to 1000 carries the title "${topTitle}"`);
+    }
 
     const courseTotalXp = ALL_LESSONS.reduce((n, l) => n + l.xp, 0);
 

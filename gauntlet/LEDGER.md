@@ -1376,3 +1376,71 @@ needs to, and the mount-time auto-scroll doesn't re-fire when
 `currentLevel` advances mid-session — both measured, neither blocking).
 
 branch: claude/gauntlet-path-mount
+
+## CLAIMED · URD-004 · 2026-08-11T20:10Z
+Top unclaimed item below URD-A02. "Master," the top level title, sits at
+level 25 (18,000 XP); a complete playthrough (sum of every lesson's `.xp`
+across `ALL_LESSONS`) pays out ~7,220 XP — 2.49x the whole course,
+structurally unreachable. Already re-measured worse once (11,552/level 20
+when first filed, 7,220/level 16 after URD-A02 attempt 1 regrouped
+lessons), which is why the item's own notes insist the fix derive both
+numbers rather than hardcode either.
+verify: `npm test -- src/lib/gamification.test.ts`
+branch: claude/gauntlet-top-title, cut from claude/gauntlet-path-mount
+after URD-002 shipped.
+
+## CRITIQUE · URD-004 · 2026-08-11T20:55Z
+Dispatched THE CRITIC only. Not CURRICULUM CRITIC (no lesson/word/order
+content changed), not DESIGN CRITIC (no screen changed — titles render
+through the same existing UI at different XP amounts), not PLAYER (no
+exercise/lesson behavior changed).
+
+### THE CRITIC
+PASS. Reproduced the core numbers independently rather than trusting the
+commit: summed `ALL_LESSONS[].xp` directly (7,220, matching exactly),
+recomputed `xpForLevel(14)=5,460` (24.38% margin) and `xpForLevel(16)=7,200`
+(0.28% margin, confirming the "razor-thin at the ceiling" reasoning for
+not putting Master at the literal max). Checked the lower-tier spacing by
+converting to course-completion fractions rather than raw level gaps
+(3%/8%/18%/30%/46%/76%) and found it reasonably even despite constant
+level-gaps, not bunched.
+MAJOR (fixed same round): deliberately broke the fix three ways per the
+brief. Reverting the threshold and trying an intermediate wrong value
+both failed with clear, correct messages. Renaming the top tier's string
+(simulating a future refactor) caused the test's own lookup loop —
+`while (levelTitle(topTitleLevel) !== topTitle) topTitleLevel++` — to
+hang indefinitely, past what vitest's timeout could interrupt since it
+depends on the same event loop the loop was blocking. Real, demonstrated
+failure mode, not hypothetical. Capped the loop with a fail-loudly
+throw instead of a silent hang.
+MAJOR (queued, not fixed here — different file/subsystem this item was
+never scoped to touch): grepped for other level/XP-threshold assumptions
+and found `achievements.ts`'s "Scholar" achievement gates its top tier at
+10,000 total XP — 38.5% more than the same 7,220 XP course total provides,
+the identical bug class in a sibling system. Filed as URD-033.
+MINOR: the six lower tiers' spacing was chosen "by feel," not by a stated
+formula — added a code comment recording the fractions THE CRITIC
+computed, so the next re-space has something to check against besides
+eyeballing again.
+
+## PASSED · URD-004 · 2026-08-11T21:05Z
+$ npx vitest run
+  6 files, 79/79 tests passed (was 78 — one new test).
+
+$ npm run check:all
+  check:all — all 25 steps pass against a deploy-shaped build.
+  Run alone on a still tree, after the final edit.
+
+Induced failure (three ways, per THE CRITIC's brief): reverted the
+threshold to level 25 — test failed with "expected 18000 to be less than
+or equal to 7220." Tried level 20 — failed with "expected 11400 to be
+less than or equal to 7220." Renamed the top tier's string to simulate a
+future refactor — confirmed the capped loop now throws a clear error
+("no level up to 1000 carries the title...") instead of hanging, closing
+THE CRITIC's MAJOR finding. All three restored and re-confirmed 79/79.
+
+New queue item: URD-033 (achievements.ts's Scholar tier is unreachable
+against the real course total, the same bug class this item fixed for
+level titles, in a system this item never touched).
+
+branch: claude/gauntlet-top-title
