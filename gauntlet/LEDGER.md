@@ -1220,3 +1220,159 @@ two seeds) rather than opening a duplicate — URD-005 and URD-006 already
 covered the root cause exactly.
 
 branch: claude/gauntlet-lint-any
+
+## CLAIMED · URD-002 · 2026-08-11T16:35Z
+Top unclaimed item below URD-A02 in QUEUE.md: the learn path was
+described as a flat ScrollView mounting all 348 lesson rows.
+verify: `npm run check:path`
+branch: claude/gauntlet-path-mount, cut from claude/gauntlet-lint-any
+after URD-001 shipped.
+
+## INVESTIGATION · URD-002 · 2026-08-11T16:50Z
+Measured first rather than assumed. `HomeScreen.tsx` already had a
+pre-existing `isOpen(lvl) &&` gate collapsing every course stage except
+the learner's current one (introduced well before this session, commit
+7e05231) — a fresh guest mounted 87 buttons total, not 348. What the item
+actually lacked was the check it calls for: `scripts/check-path.js` did
+not exist. Wrote it (three scenarios: fresh guest, learner 70% through
+the course, and — added after a live test found independent per-level
+toggles could still reach 354 mounted buttons by tapping every header —
+clicking every level open in turn). That third scenario surfaced a real,
+reachable gap the default-state check alone would have missed: levels
+were independent toggles (`openLevels: Partial<Record<Level,boolean>>`),
+so a learner curious enough to open all four reached the exact 348-row
+state the screen exists to avoid. Fixed at the root: replaced with a
+single `openLevel` value — an accordion, so opening one closes whichever
+was open, making the multi-open state unrepresentable rather than merely
+detectable.
+
+## CRITIQUE · URD-002 · round 1, 2026-08-11T17:15Z
+Dispatched THE CRITIC and DESIGN CRITIC — the accordion is a real
+interaction-behavior change on the Home screen, not just a new check.
+
+### THE CRITIC — round 1
+PASS, no BLOCKING. Confirmed the "already mitigated" claim two ways: code
+inspection (plain `&&`-gated `.map()`, no display:none trick) and
+measurement (mounted counts land exactly on each open level's real
+total). Confirmed `lesson.size`-style semantic drift doesn't apply here
+(nothing reads a lesson count off this screen). Sampled distractor... n/a
+(not a content item). Four MAJOR findings:
+1. `check:path`'s `BOUND` (`maxLevelLessons + 20`) had no ceiling against
+   `ALL_LESSONS.length` — if a future regroup ever concentrated the
+   course into fewer, bigger levels, the bound could climb toward the
+   whole course and the check would quietly stop being able to fail.
+2. The accordion pin (`openLevel`) persisted for the rest of the session
+   once a learner touched *any* header, not just the one that would later
+   become current — `HomeScreen` never remounts between lessons — silently
+   defeating both "open my current stage" and the mount-time
+   auto-scroll-to-current-lesson for the remainder of the visit.
+3. `check:path`'s third scenario used `page.getByRole('button', {name:
+   /Expand/}).first()`, which always grabs the topmost DOM match — verified
+   live it only ever oscillated between Beginner and Elementary, never
+   reaching Intermediate (94, the real largest level).
+4. Recorded that this item could not close on THE CRITIC's verdict alone
+   per ROLES.md, since DESIGN CRITIC's screenshot review was still
+   outstanding — and (live evidence in the same checkout) already turning
+   up a further real bug.
+Also flagged a MINOR (content-coupled lesson-row-suffix heuristic, unlikely
+to misfire) not requiring action.
+
+### DESIGN CRITIC — round 1
+**BLOCK.** Real repro, not hypothetical: default state (Beginner open,
+~8000px), scroll down to Elementary's collapsed header, tap it. Measured
+the actual scroll container: `scrollTop` unchanged (8420) both 50ms and
+900ms after the tap, while `scrollHeight` shrank (Beginner collapsing).
+Since the same raw pixel offset that used to sit exactly at "Elementary's
+collapsed header" now lands deep inside Elementary's own freshly-opened
+list, the resulting screen showed six-plus anonymous lesson rows with
+zero visible stage header — reachable by the single most natural next
+action from the default screen (scroll past stage one, open stage two),
+which every fresh learner starts in exactly the state to trigger.
+Also flagged a MAJOR (pre-existing missing `aria-expanded`, made costlier
+by the accordion silently changing a header a screen-reader user wasn't
+touching) and confirmed the collapse-to-none state reads as intentional,
+not broken.
+
+## FIX ROUND — round 2, commit 1344973
+All four of THE CRITIC's findings and DESIGN CRITIC's BLOCKING finding
+addressed in one round:
+- BOUND capped at `Math.min(maxLevelLessons + 20, Math.ceil(ALL_LESSONS.length
+  / 2))`, with the cap itself reported as a problem if it ever engages
+  (not silently widened to allow a future regression through).
+- `useEffect(() => setOpenLevel(undefined), [currentLevel])` added — the
+  pin now clears when the learner's actual progress advances to a new
+  stage, not just on remount.
+- check:path's third scenario rewritten to target each level by its own
+  title (`^${title}\.`), visiting all four instead of oscillating between
+  two.
+- The scroll bug: two precise-positioning approaches were tried and both
+  measured wrong against the real react-native-web build (documented
+  in-code as a record for whoever touches this next) — `measureLayout`
+  against the ScrollView returned 0 regardless of the header's real
+  position; tracking `onScroll` offset raced a real browser behavior
+  (the browser clamps `scrollTop` synchronously when a tall stage
+  collapses, ahead of the throttled event that would report it). Landed
+  on resetting to `y: 0` instead: no measurement, so nothing to race,
+  and "no header in sight" becomes impossible by construction (the app
+  header and today's-word card are always there) rather than a careful
+  arithmetic guarantee that kept failing in practice.
+
+## CRITIQUE · URD-002 · round 2, 2026-08-11T18:05Z
+
+### DESIGN CRITIC — round 2
+**PASS.** Reproduced the exact round-1 repro at both 375px and 320px:
+`scrollTop === 0` after the tap settles in both cases, sampled the
+animation at 25ms resolution (eased, ~700ms, no hard cut), and confirmed
+the landing screen is always the app header / stats / continue card /
+today's-word card — never a wall of anonymous rows. Round-1-passing
+behaviors re-confirmed unregressed (collapse-to-none, default view).
+Measured the trade-off rather than assuming it: because opening a stage
+collapses whichever was open, the newly-open content is reachable with
+~500px of scroll from the top, not a symmetric ~8000px round trip — this
+meaningfully weakens the "disorienting" concern. One MINOR, not gating: a
+tighter landing (just above the accordion) would still guarantee a
+labeled state while roughly halving that 500px — filed as URD-032.
+
+### THE CRITIC — round 2
+**PASS.** Verified all four fixes independently, not by re-reading the
+diff. BOUND: reproduced the exact 81/94/94/bound-114 numbers, hand-checked
+the cap's arithmetic and confirmed (by simulating larger `maxLevelLessons`
+values) it actually reports a problem when it engages, and noted the
+existing 50%-of-total check independently backstops it regardless of
+where the cap is set. `currentLevel`-reset effect: confirmed the
+dependency array, live-tested the "browsing ahead without currentLevel
+changing" case (opened and held for 3 seconds, no spring-back), checked
+for effect-ordering/loop risk against the pre-existing auto-scroll effect
+(none found) — did not drive a real lesson to completion in-browser to
+observe the reverse case (`currentLevel` actually advancing), and said so
+plainly rather than asserting it. check:path scenario 3: instrumented and
+confirmed live that Intermediate (94, the real largest level) is genuinely
+reached, not just Beginner/Elementary again. Scroll fix: reproduced
+DESIGN CRITIC's exact repro independently at both widths, and additionally
+measured the same ~500px-not-~8000px trade-off DESIGN CRITIC found.
+Confirmed collapsing the open level still triggers no scroll. Two MINOR
+findings: unescaped regex metacharacters in check:path's level-title
+matcher (fixed same round) and an FYI that the once-per-mount auto-scroll
+doesn't re-fire when `currentLevel` advances mid-session while the learner
+is scrolled elsewhere (folded into URD-032 alongside DESIGN CRITIC's
+finding).
+
+## PASSED · URD-002 · 2026-08-11T18:25Z
+$ npm run check:path
+  3/3 scenarios pass: 81 / 94 / 94 lesson rows mounted, bound 114 (largest
+  single level 94 of 348 total).
+
+$ npm run check:all
+  check:all — all 25 steps pass against a deploy-shaped build.
+  Run alone on a still tree, after the final edit.
+
+Induced failure: reverted the `isOpen(lvl) &&` gate to `true &&`,
+confirmed all three check:path scenarios report 348-of-348 mounted
+(exceeding the bound and the 50%-of-total floor), then restored and
+re-confirmed 81/94/94.
+
+New queue item: URD-032 (the stage-open scroll resets further than it
+needs to, and the mount-time auto-scroll doesn't re-fire when
+`currentLevel` advances mid-session — both measured, neither blocking).
+
+branch: claude/gauntlet-path-mount

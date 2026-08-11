@@ -43,6 +43,11 @@ const PORT = 8205;
 const { UNITS, ALL_LESSONS } = load('src/data/units.ts');
 const { LEVEL_ORDER, LEVEL_META } = load('src/data/words.ts');
 
+/** THE CRITIC's round-2 review of this file noted the level-title regex
+ *  below wasn't escaping metacharacters — harmless while every title is a
+ *  plain word, but cheap to make actually safe rather than "safe today". */
+const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 /** A lesson row's own accessibility label always ends in one of these four
  *  phrases (see `LessonNode` in `HomeScreen.tsx`) — distinct from every other
  *  button on the screen (level headers end in "Expand"/"Collapse", the
@@ -155,7 +160,7 @@ async function main() {
       let worst = await countLessonRows(page);
       for (const lvl of LEVEL_ORDER) {
         const title = LEVEL_META[lvl].title;
-        const btn = page.getByRole('button', { name: new RegExp(`^${title}\\.`) }).first();
+        const btn = page.getByRole('button', { name: new RegExp(`^${escapeRegExp(title)}\\.`) }).first();
         if ((await btn.count()) === 0) continue;
         await btn.click({ timeout: 5000 }).catch(() => {});
         await page.waitForTimeout(400);
