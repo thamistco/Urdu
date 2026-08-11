@@ -272,13 +272,26 @@ export function HomeScreen() {
     return () => clearTimeout(t);
   }, [currentId, pathNotice]);
 
-  // The course is long. Only the stage you are on is expanded; the others
-  // collapse to a progress line you can open when you want to look ahead.
-  const [openLevels, setOpenLevels] = useState<Partial<Record<Level, boolean>>>({});
-  const isOpen = (lvl: Level) => openLevels[lvl] ?? lvl === currentLevel;
+  // The course is long. Only one course stage is expanded at a time — the
+  // others collapse to a progress line you can open when you want to look
+  // ahead. Accordion, not independent toggles: each stage's lessons only
+  // mount while its stage is the open one, so opening a second stage closes
+  // whichever was open rather than adding to it. Independent per-level
+  // toggles used to let a learner reach every stage open at once — 348
+  // mounted lesson rows, the exact thing this screen exists to avoid — by
+  // nothing more than curious tapping; `check:path` only exercises the
+  // default state, so this is enforced by there being no way to reach that
+  // state at all, not by a check that would merely notice it.
+  //
+  // `undefined` means "never touched" (falls back to the learner's current
+  // stage); `'none'` is a real, distinct state — tapping the open stage
+  // collapses it, and that is not the same as never having touched anything.
+  const [openLevel, setOpenLevel] = useState<Level | 'none' | undefined>(undefined);
+  const effectiveOpenLevel = openLevel === undefined ? currentLevel : openLevel === 'none' ? null : openLevel;
+  const isOpen = (lvl: Level) => effectiveOpenLevel === lvl;
   const toggleLevel = (lvl: Level) => {
     feedback.tap();
-    setOpenLevels((s) => ({ ...s, [lvl]: !isOpen(lvl) }));
+    setOpenLevel(isOpen(lvl) ? 'none' : lvl);
   };
 
   const openLesson = (lesson: Lesson, _state: string) => {

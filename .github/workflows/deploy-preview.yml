@@ -180,6 +180,15 @@ jobs:
           CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
             npm run check:sizes
 
+      # The path used to be one flat ScrollView mounting every lesson row —
+      # 174, then 608, then 348 as content grew. HomeScreen.tsx now collapses
+      # every course stage except the learner's own, which is real
+      # virtualization by a different name; this holds that in place.
+      - name: Check the learn path doesn't mount the whole course
+        run: |
+          CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
+            npm run check:path
+
       - name: SPA fallback + disable Jekyll
         run: |
           cp dist/index.html dist/404.html
