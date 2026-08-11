@@ -1114,3 +1114,109 @@ cover both sentence-derived climb call sites. URD-028's scope text
 sharpened to name grammar explicitly.
 
 branch: claude/gauntlet-grammar-length
+
+## CLAIMED · URD-001 · 2026-08-11T16:07Z
+Top unclaimed item once the length dimension closed across URD-A02's
+whole backlog. 20 `@typescript-eslint/no-explicit-any` warnings across 4
+files, exactly as the spec named: `src/components/Reveal.tsx` (1),
+`src/exercises/index.tsx` (15), `src/lib/sync.ts` (3),
+`src/screens/ProfileScreen.tsx` (1).
+verify: `npx eslint . --max-warnings 0`
+branch: claude/gauntlet-lint-any, cut from claude/gauntlet-grammar-length
+after URD-031 shipped.
+
+## CRITIQUE · URD-001 · 2026-08-11T16:16Z
+Dispatched THE CRITIC (mandatory) and PLAYER — not for a behavior change
+(none was intended; this is a type-safety refactor), but because the
+highest-risk change, `exercises/index.tsx`'s switch-to-lookup-table
+rewrite, touches every exercise kind's rendering dispatch, and a
+transcription error swapping two entries would typecheck cleanly while
+being a real, silent, learner-facing bug. Not CURRICULUM CRITIC (no
+content changed) or DESIGN CRITIC (no new screen).
+
+### THE CRITIC
+PASS, two MINOR, no BLOCKING/MAJOR. Reproduced everything independently
+rather than trusting the commit message. Diffed the 15-entry
+`EXERCISE_COMPONENTS` table against the original switch key-by-key: exact
+1:1 match. Went further than asked and empirically tested the type
+system's actual guarantee — edited the real file to swap `meaningPick`/
+`wordFromMeaning` (deliberately the hardest case: same-shaped payloads,
+not just a signature change), ran `tsc --noEmit`, watched it fail with a
+real `TS2322`, reverted. Found the commit UNDERCLAIMED its own safety (it
+said "change a signature," but a same-shaped swap fails too, via
+`strictFunctionTypes`'s contravariant check on the discriminant-bearing
+prop) — corrected the record rather than letting an inaccurate but
+favorable claim stand.
+Tested `isSyncPayload` against a battery of malformed inputs (string,
+`{progress:5}`, `null`, `{progress:{}}`, number, boolean, nested-array
+`.settings`, and more) — correct on all but one: `[]`/`[1,2,3]` pass,
+because `typeof [] === 'object'` and an array's absent `.progress`/
+`.settings` satisfy the permissive check vacuously. Not learner-facing
+(`applyRemote` only acts on truthy fields, so an accepted array is inert)
+but contradicts round 1's "falls through to reseeding" claim for that
+specific shape. MINOR — fixed same day (round 2, commit `fba6647`).
+Built a standalone `tsc --strict` probe with `@ts-expect-error` assertions
+to confirm `NoParamScreen` resolves to exactly the 7 `undefined`-params
+screens, no more, no less — including the non-obvious case that
+`LetterLab: {letterId?} | undefined` is correctly excluded (the
+conditional isn't distributive over the indexed-access type).
+Ran the real app: built a tester-mode bundle, jumped to one lesson of
+each of 6 families (letters, vocab, grammar, sentences, reading,
+dialogue), screenshotted each, confirmed the right component rendered
+with `pageerror`/console-error listeners armed throughout — zero errors.
+Reproduced `eslint`, `tsc`, `vitest` (78/78) and `check:all` (24/24)
+independently, fresh, on a clean tree.
+
+### PLAYER
+No BLOCKING/MAJOR — corroborated THE CRITIC via a different method
+(reading the real shipping source of the two highest-risk components
+directly, rather than only screenshotting them) and surfaced one useful,
+out-of-scope side-finding.
+Diffed the same 15-entry table independently and confirmed the 1:1
+match. Read `MeaningPickExercise` and `WordFromMeaningExercise`'s actual
+render logic and confirmed neither is reversed (the first shows Urdu and
+asks "What does it mean?"; the second shows English and asks "How do you
+say it?" with Urdu options) — the specific swap risk this dispatch was
+about, ruled out by source, not just by screenshot.
+Attempted `npm run soak` for additional live coverage of the other 12
+kinds; found and reported plainly, rather than hiding, that it could not
+get there: `soak.js`'s own "34 lessons, 220 exercises, 0 failures"
+summary is misleading on this exact HEAD — replaying the identical seed
+with every screen's text logged showed the run never left lesson one
+(the `lessonsPlayed` counter increments per retry attempt, not per
+completion), reproduced on two independent seeds. Correctly identified
+this as a pre-existing gap already named by URD-005 (soak can't reach
+most kinds) colliding with URD-006 (hearts lockout), not a defect this
+commit introduced — and found a previously-undocumented detail (the
+counter's own dishonesty) worth folding into URD-005 rather than treating
+as a blocker here.
+Only organically exercised 3 of 15 kinds live (`letterForm`/`letterPick`/
+`letterTrace`, ~100+ answers, zero crashes) before the hearts lockout
+stalled further progress — reported the shortfall plainly rather than
+papering over it, and relied on direct source-reading (converging with
+THE CRITIC's independent, stronger compile-time proof) for the other 12.
+
+## PASSED · URD-001 · 2026-08-11T16:20Z
+$ npx eslint . --max-warnings 0
+  (no output — clean)
+
+$ npx tsc --noEmit
+  (no output — clean)
+
+$ npx vitest run
+  6 files, 78/78 tests passed
+
+$ npm run check:all
+  check:all — all 24 steps pass against a deploy-shaped build.
+  Run alone on a still tree, after the final edit.
+
+Induced failure: reverted `Reveal.tsx`'s `style?: StyleProp<ViewStyle>`
+back to `style?: any`, confirmed eslint reports the warning again (plus
+two now-unused-import errors), then restored and re-confirmed clean.
+
+New queue item: none. Appended a reproduction note to URD-005 (the
+misleading `lessonsPlayed` counter, found by PLAYER on this exact HEAD,
+two seeds) rather than opening a duplicate — URD-005 and URD-006 already
+covered the root cause exactly.
+
+branch: claude/gauntlet-lint-any

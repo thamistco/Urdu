@@ -122,20 +122,6 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-001 — Lint clean at zero warnings
-attempts: 0
-files: src/components/Reveal.tsx, src/exercises/index.tsx, src/lib/sync.ts, src/screens/ProfileScreen.tsx
-definition of done: `eslint` passes with `--max-warnings 0`. There are 20
-  `no-explicit-any` warnings across exactly those four files. Give each one a
-  real type. Where a type genuinely cannot be known, `unknown` plus a narrowing
-  check, never a disable comment without a sentence saying why the rule is wrong
-  at that line.
-verify: npx eslint . --max-warnings 0
-notes: Smallest item in the queue and it is first on purpose: it proves the loop
-  can claim, branch, work, verify, commit, push and open a PR before anything
-  harder is trusted to it. If this one does not go green end to end, fix the
-  loop, not the queue.
-
 ## URD-002 — The path screen must not mount every lesson
 attempts: 0
 files: src/screens/HomeScreen.tsx, scripts/check-path.js, package.json, .github/workflows/deploy-preview.yml
@@ -185,6 +171,20 @@ verify: npm run soak -- --lessons 30 --seed 7 --require typeWord,wordBuild,match
 notes: The soak is only worth its runtime if it visits the parts of the app the
   static checks cannot reason about. Right now it is exercising the two kinds
   that are already best covered.
+
+  Re-reproduced by PLAYER reviewing URD-001 (commit 5301c2f), with a detail
+  not previously documented: `soak.js`'s own summary line is actively
+  misleading, not just incomplete. "34 lessons, 220 exercises, 0 failures"
+  sounds like broad coverage; replaying the identical seed with every
+  screen's text logged showed the run never left lesson one — the
+  `lessonsPlayed` counter increments on every outer-loop *attempt*, not on
+  a completion, so a run stuck retrying after repeated heart loss (see
+  URD-006) reports a large, reassuring lesson count while actually
+  covering one lesson's worth of content. Reproduced on two independent
+  seeds (777001, 55501). Whatever fix lands for this item should also
+  make the counter honest — increment on `Lesson complete`, not on entry
+  — so its own summary line stops overstating coverage the way the
+  original vocab-coverage bug overstated a "23 green checks" pipeline.
 
 ## URD-006 — A new learner cannot be locked out with no way back
 attempts: 0
