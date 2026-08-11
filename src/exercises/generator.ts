@@ -248,6 +248,17 @@ const MAX_BUILD_TILES = 8;
  */
 const SIGHTINGS_PER_LETTER = 6;
 
+/**
+ * How many of a grammar concept's tagged sentences to draw into its
+ * meet-recall-produce climb. At 3 exercises per sentence, 6 is 18 quiz
+ * exercises; added to 1 teach and 1-3 drills, every concept whose tagged
+ * pool reaches 6 lands at 20-22 total (3.0-3.3 min), comfortably inside
+ * check:shape's 3-8 minute band with room to spare. Chosen the same way
+ * `SIGHTINGS_PER_LETTER` was: it matches `G()`'s pre-existing default
+ * `size` of 6, which nothing had ever made mean anything until now.
+ */
+const GRAMMAR_SENTENCE_TARGET = 6;
+
 function wordExercise(
   word: Word,
   pool: Word[],
@@ -814,7 +825,14 @@ export function buildLessonExercises(
   if (lesson.kind === 'grammar' && lesson.conceptId) {
     const c = getGrammar(lesson.conceptId);
     if (c) {
-      // teach first, then drill it, then reinforce with matching sentences
+      // Teach it once, drill it once per hand-authored drill (there is no
+      // larger pool to draw more of — each is a specific fill-in-the-blank,
+      // not interchangeable content — so repeating one would show the exact
+      // same question twice), then reinforce with the sentences already
+      // tagged to this concept, in the same meet-recall-produce climb
+      // `sentences` uses. Was: teach + drills(1-3) + 2 static sentences,
+      // 2-6 exercises, 0.3-0.9 min — a concept had as many exercises as it
+      // happened to have drills, not a designed sitting length.
       exercises.push({ kind: 'grammarTeach', concept: c });
       for (const d of c.drills) {
         const ex = grammarDrillExercise(c, d, track);
@@ -824,9 +842,34 @@ export function buildLessonExercises(
         SENTENCES.filter((x) => x.concept === c.id),
         lesson.id
       );
-      for (const sen of seededShuffle(related, lesson.id).slice(0, 2)) {
-        const ex = sentenceExercise(sen, track);
-        if (ex) exercises.push(ex);
+      const picks = seededShuffle(related, lesson.id).slice(0, GRAMMAR_SENTENCE_TARGET);
+      // Below GRAMMAR_SENTENCE_TARGET tagged sentences, the climb below is
+      // still correct — `.slice` just returns what there is — but the
+      // lesson comes up short of the 3-8 minute band; three concepts do
+      // (g-plurals: 4 tagged, g-pronouns/g-ability: 5), documented rather
+      // than solved by repeating one of the too-few sentences a 4th time,
+      // which would show the identical question twice in one sitting. See
+      // URD-029.
+      //
+      // Distractors are drawn from every sentence at this concept's level,
+      // not just the handful picked for this lesson — the same reason
+      // `sentences` gives `wordExercise` the whole level's pool rather than
+      // just its own picks: a small `picks` (as few as 4 for the thinnest
+      // concepts) is not enough source material for four distinct options.
+      const reinforcePool = SENTENCE_WORDS.filter((w) => w.level === c.level);
+      for (let round = 0; round < 3; round++) {
+        picks.forEach((sen, idx) => {
+          const turn = (round + idx) % 3;
+          const w = SENTENCE_WORDS.find((x) => x.id === sen.id);
+          if (!w) return;
+          if (turn === 2) {
+            const ex = sentenceExercise(sen, track);
+            if (ex) exercises.push(ex);
+          } else {
+            const ex = wordExercise(w, reinforcePool, track, turn === 0 ? 'meet' : 'recall', 1);
+            exercises.push(ex);
+          }
+        });
       }
     }
   }
@@ -1041,7 +1084,16 @@ export function buildLessonExercises(
   // 24-exercise lesson back down to the 8 that used to be the whole thing —
   // measured as the first version of this shipped: `size` was raised to
   // widen the lesson, and this line quietly put it back.
-  const composed = lesson.kind === 'vocab' || lesson.kind === 'sentences';
+  //
+  // Grammar joins for the same reason sentences did: `size` was never
+  // wired to anything for a grammar lesson (every `G()` call site uses the
+  // default, unmodified), and now it isn't wired to the emitted count
+  // either — a concept's teach-plus-drills is fixed by its data, and the
+  // sentence-reinforcement climb below is sized by `GRAMMAR_SENTENCE_TARGET`,
+  // not `lesson.size`. Leaving grammar out of this exemption would silently
+  // cut every concept's new climb back down to 6, the same bug caught here
+  // twice already.
+  const composed = lesson.kind === 'vocab' || lesson.kind === 'sentences' || lesson.kind === 'grammar';
   return composed ? exercises : exercises.slice(0, lesson.size);
 }
 
