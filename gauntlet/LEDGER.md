@@ -827,3 +827,177 @@ draw time, not just reassign after drawing — three options named, cheapest
 first).
 
 branch: claude/gauntlet-phrases-grammar
+
+## CLAIMED · URD-024 · 2026-08-10T21:20Z
+The sentences row of URD-A02's remaining backlog. Was one exercise per
+sentence — `size` sentences, `size` exercises, 0.8-1.3 min, an
+interruption rather than a sitting. Gave it the same meet-recall-produce
+climb vocab and phrases already have: reshape each `Sentence` into a
+`Word`-shaped object (`SENTENCE_WORDS`, the same move `PHRASE_WORDS` made)
+so it flows through the existing `meaningPick`/`wordFromMeaning`
+components, three round-major rounds (meet, recall, `sentenceBuild`) per
+sentence.
+verify: `npm run check:shape` (unfiltered — no `--kind=sentences` filter
+exists yet; the run/share sections are shared machinery, only the
+per-lesson-minutes section is what this item moves)
+branch: claude/gauntlet-sentences-length, cut from
+claude/gauntlet-phrases-grammar after URD-012 shipped.
+
+## CRITIQUE · URD-024 · 2026-08-11T13:35Z
+Dispatched all three: THE CRITIC (the exercise-kind and pool-plumbing
+changes), CURRICULUM CRITIC (a sentence's climb is a pedagogy question
+letters/phrases weren't — segmenting or not segmenting a sentence changes
+what the exercise teaches), DESIGN CRITIC (the new `wordFromMeaning`
+component now renders content up to 37 characters it was never built for
+— screenshots required, not a description). Not PLAYER: no lesson
+selection or session-length behavior a soak run would notice changed
+beyond what check:shape already measures directly.
+
+First dispatch of all three (commit 0453fa7) failed outright — hit the
+account's weekly API limit mid-investigation, all three terminated with
+no verdict. Re-dispatched fresh once the limit cleared; all three
+completed against the same commit.
+
+### THE CRITIC
+PASS (conditional on recording MAJORs, not BLOCKING). Checked, not
+assumed: zero id collisions across the vocab/PHRASE_WORDS/SENTENCE_WORDS
+pools `getAnyWord` now falls through (exhaustive script, all ~2,565 ids).
+The round-boundary "max run is 2, not 1" comment holds for all 12 lessons
+x 2 tracks, and is a structural property of `turn=(round+idx)%3` for any
+pool size, not a coincidence of size=8. `lesson.size` semantic drift
+(sentences no longer truncated to it) has exactly one consumer outside
+generator.ts — `dueBudget`, which ignores `size` for any non-review kind —
+so the drift is inert; live-tested the due-review weave too (24→26
+exercises, progress bar tracked correctly). Determinism: two `check:shape`
+runs, byte-identical. `check:all`: 24/24, alone on a clean tree.
+MAJOR: `check-coverage.js` point 5 only inspects `ex.sentence.words`
+(sentenceBuild-only), so meaningPick/wordFromMeaning are structurally
+invisible to it — masked today only because every sentence's round-robin
+turn happens to include a sentenceBuild pass, which itself depends on
+`sentenceExercise` never returning undefined on the roman track (true for
+all 256 sentences, maintained by discipline per the generator's own
+comment, not enforced). Queued: URD-028.
+MAJOR: got the `WordFromMeaningExercise` screenshot the lead could not.
+Confirmed the flagged risk: fixed 26px font, no length adaptation, wraps a
+37-char option to 3-4 lines against 1-2 line siblings. Worse than
+cosmetic — reproduced, three times with different distractor draws, the
+feedback footer landing directly on top of unpicked option cards' Urdu
+text on a *correct* answer at 375x812. Confirmed recoverable by a manual
+~300px scroll (not a stuck state, no content permanently hidden) and
+confirmed no existing check catches it (`check:sizes` never opens a
+lesson).
+
+### CURRICULUM CRITIC
+Not BLOCKING, three MAJOR. Distractor quality checked directly across 4
+sampled lessons (24 questions): same-level, similar-length, genuinely
+distinct wrong options, no giveaways, no two-right-answers. SRS-defeat
+safety checked, not assumed: `itemsOf` keys meaningPick/wordFromMeaning on
+the sentence's own id, `shouldUpdateSrs` dedupes per lesson visit, so the
+3x exposure cannot be gamed the way letters could before that fix — the
+generic fix holds for a case it wasn't written for. Sitting length (3.6
+min for 8 sentences) lands inside the 3-8 minute band, comparable to
+vocab/letters.
+MAJOR: meaningPick/wordFromMeaning show a sentence as one opaque string,
+never segmented — 2 of 3 reps are whole-sentence recognition, only 1 of 3
+(sentenceBuild) forces word-order parsing, inverted from what
+sentences.ts's own header and gauntlet/BENCHMARKS.md call this content
+type's job. Queued: URD-025.
+MAJOR: `readableSentences` filters on word forms only, no grammar-concept
+readiness check. Measured: `s-intermediate`/`s-intermediate-2` draw 6/8
+and 8/8 sentences tagging concepts (future, ability, obligation,
+comparative) not taught by any `G()` lesson until 90-115 positions later.
+Pre-existing (word-only filter and lesson placement predate this commit)
+but this commit triples the exposure and is the first time it enters SRS
+at all. Queued: URD-026.
+MAJOR: measured actual draw coverage across all 12 lessons — 81 of 256
+sentences (31.6%) ever drawn, the rest dead content. Same bug class as the
+vocab-coverage gap this project's gauntlet work started from, previously
+unmeasured for sentences, not fixed by raising `size`. Queued: URD-027.
+
+### DESIGN CRITIC
+PASS, two MAJOR, independently converging on THE CRITIC's screenshot
+finding rather than duplicating it blind. 14 real screenshots at 375px and
+320px, driven against the real production build with `completedLessons`
+seeded for all 346 preceding lessons (tester mode confirmed stripped from
+`npm run build:web` output). Measured live DOM heights, not eyeballed: at
+375px, two option rows in the same exercise measured 252px vs 192px for
+the same fixed 26px font; at 320px, a 388px row against a 312px row.
+`meaningPick` and `sentenceBuild` both pass cleanly at both widths with
+real long-sentence content. Cohesion check: the two new kinds reuse
+existing multiple-choice/tile-tray shapes already taught elsewhere in the
+app, not a bolted-on third shape.
+MAJOR: same root cause THE CRITIC found — `WordFromMeaningExercise` has no
+length-adaptive sizing, unlike its sibling `MeaningPickExercise`
+(`len > 16 ? 26 : len > 9 ? 36 : 56`). Queued alongside THE CRITIC's
+matching finding.
+MAJOR (honest caveat): arithmetic from measured heights suggests the
+longest draws likely push the fourth option below the fold at 320px,
+requiring a scroll before all options are visible. Could not get a live
+screenshot of that exact case — content is drawn by unseeded
+`Math.random()` per load, and a 20-attempt automated hunt for the worst
+draw crashed on a transient navigation timeout. Flagged MAJOR rather than
+BLOCKING because the exercise body sits inside a real `ScrollView` with
+Continue anchored outside it — the same "scrollable, not clipped"
+distinction `check:sizes` already treats as non-broken elsewhere, and
+nothing directly observed was actually unreachable.
+Minor, not queued: `sentenceBuild`'s wrong-answer footer prints "Answer:"
+with nothing after it (`answerLabel()` has no `sentenceBuild` case) —
+cosmetic, the correct order is already shown in the exercise body
+separately, no information lost.
+
+## FIX ROUND — commit (pending, see PASSED entry)
+Two independent MAJORs (THE CRITIC + DESIGN CRITIC) converged on the same
+fixable root cause, so fixed inline rather than only queued:
+`WordFromMeaningExercise` now sizes all four options off the longest
+option's length (`maxLen > 28 ? 14 : > 20 ? 17 : > 12 ? 20 : > 6 ? 24 :
+26`), one shared size per exercise so the grid can't lurch row to row —
+structurally guaranteed by construction, not by luck, and confirmed
+against the real corpus: 192 wordFromMeaning exercises generated across
+all 12 lessons x 2 tracks, longest option 37 chars, sizes correctly drop
+to 14/17/20px for long content.
+The footer-overlap finding (6a) has a distinct root cause independent of
+font size: `LessonScreen.tsx`'s scroll-to-reveal-feedback only fired
+`if (!result.correct)` — built for "the explanation is off-screen below
+a short question," which stopped being the only tall-content case once a
+question itself (the option grid) could be tall. Now fires unconditionally
+on every grade, correct or not.
+The remaining DESIGN CRITIC MAJOR (possible scroll-before-answering on the
+longest draws) is mitigated by the same sizing fix — a 37-char option at
+14px needs meaningfully less vertical room than at a fixed 26px — but not
+re-verified live under the same time pressure that stopped the original
+15-attempt/2-viewport screenshot harness from finishing (it exceeded a
+280s budget without completing a single attempt; redesigning that harness
+for speed was judged not worth the cost against a defect that, even
+unresolved, was already graded MAJOR-not-BLOCKING and matches an existing,
+accepted "scrollable, not clipped" pattern elsewhere in the app). Not
+queued as new — folds into the existing sizing discussion, no separate
+finding survives it.
+The four MAJORs with no cheap, contained fix (climb ratio, grammar
+readiness, pool coverage, check-coverage blind spot) are queued as
+URD-025 through URD-028 rather than fixed here — each is either a design
+call bigger than this item's scope (rebalancing the climb) or a
+pre-existing gap this commit only amplified or exposed, matching how
+URD-A02's other rows (review/letters/phrases) left their own non-length
+defects queued rather than folded into the length fix.
+
+## PASSED · URD-024 · 2026-08-11T14:05Z
+$ npm run check:shape
+  26 of 319 short lessons (was 38 before this item; the 12-lesson drop is
+  exactly the sentences row closing). Remaining short lessons are grammar
+  (25) and phrases (1) — both pre-existing, out of this item's scope.
+
+$ npm run check:all
+  check:all — all 24 steps pass against a deploy-shaped build.
+  Run alone on a still tree, after the final edit.
+
+Induced failure: reverted the `composed` exemption to `lesson.kind ===
+'vocab'` only (dropping `sentences`), confirmed check:shape reports the
+original 38-of-319 failure again — the exact truncation bug this item
+fixed, reproduced on demand — then restored and re-confirmed 26 of 319.
+
+New queue items: URD-025 (climb should lean on sentenceBuild, not
+recognition), URD-026 (sentences drill untaught grammar, now 3x
+amplified and SRS-scheduled), URD-027 (68% of sentence pool never drawn),
+URD-028 (check:coverage blind spot on the two new exercise kinds).
+
+branch: claude/gauntlet-sentences-length
