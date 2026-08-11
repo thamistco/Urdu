@@ -18,7 +18,7 @@ import { lastSevenDayKeys } from '../lib/date';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { LETTERS } from '../data/letters';
 import { WORDS } from '../data/words';
-import type { RootStackParamList } from '../navigation/types';
+import type { NoParamScreen, RootStackParamList } from '../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -85,9 +85,9 @@ export function ProfileScreen() {
   const league = getLeague(s.leagueId);
   const unlockedAch = ACHIEVEMENTS.filter((a) => (s.achieved[a.id] ?? 0) > 0).length;
 
-  const link = (screen: keyof RootStackParamList) => () => {
+  const link = (screen: NoParamScreen) => () => {
     feedback.tap();
-    nav.navigate(screen as any);
+    nav.navigate(screen);
   };
 
   return (
