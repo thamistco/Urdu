@@ -289,9 +289,58 @@ export function HomeScreen() {
   const [openLevel, setOpenLevel] = useState<Level | 'none' | undefined>(undefined);
   const effectiveOpenLevel = openLevel === undefined ? currentLevel : openLevel === 'none' ? null : openLevel;
   const isOpen = (lvl: Level) => effectiveOpenLevel === lvl;
+
+  // Once a learner explicitly opens a stage, it stays open (or explicitly
+  // closed) rather than following `currentLevel` — but only until real
+  // progress moves `currentLevel` itself, not for the rest of the session.
+  // THE CRITIC reviewing this accordion found the pin was otherwise
+  // permanent: `HomeScreen` never remounts between lessons (it sits under a
+  // tab navigator beneath the lesson screen), so a single curious tap on
+  // any header — not just a mistouch of the one that would later become
+  // current — silently stopped this screen from opening the learner's
+  // actual current stage as they advanced, and stopped the mount-time
+  // auto-scroll below from ever firing again (it needs the current lesson's
+  // row mounted, which requires its stage to be the open one).
+  useEffect(() => {
+    setOpenLevel(undefined);
+  }, [currentLevel]);
+
+  /**
+   * Opening a stage below the fold used to leave the scroll position exactly
+   * where it was: DESIGN CRITIC reviewing this accordion found that when the
+   * stage that closes is tall (a beginner stage open is roughly 8,000px) and
+   * the one that opens is a similar height, the same raw offset that used to
+   * point at the next stage's collapsed one-line summary lands deep inside
+   * that stage's now-open lesson list instead — a screenful of anonymous
+   * lesson rows with no header in sight, on the single most natural next
+   * action from the default screen (scroll past stage one, open stage two).
+   *
+   * Landing on the newly-open stage's own header exactly was tried two
+   * ways and both measured wrong against the real react-native-web build:
+   * `measureLayout` against the ScrollView returned 0 regardless of the
+   * header's real position, and tracking scroll offset via `onScroll` plus
+   * a fresh `measure()` raced a real browser behavior — when a stage this
+   * tall collapses, the browser clamps the current `scrollTop` down to the
+   * new, much smaller scrollable range *synchronously*, ahead of the
+   * throttled `onScroll` event that would have reported it, so the tracked
+   * offset was stale at exactly the moment that mattered. Both looked
+   * correct reading the code; both were wrong measured live.
+   *
+   * Landing at the top of the screen instead needs no measurement at all,
+   * so it can't go stale the same way: whatever the browser does to the
+   * scroll position when a stage collapses, resetting to `y: 0` is always
+   * a valid position (the app's own header and "today's word" card, never
+   * empty, never mid-list), and confirmed by the exact defect DESIGN
+   * CRITIC filed — "no header in sight" — is definitionally impossible at
+   * the top of the page. It costs a bigger jump than scrolling directly to
+   * the new stage would; that trade was chosen deliberately once the
+   * precise version couldn't be made to work.
+   */
   const toggleLevel = (lvl: Level) => {
     feedback.tap();
+    const opening = !isOpen(lvl);
     setOpenLevel(isOpen(lvl) ? 'none' : lvl);
+    if (opening) pathRef.current?.scrollTo({ y: 0, animated: true });
   };
 
   const openLesson = (lesson: Lesson, _state: string) => {
