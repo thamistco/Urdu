@@ -41,7 +41,7 @@ const DIST = path.join(ROOT, 'dist');
 const PORT = 8205;
 
 const { UNITS, ALL_LESSONS } = load('src/data/units.ts');
-const { LEVEL_ORDER } = load('src/data/words.ts');
+const { LEVEL_ORDER, LEVEL_META } = load('src/data/words.ts');
 
 /** A lesson row's own accessibility label always ends in one of these four
  *  phrases (see `LessonNode` in `HomeScreen.tsx`) — distinct from every other
@@ -74,7 +74,27 @@ async function main() {
     // the continue card / letter lab / other fixed Home-screen buttons — a
     // small constant, not a fraction of the course, so it can't quietly grow
     // into cover for a real regression.
-    const BOUND = maxLevelLessons + 20;
+    //
+    // Capped against the course total, not just derived from one level's
+    // count: THE CRITIC reviewing this check found that an uncapped bound
+    // has no defense against the level *count* changing rather than lesson
+    // counts within it — if a future regroup ever concentrated the course
+    // into 2 big levels instead of 4, `maxLevelLessons + 20` would climb
+    // toward the whole course, and the check would quietly become unable to
+    // fail no matter how bad the real regression. Capping at half the
+    // course keeps a real floor under the check itself; if a level ever
+    // legitimately needs more room than that, this reports it as its own
+    // problem rather than silently accepting it.
+    const rawBound = maxLevelLessons + 20;
+    const BOUND = Math.min(rawBound, Math.ceil(ALL_LESSONS.length / 2));
+    if (rawBound > BOUND) {
+      problems.push(
+        `The largest level (${maxLevelLessons} lessons) is close enough to half the course ` +
+          `(${ALL_LESSONS.length} total) that its own natural headroom (${rawBound}) would leave this check ` +
+          `unable to fail a real regression. Capped to ${BOUND} instead of raised to fit — if a level ` +
+          `genuinely needs more room, split it, don't widen this check to allow it.`
+      );
+    }
 
     const browser = await chromium.launch({ executablePath: execPath || undefined });
 
@@ -119,8 +139,13 @@ async function main() {
     // Levels are an accordion (`HomeScreen.tsx`'s `openLevel`, a single
     // value, not one flag per level) specifically so this can't accumulate:
     // opening a level closes whichever was open, rather than adding to it.
-    // Click every "Expand" button in turn and re-measure after each click,
-    // rather than trusting that property from reading the code alone.
+    // Click every level's own header in turn (by its distinct title, not a
+    // generic "first button matching /Expand/" — THE CRITIC reviewing this
+    // check found `.first()` always grabs the topmost match in DOM order,
+    // so it only ever toggled between the first two levels and never
+    // reached Intermediate, the actual largest one) and re-measure after
+    // each click, rather than trusting the accordion property from reading
+    // the code alone.
     {
       const page = await browser.newPage({ viewport: { width: 412, height: 900 } });
       const url = `http://localhost:${PORT}/Urdu/`;
@@ -128,15 +153,16 @@ async function main() {
       await page.waitForTimeout(1200);
 
       let worst = await countLessonRows(page);
-      for (let i = 0; i < LEVEL_ORDER.length + 1; i++) {
-        const btn = page.getByRole('button', { name: /Expand/ }).first();
-        if ((await btn.count()) === 0) break;
+      for (const lvl of LEVEL_ORDER) {
+        const title = LEVEL_META[lvl].title;
+        const btn = page.getByRole('button', { name: new RegExp(`^${title}\\.`) }).first();
+        if ((await btn.count()) === 0) continue;
         await btn.click({ timeout: 5000 }).catch(() => {});
         await page.waitForTimeout(400);
         const n = await countLessonRows(page);
         worst = Math.max(worst, n);
       }
-      counts.push({ name: `tapping every "tap to open" row in turn (worst seen)`, n: worst });
+      counts.push({ name: `tapping every level's header in turn, by identity (worst seen)`, n: worst });
       await page.close();
 
       if (worst > BOUND) {
