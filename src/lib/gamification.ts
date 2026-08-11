@@ -34,12 +34,24 @@ export function levelProgress(totalXp: number) {
   return { level, into, span, ratio: span > 0 ? into / span : 1, next };
 }
 
-/** Named tiers give the level a sense of journey, not just a number. */
+/**
+ * Named tiers give the level a sense of journey, not just a number.
+ *
+ * "Master" used to sit at level 25 (18,000 XP) against a course that pays
+ * out roughly 7,220 XP finished start to finish — 2.49x the whole path, a
+ * title nobody would ever see. Re-spaced to fit inside what a complete
+ * playthrough actually reaches (level 16 at today's course size), with
+ * Master at 14 rather than the ceiling itself, so finishing the course
+ * comfortably reaches it rather than landing on it exactly — see
+ * gamification.test.ts, which derives the course total from real content
+ * and asserts this stays true rather than trusting the numbers below to
+ * keep up with the course by hand.
+ */
 export function levelTitle(level: number): string {
-  if (level >= 25) return 'Master';
-  if (level >= 18) return 'Calligrapher';
-  if (level >= 12) return 'Fluent Reader';
-  if (level >= 8) return 'Confident';
+  if (level >= 14) return 'Master';
+  if (level >= 11) return 'Calligrapher';
+  if (level >= 9) return 'Fluent Reader';
+  if (level >= 7) return 'Confident';
   if (level >= 5) return 'Rising';
   if (level >= 3) return 'Apprentice';
   return 'Beginner';
