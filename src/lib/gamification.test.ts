@@ -12,6 +12,7 @@ import {
   promote,
   xpForLevel,
 } from './gamification';
+import { ALL_LESSONS } from '../data/units';
 
 /**
  * The XP curve, the league ladder and the gem payout.
@@ -90,6 +91,26 @@ describe('level titles', () => {
       expect(rank).toBeGreaterThanOrEqual(lastSeen);
       lastSeen = rank;
     }
+  });
+
+  // URD-004: the top title used to sit at level 25 (18,000 XP) against a
+  // course that pays out about 7,220 XP finished start to finish — nobody
+  // could ever see it. Both numbers are derived from the real thing they
+  // describe, not hardcoded, so this stays true the next time the course or
+  // the curve changes rather than needing to be re-measured by hand — which
+  // is exactly how it went stale the first time (measured at 11,552 XP course
+  // / level 20 reachable when this item was written, 7,220 / level 16 by the
+  // time it was worked, worse both times, never better).
+  it('the top title is reachable by finishing the course', () => {
+    const topTitle = 'Master';
+    // The lowest level carrying the top title — levelTitle's own thresholds,
+    // not a number copied out of gamification.ts by hand.
+    let topTitleLevel = 1;
+    while (levelTitle(topTitleLevel) !== topTitle) topTitleLevel++;
+
+    const courseTotalXp = ALL_LESSONS.reduce((n, l) => n + l.xp, 0);
+
+    expect(xpForLevel(topTitleLevel)).toBeLessThanOrEqual(courseTotalXp);
   });
 });
 
