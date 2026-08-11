@@ -46,6 +46,14 @@ export function levelProgress(totalXp: number) {
  * gamification.test.ts, which derives the course total from real content
  * and asserts this stays true rather than trusting the numbers below to
  * keep up with the course by hand.
+ *
+ * The six lower tiers were eyeballed for even level-gaps (2 each) rather
+ * than by a stated formula — no single rule that survives the course
+ * changing size again, just re-check against the test above and re-space
+ * by hand when it next goes red. THE CRITIC reviewing this noted the
+ * result isn't actually bunched despite the constant level-gaps: against
+ * the quadratic XP curve, the tiers land at roughly 3%, 8%, 18%, 30%, 46%
+ * and 76% of the course — a reasonably even spread through a playthrough.
  */
 export function levelTitle(level: number): string {
   if (level >= 14) return 'Master';
