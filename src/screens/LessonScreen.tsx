@@ -206,13 +206,16 @@ export function LessonScreen() {
   const onGraded = useCallback(
     (result: GradedResult) => {
       setGraded(result.correct);
-      // Answering both reveals the correct answer at the foot of the exercise
-      // and opens the feedback banner, which takes a third of the screen. A
-      // learner who got it wrong was left looking at the question with the
-      // explanation off-screen below, so bring it into view.
-      if (!result.correct) {
-        setTimeout(() => bodyRef.current?.scrollToEnd({ animated: true }), 120);
-      }
+      // Answering opens the feedback banner, which takes a third of the
+      // screen, so bring it into view. Used to fire only on a wrong answer —
+      // "the explanation is off-screen below" was the case that mattered when
+      // every exercise body was a handful of short words. `wordFromMeaning`
+      // drawing full sentences (see `SENTENCE_WORDS`, generator.ts) can now
+      // put a tall option grid on screen too, and THE CRITIC measured the
+      // footer landing directly on top of the bottom two cards' Urdu text on
+      // a *correct* answer at a stock 375x812 viewport — the same off-screen
+      // problem, just from a tall question instead of a tall explanation.
+      setTimeout(() => bodyRef.current?.scrollToEnd({ animated: true }), 120);
       // update SRS memory for each item touched — but only the first sighting
       // of it this lesson visit. See the doc comment on `gradedThisSession`.
       //

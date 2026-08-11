@@ -65,28 +65,36 @@ notes: The trap is fixing this by raising the word count alone. Neither
 
   WHAT IS LEFT, and it is the whole reason this is still here. URD-010
   closed the review row, URD-013 closed the letters row, URD-012 closed the
-  phrases share/run problem — but phrases was never a length problem and
-  still isn't, so it stays in the table below at 38 of 319, re-measured at
-  b98bda2:
+  phrases share/run problem, and the sentences work (commit 0453fa7,
+  claude/gauntlet-sentences-length) closed the sentences length row — 12
+  sentences lessons went from one exercise each (0.8-1.3 min) to a
+  meet-recall-produce climb (24 exercises, ~3.6 min), re-measured at 26 of
+  319 short lessons (was 38). Phrases was never a length problem and still
+  isn't, so it stays in the table below:
 
     grammar   25   a concept has as many drills as it has
-    sentences 12   `lesson.size` sentences and no repetition pass
     phrases    1   and 0.9 min, 6 exercises — length only; run/share is done
 
-  None of review, letters or phrases is fully closed, only their length or
-  run/share half is. Review still samples the wrong material (URD-016),
-  never lets a letter share fall off after the alphabet (URD-017), and never
-  asks for meaning in the reading direction (URD-018). Letters is 96.8%
-  isolated-glyph recognition against reading-in-context (URD-020), its one
-  context word touches at most 1 of a group's 4-7 letters (URD-021), and
-  drills visually confusable letters (daal/Daal) with no separation
-  (URD-022). Phrases can still fail its own run/share rule on an unlucky
-  future draw — 8.24% of them, computed exactly — because the fix reassigns
-  after a uniform draw rather than guaranteeing the draw itself has enough
-  typeable phrases (URD-023). None of the six is a length problem except
-  phrases' own remaining 0.9 minutes, so none of the other five blocks this
-  item — but do not read "0 short lessons for review/letters" or "phrases
-  run/share is clean" as either being finished.
+  None of review, letters, phrases or sentences is fully closed, only their
+  length or run/share half is. Review still samples the wrong material
+  (URD-016), never lets a letter share fall off after the alphabet
+  (URD-017), and never asks for meaning in the reading direction (URD-018).
+  Letters is 96.8% isolated-glyph recognition against reading-in-context
+  (URD-020), its one context word touches at most 1 of a group's 4-7
+  letters (URD-021), and drills visually confusable letters (daal/Daal)
+  with no separation (URD-022). Phrases can still fail its own run/share
+  rule on an unlucky future draw — 8.24% of them, computed exactly —
+  because the fix reassigns after a uniform draw rather than guaranteeing
+  the draw itself has enough typeable phrases (URD-023). Sentences leans on
+  whole-sentence recognition for 2 of its 3 reps rather than the
+  sentence-building the app's own docs call its differentiator (URD-025),
+  drills grammar constructions two lessons haven't taught yet — now 3x
+  amplified and, for the first time, SRS-scheduled (URD-026) — draws from
+  only 32% of its sentence pool (URD-027), and has a check:coverage blind
+  spot for its two new exercise kinds, currently closed only by coincidence
+  (URD-028). None of the four is a length problem, so none blocks this item
+  — but do not read "0 short lessons for review/letters/sentences" or
+  "phrases run/share is clean" as any of them being finished.
 
   URD-013 also cost four rounds of critique before its length fix alone was
   right: two critics found three separate blocking defects across the
@@ -438,3 +446,100 @@ notes: Found by THE CRITIC reviewing URD-012, across two review rounds. The
   this today only because the one real lesson happens not to trigger it;
   it would catch a future one before it shipped, which is why this is MAJOR
   and not BLOCKING.
+
+## URD-025 — A sentence's climb should lean on sentenceBuild, not recognition
+attempts: 0
+files: src/exercises/generator.ts
+definition of done: the sentences branch's three rounds currently give a
+  sentence one `meaningPick` turn, one `wordFromMeaning` turn, one
+  `sentenceBuild` turn — 2 of 3 reps spent on whole-sentence recognition
+  (see `SENTENCE_WORDS`: a sentence is shown and judged as one opaque
+  string, never segmented) and only 1 of 3 forcing the learner to place its
+  words in order. `sentences.ts`'s own header and gauntlet/BENCHMARKS.md
+  both name sentence-building specifically as what makes this app teach
+  word order "far better than any explanation" and as the reason to choose
+  Harf over Duolingo/Drops — the current ratio gives the weaker exercise
+  the majority of the reps. Rebalance the climb so sentenceBuild is not the
+  minority turn — either two sentenceBuild passes to one recognition pass,
+  or a fourth round, whichever keeps the sitting inside check:shape's 3-8
+  minute band.
+verify: npm run check:shape -- --kind=sentences
+notes: Found by CURRICULUM CRITIC reviewing commit 0453fa7 (URD-A02's
+  sentences row). Not BLOCKING — nothing shown is wrong, and every
+  distractor sampled was a fair, plausible near-miss — but the commit's own
+  message admits this ratio was a reuse-of-existing-exercises move, not a
+  pedagogy-first choice, and the critic's read is that it inverts what this
+  content type is supposed to practice.
+
+## URD-026 — Sentences drill grammar the learner hasn't been taught yet, now 3x
+attempts: 0
+files: src/exercises/generator.ts (readableSentences), src/data/units.ts
+definition of done: `readableSentences` filters a sentence pool on
+  individual word forms only — it has no notion of whether the
+  *grammatical construction* a sentence illustrates (future tense,
+  ability, obligation, comparative...) has been taught by a `G()` lesson
+  yet. Measured against the real path order: `s-intermediate` (units.ts,
+  an elementary-unit lesson) draws sentences tagging g-future/g-ability/
+  g-obligation/g-comparative in 6 of 8 picks, all taught 90-115
+  lesson-positions later; `s-intermediate-2` draws 8 of 8 untaught. Give
+  `readableSentences` (or `S()`) a concept-readiness filter mirroring how
+  word-level readiness already works, or move the two offending lessons
+  later in the path so their prerequisite concepts are already taught.
+verify: a script cross-referencing each sentences lesson's drawn sentence
+  ids against ALL_LESSONS grammar-teaching order reports 0 lessons with a
+  drawn sentence whose tagged concept is taught later in the path.
+notes: Found by CURRICULUM CRITIC reviewing 0453fa7. Pre-existing — the
+  word-only filter and the two lessons' placement both predate this
+  commit — but this commit is what first pipes that exposure into SRS
+  (via meaningPick/wordFromMeaning's `gradeItem` calls) and triples how
+  often an under-taught construction is shown in one sitting. Same shape
+  as the letters SRS-defeat bug fixed generically this session
+  (src/lib/sessionGrading.ts), applied to grammar readiness instead of
+  scheduling — an existing gap this project has already been burned by
+  once, now amplified by a length change rather than caused by one.
+
+## URD-027 — 68% of the sentence pool is never drawn by any lesson
+attempts: 0
+files: src/exercises/generator.ts, src/data/sentences.ts, scripts/
+definition of done: a coverage check (mirroring check:coverage's existing
+  word-level guarantee) proves every sentence in SENTENCES is drawn by at
+  least one sentences lesson at its level, or documents an explicit,
+  deliberate exemption for the ones that are not. Measured today: 81 of
+  256 sentences (31.6%) are ever drawn — beginner 22/67, elementary 16/69,
+  intermediate 24/63, advanced 19/57 — because each lesson does an
+  independent `seededShuffle(pool, lesson.id).slice(0, lesson.size)` with
+  no allocation across lessons at the same level, the same shape of gap
+  vocab had before wordIds replaced random topic sampling.
+verify: a new check:sentence-coverage script (or an addition to
+  check-coverage.js) exits 0 only when every sentence is reachable.
+notes: Found by CURRICULUM CRITIC reviewing 0453fa7, who was explicitly
+  asked to check whether this commit inherited vocab's coverage fix rather
+  than assume it did — it did not. Predates this commit (the draw
+  mechanism is unchanged; only `size` moved 5→8), but this is the same bug
+  class gauntlet/ROLES.md names as the project's founding motivation
+  ("a full playthrough... reached 608 of its 2,281 words"), now confirmed
+  present for sentences too and previously unmeasured.
+
+## URD-028 — check:coverage cannot see meaningPick/wordFromMeaning sentence exercises
+attempts: 0
+files: scripts/check-coverage.js
+definition of done: check-coverage.js point 5 (lines ~163-197) walks
+  generated exercises for sentences/grammar lessons and inspects
+  `ex.sentence && ex.sentence.words` — a field only sentenceBuild
+  exercises carry. meaningPick/wordFromMeaning exercises drawn from
+  SENTENCE_WORDS carry `.word` instead (topic 'sentences'), so 16 of every
+  24 exercises a sentences lesson emits (2/3) are invisible to this check
+  today. Extend it to also resolve `ex.word` back to its sentence's words
+  when `ex.word.topic === 'sentences'`.
+verify: re-run check:coverage after temporarily breaking a sentence's
+  meaningPick/wordFromMeaning path (e.g. feeding it an unteachable word id)
+  and confirm the check now fails, where today it would stay green.
+notes: Found by THE CRITIC reviewing 0453fa7. Verified this causes no live
+  false-pass today only by coincidence: the round-robin structure
+  guarantees every sentence a lesson draws also gets a sentenceBuild turn
+  in the same lesson, and that turn happens to cover what the recognition
+  turns don't. That coincidence itself rests on `sentenceExercise` never
+  returning undefined on the roman track, which is true for all 256
+  sentences today but maintained by discipline, not enforced — the
+  generator's own comment says as much. MAJOR, not BLOCKING: nothing is
+  wrong today, but the check would not catch it if something broke.
