@@ -65,36 +65,46 @@ notes: The trap is fixing this by raising the word count alone. Neither
 
   WHAT IS LEFT, and it is the whole reason this is still here. URD-010
   closed the review row, URD-013 closed the letters row, URD-012 closed the
-  phrases share/run problem, and the sentences work (commit 0453fa7,
-  claude/gauntlet-sentences-length) closed the sentences length row — 12
-  sentences lessons went from one exercise each (0.8-1.3 min) to a
-  meet-recall-produce climb (24 exercises, ~3.6 min), re-measured at 26 of
-  319 short lessons (was 38). Phrases was never a length problem and still
-  isn't, so it stays in the table below:
+  phrases share/run problem, the sentences work (commit 0453fa7,
+  claude/gauntlet-sentences-length) closed the sentences length row, and
+  the grammar work (claude/gauntlet-grammar-length) closed the grammar
+  length row — 22 of 25 grammar lessons went from teach-plus-drills-only
+  (2-6 exercises, 0.3-0.9 min) to a meet-recall-produce climb over each
+  concept's own tagged sentences (12-22 exercises, 1.8-3.3 min), and the
+  g-to-be run/share violation (50% grammarDrill) closed as a side effect.
+  Course-wide short-lesson count is now 4 of 319 (was 26): 1 pre-existing
+  phrases residual and 3 grammar concepts too thin on tagged sentences to
+  reach 3 minutes without repeating a question (URD-029). Every row of
+  this item's original backlog has had its length half addressed:
 
-    grammar   25   a concept has as many drills as it has
     phrases    1   and 0.9 min, 6 exercises — length only; run/share is done
+    grammar    3   g-plurals/g-pronouns/g-ability — tagged-sentence pool too thin (URD-029)
 
-  None of review, letters, phrases or sentences is fully closed, only their
-  length or run/share half is. Review still samples the wrong material
-  (URD-016), never lets a letter share fall off after the alphabet
-  (URD-017), and never asks for meaning in the reading direction (URD-018).
-  Letters is 96.8% isolated-glyph recognition against reading-in-context
-  (URD-020), its one context word touches at most 1 of a group's 4-7
-  letters (URD-021), and drills visually confusable letters (daal/Daal)
-  with no separation (URD-022). Phrases can still fail its own run/share
-  rule on an unlucky future draw — 8.24% of them, computed exactly —
-  because the fix reassigns after a uniform draw rather than guaranteeing
-  the draw itself has enough typeable phrases (URD-023). Sentences leans on
-  whole-sentence recognition for 2 of its 3 reps rather than the
-  sentence-building the app's own docs call its differentiator (URD-025),
-  drills grammar constructions two lessons haven't taught yet — now 3x
-  amplified and, for the first time, SRS-scheduled (URD-026) — draws from
-  only 32% of its sentence pool (URD-027), and has a check:coverage blind
-  spot for its two new exercise kinds, currently closed only by coincidence
-  (URD-028). None of the four is a length problem, so none blocks this item
-  — but do not read "0 short lessons for review/letters/sentences" or
-  "phrases run/share is clean" as any of them being finished.
+  None of review, letters, phrases, sentences or grammar is fully closed,
+  only their length or run/share half is. Review still samples the wrong
+  material (URD-016), never lets a letter share fall off after the
+  alphabet (URD-017), and never asks for meaning in the reading direction
+  (URD-018). Letters is 96.8% isolated-glyph recognition against
+  reading-in-context (URD-020), its one context word touches at most 1 of
+  a group's 4-7 letters (URD-021), and drills visually confusable letters
+  (daal/Daal) with no separation (URD-022). Phrases can still fail its own
+  run/share rule on an unlucky future draw — 8.24% of them, computed
+  exactly — because the fix reassigns after a uniform draw rather than
+  guaranteeing the draw itself has enough typeable phrases (URD-023).
+  Sentences AND grammar's sentence-reinforcement climb both lean on
+  whole-sentence recognition for 2 of their 3 reps rather than the
+  sentence-building the app's own docs call its differentiator (URD-025,
+  now scoped to both call sites), sentences draws grammar constructions
+  two lessons haven't taught yet — now 3x amplified and, for the first
+  time, SRS-scheduled (URD-026) — draws from only 32% of its sentence pool
+  (URD-027), and has a check:coverage blind spot for its (and grammar's)
+  new exercise kinds, currently closed only by coincidence for both
+  (URD-028). Grammar's own climb additionally answers 73% of its questions
+  by topic recognition rather than by parsing the construction being
+  taught, because its distractor pool isn't concept-aware (URD-030). None
+  of these is a length problem, so none blocks this item — but do not read
+  "0 short lessons for review/letters/sentences/grammar" or "phrases
+  run/share is clean" as any of them being finished.
 
   URD-013 also cost four rounds of critique before its length fix alone was
   right: two critics found three separate blocking defects across the
@@ -447,29 +457,45 @@ notes: Found by THE CRITIC reviewing URD-012, across two review rounds. The
   it would catch a future one before it shipped, which is why this is MAJOR
   and not BLOCKING.
 
-## URD-025 — A sentence's climb should lean on sentenceBuild, not recognition
+## URD-025 — A sentence-derived climb should lean on sentenceBuild, not recognition
 attempts: 0
 files: src/exercises/generator.ts
-definition of done: the sentences branch's three rounds currently give a
-  sentence one `meaningPick` turn, one `wordFromMeaning` turn, one
-  `sentenceBuild` turn — 2 of 3 reps spent on whole-sentence recognition
-  (see `SENTENCE_WORDS`: a sentence is shown and judged as one opaque
-  string, never segmented) and only 1 of 3 forcing the learner to place its
-  words in order. `sentences.ts`'s own header and gauntlet/BENCHMARKS.md
-  both name sentence-building specifically as what makes this app teach
-  word order "far better than any explanation" and as the reason to choose
-  Harf over Duolingo/Drops — the current ratio gives the weaker exercise
-  the majority of the reps. Rebalance the climb so sentenceBuild is not the
-  minority turn — either two sentenceBuild passes to one recognition pass,
-  or a fourth round, whichever keeps the sitting inside check:shape's 3-8
-  minute band.
-verify: npm run check:shape -- --kind=sentences
+definition of done: two call sites now share the identical `turn =
+  (round + idx) % 3` climb over `SENTENCE_WORDS` — the `sentences` branch,
+  and (as of URD-024's grammar follow-up) the `grammar` branch's
+  sentence-reinforcement climb. Both give a sentence one `meaningPick`
+  turn, one `wordFromMeaning` turn, one `sentenceBuild` turn — 2 of 3 reps
+  spent on whole-sentence recognition (see `SENTENCE_WORDS`: a sentence is
+  shown and judged as one opaque string, never segmented) and only 1 of 3
+  forcing the learner to place its words in order. `sentences.ts`'s own
+  header and gauntlet/BENCHMARKS.md both name sentence-building
+  specifically as what makes this app teach word order "far better than
+  any explanation" and as the reason to choose Harf over Duolingo/Drops —
+  the current ratio gives the weaker exercise the majority of the reps at
+  both call sites. Rebalance so sentenceBuild is not the minority turn —
+  either two sentenceBuild passes to one recognition pass, or a fourth
+  round, whichever keeps the sitting inside check:shape's 3-8 minute band
+  — fixed once, ideally by factoring the shared climb into one function
+  both branches call, so the two cannot drift out of sync again.
+verify: npm run check:shape -- --kind=sentences && npm run check:shape -- --kind=grammar
 notes: Found by CURRICULUM CRITIC reviewing commit 0453fa7 (URD-A02's
   sentences row). Not BLOCKING — nothing shown is wrong, and every
   distractor sampled was a fair, plausible near-miss — but the commit's own
   message admits this ratio was a reuse-of-existing-exercises move, not a
   pedagogy-first choice, and the critic's read is that it inverts what this
-  content type is supposed to practice.
+  content type is supposed to practice. Reviewing URD-024's grammar
+  follow-up, CURRICULUM CRITIC found the identical ratio reproduced
+  verbatim at the grammar call site (line-for-line copy of the same
+  structure) and recommended broadening this item to cover both rather
+  than opening a duplicate — done here. That review also noted a
+  mitigating half-truth specific to grammar: the concept's own
+  `grammarDrill` exercises already force picking the correct inflected
+  form among minimal-pair near-misses, a sharper construction-test than
+  the climb offers — so the climb's job there may only be
+  recognition/consolidation, not first exposure to the construction. If
+  that's the intended division of labor, say so explicitly when this is
+  fixed rather than rebalancing grammar's ratio to match sentences' by
+  default.
 
 ## URD-026 — Sentences drill grammar the learner hasn't been taught yet, now 3x
 attempts: 0
@@ -520,26 +546,96 @@ notes: Found by CURRICULUM CRITIC reviewing 0453fa7, who was explicitly
   ("a full playthrough... reached 608 of its 2,281 words"), now confirmed
   present for sentences too and previously unmeasured.
 
-## URD-028 — check:coverage cannot see meaningPick/wordFromMeaning sentence exercises
+## URD-028 — check:coverage cannot see meaningPick/wordFromMeaning sentence-derived exercises
 attempts: 0
 files: scripts/check-coverage.js
-definition of done: check-coverage.js point 5 (lines ~163-197) walks
-  generated exercises for sentences/grammar lessons and inspects
-  `ex.sentence && ex.sentence.words` — a field only sentenceBuild
-  exercises carry. meaningPick/wordFromMeaning exercises drawn from
-  SENTENCE_WORDS carry `.word` instead (topic 'sentences'), so 16 of every
-  24 exercises a sentences lesson emits (2/3) are invisible to this check
-  today. Extend it to also resolve `ex.word` back to its sentence's words
-  when `ex.word.topic === 'sentences'`.
+definition of done: check-coverage.js point 5 (lines ~163-197) already
+  scopes itself to `l.kind === 'sentences' || l.kind === 'grammar'`, but
+  only inspects `ex.sentence && ex.sentence.words` — a field only
+  sentenceBuild exercises carry. meaningPick/wordFromMeaning exercises
+  drawn from SENTENCE_WORDS carry `.word` instead (topic 'sentences'), so
+  2/3 of every sentences lesson's exercises AND 2/3 of every grammar
+  lesson's sentence-reinforcement exercises (added by URD-024's grammar
+  follow-up) are invisible to this check today. Extend it to also resolve
+  `ex.word` back to its sentence's words when `ex.word.topic ===
+  'sentences'` — one fix covers both lesson kinds, since both draw from
+  the same `SENTENCE_WORDS` pool.
 verify: re-run check:coverage after temporarily breaking a sentence's
   meaningPick/wordFromMeaning path (e.g. feeding it an unteachable word id)
-  and confirm the check now fails, where today it would stay green.
-notes: Found by THE CRITIC reviewing 0453fa7. Verified this causes no live
-  false-pass today only by coincidence: the round-robin structure
-  guarantees every sentence a lesson draws also gets a sentenceBuild turn
-  in the same lesson, and that turn happens to cover what the recognition
-  turns don't. That coincidence itself rests on `sentenceExercise` never
-  returning undefined on the roman track, which is true for all 256
-  sentences today but maintained by discipline, not enforced — the
-  generator's own comment says as much. MAJOR, not BLOCKING: nothing is
-  wrong today, but the check would not catch it if something broke.
+  in both a sentences lesson and a grammar lesson, and confirm the check
+  now fails both, where today it would stay green for either.
+notes: Found by THE CRITIC reviewing 0453fa7 (sentences lessons). Reviewing
+  URD-024's grammar follow-up, THE CRITIC confirmed the same gap now
+  silently covers grammar lessons too — the file's scoping condition
+  already named `grammar`, so no new code change was needed for the check
+  to apply there, but the underlying defect it can't yet see now has twice
+  the surface. Verified this causes no live false-pass today only by
+  coincidence, for both lesson kinds: the round-robin structure guarantees
+  every sentence a lesson draws also gets a sentenceBuild turn in the same
+  lesson, and that turn happens to cover what the recognition turns don't.
+  That coincidence itself rests on `sentenceExercise` never returning
+  undefined on the roman track, which is true for all 256 sentences today
+  but maintained by discipline, not enforced — the generator's own comment
+  says as much. MAJOR, not BLOCKING: nothing is wrong today, but the check
+  would not catch it if something broke, in either lesson kind.
+
+## URD-029 — Three grammar concepts stay short because their tagged-sentence pools are thin
+attempts: 0
+files: src/data/sentences.ts, src/data/units.ts
+definition of done: g-plurals (1.80 min, 3 of 4 tagged sentences readable
+  at its lesson position), g-pronouns (2.70 min, 5 of 5 tagged) and
+  g-ability (2.55 min, 5 of 5 tagged) stay under check:shape's 3-minute
+  floor after URD-024's grammar climb, because their `SENTENCES`-tagged
+  pool is too thin for the climb to reach `GRAMMAR_SENTENCE_TARGET`
+  without repeating an identical question. For g-pronouns and g-ability
+  this is genuine content scarcity — tag more sentences to those concepts,
+  or author new ones. For g-plurals specifically, check the cheaper fix
+  first: one of its 4 tagged sentences (`s-39`, "میز پر تین کتابیں ہیں")
+  is dropped by `readableSentences` only because "میز" isn't taught yet at
+  g-plurals' current path position — either move g-plurals a few positions
+  later (past wherever "میز" is taught), or re-tag a different,
+  already-readable sentence to `g-plurals`, before assuming new content
+  authoring is required.
+verify: npm run check:shape -- --kind=grammar reports 0 of 25 grammar
+  lessons under 3 minutes.
+notes: Found reviewing URD-024's grammar follow-up. Both THE CRITIC and
+  CURRICULUM CRITIC independently confirmed the degradation is graceful —
+  no crash, no repeated question, no truncation, just genuinely short —
+  and that leaving it documented rather than forced (matching URD-023's
+  precedent for phrases) is the right call for this item. CURRICULUM
+  CRITIC specifically flagged that the original code comment attributed
+  g-plurals' shortfall entirely to "4 tagged" sentences when the real
+  count feeding the climb is 3 readable of 4 tagged — fixed in the comment
+  as part of recording URD-024 passed, and folded into this item's DoD so
+  the placement-vs-content-scarcity distinction isn't lost.
+
+## URD-030 — The grammar climb's distractor pool doesn't know which concept it's reinforcing
+attempts: 0
+files: src/exercises/generator.ts
+definition of done: `reinforcePool` in the grammar branch (feeding
+  `meaningPick`/`wordFromMeaning` distractors) is every `SENTENCE_WORDS`
+  entry at the concept's CEFR level, drawn with no concept-awareness at
+  all — the same flat, unweighted draw `distractorsFor` already does for
+  plain vocabulary. Measured across all 290 meaningPick/wordFromMeaning
+  exercises the grammar climb currently emits: only 26.9% (78 of 290) have
+  even one distractor tagged to the same grammar concept as the correct
+  answer. The other 73.1% offer a correct sentence (e.g. a comparative)
+  against three topically unrelated options (e.g. "I like listening to
+  music" / "You should rest" / "The doctor gave medicine") — answerable by
+  topic/vocabulary recognition alone, without parsing the comparative
+  marker, passive auxiliary, or plural ending the lesson is actually
+  about. Bias the distractor draw toward same-level, different-concept
+  sentences that are near-misses in form, so a correct answer requires
+  noticing the construction, not just the topic.
+verify: a script measuring same-concept-distractor rate across all
+  generated grammar-climb meaningPick/wordFromMeaning exercises reports it
+  well above today's 26.9% (100% is not required — same-concept sentences
+  may not exist for every draw at small pool sizes — but the flat,
+  unweighted draw should no longer be the default).
+notes: Found by CURRICULUM CRITIC reviewing URD-024's grammar follow-up.
+  Distinct root cause from URD-025 (which is about the round ratio, not
+  which pool feeds distractors) — do not fold into it. Not BLOCKING: every
+  sampled exercise was still answerable, fluent, and free of exact-meaning
+  giveaways, so nothing is wrong, but the climb's implicit claim to
+  "reinforce this construction" is not backed by most of the questions it
+  actually asks.

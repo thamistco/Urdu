@@ -1001,3 +1001,116 @@ amplified and SRS-scheduled), URD-027 (68% of sentence pool never drawn),
 URD-028 (check:coverage blind spot on the two new exercise kinds).
 
 branch: claude/gauntlet-sentences-length
+
+## CLAIMED · URD-031 · 2026-08-11T14:35Z
+The last unaddressed row of URD-A02's remaining backlog: grammar. A
+grammar lesson taught its concept, drilled it once per hand-authored
+drill (1-3, fixed by content), showed up to 2 static sentences, and
+stopped — 2-6 exercises, 0.3-0.9 min, and `g-to-be` specifically was 50%
+grammarDrill (a check:shape run/share violation). Reuses the exact
+meet-recall-produce climb URD-024 built for sentences-kind lessons,
+applied to each concept's own tagged sentences.
+verify: `npm run check:shape -- --kind=grammar`
+branch: claude/gauntlet-grammar-length, cut from
+claude/gauntlet-sentences-length after URD-024 shipped.
+
+## CRITIQUE · URD-031 · 2026-08-11T15:10Z
+Dispatched THE CRITIC and CURRICULUM CRITIC. Not DESIGN CRITIC: no new
+screen or component, the same reused exercise shapes DESIGN CRITIC
+already screened reviewing URD-024. Not PLAYER: no session-length or
+lesson-selection behavior beyond what check:shape/order/coverage measure
+directly.
+
+### THE CRITIC
+PASS, one MAJOR, one MINOR. Checked, not assumed, across all 25 grammar
+lessons x 2 tracks: zero duplicate drill ids, zero duplicate (sentence,
+kind) pairs, no run over MAX_RUN=3. `lesson.size` semantic drift (grammar
+joins the `composed` exemption) has the same single, inert consumer
+already verified for `sentences` (`dueBudget` ignores `size` for any
+non-review kind). Distractor pool sampled for the three thinnest concepts
+(g-plurals, g-pronouns, g-ability): always exactly 4 distinct, non-leaking
+options — `reinforcePool` (every SENTENCE_WORDS entry at the concept's
+level, 68-73 sentences) is far bigger than DISTRACTORS=3 needs. The three
+residual short lessons (g-plurals 1.80min/12ex, g-ability 2.55min/17ex,
+g-pronouns 2.70min/18ex) degrade gracefully — no crash, no repeat, no
+truncation. Determinism: two `check:shape` runs, byte-identical.
+`check:all`: 24/24, alone on a clean tree.
+MAJOR: `check-coverage.js`'s existing blind spot (URD-028, filed against
+sentences-kind lessons) now silently covers grammar lessons too — the
+file's scoping condition already named `grammar`, so no code change
+introduced this, but the surface doubled. Confirmed the same mitigating
+coincidence holds here (every picked sentence gets one sentenceBuild turn
+per lesson, which the check does see).
+MINOR: the code comment attributed g-plurals' shortfall to "4 tagged"
+sentences; actual count feeding the climb is 3 readable of 4 (one dropped
+by `readableSentences` for using an untaught word, "میز"). Fixed in this
+round.
+
+### CURRICULUM CRITIC
+Not BLOCKING, two new MAJOR. Teach-then-drill-then-reinforce order judged
+sound. SRS interaction checked directly (not assumed): `shouldUpdateSrs`'s
+per-lesson dedupe holds at this new call site for the same structural
+reason verified for `sentences`. Grammar lessons now average 2.99 min
+(range 1.80-3.30) against vocab's 4.56 and sentences' flat 3.60 — judged a
+reasonable floor for this content type specifically, not a shortfall to
+chase further; BENCHMARKS.md's comparison products have no equivalent
+content type to measure against.
+MAJOR: the sentence-reinforcement climb is a line-for-line copy of the
+`sentences` branch's `turn=(round+idx)%3` structure — same 2-of-3-reps
+whole-sentence-recognition ratio URD-025 already named for `sentences`,
+reproduced verbatim here rather than being a new defect. Recommended
+broadening URD-025 to cover both call sites rather than opening a
+duplicate; done.
+MAJOR (new root cause, not URD-025): measured across all 290
+meaningPick/wordFromMeaning exercises the climb emits — only 26.9% (78 of
+290) have even one distractor sharing the correct answer's grammar
+concept. The other 73.1% are answerable by topic/vocabulary recognition
+alone, without parsing the construction being taught. Filed as URD-030,
+kept separate from URD-025 since it's about which pool feeds distractors,
+not the round ratio.
+Also flagged the same g-plurals comment imprecision THE CRITIC found
+independently, plus a housekeeping note: the working diff referenced
+"URD-029" in a comment before that item existed in QUEUE.md — created
+before recording this PASSED, per ROLES.md's rule that a lead may not
+record PASSED with a referenced-but-missing queue item.
+
+## FIX ROUND — commit (pending, see PASSED entry)
+Comment corrected to say "3 readable of 4 tagged" for g-plurals rather
+than implying all 4 feed the climb, and to note the placement-vs-content
+distinction CURRICULUM CRITIC raised. URD-025 broadened (title, file
+scope, DoD, verify command) to cover both the `sentences` and `grammar`
+call sites rather than leaving a duplicate gap. URD-028's description
+text sharpened to say explicitly that grammar lessons carry the same
+blind spot, not just sentences lessons — its file scope already covered
+both. Two new queue items created: URD-029 (the three residual short
+grammar lessons, including the g-plurals placement-fixable nuance) and
+URD-030 (the grammar climb's distractor pool isn't concept-aware, 73.1%
+of questions answerable by topic recognition alone).
+
+## PASSED · URD-031 · 2026-08-11T15:35Z
+$ npm run check:shape -- --kind=grammar
+  3 of 25 short lessons (was 25 before this item). g-plurals, g-pronouns,
+  g-ability remain short — thin tagged-sentence pools, documented as
+  URD-029, not solved by repetition.
+
+$ npm run check:shape (unfiltered)
+  4 of 319 short lessons course-wide (was 26 before this item — 22 of the
+  25 grammar lessons closed). The g-to-be run/share violation (50%
+  grammarDrill) is gone as a side effect: no run/share problems reported
+  for any grammar lesson.
+
+$ npm run check:all
+  check:all — all 24 steps pass against a deploy-shaped build.
+  Run alone on a still tree, after the final edit.
+
+Induced failure: reverted the `composed` exemption to drop `grammar`,
+confirmed check:shape --kind=grammar reports the original 25-of-25
+failure again, then restored and re-confirmed 3 of 25.
+
+New queue items: URD-029 (three grammar concepts stay short, thin
+tagged-sentence pools), URD-030 (grammar climb's distractor pool isn't
+concept-aware, 73.1% answerable by topic alone). URD-025 broadened to
+cover both sentence-derived climb call sites. URD-028's scope text
+sharpened to name grammar explicitly.
+
+branch: claude/gauntlet-grammar-length
