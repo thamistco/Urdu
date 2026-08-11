@@ -40,7 +40,7 @@ type SyncPayload = { progress?: string | null; settings?: string | null };
  * shape from a future/older schema version. Checked rather than trusted.
  */
 function isSyncPayload(v: unknown): v is SyncPayload {
-  if (typeof v !== 'object' || v === null) return false;
+  if (typeof v !== 'object' || v === null || Array.isArray(v)) return false;
   const o = v as Record<string, unknown>;
   const ok = (x: unknown) => x === undefined || x === null || typeof x === 'string';
   return ok(o.progress) && ok(o.settings);
