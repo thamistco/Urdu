@@ -1,4 +1,5 @@
 import { ReactNode, useEffect } from 'react';
+import { StyleProp, ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withTiming, Easing } from 'react-native-reanimated';
 import { useSettingsStore } from '../store/useSettingsStore';
 
@@ -15,7 +16,7 @@ export function Reveal({
   children: ReactNode;
   delay?: number;
   distance?: number;
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 }) {
   const reduced = useSettingsStore((s) => s.reducedMotion);
   const p = useSharedValue(reduced ? 1 : 0);

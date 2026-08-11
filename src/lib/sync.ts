@@ -28,12 +28,30 @@ async function readLocal() {
   return { progress, settings };
 }
 
-async function applyRemote(data: { progress?: string | null; settings?: string | null }) {
+type SyncPayload = { progress?: string | null; settings?: string | null };
+
+/**
+ * The Supabase client is created without a typed schema (see supabase.ts —
+ * there is no backend to run codegen against until a project is configured),
+ * so a row's `data` column comes back as `unknown`, not `SyncPayload`. It is
+ * also, unlike everything else this app reads, a value nothing local wrote —
+ * a network response, from a table this app's own migrations control but a
+ * user's browser storage does not, that could in principle carry a stale
+ * shape from a future/older schema version. Checked rather than trusted.
+ */
+function isSyncPayload(v: unknown): v is SyncPayload {
+  if (typeof v !== 'object' || v === null) return false;
+  const o = v as Record<string, unknown>;
+  const ok = (x: unknown) => x === undefined || x === null || typeof x === 'string';
+  return ok(o.progress) && ok(o.settings);
+}
+
+async function applyRemote(data: SyncPayload) {
   if (data.progress) await safeStorage.setItem(PROGRESS_KEY, data.progress);
   if (data.settings) await safeStorage.setItem(SETTINGS_KEY, data.settings);
   // re-hydrate the zustand stores from the freshly written blobs
-  await (useProgressStore as any).persist?.rehydrate?.();
-  await (useSettingsStore as any).persist?.rehydrate?.();
+  await useProgressStore.persist?.rehydrate?.();
+  await useSettingsStore.persist?.rehydrate?.();
 }
 
 export async function pushProgress() {
@@ -61,10 +79,12 @@ export async function pullThenMerge(userId: string) {
 
   const { data, error } = await supabase.from('progress').select('data').eq('user_id', userId).maybeSingle();
 
-  if (!error && data?.data) {
-    await applyRemote(data.data as any);
+  if (!error && data?.data && isSyncPayload(data.data)) {
+    await applyRemote(data.data);
   } else {
-    // no cloud copy yet → seed it from the current (possibly guest) progress
+    // no cloud copy yet — or a row present but not shaped like a payload
+    // this version understands — seed it from the current (possibly guest)
+    // progress rather than pass something unvalidated to applyRemote.
     await pushProgress();
   }
 
