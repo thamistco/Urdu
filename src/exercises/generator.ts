@@ -843,13 +843,19 @@ export function buildLessonExercises(
         lesson.id
       );
       const picks = seededShuffle(related, lesson.id).slice(0, GRAMMAR_SENTENCE_TARGET);
-      // Below GRAMMAR_SENTENCE_TARGET tagged sentences, the climb below is
-      // still correct — `.slice` just returns what there is — but the
-      // lesson comes up short of the 3-8 minute band; three concepts do
-      // (g-plurals: 4 tagged, g-pronouns/g-ability: 5), documented rather
-      // than solved by repeating one of the too-few sentences a 4th time,
-      // which would show the identical question twice in one sitting. See
-      // URD-029.
+      // Below GRAMMAR_SENTENCE_TARGET *readable* sentences, the climb below
+      // is still correct — `.slice` just returns what there is — but the
+      // lesson comes up short of the 3-8 minute band. Three concepts land
+      // there: g-pronouns and g-ability have only 5 tagged sentences each,
+      // all 5 readable. g-plurals has 4 tagged but only 3 readable at its
+      // lesson position — `readableSentences` above drops one for using a
+      // word ("میز") not yet taught there — so "tagged" and "usable" are not
+      // the same count and neither should be read off the other. Documented
+      // rather than solved by repeating one of the too-few sentences a 4th
+      // time, which would show the identical question twice in one sitting.
+      // See URD-029, which also tracks whether g-plurals' gap is cheaper to
+      // fix by repositioning or re-tagging than by treating it as pure
+      // content scarcity.
       //
       // Distractors are drawn from every sentence at this concept's level,
       // not just the handful picked for this lesson — the same reason
