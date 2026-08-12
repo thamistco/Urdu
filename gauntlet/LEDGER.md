@@ -1444,3 +1444,199 @@ against the real course total, the same bug class this item fixed for
 level titles, in a system this item never touched).
 
 branch: claude/gauntlet-top-title
+
+## CLAIMED · URD-005 · 2026-08-11T21:10Z
+Top unclaimed item below URD-004. `npm run soak` reports only `tap` and
+`letterTrace` from a default run, because it starts at lesson one and the
+alphabet units never reach most exercise kinds. Add `--start`/`--require`
+so a run can begin anywhere on the path and assert which kinds it saw.
+verify: npm run soak -- --lessons 30 --seed 7 --require typeWord,wordBuild,matching,sentenceBuild
+branch: claude/gauntlet-soak-coverage, cut from claude/gauntlet-top-title
+after URD-004 shipped.
+
+## CRITIQUE · URD-005 · 2026-08-12T00:20Z
+Dispatched THE CRITIC and PLAYER (this item rewrites `scripts/soak.js`
+itself — PLAYER's own instrument — and its correctness needs an
+adversarial read, not curriculum or screen review; no lesson content or
+UI changed, so CURRICULUM CRITIC and DESIGN CRITIC were not dispatched).
+
+### PLAYER
+No BLOCKING/MAJOR authority, clean report. Independently completed a real
+run (`--start 90 --lessons 20 --seed 7 --require wordBuild`, own numbers:
+141 exercises, `wordBuild 3`, exit 0) after tracking down an environment
+issue (a worktree file reversion, and port contention with a concurrent
+verification run on the hardcoded PORT=8311 — both process notes, not
+code findings). Verified by direct source comparison, not just trusting
+the code comments, that `solveMatching`'s `:not([aria-disabled="true"])`
+filter genuinely excludes only already-matched tiles (`Matching.tsx`'s
+per-tile `disabled` prop), and that the Finish-button and Home-screen
+completion regexes match their exact source lines.
+MINOR: `--require reading`/`--require dialogue` could never pass —
+both kinds use dynamic `<Question>` text with no fixed marker, so they
+fell through to `'tap'` and could never be named (independently found;
+see THE CRITIC's B1 below, same defect from a different angle).
+MINOR: same-seed replay is approximate, not exact — two runs of the
+identical seed/flags landed on the same kind mix and pass/fail shape but
+different exercise counts (130 vs 141), evidently perturbed by real
+browser/network timing the RNG doesn't control. Worth a doc caveat.
+
+### THE CRITIC
+Verdict: FAIL, 1 BLOCKING.
+
+B1 (BLOCKING): `--require` can never recognize `reading`, `dialogue` or
+`grammarTeach` by name — all three fall through to the literal string
+`'tap'` (`reading`/`dialogue` have dynamic `<Question>` text drawn from
+the passage/exchange; `grammarTeach` has no `<Question>` at all). So
+`npm run soak -- --require dialogue` reports "required kind never seen"
+even on a run that genuinely visited and correctly answered dozens of
+them — and `reportRequired`'s own failure-hint text explicitly names
+`dialogue` and `reading` as things to try, actively steering a user into
+a permanently-broken invocation. THE CRITIC: "a real, demonstrable lie
+the tool can tell about itself... the same class of bug this project has
+been burned by twice before." Verified independently: both of the lead's
+claimed-passing runs (`--start 90 --require wordBuild`,
+`--start 97 --require sentenceBuild`) re-ran clean; `check:all` re-ran
+clean; a live induced-failure test (reverting the matching-board y-bound,
+the `aria-disabled` filter and the mouse-coordinate click back to their
+broken originals, in a throwaway copy) reproduced the exact `dead end`
+failure the diff's own commentary predicted, confirming that fix is real
+and load-bearing, not cosmetic.
+M1 (MAJOR, folded into the fix below rather than queued separately):
+`solveMatching` never attempts a deliberately wrong pair — it has no
+`wrongOnPurpose` parameter at all, unlike every other solver — so the
+module's own doc-comment claim ("answers deliberately wrongly some of
+the time... so the wrong path is exercised") was unfulfilled for an 8th
+kind, not the 7 originally scoped.
+M2 (MAJOR, queued): `--start N --track roman` undercounts skip depth by
+up to 13 lessons, because `START_COMPLETED` is always built from the
+script-track's `ALL_LESSONS` order, which still contains the 13 letter
+lessons the roman track's own order (`unitsForTrack('roman')`) drops.
+Neither shipped verify combines `--track roman` with `--start`, so this
+does not affect what got recorded PASSED here — queued as part of
+URD-034 rather than a fourth item, since it is a smaller instance of the
+same "soak's simplifying assumptions don't hold once you look" pattern.
+
+## FIX ROUND — URD-005, commit (pending)
+B1 fixed, and fixing it exactly as scoped immediately surfaced two more
+real, previously-unknown bugs that made the fix's own verification fail
+until they were fixed too — documented here in the order they were found,
+each with the real run that caught it.
+
+1. **Naming.** Added `Reading · ` / `Conversation · ` (both exercises'
+   own `Eyebrow` caption, present on every stage) and a bare `Grammar`
+   eyebrow to the kind-detection tables, matched case-insensitively — the
+   eyebrows render uppercase via CSS `text-transform`, so `innerText`
+   reports `READING · MY FAMILY`, not the source's mixed-case string; a
+   first attempt without the `i` flag still failed on that exact text,
+   caught by re-running rather than trusting the diff.
+
+2. **Reachability, not just naming.** Labeling alone did not make
+   `reading`/`dialogue`/`grammarTeach` answerable: THE CRITIC's B1 fix
+   pointed at real content these screens had likely never been exercised
+   in at all. Confirmed live: `<Button>` (`src/components/Button.tsx`,
+   backing "I've read it," "Got it," "Show examples") never sets
+   `accessibilityRole="button"`, unlike `<Choice>` — walked its DOM
+   ancestry six levels up, no `role` attribute anywhere. `tapNamedKind`'s
+   `[role="button"]` query is structurally blind to it, so a run through
+   any of these screens hit `unanswerable screen` and stalled — this was
+   not a labeling bug alone, it was an unreachable-content bug the
+   labeling work exposed. Fixed with an explicit text-based tap
+   (`text=/read it/i`, `text=/^(Show the pattern|Show examples|Got it)$/i`)
+   for the intro/reveal stage of each, falling through to the ordinary
+   `role="button"` search only for the `<Choice>`-built answer stage that
+   follows.
+
+3. **Off-screen content.** A longer dialogue (5 speaker turns) pushed
+   both the "I've read it" button and, on the next stage, the Question
+   and its Choice options below the fixed 900px viewport — `tap`'s
+   bounding-box check correctly reported them as not on screen, since it
+   never scrolls. Fixed with `scrollIntoViewIfNeeded()` for the single
+   intro button; for the answer stage, `page.mouse.wheel()` was tried
+   first and visibly did nothing (identical failure screenshot before and
+   after — it dispatches at the mouse's last position, not necessarily
+   over RN-web's actual `overflow: auto` scroll container), so replaced
+   with a `page.evaluate()` that scrolls every scrollable container on
+   the page to its bottom directly.
+
+4. **Recovery.** A separate, pre-existing gap this now reaches: `why ===
+   'ran out'` (a lesson that hits its 90-step budget) was never given the
+   same `page.goto(url)` recovery `why === 'stuck'` gets, so a timed-out
+   lesson could leave the browser on a mid-lesson screen (observed: an
+   affordable-refill "Out of hearts" prompt) and the *next* attempt's
+   `openNextLesson` then failed against that stale screen, cascading into
+   a second, unrelated `no lesson to open` failure. Fixed by extending the
+   reset to both outcomes.
+
+5. **A real, separate app bug, left unfixed and queued as URD-035.**
+   Fixing 1-4 let a run reach far enough into `GrammarTeachExercise` to
+   trigger an uncaught `TypeError: Cannot read properties of undefined
+   (reading 'N')` partway through its reveal-a-stage flow, blanking the
+   screen — reproduced on two independent concepts and seeds
+   (`g-pronouns`/seed 7/`--start 29`; `g-gender`/seed 11/`--start 45`).
+   Ruled out a driver-timing race first (the card's own `setTimeout(120)`
+   reveal delay was a plausible cause): added a 200ms settle wait after
+   each reveal tap, reran, identical crash. This is app code
+   (`src/exercises/GrammarExercises.tsx`), not `scripts/soak.js`, and out
+   of scope to fix here — filed as URD-035 with full repro rather than
+   silently working around it or leaving it undocumented.
+
+## PASSED · URD-005 · 2026-08-12T04:05Z
+$ node -c scripts/soak.js && npx eslint scripts/soak.js && npx prettier --check scripts/soak.js
+  syntax OK, 0 lint errors, formatted.
+
+$ npm run check:all
+  check:all — all 25 steps pass against a deploy-shaped build.
+  Run alone on a still tree, after the final edit.
+
+Real (non-diagnostic, real hearts economy, no code hacks) verify runs,
+each independently re-run after the B1 fix round and confirmed clean:
+
+  npm run soak -- --start 90 --lessons 20 --seed 7 --require wordBuild
+    → 0 lessons completed (expected — see URD-034), wordBuild seen,
+      required kinds all seen, Nothing broke. Seed 7.
+  npm run soak -- --start 97 --lessons 15 --seed 7 --require sentenceBuild
+    → same shape, sentenceBuild seen, Nothing broke.
+  npm run soak -- --start 74 --lessons 2 --seed 7 --require reading
+    → 2/2 lessons completed, reading seen twice, Nothing broke.
+  npm run soak -- --start 77 --lessons 3 --seed 7 --require dialogue
+    → 3/3 lessons completed, dialogue seen twice, Nothing broke.
+
+Induced failure, per THE CRITIC's own live method: reverted the matching
+board's `y > 80` bound to the original `150`, the `:not([aria-disabled=
+"true"])` filter, and the mouse-coordinate click, each back to their
+broken originals in a throwaway copy — reproduced the exact `dead end`
+("the screen did not change across 4 attempts") the fix was written
+against, twice. Restored and re-confirmed all four real runs above.
+
+`--require matching` and the item's own originally literal verify
+(`--lessons 30 --seed 7 --require typeWord,wordBuild,matching,
+sentenceBuild`, no `--start`) still do not pass against a real run —
+not a defect in what shipped here, but a real, separately-diagnosed
+downstream effect (see URD-034: the generic answer-tap doesn't try to be
+correct, so no real soak run has completed a single lesson this entire
+session, independent of `--start`; `matching` sits behind full-lesson
+completion and so is currently unreachable regardless of budget). The
+solver itself is verified correct: a throwaway, unshipped patch
+(`hearts: 999` in the guest-seed call, never committed) that removes the
+hearts economy as a confound let 10 of 10 real attempts complete cleanly
+in one run, all four required kinds seen together, `matching` solved 8/8
+— proof the code is right even though today's real hearts economy and
+answer accuracy keep it out of reach. Recorded here rather than claimed
+as a passing shipped verify, per the project's own rule against
+reporting a check green on reasoning instead of a real run.
+
+Counter honesty (this item's other half): `attempts`/`lessonsCompleted`
+are genuinely separate counters now; `--lessons` still bounds the loop on
+`attempts`, deliberately — self-corrected mid-implementation after
+measuring that gating on completions instead made a real run's length
+unbounded (see the code comment at the loop site), which is itself
+information about URD-006, not a redefinition this item's own
+instruction called for.
+
+New queue items: URD-034 (the generic answer-tap doesn't try to be
+correct, the root cause behind every 0-completion real run this
+session, MAJOR from THE CRITIC plus the lead's own measurement),
+URD-035 (a real, reproducible uncaught error blanking a grammar teaching
+card, found chasing THE CRITIC's B1 fix, app code not soak.js).
+
+branch: claude/gauntlet-soak-coverage
