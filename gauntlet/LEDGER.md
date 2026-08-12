@@ -1759,3 +1759,125 @@ found incidentally as a flake under check:all's full sequence, not
 reproduced standalone, unrelated to this item's own files).
 
 branch: claude/gauntlet-lockout-screen
+
+## CLAIMED · URD-007 · 2026-08-12T12:22Z
+Top unclaimed item below URD-A02. ذ ز ض ظ (zaal/ze/zwaad/zoe) are four
+different letters all pronounced "z" — `letterPick` ("which letter makes
+this sound?") drew distractors uniformly from all 38 letters with no
+awareness of sound, so offering two of the four (or two of any other
+same-sound group) makes a question with two right answers, answerable
+only by luck.
+verify: npm run check:answerable
+branch: claude/gauntlet-similar-letters, cut from claude/gauntlet-lockout-screen
+after URD-006 shipped.
+
+## CRITIQUE · URD-007 · 2026-08-12T12:45Z
+Dispatched THE CRITIC (mandatory) and CURRICULUM CRITIC (this changes how a
+homophone letter group is taught/tested, not just engineering correctness).
+Not DESIGN CRITIC (no screen changed — only `letterPick`'s distractor pool
+and a check script). Not PLAYER — `check:answerable` already drives every
+generated exercise across both tracks × 6 passes (107,610 exercises), which
+is more exhaustive for this specific property than a soak run would be;
+noted here rather than silently skipped, per ROLES.md.
+
+### THE CRITIC
+Verdict: PASS. No BLOCKING, no MAJOR.
+Independently re-derived the fix rather than trusting it: read
+`distractLetters`/`bareSound` (as they stood at review time) by hand against
+all 40 letters (32 distinct bare sounds then), confirmed the exclusion was
+genuinely pairwise (distractor-vs-distractor, not just vs-target), and
+reproduced *both* induced-failure states the lead claimed — the naive
+target-only exclusion (142 failures) and an intermediate single-pass,
+target-sound-only variant that still let two unrelated distractors collide
+with each other (reproduced the exact gap: "alif (\"a / aa\") among ze,
+zaal, alif, zhe" — two distractors colliding, not the target).
+MINOR (all fixed same round): (1) two stray untracked scratch scripts
+(`_tmp_sample.js`, `_tmp_sample2.js`) left in the shared checkout by THE
+CRITIC's own probing — exactly the accident URD-A01's ledger entry already
+warned about, deleted; (2) `bareSound` was duplicated (not shared) between
+`generator.ts` and `check-answerable.js`, risking silent drift between the
+two definitions of "sounds the same" — fixed by exporting it from
+`generator.ts` and having `check-answerable.js` import it the same way it
+already imports `buildLessonExercises`, rather than keeping a hand-synced
+copy; (3) no dedicated unit test for the new pure logic, against this
+project's own stated test-philosophy split — fixed by adding
+`src/exercises/generator.test.ts`.
+
+### CURRICULUM CRITIC
+Verdict: passes this item's own definition of done. One MAJOR (fixed same
+round, see below) and one MAJOR left open as a new queue item.
+Found, empirically, that the lead's own doc comment overclaimed: a first
+version of the sound-equality check normalized each letter to one string
+("z", "h", …), so it matched "z" against "z" but missed that alif ("a /
+aa") and alif-madda ("aa") are different *strings* sharing a *reading* —
+sampled 2,902 of 3,000 real `letterPick` generations offering both
+together, disproving the comment's claim that the fix was generic enough to
+catch "a new homophone letter" automatically. FIXED same round: rewrote
+`bareSound` into `soundTokens`/`soundsOverlap` (splits a multi-reading
+`sound` field like "a / aa" on "/" and checks for token overlap rather than
+string equality), re-verified empirically — 0/5,100 sampled `letterPick`
+exercises across 20 passes now show any sound collision, 0 alif/alif-madda
+pairs — and re-ran the full induced-failure cycle against the corrected
+version (see PASSED below).
+Also found, not fixed here (explicitly out of this item's "not generated"
+branch, filed as URD-038): none of the four ذ ز ض ظ letters' `note` fields
+in `letters.ts` teach a rule for *which* letter a word actually uses — they
+only name the collision ("another of the four ways Urdu spells 'z'"). The
+gap is real but muted today because `TypeWordExercise` matches Roman input
+(`skeleton()` in `src/lib/roman.ts`), so a learner who types "zaroorat"
+never has to choose the correct z-letter — but 204 of 2,281 words (8.9%)
+contain one of these four, and anyone writing Nastaliq directly, or drawing
+a `wordBuild` tray whose random decoy happens to be a same-sound rival, has
+no taught rule to fall back on.
+Confirmed not a regression, not filed: 64.0% of the four letters'
+`letterPick` questions offer no phonetically-adjacent distractor at all
+(sampled 184,000 generations) — true before this diff too, since
+`distractLetters` draws uniformly from the whole alphabet with no
+similarity-weighting beyond the same-sound exclusion this item adds; not
+scoped to this item.
+Confirmed not a regression, not filed (cosmetic, pre-existing): `te`'s
+`name` is `'te'` and `Te`'s is `'Te'`, differing only by case, unlike the
+other two retroflex pairs which get a real diacritic in the name
+(daal/Ḍaal, re/Ṛe) — `LetterPickExercise`'s secondary label cue is weaker
+for this one pair.
+Confirmed no interaction with URD-020/021/022 (isolated-glyph share,
+context-word coverage, visual-confusability weighting) — none of those
+mechanisms were touched by this diff.
+
+## PASSED · URD-007 · 2026-08-12T12:47Z
+$ npm run check:answerable
+  107,610 exercises generated across 2 tracks × 6 passes.
+  "every generated exercise is answerable from what it puts on screen"
+
+$ npx vitest run src/exercises/generator.test.ts
+  10/10 pass.
+
+$ npx tsc --noEmit
+  clean.
+
+$ npm run lint
+  clean.
+
+$ npm run check:all
+  check:all — all 25 steps pass against a deploy-shaped build.
+  Run alone on a still tree, after the final edit.
+
+Induced failure, twice: (1) reverted `distractLetters` to a naive
+target-only exclusion — `check:answerable` failed immediately (142
+occurrences), restored and reconfirmed clean. (2) after the
+CURRICULUM-CRITIC-driven rewrite to `soundTokens`/`soundsOverlap`, reverted
+`distractLetters` again to a naive `filter(id !== target)` — both
+`check:answerable` (195 occurrences, specifically reproducing
+"alif-madda (\"aa\"): alif vs alif-madda") and the new unit test
+("never offers a distractor that sounds like the target, or like another
+distractor") failed together; restored and reconfirmed both clean. Also
+independently sampled 5,100 real `letterPick` exercises across 20 passes
+outside the check script: 0 sound collisions, 0 alif/alif-madda pairs.
+
+New queue item: URD-038 (none of ذ ز ض ظ's `note` fields teach a rule for
+which letter a word actually uses — the "not generated" branch this item
+took avoids the unanswerable-question bug but leaves the underlying
+spelling ambiguity untaught for anyone writing Nastaliq directly, MAJOR
+from CURRICULUM CRITIC).
+
+branch: claude/gauntlet-similar-letters

@@ -21,10 +21,6 @@ import { Exercise, ItemRef } from './types';
 
 const rand = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
-function sample<T>(pool: T[], n: number, exclude: (t: T) => boolean): T[] {
-  return shuffle(pool.filter((t) => !exclude(t))).slice(0, n);
-}
-
 /**
  * Phrases reshaped as word-like items so they flow through the same exercises.
  *
@@ -81,6 +77,87 @@ const poolFor = (w: Word): Word[] =>
 
 // ---- per-item exercise builders -----------------------------------------
 
+/**
+ * Every distinct reading `letter.sound` claims, lowercased and stripped of
+ * parenthetical asides — most letters have one ("z"), some have several
+ * ("a / aa" for alif, one short and one long).
+ *
+ * A first version of this returned the whole normalized string as one
+ * token, so it matched "z" against "z" but missed that "a / aa" (alif) and
+ * "aa" (alif-madda) are different *strings* that share a *reading* — the
+ * CURRICULUM CRITIC found alif and alif-madda co-occurring in 2,902 of
+ * 3,000 sampled `letterPick` generations despite that version's own claim
+ * to be generic. Splitting on "/" and comparing token sets (below) catches
+ * that, and also correctly leaves alif-madda ("aa" only) free to appear
+ * alongside ain ("a / ‘ (silent)"): they share no token, because nothing
+ * about ain sounds like alif-madda's long aa specifically.
+ *
+ * Exported so `check-answerable.js` can import this exact function (it loads
+ * this module the same way it already loads `buildLessonExercises`) rather
+ * than keeping its own copy — a second, hand-synced definition of "sounds
+ * the same" is exactly the kind of drift this item exists to prevent, one
+ * file up.
+ */
+export const soundTokens = (l: Letter): string[] =>
+  l.sound
+    .replace(/\s*\(.*?\)/g, '')
+    .toLowerCase()
+    .split('/')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+/** Do these two letters share even one reading? */
+export const soundsOverlap = (a: Letter, b: Letter): boolean => {
+  const bTokens = soundTokens(b);
+  return soundTokens(a).some((t) => bTokens.includes(t));
+};
+
+/**
+ * URD-007: ذ ز ض ظ are four different letters for one sound — Urdu speakers
+ * hear no difference between zaal, ze, zwaad and zoe, so `letterPick`
+ * ("which letter makes this sound?") offering two of them has two right
+ * answers, answerable only by luck. The same is true, less famously, of
+ * te/toe ("t"), se/seen/swaad ("s"), the three ه letters
+ * (baRi-he/choti-he/do-chashmi-he, all "h"), and alif/alif-madda/ain's
+ * overlapping "a"/"aa" readings — computed from `sound` rather than a
+ * hand-picked list so a new homophone letter can't slip back through
+ * unnoticed the way this one did (see `soundTokens`'s own history for a
+ * homophone group this file's first attempt still missed). These letters
+ * are still taught and still drilled — `letterForm` and `letterTrace` test
+ * the glyph itself, which does distinguish them, and their word-context
+ * card shows the spelling. Only the audio-only "which letter?" question is
+ * exempted from offering a same-sound rival, per this item's own choice of
+ * "not generated" over "tested by spelling context" — these letters don't
+ * share enough of a lesson position to build a spelling-context question
+ * around without a content change well past this item's scope.
+ *
+ * Picks distractors one at a time rather than filtering `LETTERS` once and
+ * slicing, because the collision is not only ever with the target: two
+ * *distractors* that are strangers to the target but homophones of each
+ * other (e.g. choti-he and do-chashmi-he both drawn against a target with
+ * neither's sound) are exactly as unanswerable, and a single-pass filter
+ * keyed only on the target misses that. Tracking every reading already
+ * claimed — by the target, or by a distractor already chosen — as each new
+ * distractor is picked rules out both cases, and (unlike a global
+ * equivalence-class grouping would) still correctly allows two letters that
+ * merely share a *third* letter's reading, not each other's, to co-occur:
+ * alif overlaps both alif-madda ("aa") and ain ("a"), but alif-madda and
+ * ain do not overlap each other, and can still appear together.
+ */
+export function distractLetters(letter: Letter, n: number): Letter[] {
+  const usedTokens = new Set(soundTokens(letter));
+  const picked: Letter[] = [];
+  for (const candidate of shuffle(LETTERS)) {
+    if (picked.length >= n) break;
+    if (candidate.id === letter.id) continue;
+    const tokens = soundTokens(candidate);
+    if (tokens.some((t) => usedTokens.has(t))) continue;
+    tokens.forEach((t) => usedTokens.add(t));
+    picked.push(candidate);
+  }
+  return picked;
+}
+
 function letterExercise(letter: Letter): Exercise {
   // Three ways to meet a letter: name the position of a glyph, pick the glyph
   // out of four, or draw it. Tracing is the slowest, so it stays a minority.
@@ -95,7 +172,7 @@ function letterExercise(letter: Letter): Exercise {
   if (roll < 0.72) {
     return { kind: 'letterForm', letter, position, options: POSITIONS.map((p) => p.key) };
   }
-  const distractors = sample(LETTERS, DISTRACTORS, (l) => l.id === letter.id);
+  const distractors = distractLetters(letter, DISTRACTORS);
   return { kind: 'letterPick', letter, options: shuffle([letter, ...distractors]) };
 }
 
@@ -143,7 +220,7 @@ function letterExerciseAt(letter: Letter, turn: number, positionIndex: number): 
   if (t !== 2) {
     return { kind: 'letterForm', letter, position, options: POSITIONS.map((p) => p.key) };
   }
-  const distractors = sample(LETTERS, DISTRACTORS, (l) => l.id === letter.id);
+  const distractors = distractLetters(letter, DISTRACTORS);
   return { kind: 'letterPick', letter, options: shuffle([letter, ...distractors]) };
 }
 
