@@ -17,6 +17,7 @@ import { feedback } from '../lib/feedback';
 import { announce, invalidateSpeech } from '../lib/speech';
 import { dueQueue, dueBudget } from '../lib/srs';
 import { shouldUpdateSrs } from '../lib/sessionGrading';
+import { REFILL_COST, gemsShortOfRefill, minutesUntilNextHeart } from '../lib/gamification';
 import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { resolveLesson } from '../data/units';
@@ -130,6 +131,7 @@ export function LessonScreen() {
   const refillHearts = useProgressStore((s) => s.refillHearts);
   const hearts = useProgressStore((s) => s.hearts);
   const gems = useProgressStore((s) => s.gems);
+  const heartsUpdatedAt = useProgressStore((s) => s.heartsUpdatedAt);
 
   /**
    * Build the exercise set once, weaving in whatever SRS items are due.
@@ -275,6 +277,15 @@ export function LessonScreen() {
   }
 
   if (outOfHearts) {
+    // Either the button works, or the learner is told exactly what stands
+    // between them and playing again — never a disabled button and a
+    // sentence that only talks about the option they can't take yet.
+    // A fresh profile starts with 20 gems against a 40-gem refill and earns
+    // 5-8 a lesson, so the first lockout almost never affords the button;
+    // the wait needs to be a real answer, not just implied by its absence.
+    const canAfford = gems >= REFILL_COST;
+    const short = gemsShortOfRefill(gems);
+    const waitMin = minutesUntilNextHeart(heartsUpdatedAt);
     return (
       <Screen scroll={false}>
         <SafeAreaView className="flex-1">
@@ -282,12 +293,16 @@ export function LessonScreen() {
             <Illustration name="heart" tile={false} size={60} />
             <Heading className="mb-2 mt-4 text-2xl">Out of hearts</Heading>
             <Txt className="mb-8 max-w-[280px] text-center text-sm text-paper/60">
-              Hearts refill slowly over time, or you can spend gems to keep the calm going now.
+              {canAfford
+                ? 'Hearts refill slowly over time, or you can spend gems to keep the calm going now.'
+                : `You're ${short} gem${short === 1 ? '' : 's'} short for a refill — the next heart arrives ${
+                    waitMin <= 0 ? 'any moment now' : `in about ${waitMin} minute${waitMin === 1 ? '' : 's'}`
+                  }.`}
             </Txt>
             <View className="w-full gap-3">
               <Button
                 variant="primary"
-                disabled={gems < 40}
+                disabled={!canAfford}
                 onPress={() => {
                   if (refillHearts()) {
                     feedback.correct();
@@ -297,7 +312,7 @@ export function LessonScreen() {
                   }
                 }}
               >
-                Refill · 40 gems (you have {gems})
+                Refill · {REFILL_COST} gems (you have {gems})
               </Button>
               <Button variant="ghost" onPress={() => nav.navigate('Main')}>
                 Leave for now

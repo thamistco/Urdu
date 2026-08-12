@@ -122,28 +122,6 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-006 — A new learner cannot be locked out with no way back
-attempts: 0
-files: src/lib/gamification.ts, src/screens/LessonScreen.tsx, src/lib/gamification.test.ts
-definition of done: Either the first refill is affordable, or the lockout screen
-  says plainly how long the wait is and how many gems short you are. A profile
-  starts with 20 gems, a refill costs 40 (`LessonScreen.tsx:262`), and a lesson
-  pays 5 to 10. So a learner who loses five hearts in their first two lessons
-  faces a disabled button and a 30 minute wait per heart with no explanation of
-  either. A test asserts a fresh profile can always either refill or be told the
-  wait.
-verify: npm test -- src/lib/gamification.test.ts
-notes: The button is correctly `disabled={gems < 40}`; the problem is that it
-  does not look disabled and says nothing about the wait. Found by the soak,
-  which sat tapping it until its step budget ran out.
-
-
-  RE-MEASURED after URD-A02 attempt 1: gems earned across the course roughly
-  halve, while HEARTS_MAX stays 5 and a vocabulary lesson is now up to 43
-  exercises. Five hearts against 43 questions is a tighter constraint than five
-  against 9, and the refill is now further out of reach, so this is worse than
-  when it was first measured.
-
 ## URD-007 — Teach ذ ز ض ظ by spelling context, not by sound
 attempts: 0
 files: src/data/letters.ts, src/exercises/generator.ts, scripts/check-answerable.js
@@ -716,3 +694,54 @@ notes: Found chasing down THE CRITIC's BLOCKING finding on URD-005 (that
   during the stage-reveal sequence, but that needs someone reading
   `GrammarExercises.tsx`'s `stages`/`shown` logic against real `GRAMMAR`
   concept data, not more soak driving.
+
+## URD-036 — A disabled button should look disabled, not just say why it is
+attempts: 0
+files: src/components/Button.tsx
+definition of done: `Button`'s disabled state is `opacity: disabled ? 0.4 :
+  1` on an otherwise-unchanged fill, border and label — for the `primary`
+  variant (warm gold) this stays a shaped, coloured, clearly-tappable-looking
+  pill at 40% opacity, not a control that reads as unavailable at a glance.
+  Give disabled buttons a visual treatment (desaturating toward a neutral
+  tone, a different fill entirely, or similar) that a learner recognizes as
+  "will not respond" before they read anything next to it.
+verify: DESIGN CRITIC screenshots the same control enabled vs. disabled and
+  confirms the disabled state reads as unavailable at a glance, without
+  needing the surrounding copy to explain it.
+notes: Found by DESIGN CRITIC reviewing URD-006's lockout-screen fix,
+  comparing the refill button enabled (gems ≥ 40) against disabled
+  (gems < 40) at the same seed: "the only disabled cue is `opacity: disabled
+  ? 0.4 : 1` on the whole Pressable — fill, border and label text all dim
+  together to a muted orange, still shaped and sized exactly like a live
+  CTA... at a glance, before reading, a warm 40%-opacity gold pill still
+  reads as 'a button,' just a slightly duller one." URD-006's own fix (a
+  subtitle explaining *why* the button won't respond) closes the
+  explanation gap but not this one — flagged there as real but out of that
+  item's scope, since `Button` is shared across the whole app and changing
+  its disabled treatment needs its own review, not a decision folded into
+  an unrelated screen's copy fix.
+
+## URD-037 — check:path has no floor, so a real regression could read as a pass
+attempts: 0
+files: scripts/check-path.js
+definition of done: `check:path` asserts only an upper bound (`n` mounted
+  rows over `BOUND` fails); nothing asserts a *lower* bound, so a scenario
+  that mounts zero rows — the accordion silently failing to render anything
+  — passes exactly as cleanly as one mounting the expected 81 or 94. Add a
+  floor per scenario (e.g. "fresh guest" should mount at least the lessons
+  in an open level's own unit, not zero) so a genuine render failure fails
+  loudly instead of reading as an excellent bound.
+verify: temporarily force the accordion's `isOpen(lvl)` gate to always
+  `false` (mounting nothing) and confirm check:path now fails; today it
+  would report "0 lesson rows mounted (bound: 114)" and exit 0.
+notes: Found incidentally verifying URD-006 — `npm run check:all`, run
+  twice back to back, reported a different scenario mounting 0 rows each
+  time ("learner deep into the course: 0" once, "fresh guest: 0" the other),
+  while `npm run check:path` run alone, three times in a row, reported the
+  normal 81/94/94 every time. So this is a real flake under check:all's
+  full-sequence load (not reproduced standalone, not investigated further
+  here — a timing race between the build and the check, or system load from
+  running 25 steps back to back, is the likely cause) that the check's own
+  bound cannot catch either way, since "0" is a legal reading. Unrelated to
+  URD-006's own change (no file this item touched is anywhere near
+  `check-path.js` or `HomeScreen.tsx`'s accordion).

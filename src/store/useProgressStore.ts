@@ -8,6 +8,7 @@ import { dayKey, daysBetween } from '../lib/date';
 import {
   HEARTS_MAX,
   HEART_REGEN_MINUTES,
+  REFILL_COST,
   levelFromXp,
   gemsForLesson,
   promote,
@@ -243,9 +244,8 @@ export const useProgressStore = create<ProgressState>()(
       refillHearts: () => {
         const s = get();
         if (s.hearts >= HEARTS_MAX) return false;
-        const COST = 40;
-        if (s.gems < COST) return false;
-        set({ hearts: HEARTS_MAX, gems: s.gems - COST, heartsUpdatedAt: Date.now() });
+        if (s.gems < REFILL_COST) return false;
+        set({ hearts: HEARTS_MAX, gems: s.gems - REFILL_COST, heartsUpdatedAt: Date.now() });
         return true;
       },
 

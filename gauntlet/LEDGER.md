@@ -1640,3 +1640,122 @@ URD-035 (a real, reproducible uncaught error blanking a grammar teaching
 card, found chasing THE CRITIC's B1 fix, app code not soak.js).
 
 branch: claude/gauntlet-soak-coverage
+
+## CLAIMED · URD-006 · 2026-08-12T04:20Z
+Top unclaimed item below URD-A02. The "Out of hearts" lockout screen's
+refill button is correctly `disabled={gems < 40}`, but a fresh profile
+starts at 20 gems against a 40-gem refill and pays 5-8 gems a lesson —
+close to every new learner's first lockout is unaffordable, and the
+screen says nothing about why or what to do instead.
+verify: npm test -- src/lib/gamification.test.ts
+branch: claude/gauntlet-lockout-screen, cut from claude/gauntlet-soak-coverage
+after URD-005 shipped.
+
+## CRITIQUE · URD-006 · 2026-08-12T07:35Z
+Dispatched THE CRITIC (mandatory) and DESIGN CRITIC (this item changes the
+lockout screen's rendered text and disabled-state wiring). Not CURRICULUM
+CRITIC (no lesson content). PLAYER not dispatched — the change is a small,
+self-contained text/logic fix with direct unit-test coverage, and DESIGN
+CRITIC was already going to drive the real screen in a browser, covering
+much of the same ground a soak run would; noted here rather than silently
+skipped, per ROLES.md.
+
+### THE CRITIC
+First dispatch hung indefinitely: it tried to `git diff`/`EnterWorktree`
+the shared checkout to see this item's still-uncommitted change from its
+own isolated worktree (whose git history predates the change), and
+`EnterWorktree` never returned — killed after ~3 hours with zero file
+activity or running processes in its worktree, confirmed dead rather than
+slow. Redispatched with explicit instructions to read the changed files
+directly from `/home/user/Urdu` by absolute path instead of git-diffing a
+worktree that can't see uncommitted work. Second dispatch completed
+normally.
+
+Verdict: PASS. No BLOCKING.
+MAJOR (fixed same round): `gamification.test.ts`'s "fresh profile" test
+asserted `minutesUntilNextHeart(Date.now())` `toBeGreaterThanOrEqual(0)`
+— structurally true against any implementation, since the function is
+clamped to `[0, HEART_REGEN_MINUTES]` regardless of its inner arithmetic.
+THE CRITIC: "I mentally deleted the clamp's inner arithmetic... and this
+assertion still passes" — citing `docs/ENGINEERING_STANDARDS.md` rules
+90-91 ("every new test must be seen to fail" / "a test that cannot fail
+is worse than no test"), the same class of bug the DST test was burned by
+once already. Fixed to assert the actual expected value (a heart just
+lost, zero elapsed, must wait the full cycle: `toBe(HEART_REGEN_MINUTES)`).
+MINOR (fixed same round): the doc comment above `minutesUntilNextHeart`
+claimed `LessonScreen.tsx` "clears `outOfHearts` as soon as `hearts > 0`"
+— false as a description of the code; grepped every reference and found
+`outOfHearts` clears only on a successful refill or "Leave for now,"
+never on a heart regenerating on its own. Not a learner-facing defect
+(the real escape hatch, "Leave for now," is unconditional and unaffected;
+`HomeScreen.tsx` never gates starting a lesson on hearts either) but a
+false claim about the mechanism a future engineer could reason from
+wrongly. Rewrote the comment to describe what actually happens.
+Verified independently: `npx vitest run src/lib/gamification.test.ts`
+(22/22), `npx tsc --noEmit` (clean), `npm run check:all` (all 25 steps,
+watched the real process to its own exit rather than trusting a
+premature signal). Hand-traced `heartsUpdatedAt`'s semantics against
+`regenHearts`/`loseHeart`/`refillHearts` in `useProgressStore.ts` and the
+boundary cases (gems exactly 40, elapsed exactly 30/0/negative minutes,
+singular/plural wording) — all correct as read.
+
+### DESIGN CRITIC
+Built (`npx expo export` after `build:web` hit a stale cross-worktree
+metro cache — an environment issue, not this item) and screenshotted the
+real lockout screen at four gem/wait combinations via Playwright/chromium,
+390×844 @2x. Not blocking.
+Glance: both required copy combinations ("1 gem short / 1 minute", "39
+gems short / 29 minutes") wrap to exactly 2 lines inside the unchanged
+`max-w-[280px]` box, singular grammar correct at both boundaries, screen
+rhythm (button position) identical to the unchanged `canAfford` branch.
+MINOR: measured contrast (WCAG relative luminance, sampled pixels, not
+guessed) at the same screen position old vs. new copy — old ≈4.66:1/
+4.99:1, new (39-gems scenario) ≈4.64:1/4.13:1 — both near the 4.5:1 AA
+floor already (this text-over-`DuskScene`-illustration treatment was
+already marginal), but the new copy's second line measured a real, if
+small, dip below AA in this one sample. Not caused by this diff's logic
+(CSS/opacity token unchanged; different string simply samples different
+pixels of a non-flat background) — worth a follow-up measurement pass on
+`text-paper/60` over `DuskScene` generally, not blocking this fix.
+Flagged, not fixed (explicitly out of this item's scope, filed
+separately): the disabled `primary`-variant button is still only
+`opacity: 0.4` on an otherwise-unchanged gold pill — "at a glance, before
+reading, a warm 40%-opacity gold pill still reads as 'a button,' just a
+slightly duller one." The new copy closes the *explanation* gap (a
+learner who reads understands why it won't respond) but not the *visual
+affordance* gap (before reading, it doesn't obviously look disabled).
+Matches the item's own original note; DESIGN CRITIC correctly declined to
+recommend changing `Button`'s shared disabled styling inline, since that
+touches every disabled button in the app and needs its own review — filed
+as URD-036.
+Verdict vs. previous behaviour: clear improvement, no regression across
+all four screenshotted scenarios; the unaffordable branch (the common
+case for a fresh profile) now states a real number instead of a
+one-size-fits-all sentence a learner in this situation could never act on.
+
+## PASSED · URD-006 · 2026-08-12T07:40Z
+$ npx vitest run src/lib/gamification.test.ts
+  22/22 pass.
+
+$ npx tsc --noEmit
+  clean.
+
+$ npm run check:all
+  check:all — all 25 steps pass against a deploy-shaped build.
+  Run alone on a still tree, after the final edit.
+
+Induced failure, per THE CRITIC's own finding: reverted
+`minutesUntilNextHeart`'s return to a hardcoded `0`, confirmed the fixed
+test now catches it (2 of 22 tests fail: the corrected "fresh profile"
+assertion and the pre-existing "counts down" property test both flag it,
+where before the fix neither would have), restored and re-confirmed
+22/22.
+
+New queue items: URD-036 (Button's disabled state doesn't look disabled
+at a glance, from DESIGN CRITIC, deliberately not fixed here since it's
+shared across the whole app), URD-037 (check:path asserts no lower bound
+on mounted rows, so a real render failure could read as "0 ≤ bound" —
+found incidentally as a flake under check:all's full sequence, not
+reproduced standalone, unrelated to this item's own files).
+
+branch: claude/gauntlet-lockout-screen
