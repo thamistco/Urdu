@@ -7,6 +7,40 @@
 export const HEARTS_MAX = 5;
 /** Minutes to regenerate one heart. */
 export const HEART_REGEN_MINUTES = 30;
+/** Gems to refill to full immediately, instead of waiting. */
+export const REFILL_COST = 40;
+
+/**
+ * How many more gems a learner needs before a refill is affordable. Zero
+ * once they can afford it — the lockout screen uses that to decide whether
+ * to show a price or a wait, not both.
+ */
+export function gemsShortOfRefill(gems: number): number {
+  return Math.max(0, REFILL_COST - gems);
+}
+
+/**
+ * Minutes until the next heart regenerates, from the timestamp the hearts
+ * clock last reset (`heartsUpdatedAt` in the progress store).
+ *
+ * The wait for the *first* heart, not a full refill — only one heart is
+ * needed to *start* a lesson again (`HomeScreen.tsx` never gates on
+ * `hearts`), which is the number a learner staring at the lockout screen
+ * actually wants. THE CRITIC reviewing this found the lockout screen itself
+ * does not auto-dismiss the moment that heart lands — `outOfHearts` only
+ * ever clears on a successful refill or "Leave for now" — so this number
+ * describes when trying again would work, not when this exact screen will
+ * go away on its own. Recorded explicitly because an earlier version of
+ * this comment claimed the auto-dismiss and was wrong about it.
+ */
+export function minutesUntilNextHeart(heartsUpdatedAt: number, now: number = Date.now()): number {
+  const elapsedMin = (now - heartsUpdatedAt) / 60000;
+  // Clamped on both ends: `elapsedMin` should never be negative in real use
+  // (the clock only moves forward), but a lockout screen reading a bogus
+  // number from clock skew or a stale timestamp is worse than one reading a
+  // merely-approximate one, so this never reports more than a full cycle.
+  return Math.min(HEART_REGEN_MINUTES, Math.max(0, Math.ceil(HEART_REGEN_MINUTES - elapsedMin)));
+}
 
 /**
  * Level curve: gently super-linear so early levels come fast (momentum for new

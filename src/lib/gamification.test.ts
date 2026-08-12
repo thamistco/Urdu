@@ -2,13 +2,17 @@ import { describe, expect, it } from 'vitest';
 
 import {
   HEARTS_MAX,
+  HEART_REGEN_MINUTES,
+  REFILL_COST,
   demote,
   gemsForLesson,
+  gemsShortOfRefill,
   getLeague,
   LEAGUES,
   levelFromXp,
   levelProgress,
   levelTitle,
+  minutesUntilNextHeart,
   promote,
   xpForLevel,
 } from './gamification';
@@ -183,5 +187,56 @@ describe('the hearts economy', () => {
     // A max of 1 would mean the first wrong answer ends the session, which is
     // not what any screen's copy says.
     expect(HEARTS_MAX).toBeGreaterThan(1);
+  });
+
+  // URD-006: the refill button was correctly `disabled={gems < 40}`, but
+  // the lockout screen said nothing else — a learner who could not afford
+  // it saw a button that did not work and no explanation of why or what to
+  // do instead. A fresh profile starts at 20 gems (`useProgressStore.ts`)
+  // against a 40-gem refill, so this was not an edge case: it was close to
+  // every new learner's first lockout.
+  it('a fresh profile is either able to refill, or told something real instead', () => {
+    const freshGems = 20; // useProgressStore's starting balance
+    const canAfford = freshGems >= REFILL_COST;
+    // The two branches this item's own fix reads from. Whichever is true,
+    // there is a real thing on screen — a working button, or a wait that
+    // means something.
+    if (!canAfford) {
+      expect(gemsShortOfRefill(freshGems)).toBeGreaterThan(0);
+      // THE CRITIC: `toBeGreaterThanOrEqual(0)` here would pass against any
+      // implementation, including a broken one — `minutesUntilNextHeart` is
+      // clamped to `[0, HEART_REGEN_MINUTES]` regardless of what its inner
+      // arithmetic does, so that assertion could never fail. A heart just
+      // lost (`now` passed as `heartsUpdatedAt`, zero elapsed) has to wait
+      // the full cycle — that is the number the lockout screen actually
+      // shows a learner in this exact situation, so it is the number worth
+      // asserting.
+      const now = Date.now();
+      expect(minutesUntilNextHeart(now, now)).toBe(HEART_REGEN_MINUTES);
+    } else {
+      expect(gemsShortOfRefill(freshGems)).toBe(0);
+    }
+  });
+
+  it('gemsShortOfRefill is zero exactly when a refill is affordable', () => {
+    for (let gems = 0; gems <= REFILL_COST + 10; gems++) {
+      expect(gemsShortOfRefill(gems) === 0).toBe(gems >= REFILL_COST);
+    }
+  });
+
+  it('the wait for the next heart never goes negative or past one full cycle', () => {
+    const now = Date.now();
+    for (let minutesAgo = -10; minutesAgo <= HEART_REGEN_MINUTES + 10; minutesAgo++) {
+      const wait = minutesUntilNextHeart(now - minutesAgo * 60000, now);
+      expect(wait).toBeGreaterThanOrEqual(0);
+      expect(wait).toBeLessThanOrEqual(HEART_REGEN_MINUTES);
+    }
+  });
+
+  it('counts down as time passes since the hearts clock last reset', () => {
+    const now = Date.now();
+    const justLost = minutesUntilNextHeart(now, now);
+    const almostThere = minutesUntilNextHeart(now - (HEART_REGEN_MINUTES - 1) * 60000, now);
+    expect(almostThere).toBeLessThan(justLost);
   });
 });
