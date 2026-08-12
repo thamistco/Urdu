@@ -122,20 +122,6 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-007 — Teach ذ ز ض ظ by spelling context, not by sound
-attempts: 0
-files: src/data/letters.ts, src/exercises/generator.ts, scripts/check-answerable.js
-definition of done: These four letters are pronounced identically by most Urdu
-  speakers, so a listening exercise offering two of them has two correct answers
-  and is unanswerable from what it puts on screen. Either such an exercise is
-  not generated, or the four are taught and tested by spelling context. Extend
-  `check:answerable` to fail on any audio prompt whose options contain more than
-  one of the set.
-verify: npm run check:answerable
-notes: Exactly the shape of the verdict-cue bug already fixed there: a question
-  that cannot be answered from what is visible. Extend that check rather than
-  writing a new one.
-
 ## URD-008 — Logical direction properties in Urdu-bearing components
 attempts: 0
 files: src/components/, src/screens/, src/exercises/
@@ -745,3 +731,33 @@ notes: Found incidentally verifying URD-006 — `npm run check:all`, run
   bound cannot catch either way, since "0" is a legal reading. Unrelated to
   URD-006's own change (no file this item touched is anywhere near
   `check-path.js` or `HomeScreen.tsx`'s accordion).
+
+## URD-038 — ذ ز ض ظ are avoided in listening questions, never actually taught apart
+attempts: 0
+files: src/data/letters.ts
+definition of done: URD-007 stopped `letterPick` from ever pairing two
+  same-sound letters (ذ ز ض ظ, and the te/toe, se/seen/swaad and
+  baRi-he/choti-he/do-chashmi-he groups) as options, which closes the
+  unanswerable-question bug — but none of these letters' `note` fields in
+  `letters.ts` teach a learner *which* letter a real word uses. Each note
+  only names the collision: zaal's says "another of the 'z' family", zoe's
+  says "another of the four ways Urdu spells 'z'". A learner who writes
+  Nastaliq directly, or hits a `wordBuild` tray whose randomly-drawn decoy
+  happens to be a same-sound rival, has no rule to reach for. Give at least
+  the ذ ز ض ظ group a real disambiguation cue — e.g. "ز is native Urdu
+  vocabulary, ذ ض ظ are almost always Arabic/Persian loanwords" if that
+  holds up, a short high-frequency-word anchor per letter, or similar —
+  either in the `note` field or a dedicated teaching moment.
+verify: a test or check asserting each of the four ز-sound letters' `note`
+  (or an added field) contains a disambiguation cue distinct from merely
+  naming the other three letters in the group, plus a manual read of the
+  four notes confirming the cue is actually true and usable.
+notes: Found by CURRICULUM CRITIC reviewing URD-007. Explicitly not
+  BLOCKING that item — URD-007's own definition of done named "not
+  generated" as a valid alternative to "taught by spelling context", and
+  the lead took that branch — but real: 204 of 2,281 words (8.9%) contain
+  one of these four letters. The gap is muted today because
+  `TypeWordExercise` matches Roman input (`skeleton()` in
+  `src/lib/roman.ts`), so a learner who types the Roman spelling never has
+  to choose the correct Urdu letter — but not eliminated, and not something
+  to rely on staying true if the Roman-matching logic ever tightens.

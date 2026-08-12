@@ -44,7 +44,7 @@ function load(rel) {
   return mod.exports;
 }
 
-const { buildLessonExercises } = load('src/exercises/generator.ts');
+const { buildLessonExercises, soundsOverlap } = load('src/exercises/generator.ts');
 const { unitsForTrack } = load('src/data/units.ts');
 const { pictureIdentifies, cueOf, VERDICT_CUES } = load('src/data/art.ts');
 
@@ -220,8 +220,31 @@ function check(ex, track) {
       if (roman && !ex.romanOptions) fail('drill options have no transliteration on the Roman track', ex.drill.id);
       break;
 
+    case 'letterPick': {
+      if (roman) fail('script exercise on the Roman track', `letterPick ${ex.letter.id}`);
+      // URD-007: ذ ز ض ظ (zaal/ze/zwaad/zoe) all say "z" — an audio prompt
+      // ("which letter makes this sound?") offering two of them has two
+      // right answers. Same bug, same fix, for every other homophone group
+      // Urdu's script has (te/toe "t"; se/seen/swaad "s"; the three ه
+      // letters "h"; alif/alif-madda/ain's overlapping "a"/"aa" readings) —
+      // computed pairwise from each option's own `sound` rather than naming
+      // only the four this item was filed against, so a question this loose
+      // cannot ship for a group nobody happened to list. Pairwise, not a
+      // single normalized string per option, because a letter can carry more
+      // than one reading ("a / aa") that only partly overlaps another's.
+      for (let i = 0; i < ex.options.length; i++) {
+        for (let j = i + 1; j < ex.options.length; j++) {
+          if (soundsOverlap(ex.options[i], ex.options[j]))
+            fail(
+              'letterPick offers two letters that sound the same',
+              `${ex.letter.id} ("${ex.letter.sound}"): ${ex.options[i].id} vs ${ex.options[j].id}`
+            );
+        }
+      }
+      break;
+    }
+
     case 'letterForm':
-    case 'letterPick':
     case 'letterTrace':
       if (roman) fail('script exercise on the Roman track', `${ex.kind} ${ex.letter.id}`);
       break;
