@@ -1881,3 +1881,129 @@ spelling ambiguity untaught for anyone writing Nastaliq directly, MAJOR
 from CURRICULUM CRITIC).
 
 branch: claude/gauntlet-similar-letters
+
+## CLAIMED · URD-008 · 2026-08-12T13:11Z
+Top unclaimed item below URD-A02. `ml-`/`mr-`/`pl-`/`pr-` and inline
+`marginLeft`/`paddingRight`/`borderLeftWidth` etc. in components that can
+render Urdu pin spacing to a screen side rather than a position in reading
+order — pinned to a side happens to render identically today (nothing in
+the app ever sets an RTL container direction), but stays that way only
+because nobody has tried, not by construction.
+verify: npm run check:all
+branch: claude/gauntlet-logical-direction, cut from
+claude/gauntlet-similar-letters after URD-007 shipped.
+
+## CRITIQUE · URD-008 · 2026-08-18T22:53Z
+Dispatched THE CRITIC (mandatory) and DESIGN CRITIC (this touches rendered
+UI in 9 files, even though the change is reasoned to be a visual no-op —
+ROLES.md: "anything that changes a screen needs the design critic"). Not
+CURRICULUM CRITIC (no lesson content or pedagogy touched). Not PLAYER — the
+change has no behavioral/interaction surface a soak run would exercise
+differently than `check:stability` already does (same tap-through machinery,
+same screens), and `check:sizes`/`check:scenery` already render every
+touched screen across 8 sizes with real contrast measurement.
+
+### THE CRITIC
+Verdict: PASS. No BLOCKING. One MAJOR (fixed same round).
+Independently reproduced the lead's induced-failure claim (reverted
+`Card.tsx:32`, confirmed `check:direction` fails at the right line,
+restored). Traced all 22 conversions by hand across all 9 touched files —
+every Left→Start / Right→End rename correct, no swapped conditional values,
+confirmed a live count of 22 matching the claim. Specifically traced
+`DialogueExercise.tsx`'s `borderTopStartRadius`/`borderTopEndRadius` (the
+one change where a mechanical substitution could plausibly have been
+backwards) against `isA`'s `items-start`/`items-end` alignment a few lines
+above — correct, no flip. Ran `check:all` independently: all 26 steps pass.
+Confirmed `LeaderboardScreen.tsx` (included despite rendering no Urdu
+script itself) and both "deliberately out of scope" exclusions (position
+offsets, `textAlign`) are honestly reasoned, not cop-outs — agreed with the
+lead's calls on both, explicitly not filing either as a finding.
+
+MAJOR (fixed same round): `check-direction.js`'s `STYLE_PHYSICAL` regex
+only matched `name\s*:` — missing object-shorthand syntax (`{ marginLeft }`,
+no colon at all), a live idiom already used in this exact codebase for a
+different prop (`{ color }` in `src/components/Stats.tsx:25`,
+`src/screens/LessonComplete.tsx:22`). Reproduced live: added
+`{ marginLeft }` shorthand to `Card.tsx` using that precedent's own shape,
+`check:direction` reported clean — a real physical property silently
+missed, directly contradicting this item's own DoD ("fails on any physical
+property reintroduced there"). Also flagged, same gap: a quoted key
+(`{ 'marginLeft': 4 }`) and a computed key built from a quoted string.
+Fixed by rewriting `STYLE_PHYSICAL` into three alternatives — explicit
+`name:`, quoted `'name':`, and bare shorthand `name` bounded by `,`/`}` —
+covering all three shapes without double-matching (verified: the regex
+alternation resolves to exactly one branch per match, confirmed by
+`matchAll` producing no duplicates on the existing 22-occurrence tree).
+Re-verified via induced failure: reproduced THE CRITIC's exact shorthand
+repro (caught), plus a quoted-key variant (caught), both restored and
+`check:direction` reconfirmed clean on the real tree afterward. Full
+`check:all` re-run clean (26/26) after the fix.
+
+### DESIGN CRITIC
+Two dispatches, both terminated mid-review by the same account-level error
+("You've hit your monthly spend limit") — an infrastructure interruption,
+not a finding about the work. Not retried a third time against a
+known-exhausted resource. Recorded here rather than silently treated as a
+pass, per this project's own rule against reporting a check green (or, here,
+skipped) without saying so plainly.
+
+In its place, the lead ran a direct supplementary check rather than closing
+this out on THE CRITIC's verdict alone: built the app for web, drove it with
+Playwright/chromium exactly as `check:stability` does (`enterAsGuest` +
+real taps, no mocking), and screenshotted the two highest-risk sites both
+critics would have prioritized — the accent-stripe pattern, where a typo'd
+`borderStartColor` without its paired width, or a wrong side, would be
+immediately visible:
+  - `LetterLabScreen.tsx`'s note card (`border-s-2` + `borderStartColor:
+    palette.jade`, converted from `border-l-2`/`borderLeftColor`): reached
+    via Home → "LETTER LAB" → alif. Screenshot shows a solid jade-green
+    stripe on the card's left edge (start = left, this app is always LTR),
+    same visual treatment as before the property rename.
+  - `LeaderboardScreen.tsx`'s per-row promote/demote accent
+    (`borderStartWidth`/`borderStartColor`, converted from
+    `borderLeftWidth`/`borderLeftColor`): reached via Profile → League.
+    Screenshot shows every row's colored zone stripe on the left edge,
+    rendering identically to the pre-conversion property.
+Both confirm the "visually a complete no-op" claim for the two sites most
+likely to show a real regression if the rename had gone wrong anywhere.
+Not a substitute for a full DESIGN CRITIC pass — `GrammarExercises.tsx`,
+`DialogueExercise.tsx`'s bubble-corner mapping, `LoginScreen.tsx`'s
+conditional note card, and the plain-spacing sites (`HomeScreen.tsx`,
+`PracticeScreen.tsx`, `SettingsScreen.tsx`, `SentenceReading.tsx`) were not
+independently screenshotted here — those rest on THE CRITIC's by-hand trace
+of the source (confirmed correct, including the one bubble-corner site
+specifically) plus `check:sizes`/`check:stability`/`check:scenery` all
+passing clean against the real built app across every touched screen.
+
+## PASSED · URD-008 · 2026-08-18T23:05Z
+$ node scripts/check-direction.js
+  no physical margin/padding/border-left/right property in
+  src/components, src/screens or src/exercises.
+
+$ npx tsc --noEmit
+  clean.
+
+$ npm run lint
+  clean.
+
+$ npm run format:check
+  clean.
+
+$ npm run check:all
+  check:all — all 26 steps pass against a deploy-shaped build (was 25;
+  check:direction is now wired in, right after check:theme).
+  Run alone on a still tree, after the final edit.
+
+Induced failure, three times: (1) reverted `Card.tsx`'s
+`borderStartWidth`/`borderStartColor` to physical — `check:direction` failed
+at the right line, restored, reconfirmed clean. (2) After THE CRITIC's
+regex fix, reproduced the exact object-shorthand gap it found
+(`{ marginLeft }` added to `Card.tsx`) — caught, restored, reconfirmed
+clean. (3) Reproduced a quoted-key variant (`{ 'marginLeft': 4 }`) — caught,
+restored, reconfirmed clean.
+
+New queue items: none. THE CRITIC's one MAJOR was fixed same round;
+DESIGN CRITIC's incompletion is an infrastructure gap, not a finding, and
+is recorded above rather than filed as follow-up work.
+
+branch: claude/gauntlet-logical-direction

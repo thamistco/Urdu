@@ -90,7 +90,7 @@ function LessonNode({
     state === 'locked' || state === 'skipped' ? palette.ink700 : state === 'done' ? color : withAlpha(color, 0.22);
   const ring = state === 'current' ? palette.gold : 'transparent';
   return (
-    <View className="mb-6 flex-row items-center" style={{ marginLeft: offset }}>
+    <View className="mb-6 flex-row items-center" style={{ marginStart: offset }}>
       <Pressable
         onPress={onPress}
         hitSlop={8}
@@ -156,7 +156,7 @@ function LessonNode({
           </View>
         )}
       </Pressable>
-      <View className="ml-4 flex-1">
+      <View className="ms-4 flex-1">
         <Bold
           className="text-[15px]"
           style={{ opacity: state === 'locked' ? 0.5 : 1, writingDirection: 'ltr', textAlign: 'left' }}
@@ -356,7 +356,7 @@ export function HomeScreen() {
         <Reveal>
           <SafeAreaView edges={['top']}>
             <View className="mb-4 flex-row items-start justify-between">
-              <View className="flex-1 pr-3">
+              <View className="flex-1 pe-3">
                 <Eyebrow style={{ color: palette.gold }}>Harf · حرف</Eyebrow>
                 <Display className="mt-1 text-3xl leading-9">{GREETING[store.goal ?? 'curious']}</Display>
               </View>
@@ -718,7 +718,7 @@ export function HomeScreen() {
                         <Txt className="text-xs text-paper/55">{unit.subtitle}</Txt>
                       </View>
                     </View>
-                    <View className="mt-3 pl-2">
+                    <View className="mt-3 ps-2">
                       {unit.lessons.map((lesson, li) => {
                         const st = lessonState(lesson.id, store.completedLessons, store.skippedLessons, order);
                         const offset = [0, 28, 44, 28][li % 4];

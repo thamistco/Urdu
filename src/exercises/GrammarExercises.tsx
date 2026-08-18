@@ -173,8 +173,8 @@ export function GrammarTeachExercise({ exercise, track, onGraded, onExpand }: Ex
           {concept.examples.map((ex, i) => (
             <View
               key={i}
-              className="rounded-xl border-l-2 px-4 py-3"
-              style={{ borderLeftColor: palette.jade, backgroundColor: withAlpha(palette.jade, 0.08) }}
+              className="rounded-xl border-s-2 px-4 py-3"
+              style={{ borderStartColor: palette.jade, backgroundColor: withAlpha(palette.jade, 0.08) }}
             >
               {track === 'roman' ? (
                 <Bold style={{ fontSize: 17 }}>{ex.roman}</Bold>
@@ -267,8 +267,8 @@ export function GrammarDrillExercise({ exercise, track, showRoman, locked, onGra
 
       {picked && (
         <View
-          className="mt-1 rounded-xl border-l-2 px-4 py-3"
-          style={{ borderLeftColor: palette.gold, backgroundColor: withAlpha(palette.gold, 0.1) }}
+          className="mt-1 rounded-xl border-s-2 px-4 py-3"
+          style={{ borderStartColor: palette.gold, backgroundColor: withAlpha(palette.gold, 0.1) }}
         >
           <Bold style={{ color: palette.gold }} className="mb-0.5 text-xs uppercase tracking-wider">
             Why

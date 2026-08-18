@@ -103,6 +103,12 @@ jobs:
       - name: Check the theme is the only place colour lives
         run: npm run check:theme
 
+      # A margin or padding written as -left/-right is pinned to a screen
+      # side; written as -start/-end it is pinned to a position in reading
+      # order instead, which is what a component that can render Urdu wants.
+      - name: Check for physical left/right in Urdu-bearing components
+        run: npm run check:direction
+
       - name: Generate voice clips (only if a TTS key is set)
         env:
           GOOGLE_TTS_API_KEY: ${{ secrets.GOOGLE_TTS_API_KEY }}

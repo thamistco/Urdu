@@ -31,7 +31,7 @@ function Row({
 }) {
   return (
     <View className="flex-row items-center justify-between py-3">
-      <View className="flex-1 pr-4">
+      <View className="flex-1 pe-4">
         <Bold className="text-[15px]">{label}</Bold>
         {hint ? <Txt className="text-xs text-paper/55">{hint}</Txt> : null}
       </View>
@@ -241,7 +241,7 @@ export function SettingsScreen() {
           <Eyebrow className="mb-2 text-paper/55">Account</Eyebrow>
           <Card className="mb-5">
             <View className="flex-row items-center justify-between">
-              <View className="flex-1 pr-3">
+              <View className="flex-1 pe-3">
                 <Bold className="text-[15px]">{email ?? 'Guest'}</Bold>
                 <Txt className="text-xs text-paper/55">
                   {email ? 'Progress is saved to your account' : 'Progress is saved on this device'}

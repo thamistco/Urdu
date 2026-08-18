@@ -23,6 +23,7 @@
     "check:answerable": "node scripts/check-answerable.js",
     "check:stability": "node scripts/check-stability.js",
     "check:theme": "node scripts/check-theme.js",
+    "check:direction": "node scripts/check-direction.js",
     "check:scenery": "node scripts/check-scenery.js",
     "check:sizes": "node scripts/check-sizes.js",
     "check:path": "node scripts/check-path.js",
