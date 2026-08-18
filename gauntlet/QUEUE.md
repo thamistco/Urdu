@@ -122,20 +122,6 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-009 — Say how long the daily goal really takes
-attempts: 0
-files: src/lib/achievements.ts, src/screens/SettingsScreen.tsx, src/lib/achievements.test.ts
-definition of done: The daily goal labels are derived from the course's actual
-  XP-per-minute rather than a constant that no longer holds. `achievements.ts:69`
-  and `SettingsScreen.tsx:400` label the goals with minute figures computed at
-  12.54 XP/min. After URD-A02 attempt 1 the course yields 3.95 XP/min, so the
-  "20 min a day" goal is really 30.4 minutes. A test computes the rate from the
-  real path and asserts each label is within a minute of it.
-verify: npm test -- src/lib/achievements.test.ts
-notes: Found by THE CRITIC on URD-A02, which is the pattern worth noticing: a
-  curriculum change moved a number three files away and nothing connected them.
-  Deriving the rate is what stops that happening the next time the path moves.
-
 ## URD-011 — Stop check:shape recomputing the same lesson
 attempts: 0
 files: scripts/check-shape.js, src/data/units.ts

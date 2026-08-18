@@ -2007,3 +2007,103 @@ DESIGN CRITIC's incompletion is an infrastructure gap, not a finding, and
 is recorded above rather than filed as follow-up work.
 
 branch: claude/gauntlet-logical-direction
+
+## CLAIMED · URD-009 · 2026-08-18T23:31Z
+Top unclaimed item below URD-A02. `DAILY_GOALS`' minute labels ("20 min a
+day") were hand-set once at 12.54 XP/min; the course has moved twice since
+(3.95 XP/min after URD-A02 attempt 1, 4.77 XP/min measured just now) and
+nothing connects the label to the real pace.
+verify: npm test -- src/lib/achievements.test.ts
+branch: claude/gauntlet-daily-goal-rate, cut from
+claude/gauntlet-logical-direction after URD-008 shipped.
+
+## CRITIQUE · URD-009 · 2026-08-18T23:50Z
+Dispatched THE CRITIC only (mandatory). Not DESIGN CRITIC — no screen code
+changed; the only rendered difference is digits inside an already-existing,
+unchanged-layout string, and `check:sizes` already renders both display
+screens clean. Not CURRICULUM CRITIC — no lesson content, word order or
+exercise design touched, this is a pacing-label accuracy fix. Not PLAYER —
+a soak run exercises interaction/completion, not a static label's
+arithmetic. THE CRITIC agreed with all three calls after confirming, via
+`git status`, that only `src/data/achievements.ts` and the two new
+`src/lib/achievements.*` files changed.
+
+### THE CRITIC
+Verdict: PASS. No BLOCKING, no MAJOR. Three MINOR.
+Independently recomputed `courseXpPerMinute()` from scratch (own standalone
+probe): 4.768197335095254 XP/min, matching the reported 4.77; reran three
+fresh processes to confirm the memoised value is stable and not leaking
+`Math.random()` noise from the generator's content-selection logic into
+exercise *counts*. Reproduced the induced-failure test independently
+(reverted `calm`'s tier to the stale 3-minute label, confirmed the "within
+a minute" assertion fails at 1.19 min over, restored, reconfirmed green).
+Traced the numerator-exclusion question by hand: `useProgressStore.ts`
+credits `todayXp`/`totalXp` for every lesson kind including reading/dialogue,
+so `courseXpPerMinute()`'s exclusion of those kinds is local to its own
+rate *denominator* only, not a leak into real progress tracking — and
+computed the rate *with* them included (5.28 XP/min) to show why excluding
+them is the more honest choice: 17 reading lessons model to only 153 total
+seconds under the 9-sec/exercise assumption, wildly underestimating real
+reading time. Ran `check:all` independently to completion: 26/26.
+
+MINOR 1 (verification-claim correction, no code change): the dispatch
+description claimed `OnboardingScreen.tsx` reads `DAILY_GOALS` at two
+render sites; THE CRITIC found only one does (`step === 'daily'`, ~line
+702) — the other site the claim pointed at (~line 440) maps a different,
+unrelated `GOALS` array (the motivation picker: "Speak with family" /
+"Read & write it" / etc.). No functional bug — THE CRITIC confirmed no
+stray duplicate of the stale numbers exists anywhere — but the claim
+itself was wrong and is corrected here rather than left standing: the real
+count is two render sites total across the app (`SettingsScreen.tsx:400`,
+`OnboardingScreen.tsx`'s daily-goal step), not three.
+
+MINOR 2 (comment fixed same round): `achievements.ts`'s header claimed the
+hand-set-plus-test design "matches `levelTitle`'s own precedent for this
+exact shape of problem" — THE CRITIC pointed out `levelTitle` gates on
+`level`, itself from a fixed internal formula that cannot drift with course
+content, a materially different risk profile than a rate that has already
+moved twice in this project's own history. Also noted
+`docs/ENGINEERING_STANDARDS.md` principle 6 ("make the invalid
+unrepresentable") argues for live computation over "hand-set + a test that
+catches it after the fact," and that this repo has an unmentioned codegen
+precedent (`scripts/generate-glyph-masks.js` etc.) for this shape of
+problem — while still judging this MINOR rather than MAJOR, since `npm
+test` genuinely gates `deploy-preview.yml` and a drift is loud, not silent.
+Fixed by rewriting the comment to state the real tradeoff honestly (a
+softer, not identical, guarantee to `levelTitle`'s) rather than overclaim
+an equivalent precedent.
+
+MINOR 3 (paperwork — resolved by this same closing round): the ledger and
+queue had not yet been closed out at review time (only CLAIMED existed) —
+expected mid-review, not a defect; this CRITIQUE/PASSED pair and the
+QUEUE.md/done/ update close it.
+
+## PASSED · URD-009 · 2026-08-18T23:55Z
+$ npx vitest run src/lib/achievements.test.ts
+  4/4 pass.
+
+$ npx tsc --noEmit
+  clean.
+
+$ npm run lint / npm run format:check
+  clean.
+
+$ npm test
+  97/97 pass across 8 files.
+
+$ npm run check:all
+  check:all — all 26 steps pass against a deploy-shaped build.
+  Run alone on a still tree, after the final edit.
+
+Induced failure, twice (once by the lead, reproduced independently by THE
+CRITIC): reverted `DAILY_GOALS`'s stale `minutes`/`desc` values (3/7/12/20),
+confirmed the "within a minute" test assertion fails (calm's real ~4.19 min
+vs the reverted 3, a 1.19 min gap), restored, reconfirmed 4/4 pass both
+times.
+
+New queue items: none. THE CRITIC's three MINORs were fixed or corrected
+same round (a wrong verification claim corrected in this entry, an
+overclaimed precedent rewritten in `achievements.ts`'s own comment, the
+paperwork gap closed by this entry itself).
+
+branch: claude/gauntlet-daily-goal-rate
