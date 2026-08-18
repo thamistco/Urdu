@@ -122,19 +122,6 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-008 — Logical direction properties in Urdu-bearing components
-attempts: 0
-files: src/components/, src/screens/, src/exercises/
-definition of done: The 8 remaining physical direction properties (`ml-`, `mr-`,
-  `pl-`, `pr-`, `marginLeft`, `paddingRight` and friends) in components that can
-  render Urdu become logical equivalents. A source scan fails on any physical
-  property reintroduced there.
-verify: npm run check:all
-notes: Small and already mostly done — `writingDirection` is handled in
-  `Text.tsx`, `HomeScreen.tsx` and `PracticeScreen.tsx`. Write the guard in the
-  style of `check:theme`, which already does this shape of source scan for
-  colour. Last in the queue because it is the least likely to be felt.
-
 ## URD-009 — Say how long the daily goal really takes
 attempts: 0
 files: src/lib/achievements.ts, src/screens/SettingsScreen.tsx, src/lib/achievements.test.ts

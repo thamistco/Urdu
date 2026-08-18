@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { Pressable, View, ViewStyle, AccessibilityRole } from 'react-native';
 import { feedback } from '../lib/feedback';
 
-/** Raised surface. Optional left accent stripe + tap behaviour. */
+/** Raised surface. Optional leading-edge accent stripe + tap behaviour. */
 export function Card({
   children,
   onPress,
@@ -29,7 +29,7 @@ export function Card({
   const inner = (
     <View
       className={`rounded-2xl border border-white/10 p-5 ${base} ${className}`}
-      style={[accent ? { borderLeftWidth: 4, borderLeftColor: accent } : null, style]}
+      style={[accent ? { borderStartWidth: 4, borderStartColor: accent } : null, style]}
       accessibilityRole={accessibilityRole}
       accessibilityLabel={accessibilityLabel}
     >
