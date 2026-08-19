@@ -122,21 +122,6 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-011 — Stop check:shape recomputing the same lesson
-attempts: 0
-files: scripts/check-shape.js, src/data/units.ts
-definition of done: `buildLessonExercises` is called 5,070 times per run of
-  check:shape, taking 2.5 to 3.4 seconds; memoised on lesson id and track it is
-  about 700. Also `lesson.size` is wrong by exactly 3 on all 233 vocabulary
-  lessons — `coverTopics` budgets `3n+4` and the generator emits `3n+1`. Nothing
-  reads it for vocabulary lessons today, which is the only reason it is minor.
-  Fix the arithmetic and memoise, with check:shape still exiting the same way.
-verify: npm run check:shape
-notes: Both found by THE CRITIC on URD-A02 as MINOR. Paired because they are the
-  same file and the same sitting. Do not memoise across tracks by accident — the
-  tracks emit different exercises for the same lesson and that difference is
-  what the run and share rules exist to see.
-
 ## URD-014 — A wiped profile deserves a different sentence
 attempts: 0
 files: src/store/useProgressStore.ts, src/lib/progress.ts, src/lib/progress.test.ts

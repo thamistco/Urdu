@@ -913,8 +913,38 @@ const MAX_PARTS_PER_TOPIC = 3;
  */
 const SIGHTINGS_PER_WORD = 3;
 
-/** The closing run: a matching board and the woven review around it. */
-const CLOSING_EXERCISES = 4;
+/**
+ * The closing matching board — one `{ kind: 'matching' }` exercise holding
+ * four word pairs, but exactly one entry in the exercises array the way
+ * `check:shape` counts it.
+ *
+ * URD-011: this was `4`, silently confusing "the board holds four words"
+ * with "the board is four exercises." `check:shape` measures the real
+ * generator rather than trusting this budget, which is exactly how it
+ * caught the drift: every vocabulary lesson's real length was `3n + 1`
+ * against a recorded `size` of `3n + 4`, three too many, on every one of
+ * them. Nothing reads `lesson.size` for vocabulary lessons today, which is
+ * the only reason a three-exercise lie sat here unnoticed.
+ *
+ * The lesson can also gain up to two more exercises at runtime — a due SRS
+ * item woven in near the front (`generator.ts`, "Weave up to two due review
+ * items") — but that is a learner-state-dependent bonus on top of the
+ * baseline shape, not part of it, and does not belong in this constant.
+ *
+ * `+1` still assumes the board renders at all: `generator.ts` only pushes it
+ * when four distinct-cue, distinct-gloss words can be found (`board.length
+ * === 4`), topping up from the wider topic pool when the lesson's own words
+ * fall short. True for every topic today (the smallest has 11 words) and
+ * re-verified whenever `check:shape` runs (THE CRITIC, reviewing this: 233
+ * of 233 real vocabulary lessons match exactly) — but not structurally
+ * guaranteed, so a future topic too small or too homogeneous to fill the
+ * board would make this constant wrong by one again, the same shape of bug
+ * this item exists to fix. Worth a real guard the next time topic sizing is
+ * touched; not one now, since nothing reads vocab `lesson.size` at runtime
+ * and `check:shape`'s own real-generator measurement would simply start
+ * reporting the new mismatch.
+ */
+const CLOSING_EXERCISES = 1;
 
 /**
  * How much of a unit its review revisits, and the floor and ceiling on that.
