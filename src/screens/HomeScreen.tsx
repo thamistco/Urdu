@@ -250,6 +250,27 @@ export function HomeScreen() {
   const pathNotice = !store.ticksWipedByMigration && rawPathNotice;
 
   /**
+   * URD-015: dismissing a notice used to remove its whole card — 275px on
+   * this one — in the same instant as the tap that dismissed it, so a
+   * finger still settling from that tap could land on whatever had already
+   * snapped into its place. `showX` stays true for as long as `<Reveal>`'s
+   * exit fade is still running, even after the store flag that first
+   * showed the card has gone false; only `onExited` (fired once the fade
+   * genuinely finishes) is allowed to stop rendering it. The effects only
+   * ever set these true, never false — going false is `onExited`'s job
+   * alone, so a card can't be yanked from under its own exit animation by
+   * some unrelated re-render.
+   */
+  const [showTicksWiped, setShowTicksWiped] = useState(store.ticksWipedByMigration);
+  useEffect(() => {
+    if (store.ticksWipedByMigration) setShowTicksWiped(true);
+  }, [store.ticksWipedByMigration]);
+  const [showPathNotice, setShowPathNotice] = useState(pathNotice);
+  useEffect(() => {
+    if (pathNotice) setShowPathNotice(true);
+  }, [pathNotice]);
+
+  /**
    * A learner who is owed nothing has still *seen* this path, and needs to be
    * recorded as having seen it — otherwise the next regroup cannot tell them
    * apart from someone who was last here two paths ago. Runs on the launches
@@ -303,12 +324,20 @@ export function HomeScreen() {
    * the very first lesson, which combined with the header and the notice card
    * itself reliably clears the 420px threshold below). Gated on both now, not
    * just the older of the two.
+   *
+   * URD-015: gated on `showTicksWiped`/`showPathNotice` — whether either card
+   * is still rendering at all — rather than the raw store flags. A dismissed
+   * notice keeps rendering, fading in place, for the whole of its exit (see
+   * `Reveal.tsx`); the raw flags go false the instant the tap lands, before
+   * that fade even starts. Scrolling while a card is still visibly there,
+   * mid-fade, is exactly the same "not while the notice is up" case the
+   * comment above already argues for.
    */
   const pathRef = useRef<ScrollView>(null);
   const currentNode = useRef<View>(null);
   const didAutoScroll = useRef(false);
   useEffect(() => {
-    if (didAutoScroll.current || pathNotice || store.ticksWipedByMigration) return;
+    if (didAutoScroll.current || showPathNotice || showTicksWiped) return;
     const t = setTimeout(() => {
       // `measure` reports pageY — position on screen. The list has not been
       // scrolled yet at this point, so pageY is also the content offset we
@@ -323,7 +352,7 @@ export function HomeScreen() {
       });
     }, 500);
     return () => clearTimeout(t);
-  }, [currentId, pathNotice, store.ticksWipedByMigration]);
+  }, [currentId, showPathNotice, showTicksWiped]);
 
   // The course is long. Only one course stage is expanded at a time — the
   // others collapse to a progress line you can open when you want to look
@@ -476,8 +505,8 @@ export function HomeScreen() {
             so the notice below it never fires for exactly this learner. This
             card is that second, separate truth, with its own honest copy:
             unlike a regroup, something really was dropped here. */}
-        {store.ticksWipedByMigration && (
-          <Reveal delay={20}>
+        {showTicksWiped && (
+          <Reveal delay={20} visible={store.ticksWipedByMigration} onExited={() => setShowTicksWiped(false)}>
             <Card
               className="mb-4"
               accent={palette.gold}
@@ -527,8 +556,8 @@ export function HomeScreen() {
             rather than on the render, so a notice drawn and never read is still
             owed. It records the path size with the flag, so the next regroup
             re-arms this without anyone bumping the persist version. */}
-        {pathNotice && (
-          <Reveal delay={30}>
+        {showPathNotice && (
+          <Reveal delay={30} visible={pathNotice} onExited={() => setShowPathNotice(false)}>
             <Card
               className="mb-4"
               accent={palette.gold}
