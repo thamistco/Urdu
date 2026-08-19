@@ -122,19 +122,6 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-015 — Nothing should change under a finger that is already moving
-attempts: 0
-files: src/screens/HomeScreen.tsx, src/components/Reveal.tsx
-definition of done: Dismissing the path-moved notice removes 275 px of content
-  instantly, so the 23 px band at y 294 to 317 changes from "dismiss" to "start a
-  lesson" between the press and the release. Give the card an exit, or hold the
-  layout until the touch is over. A check drives the built app, taps Got it, and
-  asserts nothing tappable occupies the released point within the tap window.
-verify: npm run check:stability
-notes: Found by the DESIGN CRITIC on URD-003, measured at +120ms and +1s: the
-  card simply vanishes. Extend `check:stability`, which already owns the property
-  that answering a question does not move it, rather than writing a new check.
-
 ## URD-016 — A review should mostly review the unit it closes
 attempts: 0
 files: src/exercises/generator.ts, src/data/units.ts

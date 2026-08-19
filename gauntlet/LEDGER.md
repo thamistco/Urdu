@@ -2357,3 +2357,178 @@ CRITIC pass before this was recorded.
 New queue items: none.
 
 branch: claude/gauntlet-migration-notice
+
+## CLAIMED · URD-015 · 2026-08-19T21:10Z
+Top unclaimed item below URD-A02. Dismissing either HomeScreen notice card
+removes ~275px of content in the same instant as the tap that dismissed
+it, so a finger still settling from that tap can land on whatever
+snapped into its place — measured by the DESIGN CRITIC on URD-003 at
++120ms and +1s. Give the card an exit, or hold the layout until the
+touch is over; extend `check:stability` (already owns "the screen
+doesn't move under an answered question") rather than write a new
+check.
+verify: npm run check:stability
+branch: claude/gauntlet-notice-exit, cut from claude/gauntlet-migration-notice
+after URD-014 shipped.
+
+## CRITIQUE · URD-015 · 2026-08-19T23:40Z
+Dispatched THE CRITIC (mandatory) and DESIGN CRITIC (the fix changes what
+a learner sees and how it moves on a real screen). Not CURRICULUM CRITIC
+(no lesson content or pedagogy touched). Not PLAYER (a narrow, already
+adversarially-tested interaction-timing fix, not a broad content/play-
+through surface `npm run soak` would add anything to).
+
+### Before either critic ran
+Building `checkNoticeExit` itself surfaced two false passes in the check,
+found by deliberately reverting the real fix and watching the check not
+notice (this project's own non-negotiable #2):
+
+1. First draft detected the tappable control at the release point via
+   `[role="button"]`. This app's `Button` never sets an explicit
+   `accessibilityRole`, so react-native-web renders it as a bare `<div
+   tabindex="0">` — confirmed by dumping the live DOM at the exact point.
+   `[role="button"]` matched nothing, ever, so the check passed
+   regardless of what was actually on screen. Fixed: detect via
+   `closest('[tabindex]')` instead.
+2. Second draft's seed for the ticks-wiped scenario left `pathNoticeSeen`
+   at its default `false`, which also satisfies the sibling path-moved
+   notice's own condition. Dismissing the ticks-wiped card — correctly,
+   by URD-014's own stacking design — revealed that second, real notice
+   queued right behind it, and its "Got it" button happened to land close
+   enough to the just-dismissed one that the check mistook the new card
+   for the old one still fading: another false pass. Found by dumping the
+   post-click page and seeing the *other* notice's title where "nothing
+   tappable" was expected. Fixed: seed `pathNoticeSeen: true` for that
+   scenario so only the one notice under test can possibly show.
+
+With both fixed, reverting `Reveal.tsx`/`HomeScreen.tsx` to the pre-fix
+shape made `check:stability` fail with a correct, specific message for
+*both* notices ("a different control snapped in under the finger before
+the dismissed card finished leaving"), and restoring the fix made it
+pass clean — the induced-failure bar this project holds every check to.
+
+### THE CRITIC
+Verdict: BLOCKING. One BLOCKING, one MAJOR.
+
+BLOCKING: `Reveal.tsx`'s reduced-motion exit path is not resilient to a
+second re-render during the 300ms exit window, and permanently strands a
+dismissed notice on screen — reintroducing the exact "two notices visible
+on Home at once" shape of bug URD-014 exists to prevent, just via a new
+mechanism. Root cause: the exit effect's dependency array included
+`onExited` (a fresh arrow function on every `HomeScreen` render — the
+callers never memoise it) and `reduced`. Any unrelated re-render during
+the exit window reran the effect; React tears down the previous run's
+cleanup first, cancelling the pending reduced-motion `setTimeout` — and
+the `wasVisible` guard, whose job is to stop an exit from *restarting*,
+also stops it from ever being *rescheduled*, since it had already
+flipped to `false` when the timer first started. Two real, reachable
+triggers: (1) a rapid double-tap on the same "Got it" button — literally
+the "finger still moving" case this item exists for, just relocated from
+a mis-tapped target to a dropped callback, since `dismissTicksWipedNotice`/
+`dismissPathNotice` call `set()` unconditionally and `HomeScreen` reads
+the whole store with no selector; (2) the URD-014 stacking hand-off
+itself — dismissing the first notice while a second is genuinely queued
+fires `setShowPathNotice(true)` on the very next render, handing the
+still-fading first card a fresh `onExited`. Empirically confirmed, not
+just reasoned: standalone repros against the real built app showed a
+single tap clearing correctly within 1s, a double tap (60ms apart)
+leaving the card on screen past 4s, and the stacking scenario leaving
+both cards on screen past 5s — all under `reducedMotion: true`, which is
+what every one of this file's own seeded profiles already used; a
+control run of the same stacking scenario with `reducedMotion: false`
+(the real app default) cleared correctly, isolating the bug to the
+reduced-motion branch specifically. Reachable by anyone using the app's
+own Reduce Motion accessibility setting.
+
+MAJOR: `check:stability`'s new checks exercised only the reduced-motion
+branch (every seed hardcodes `reducedMotion: true`) and never attempted a
+second tap or the stacking sequence — the one branch where the bug lived,
+via the one interaction that triggers it, and the check still missed it,
+because it only ever asked "is anything wrong to tap right now," never
+"does the card ever actually leave."
+
+Fixed: `Reveal.tsx`'s exit effect now reads `onExited` and `reduced`
+through a ref kept current by a separate, dependency-free effect, so its
+own dependency array is just `[visible, exit]` — only a genuine
+`visible` transition can start or cancel an exit; an unrelated parent
+re-render for any other reason can't touch it. Added
+`checkNoticeSurvivesDoubleTap` to `check-stability.js`: taps the dismiss
+button twice in quick succession and asserts the card is actually gone
+1.5s later, for both notices. Verified via the same induced-failure
+discipline as above: reverted `Reveal.tsx` to the pre-fix dependency
+array, rebuilt, and the new check failed for both notices with "a
+double-tap on 'Got it' left the card on screen well past its exit
+window"; restored the fix, rebuilt, and it passed. The stacking trigger
+specifically (not covered by an automated check, since the double-tap
+check already exercises the identical root-cause mechanism — an
+unrelated re-render mid-exit — more cheaply and deterministically) was
+re-verified by hand against the restored fix: single tap on the
+ticks-wiped card, 1.5s wait, and the path-moved notice it hands off to
+appears cleanly with exactly one "Got it" on screen, no stuck or
+duplicate control.
+
+### DESIGN CRITIC
+Not blocking (never blocks, per ROLES.md). No blocking findings, two
+MINOR/informational.
+
+Measured directly against the live built app at 412×900, with an
+in-page HUD burning true elapsed-ms and live `getComputedStyle` opacity
+into every screenshot (screenshot I/O itself was skewing nominal
+`waitForTimeout` intervals by 100-150ms). Card boxes: path-notice
+372×281px, ticks-wiped 372×257px — ~297px/~273px of held space, matching
+the item's own "~275px" claim. Gap to the next card measured two ways
+(a baseline profile that never shows a notice; 700ms after a real
+dismissal) both landed at 16px, identical — no leftover empty space, no
+double margin. Tap targets: "Got it" is a 100×51px hit box (not the
+58×17px text glyph), due-review card 372×105px, continue-lesson card
+372×94px, all clear of the 44×44/48×48 floors with no overlap.
+
+MINOR: the exit's 300ms ease-in opacity-only fade is a different motion
+shape than the app's 380ms ease-out-with-rise entrance — a deliberate,
+justified asymmetry (can't translate away without either overflow or the
+exact jump this item exists to prevent) but the two no longer share a
+signature. MINOR: opacity trace shows roughly a 30-40ms window mid-fade
+(opacity ≈0.4-0.6) where the text's effective contrast against the card's
+own darkening self-composite dips just under the 4.5:1 AA floor (down to
+~4.22:1 at opacity 0.5) before the text is itself already close to
+invisible — an inherent property of any pure-opacity fade over a dark
+ground, not something specific to this implementation, and the learner
+who triggered the dismissal is not still reading it by then. 300ms
+judged a reasonable exit duration against the app's own motion
+vocabulary (380ms entrance, 350ms progress-bar fill) — shorter than the
+entrance, which is conventional for exits, and comfortably inside a real
+gesture's press-to-release time.
+
+## PASSED · URD-015 · 2026-08-19T23:45Z
+$ npm run check:stability
+  checked 28 answered questions and notice dismissals across path and
+  practice lessons, both tracks (24 base + 2 exit-safety + 2 double-tap).
+  the question and its options stay put when answered.
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npm test
+  104/104 pass across 8 files (no new unit-testable pure logic — this
+  item is UI/interaction timing, covered by the extended check above).
+
+$ npm run check:all
+  check:all — all 26 steps pass against a deploy-shaped build.
+  Run alone on a still tree, after the final edit.
+
+Induced failure, twice over: (1) reverted `Reveal.tsx`/`HomeScreen.tsx`
+to their pre-URD-015 shape entirely — both new `checkNoticeExit` checks
+failed with the exact real-world regression message ("a different
+control snapped in under the finger"), restored, reconfirmed clean.
+(2) After THE CRITIC's BLOCKING finding was fixed, reverted only
+`Reveal.tsx`'s exit-effect dependency array to the pre-fix shape (the
+rest of the URD-015 diff intact) — the new `checkNoticeSurvivesDoubleTap`
+check failed for both notices ("left the card on screen well past its
+exit window"), restored, reconfirmed clean. THE CRITIC's BLOCKING and
+MAJOR findings were both fixed and independently re-verified via live
+reproduction against the real built app, not just code reading.
+
+New queue items: none — both critic findings were fixed inline this
+round rather than filed forward.
+
+branch: claude/gauntlet-notice-exit
