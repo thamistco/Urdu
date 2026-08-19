@@ -2107,3 +2107,104 @@ overclaimed precedent rewritten in `achievements.ts`'s own comment, the
 paperwork gap closed by this entry itself).
 
 branch: claude/gauntlet-daily-goal-rate
+
+## CLAIMED · URD-011 · 2026-08-19T00:12Z
+Top unclaimed item below URD-A02. `buildLessonExercises` runs 5,070+ times
+per `check:shape` run (measured just now: 5,839 requests) because several
+independent call sites each regenerate the same (lesson, refs, track)
+tuple; unmemoised. Separately, `coverTopics`' vocabulary-lesson `size`
+budget (`3n + 4`) has never matched what the generator actually emits
+(`3n + 1`) — `CLOSING_EXERCISES = 4` counted the closing matching board as
+four exercises when it is one array entry holding four word-pairs.
+verify: npm run check:shape
+branch: claude/gauntlet-shape-perf, cut from claude/gauntlet-daily-goal-rate
+after URD-009 shipped.
+
+## CRITIQUE · URD-011 · 2026-08-19T00:29Z
+Dispatched THE CRITIC only (mandatory). Not DESIGN CRITIC — no screen or UI
+code touched. Not CURRICULUM CRITIC — no taught content, word order, or
+exercise design changed; the real generator output for every vocabulary
+lesson is bit-for-bit identical before and after, only a previously-wrong
+bookkeeping field is corrected to match what was already true. Not
+PLAYER — a soak run would see literally identical exercise sequences,
+confirmed by a 233/233 real-vs-recorded match across every vocabulary
+lesson. THE CRITIC agreed with all three calls after independently
+confirming the diff's whole blast radius is two files with no other reader
+of the changed values anywhere in the app.
+
+### THE CRITIC
+Verdict: PASS. No BLOCKING, no MAJOR. One MINOR.
+Independently reproduced every claim from scratch rather than trusting the
+report: confirmed the cache key (`` `${lesson.id}:${track}:${refs...}` ``)
+is collision-free by grepping every real id in the corpus for `:`/`,`;
+called `buildLessonExercises` directly for a real lesson on both tracks and
+confirmed the cache holds genuinely distinct entries (same length, 9
+positions differing in kind) rather than accidentally collapsing tracks
+together; confirmed no other call site in the file relies on drawing
+independent random samples of the same tuple (the redundancy the item
+targets IS the whole duplication, not a deliberate statistical-coverage
+pattern like `check-answerable.js`'s `PASSES=6`); independently grepped
+every `.size` occurrence in `src/` and `scripts/` and traced each one,
+confirming nothing reads a real vocabulary lesson's `size` at runtime
+(`generator.ts`'s trim exemption explicitly excludes `'vocab'`; `dueBudget`
+returns a flat 4 for any non-review kind; `check-srs.js` hardcodes its own
+vocab assertion size rather than reading the field). Reran `check:shape`
+independently: byte-identical output. Reran the 233-lesson arithmetic
+verification independently: 233/233 exact matches. Instrumented the cache
+itself and reran: confirmed 5,839→999, matching exactly. Ran `check:all`
+to completion independently (in two passes — flagged as an open caveat in
+its first report, then closed out in a follow-up once its own background
+run finished): 26/26 pass.
+
+MINOR (fixed same round): `CLOSING_EXERCISES = 1` assumes the closing
+matching board always renders — `generator.ts` only pushes it when four
+distinct-cue, distinct-gloss words can be found, topping up from the wider
+topic pool. True for all 233 real lessons today (smallest topic has 11
+words) but not structurally guaranteed; a future topic too small or
+homogeneous to fill the board would make the constant wrong by one again —
+the same shape of bug this item exists to fix, just smaller. Zero runtime
+impact either way (confirmed above), so not gating — fixed by extending the
+constant's own comment to state the assumption plainly rather than leaving
+it implicit, so the next person touching topic sizing sees the risk at the
+site rather than rediscovering it.
+
+## PASSED · URD-011 · 2026-08-19T00:31Z
+$ npm run check:shape
+  same 2 pre-existing, unrelated problems as before this change (4 short
+  lessons, 2 units outside the 4-12 band — both already-known URD-A02
+  remainder rows, not touched here); byte-identical summary stats
+  (3.9 min · 9.8 new words · 26.2 exercises emitted). Confirmed via
+  `git stash`/`git stash pop` A/B comparison: this item's own requirement
+  ("check:shape still exiting the same way") holds exactly, not just
+  approximately.
+
+  Real generation calls: 5,839 total requests → 999 unique generations
+  (measured directly, instrumented cache counters) — the shape of
+  reduction this item names, on today's larger course (the item's own
+  5,070→~700 figures were measured on an earlier, smaller version of the
+  path).
+
+  Vocabulary lesson `size` accuracy: 233 of 233 real vocabulary lessons'
+  recorded `size` now exactly equals what the generator actually emits
+  (was 0 of 233, off by exactly 3 on every one, before the fix).
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npm test
+  97/97 pass across 8 files.
+
+$ npm run check:all
+  check:all — all 26 steps pass against a deploy-shaped build.
+  Run alone on a still tree, after the final edit.
+
+Induced failure: reverted `CLOSING_EXERCISES` to `4`, reran the 233-lesson
+verification — 0/233 exact matches, all off by exactly 3, restored,
+reconfirmed 233/233. Memoisation's own correctness verified by A/B
+comparison (stash/pop) rather than induced failure, since there is no
+pass/fail assertion to break — the property under test is "identical
+output, fewer calls," and both halves were measured directly.
+
+New queue items: none.
+
+branch: claude/gauntlet-shape-perf

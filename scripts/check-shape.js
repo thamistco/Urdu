@@ -56,7 +56,39 @@ const { load } = require('./lib/load-ts');
 
 const { ALL_LESSONS, UNITS } = load('src/data/units.ts');
 const { WORDS, TOPICS } = load('src/data/words.ts');
-const { buildLessonExercises } = load('src/exercises/generator.ts');
+const { buildLessonExercises: buildLessonExercisesUncached } = load('src/exercises/generator.ts');
+
+/**
+ * URD-011: `buildLessonExercises` ran 5,070 times per check:shape run,
+ * 2.5-3.4 seconds, because `variants()` below and the run/share loop
+ * further down each generate the identical (lesson, refs, track) tuple
+ * independently, and every other rule in this file calls through `emitted`
+ * — itself calling `variants` — again. Memoised on that tuple it is about
+ * 700, the number this item names.
+ *
+ * The generator is not pure — `shuffle()`/`Math.random()` pick option order
+ * and, for some word exercises, which kind to ask (`generator.ts`'s
+ * `wordExercise`) — so memoising changes more than speed: every rule in
+ * this file that asks about "lesson L, due-state R, track T" now sees the
+ * exact same generated instance, where before each call site silently drew
+ * its own independent random sample under the same nominal scenario. That
+ * is a correctness improvement, not a side effect to route around — two
+ * checks that both claim to test "this lesson in this state" should not be
+ * able to disagree because they happened to roll differently.
+ *
+ * Keyed on `refs`, not just lesson id and track, on purpose: a review
+ * lesson's five due-queue states (`dueQueues` below) are meaningfully
+ * different generations of the same lesson, and collapsing them together
+ * would silently cache the empty-queue result over the ones the due-queue
+ * rules exist to check — the opposite of "do not memoise across tracks by
+ * accident" for a different axis of the same mistake.
+ */
+const exerciseCache = new Map();
+function buildLessonExercises(lesson, refs, track) {
+  const key = `${lesson.id}:${track}:${refs.map((r) => `${r.type}:${r.id}`).join(',')}`;
+  if (!exerciseCache.has(key)) exerciseCache.set(key, buildLessonExercisesUncached(lesson, refs, track));
+  return exerciseCache.get(key);
+}
 
 /**
  * How many exercises a lesson really produces.
