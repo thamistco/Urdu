@@ -46,6 +46,55 @@
  * ungrammatical to the rest is not worth the second code path.
  */
 
+/**
+ * The v1 → v2 lesson-id migration (`useProgressStore.ts`) empties
+ * `completedLessons`/`skippedLessons` for a profile that predates
+ * content-derived ids, because a positional id like `v-12` genuinely does
+ * not say which lesson it meant once the path has been reshuffled. That is
+ * correct — but for a learner who actually had ticks, it is also a second,
+ * worse silence than the one `needsPathMoveNotice` exists to close.
+ *
+ * URD-014: `needsPathMoveNotice` requires a *surviving* completed or
+ * skipped lesson to have anything to say — exactly the evidence this wipe
+ * just deleted. A learner who finished 55 lessons on the old path upgrades,
+ * loses every tick, and reads 0 of 81 with no explanation whatsoever,
+ * while `needsPathMoveNotice` looks at their now-empty `completed`/
+ * `skipped` and correctly (by its own question) finds nothing to report.
+ * The bug is not in that function; it is that this migration destroyed the
+ * only evidence it reads, without recording that it had.
+ *
+ * `migrateProgress` is what `useProgressStore.ts`'s `persist` config calls,
+ * extracted here so this decision is a plain function a test can drive
+ * directly rather than an inline arrow reachable only through zustand's
+ * persist middleware.
+ */
+export type MigratableProgress = {
+  completedLessons?: Readonly<Record<string, unknown>>;
+  skippedLessons?: Readonly<Record<string, unknown>>;
+  [key: string]: unknown;
+};
+
+export function migrateProgress(persisted: MigratableProgress, from: number): Record<string, unknown> {
+  // v2 → v3 (and later): nothing is dropped. See useProgressStore.ts's own
+  // migrate comment for why `pathNoticeSeen`/`pathSize` still reset here.
+  const owed = { pathNoticeSeen: false, pathSize: null };
+  if (from >= 2) return { ...persisted, ...owed };
+
+  // v0/v1 → v2: lesson ids were positional and cannot be translated. Record
+  // whether there was anything to lose — a profile that had ticked nothing
+  // is migrated the same way and, correctly, told nothing, matching
+  // `needsPathMoveNotice`'s own "nothing ticked" branch below.
+  const hadTicks =
+    Object.keys(persisted.completedLessons ?? {}).length > 0 || Object.keys(persisted.skippedLessons ?? {}).length > 0;
+  return {
+    ...persisted,
+    completedLessons: {},
+    skippedLessons: {},
+    ticksWipedByMigration: hadTicks,
+    ...owed,
+  };
+}
+
 export type PathNoticeInput = {
   /** `completedLessons` from the store — only its keys are read. */
   completed: Readonly<Record<string, unknown>>;

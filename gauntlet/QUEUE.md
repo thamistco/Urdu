@@ -122,22 +122,6 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-014 — A wiped profile deserves a different sentence
-attempts: 0
-files: src/store/useProgressStore.ts, src/lib/progress.ts, src/lib/progress.test.ts
-definition of done: A profile persisted at version 0 or 1 has its
-  `completedLessons` and `skippedLessons` emptied by the v1 to v2 migration,
-  because positional lesson ids could not be translated. That learner genuinely
-  did lose their ticks, and the path-moved notice says nothing to them, because
-  the migration has already removed the evidence that they had any. Either the
-  migration records what it dropped, or a second notice covers the case. A test
-  asserts a v1 profile with completions is told something.
-verify: npm test -- src/lib/progress.test.ts
-notes: Found by THE CRITIC on URD-003 as MINOR. The wipe is pre-existing and
-  correct — the old ids really do not say which lesson they meant — but "we threw
-  your ticks away and said nothing" is a worse silence than the one URD-003 just
-  fixed, not a better one.
-
 ## URD-015 — Nothing should change under a finger that is already moving
 attempts: 0
 files: src/screens/HomeScreen.tsx, src/components/Reveal.tsx

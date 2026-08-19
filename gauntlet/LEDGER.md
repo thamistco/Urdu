@@ -2208,3 +2208,152 @@ output, fewer calls," and both halves were measured directly.
 New queue items: none.
 
 branch: claude/gauntlet-shape-perf
+
+## CLAIMED · URD-014 · 2026-08-19T00:54Z
+Top unclaimed item below URD-A02. A profile persisted at v0/v1 has
+`completedLessons`/`skippedLessons` emptied by the migration to content-
+derived lesson ids, because a positional id genuinely cannot say which
+lesson it meant once the path has been rebuilt. That is correct — but it
+also deletes the only evidence `needsPathMoveNotice` (URD-003) reads, so
+the learner who lost the most is told the least: their now-empty
+`completed`/`skipped` maps make `needsPathMoveNotice` correctly, and
+silently, find nothing to report.
+verify: npm test -- src/lib/progress.test.ts
+branch: claude/gauntlet-migration-notice, cut from claude/gauntlet-shape-perf
+after URD-011 shipped.
+
+## CRITIQUE · URD-014 · 2026-08-19T20:59Z
+Dispatched THE CRITIC (mandatory) and DESIGN CRITIC (a new screen notice
+was added to Home). Not CURRICULUM CRITIC (no lesson content or pedagogy
+touched). Not PLAYER (no interaction/completion surface changes a soak
+run would exercise differently — this is a one-time migration notice, not
+a lesson mechanic).
+
+### THE CRITIC (round 1)
+Verdict: BLOCKING. One BLOCKING, one MAJOR, two MINOR.
+
+BLOCKING: `HomeScreen.tsx`'s mount-time auto-scroll effect (scrolls to the
+current lesson) only guarded on `pathNotice`, not the new
+`ticksWipedByMigration`. Reproduced live: the new notice rendered
+correctly at first paint, then was auto-scrolled off-screen within ~1.5s —
+for exactly the population it exists to reach, since a wiped profile
+always starts at the very first lesson, and the header plus the ~330px
+notice card together reliably clear the scroll-trigger threshold. "The
+learner who lost the most, told the least" reopened by an unrelated
+feature this diff never checked against.
+
+MAJOR: the new notice and the pre-existing "Lessons were regrouped"
+path-moved notice could stack — reachable sequence traced and reasoned
+through: wipe happens, learner leaves the new notice up, does a few
+lessons, the path (already reshaped three times per `progress.ts`'s own
+header) regroups again before they dismiss — both `ticksWipedByMigration`
+and `needsPathMoveNotice(...)` become true at once, nothing coordinates
+the two dismiss-once alert cards.
+
+MINOR (fixed same round): title/body said "finished lessons," but
+`hadTicks` correctly also counts a skip-only wipe (onboarding-skipped
+lessons, never attempted) — a heritage learner with only lost skips saw a
+notice overclaiming something "finished."
+
+MINOR: an untracked scratch file was reported left behind, contradicting
+a "deleted" claim — investigated, did not reproduce (file did not exist
+in the shared checkout; the round-2 pass confirmed this independently via
+`git status --untracked-files=all --ignored=matching`, all clean) —
+likely THE CRITIC's own leftover scratch artifact, misattributed.
+
+Fixed same round: (1) added `store.ticksWipedByMigration` to the
+auto-scroll guard and its dependency array. (2) Split `pathNotice`
+(gated, used for render) from `rawPathNotice` (the raw
+`needsPathMoveNotice` result) — `pathNotice = !ticksWipedByMigration &&
+rawPathNotice` so the two notices queue strictly one at a time. Caught a
+second bug in this fix's own first draft, via live testing rather than
+code review: the `notePathSize` auto-record effect originally read the
+gated `pathNotice`, which silently recorded a stale `pathSize` as "seen"
+the moment the wipe notice merely appeared — permanently erasing the
+path-moved notice's own evidence before the learner was ever shown it,
+the identical class of silent loss this whole item exists to close, one
+layer up. Fixed by pointing that effect at `rawPathNotice` instead. (3)
+Retitled the notice "Your lesson progress wasn't carried over" (was
+"Your finished lessons weren't carried over") and reworded the body to
+"your lesson history" rather than "which lessons you'd finished."
+
+Verified via disposable Playwright scripts (not committed, matching this
+project's established no-permanent-scratch-tooling practice): the notice
+survives past 2.5s with no auto-scroll; a dual-trigger seed (wipe +
+stale pathSize) renders only one card; dismissing it correctly reveals
+the second notice on its own next render, with `pathSize` proven
+undisturbed by the wipe-notice dismissal.
+
+### THE CRITIC (round 2, re-review of the fixes)
+Verdict: PASS. No BLOCKING, no MAJOR. One soft MINOR.
+Independently reproduced every claim from round 1's fix rather than
+trusting the summary: rebuilt fresh, reproduced the exact BLOCKING
+scenario (notice stays in-viewport past 3.2s this time); traced the
+`rawPathNotice`/`notePathSize` counter-scenario by hand and confirmed the
+claimed bug class would occur if reverted; specifically hunted for a
+third bug (a race between the auto-scroll effect and `notePathSize` via
+`didAutoScroll.current`) by seeding a profile that clears the scroll
+threshold while the wipe notice is up, and confirmed `scrollTop` stays 0
+until dismissal, then fires once, correctly, afterward; reproduced the
+dual-trigger no-stacking-then-sequenced-reveal scenario independently;
+confirmed the never-wiped path is provably unaffected
+(`pathNotice === rawPathNotice` by construction when
+`ticksWipedByMigration` is false, plus the pre-existing, unchanged
+`needsPathMoveNotice` test suite still green); ran the full pipeline
+independently, all 26 `check:all` steps read from real output, not a
+summary; confirmed the untracked-file claim (none exist).
+
+MINOR (fixed same round): "your lesson checkmarks were reset" still
+mildly overclaims for a skip-only wipe — skipped lessons never rendered a
+checkmark (`LessonNode` shows a dashed circle + a skip badge for
+`state === 'skipped'`, not the same glyph as `done`). Softer than the
+first round's finding (title already accurate, "checkmarks" plausibly
+reads as a colloquial stand-in) and explicitly judged not blocking, but
+fixed anyway since it was one word: "your lesson checkmarks" → "your
+lesson progress," matching the title's own already-accurate phrasing.
+
+### DESIGN CRITIC
+Not blocking (never blocks, per ROLES.md). One MINOR, one MAJOR-flagged-
+but-unverified-by-DESIGN-CRITIC-itself (the same stacking issue THE
+CRITIC independently found and blocked on, and which is now fixed and
+empirically re-verified above — recorded here rather than opened as a
+second finding, since it is the identical root cause).
+Measured directly rather than eyeballed: body-text contrast 7.45:1
+(WCAG relative luminance on live computed styles), heading contrast
+11.99:1 — both clear AA and AAA, matching or exceeding the sibling
+"Lessons were regrouped" notice's own measured contrast (URD-003
+ledger). Tap target 100×51px, comfortably over the 44×44/48×48 floors.
+Dismiss reflow clean, no lingering gap. MINOR: at 320×568 (the tightest
+phone this project tests) the card is 353px/568px, 62% of the viewport —
+slightly more than the sibling notice's own previously-accepted 52%
+footprint, covered by the same precedent DESIGN CRITIC already overruled
+for that sibling ("on the one launch this appears, the notice *is* the
+screen's subject") — not re-litigated here, noted as a boundary this
+precedent should not be stretched further without review.
+
+## PASSED · URD-014 · 2026-08-19T21:05Z
+$ npx vitest run src/lib/progress.test.ts
+  17/17 pass (10 pre-existing + 7 new).
+
+$ npx tsc --noEmit / npm run lint / npm run format:check / npm run check:writing
+  clean.
+
+$ npm test
+  104/104 pass across 8 files.
+
+$ npm run check:all
+  check:all — all 26 steps pass against a deploy-shaped build.
+  Run alone on a still tree, after the final edit.
+
+Induced failure, on the core migration logic: reverted `migrateProgress`
+to the pre-fix shape (no `ticksWipedByMigration` at all) — 4 of 17 tests
+failed, including the item's own literal acceptance test ("a v1 profile
+with completions is told something"), restored, reconfirmed 17/17. Both
+BLOCKING and MAJOR findings from THE CRITIC's first round were verified
+as real via live reproduction (not just code reading) before being fixed,
+and the fixes were independently re-verified via a second, harsher THE
+CRITIC pass before this was recorded.
+
+New queue items: none.
+
+branch: claude/gauntlet-migration-notice

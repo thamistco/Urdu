@@ -41,6 +41,25 @@ const PATH_SIZE = ALL_LESSONS.length;
 const NOTICE_BODY =
   'Short lessons were merged into fewer, longer ones, so your units hold a different number of lessons than when you were last here. Nothing you learned was lost: your streak, your level and everything the app remembers about your words are untouched.';
 
+/**
+ * URD-014: a genuinely different truth from `NOTICE_BODY` above, and said
+ * with different copy on purpose. `NOTICE_BODY` can honestly promise
+ * nothing was lost, because a regroup keeps a topic's first-part id. This
+ * one cannot: an old update really did drop this learner's lesson
+ * checkmarks (`ticksWipedByMigration` — see `lib/progress.ts`), so it says
+ * so plainly and reassures only about what is actually still true.
+ *
+ * Says "lesson progress" rather than "finished lessons" on purpose — THE
+ * CRITIC found `hadTicks` (progress.ts) correctly counts a skip-only wipe
+ * (lessons pre-satisfied at onboarding, never actually attempted) as
+ * something lost, but the first draft's copy described only the completed
+ * case. A heritage learner who skipped lessons at onboarding and lost
+ * those skips had nothing "finished" to overclaim.
+ */
+const TICKS_WIPED_NOTICE_TITLE = 'Your lesson progress wasn’t carried over';
+const TICKS_WIPED_NOTICE_BODY =
+  'An old update couldn’t carry over your lesson history, so your lesson progress was reset. Your streak, your level and everything the app remembers about your words and letters are untouched — pick back up wherever feels right.';
+
 const GREETING: Record<string, string> = {
   family: 'Speak with them',
   read: 'Read the script',
@@ -198,13 +217,37 @@ export function HomeScreen() {
    * Roman track `units` drops the thirteen alphabet lessons, so a track switch
    * would otherwise register as the course changing size underneath them.
    */
-  const pathNotice = needsPathMoveNotice({
+  /**
+   * URD-014, THE CRITIC's MAJOR: two dismiss-once alert cards can otherwise
+   * stack on Home. A wiped profile's first render always has empty
+   * `completed`/`skipped`, so `needsPathMoveNotice` itself starts false —
+   * but if the learner leaves the ticks-wiped notice up, does a few lessons,
+   * and the path regroups again before they dismiss it, `needsPathMoveNotice`
+   * turns true while `ticksWipedByMigration` is still true too.
+   *
+   * Kept as two names on purpose, not one gated boolean. `rawPathNotice` is
+   * what the path-moved notice is actually true of, independent of whether
+   * anything else is currently showing; `pathNotice` is what gets rendered
+   * — the two notices queued strictly one at a time. The `notePathSize`
+   * effect just below has to read `rawPathNotice`, not `pathNotice`: an
+   * earlier version of this fix read the gated value there too, and it
+   * silently re-recorded `pathSize` to the current path the moment the
+   * wipe notice appeared — "nothing is owed" was true only because the
+   * gate said so, not because the path genuinely matched — which erased
+   * the path-moved notice's own evidence before the learner ever saw it,
+   * the identical shape of silent loss this whole item exists to close,
+   * one layer up. Caught by testing the sequence live, not by reading the
+   * code: dismissing the wipe notice never revealed a path-moved notice
+   * that a stale `pathSize` should have produced.
+   */
+  const rawPathNotice = needsPathMoveNotice({
     completed: store.completedLessons,
     skipped: store.skippedLessons,
     pathSize: PATH_SIZE,
     seen: store.pathNoticeSeen,
     lastPathSize: store.pathSize,
   });
+  const pathNotice = !store.ticksWipedByMigration && rawPathNotice;
 
   /**
    * A learner who is owed nothing has still *seen* this path, and needs to be
@@ -212,11 +255,13 @@ export function HomeScreen() {
    * apart from someone who was last here two paths ago. Runs on the launches
    * where nothing is shown; the dismissal records it on the launches where
    * something is.
+   *
+   * Reads `rawPathNotice`, not `pathNotice` — see the comment above.
    */
   const notePathSize = useProgressStore((s) => s.notePathSize);
   useEffect(() => {
-    if (!pathNotice && store.pathSize !== PATH_SIZE) notePathSize(PATH_SIZE);
-  }, [pathNotice, store.pathSize, notePathSize]);
+    if (!rawPathNotice && store.pathSize !== PATH_SIZE) notePathSize(PATH_SIZE);
+  }, [rawPathNotice, store.pathSize, notePathSize]);
   const order = useMemo(() => units.flatMap((u) => u.lessons.map((l) => l.id)), [units]);
 
   // The one next thing to do: the first lesson on the path not yet finished
@@ -250,12 +295,20 @@ export function HomeScreen() {
    * every launch, and dismissed on tap rather than on render, so never dismissed
    * either. The notice is the one thing on the screen that has to be read before
    * anything else makes sense; the scroll runs when it is gone.
+   *
+   * URD-014's ticks-wiped notice sits above this same ScrollView the same way,
+   * and needs the identical guard — THE CRITIC caught this reviewing that item:
+   * `pathNotice` alone let the wipe notice get auto-scrolled past within ~1.5s
+   * for exactly the population it exists for (a wiped profile always starts at
+   * the very first lesson, which combined with the header and the notice card
+   * itself reliably clears the 420px threshold below). Gated on both now, not
+   * just the older of the two.
    */
   const pathRef = useRef<ScrollView>(null);
   const currentNode = useRef<View>(null);
   const didAutoScroll = useRef(false);
   useEffect(() => {
-    if (didAutoScroll.current || pathNotice) return;
+    if (didAutoScroll.current || pathNotice || store.ticksWipedByMigration) return;
     const t = setTimeout(() => {
       // `measure` reports pageY — position on screen. The list has not been
       // scrolled yet at this point, so pageY is also the content offset we
@@ -270,7 +323,7 @@ export function HomeScreen() {
       });
     }, 500);
     return () => clearTimeout(t);
-  }, [currentId, pathNotice]);
+  }, [currentId, pathNotice, store.ticksWipedByMigration]);
 
   // The course is long. Only one course stage is expanded at a time — the
   // others collapse to a progress line you can open when you want to look
@@ -414,6 +467,39 @@ export function HomeScreen() {
             </View>
           </SafeAreaView>
         </Reveal>
+
+        {/* URD-014: the learner who lost the most, told the least.
+            An old profile's lesson-id migration empties completedLessons and
+            skippedLessons, because a positional id from before the path was
+            content-keyed genuinely cannot be translated. That is correct —
+            but it also deletes the only evidence `needsPathMoveNotice` reads,
+            so the notice below it never fires for exactly this learner. This
+            card is that second, separate truth, with its own honest copy:
+            unlike a regroup, something really was dropped here. */}
+        {store.ticksWipedByMigration && (
+          <Reveal delay={20}>
+            <Card
+              className="mb-4"
+              accent={palette.gold}
+              accessibilityRole="alert"
+              accessibilityLabel={`${TICKS_WIPED_NOTICE_TITLE}. ${TICKS_WIPED_NOTICE_BODY}`}
+            >
+              <Bold className="text-base">{TICKS_WIPED_NOTICE_TITLE}</Bold>
+              <Txt className="mt-2 text-sm leading-6 text-paper/75">{TICKS_WIPED_NOTICE_BODY}</Txt>
+              <View className="mt-3 flex-row">
+                <Button
+                  variant="ghost"
+                  onPress={() => {
+                    feedback.tap();
+                    store.dismissTicksWipedNotice();
+                  }}
+                >
+                  Got it
+                </Button>
+              </View>
+            </Card>
+          </Reveal>
+        )}
 
         {/* Why the unit counts moved.
             The path has been rebuilt underneath people twice and will move

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { ALL_LESSONS } from '../data/units';
-import { needsPathMoveNotice } from './progress';
+import { migrateProgress, needsPathMoveNotice } from './progress';
 
 /**
  * The rule is "once per move, and never to somebody it is not true of".
@@ -109,5 +109,68 @@ describe('telling a learner their place on the path moved', () => {
     expect(
       needsPathMoveNotice({ completed: survivor, skipped: {}, pathSize: 0, seen: false, lastPathSize: null })
     ).toBe(false);
+  });
+});
+
+/**
+ * URD-014: the v1 → v2 migration empties `completedLessons`/`skippedLessons`
+ * because old positional ids genuinely cannot be translated — correct — but
+ * that also destroys the only evidence `needsPathMoveNotice` reads, so the
+ * learner who lost the most was told the least. `migrateProgress` is the
+ * function `useProgressStore.ts`'s `persist` config calls; these tests drive
+ * it directly rather than through zustand's middleware.
+ */
+describe('migrating a profile whose lesson ids were positional', () => {
+  it('a v1 profile with completions is told something', () => {
+    // The item's own acceptance test, verbatim: the whole point is that
+    // *some* signal survives the wipe, even though `needsPathMoveNotice`
+    // itself — reading the now-empty maps this same migration just
+    // produced — cannot see it.
+    const migrated = migrateProgress({ completedLessons: survivor, skippedLessons: {} }, 1);
+    expect(migrated.ticksWipedByMigration).toBe(true);
+  });
+
+  it('empties completedLessons and skippedLessons — the old ids really cannot be translated', () => {
+    const migrated = migrateProgress({ completedLessons: survivor, skippedLessons: { 'v-1': true } }, 1);
+    expect(migrated.completedLessons).toEqual({});
+    expect(migrated.skippedLessons).toEqual({});
+  });
+
+  it('a v0 profile is migrated the same way as v1 — both predate content-derived ids', () => {
+    const migrated = migrateProgress({ completedLessons: survivor, skippedLessons: {} }, 0);
+    expect(migrated.ticksWipedByMigration).toBe(true);
+    expect(migrated.completedLessons).toEqual({});
+  });
+
+  it('says nothing to a v1 profile that had nothing ticked — there is nothing to lose', () => {
+    // Matches needsPathMoveNotice's own "nothing ticked" branch: a profile
+    // that finished nothing is migrated the same way and, correctly, told
+    // nothing new.
+    const migrated = migrateProgress({ completedLessons: {}, skippedLessons: {} }, 1);
+    expect(migrated.ticksWipedByMigration).toBe(false);
+  });
+
+  it('counts a skipped-at-onboarding lesson as something to lose, same as a completed one', () => {
+    const migrated = migrateProgress({ completedLessons: {}, skippedLessons: { 'v-1': true } }, 1);
+    expect(migrated.ticksWipedByMigration).toBe(true);
+  });
+
+  it('a v2 profile is not wiped — only pre-content-id profiles are', () => {
+    const migrated = migrateProgress({ completedLessons: survivor, skippedLessons: {} }, 2);
+    expect(migrated.completedLessons).toBe(survivor);
+    // No claim about `ticksWipedByMigration` here: the v2→v3 branch does not
+    // set it, and the store's own default (`false`) fills the gap on merge
+    // — this function's contract is only about what it *changes*.
+    expect(migrated.ticksWipedByMigration).toBeUndefined();
+  });
+
+  it('still resets the path notice for every migrated profile, wiped or not', () => {
+    // v2→v3 (nothing dropped) and v0/v1→v2 (dropped) both owe a fresh look
+    // at the path-moved notice — that part of the fix this item is not about.
+    for (const from of [0, 1, 2]) {
+      const migrated = migrateProgress({ completedLessons: {}, skippedLessons: {} }, from);
+      expect(migrated.pathNoticeSeen).toBe(false);
+      expect(migrated.pathSize).toBeNull();
+    }
   });
 });
