@@ -2532,3 +2532,200 @@ New queue items: none — both critic findings were fixed inline this
 round rather than filed forward.
 
 branch: claude/gauntlet-notice-exit
+
+## CLAIMED · URD-016 · 2026-08-20T12:22Z
+Top unclaimed item below URD-A02. `fallbackReviewRefs` in generator.ts
+draws uniformly from every word and letter taught up to the review, with
+no weighting toward the unit it closes. Measured on real generated
+output with nothing due: rev-gender-and-number (u6) draws 0-5% of its
+words from u6; rev-the-wider-world (u39) draws 3-5% from u39. Scope the
+fallback to the closing unit first, falling back to the wider course
+only when the unit cannot fill it — rev-your-first-readings closes a
+unit with zero vocabulary lessons and needs the fallback for all of it.
+verify: npm test -- src/lib/review.test.ts
+branch: claude/gauntlet-review-scope, cut from claude/gauntlet-notice-exit
+after URD-015 shipped.
+
+## CRITIQUE · URD-016 · 2026-08-20T13:10Z
+Dispatched THE CRITIC (mandatory) and CURRICULUM CRITIC (this rescopes
+what a review lesson actually teaches — squarely a curriculum question).
+Not DESIGN CRITIC (no screen or rendering touched — this is pure
+content-generation logic). Not PLAYER (a narrow, already
+adversarially-tested generation-logic fix, not a broad
+content/play-through surface `npm run soak` would add anything to).
+
+### Implementation
+New `src/lib/review.ts`: `taughtInUnit(lessonId)` (words/letters taught
+by lessons in the SAME unit as a lesson, via `UNITS`, not the whole
+course), `prioritizedPool(tiers, seedBase)` (concatenates pools in
+priority order, deduping, shuffling *within* each tier independently —
+the actual fix, since shuffling a concatenation together lets a huge
+low-priority tier dilute a tiny high-priority one by chance), and
+`reviewWordPool`/`reviewLetterPool` (the full tiered logic).
+`generator.ts`'s `fallbackReviewRefs` now calls these instead of
+building one flat course-wide pool. Measured directly on real generated
+output before either critic ran: rev-gender-and-number and
+rev-the-wider-world now draw 100% of their words from their own unit
+(up from the reported 0% and ~5%); rev-your-first-readings (zero
+vocabulary lessons) correctly still falls through to course-wide, 0%,
+exactly as the item's own note describes.
+
+Before either critic ran, building `reviewWordPool`/`reviewLetterPool`
+itself surfaced a real regression in the fix's own first draft, found by
+running the full check suite (not just the new test) and seeing
+`check-srs.js` fail: treating "known within the unit" and "taught
+course-wide, ungraded" as two tiers in the same priority list meant that
+once the unit's own known words ran out, the pool quietly widened to
+*any* taught material — reintroducing the exact thing
+"a review with nothing due never asks about a word outside what the
+learner has been graded on" exists to catch. Fixed: whether `known`
+restricts the pool at all is an all-or-nothing decision — if the learner
+has graded anything reachable from this review, the whole pool stays
+restricted to graded ids, unit-known ones ordered first; only when
+nothing anywhere is graded yet does it widen to the full taught pool.
+Verified via induced failure: reverted just that restriction to the
+broken shape, confirmed both `check-srs.js` and the new `review.test.ts`
+fail with the exact leaked-word list, restored, reconfirmed clean.
+
+### THE CRITIC
+Verdict: BLOCKING. One BLOCKING, one MAJOR.
+
+BLOCKING: the "is anything known" decision above was still per-type —
+`reviewWordPool` looked only at `known ∩ courseWideWords`,
+`reviewLetterPool` only at `known ∩ courseWideLetters`. `known` is a
+single flat set of every id graded regardless of type
+(`Object.keys(srs)`, `LessonScreen.tsx`), and a learner graded on many
+words but zero letters is not synthetic: studying the Roman track (which
+drops letter lessons from the path entirely) for a stretch, then
+switching to Script or Both, reaches exactly this state on the very next
+review. Deciding the letter side alone found `known ∩ courseWideLetters`
+empty and widened to *every letter ever taught* — reproduced live
+against the real built generator: 12 of 16 exercises were letters the
+learner had never once been shown. Fixed: both pools now key off whether
+*anything*, of either type, has been graded (`anythingKnown`, checking
+both course-wide arrays), so a learner known on words alone gets a
+correctly empty, never-taught-material letter pool — topped up from more
+words by the generator's own existing shortfall logic — rather than a
+flooded one. Added two regression tests exercising both directions
+(words-only known must not unlock every letter; letters-only known must
+not unlock every word). Verified via induced failure: reverted to the
+per-type decision, confirmed both the new tests and the real
+`rev-food-and-nature` reproduction fail exactly as THE CRITIC described,
+restored, reconfirmed clean.
+
+MAJOR (filed forward, not fixed inline — see below): `prioritizedPool`'s
+per-tier shuffle seed is keyed on `lessonId` alone, so once a learner has
+graded every word in a small, fully-known unit, the fallback always
+slices off the identical subset of that unit's words, forever, and the
+rest never surfaces via this path. Real numbers:
+rev-gender-and-number offers the same 4 of its 20 words on every single
+replay; rev-the-wider-world can only ever reach 19 of its 117. Not a
+regression from this diff — `seededShuffle`'s fixed-not-random content
+selection is this project's own deliberate, pre-existing convention (see
+`lib/shuffle.ts`'s docstring) — but shrinking the pool from a course-wide
+list of thousands down to one unit's dozen-to-hundred words is exactly
+what this item does, and it is what turns a shuffle quirk that barely
+mattered against the old pool into a first-order coverage gap against
+the new one. → new URD-039 (renumbered from a duplicate draft; see
+CURRICULUM CRITIC below, same finding, independently).
+
+Also verified correct, not just claimed: `taughtInUnit` checked against
+5 additional real review ids beyond the 3 in the test file, all
+resolving to the correct unit with no crash for an unplaced id; the
+overlap/ghost-id scenarios (a known id in both unit and course-wide
+tiers; a known id absent from every real pool) neither leak nor
+spuriously trigger restriction; full check suite (review.test.ts 16/16
+at the time, check:srs 19/19, check:answerable, check:order,
+check:coverage, full `npx vitest run` 120/120) all clean; the two
+explicitly-out-of-scope notes (review *sizing* left untouched; the
+rigid letter/word cadence MINOR) independently agreed to be legitimately
+out of scope, not silently dropped.
+
+### CURRICULUM CRITIC
+Not blocking (never blocks, per ROLES.md). Two MAJOR, confirming the
+fix does what it claims for words specifically while surfacing that the
+*whole lesson* a learner experiences is a different, larger story.
+
+Measured across all 39 reviews, track 'both' (the default), nothing
+due: word-side scoping holds exactly as claimed — 100% in-unit for
+every unit that teaches any vocabulary, 0% (correct fallback) for the
+one that doesn't. But *overall* in-unit share (words and letters
+together, what a learner actually experiences) averages only 53.5% and
+is ≤50% for 30 of 39 reviews — traced to `fallbackReviewRefs`'s
+pre-existing, unconditional 50/50 letter/word split colliding with the
+fact every letter lesson sits in units 1-9: every review from u10
+onward has zero letters of its own, so the letter half permanently
+falls back to pre-alphabet material regardless of how well-supplied the
+unit's own vocabulary is (u39 teaches 117 words and still can't push
+past 48.7% overall). Confirmed by the same 39 reviews scoring 96.0%
+in-unit on the Roman track, which never reserves letter slots at all —
+isolating the cause to the split, not to this fix's own scoping logic.
+This is the exact problem URD-017 (already queued, "A review's letter
+share should decay once the alphabet is behind it") describes, found
+independently and from a sharper angle here — folded into URD-017's own
+notes rather than filed as a duplicate.
+
+Second MAJOR: the same deterministic per-lesson seed THE CRITIC flagged
+above, found independently — measured as permanently excluding 45-84%
+of a mastered unit's own vocabulary depending on unit size (11/52, 21%,
+for rev-hooks-and-throats; 19/117, 16%, for rev-the-wider-world). → new
+URD-039 (see above).
+
+Also: due-vs-fallback division of labor confirmed sound (due items are
+untouched by this change and are placed first; the fallback only widens
+past the unit for the rare "nothing anywhere graded, unit supplies
+nothing" case). Landing scoping now while leaving review *size*
+untouched judged acceptable — sizing already meets `BENCHMARKS.md`'s
+3-8 minute band regardless. Rigid letter/word cadence restated as
+MINOR, unchanged by this diff. Bonus finding, filed as new URD-040:
+review never touches the grammar concepts or sentences that give a
+unit its name (`rev-saying-who-you-are` never touches `g-pronouns` or
+`g-to-be`) — pre-existing (grammar/sentences have never fed SRS/review),
+not a regression, worth its own item.
+
+## PASSED · URD-016 · 2026-08-20T13:15Z
+$ npx vitest run src/lib/review.test.ts
+  18/18 pass.
+
+$ npm run check:srs
+  19/19 pass, including "a review with nothing due never asks about a
+  word outside what the learner has been graded on."
+
+$ npx tsc --noEmit / npm run lint / npm run format:check / npm run check:writing
+  clean.
+
+$ npm run check:answerable / npm run check:order / npm run check:coverage
+  clean — every generated exercise answerable, every position-ordering
+  and coverage invariant holds with the new review pool wiring.
+
+$ npm test
+  122/122 pass across 9 files.
+
+$ npm run check:all
+  check:all — all 26 steps pass against a deploy-shaped build.
+  Run alone on a still tree, after the final edit.
+
+Induced failure, three times over: (1) reverted the whole unit-scoping
+approach in `generator.ts` — real generated output for
+rev-gender-and-number and rev-the-wider-world reproduced the item's own
+reported 0% and ~5.3% in-unit share exactly, restored, reconfirmed
+100%/100%/0% (the last correctly the no-vocabulary unit). (2) reverted
+just the known-restriction to the "two tiers in one list" shape THE
+CRITIC's first-round-equivalent bug — both `check-srs.js` and
+`review.test.ts` failed with a concrete leaked-word list, restored,
+reconfirmed clean. (3) reverted just the cross-type joint-known check
+(THE CRITIC's BLOCKING finding) to per-type — the two new regression
+tests and the real `rev-food-and-nature` reproduction (12 of 16
+exercises were never-taught letters) failed exactly as reported,
+restored, reconfirmed clean. Both THE CRITIC's BLOCKING finding and both
+critics' MAJOR findings were addressed: the BLOCKING fixed inline and
+re-verified; the MAJORs filed forward as URD-039 (folded into existing
+URD-017) and URD-040, with reasoning recorded rather than silently
+dropped.
+
+New queue items: URD-039 (renumbered — the letter-share-decay MAJOR was
+a duplicate of already-queued URD-017 and was folded into its notes
+instead), URD-040 (review never touches its own unit's grammar/sentence
+content).
+
+branch: claude/gauntlet-review-scope

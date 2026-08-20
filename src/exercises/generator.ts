@@ -17,6 +17,7 @@ import {
 import { cueOf, VERDICT_CUES } from '../data/art';
 import { GLYPH_MASKS } from '../data/glyphMasks';
 import { shuffle, seededShuffle } from '../lib/shuffle';
+import { reviewWordPool, reviewLetterPool } from '../lib/review';
 import { Exercise, ItemRef } from './types';
 
 const rand = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
@@ -1223,21 +1224,23 @@ function taughtUpTo(lessonId: string): { letters: string[]; words: string[] } {
  * 3 and letters not yet introduced: material the learner had never seen, in a
  * lesson whose whole job is to bring back what they had.
  *
- * It was then drawn from `taughtUpTo`, which fixed the *unit* being wrong but
- * not the *word*: a vocab lesson only ever shows a handful of its topic's
- * words, while `taughtUpTo` counts the whole topic as taught the moment any
- * lesson touches it. A review reached before spaced repetition has scheduled
- * anything — which in practice means most early reviews, since a freshly
- * graded word is not due again for at least a day — fell all the way through
- * to this fallback and could pull any of a topic's words, including ones this
- * specific lesson never happened to pick.
+ * It was then drawn from `taughtUpTo`, which fixed *that* but not the scope:
+ * `taughtUpTo` is everything the course has taught by this point, course-wide
+ * — not the unit this review actually closes. URD-016 measured that gap
+ * directly: a review drew 0-5% of its words from its own unit, because the
+ * unit's own dozen-or-so words were a rounding error against the hundreds
+ * taught before it. `reviewWordPool`/`reviewLetterPool` (`lib/review.ts`)
+ * prefer the closing unit's own material first, falling back to the wider
+ * course only for whatever the unit itself cannot supply — which genuinely
+ * happens: `rev-your-first-readings` closes a unit of reading, sentence and
+ * dialogue lessons with no vocabulary of its own.
  *
- * `known` closes that gap: it is `Object.keys(srs)` from the progress store,
- * so it is not a guess about the order content was authored in, it is every
- * id the learner has actually been graded on, in any lesson, in any order —
- * true regardless of whether they took the path in sequence or jumped ahead.
- * Intersecting the two keeps the unit-level guardrail from `taughtUpTo` and
- * replaces its topic-wide guess with the one thing that is not a guess.
+ * `known` — `Object.keys(srs)` from the progress store, every id the learner
+ * has actually been graded on, in any lesson, in any order — still prefers
+ * graded material within whichever pool (unit or course) is being drawn from,
+ * for the reason it always did: a review reached before spaced repetition has
+ * scheduled anything (most early reviews) would otherwise pull any of a
+ * topic's words, including ones this specific lesson never happened to pick.
  */
 function fallbackReviewRefs(
   n: number,
@@ -1246,38 +1249,37 @@ function fallbackReviewRefs(
   known: ReadonlySet<string> = new Set()
 ): ItemRef[] {
   const taught = lessonId ? taughtUpTo(lessonId) : null;
-  const seen = (ids: string[]) => ids.filter((id) => known.has(id));
   // No lesson context (practice review, say) falls back to the foundational
-  // material, which is the old behaviour and correct there — practice review is
-  // not positioned anywhere on the path. Within a real lesson, prefer words
-  // actually known; only widen to the whole topic if the learner has somehow
-  // graded none of it yet (e.g. the very first review reachable from a unit).
-  const taughtWords = taught?.words ?? [];
-  const knownWords = seen(taughtWords);
-  const wordPool = knownWords.length
-    ? knownWords
-    : taughtWords.length
-      ? taughtWords
-      : WORDS.slice(0, 120).map((w) => w.id);
-  const taughtLetters = taught?.letters ?? [];
-  const knownLetters = seen(taughtLetters);
-  const letterPool = knownLetters.length
-    ? knownLetters
-    : taughtLetters.length
-      ? taughtLetters
-      : LETTERS.slice(0, 20).map((l) => l.id);
+  // material, which is the old behaviour and correct there — practice review
+  // is not positioned anywhere on the path.
+  //
+  // Both course-wide arrays are always passed to both pools, `withLetters`
+  // notwithstanding: the word pool's own "has anything been graded" decision
+  // has to see the letter side too, or a learner known on words alone but
+  // zero letters gets an unrestricted, never-taught-material letter pool the
+  // moment `withLetters` is true again (see `reviewLetterPool`'s comment).
+  const courseWords = taught?.words ?? [];
+  const courseLetters = taught?.letters ?? [];
+  const wordPool = reviewWordPool(
+    lessonId,
+    known,
+    courseWords,
+    courseLetters,
+    WORDS.slice(0, 120).map((w) => w.id)
+  );
 
   if (!withLetters) {
-    return seededShuffle(wordPool, `${lessonId ?? 'review'}:words`)
-      .slice(0, n)
-      .map((id) => ({ id, type: 'word' as const }));
+    return wordPool.slice(0, n).map((id) => ({ id, type: 'word' as const }));
   }
-  const letters: ItemRef[] = seededShuffle(letterPool, `${lessonId ?? 'review'}:letters`)
-    .slice(0, Math.ceil(n / 2))
-    .map((id) => ({ id, type: 'letter' as const }));
-  const words: ItemRef[] = seededShuffle(wordPool, `${lessonId ?? 'review'}:words`)
-    .slice(0, Math.floor(n / 2))
-    .map((id) => ({ id, type: 'word' as const }));
+  const letterPool = reviewLetterPool(
+    lessonId,
+    known,
+    courseWords,
+    courseLetters,
+    LETTERS.slice(0, 20).map((l) => l.id)
+  );
+  const letters: ItemRef[] = letterPool.slice(0, Math.ceil(n / 2)).map((id) => ({ id, type: 'letter' as const }));
+  const words: ItemRef[] = wordPool.slice(0, Math.floor(n / 2)).map((id) => ({ id, type: 'word' as const }));
   // Interleaved rather than shuffled together. Shuffling clustered them — four
   // consecutive letter exercises inside a mixed review — and did it differently
   // on every generation, so the review a learner reopened was a different
