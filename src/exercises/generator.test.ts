@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
-import { distractLetters, OPTIONS_PER_QUESTION, soundsOverlap, soundTokens } from './generator';
+import { buildLessonExercises, distractLetters, OPTIONS_PER_QUESTION, soundsOverlap, soundTokens } from './generator';
 import { getLetter, LETTERS, type Letter } from '../data/letters';
+import { resolveLesson, UNITS } from '../data/units';
+
+/** Letter-type exercise kinds, as opposed to everything else a review can ask. */
+const LETTER_KINDS = new Set(['letterForm', 'letterPick', 'letterTrace']);
+const letterCountOf = (lessonId: string, known: ReadonlySet<string> = new Set()) => {
+  const lesson = resolveLesson(lessonId)!;
+  const exercises = buildLessonExercises(lesson, [], 'both', known);
+  return exercises.filter((e) => LETTER_KINDS.has(e.kind)).length;
+};
 
 /** `soundTokens` only ever reads `.sound`, so a test double needs nothing else. */
 const withSound = (sound: string): Letter => ({ sound }) as Letter;
@@ -113,5 +122,85 @@ describe('distractLetters', () => {
     for (const letter of LETTERS) {
       expect(distractLetters(letter, n)).toHaveLength(n);
     }
+  });
+});
+
+describe("URD-017: Daily Review's letter share reflects this learner's position, not the whole course", () => {
+  // `practice-review` isn't placed on the path, so `taughtUpTo` can't stop
+  // walking it and returns the entire course — 2,281 words against 46
+  // letters, a ~2% letter share fixed regardless of who opens the screen.
+  // THE CRITIC: reproduced live, a learner who had just finished the very
+  // first letters and vocab lessons got 0 of 10 letter exercises, identical
+  // to one who had finished the whole course. The fix keys the split off
+  // `known` instead for this specific lesson.
+
+  it('with nothing graded yet (day one), splits close to the old even 50/50', () => {
+    const letters = letterCountOf('practice-review');
+    expect(letters).toBeGreaterThanOrEqual(4);
+    expect(letters).toBeLessThanOrEqual(6);
+  });
+
+  it('reflects a learner still deep in the alphabet, not the fixed whole-course ratio', () => {
+    // Graded on l-1's six letters and v-first-words' eleven words — a
+    // learner on day one or two, the population this regression hit.
+    const known = new Set([
+      'alif',
+      'alif-madda',
+      'be',
+      'pe',
+      'te',
+      'Te',
+      'w-paani',
+      'w-kitaab',
+      'w-ghar',
+      'w-dil',
+      'w-naam',
+    ]);
+    const letters = letterCountOf('practice-review', known);
+    // Before the fix this was 0, pinned by the whole course's ~2% ratio.
+    // 6 letters of 17 known items ≈ 35% ⇒ round(10 × 0.35) = 4 (± rounding
+    // and pool-fill from due letters not present here), comfortably above
+    // the old regression's 0 and nowhere near the whole-course ~2%.
+    expect(letters).toBeGreaterThanOrEqual(3);
+  });
+
+  it("an on-path review's letter share is unaffected — still keyed on course position, not known", () => {
+    // rev-the-wider-world (u39) is placed on the path, so this fix's
+    // known-based branch must not apply to it regardless of what `known`
+    // contains — course position stays the measure there.
+    const allWords = Array.from({ length: 200 }, (_, i) => `w-fake-${i}`);
+    const knownEverything = new Set(allWords);
+    const letters = letterCountOf('rev-the-wider-world', knownEverything);
+    expect(letters).toBeLessThanOrEqual(1);
+  });
+});
+
+describe('URD-017: a review with any letters in scope always asks at least one', () => {
+  it('every real review lesson in the course asks about at least one letter', () => {
+    // The floor exists because `Math.round` alone stays >= 1 only by
+    // coincidence of today's review sizes (coverTopics floors them at 22) —
+    // this asserts the guarantee directly rather than trusting the
+    // coincidence to hold as content changes.
+    for (const u of UNITS) {
+      for (const l of u.lessons) {
+        if (l.kind !== 'review') continue;
+        expect(letterCountOf(l.id)).toBeGreaterThanOrEqual(1);
+      }
+    }
+  });
+
+  it('holds even at a review size real content never happens to produce', () => {
+    // rev-the-wider-world's real size (39, set by coverTopics) is generous
+    // enough that Math.round alone never rounds its ~1.98% letter share
+    // down to 0. Its floor-set size — 22, coverTopics's own minimum — does:
+    // Math.round(22 * 0.0198) = Math.round(0.436) = 0 without the floor.
+    // A synthetic lesson sharing its id (so taughtUpTo/taughtInUnit resolve
+    // real course position) but a smaller size exercises the case current
+    // content doesn't, so this doesn't depend on staying lucky as units and
+    // reviews are added or resized.
+    const lesson = { ...resolveLesson('rev-the-wider-world')!, size: 22 };
+    const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+    const letters = exercises.filter((e) => LETTER_KINDS.has(e.kind)).length;
+    expect(letters).toBeGreaterThanOrEqual(1);
   });
 });

@@ -17,7 +17,7 @@ import {
 import { cueOf, VERDICT_CUES } from '../data/art';
 import { GLYPH_MASKS } from '../data/glyphMasks';
 import { shuffle, seededShuffle } from '../lib/shuffle';
-import { reviewWordPool, reviewLetterPool, taughtUpTo, reviewLetterShare } from '../lib/review';
+import { reviewWordPool, reviewLetterPool, taughtUpTo, taughtInUnit, reviewLetterShare } from '../lib/review';
 import { Exercise, ItemRef } from './types';
 
 const rand = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
@@ -1252,8 +1252,66 @@ function fallbackReviewRefs(
     courseLetters,
     LETTERS.slice(0, 20).map((l) => l.id)
   );
-  const letterShare = reviewLetterShare(courseWords, courseLetters);
-  const letterCount = Math.round(n * letterShare);
+  // THE CRITIC, URD-017: a lesson id `taughtUpTo` cannot place on the path —
+  // `practice-review`, the synthetic Daily Review screen, is the one that
+  // matters — never satisfies its `break`, so `courseWords`/`courseLetters`
+  // above are silently the *entire* course rather than "what this learner
+  // has reached". Feeding those straight to `reviewLetterShare` pinned the
+  // letter share at its end-of-course value (≈2%) from the very first time
+  // a learner ever opened the screen, deep in the alphabet or not.
+  // Reproduced live: a learner who had just finished the first letters
+  // lesson and first vocab lesson still got 0 of 10 letter exercises on
+  // Daily Review — identical to one who had finished the whole course.
+  //
+  // For a lesson actually placed on the path, course position is the right
+  // measure. For one that is not, the learner's own graded progress is —
+  // restricting both arrays to `known` asks "of everything reachable, how
+  // much has this learner actually seen so far", the same question
+  // `anythingKnown` already asks for pool selection. Nothing graded yet at
+  // all (day one, before any grading) leaves both arrays empty, which
+  // `reviewLetterShare` already treats as its 0.5 case — matching the old
+  // fixed split for exactly the population it protected.
+  // THE CRITIC, URD-017: a lesson id `taughtUpTo` cannot place on the path —
+  // `practice-review`, the synthetic Daily Review screen, is the one that
+  // matters — never satisfies its `break`, so `courseWords`/`courseLetters`
+  // above are silently the *entire* course rather than "what this learner
+  // has reached". Feeding those straight to `reviewLetterShare` pinned the
+  // letter share at its end-of-course value (≈2%) from the very first time
+  // a learner ever opened the screen, deep in the alphabet or not.
+  // Reproduced live: a learner who had just finished the first letters
+  // lesson and first vocab lesson still got 0 of 10 letter exercises on
+  // Daily Review — identical to one who had finished the whole course.
+  //
+  // For a lesson actually placed on the path, course position is the right
+  // measure. For one that is not, the learner's own graded progress is —
+  // restricting both arrays to `known` asks "of everything reachable, how
+  // much has this learner actually seen so far", the same question
+  // `anythingKnown` already asks for pool selection. Nothing graded yet at
+  // all (day one, before any grading) leaves both arrays empty, which
+  // `reviewLetterShare` already treats as its 0.5 case — matching the old
+  // fixed split for exactly the population it protected.
+  const onPath = !!lessonId && taughtInUnit(lessonId) !== null;
+  const letterShare = onPath
+    ? reviewLetterShare(courseWords, courseLetters)
+    : reviewLetterShare(
+        courseWords.filter((id) => known.has(id)),
+        courseLetters.filter((id) => known.has(id))
+      );
+  // CURRICULUM CRITIC, URD-017: `Math.round` alone stays >= 1 today only
+  // because every real review is large enough (`coverTopics` floors review
+  // size at 22) — a coincidence of current content sizes, not a guarantee.
+  // At the lowest measured share (1.98%, rev-the-wider-world) a review as
+  // small as 22 already rounds to 0. Floor it at 1 whenever this context
+  // has any letters to ask about at all, so "near zero" never silently
+  // becomes "none, if content changes under it".
+  // CURRICULUM CRITIC, URD-017: `Math.round` alone stays >= 1 today only
+  // because every real review is large enough (`coverTopics` floors review
+  // size at 22) — a coincidence of current content sizes, not a guarantee.
+  // At the lowest measured share (1.98%, rev-the-wider-world) a review as
+  // small as 22 already rounds to 0. Floor it at 1 whenever this context
+  // has any letters to ask about at all, so "near zero" never silently
+  // becomes "none, if content changes under it".
+  const letterCount = courseLetters.length > 0 ? Math.max(1, Math.round(n * letterShare)) : 0;
   const wordCount = n - letterCount;
   const letters: ItemRef[] = letterPool.slice(0, letterCount).map((id) => ({ id, type: 'letter' as const }));
   const words: ItemRef[] = wordPool.slice(0, wordCount).map((id) => ({ id, type: 'word' as const }));
