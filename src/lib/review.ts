@@ -19,7 +19,7 @@
  * lesson of its own, and needs the fallback for all of it.
  */
 
-import { UNITS, type Lesson } from '../data/units';
+import { UNITS, ALL_LESSONS, type Lesson } from '../data/units';
 import { wordsByTopic } from '../data/words';
 import { seededShuffle } from './shuffle';
 
@@ -47,6 +47,68 @@ function taughtByLessons(lessons: readonly Lesson[]): TaughtPool {
 export function taughtInUnit(lessonId: string): TaughtPool | null {
   const unit = UNITS.find((u) => u.lessons.some((l) => l.id === lessonId));
   return unit ? taughtByLessons(unit.lessons) : null;
+}
+
+/**
+ * What the path has actually taught by the time a given lesson is reached —
+ * every letter and word introduced strictly before it, course-wide.
+ *
+ * This used to be an *upper bound* rather than a record: a vocab lesson
+ * showed a random handful of its topic while this counted the whole topic
+ * taught the moment any lesson touched it. Nineteen words claimed for a
+ * lesson that had shown three. That gap is gone — a vocabulary lesson now
+ * carries `wordIds`, exactly the words it introduces, so this walks the same
+ * list the learner actually saw. The fallback to a lesson's whole topic
+ * remains for the case that still needs it: a lesson without `wordIds` is a
+ * synthetic practice drill, which ranges over a whole topic by design.
+ *
+ * A lesson id placed nowhere on the path (a synthetic practice review, say)
+ * never satisfies the `break` and so returns everything the course teaches,
+ * end to end — the honest answer for "what has this learner seen" when the
+ * lesson itself carries no position to stop at.
+ */
+export function taughtUpTo(lessonId: string): TaughtPool {
+  const letters: string[] = [];
+  const words: string[] = [];
+  for (const l of ALL_LESSONS) {
+    if (l.kind === 'letters' && l.letterIds) letters.push(...l.letterIds);
+    if (l.kind === 'vocab' && l.topic) {
+      words.push(...(l.wordIds ?? wordsByTopic(l.topic).map((w) => w.id)));
+    }
+    if (l.id === lessonId) break;
+  }
+  return { letters, words };
+}
+
+/**
+ * What share of a review's fallback questions should be letters rather than
+ * words, given how much of each the course has taught by that point.
+ *
+ * `fallbackReviewRefs` (`generator.ts`) used to split every review's
+ * fallback content `Math.ceil(n / 2)` letters, `Math.floor(n / 2)` words,
+ * unconditionally — the same fixed ratio at a review two units after the
+ * alphabet finished and one thirty units after. Every `L(...)` lesson lives
+ * in units 1-9 (`grep "L([0-9]" src/data/units.ts`), so a review that far out
+ * has nothing new to say about letters, yet spent half its questions on them
+ * anyway. Measured on real course data: cumulative letters-vs-words taught
+ * gives a letter share of 18.2% at rev-first-faces (u1) — already below the
+ * old fixed 50%, because most units teach several words alongside a letter
+ * group — falling to 2.0% by rev-the-wider-world (u39), monotonically, as
+ * word teaching keeps going long after the last letter lesson does.
+ *
+ * The fix ties the split to that same measure instead of a constant: a
+ * review's letter share is exactly the letters' share of everything taught
+ * course-wide by that point. No unit past u9 teaches a letter at all, so
+ * this decays toward zero on its own as the course moves on — nothing here
+ * needs to know where the alphabet units end.
+ *
+ * `0.5` only when nothing at all has been taught yet (both counts zero) —
+ * preserves the old 50/50 behaviour for a hypothetical lesson with no
+ * course history behind it, rather than dividing by zero.
+ */
+export function reviewLetterShare(courseWideWords: readonly string[], courseWideLetters: readonly string[]): number {
+  const total = courseWideWords.length + courseWideLetters.length;
+  return total === 0 ? 0.5 : courseWideLetters.length / total;
 }
 
 /**
