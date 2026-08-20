@@ -2729,3 +2729,96 @@ instead), URD-040 (review never touches its own unit's grammar/sentence
 content).
 
 branch: claude/gauntlet-review-scope
+
+## CLAIMED · URD-017 · 2026-08-20T13:22Z
+Top unclaimed item, chained off claude/gauntlet-review-scope after
+URD-016 shipped. `fallbackReviewRefs` splits every review's fallback
+`Math.ceil(n/2)` letters / `Math.floor(n/2)` words, unconditionally,
+independent of how many units separate the review from the alphabet.
+Measured u10 through u39 (script track): 367 letter exercises against
+360 word exercises, 50.5% letters — a review 30 units after the
+alphabet finished still spends half its questions re-tracing glyphs.
+The letter share should fall as the course moves further from the
+alphabet units, reaching near zero by the units this measurement
+covers.
+verify: npm test -- src/lib/review.test.ts
+branch: claude/gauntlet-review-letter-decay, cut from
+claude/gauntlet-review-scope after URD-016 shipped.
+
+## CRITIQUE · URD-017 · 2026-08-20T13:45Z
+Dispatched THE CRITIC (mandatory) and CURRICULUM CRITIC (this is
+squarely a curriculum-pacing question — how many of a review's
+questions should be about the alphabet — the same pairing used for
+URD-016). Not DESIGN CRITIC (no screen or rendering touched). Not
+PLAYER (a narrow generation-logic fix, not a play-through surface
+`npm run soak` would add anything to).
+
+Implementation before critique: added `reviewLetterShare(courseWideWords,
+courseWideLetters)` to `lib/review.ts` — the letter share is exactly the
+letters' share of everything the course has taught by that point, so it
+decays toward zero on its own as word-teaching continues long after the
+last letter lesson (no unit past u9 teaches a letter at all — confirmed
+`grep "L([0-9]" src/data/units.ts`). Moved `taughtUpTo` out of
+`generator.ts` (private) into `lib/review.ts` (exported), alongside
+`taughtInUnit` it now sits next to architecturally, updating both of
+generator.ts's call sites. Re-measured on real generated output: u10
+through u39 now sums to 34 letter exercises against 693 words (4.7%,
+down from the item's own reported 50.5%), and the share falls
+monotonically course-wide from 18.2% at u1 (rev-first-faces) to 2.6% at
+u39 (rev-the-wider-world).
+
+THE CRITIC found MAJOR: `taughtUpTo('practice-review')` — the synthetic
+Daily Review screen, not placed anywhere on the path — never satisfies
+its own `break` and so returns the *entire* course (2,281 words, 46
+letters), pinning that screen's letter share at its end-of-course value
+(≈2%) from the very first time it is ever opened, regardless of whether
+the learner is on day one or has finished the course. Reproduced live: a
+learner who had just finished the first letters lesson and first vocab
+lesson still got 0 of 10 letter exercises on Daily Review — identical to
+one who had finished the whole course; before this diff the same call
+used the old fixed split and reliably gave 5 of 10. Fixed inline: for a
+lesson id `taughtInUnit` cannot place on the path, the letter share is
+computed from `known` (what this learner has actually been graded on)
+restricted to the reachable pool, instead of the raw course-wide totals
+— the same "where is this learner, really" question `anythingKnown`
+already asks for pool selection. Nothing graded yet at all (day one)
+leaves both restricted arrays empty, which `reviewLetterShare` already
+treats as its 0.5 case, matching the pre-fix split for exactly the
+population it protected. Also MINOR (noted, not fixed — see below): the
+sole letter exercise lands in the same relative position every time
+letterCount is 1.
+
+CURRICULUM CRITIC confirmed the decay's math is sound and directionally
+right (independently re-derived the same 18.2%→1.98% numbers), but found
+two MAJORs (curriculum severity, does not block) in what fills the
+now-mostly-empty letter side: (1) with only one letter slot from ~u14 on,
+`letterExerciseAt(l, i, i)` is always called with `i=0` (the letter
+always lands first in the interleaved mix), and `turn=0` always resolves
+to `letterTrace` when a glyph mask exists — measured, u14 through u39
+(26 straight reviews) draw `letterTrace` and *only* `letterTrace`;
+`letterForm`, the app's own core joining-position drill, never appears
+in that entire stretch. (2) with each review's one letter drawn from an
+independent per-lesson shuffle of the full 46-letter pool, only 21 of 40
+letters (52.5%) are ever touched across all of u10-u39, including
+`be`/`pe` from the very first letters lesson never appearing again. Both
+are structural consequences of shrinking the typical letter count to
+~1 — a direct effect of this fix, correctly not something its own
+"decay toward near zero" acceptance bar could have avoided — and both
+require real design work (how a lone letter's exercise kind is chosen;
+how letter selection tracks coverage across reviews) rather than a cheap
+inline change, so filed forward rather than fixed here: URD-041 (kind
+and position always the same, folding THE CRITIC's MINOR and the
+curriculum critic's MAJOR together, same root cause from two angles),
+URD-042 (half the alphabet untouched, back two-thirds of the course).
+Also flagged (MINOR, fixed inline): `Math.round` alone stays >= 1 only
+because every real review is large enough today (`coverTopics` floors
+review size at 22) — a coincidence of current content sizes, not a
+guarantee; at the lowest measured share a review as small as 22 already
+rounds to 0. Floored `letterCount` at 1 whenever the context has any
+letters to ask about at all. Two observations, no action needed: pacing
+(total exercises per review) is untouched by this change, only the
+ratio; and the freed slots go entirely to more unit-scoped vocabulary,
+which the curriculum critic ties to already-queued URD-040 (review never
+touches grammar/sentences) and URD-039 (fallback pool never rotates) as
+reasoning for sequencing, not a defect of this item.
+

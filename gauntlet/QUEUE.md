@@ -733,3 +733,71 @@ notes: Found by CURRICULUM CRITIC reviewing URD-016, as a bonus while
   SRS/review system, unrelated to URD-016's own change — but a real gap
   worth its own item rather than folding into a scoping fix that was never
   about which *kinds* of lesson a review can draw from.
+
+## URD-041 — A review's one letter slot always lands on the same position, and so always the same exercise kind
+attempts: 0
+files: src/exercises/generator.ts
+definition of done: `letterExerciseAt(letter, turn, positionIndex)` picks
+  `letterTrace` whenever `turn % 3 === 0` and a glyph mask exists — true for
+  every glyph sampled. `buildLessonExercises`'s review branch calls
+  `letterExerciseAt(l, i, i)` where `i` is the item's index within `refs`
+  (due items first, then the interleaved fallback); the fallback's own
+  interleave (`fallbackReviewRefs`) always places its first letter at index
+  0 of the mixed array. So whenever a review has no letters due (the common
+  case from about u14 on, now that URD-017 usually reserves exactly one
+  letter slot) that slot lands at `i=0` and is `letterTrace`, every time,
+  never `letterForm` or `letterPick`. Measured directly on real generated
+  reviews with nothing due: u14 through u39 (26 straight reviews) all draw
+  `letterTrace` and only `letterTrace` for their one letter question.
+  `letterForm` — the joining-position drill the app is specifically built
+  around — never appears in that entire stretch. Vary the position (and so
+  the kind) a lone review letter lands on, rather than letting it be
+  whatever a fixed loop index happens to produce.
+verify: a test that builds several real late-course reviews (u14+) with
+  nothing due and asserts the letter exercise kinds drawn are not identical
+  across all of them.
+notes: Found independently from two angles reviewing URD-017: THE CRITIC
+  (MINOR) — "the sole letter exercise lands in the same relative position
+  every time, once letterCount is 1" — and CURRICULUM CRITIC (MAJOR,
+  curriculum severity) — "the one letter slot late-course is spent entirely
+  on tracing, never on the app's own core position-form skill." Same root
+  cause (turn/positionIndex tied to a loop index that stopped varying once
+  URD-017 shrank the typical letter count to ~1), described from two
+  different angles — filed as one item rather than two. Pre-existing
+  selection logic (`letterExerciseAt`), made into the dominant outcome
+  rather than one of several by URD-017 lowering the letter count that
+  used to cycle through positions 0, 2, 4... and so through all three
+  kinds. Not blocking — nothing crashes or answers incorrectly, and
+  `letterTrace` is itself a legitimate exercise kind, just no longer one of
+  three.
+
+## URD-042 — Half the alphabet gets no review exposure across the back two-thirds of the course
+attempts: 0
+files: src/lib/review.ts, src/exercises/generator.ts
+definition of done: with only one letter slot per review from roughly u14
+  on (URD-017), and `reviewLetterPool`'s per-review pool shuffled with a
+  seed keyed on `lessonId` alone, each review effectively draws one letter
+  from an independent shuffle of the full 46-letter course-wide pool.
+  Measured directly: tallying every letter that appears in a
+  `letterForm`/`letterPick`/`letterTrace` exercise across all reviews u10
+  through u39 (30 reviews) with nothing due, only 21 of 40 letters (52.5%)
+  are ever touched; 19 never appear, including `be`/`pe` — the very first
+  letter pair taught, in `l-1` — and three of the four Urdu "z"-sound
+  letters (`zaal`, `ze`, `zhe`). Since the shuffle is seeded (deterministic,
+  not per-play), this is the fixed, reproducible content of the course
+  today, not sampling noise that might average out. Give letter selection
+  across reviews some notion of coverage — round-robin, a stored
+  last-reviewed-letter cursor, or similar — so a learner who studies the
+  whole course actually meets every letter again somewhere in it, not just
+  the ones an independent per-review shuffle happened to surface first.
+verify: a test simulating every review lesson in course order and asserting
+  every letter in `LETTERS` is drawn by at least one of them.
+notes: Found by CURRICULUM CRITIC reviewing URD-017. A structural
+  consequence of two independently-reasonable pre-existing designs
+  (per-review independent shuffle; one letter slot per late review) meeting
+  for the first time once URD-017 made "one letter slot" the norm rather
+  than "four or five." Not blocking, and not something URD-017 itself
+  promised to fix — its own acceptance bar ("reaching near zero") is what
+  makes one slot the norm in the first place — but a real coverage gap
+  worth its own item, since fixing it well means changing how letters are
+  *selected* across reviews, not just how many are asked per review.
