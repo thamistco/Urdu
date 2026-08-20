@@ -122,30 +122,6 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-016 — A review should mostly review the unit it closes
-attempts: 0
-files: src/exercises/generator.ts, src/data/units.ts
-definition of done: `fallbackReviewRefs` in generator.ts draws uniformly from
-  every word and letter taught up to the review, with no weighting toward the
-  unit it is attached to. Measured on real generated output with nothing due:
-  rev-gender-and-number (u6) draws 0-5% of its words from u6; rev-the-wider-
-  world (u39) draws 3-5% from u39. A review should draw mostly from its own
-  unit, falling back to the wider course only when the unit cannot fill it —
-  which happens: rev-your-first-readings closes a unit with zero vocabulary
-  lessons and needs the fallback for all of it. A test asserts a review whose
-  unit has enough taught words draws at least half of them from that unit.
-verify: npm test -- src/lib/review.test.ts
-notes: Found by the CURRICULUM CRITIC on URD-010, independently confirmed by
-  THE CRITIC from a different angle: two-thirds of reviews (26 of 39) are
-  governed purely by REVIEW_MIN rather than by the unit's actual size, because
-  most units don't teach 66 words. That is the same problem URD-010's commit
-  set out to fix — a flat number wherever the review sits — relocated from a
-  flat 9 to a flat 22. Scoping selection to the closing unit and sizing the
-  review off what the unit can actually supply are the same piece of work;
-  do not fix one without the other. Also carries the curriculum critic's
-  MINOR finding that letter/word alternation is now a rigid fixed cadence,
-  worth a second look while this is open.
-
 ## URD-017 — A review's letter share should decay once the alphabet is behind it
 attempts: 0
 files: src/exercises/generator.ts
@@ -163,6 +139,18 @@ notes: Found by the CURRICULUM CRITIC on URD-010. Right near unit 2, wrong by
   unit 30 — the code applies the identical ratio at both positions with no
   decay. Shares a file and a home with URD-016; consider one item if the fix
   turns out to be the same change.
+
+  Independently re-confirmed by CURRICULUM CRITIC reviewing URD-016, from a
+  different angle and with a different, sharper number: not just "the letter
+  share should decay," but "it structurally can't, because no unit past u9
+  teaches a letter at all" — every `L(...)` lesson lives in units 1-9
+  (`grep "L([0-9]" src/data/units.ts`), so `withLetters` reserving
+  `Math.ceil(n/2)` slots regardless of unit content caps *overall* in-unit
+  review share near 50% for 30 of 39 reviews (average 53.5%, e.g.
+  rev-out-and-about 48.0%, rev-the-wider-world 48.7%), confirmed against the
+  Roman track (no letter reservation at all) scoring 96.0% on the same
+  reviews — isolating the cause to this split, not to URD-016's own scoping
+  fix, which only fixed the *word* half. Still unfixed; still not blocking.
 
 ## URD-018 — Review should sometimes ask for a word's meaning, not just its form
 attempts: 0
@@ -690,3 +678,58 @@ notes: Found by CURRICULUM CRITIC reviewing URD-007. Explicitly not
   `src/lib/roman.ts`), so a learner who types the Roman spelling never has
   to choose the correct Urdu letter — but not eliminated, and not something
   to rely on staying true if the Roman-matching logic ever tightens.
+
+## URD-039 — A review's fallback content for a mastered unit never rotates, ever
+attempts: 0
+files: src/lib/review.ts
+definition of done: `prioritizedPool`'s per-tier shuffle seed
+  (`` `${lessonId}:words:${i}` `` / `` `${lessonId}:letters:${i}` ``) has no
+  source of variation across replays of the same review by the same learner
+  — same lesson, same `known` set, byte-identical output, every time. Once a
+  learner has graded every word in a unit (the common case for a unit small
+  enough that a fresh review of it is even reachable), the fallback always
+  slices off the same fixed subset of that unit's words and never surfaces
+  the rest. Give repeated reviews of the same unit some source of variation
+  once the learner already knows everything in scope — a rotation keyed on
+  something that actually changes between visits (visit count, a stored
+  per-review cursor, or similar), not a a value fixed by `lessonId` alone.
+verify: a test seeding a review's `known` set to the closing unit's full
+  word list, calling the pool-selection twice with state representing two
+  different real visits (however "visit" ends up being modeled), and
+  asserting the two calls' chosen words differ when the unit has more words
+  than the review's word-slot count.
+notes: Found independently by both THE CRITIC and CURRICULUM CRITIC
+  reviewing URD-016. Measured on rev-gender-and-number (u6, 20 words) with
+  the whole unit known: the same 4 words
+  (w-surkh, w-gulaabi, w-pyaazi, w-neela) are offered on every single call,
+  and the other 16 never appear via this fallback under any circumstance.
+  On rev-the-wider-world (u39, 117 words) only 19 (16%) can ever surface
+  this way. Pre-existing behavior (seeded, not random, content selection is
+  this project's deliberate convention — see `lib/shuffle.ts`'s own
+  docstring) made newly visible, not newly broken, by URD-016 shrinking the
+  pool a fallback draws from down to a single unit's dozen-to-hundred words,
+  where a shuffle quirk that barely mattered against a course-wide pool of
+  thousands now determines the entire fallback's content. Not blocking.
+
+## URD-040 — Review lessons never touch the grammar concepts or sentences that name their own unit
+attempts: 0
+files: src/lib/review.ts, src/exercises/generator.ts
+definition of done: `taughtByLessons` (`lib/review.ts`) only counts
+  `kind: 'letters'` and `kind: 'vocab'` lessons; `itemsOf` (`generator.ts`)
+  returns `[]` for grammar, sentence, reading and dialogue exercises by
+  design, since none of those are SRS-gradable. Concretely,
+  rev-saying-who-you-are (u4, "Saying Who You Are") draws its entire review
+  from `V('rooms')`/`V('adjectives')` and never once touches `g-pronouns` or
+  `g-to-be` — the two grammar concepts the unit is named for and organized
+  around. Give a unit review some way to touch the grammar concepts (and
+  ideally the sentence-building practice) its own lessons taught, not only
+  its vocabulary.
+verify: a test asserting a review whose unit includes a grammar lesson
+  (e.g. rev-saying-who-you-are) generates at least one exercise referencing
+  that unit's own `conceptId`, once a mechanism for it exists.
+notes: Found by CURRICULUM CRITIC reviewing URD-016, as a bonus while
+  checking whether review content matches "what the unit was actually
+  about." Pre-existing — grammar/sentence content has never fed the
+  SRS/review system, unrelated to URD-016's own change — but a real gap
+  worth its own item rather than folding into a scoping fix that was never
+  about which *kinds* of lesson a review can draw from.
