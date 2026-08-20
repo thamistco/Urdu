@@ -122,25 +122,6 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-018 — Review should sometimes ask for a word's meaning, not just its form
-attempts: 0
-files: src/exercises/generator.ts
-definition of done: Across all 39 review lessons on both tracks (1,856
-  exercises measured), `meaningPick` — the only exercise that shows Urdu and
-  asks what it means — appears 16 times, 0.86%, only as the produce
-  fallback for words that are neither typeable nor buildable. Every other
-  review exercise is English-or-audio-in, Urdu-out. Review is the lesson
-  explicitly meant to consolidate what has been read, and it never asks the
-  learner to read something and say what it means. Give the middle turn (or
-  another turn) a real chance at `meaningPick` rather than reserving it for
-  the produce-demand's edge case. A test asserts a review of typeable words
-  still contains at least one meaning-direction question.
-verify: npm test -- src/lib/review.test.ts
-notes: Found by the CURRICULUM CRITIC on URD-010. The three-demand ladder
-  (recall, listen, produce) is defensible as retrieval-first, but all three
-  read the same direction; this is the one missing rung, not a reason to
-  rebuild the ladder.
-
 ## URD-019 — Grade a lesson's own improvement, not just its first guess
 attempts: 0
 files: src/lib/sessionGrading.ts, src/lib/sessionGrading.test.ts, src/screens/LessonScreen.tsx

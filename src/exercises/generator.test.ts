@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { buildLessonExercises, distractLetters, OPTIONS_PER_QUESTION, soundsOverlap, soundTokens } from './generator';
 import { getLetter, LETTERS, type Letter } from '../data/letters';
 import { resolveLesson, UNITS } from '../data/units';
+import { WORDS } from '../data/words';
+import { VERDICT_CUES, cueOf } from '../data/art';
 
 /** Letter-type exercise kinds, as opposed to everything else a review can ask. */
 const LETTER_KINDS = new Set(['letterForm', 'letterPick', 'letterTrace']);
@@ -202,5 +204,139 @@ describe('URD-017: a review with any letters in scope always asks at least one',
     const exercises = buildLessonExercises(lesson, [], 'both', new Set());
     const letters = exercises.filter((e) => LETTER_KINDS.has(e.kind)).length;
     expect(letters).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('URD-018: review gives the learner a real chance to read Urdu and say what it means', () => {
+  // Before this fix, `meaningPick` — the only exercise that shows Urdu and
+  // asks what it means — appeared in review only as `produceExercise`'s own
+  // fallback for the 82 words that are neither typeable nor buildable
+  // (measured: 16 of 1,856 exercises across all 39 reviews, 0.86%). Every
+  // other review question went the same direction: shown English (or heard
+  // audio), produce or pick the Urdu form. One turn in the review ladder's
+  // six-turn cycle now asks `wordExercise(..., 'meet', 1)` — the same call
+  // the sentence and grammar climbs already use for "show the word, ask its
+  // meaning" — directly, not just as a fallback for the hardest few words.
+
+  it('every real review lesson, on every track, asks at least one meaning-direction question', () => {
+    for (const u of UNITS) {
+      for (const l of u.lessons) {
+        if (l.kind !== 'review') continue;
+        for (const track of ['script', 'roman', 'both'] as const) {
+          const exercises = buildLessonExercises(l, [], track, new Set());
+          const meaningPicks = exercises.filter((e) => e.kind === 'meaningPick').length;
+          expect(meaningPicks, `${l.id} (${track})`).toBeGreaterThanOrEqual(1);
+        }
+      }
+    }
+  });
+
+  it('a review of typeable words still contains at least one meaning-direction question', () => {
+    // The item's own acceptance criterion, stated directly: a review
+    // entirely of typeable words used to route every third-sighting
+    // question to `typeWord` instead of ever reaching `meaningPick`'s old
+    // fallback path, so this case is exactly the one the old design missed.
+    const lesson = resolveLesson('rev-gender-and-number')!;
+    const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+    expect(exercises.filter((e) => e.kind === 'meaningPick').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('meaningPick is now a real share of review content, not a rounding error', () => {
+    // Measured directly across all 39 reviews on all three tracks: before
+    // this fix, 16 of 1,856 exercises, 0.86%. The six-turn design (recall,
+    // recall, listen, produce, read, produce) targets roughly one in six —
+    // measured at 15.5% on real content. The threshold here is set well
+    // below that real number rather than pinned close to it, so a small,
+    // legitimate future content change doesn't turn this flaky.
+    let total = 0;
+    let meaningPicks = 0;
+    for (const u of UNITS) {
+      for (const l of u.lessons) {
+        if (l.kind !== 'review') continue;
+        for (const track of ['script', 'roman', 'both'] as const) {
+          const exercises = buildLessonExercises(l, [], track, new Set());
+          total += exercises.length;
+          meaningPicks += exercises.filter((e) => e.kind === 'meaningPick').length;
+        }
+      }
+    }
+    expect(meaningPicks / total).toBeGreaterThan(0.1);
+  });
+
+  it("regression (THE CRITIC): a meaningPick option never carries a verdict icon it doesn't deserve", () => {
+    // BLOCKING: `meaningPick`'s distractor call used to omit `distinctCue`,
+    // the guard `pictureOptions` above it already requests — so a
+    // verdict-cue word (VERDICT_CUES: yes/no/correct/wrong/good/bad/
+    // approved/rejected) could be offered as a *wrong* option, and
+    // `MeaningPickExercise` renders every option's own tick/cross regardless
+    // of correctness. Sampled directly: every meaningPick generated across
+    // all 39 reviews on all three tracks, with the word itself allowed to
+    // carry a verdict cue (that's the correct answer's icon, not a lie) but
+    // no *other* option allowed to.
+    for (const u of UNITS) {
+      for (const l of u.lessons) {
+        if (l.kind !== 'review') continue;
+        for (const track of ['script', 'roman', 'both'] as const) {
+          const exercises = buildLessonExercises(l, [], track, new Set());
+          for (const e of exercises) {
+            if (e.kind !== 'meaningPick') continue;
+            const wrongOptions = e.options.filter((o) => o.id !== e.word.id);
+            const leaked = wrongOptions.filter((o) => VERDICT_CUES.has(cueOf(o)));
+            expect(leaked, `${l.id} (${track}): ${e.word.id}`).toEqual([]);
+          }
+        }
+      }
+    }
+  });
+
+  it('regression (THE CRITIC): a review with due letters and words interleaved 1:1 still reaches every turn', () => {
+    // BLOCKING: the turn used to be `i % 4` computed from the shared
+    // due/fallback index, and the interleave alternates letter/word 1:1
+    // whenever both are present — a step of 2 through a mod-4 space only
+    // ever visits 2 of the 4 residues. Reproduced with the exact shape THE
+    // CRITIC used: 10 due letters, 6 due words, interleaved — before the
+    // fix this locked every word into alternating between only listenTap
+    // and typeWord, never reaching wordFromMeaning or meaningPick at all.
+    const reviewLesson = UNITS.flatMap((u) => u.lessons).find((l) => l.kind === 'review')!;
+    const dueLetters = LETTERS.slice(0, 10).map((l) => ({ id: l.id, type: 'letter' as const }));
+    const dueWords = WORDS.slice(0, 6).map((w) => ({ id: w.id, type: 'word' as const }));
+    const due: { id: string; type: 'letter' | 'word' }[] = [];
+    for (let i = 0; i < 10; i++) {
+      due.push(dueLetters[i]);
+      if (dueWords[i]) due.push(dueWords[i]);
+    }
+    const exercises = buildLessonExercises({ ...reviewLesson, size: 16 }, due, 'both', new Set());
+    const wordKinds = new Set(exercises.filter((e) => !LETTER_KINDS.has(e.kind)).map((e) => e.kind));
+    // The specific thing the interleave-parity bug hides: with a step of 2
+    // through an even modulus, only the residues sharing the start index's
+    // parity are ever reached — 3 kinds can still appear (as they did in the
+    // exact bug this reproduces: listenTap, wordFromMeaning, typeWord) while
+    // meaningPick specifically stays unreachable. Asserting `size > 2` alone
+    // would not have caught that; asserting meaningPick's presence directly
+    // does.
+    expect(wordKinds.has('meaningPick')).toBe(true);
+    expect(wordKinds.size).toBeGreaterThan(2);
+  });
+
+  it('no real review generates a run of 3 or more identical exercise kinds in a row', () => {
+    // CURRICULUM CRITIC: before this fix, the longest run anywhere in review
+    // was 1 (never two identical kinds adjacent). The six-turn design keeps
+    // it well under check:shape's own MAX_RUN of 3, even though a few
+    // pre-existing independent fallbacks (the VERDICT_CUES override, the
+    // Roman track's produce-fallback) can still land two of the same kind
+    // side by side.
+    for (const u of UNITS) {
+      for (const l of u.lessons) {
+        if (l.kind !== 'review') continue;
+        for (const track of ['script', 'roman', 'both'] as const) {
+          const exercises = buildLessonExercises(l, [], track, new Set());
+          let run = 1;
+          for (let i = 1; i < exercises.length; i++) {
+            run = exercises[i].kind === exercises[i - 1].kind ? run + 1 : 1;
+            expect(run, `${l.id} (${track}) @${i}`).toBeLessThan(3);
+          }
+        }
+      }
+    }
   });
 });

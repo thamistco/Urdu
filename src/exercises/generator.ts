@@ -394,7 +394,19 @@ function wordExercise(
   if (v !== 1 && VERDICT_CUES.has(cueOf(word))) v = 1;
 
   if (v === 1) {
-    const opts = distractorsFor(word, pool, { distinctMeaning: true });
+    // THE CRITIC, URD-018: needs `distinctCue` too, the same guard
+    // `pictureOptions` above already requests. Without it, a verdict-cue word
+    // (`VERDICT_CUES`, e.g. "yes"/"no"/"approved") can be offered as a
+    // *distractor* here, and `MeaningPickExercise` renders every option's own
+    // ✅/❌ art regardless of whether it is the answer — a wrong option
+    // glowing correct, the interface lying about its own question. Harmless
+    // in `wordFromMeaning` (the same gap exists there too, but its options
+    // render as plain text, no icon) — this is the one branch that renders
+    // the icon, and this fix took it from a fraction of a percent of review
+    // content to roughly a sixth, turning a near-unreachable gap into a
+    // routine one. Measured before this fix: 689 of 19,170 sampled instances
+    // (~3.6%) leaked a verdict icon onto a wrong option.
+    const opts = distractorsFor(word, pool, { distinctCue: true, distinctMeaning: true });
     return { kind: 'meaningPick', word, options: shuffle([word, ...opts]) };
   }
   if (v === 0) {
@@ -1104,6 +1116,22 @@ export function buildLessonExercises(
     }
     refs.length = Math.min(refs.length, lesson.size);
 
+    // Counts words only, separately from `i` (which also counts letters).
+    // THE CRITIC, URD-018: the turn used to be `i % 4` directly, and
+    // `fallbackReviewRefs`'s interleave alternates letter/word 1:1 whenever
+    // both are present — a step of 2 through `refs`. Stepping by 2 through a
+    // mod-4 space only ever visits 2 of the 4 residues (this file already
+    // knows this hazard elsewhere — see `posOffset`'s "a step size coprime
+    // with POSITIONS.length" comment above — but the review ladder wasn't
+    // checked against it). Reproduced live: a review with due letters
+    // interleaved 1:1 with due words locked every word into alternating
+    // between only two of the four turns, never reaching the other two —
+    // one measured case (10 due letters, 6 due words) produced zero
+    // `wordFromMeaning` and zero `meaningPick` in a 16-exercise review, a
+    // complete reversion to pre-fix behaviour. A dedicated counter that
+    // increments once per word, independent of how letters are interleaved
+    // around them, has no step-size/modulus relationship to break.
+    let wordTurn = 0;
     refs.forEach((ref, i) => {
       if (ref.type === 'letter') {
         const l = teachesScript ? getLetter(ref.id) : undefined;
@@ -1112,21 +1140,41 @@ export function buildLessonExercises(
         const w = getAnyWord(ref.id);
         // Review is where the harder demands belong: a word is only here
         // because it was met before, so asking to recognise it again teaches
-        // little. Most reviews retrieve; every third one asks for it typed.
+        // little. Most reviews retrieve; every third one asks for it typed —
+        // recall and produce keep the same 1-in-3 shares they always had.
         //
-        // Every third by position, not by a coin flip. `Math.random() < 0.35`
-        // said the same thing in the comment and did something else: it made a
+        // By position, not by a coin flip. `Math.random() < 0.35` said the
+        // same thing in an earlier comment and did something else: it made a
         // review lesson a different lesson each time it was opened, and made
         // every measurement over review lessons differ run to run.
         //
-        // Three demands on rotation rather than two. Recall alone is
-        // `wordFromMeaning` every time, and with letters off the Roman track a
-        // review came out 73% one question — a screen of identical prompts
-        // scrolling past. The middle turn hears the word instead, which is the
-        // one modality a review of things you have already read does not
-        // otherwise use.
-        const turn = i % 3;
-        if (w && turn === 2) exercises.push(produceExercise(w, poolFor(w), track, teachesScript, i));
+        // The middle third — recognising the word met before, not recalling
+        // or producing it — used to go one way every time: `listenTap`,
+        // hearing the word rather than reading it, the one modality a review
+        // of things already read did not otherwise use. That still left
+        // every review turn going the same direction overall: shown English
+        // (or heard audio), produce or pick the Urdu form. Measured across
+        // all 39 reviews, 1,856 exercises: `meaningPick` — read the Urdu, say
+        // what it means — appeared 16 times, 0.86%, only ever as
+        // `produceExercise`'s own fallback for the 82 words neither typeable
+        // nor buildable. Review is the lesson meant to consolidate what has
+        // been read, and it never actually asked a learner to read something
+        // and say what it means (URD-018).
+        //
+        // CURRICULUM CRITIC: a first fix added a flat fourth turn instead,
+        // funding it by cutting recall *and* produce — this file's own
+        // comment two lines up calls those "the harder demands [that] belong"
+        // in review — by a quarter each, nearly doubling review's share of
+        // first-teaching-tier ("meet") demand from ~34.5% to ~52%. Splitting
+        // the *existing* middle third between `listenTap` and `meaningPick`
+        // instead — six turns, not four — leaves recall and produce exactly
+        // where they were (1 in 3 each) and gives the read direction a real,
+        // non-trivial share (about 1 in 6) without diluting the demands this
+        // file already says a review should keep hard.
+        const turn = wordTurn % 6;
+        wordTurn++;
+        if (w && (turn === 2 || turn === 5)) exercises.push(produceExercise(w, poolFor(w), track, teachesScript, i));
+        else if (w && turn === 4) exercises.push(wordExercise(w, poolFor(w), track, 'meet', 1));
         else if (w && turn === 1) exercises.push(wordExercise(w, poolFor(w), track, 'meet', 2));
         else if (w) exercises.push(wordExercise(w, poolFor(w), track, 'recall'));
       }

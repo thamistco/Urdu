@@ -2861,3 +2861,172 @@ the same position and kind), URD-042 (half the alphabet gets no review
 exposure across the back two-thirds of the course).
 
 branch: claude/gauntlet-review-letter-decay
+
+## CLAIMED · URD-018 · 2026-08-20T14:00Z
+Top unclaimed item, chained off claude/gauntlet-review-letter-decay
+after URD-017 shipped. Across all 39 review lessons on both tracks
+(1,856 exercises measured), `meaningPick` — the only exercise that
+shows Urdu and asks what it means — appears 16 times, 0.86%, only as
+the produce fallback for words that are neither typeable nor
+buildable. Every other review exercise is English-or-audio-in,
+Urdu-out. Review is the lesson explicitly meant to consolidate what has
+been read, and it never asks the learner to read something and say
+what it means.
+verify: npm test -- src/lib/review.test.ts
+branch: claude/gauntlet-review-meaning-direction, cut from
+claude/gauntlet-review-letter-decay after URD-017 shipped.
+
+## CRITIQUE · URD-018 · 2026-08-20T15:00Z
+Dispatched THE CRITIC (mandatory) and CURRICULUM CRITIC (this is a
+curriculum-pacing/exercise-direction question — how much of review
+should ask for meaning rather than form — the same pairing used for
+URD-016/URD-017). Not DESIGN CRITIC (no screen changed, only which
+existing exercise kinds a review's turn ladder reaches). Not PLAYER (a
+narrow generation-logic fix, not a play-through surface `npm run soak`
+would add anything to).
+
+Implementation before critique: the fix's own logic actually lives
+where the item's `files:` says (`src/exercises/generator.ts`), not in
+`lib/review.ts` — the item's `verify:` command names `review.test.ts`
+by analogy with URD-016/017, but the turn-ladder logic this item
+targets was never moved there. Ran the named command anyway (passes,
+unaffected) and put the real acceptance tests in `generator.test.ts`,
+next to the code they test — noted here rather than silently
+substituted. First draft: added a flat fourth turn to the existing
+3-way ladder (`turn = i % 4`), using `wordExercise(w, pool, track,
+'meet', 1)` — the same call the sentence and grammar climbs already
+use for "show the word, ask its meaning" — for the new turn. Measured:
+`meaningPick` share rose from 0.86% to ~23% across all 39 reviews.
+
+THE CRITIC found BLOCKING, twice over. (1) `meaningPick`'s own
+distractor call omitted `distinctCue`, the guard `pictureOptions` two
+lines above it already requests — so a verdict-cue word (yes/no/
+correct/wrong/good/bad/approved/rejected) could be offered as a
+*wrong* option, and `MeaningPickExercise` renders every option's own
+✅/❌ regardless of correctness. Measured: 689 of 19,170 sampled
+instances (~3.6%) leaked a verdict icon onto a wrong option, across 45
+of 117 lesson×track combinations, including the very first and very
+last review in the course. Pre-existing gap in `wordExercise` itself
+(harmless in `wordFromMeaning`, which renders no icon), but this fix
+took `meaningPick` from a fraction of a percent of review content to
+routine, turning a near-unreachable latent bug into a common one.
+Fixed: added `distinctCue: true` to that branch's `distractorsFor`
+call. (2) the new turn was computed as `i % 4` from the shared
+due/fallback index, and `fallbackReviewRefs`'s interleave alternates
+letter/word 1:1 whenever both are present — a step of 2 through a
+mod-4 space only ever visits 2 of the 4 residues (this file already
+knows this exact hazard elsewhere, for `POSITIONS.length`, but the new
+review ladder wasn't checked against it). Reproduced live: a
+constructed due queue of 10 letters and 6 words, interleaved, locked
+every word into alternating between only `listenTap` and `typeWord`,
+never once reaching `wordFromMeaning` or `meaningPick` — a complete
+reversion to pre-fix behaviour that the lead's own tests (which only
+ever passed an empty due queue) could not see. Fixed: a dedicated
+counter incrementing once per word, independent of `i` and of how
+letters are interleaved around them, replacing the shared-index turn
+computation. THE CRITIC also found MAJOR (addressed as part of the
+redesign below, not filed separately): before this fix the longest run
+of identical exercise kinds anywhere in review was 1 (measured by
+rebuilding the pre-fix ladder against identical content); the flat
+fourth-turn design let 21 of 117 lesson/track pairs reach a run of 2,
+and one — rev-the-wider-world/roman — reach a run of 3, sitting
+exactly at (not over) `check:shape`'s own MAX_RUN.
+
+CURRICULUM CRITIC found MAJOR (design-level, addressed by a redesign
+rather than a patch): the flat fourth turn funded `meaningPick` by
+cutting recall *and* produce equally by a quarter each — the two
+demands this same file's own comment, two lines above the turn logic,
+calls "the harder demands [that] belong" in review — nearly doubling
+review's overall share of first-teaching-tier ("meet") demand from
+~34.5% to ~52%. Recommended (and the lead adopted): split the
+*existing* middle third between `listenTap` and `meaningPick` instead
+of adding a new quarter, so recall and produce keep exactly the shares
+they had before this item, and the read direction gets a real,
+non-trivial share without diluting review's demand level. Also raised,
+addressed as an observation rather than a change: on the `both` track
+(default) `Lexeme` shows the Roman transliteration alongside the Urdu
+prompt — checked directly (`Lexeme.tsx`, `WordChoiceExercises.tsx`):
+this is the `both` track's own pre-existing, global, by-design
+behaviour for every exercise that shows Urdu (not something this fix
+introduced or could fix in scope), and for ordinary vocabulary the
+Roman caption reveals pronunciation, not meaning — the specific case
+where it *would* reveal meaning (a loanword whose transliteration is
+the English word) is already routed away from `meaningPick` by the
+pre-existing `romanRevealsMeaning` guard. Recorded here as a
+curriculum-critic finding correctly not requiring a code change, not
+silently dropped.
+
+Redesign (addressing both critics together): the turn ladder is now
+`wordTurn % 6` on a counter dedicated to words (fixing THE CRITIC's
+BLOCKING #2 at its root — no shared-index/interleave-step coupling to
+break), splitting into recall (2/6), produce (2/6, unchanged shares
+from before this item), and the former single "listen" third now split
+into `listenTap` (1/6) and `meaningPick` (1/6) — directly addressing
+CURRICULUM CRITIC's finding. Re-measured: recall 34.7%, produce 31.0%,
+listenTap 18.1%, meaningPick 16.2% (close to the theoretical even
+1/6 split; real content shapes account for the rest) — recall+produce
+at 65.7%, within a point of the old 66.7%. Longest run anywhere in
+review dropped from the flat-fourth-turn design's 3 back down to 2
+(residual 2-runs, 12 of them, come from pre-existing independent
+fallback guards — the VERDICT_CUES override, the Roman track's
+produce-fallback — occasionally landing beside the new deterministic
+read turn; not eliminated, comfortably under MAX_RUN=3, and a MINOR
+worth a note rather than a block).
+
+## PASSED · URD-018 · 2026-08-20T15:18Z
+$ npx vitest run src/lib/review.test.ts src/exercises/generator.test.ts
+  21/21 and 21/21 pass — the item's own named verify command
+  (unaffected, since this item's logic lives in generator.ts) plus the
+  real acceptance and regression tests: every review lesson on every
+  track asks at least one meaning-direction question; a review of
+  typeable words does too; meaningPick's real share (>10%, measured at
+  15.5%); no meaningPick option carries an undeserved verdict icon
+  (THE CRITIC regression); a due queue with letters and words
+  interleaved 1:1 still reaches meaningPick (THE CRITIC regression);
+  no real review generates a run of 3+ identical kinds (CURRICULUM
+  CRITIC regression).
+
+$ npm run check:srs
+  19/19 pass, unaffected.
+
+$ npx tsc --noEmit
+  clean.
+
+$ npm run check:answerable
+  107,610 exercises generated across 2 tracks × 6 passes — every
+  generated exercise is answerable from what it puts on screen;
+  answer position 0:24.7% 1:24.9% 2:25.0% 3:25.4% (even would be 25%).
+
+$ npm run check:coverage
+  all 2,281 words taught by exactly one of 233 vocabulary lessons,
+  unaffected.
+
+$ npm test
+  136/136 pass across 9 files.
+
+$ npm run check:all
+  check:all — all 26 steps pass against a deploy-shaped build.
+  (First run caught a real prettier formatting issue in the new test
+  file — fixed with `prettier --write`, reconfirmed clean on rerun.)
+
+Induced failure, four times over: (1) reverted the `distinctCue: true`
+fix on `meaningPick`'s distractor call — the new verdict-icon
+regression test failed, reproducing THE CRITIC's exact finding (a
+"truth"/w-sach distractor glowing ✅ on a wrong option). (2) reverted
+the per-word counter back to the shared, interleave-coupled index — the
+due-queue regression test failed exactly as THE CRITIC described
+(3 kinds reachable, but `meaningPick` specifically absent); this also
+caught that the test's first draft (`wordKinds.size > 2`) was too weak
+to notice the specific missing kind and needed strengthening to assert
+`meaningPick`'s presence directly, which was done before re-confirming.
+(3) reverted to the flat four-turn design — the new no-long-run test
+failed at the exact lesson/track/position (rev-the-wider-world/roman
+@36) THE CRITIC's measurement named. All three restored and
+reconfirmed clean; the fourth induced failure (the original flat
+4-turn design vs. THE CRITIC's due-queue reproduction) was how BLOCKING
+#2 was originally found and is folded into (2) above.
+
+No new queue items — every finding from both critics was fixed inline
+in this same redesign rather than filed forward.
+
+branch: claude/gauntlet-review-meaning-direction
