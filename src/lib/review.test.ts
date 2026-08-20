@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { UNITS } from '../data/units';
-import { taughtInUnit, prioritizedPool, reviewWordPool, reviewLetterPool } from './review';
+import { taughtInUnit, taughtUpTo, prioritizedPool, reviewWordPool, reviewLetterPool, reviewLetterShare } from './review';
 
 describe('taughtInUnit', () => {
   it('scopes to the unit a review lesson actually closes, not the whole course', () => {
@@ -180,5 +180,31 @@ describe('reviewWordPool / reviewLetterPool — a review draws mostly from the u
     const known = new Set([unitLetters[0], 'l-elsewhere']); // letters only, no words
     const wordPool = reviewWordPool('rev-gender-and-number', known, courseWords, courseLetters, ['corpus-word']);
     expect(wordPool).toEqual([]);
+  });
+});
+
+describe('reviewLetterShare — a review\'s letter share decays once the alphabet is behind it', () => {
+  it('is higher for a review early in the course than one late in it', () => {
+    // URD-017: the old split was a flat Math.ceil(n/2)/Math.floor(n/2)
+    // regardless of how far the review sits from the alphabet units. Real
+    // course data instead: rev-first-faces (u1) is still mid-alphabet, so a
+    // meaningful share of everything taught so far is still letters;
+    // rev-the-wider-world (u39) is thirty units past the last letter lesson,
+    // so letters are a rounding error against the words taught since.
+    const early = taughtUpTo('rev-first-faces');
+    const late = taughtUpTo('rev-the-wider-world');
+    const earlyShare = reviewLetterShare(early.words, early.letters);
+    const lateShare = reviewLetterShare(late.words, late.letters);
+    expect(earlyShare).toBeGreaterThan(lateShare);
+  });
+
+  it('reaches near zero by the units this measurement covers', () => {
+    const late = taughtUpTo('rev-the-wider-world');
+    expect(reviewLetterShare(late.words, late.letters)).toBeLessThan(0.05);
+  });
+
+  it('is exactly the letters\' share of everything taught, not some other function of it', () => {
+    expect(reviewLetterShare(['w1', 'w2', 'w3'], ['l1'])).toBeCloseTo(0.25);
+    expect(reviewLetterShare([], [])).toBe(0.5);
   });
 });

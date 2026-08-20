@@ -17,7 +17,7 @@ import {
 import { cueOf, VERDICT_CUES } from '../data/art';
 import { GLYPH_MASKS } from '../data/glyphMasks';
 import { shuffle, seededShuffle } from '../lib/shuffle';
-import { reviewWordPool, reviewLetterPool } from '../lib/review';
+import { reviewWordPool, reviewLetterPool, taughtUpTo, reviewLetterShare } from '../lib/review';
 import { Exercise, ItemRef } from './types';
 
 const rand = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
@@ -1078,17 +1078,18 @@ export function buildLessonExercises(
     /**
      * Letters can run out where words never do.
      *
-     * `fallbackReviewRefs` always asks for half letters, half words, and early
-     * in the course that half can be thinner than it looks: `l-1-2`
-     * ("Position practice") deliberately re-teaches `l-1`'s six letters in
-     * their joining forms rather than introducing new ones, so the earliest
-     * review's entire letter pool really is those same six. A due queue that
-     * already contains most of them leaves almost nothing left to draw for the
-     * fallback split, and unlike a letter, a word is never in short supply — the
-     * course has taught 54 of them by the same point. Measured directly: five
-     * real due letters at this position produced 18 of 22 exercises even after
-     * the filter-before-cap fix above, because the shortfall was never in what
-     * got capped, it was in what existed to fill the gap.
+     * `fallbackReviewRefs` reserves a letter share of its slots (see
+     * `reviewLetterShare`), and early in the course that share can be thinner
+     * than it looks: `l-1-2` ("Position practice") deliberately re-teaches
+     * `l-1`'s six letters in their joining forms rather than introducing new
+     * ones, so the earliest review's entire letter pool really is those same
+     * six. A due queue that already contains most of them leaves almost
+     * nothing left to draw for the fallback split, and unlike a letter, a word
+     * is never in short supply — the course has taught 54 of them by the same
+     * point. Measured directly: five real due letters at this position
+     * produced 18 of 22 exercises even after the filter-before-cap fix above,
+     * because the shortfall was never in what got capped, it was in what
+     * existed to fill the gap.
      *
      * So the remainder is topped up from words alone, which is always possible
      * this early and is the same "more topping up, not less" principle the due
@@ -1182,40 +1183,6 @@ export function buildLessonExercises(
 }
 
 /**
- * What the path has actually taught by the time a given lesson is reached.
- *
- * Walks the real lesson order and collects the letters and topics introduced
- * strictly before this lesson, plus this lesson's own unit-mates, so a review
- * draws only from units the learner has reached.
- *
- * This used to be an *upper bound* rather than a record, and said so: a vocab
- * lesson showed a random handful of its topic while this counted the whole
- * topic taught the moment any lesson touched it. Nineteen words claimed for a
- * lesson that had shown three.
- *
- * That is no longer a gap, because the gap it was describing is gone. A
- * vocabulary lesson now carries `wordIds` — exactly the words it introduces —
- * and the topics are spread across enough lessons to cover them, so this walks
- * the same list the learner actually saw. It is now what its name says.
- *
- * The fallback matters for the same reason it always did: a lesson without
- * `wordIds` is a synthetic practice drill, which ranges over a whole topic by
- * design, so for those the topic really is the honest answer.
- */
-function taughtUpTo(lessonId: string): { letters: string[]; words: string[] } {
-  const letters: string[] = [];
-  const words: string[] = [];
-  for (const l of ALL_LESSONS) {
-    if (l.kind === 'letters' && l.letterIds) letters.push(...l.letterIds);
-    if (l.kind === 'vocab' && l.topic) {
-      words.push(...(l.wordIds ?? wordsByTopic(l.topic).map((w) => w.id)));
-    }
-    if (l.id === lessonId) break;
-  }
-  return { letters, words };
-}
-
-/**
  * When nothing is due yet, review still needs something to ask about.
  *
  * This used to take `WORDS.slice(0, 120)` and `LETTERS.slice(0, 20)` — the
@@ -1241,6 +1208,13 @@ function taughtUpTo(lessonId: string): { letters: string[]; words: string[] } {
  * for the reason it always did: a review reached before spaced repetition has
  * scheduled anything (most early reviews) would otherwise pull any of a
  * topic's words, including ones this specific lesson never happened to pick.
+ *
+ * The letter/word split used to be `Math.ceil(n / 2)` / `Math.floor(n / 2)`,
+ * unconditionally — the same near-50/50 ratio at a review right after the
+ * alphabet finished and one thirty units later, even though no unit past u9
+ * teaches a letter at all. `reviewLetterShare` (`lib/review.ts`) ties the
+ * split to how much of the course-wide pool is actually letters at this
+ * point instead, so it decays toward zero on its own as the course moves on.
  */
 function fallbackReviewRefs(
   n: number,
@@ -1278,8 +1252,11 @@ function fallbackReviewRefs(
     courseLetters,
     LETTERS.slice(0, 20).map((l) => l.id)
   );
-  const letters: ItemRef[] = letterPool.slice(0, Math.ceil(n / 2)).map((id) => ({ id, type: 'letter' as const }));
-  const words: ItemRef[] = wordPool.slice(0, Math.floor(n / 2)).map((id) => ({ id, type: 'word' as const }));
+  const letterShare = reviewLetterShare(courseWords, courseLetters);
+  const letterCount = Math.round(n * letterShare);
+  const wordCount = n - letterCount;
+  const letters: ItemRef[] = letterPool.slice(0, letterCount).map((id) => ({ id, type: 'letter' as const }));
+  const words: ItemRef[] = wordPool.slice(0, wordCount).map((id) => ({ id, type: 'word' as const }));
   // Interleaved rather than shuffled together. Shuffling clustered them — four
   // consecutive letter exercises inside a mixed review — and did it differently
   // on every generation, so the review a learner reopened was a different
