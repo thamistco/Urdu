@@ -2822,3 +2822,42 @@ which the curriculum critic ties to already-queued URD-040 (review never
 touches grammar/sentences) and URD-039 (fallback pool never rotates) as
 reasoning for sequencing, not a defect of this item.
 
+## PASSED · URD-017 · 2026-08-20T13:44Z
+$ npx vitest run src/lib/review.test.ts src/exercises/generator.test.ts
+  21/21 and 15/15 pass, including the item's own acceptance test (letter
+  share at rev-first-faces > rev-the-wider-world, and < 5% by u39) and
+  new regression tests for both critique fixes (Daily Review's letter
+  share reflects `known` rather than the whole course; every real review
+  asks about at least one letter, including at a size real content
+  doesn't currently produce).
+
+$ npm run check:srs
+  19/19 pass, unaffected — review letter/word ratio is orthogonal to
+  due-queue behaviour.
+
+$ npx tsc --noEmit
+  clean.
+
+$ npm test
+  130/130 pass across 9 files.
+
+$ npm run check:all
+  check:all — all 26 steps pass against a deploy-shaped build.
+  Run alone on a still tree, after the final edit.
+
+Induced failure, three times over: (1) reverted `reviewLetterShare` to
+the old fixed `0.5` — the three new `reviewLetterShare` tests in
+`review.test.ts` failed exactly as expected (0.5 not > 0.5; 0.5 not
+< 0.05; 0.5 not close to 0.25). (2) reverted the practice-review known-
+restriction fix to the raw course-wide arrays — both new Daily-Review
+regression tests failed with exactly 0 letters, reproducing THE CRITIC's
+finding precisely. (3) reverted the `Math.max(1, ...)` floor — the new
+size-22 floor test failed with exactly 0 letters, reproducing the
+curriculum critic's predicted case precisely. All three restored and
+reconfirmed clean.
+
+New queue items: URD-041 (a review's one letter slot always lands on
+the same position and kind), URD-042 (half the alphabet gets no review
+exposure across the back two-thirds of the course).
+
+branch: claude/gauntlet-review-letter-decay

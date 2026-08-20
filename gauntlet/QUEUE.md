@@ -122,36 +122,6 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-017 — A review's letter share should decay once the alphabet is behind it
-attempts: 0
-files: src/exercises/generator.ts
-definition of done: `fallbackReviewRefs` splits every review's fallback
-  ceil(n/2) letters, floor(n/2) words, unconditionally, independent of how
-  many units separate the review from the alphabet. Measured u10 through u39
-  (script track): 367 letter exercises against 360 word exercises, 50.5%
-  letters. A review at u30, thirty units after the alphabet finished, spends
-  half its questions re-tracing glyphs. The letter share should fall as the
-  course moves further from the alphabet units, reaching near zero by the
-  units this measurement covers. A test asserts the letter share at a review
-  early in the course is higher than the letter share at one late in it.
-verify: npm test -- src/lib/review.test.ts
-notes: Found by the CURRICULUM CRITIC on URD-010. Right near unit 2, wrong by
-  unit 30 — the code applies the identical ratio at both positions with no
-  decay. Shares a file and a home with URD-016; consider one item if the fix
-  turns out to be the same change.
-
-  Independently re-confirmed by CURRICULUM CRITIC reviewing URD-016, from a
-  different angle and with a different, sharper number: not just "the letter
-  share should decay," but "it structurally can't, because no unit past u9
-  teaches a letter at all" — every `L(...)` lesson lives in units 1-9
-  (`grep "L([0-9]" src/data/units.ts`), so `withLetters` reserving
-  `Math.ceil(n/2)` slots regardless of unit content caps *overall* in-unit
-  review share near 50% for 30 of 39 reviews (average 53.5%, e.g.
-  rev-out-and-about 48.0%, rev-the-wider-world 48.7%), confirmed against the
-  Roman track (no letter reservation at all) scoring 96.0% on the same
-  reviews — isolating the cause to this split, not to URD-016's own scoping
-  fix, which only fixed the *word* half. Still unfixed; still not blocking.
-
 ## URD-018 — Review should sometimes ask for a word's meaning, not just its form
 attempts: 0
 files: src/exercises/generator.ts
