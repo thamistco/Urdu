@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { UNITS } from '../data/units';
-import { taughtInUnit, taughtUpTo, prioritizedPool, reviewWordPool, reviewLetterPool, reviewLetterShare } from './review';
+import {
+  taughtInUnit,
+  taughtUpTo,
+  prioritizedPool,
+  reviewWordPool,
+  reviewLetterPool,
+  reviewLetterShare,
+} from './review';
 
 describe('taughtInUnit', () => {
   it('scopes to the unit a review lesson actually closes, not the whole course', () => {
@@ -183,7 +190,7 @@ describe('reviewWordPool / reviewLetterPool — a review draws mostly from the u
   });
 });
 
-describe('reviewLetterShare — a review\'s letter share decays once the alphabet is behind it', () => {
+describe("reviewLetterShare — a review's letter share decays once the alphabet is behind it", () => {
   it('is higher for a review early in the course than one late in it', () => {
     // URD-017: the old split was a flat Math.ceil(n/2)/Math.floor(n/2)
     // regardless of how far the review sits from the alphabet units. Real
@@ -203,7 +210,7 @@ describe('reviewLetterShare — a review\'s letter share decays once the alphabe
     expect(reviewLetterShare(late.words, late.letters)).toBeLessThan(0.05);
   });
 
-  it('is exactly the letters\' share of everything taught, not some other function of it', () => {
+  it("is exactly the letters' share of everything taught, not some other function of it", () => {
     expect(reviewLetterShare(['w1', 'w2', 'w3'], ['l1'])).toBeCloseTo(0.25);
     expect(reviewLetterShare([], [])).toBe(0.5);
   });
