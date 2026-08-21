@@ -3658,3 +3658,47 @@ check:sentence-coverage step — the first hyphenated check:* script ever
 added. Confirmed no other existing script name was affected.
 
 branch: claude/gauntlet-sentence-coverage
+
+## CLAIMED · URD-048 · 2026-08-21T15:50Z
+files: src/data/units.ts (+ src/exercises/generator.ts,
+  scripts/check-sentence-coverage.js, src/exercises/generator.test.ts —
+  a real bug the size bump exposed in URD-027's own mechanism)
+branch: claude/gauntlet-sentence-lesson-size
+
+## CRITIQUE · URD-048
+THE CRITIC: two MAJOR, both fixed. (1) units.ts's own doc comment quoted
+the pre-discovery estimate (115/256) after the real number (116/256) was
+known — corrected. (2) found and root-caused an unrelated, pre-existing
+check:answerable flakiness (homograph pairs — same spelling, different
+meaning — missing a dedup guard in distractorsFor; ~3 of 10 standalone
+runs fail, each citing a different id) — confirmed unrelated to this
+item's diff, filed forward as URD-049 (high priority, undermines every
+item's check:all verification until fixed). Independently reproduced
+the induced-failure case (old fallback reintroduced → overlap → both
+check:sentence-coverage and the vitest test fail exactly as predicted),
+confirmed the adjacency is a genuine isolated content fact (checked
+every other adjacent-lesson pair), and confirmed no degenerate 0-sentence
+lesson risk (check:answerable's own empty-lesson guard would catch it).
+
+## PASSED · URD-048 · 2026-08-21T16:15Z
+$ npm run check:sentence-coverage
+  116 of 256 sentences reachable (45.3%, up from 96/256 = 37.5%); 1
+  lesson (s-intermediate-2, 6/10) drew short of its designed size — a
+  real, honest position scarcity, not an error; zero overlap anywhere.
+
+$ npm run check:shape -- --kind=sentences
+  0 problems.
+
+$ npm run check:all
+  all 27 steps pass, confirmed twice (before and after the two MAJOR
+  fixes above landed) — including 3 standalone check:answerable reruns
+  to confirm URD-049's flakiness wasn't currently manifesting.
+
+Induced failure: reintroduced the old claimed-sentence-reuse fallback in
+sentencesForLesson, both check:sentence-coverage and the vitest test
+failed exactly as predicted — restored and reconfirmed clean.
+
+New queue item filed: URD-049 (check:answerable homograph-distractor
+flakiness, found by THE CRITIC, unrelated to this item's diff).
+
+branch: claude/gauntlet-sentence-lesson-size

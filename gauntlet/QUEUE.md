@@ -122,38 +122,43 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-048 — Raise sentences-lesson size to close more of the reachability ceiling
+## URD-049 — check:answerable is flaky: homograph pairs can land as two indistinguishable distractor options
 attempts: 0
-files: src/data/units.ts
-definition of done: `S()`'s default `size` (units.ts) is 8, costing 45s of
-  exercises per sentence (`sentenceReinforceClimb`, URD-025) — 6.0 minutes
-  at size 8, comfortably under check:shape's 8-minute ceiling (up to 10.67
-  sentences fit, 450s). Raise it to 10, the largest value still inside the
-  band, verified directly against real generated output (not estimated):
-  moves course-wide reachable coverage from 96/256 (37.5%) to 115/256
-  (44.9%) with zero check:shape length/share/run violations introduced.
-  Full parity (matching every level's whole pool) is out of reach this way
-  — elementary alone would need size 35, ~26 minutes, more than 3x the
-  ceiling — so this closes part of the gap, not all of it, and should say
-  so rather than be mistaken for a complete fix.
-verify: npm run check:sentence-coverage (ceiling rows should show higher
-  reachable/pool ratios) && npm run check:shape -- --kind=sentences
-notes: Found by CURRICULUM CRITIC reviewing URD-027. That item raised
-  reachable coverage to the *current* lesson-capacity ceiling but left the
-  ceiling itself unraised, on the reasoning that closing the gap further
-  needed a units.ts change outside its own file scope. CURRICULUM CRITIC
-  computed and verified (by mutating the in-memory lesson size and
-  rerunning the real generator, not estimating) that a modest, in-band
-  size bump was available and unexplored. Not a duplicate of URD-027's own
-  fix (which changes WHICH sentences are drawn, not how many): this
-  changes how many, and composes with it — the sibling-exclusion and
-  concept-priority logic `sentencesForLesson` already has both apply
-  unchanged at a larger size, verified directly by CURRICULUM CRITIC
-  against g-future/g-compound (whose zero-reinforcement gap a size bump
-  alone does not close: re-measured at size=10, g-future stayed 0/6 before
-  URD-027's own concept-priority fix landed — re-verify against the
-  now-current generator.ts, since that fix already shipped after this
-  measurement was taken).
+files: src/exercises/generator.ts (distractorsFor)
+definition of done: `distractorsFor` (generator.ts, ~lines 432-456) dedupes
+  candidate distractors by `.id`, `.cue`, and `.meaning`, but never by
+  `.urdu` — so two distinct vocabulary entries that are genuine homographs
+  (identical spelling, different meaning — e.g. `w-chashma`/`w-chashma2`,
+  چشمہ meaning both "glasses" and "spring (water)") can both land in one
+  `meaningPick`/`wordFromMeaning` option set, indistinguishable on screen
+  from each other even though they're logically distinct options. Add an
+  `.urdu`-uniqueness guard alongside the existing three. Measured: 40
+  homograph groups exist across the 2,281-word vocabulary; `consider()`'s
+  unseeded `Math.random()` shuffle means which pair collides, if any,
+  differs run to run, so `npm run check:answerable` fails roughly 3 of 10
+  runs today, each time citing a different, unrelated sentence/word id —
+  a check that fails on the wrong signal 30% of the time is worse than one
+  that never fails at all (this project's own non-negotiable #2).
+verify: run `npm run check:answerable` 10 times in a row; 0 of 10 may
+  report a "two options are the same word" finding.
+notes: Found by THE CRITIC reviewing URD-048, while root-causing why
+  `npm run check:all` failed at `check:answerable` on both of two
+  consecutive runs, each citing a different sentence id (`s-143`, then
+  `s-67`). Traced to a real `meaningPick` exercise for `s-104` whose
+  distractor set included both `w-chashma` and `w-chashma2`. Confirmed via
+  10 additional standalone `check:answerable` runs: ~3 of 10 fail, citing
+  a different, unrelated id each time — the flakiness is real and
+  reproducible, not a one-off. Entirely unrelated to URD-048's own diff
+  (`distractorsFor` untouched by that item; reproduces via plain
+  vocabulary words with no sentence lesson involved) — filed separately
+  rather than folded into that item's fix. Not a duplicate of URD-013
+  (already closed): that item's flakiness came from `letterExercise`'s own
+  unseeded `Math.random()`, a different call site entirely. Until fixed,
+  `check:all` cannot be trusted to exit 0 on a single run for ANY item —
+  a real failure and a homograph-collision false alarm look identical from
+  outside, so a re-run that goes green does not by itself prove a fix
+  worked. Recommended priority: high, given every other item's own
+  `check:all` verification is undermined until this is fixed.
 
 ## URD-028 — check:coverage cannot see meaningPick/wordFromMeaning sentence-derived exercises
 attempts: 0
