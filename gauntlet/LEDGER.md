@@ -3030,3 +3030,134 @@ No new queue items — every finding from both critics was fixed inline
 in this same redesign rather than filed forward.
 
 branch: claude/gauntlet-review-meaning-direction
+
+## CLAIMED · URD-019 · 2026-08-20T23:35Z
+Top unclaimed item, chained off claude/gauntlet-review-meaning-direction
+after URD-018 shipped. `shouldUpdateSrs` caps SRS advancement to the
+first sighting of an item per lesson visit, which fixed a real bug (six
+correct sightings walking a letter's interval to 98 days) but chose the
+wrong sighting to trust: a learner who answers wrong, then right five
+times running in the same sitting, leaves with identical SRS state to
+one who answered wrong six times, because the first grade is the one
+that sticks.
+verify: npm test -- src/lib/sessionGrading.test.ts
+branch: claude/gauntlet-session-grading-last-sighting, cut from
+claude/gauntlet-review-meaning-direction after URD-018 shipped.
+
+## CRITIQUE · URD-019 · 2026-08-21T00:00Z
+Dispatched THE CRITIC (mandatory) and CURRICULUM CRITIC (this item was
+itself found by a curriculum critic reviewing URD-013 — squarely a
+pedagogy-scheduling question, which sighting's evidence a teaching
+lesson should trust). Not DESIGN CRITIC (no visual/rendering change —
+same screen, same UI, only internal grading timing). Not PLAYER (a
+narrow scheduler-correctness fix with a direct pure-logic test and a
+real-app `check:stability` pass already covering the touched screen;
+not a broad play-through surface).
+
+Implementation before critique: `sessionGrading.ts` rewritten from a
+gate-and-skip boolean (`shouldUpdateSrs`) to overwrite-and-defer
+(`recordSighting` always overwrites an item's pending grade;
+`flushSessionGrades` applies each item's grade exactly once).
+`LessonScreen.tsx`'s `onGraded` now records every sighting instead of
+gating; a `pendingGrades` ref holds the current visit's Map, flushed
+via a `useEffect` cleanup keyed on `[exercises, applyGrade]` (fires on
+a new lesson visit or unmount, covering the ✕ button, running out of
+hearts and leaving, and eventual navigation home) plus an explicit
+flush in `advance()`'s completion branch (belt-and-suspenders: `
+finishLesson` persists XP/streak/gems synchronously while
+`LessonComplete` renders in the same still-mounted screen, so relying
+on unmount alone would risk losing SRS grading if the app were closed
+from the results screen before pressing "home").
+
+THE CRITIC found no BLOCKING or MAJOR defect in the mechanism itself —
+traced React's effect-cleanup-then-setup ordering, the double-flush
+safety, every quit route (✕, out-of-hearts, normal completion), the
+heart-refill retry-same-exercise flow, and the `string`→`ItemType`
+cast, all against the actual code rather than the doc comments' claims,
+and confirmed each correct. One MAJOR: no test anywhere exercises the
+real `LessonScreen`↔`sessionGrading` wiring end-to-end — every existing
+test either drives `sessionGrading.ts` in isolation from React or
+drives `srs.ts` in isolation from `sessionGrading.ts`; the actual bug
+this item fixes lived in the ref/effect integration between them, which
+has zero coverage. Filed forward as URD-044 rather than fixed inline:
+properly closing it means deciding on and wiring up component-level
+test infrastructure (no React Testing Library or jsdom/happy-dom
+environment exists in this project today — confirmed by reading
+`vitest.config.ts`), not adding one more `.test.ts` file.
+
+CURRICULUM CRITIC found the mechanism's premise incomplete: "grade on
+the last sighting" is provably correct for vocabulary (100% of 2,281
+words' staggered climb ends on the hardest, `produce` demand, both
+tracks, measured directly) but not for letters, where the turn
+rotation lands the *last* round on an easier recognise-tier kind 67.4%
+of the time (31 of 46 sampled) because the letter pipeline rotates
+turns rather than climbing meet→recall→produce the way vocabulary
+does. More directly actionable: no guard existed anywhere against a
+single lucky final guess — every multiple-choice question is a 4-
+option, 25%-guess exercise, so a learner wrong on every real attempt
+could still be scheduled as "known" off one lucky final tap. Fixed
+inline (cheap, and squarely strengthens this item's own stated goal
+rather than widening its scope): `finalGradeOf` now requires the last
+TWO sightings to agree — both correct (in either order, `good`/`easy`)
+or both `again` — before trusting the result; a disagreement resolves
+to `again`, cutting the guess-through risk from ~1-in-4 to ~1-in-16.
+Majority-vote across all sightings was considered and rejected (per the
+curriculum critic's own reasoning, adopted): it discards recency, which
+is exactly what makes trusting a recent sighting correct in the first
+place — a learner right, right, right, then wrong, wrong at the very
+end forgot the item within the session and should not schedule as
+mastered. The deeper letter-vs-vocabulary demand-tier mismatch is a
+separate, real gap the two-sighting guard mitigates in practice but
+does not fully close — filed forward as URD-043 (checked against
+URD-020/021/022, the already-queued letter-pipeline content items, for
+overlap; none found — this is about turn *diagnosticity*, those are
+about content composition).
+
+## PASSED · URD-019 · 2026-08-21T00:15Z
+$ npx vitest run src/lib/sessionGrading.test.ts
+  11/11 pass — the item's own acceptance criterion (wrong-then-five-
+  right differs from all-wrong) plus THE CRITIC's and CURRICULUM
+  CRITIC's regression tests (single-sighting trust, two-agree, the
+  guess-through case, the forgetting-within-session case, only-last-
+  two-matter).
+
+$ npm run check:srs
+  19/19 pass, unaffected — SM-2 scheduling itself untouched.
+
+$ npx tsc --noEmit
+  clean.
+
+$ npm run check:stability
+  28 answered questions and notice dismissals checked across path and
+  practice lessons, both tracks, plus Profile/Achievements/League —
+  clean; drives the real LessonScreen this item's wiring lives in.
+
+$ npm test
+  142/142 pass across 9 files.
+
+$ npm run check:all
+  check:all — all 26 steps pass against a deploy-shaped build.
+  Run alone on a still tree, after the final edit.
+
+Induced failure, twice over: (1) reverted `recordSighting` to gate-
+and-skip (first sighting wins) — the acceptance test and the "tracks
+items independently" test both failed exactly as the pre-fix bug
+predicts (first grade sticks, not the last). (2) reverted
+`finalGradeOf` to trust the bare last sighting with no confirmation
+check — exactly one test failed (the guess-through case,
+`['again','good'] → 'again'`), correctly isolating that this is the
+one scenario the confirmation guard changes versus bare-last-sighting;
+every other test passed either way, confirming they weren't
+accidentally validating the new behavior by coincidence. Also
+separately verified the double-flush (`advance()` + unmount) is safe
+via the existing `flushSessionGrades` clear-then-no-op test, and
+confirmed (by reading, not assuming) that `gradeItem`'s reference is
+stable across renders (a zustand action closed over once in `create()`)
+so `applyGrade`'s `useCallback` never produces a stale flush target.
+Both restored and reconfirmed clean.
+
+New queue items: URD-043 (a letter's last sighting is usually the easy
+kind, not the hard one), URD-044 (nothing exercises the
+LessonScreen↔SRS-grading wiring end-to-end).
+
+branch: claude/gauntlet-session-grading-last-sighting

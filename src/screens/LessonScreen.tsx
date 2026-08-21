@@ -15,10 +15,10 @@ import { SpeakerButton } from '../exercises/common';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { announce, invalidateSpeech } from '../lib/speech';
-import { dueQueue, dueBudget } from '../lib/srs';
-import { shouldUpdateSrs } from '../lib/sessionGrading';
+import { dueQueue, dueBudget, type SrsGrade } from '../lib/srs';
+import { recordSighting, flushSessionGrades, type PendingGrades } from '../lib/sessionGrading';
 import { REFILL_COST, gemsShortOfRefill, minutesUntilNextHeart } from '../lib/gamification';
-import { useProgressStore } from '../store/useProgressStore';
+import { useProgressStore, type ItemType } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { resolveLesson } from '../data/units';
 import { POSITIONS } from '../data/letters';
@@ -126,6 +126,16 @@ export function LessonScreen() {
   const showRoman = useSettingsStore((s) => s.showRoman);
   const track = useSettingsStore((s) => s.track);
   const gradeItem = useProgressStore((s) => s.gradeItem);
+  // `flushSessionGrades` (`lib/sessionGrading.ts`) keeps its item type as a
+  // loose `string`, like the rest of `lib/`, rather than depending on
+  // `ItemType` (`useProgressStore.ts`). Every id it ever holds came from
+  // `recordSighting`, called only with `ItemRef`s (`exercises/types.ts`)
+  // whose `type` is already `'letter' | 'word'` — the same union `ItemType`
+  // is — so this cast reflects a real invariant, not a papered-over one.
+  const applyGrade = useCallback(
+    (id: string, type: string, grade: SrsGrade) => gradeItem(id, type as ItemType, grade),
+    [gradeItem]
+  );
   const loseHeart = useProgressStore((s) => s.loseHeart);
   const finishLesson = useProgressStore((s) => s.finishLesson);
   const refillHearts = useProgressStore((s) => s.refillHearts);
@@ -180,25 +190,30 @@ export function LessonScreen() {
   const bodyRef = useRef<ScrollView>(null);
 
   /**
-   * Which items this lesson visit has already updated SRS state for.
+   * Which items this lesson visit has sighted, and each one's most recent
+   * grade — not yet applied to SRS. See the doc comment on `recordSighting`
+   * (`lib/sessionGrading.ts`) for why this defers rather than applying every
+   * sighting immediately, and why it defers to the *last* sighting rather
+   * than the first (URD-019).
    *
-   * A lesson can meet the same word or letter more than once by design — the
-   * whole point of the staggered pipelines in `generator.ts` — but every
-   * exercise grades independently, and until `shouldUpdateSrs` existed, every
-   * sighting of an item called `gradeItem`, walking its `SrsCard` through
-   * SM-2 as if each were a separate day's review. A letter met 6 times
-   * correctly in one sitting pushed its next due date out 98 days from a
-   * single 5 minute lesson. See the doc comment on `shouldUpdateSrs` for the
-   * full measurement.
-   *
-   * Reset whenever `exercises` changes — a new lesson visit, including the
-   * same lesson opened again — rather than once at mount, so it cannot
-   * outlive the session it is scoped to.
+   * Flushed, not just reset, whenever `exercises` changes or this screen
+   * unmounts — a new lesson visit (including the same lesson reopened) or
+   * leaving the lesson altogether, by any route: finishing it normally,
+   * hitting ✕, or running out of hearts and leaving. Whatever was pending
+   * for the visit that just ended is applied before a fresh session starts
+   * tracking its own; nothing pending is ever silently dropped by a route
+   * this component didn't anticipate.
    */
-  const gradedThisSession = useRef<Set<string>>(new Set());
+  const pendingGrades = useRef<PendingGrades>(new Map());
   useEffect(() => {
-    gradedThisSession.current = new Set();
-  }, [exercises]);
+    // A new `Map` per visit, closed over by this effect's own cleanup rather
+    // than read back off the ref later — so the cleanup always flushes
+    // exactly the visit it belongs to, never one a later reset has already
+    // replaced `pendingGrades.current` with.
+    const thisVisit: PendingGrades = new Map();
+    pendingGrades.current = thisVisit;
+    return () => flushSessionGrades(thisVisit, applyGrade);
+  }, [exercises, applyGrade]);
 
   const current = exercises[idx];
   /** The clip the feedback banner offers to replay, when there is one. */
@@ -218,8 +233,12 @@ export function LessonScreen() {
       // a *correct* answer at a stock 375x812 viewport — the same off-screen
       // problem, just from a tall question instead of a tall explanation.
       setTimeout(() => bodyRef.current?.scrollToEnd({ animated: true }), 120);
-      // update SRS memory for each item touched — but only the first sighting
-      // of it this lesson visit. See the doc comment on `gradedThisSession`.
+      // Record this sighting's grade for each item touched — overwriting
+      // whatever an earlier sighting this lesson visit recorded, rather than
+      // applying it to SRS immediately. See the doc comment on
+      // `recordSighting` (`lib/sessionGrading.ts`) for why: only the last
+      // sighting of an item in the session is graded, once, when the
+      // session is done with it.
       //
       // Every answer used to be graded `good` or `again`, which left the
       // scheduler's `easy` branch dead: recalling a word from nothing but its
@@ -227,9 +246,7 @@ export function LessonScreen() {
       // out by exactly the same amount. They are not the same evidence, so a
       // correct answer on an exercise that supplied no options counts as easy.
       const grade = !result.correct ? 'again' : demandOf(exercises[idx]) === 'produce' ? 'easy' : 'good';
-      result.items.forEach((it) => {
-        if (shouldUpdateSrs(gradedThisSession.current, it)) gradeItem(it.id, it.type, grade);
-      });
+      result.items.forEach((it) => recordSighting(pendingGrades.current, it, grade));
       if (result.correct) {
         setCorrectCount((c) => c + 1);
       } else if (!isTeaching(exercises[idx])) {
@@ -245,7 +262,7 @@ export function LessonScreen() {
     // against exercise 0 — which in a grammar lesson is the teaching card, and
     // `isTeaching` therefore suppressed the heart loss for every wrong answer in
     // the lesson. Grammar cost nothing to get wrong.
-    [gradeItem, loseHeart, exercises, idx]
+    [loseHeart, exercises, idx]
   );
 
   // Stop this lesson's audio the instant the screen is left, however that
@@ -259,6 +276,15 @@ export function LessonScreen() {
       setGraded(null);
       setIdx(idx + 1);
     } else {
+      // Flushed here too, not just on unmount: `finishLesson` below persists
+      // XP/streak/gems immediately, and `LessonComplete` renders in this
+      // same mounted screen rather than a new one — so if this visit's SRS
+      // grades waited for unmount alone, closing the app from that results
+      // screen (before ever pressing "home") would persist the lesson's
+      // rewards while silently losing its SRS grading. Safe to call before
+      // the effect's own unmount-time flush later finds an already-emptied
+      // map and does nothing.
+      flushSessionGrades(pendingGrades.current, applyGrade);
       const r = finishLesson({
         lessonId: lesson.id,
         correct: correctCount,
