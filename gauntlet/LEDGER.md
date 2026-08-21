@@ -3161,3 +3161,171 @@ kind, not the hard one), URD-044 (nothing exercises the
 LessonScreen↔SRS-grading wiring end-to-end).
 
 branch: claude/gauntlet-session-grading-last-sighting
+
+## CLAIMED · URD-020 · 2026-08-21T00:52Z
+Top unclaimed item, chained off claude/gauntlet-session-grading-last-
+sighting after URD-019 shipped. Across all 9 letter lessons,
+`letterTrace`/`letterForm`/`letterPick` account for 276 of 285
+exercises (96.8%); the remaining 9 are one shared context-word exercise
+per lesson, regardless of how many letters it taught. A learner meeting
+a completely new script spends nearly all their first hours on
+isolated glyphs and almost none reading them inside real words.
+verify: npm run check:shape -- --kind=letters
+branch: claude/gauntlet-letters-in-context, cut from
+claude/gauntlet-session-grading-last-sighting after URD-019 shipped.
+
+## CRITIQUE · URD-020 · 2026-08-21T01:05Z
+Dispatched THE CRITIC (mandatory, twice — once on the first design, once
+again after a full redesign in response to its own BLOCKING finding) and
+CURRICULUM CRITIC (a curriculum-composition question — how a learner
+meets a new script — the same pairing used for URD-016 through URD-019).
+Not DESIGN CRITIC (no new UI — every exercise kind used already existed
+and renders unchanged). Not PLAYER (a content-generation fix already
+covered by `check:answerable`'s real-exercise sweep and `check:shape`'s
+scoped verify command).
+
+First implementation: every `Letter` already carries its own curated
+example word (`word`/`roman`/`meaning`/`emoji`) that the generator had
+never used — reshaped it into a synthetic 40-word corpus
+(`LETTER_CONTEXT_WORDS`) and gave every letter its own context-word
+sighting, one of its 6, replacing an isolated sighting rather than
+adding one. Measured: isolated share fell from 96.8% to 83.3%, context
+rose from 3.2% to 16.7%, total exercise count essentially unchanged.
+
+THE CRITIC found this BLOCKING: the synthetic ids existed nowhere in
+`voiceManifest.ts`. A `listenTap` review question built from one of
+these — reachable once such a word is SRS-graded and comes due —
+showed only a "tap to hear" prompt with no fallback text, asking the
+learner to identify a word from audio that did not exist. Reproduced
+live via a constructed due-queue scenario. No existing check could see
+it: `check-voice.js`'s speakable list never knew the new pool existed,
+`check-answerable.js` never builds a due queue at all, `check-shape.js`
+builds its due queues only from real lesson word/letter ids.
+
+Rebuilt entirely rather than patched: `LETTER_CONTEXT_WORD` now matches
+each letter's own glyph (`forms.isolated`) as a literal substring
+against the real `WORDS` corpus — every entry therefore a real,
+already-voice-covered vocabulary word, nothing invented. Preferring the
+lowest CEFR level, and distinct within a teaching group wherever a
+distinct match exists (a first pass of this let two different letters
+in one lesson land the identical word — پانی contains both alif and
+pe — halving the intended variety; fixed by tracking per-group used
+ids). Also added a guard against a word that puts the taught letter
+immediately before `do-chashmi-he` (an aspirating digraph, gh/bh/kh) —
+CURRICULUM CRITIC found `gaaf`'s naive best match, گھر ("ghar"), did
+exactly this, demonstrating a different sound than gaaf's own.
+
+CURRICULUM CRITIC also found MAJOR: `contextRound`'s original formula
+put the first letter's context sighting at round 0 whenever a lesson
+wasn't a later sibling — true for 8 of the 9 real lessons, including
+the first lesson in the entire course — making a whole unfamiliar word
+the learner's literal first exercise, before the taught letter had
+been isolated-introduced even once. Fixed: `contextRound` now always
+maps into rounds 1 through 5, never round 0, guaranteeing every
+letter's first sighting is always the isolated introduction. Verified
+directly on all 9 real lessons: every one now opens on an isolated
+kind. Also found `baRi-ye`'s pre-existing curated example word (میز,
+"table") does not contain baRi-ye's own glyph at all — a data bug
+predating this item, newly reachable (LetterLabScreen already showed
+it; a generator search over `Letter.word` would have promoted it into
+a graded exercise). Fixed in `letters.ts`, twice: the first replacement
+(چائے, "tea") turned out to already be `hamza`'s own curated word —
+caught by `npm run audit`'s example-word-collision rule, not by any
+review round — replaced again with جوتے ("shoes"), which contains
+neither collision.
+
+A second THE CRITIC pass, after the redesign, confirmed the BLOCKING
+finding fully closed (every one of the ~40 `LETTER_CONTEXT_WORD`
+entries checked exhaustively against `getWord` and the voice manifest,
+not sampled) and found no new BLOCKING. It found three MINOR gaps,
+addressed: (1) nothing locked in that two letters in one lesson never
+share an identical assigned word — added a direct regression test;
+(2) a doc comment overclaimed two letters "never" share a context
+round — corrected to state the real, harmless pigeonhole exception for
+groups over 5 letters; (3) `check-shape.js`'s per-letter rule would
+silently skip a hypothetical letter with zero real matches — noted as
+already independently caught by the vitest suite's count-based test,
+not hardened further (redundant, not a live gap). It also re-flagged
+the `baRi-ye` data bug as still live — read from the file before the
+lead's fix for it had landed in the same window; already resolved by
+the time of this ledger entry.
+
+CURRICULUM CRITIC's remaining MAJOR — none of the three possible
+exercise kinds (`multipleChoice`/`meaningPick`/`listenTap`) ask the
+learner to find or identify the taught letter's shape *within* the
+word; a learner answers by picture/meaning matching without ever
+parsing the letter in context — was not fixed inline: it is exactly
+the item's own second, bigger design option ("a dedicated 'spot the
+letter' exercise kind"), correctly out of scope for a fix confined to
+`generator.ts`. Filed forward as new URD-045.
+
+URD-020's fix also fully resolves already-queued URD-021 ("a letter
+group's context word should touch more than its first letter") — every
+letter now gets its own, matched against its real glyph rather than a
+transliteration substring — confirmed by CURRICULUM CRITIC and by this
+item's own tests. Closed as resolved rather than left stale.
+
+## PASSED · URD-020 · 2026-08-21T01:15Z
+$ npx vitest run src/exercises/generator.test.ts
+  27/27 pass — per-letter exact context-sighting count (not just an
+  aggregate total), never opens a lesson on a context word, every
+  context word is a real `WORDS` entry, every context word contains its
+  letter's own glyph, no two letters in one lesson share a word.
+
+$ npm run check:shape -- --kind=letters
+  exits 0 — both the aggregate in-context-share floor (10%, real output
+  16.7%) and the per-letter exact-assignment rule (every taught letter's
+  own `LETTER_CONTEXT_WORD` actually appears in its lesson's real
+  output, matched by word id, not loose glyph presence).
+
+$ npm run audit
+  no problems found — confirms no two letters share an example word,
+  the exact rule that caught the baRi-ye/hamza چائے collision.
+
+$ node scripts/check-voice.js
+  2720/2720 speakable items covered, unchanged — no new content
+  introduced that needs a clip nobody has recorded.
+
+$ node scripts/check-answerable.js
+  107,556 exercises generated across 2 tracks × 6 passes, every one
+  answerable from what it puts on screen.
+
+$ node scripts/check-coverage.js
+  all 2,281 words taught by exactly one lesson, unaffected.
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npm test
+  148/148 pass across 9 files.
+
+$ npm run check:all
+  check:all — all 26 steps pass against a deploy-shaped build.
+  (First run caught the real حچائے/hamza example-word collision via
+  `npm run audit`, one of check:all's own 26 steps — fixed, rerun
+  clean.)
+
+Induced failure, four times over: (1) reverted `contextRound` to allow
+round 0 — the "never opens on a context word" test failed on real
+lessons exactly as the pre-fix bug predicts. (2) reverted the group-
+distinctness guard (`matches[0]` instead of `matches.find(w =>
+!used.has(w.id))`) — the new "no two letters share a word" test failed,
+l-1 collapsing from 6 distinct words to 4. (3) dropped the whole
+context-round mechanism (`contextRound = () => -1`) — the new
+`check-shape.js` letter-context-share rule failed exactly as designed,
+reporting all 9 lessons under the 10% floor. (4) dropped one specific
+letter's assignment directly at the insertion site — the FIRST attempt
+at this induced failure produced a false negative (the check-shape.js
+per-letter rule I had just written passed regardless), which is what
+surfaced the pooled-word false-positive described above; fixed the
+rule to match by word id rather than loose glyph presence, then
+re-ran the same induced failure and confirmed it now correctly fails.
+All four restored and reconfirmed clean.
+
+New queue items: URD-045 (a letter's context sighting never asks the
+learner to find the letter in the word — the item's own second,
+bigger design option, correctly left out of this fix's scope).
+URD-021 resolved as a side effect, moved to done/ rather than left
+open.
+
+branch: claude/gauntlet-letters-in-context

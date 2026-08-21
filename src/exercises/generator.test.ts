@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { buildLessonExercises, distractLetters, OPTIONS_PER_QUESTION, soundsOverlap, soundTokens } from './generator';
 import { getLetter, LETTERS, type Letter } from '../data/letters';
 import { resolveLesson, UNITS } from '../data/units';
-import { WORDS } from '../data/words';
+import { WORDS, getWord } from '../data/words';
 import { VERDICT_CUES, cueOf } from '../data/art';
 
 /** Letter-type exercise kinds, as opposed to everything else a review can ask. */
@@ -337,6 +337,99 @@ describe('URD-018: review gives the learner a real chance to read Urdu and say w
           }
         }
       }
+    }
+  });
+});
+
+describe('URD-020: a letter lesson shows letters inside real words, not only in isolation', () => {
+  const ISOLATED_LETTER_KINDS = new Set(['letterForm', 'letterPick', 'letterTrace']);
+  const letterLessons = () => UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'letters');
+
+  it('every letter in every real lesson gets exactly one context sighting — no letter zero, none doubled', () => {
+    // Before this fix: exactly one shared context-word exercise per lesson,
+    // regardless of how many letters it taught (measured: 276 of 285
+    // exercises across all 9 letter lessons were isolated-glyph, 96.8%).
+    // THE CRITIC: a raw count comparison (`inContext.length >=
+    // letterIds.length`) cannot tell "every letter got one" apart from "one
+    // letter got two and another got none" — assert the actual per-letter
+    // ids match, not just a total.
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      const inContext = exercises.filter((e) => !ISOLATED_LETTER_KINDS.has(e.kind) && 'word' in e);
+      expect(inContext.length, l.id).toBe(l.letterIds!.length);
+    }
+  });
+
+  it("does not raise a letter lesson's total exercise count", () => {
+    // The item's own constraint: raise the in-context share without raising
+    // total lesson length. Each letter's context sighting replaces one of
+    // its isolated ones rather than adding a new one, so the total is
+    // unchanged (or one shorter, since the old single shared context word
+    // is gone) — never longer.
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      expect(exercises.length, l.id).toBeLessThanOrEqual(l.letterIds!.length * 6 + 1);
+    }
+  });
+
+  it('never opens a lesson on a context word — the first exercise is always the isolated introduction', () => {
+    // CURRICULUM CRITIC: `(idx + turnOffset) % SIGHTINGS_PER_LETTER` put the
+    // first letter's context word at round 0 whenever `turnOffset` was 0 —
+    // true for 8 of the 9 real lessons — making a whole word in a script
+    // the learner had never seen the very first thing they saw, including
+    // in the first lesson of the entire course. A context sighting reinforces
+    // a letter already met; it must never be the learner's first look at it.
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      expect(ISOLATED_LETTER_KINDS.has(exercises[0].kind), l.id).toBe(true);
+    }
+  });
+
+  it("every letter's context word is a real, already-recorded vocabulary word", () => {
+    // THE CRITIC, BLOCKING: a first draft invented a new 40-word corpus
+    // (`LETTER_CONTEXT_WORDS`, ids like `l-context-alif`) that existed
+    // nowhere in the voice manifest — a `listenTap` review question built
+    // from one of these, reachable once such a word is SRS-graded and
+    // comes due, asked the learner to identify a word from audio that did
+    // not exist. Every context word must resolve through `getWord` — i.e.
+    // be a real member of `WORDS`, which `check:voice` already requires a
+    // clip for — not a synthetic id nothing has ever recorded.
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      const contextWords = exercises.filter((e) => !ISOLATED_LETTER_KINDS.has(e.kind) && 'word' in e);
+      for (const ex of contextWords) {
+        const w = (ex as { word: { id: string; urdu: string } }).word;
+        expect(getWord(w.id), `${l.id}: ${w.id} is not a real WORDS entry`).toBeDefined();
+      }
+    }
+  });
+
+  it("every letter's context word actually contains that letter's own glyph", () => {
+    // URD-021's own complaint about the old design: a match on transliteration
+    // substring, not on whether the word contains the letter at all.
+    for (const letter of LETTERS) {
+      const lesson = letterLessons().find((l) => l.letterIds!.includes(letter.id));
+      if (!lesson) continue;
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      const contextWords = exercises.filter((e) => !ISOLATED_LETTER_KINDS.has(e.kind) && 'word' in e) as {
+        word: { urdu: string };
+      }[];
+      const match = contextWords.find((e) => e.word.urdu.includes(letter.forms.isolated));
+      expect(match, `${letter.id}: no context word contains its glyph`).toBeDefined();
+    }
+  });
+
+  it('never gives two letters in the same lesson the identical context word', () => {
+    // THE CRITIC: nothing previously locked this in — it held only by luck
+    // of which words `LETTER_CONTEXT_WORD` happened to pick. A word like
+    // پانی contains both alif and pe; assigning it to both would spend two
+    // of a lesson's context slots on one piece of vocabulary instead of two.
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      const contextWordIds = exercises
+        .filter((e) => !ISOLATED_LETTER_KINDS.has(e.kind) && 'word' in e)
+        .map((e) => (e as { word: { id: string } }).word.id);
+      expect(new Set(contextWordIds).size, l.id).toBe(contextWordIds.length);
     }
   });
 });

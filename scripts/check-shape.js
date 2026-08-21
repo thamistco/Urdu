@@ -56,7 +56,7 @@ const { load } = require('./lib/load-ts');
 
 const { ALL_LESSONS, UNITS } = load('src/data/units.ts');
 const { WORDS, TOPICS } = load('src/data/words.ts');
-const { buildLessonExercises: buildLessonExercisesUncached } = load('src/exercises/generator.ts');
+const { buildLessonExercises: buildLessonExercisesUncached, LETTER_CONTEXT_WORD } = load('src/exercises/generator.ts');
 
 /**
  * URD-011: `buildLessonExercises` ran 5,070 times per check:shape run,
@@ -485,6 +485,86 @@ function categoryMapKeys() {
   const keys = {};
   for (const km of m[1].matchAll(/(?:^|[,{]\s*)'?([a-zA-Z][\w-]*)'?\s*:/g)) keys[km[1]] = true;
   return keys;
+}
+
+// ------------------------------ 7. does a letter lesson show letters in context?
+//
+// URD-020: a learner meeting a completely new script used to spend nearly all
+// their first hours on isolated glyphs — `letterTrace`/`letterForm`/
+// `letterPick` never show a letter inside a real word. Measured before the
+// fix: 276 of 285 exercises across all 9 letter lessons (96.8%) were
+// isolated, and the lesson added exactly one context-word exercise no matter
+// how many letters it taught, so a 7-letter lesson's one context word
+// reinforced exactly 1 of the 7 (URD-021).
+
+/**
+ * The smallest share of a letter lesson's exercises that may show a letter
+ * inside a real word rather than alone.
+ *
+ * The fix gives every letter its own context sighting, one of its six —
+ * 16.7% — measured on real generated output today. Floored well under that,
+ * at 10%: comfortably below what the fix achieves so it has headroom to
+ * shift without tripping this, comfortably above the old ~3.2% (9 shared
+ * context words across 285 exercises) so a regression back toward "one
+ * context word for the whole lesson" fails loudly.
+ */
+const MIN_LETTER_CONTEXT_SHARE = 0.1;
+const ISOLATED_LETTER_KINDS = new Set(['letterTrace', 'letterForm', 'letterPick']);
+
+const thinContext = ALL_LESSONS.filter((l) => l.kind === 'letters')
+  .filter(judged)
+  .filter((l) => {
+    const ex = buildLessonExercises(l, [], 'both');
+    const isolated = ex.filter((e) => ISOLATED_LETTER_KINDS.has(e.kind)).length;
+    const contextShare = (ex.length - isolated) / ex.length;
+    return contextShare < MIN_LETTER_CONTEXT_SHARE;
+  });
+if (thinContext.length) {
+  bad(
+    `${thinContext.length} of ${ALL_LESSONS.filter((l) => l.kind === 'letters').length} letter lessons show a letter ` +
+      `in a real word less than ${(MIN_LETTER_CONTEXT_SHARE * 100).toFixed(0)}% of the time.\n` +
+      `      A learner meeting a new script should read its letters inside words, not\n` +
+      `      only trace, name and pick them in isolation.`
+  );
+}
+
+/**
+ * THE CRITIC, reviewing URD-020: the aggregate share above is a lesson-wide
+ * average, not a per-letter guarantee — dropping context coverage for one
+ * letter of a large group barely moves the share (one of `l-3`'s seven
+ * dropped still lands at 11.9%, comfortably over the 10% floor). Checked
+ * directly instead: every letter a lesson teaches must have its OWN
+ * assigned context word (`LETTER_CONTEXT_WORD`, `generator.ts`) actually
+ * appear in that lesson's real output.
+ *
+ * Matched by word id, not by checking whether the letter's glyph merely
+ * appears somewhere in *some* context word shown in the lesson — a first
+ * draft of this rule did that and passed even with a letter's own context
+ * sighting entirely missing, because common letters (alif, among the most
+ * frequent in the script) turn up incidentally inside *other* letters'
+ * context words too (e.g. کتاب, "book," contains alif's glyph but is te's
+ * assigned word, not alif's) — the loose check couldn't tell "this letter's
+ * own sighting happened" from "some unrelated word happened to contain the
+ * same glyph."
+ */
+const missingContext = [];
+for (const l of ALL_LESSONS.filter((x) => x.kind === 'letters').filter(judged)) {
+  const ex = buildLessonExercises(l, [], 'both');
+  const contextWordIds = new Set(ex.filter((e) => !ISOLATED_LETTER_KINDS.has(e.kind) && e.word).map((e) => e.word.id));
+  for (const id of l.letterIds || []) {
+    const assigned = LETTER_CONTEXT_WORD.get(id);
+    if (assigned && !contextWordIds.has(assigned.id)) missingContext.push({ lesson: l.id, letter: id });
+  }
+}
+if (missingContext.length) {
+  bad(
+    `${missingContext.length} letter${missingContext.length === 1 ? '' : 's'} in letter lessons never show their ` +
+      `own assigned context word:\n` +
+      missingContext
+        .slice(0, 8)
+        .map((m) => `      ${m.letter} in ${m.lesson}`)
+        .join('\n')
+  );
 }
 
 // ------------------------------------------------------------------- report
