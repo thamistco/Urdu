@@ -103,7 +103,13 @@ function stepsFromWorkflow() {
     if (inline) inRun = false;
     if (!body) continue;
 
-    const cmd = body.match(/\b(npm (?:run [a-z:]+|test)|node scripts\/[\w-]+\.js)\b/);
+    // URD-027: `[a-z:]+` silently truncated a hyphenated script name at the
+    // hyphen — `npm run check:sentence-coverage` parsed as `npm run
+    // check:sentence`, a script that doesn't exist, and `check:all` failed
+    // with npm's "did you mean" rather than running the real check. Every
+    // script name until this one happened to be hyphen-free, so nothing had
+    // exercised this before. `[a-z:-]` admits the character actually used.
+    const cmd = body.match(/\b(npm (?:run [a-z:-]+|test)|node scripts\/[\w-]+\.js)\b/);
     if (cmd) {
       const found = cmd[1];
       if (found.includes(SELF)) continue;

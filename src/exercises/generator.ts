@@ -779,6 +779,102 @@ function readableSentences(pool: Sentence[], lessonId: string): Sentence[] {
   return ok.length ? ok : pool;
 }
 
+/**
+ * URD-027: which sentences a "sentences" lesson draws — coverage-aware,
+ * where the previous version was not.
+ *
+ * Every `sentences`-kind lesson used to draw independently:
+ * `seededShuffle(pool, lesson.id).slice(0, lesson.size)`, each lesson its
+ * own uniform sample of its whole level's pool with no notion of what a
+ * sibling lesson at the same level had already drawn. Measured: only 81 of
+ * 256 sentences (31.6%) were ever reachable by any lesson course-wide —
+ * beginner's 3 lessons, drawing independently, still overlapped enough to
+ * cover only 22 of a possible 24 distinct sentences (its 3 lessons' combined
+ * capacity, `size` 8 each).
+ *
+ * This walks a level's `sentences`-kind lessons in path order and has each
+ * one exclude whatever an *earlier* sibling has already drawn, so within one
+ * level, no sentence is drawn twice while any undrawn one remains. `siblings`
+ * is small (2-4 lessons per level today) and each call is cheap, so this
+ * recomputes earlier siblings' picks on every call rather than caching them
+ * — the same call-site-driven-cost tradeoff URD-011 measured before adding
+ * `check:shape`'s own memoisation, not assumed here without a slow run to
+ * justify it.
+ *
+ * This raises reachable coverage to each level's real ceiling — the sum of
+ * its `sentences`-lessons' sizes — not to 100%: a level's total lesson
+ * capacity (24-32 sentences today) is well under its pool (57-69), so most
+ * of a level's pool is still never drawn by design, not oversight. Closing
+ * that gap needs more lesson capacity (bigger lessons or more of them), which
+ * is a curriculum decision this item's own file scope (`generator.ts`,
+ * `sentences.ts`, `scripts/`) does not include — `check:sentence-coverage`
+ * (`scripts/`) states the real ceiling explicitly rather than claiming a
+ * false 100%, the same "document the deliberate exemption" escape hatch
+ * this item's own definition of done offers.
+ *
+ * Falls back to allowing a repeat only if a lesson's own readable-and-
+ * unclaimed pool is too thin to fill it — not expected today (every real
+ * level's readable pool is far larger than any one lesson's size, measured
+ * directly) but a lesson with nothing new left to show is worse than one
+ * with one repeat.
+ *
+ * CURRICULUM CRITIC, reviewing this item: raising the aggregate ceiling
+ * says nothing about *which* sentences fill it, and a uniform random draw
+ * left two real grammar concepts (g-future, g-compound) at literally zero
+ * sentences shown outside their own one-shot `grammar` lesson — measured,
+ * not assumed: a concept taught late in a level (only 1 of that level's
+ * `sentences`-lessons comes after it, against 3-4 for an early concept)
+ * gets exactly as many lottery tickets in the random draw as any other
+ * concept, so being taught late is a real, structural disadvantage, not
+ * noise. So each lesson's draw is no longer pure random fill: it first
+ * gives one slot each to every concept tagged in the readable-and-unclaimed
+ * pool that no *earlier* sibling at this level has represented yet
+ * (deterministically ordered, so which concept wins a contested lesson's
+ * limited slots is still stable across runs), then fills whatever is left
+ * the same way as before. A concept whose only eligible lesson already has
+ * more competing never-yet-shown concepts than it has slots can still miss
+ * out — this does not guarantee every concept a sighting, it removes the
+ * "uniform random draw structurally favours early concepts" bias, which is
+ * the actual defect found.
+ */
+function sentencesForLesson(lesson: Lesson): Sentence[] {
+  const levelPool = lesson.level ? SENTENCES.filter((x) => x.level === lesson.level) : SENTENCES;
+  const readable = readableSentences(levelPool.length ? levelPool : SENTENCES, lesson.id);
+
+  const siblings = ALL_LESSONS.filter((l) => l.kind === 'sentences' && l.level === lesson.level);
+  const idx = siblings.findIndex((l) => l.id === lesson.id);
+  const claimed = new Set<string>();
+  const represented = new Set<string>();
+  for (let i = 0; i < idx; i++) {
+    for (const s of sentencesForLesson(siblings[i])) {
+      claimed.add(s.id);
+      if (s.concept) represented.add(s.concept);
+    }
+  }
+
+  const unclaimed = readable.filter((s) => !claimed.has(s.id));
+
+  const byUnrepresentedConcept = new Map<string, Sentence[]>();
+  for (const s of unclaimed) {
+    if (!s.concept || represented.has(s.concept)) continue;
+    if (!byUnrepresentedConcept.has(s.concept)) byUnrepresentedConcept.set(s.concept, []);
+    byUnrepresentedConcept.get(s.concept)!.push(s);
+  }
+  const picks: Sentence[] = [];
+  const pickedIds = new Set<string>();
+  for (const concept of seededShuffle([...byUnrepresentedConcept.keys()], `${lesson.id}:concepts`)) {
+    if (picks.length >= lesson.size) break;
+    const chosen = seededShuffle(byUnrepresentedConcept.get(concept)!, `${lesson.id}:${concept}`)[0];
+    picks.push(chosen);
+    pickedIds.add(chosen.id);
+  }
+
+  const rest = unclaimed.filter((s) => !pickedIds.has(s.id));
+  const need = lesson.size - picks.length;
+  const drawFrom = rest.length >= need ? rest : readable.filter((s) => !pickedIds.has(s.id));
+  return [...picks, ...seededShuffle(drawFrom, lesson.id).slice(0, need)];
+}
+
 /** Every word form the course teaches anywhere, so an untaught-by-anyone form
  *  (a name, an inflection) is not mistaken for one the learner has not reached. */
 const TAUGHT_FORMS = new Set(WORDS.map((w) => w.urdu));
@@ -1309,11 +1405,7 @@ export function buildLessonExercises(
   }
 
   if (lesson.kind === 'sentences') {
-    const pool = lesson.level ? SENTENCES.filter((x) => x.level === lesson.level) : SENTENCES;
-    const picks = seededShuffle(readableSentences(pool.length ? pool : SENTENCES, lesson.id), lesson.id).slice(
-      0,
-      lesson.size
-    );
+    const picks = sentencesForLesson(lesson);
     /**
      * Every sentence met five times through `sentenceReinforceClimb` (see its
      * own doc comment for the full reasoning, including why 2:1:2 rather

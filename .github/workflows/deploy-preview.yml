@@ -93,6 +93,9 @@ jobs:
       - name: Check that every word is actually taught by a lesson
         run: npm run check:coverage
 
+      - name: Check that every sentence reachable given lesson capacity is reached
+        run: npm run check:sentence-coverage
+
       - name: Check that spaced repetition does what it claims
         run: npm run check:srs
 
