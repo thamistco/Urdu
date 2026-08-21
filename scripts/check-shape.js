@@ -57,6 +57,7 @@ const { load } = require('./lib/load-ts');
 const { ALL_LESSONS, UNITS } = load('src/data/units.ts');
 const { WORDS, TOPICS } = load('src/data/words.ts');
 const { buildLessonExercises: buildLessonExercisesUncached, LETTER_CONTEXT_WORD } = load('src/exercises/generator.ts');
+const { getLetter } = load('src/data/letters.ts');
 
 /**
  * URD-011: `buildLessonExercises` ran 5,070 times per check:shape run,
@@ -563,6 +564,110 @@ if (missingContext.length) {
       missingContext
         .slice(0, 8)
         .map((m) => `      ${m.letter} in ${m.lesson}`)
+        .join('\n')
+  );
+}
+
+// ------------------------- 8. are visually confusable letters kept apart?
+//
+// URD-022: `l-3` teaches `daal`/`Daal`/`zaal` and `re`/`Re`/`ze`/`zhe` — two
+// families distinguished only by a dot or a diacritic — and the round-major
+// loop used to drill a lesson's letters in raw `letterIds` order, every
+// round, so the whole `daal`/`Daal`/`zaal` family landed back to back before
+// `re`'s family ever appeared. Drilling visually confusable letters with no
+// separation risks teaching the confusion rather than resolving it.
+//
+// `generator.ts`'s `separateConfusables` now reorders each lesson's letters
+// so members of one `confusableWith` bucket are spread apart. Checked here
+// against the real generated sequence, not the reordering function in
+// isolation, the same way rule 7 above checks the real output rather than
+// `LETTER_CONTEXT_WORD` alone.
+//
+// A context-word exercise carries a word, not a letter id directly, so which
+// letter it stands in for is recovered via `LETTER_CONTEXT_WORD` — the same
+// map the generator used to assign it.
+function bucketKeyOf(letterId) {
+  const letter = getLetter(letterId);
+  return (letter && letter.confusableWith) || letterId;
+}
+
+function letterIdOfExercise(exercise, lesson) {
+  if (ISOLATED_LETTER_KINDS.has(exercise.kind)) return exercise.letter.id;
+  return (lesson.letterIds || []).find((lid) => {
+    const assigned = LETTER_CONTEXT_WORD.get(lid);
+    return assigned && exercise.word && assigned.id === exercise.word.id;
+  });
+}
+
+/**
+ * THE CRITIC / CURRICULUM CRITIC, reviewing this rule's first draft: it
+ * looped `i < n - 1` where `n` was the lesson's *letter count* (7 for
+ * `l-3`), not its *exercise count* (42 for `l-3`, `SIGHTINGS_PER_LETTER`
+ * rounds of `n` each) — so it only ever scanned round 0 and compared a
+ * fixed `ids[n-1]` against `ids[0]` for the "wrap," silently never looking
+ * past the first 7 of 42 exercises. It reported "Clear" while the real
+ * generated `l-3` actually drilled `zhe` immediately before `re` five
+ * times, at every one of the lesson's 5 round transitions — the same
+ * "check that cannot fail" shape as the tools this project has been burned
+ * by before. Fixed to walk every adjacent pair in the full generated
+ * sequence.
+ *
+ * Because every round repeats the identical order (see `separateConfusables`
+ * in `generator.ts` for why), whatever adjacency exists at the round wrap
+ * recurs at *every* round transition, not once. For a group whose largest
+ * confusable bucket is more than half the group, at least
+ * `2 * bucketSize - groupSize` such wrap adjacencies are forced per
+ * transition (a known bound for circular arrangements): `l-3`'s `re` family
+ * (4 of 7 letters) forces exactly one, `2*4 - 7 = 1`, recurring across all
+ * `rounds - 1` transitions. Every other real lesson's largest bucket is at
+ * most half its group, so nothing is forced there and any adjacency is a
+ * real regression. The expected count is computed, not assumed, and
+ * checked for an exact match — too few would mean this rule regressed
+ * (silently stopped seeing violations it should), too many would mean the
+ * generator did.
+ */
+const confusableAdjacent = [];
+for (const l of ALL_LESSONS.filter((x) => x.kind === 'letters').filter(judged)) {
+  const ex = buildLessonExercises(l, [], 'both');
+  const ids = ex.map((e) => letterIdOfExercise(e, l));
+  const n = (l.letterIds || []).length;
+  const rounds = n > 0 ? ex.length / n : 0;
+
+  const found = [];
+  for (let i = 0; i < ids.length - 1; i++) {
+    const a = ids[i];
+    const b = ids[i + 1];
+    if (a && b && a !== b && bucketKeyOf(a) === bucketKeyOf(b)) found.push({ a, b, at: i });
+  }
+
+  const bucketSizes = new Map();
+  for (const id of l.letterIds || []) {
+    const key = bucketKeyOf(id);
+    bucketSizes.set(key, (bucketSizes.get(key) || 0) + 1);
+  }
+  const largest = bucketSizes.size ? Math.max(...bucketSizes.values()) : 0;
+  const perTransitionForced = Math.max(0, 2 * largest - n);
+  const expected = perTransitionForced * Math.max(0, rounds - 1);
+
+  if (found.length !== expected) {
+    for (const f of found) confusableAdjacent.push({ lesson: l.id, a: f.a, b: f.b, at: `${f.at}` });
+    if (found.length < expected) {
+      confusableAdjacent.push({
+        lesson: l.id,
+        a: `(expected ${expected} forced adjacencies, found only ${found.length} —`,
+        b: `this rule may be under-scanning again)`,
+        at: '?',
+      });
+    }
+  }
+}
+if (confusableAdjacent.length) {
+  bad(
+    `${confusableAdjacent.length} pair${confusableAdjacent.length === 1 ? '' : 's'} of visually confusable letters ` +
+      `are drilled back to back:\n` +
+      confusableAdjacent
+        .slice(0, 8)
+        .map((m) => `      ${m.a} next to ${m.b} in ${m.lesson} (position ${m.at})`)
         .join('\n')
   );
 }

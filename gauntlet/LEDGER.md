@@ -3329,3 +3329,150 @@ URD-021 resolved as a side effect, moved to done/ rather than left
 open.
 
 branch: claude/gauntlet-letters-in-context
+
+## CLAIMED · URD-022 · 2026-08-21T05:38Z
+Top unclaimed item, chained off claude/gauntlet-letters-in-context after
+URD-020/021 shipped. `l-3` teaches `daal`/`Daal`/`zaal` and
+`re`/`Re`/`ze`/`zhe` — dot-pairs distinguished only by a diacritic — with
+no ordering or weighting anywhere in the pipeline that references visual
+similarity. Drilling visually confusable letters back to back with
+identical weight risks teaching the confusion rather than resolving it.
+verify: npm run check:shape -- --kind=letters
+branch: claude/gauntlet-letter-confusability, cut from
+claude/gauntlet-letters-in-context after URD-020/021 shipped.
+
+## CRITIQUE · URD-022 · 2026-08-21T06:02Z
+Dispatched THE CRITIC (mandatory) and CURRICULUM CRITIC (a curriculum-
+composition question, same pairing used for every letter-pipeline item
+this session). Not DESIGN CRITIC (no new UI). Not PLAYER (content-
+generation logic already covered by check:answerable's real-exercise
+sweep and check:shape's scoped verify command).
+
+First implementation: added `confusableWith?: string` to `Letter`
+(letters.ts), populated on 13 letters derived from each letter's own
+curated `note` field describing a shared shape with a same-group base
+letter ("same bowl as", "X with N dots", "X with the retroflex mark").
+`separateConfusables` (generator.ts) buckets a lesson's letters by
+`confusableWith ?? id` and places buckets largest-first into positions
+taken evens-then-odds — the largest bucket's own members land
+`positions.length` apart, never adjacent within a single pass. Applied to
+reorder the letters branch's array before its existing round-major loop.
+A new check-shape.js rule and two generator.test.ts tests asserted no
+same-bucket letters land adjacent, with one documented exception: `l-3`'s
+`re` family (4 of 7 letters) forces exactly one wrap adjacency by a cited
+circular-arrangement bound, `2*4-7=1`, claimed as the sole occurrence.
+
+CURRICULUM CRITIC found a real gap between that claim and what actually
+shipped, by running the real generator output directly rather than
+trusting the reasoning: the new check-shape.js rule and both new tests
+looped `i < n - 1` where `n` was the lesson's *letter count* (7 for
+l-3), not its *exercise count* (42) — so they only ever scanned round 0
+and compared one fixed pair for the "wrap," never the other 4 round
+transitions. Both passed "clean" while the real generated `l-3` actually
+drilled `zhe` immediately before `re` five times — once at every round
+transition, since the round-major loop reuses one identical order every
+round — not the one instance claimed. Verified directly (not taken on
+trust): re-ran the real generator, confirmed 5 occurrences at exercise
+indices 6, 13, 20, 27, 34, all `zhe` then `re`. Reasoned through why —
+the largest bucket in a group where it equals `ceil(n/2)` is forced to
+occupy both endpoints of the one arrangement with zero internal
+adjacency, so replaying that identical arrangement every round recreates
+the same wrap collision every single transition, not once. This is the
+same "check that cannot fail" shape CLAUDE.md's non-negotiable #2 names.
+
+CURRICULUM CRITIC and THE CRITIC also independently converged on real
+gaps in `confusableWith` coverage, checked directly against each
+candidate's own `note` text: `alif-madda` ("Alif wearing a wavy hat")
+and `noon-ghunna` ("A dotless noon at the end of a word") both name
+their own same-group base letter the identical way every marked pair
+does, and had no `confusableWith` field. CURRICULUM CRITIC additionally
+argued for `baRi-ye`→`choti-ye` (shared "baṛī"/"choṭī" naming, and their
+`initial` glyphs are literally identical strings) and for `Te`→`te`;
+THE CRITIC specifically re-checked `Te` and concluded it does NOT meet
+the stated derivation rule — its own note compares its mark's shape to
+`to'e` (a different group), not to `te` itself. Followed THE CRITIC on
+`Te` (not added — the note doesn't support it under the rule as written)
+and CURRICULUM CRITIC on `baRi-ye` (added — the naming-convention and
+shared-glyph argument is real even though the note doesn't use the
+"X with N dots" phrasing the other 13 use). Did not add the two weaker
+MINOR suggestions (a merged jeem/baRi-he/khe family; fe/qaaf) — both
+critics themselves rated these low-confidence or textually unsupported.
+
+Fixed: check-shape.js's rule now scans every adjacent pair in the full
+generated sequence and asserts an *exact* computed count (bucket size
+forcing `max(0, 2*largest-n)` adjacencies per round transition, times
+`rounds-1` transitions) rather than a loose presence check — too few
+would mean the rule regressed, too many would mean the generator did.
+The two buggy tests were replaced with one correct test using the same
+formula. `letters.ts` gained 3 more `confusableWith` entries
+(`alif-madda`→`alif`, `noon-ghunna`→`noon`, `baRi-ye`→`choti-ye`).
+`separateConfusables`'s doc comment was rewritten to state the true,
+proven count (5 recurring identical-pair wrap adjacencies for l-3, not
+1) with the endpoint-pigeonhole proof, and to honestly compare against
+the measured pre-fix baseline (30 — 5 confusable pairs internal to every
+one of l-3's 6 rounds under raw `letterIds` order) rather than
+overclaiming perfect elimination.
+
+THE CRITIC's other finding (a doc comment said "five other pairs" where
+the real count was eight, now eleven after this fix's additions) was
+corrected to not name a number that goes stale. Its noted latent risk
+(`letterIdOfExercise`'s fallback could misattribute a context word if
+two same-group letters were ever assigned an identical one) is real but
+not currently live — confirmed no such collision exists in the real
+data — and is the same invariant URD-020's own "no two letters share a
+context word" test already guards, so left as documented rather than
+duplicated.
+
+CURRICULUM CRITIC additionally judged that pure temporal separation
+addresses interference-in-the-moment but not the longer-term
+discrimination skill the item's own definition of done gestures at
+("resolving" the confusion, not just avoiding it) — filed forward as
+URD-047, checked against QUEUE.md/done/ for duplicates first (none
+found). Also filed forward URD-046 (found while designing the fix
+itself): the one forced adjacency always recurs as the identical pair,
+`zhe` then `re`, all 5 times, when varying which specific bucket member
+collides each round would spread the exposure — not attempted here
+because it requires decoupling per-round letter order from the stable
+per-letter index `turn`/`position` depend on, risking the exact
+kind-repetition and sibling-collision bugs the round-major loop's own
+extensive prior history (URD-013) took several rounds to fix.
+
+Verified via induced failure, twice: (1) bypassed `separateConfusables`
+entirely (raw `letterIds` order) — the corrected check-shape.js rule and
+test both failed, reporting the true magnitude (108 confusable-adjacent
+pairs across the whole corpus, not the single instance the pre-fix
+buggy versions would have shown) — confirming the fix now catches a
+regression at its real size, not just its existence. (2) restored,
+reconfirmed both clean. Full corpus measurement after all fixes: every
+real letter lesson has zero confusable-adjacent exercises in its
+complete generated sequence except `l-3`, which has exactly 5 — the
+proven, computed minimum, not a residual bug.
+
+$ npx vitest run src/exercises/generator.test.ts
+  28/28 pass (27 pre-existing + 1 corrected, replacing 2 buggy ones).
+
+$ npm run check:shape -- --kind=letters
+  exits 0 — no confusable-adjacent pairs beyond the proven minimum.
+
+$ npm run check:shape (unfiltered)
+  2 problems, both pre-existing and unrelated (a phrases lesson under 3
+  minutes; 2 units outside the 4-12 lesson band) — zero confusable-
+  adjacency findings across the full corpus.
+
+$ npx tsc --noEmit / npx eslint / npx prettier --check
+  clean.
+
+## PASSED · URD-022 · 2026-08-21T06:10Z
+$ npm run check:all
+  check:all — all 26 steps pass against a deploy-shaped build. No
+  failures anywhere in the run (checked the full log, not just the
+  summary line).
+
+New queue items: URD-046 (spread which specific pair collides at l-3's
+one forced wrap, instead of the identical zhe/re pair five times over),
+URD-047 (CURRICULUM CRITIC's own suggestion — a discrimination exercise
+that poses a confusable pair directly against each other, which
+temporal separation alone does not provide). Both checked against
+QUEUE.md and done/ for duplicates first — none found.
+
+branch: claude/gauntlet-letter-confusability

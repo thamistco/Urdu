@@ -44,6 +44,19 @@ export type Letter = {
   note: string;
   /** Rough teaching group for the learning path. */
   group: number;
+  /**
+   * URD-022: the id of the letter this one is visually confusable with
+   * within its own teaching group — same base shape, distinguished only by
+   * a dot or diacritic (e.g. `pe`'s bowl is `be`'s with two extra dots).
+   * Unset for a group's "base" letter; every letter that shares a bucket
+   * (base plus all its variants) points at the same base id, so the
+   * exercise generator can keep them apart within a lesson's rounds
+   * instead of drilling them back to back. Derived conservatively from
+   * each letter's own curated `note` above — only pairs the note itself
+   * describes as sharing a shape ("same bowl as", "X with N dots", "X
+   * with the retroflex mark") are marked, nothing inferred beyond that.
+   */
+  confusableWith?: string;
 };
 
 function connector(base: string): LetterForms {
@@ -93,6 +106,7 @@ export const LETTERS: Letter[] = [
     emoji: '🥭',
     group: 1,
     note: 'Alif wearing a wavy hat (madda). It starts a word with a long “aa”, alif alone cannot do that at the beginning.',
+    confusableWith: 'alif',
   },
   {
     id: 'be',
@@ -119,6 +133,7 @@ export const LETTERS: Letter[] = [
     emoji: '💧',
     group: 1,
     note: 'Same bowl as be, but three dots below. A Persian/Urdu letter, Arabic has no p.',
+    confusableWith: 'be',
   },
   {
     id: 'te',
@@ -186,6 +201,7 @@ export const LETTERS: Letter[] = [
     emoji: '🌙',
     group: 2,
     note: 'The jeem shape with three dots. Say “ch” as in chair.',
+    confusableWith: 'jeem',
   },
   {
     id: 'baRi-he',
@@ -212,6 +228,7 @@ export const LETTERS: Letter[] = [
     emoji: '✉️',
     group: 2,
     note: 'One dot above the ح (baṛī he) curve. A raspy “kh”, like clearing the throat gently.',
+    confusableWith: 'baRi-he',
   },
 
   // ---- Group 3: the non-joiners -----------------------------------------
@@ -240,6 +257,7 @@ export const LETTERS: Letter[] = [
     emoji: '📦',
     group: 3,
     note: 'Daal with the retroflex mark, the hard d made with the tongue curled back.',
+    confusableWith: 'daal',
   },
   {
     id: 'zaal',
@@ -253,6 +271,7 @@ export const LETTERS: Letter[] = [
     emoji: '🤏',
     group: 3,
     note: 'Daal with one dot above. Another of the “z” family.',
+    confusableWith: 'daal',
   },
   {
     id: 're',
@@ -279,6 +298,7 @@ export const LETTERS: Letter[] = [
     emoji: '⌚',
     group: 3,
     note: 'Re with the retroflex mark, a flapped, curled r with no true English match.',
+    confusableWith: 're',
   },
   {
     id: 'ze',
@@ -292,6 +312,7 @@ export const LETTERS: Letter[] = [
     emoji: '🌍',
     group: 3,
     note: 'Re with one dot above. The everyday “z”.',
+    confusableWith: 're',
   },
   {
     id: 'zhe',
@@ -305,6 +326,7 @@ export const LETTERS: Letter[] = [
     emoji: '🧊',
     group: 3,
     note: 'Re with three dots, a rare “zh” sound, like the s in “measure”.',
+    confusableWith: 're',
   },
 
   // ---- Group 4 -----------------------------------------------------------
@@ -333,6 +355,7 @@ export const LETTERS: Letter[] = [
     emoji: '🦁',
     group: 4,
     note: 'Seen with three dots above the teeth. Say “sh”.',
+    confusableWith: 'seen',
   },
   {
     id: 'swaad',
@@ -359,6 +382,7 @@ export const LETTERS: Letter[] = [
     emoji: '✖️',
     group: 4,
     note: 'Swaad with one dot above. In Urdu it sounds like ze, one of four letters spelling “z”.',
+    confusableWith: 'swaad',
   },
 
   // ---- Group 5 -----------------------------------------------------------
@@ -387,6 +411,7 @@ export const LETTERS: Letter[] = [
     emoji: '🏺',
     group: 5,
     note: 'To’e with one dot above. Another of the four ways Urdu spells “z”.',
+    confusableWith: 'toe',
   },
   {
     id: 'ain',
@@ -413,6 +438,7 @@ export const LETTERS: Letter[] = [
     emoji: '🎈',
     group: 5,
     note: 'Ain with one dot above. A gargled “gh”, like a French r.',
+    confusableWith: 'ain',
   },
 
   // ---- Group 6 -----------------------------------------------------------
@@ -476,6 +502,7 @@ export const LETTERS: Letter[] = [
     icon: 'flower',
     group: 6,
     note: 'Kaaf with a second stroke on top, the tell for a hard “g”.',
+    confusableWith: 'kaaf',
   },
 
   // ---- Group 7: the finishers -------------------------------------------
@@ -531,6 +558,7 @@ export const LETTERS: Letter[] = [
     icon: 'check',
     group: 7,
     note: 'A dotless noon at the end of a word, it nasalises the vowel before it.',
+    confusableWith: 'noon',
   },
   {
     id: 'waw',
@@ -630,6 +658,7 @@ export const LETTERS: Letter[] = [
     emoji: '👟',
     group: 8,
     note: 'The “big” ye, a wide sweeping tail used at the end of words for the “e/ai” sound.',
+    confusableWith: 'choti-ye',
   },
 ];
 

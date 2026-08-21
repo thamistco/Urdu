@@ -122,24 +122,6 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-022 — Letters that look alike should not be drilled as if they don't
-attempts: 0
-files: src/exercises/generator.ts, src/data/letters.ts
-definition of done: `l-3` teaches `daal`/`Daal` and `re`/`Re`/`ze`/`zhe` —
-  dot-pairs distinguished only by a diacritic — with no ordering or
-  weighting that references visual similarity anywhere in the pipeline
-  (confirmed: no reference to confusability in letters.ts, units.ts or
-  generator.ts). Drilling visually confusable letters back to back with
-  identical weight risks teaching the confusion rather than resolving it.
-  Either separate confusable pairs within a lesson's rounds, or give them
-  extra sightings relative to visually distinctive letters in the same
-  group.
-verify: npm run check:shape -- --kind=letters
-notes: Found by the CURRICULUM CRITIC reviewing URD-013. Recommended over
-  URD-021 as the higher-priority pick if only one of the two is taken next,
-  because it actively works against the letters just taught rather than
-  merely under-using them.
-
 ## URD-023 — Guarantee a phrases lesson has enough typeable phrases, not just reassign after drawing
 attempts: 0
 files: src/exercises/generator.ts
@@ -787,3 +769,58 @@ notes: Found by CURRICULUM CRITIC reviewing URD-020. Not blocking — URD-020
   (`check-answerable.js`), and `check:coverage`'s exercise-kind audit, not
   just content-generation logic, so it is real, separate work rather than a
   gap in URD-020's own delivery.
+
+## URD-046 — A letter lesson's one unavoidable confusable pair always collides identically, every round
+attempts: 0
+files: src/exercises/generator.ts
+definition of done: `separateConfusables` (URD-022) spreads visually
+  confusable letters apart within a lesson's rounds, but the round-major
+  loop reuses one fixed order every round, so wherever a bucket forces one
+  residual adjacency (only `l-3`'s 4-letter `re` family — a bucket exactly
+  `ceil(groupSize/2)` — real corpus today), it is the identical pair,
+  `zhe` then `re`, at all 5 of the lesson's round transitions, not a
+  varied one. Reinforcing the exact same two letters back to back five
+  times is a worse version of the risk this item names ("teaching the
+  confusion") than hitting five different pairs once each would be. Vary
+  which specific bucket member sits at each end of the round across
+  rounds — without changing which letter has which stable index, since
+  `turn`/`position` below are computed from a letter's own index plus the
+  round number and only cycle correctly if that index never moves (see
+  `separateConfusables`'s own doc comment, and the multi-round history two
+  functions below it, for what breaks if a letter's index depends on the
+  round) — so a learner who does see the forced collision sees a different
+  pair of the family each time, not one pair five times over.
+verify: a test asserting that across a lesson's round transitions, no two
+  round-boundary confusable-pair occurrences involve the identical two
+  specific letters twice, for every real letter lesson where a forced
+  adjacency exists.
+notes: Found designing URD-022's fix. Not blocking — URD-022 itself already
+  reduced `l-3`'s confusable-adjacent count from 30 (5 pairs internal to
+  every one of 6 rounds, under the pre-fix raw ordering) to 5 (the same one
+  pair, once per round transition), a real, measured improvement; this is
+  a further refinement to *which* pair recurs, not whether one does.
+
+## URD-047 — A confusable letter pair is only ever kept apart, never asked to be told apart
+attempts: 0
+files: src/exercises/types.ts, src/exercises/generator.ts, src/exercises/*.tsx
+definition of done: URD-022 spreads a lesson's visually confusable letters
+  (`daal`/`Daal`/`zaal`, `re`/`Re`/`ze`/`zhe`, and every other
+  `confusableWith` pair in `letters.ts`) apart in time so they are rarely
+  drilled back to back, which prevents momentary interference but never
+  actually tests whether a learner can tell the two apart — the specific
+  skill this item's own definition of done names ("risks teaching the
+  confusion rather than resolving it"). Add a discrimination exercise kind
+  that poses a `confusableWith` pair directly against each other (e.g.
+  "here are ز and ذ — which one is ze?") for at least one of a lesson's
+  sightings of each letter that has a `confusableWith` partner, so the pair
+  is confronted directly at least once, not only ever kept apart.
+verify: a test asserting every letter with a `confusableWith` partner gets
+  at least one exercise, somewhere in its teaching lesson, that poses it
+  directly against that partner.
+notes: Found by CURRICULUM CRITIC reviewing URD-022, who judged pure
+  temporal separation addresses interference-in-the-moment but not the
+  longer-term discrimination skill a learner needs for two letters they
+  will keep encountering. Checked for duplicates in QUEUE.md and done/ —
+  none found. Not blocking — URD-022's own definition of done offered
+  separation as one legitimate, complete option and the fix satisfies it;
+  this is a complementary, not corrective, addition.
