@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildLessonExercises, distractLetters, OPTIONS_PER_QUESTION, soundsOverlap, soundTokens } from './generator';
+import {
+  buildLessonExercises,
+  distractLetters,
+  LETTER_CONTEXT_WORD,
+  OPTIONS_PER_QUESTION,
+  soundsOverlap,
+  soundTokens,
+} from './generator';
 import { getLetter, LETTERS, type Letter } from '../data/letters';
-import { resolveLesson, UNITS } from '../data/units';
+import { resolveLesson, UNITS, type Lesson } from '../data/units';
 import { WORDS, getWord } from '../data/words';
 import { VERDICT_CUES, cueOf } from '../data/art';
 
@@ -430,6 +437,73 @@ describe('URD-020: a letter lesson shows letters inside real words, not only in 
         .filter((e) => !ISOLATED_LETTER_KINDS.has(e.kind) && 'word' in e)
         .map((e) => (e as { word: { id: string } }).word.id);
       expect(new Set(contextWordIds).size, l.id).toBe(contextWordIds.length);
+    }
+  });
+});
+
+describe('URD-022: visually confusable letters are not drilled back to back', () => {
+  const letterLessons = () => UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'letters');
+  const ISOLATED_LETTER_KINDS = new Set(['letterForm', 'letterPick', 'letterTrace']);
+  const bucketKeyOf = (letterId: string) => getLetter(letterId)?.confusableWith ?? letterId;
+
+  /**
+   * The exercise stream doesn't carry a letter id for a context-word
+   * exercise directly (it carries the word), so recover which letter of
+   * *this lesson* that word was standing in for via `LETTER_CONTEXT_WORD`
+   * — the same map `buildLessonExercises` used to pick it in the first
+   * place. Every letters-kind exercise resolves to exactly one letter id;
+   * this throws rather than silently skipping if one doesn't, since a
+   * silent skip would quietly shrink the sequence being checked for
+   * adjacency, which is exactly the kind of check that could pass by
+   * accident (see URD-020's own history of that mistake).
+   */
+  const letterIdOf = (e: { kind: string; letter?: { id: string }; word?: { id: string } }, lesson: Lesson) => {
+    if (ISOLATED_LETTER_KINDS.has(e.kind)) return e.letter!.id;
+    const id = lesson.letterIds!.find((lid) => LETTER_CONTEXT_WORD.get(lid)?.id === e.word!.id);
+    if (!id) throw new Error(`${lesson.id}: context exercise for word ${e.word!.id} matches no taught letter`);
+    return id;
+  };
+
+  /**
+   * THE CRITIC / CURRICULUM CRITIC, reviewing the first version of these
+   * tests: both looped `i < n - 1` where `n` was the lesson's letter count
+   * (7 for `l-3`), not its exercise count (42 for `l-3`) — so they only
+   * ever examined round 0 and one fixed pair (`ids[n-1]` vs `ids[0]`),
+   * never the other 4 round transitions. Both still passed, because round
+   * 0 genuinely has no adjacency and that one fixed pair happens to be one
+   * of the real violations — they passed for the right *pair* but by
+   * accident of which single position they happened to check, the same
+   * "check that cannot fail" shape as `check-shape.js`'s own first draft of
+   * this rule (see its doc comment). Replaced with one test that walks
+   * every adjacent pair in the real, full generated sequence and asserts
+   * an *exact* count, computed from the group's own bucket sizes and round
+   * count — not "small", not "at most N": exactly the number a bucket that
+   * size forces, once per round transition (see `separateConfusables`'s
+   * own doc comment in `generator.ts` for the proof this recurs every
+   * transition rather than once).
+   */
+  it("adjacent confusable-bucket letters occur exactly as often as the group's own bucket sizes force, never more", () => {
+    for (const l of letterLessons()) {
+      const letters = l.letterIds!.map((id) => getLetter(id)!);
+      const bucketSizes = new Map<string, number>();
+      for (const letter of letters) {
+        const key = bucketKeyOf(letter.id);
+        bucketSizes.set(key, (bucketSizes.get(key) ?? 0) + 1);
+      }
+      const largest = Math.max(...bucketSizes.values());
+      const n = letters.length;
+      const perTransitionForced = Math.max(0, 2 * largest - n);
+
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      const ids = exercises.map((e) => letterIdOf(e, l));
+      const rounds = n > 0 ? exercises.length / n : 0;
+      const expected = perTransitionForced * Math.max(0, rounds - 1);
+
+      let found = 0;
+      for (let i = 0; i < ids.length - 1; i++) {
+        if (bucketKeyOf(ids[i]) === bucketKeyOf(ids[i + 1]) && ids[i] !== ids[i + 1]) found++;
+      }
+      expect(found, `${l.id}: expected exactly ${expected} forced adjacencies, found ${found}`).toBe(expected);
     }
   });
 });

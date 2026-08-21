@@ -300,6 +300,100 @@ function letterExerciseAt(letter: Letter, turn: number, positionIndex: number): 
 }
 
 /**
+ * URD-022: reorder a lesson's letters so visually confusable ones never sit
+ * next to each other in the round-major sequence below. `l-3` teaches
+ * `daal`/`Daal`/`zaal` and `re`/`Re`/`ze`/`zhe` — two families distinguished
+ * only by a dot or a diacritic — and drilling `daal, Daal, zaal, re, Re, ze,
+ * zhe` in that order puts every same-family pair back to back, which risks
+ * teaching the confusion rather than resolving it.
+ *
+ * Letters are bucketed by `confusableWith ?? id` (a base letter and all its
+ * variants share one bucket), then buckets are placed largest-first into
+ * target positions taken in the order [0, 2, 4, …, 1, 3, 5, …] — even
+ * indices before odd. Filling evens first is what keeps the largest bucket
+ * safe: consecutive members of one bucket land `positions.length` apart
+ * until the evens run out, never adjacent *within* the returned order.
+ * A naive round-robin merge (alternate between buckets in insertion order)
+ * was tried and rejected: hand-traced on `l-3`'s real 4-vs-3 split it
+ * produces `[daal, re, Daal, Re, zaal, ze, zhe]`, which still lands `ze`
+ * immediately before `zhe` once the smaller bucket runs out — the
+ * every-other pattern breaks exactly where the buckets are unequal, which
+ * is the real case this exists for.
+ *
+ * The round-major loop below reuses this exact order every round, so the
+ * full exercise sequence is this order repeated back to back — meaning the
+ * *last* letter of one round sits next to the *first* letter of the next,
+ * a wrap-around adjacency this function cannot see from a single pass, and
+ * because every round repeats the identical order, whatever happens at
+ * that wrap happens at *every* round transition, not just once.
+ *
+ * For every real group but one, the wrap lands on two different buckets —
+ * fine, verified directly. `l-3` cannot be made fine: its largest bucket
+ * (`re`'s family, 4 letters) is exactly half of the group's 7 rounded up,
+ * and whenever a bucket's size equals `ceil(n/2)` there is exactly *one*
+ * linear arrangement with zero *internal* adjacency, and in it the two
+ * ends of the array are forced to both belong to that bucket — a bucket
+ * that large has no other way to avoid sitting next to itself somewhere in
+ * a line of 7. (Proof sketch: the largest independent set of positions in
+ * a path of `n` nodes with no two chosen positions adjacent has size
+ * `ceil(n/2)`, and for `n=7` that unique set is `{0,2,4,6}` — both
+ * endpoints. A different arrangement that didn't use both endpoints for
+ * this bucket would have fewer than 4 non-adjacent slots available to it,
+ * which isn't enough room for 4 letters.) So `l-3`'s wrap always pairs two
+ * `re`-family letters, every single round transition — 5 times over the
+ * lesson's 6 rounds, not once. A first version of this comment claimed
+ * "one unavoidable pair" — true of a single linear pass, false of what the
+ * lesson actually plays, and CURRICULUM CRITIC caught the gap by running
+ * the real generator output rather than trusting this reasoning in
+ * isolation. Measured directly on `l-3`'s real 42-exercise output: exactly
+ * 5 occurrences, every one `zhe` then `re`, zero anywhere else in this
+ * lesson and zero anywhere in any other real letter lesson — still a large
+ * improvement on the pre-fix baseline (raw `letterIds` order put 5 pairs
+ * of confusable letters back to back *within a single round*, so 30 across
+ * `l-3`'s 6 rounds), just not the perfect elimination first claimed.
+ *
+ * Varying the order round to round instead of reusing one fixed order was
+ * considered, to at least spread *which* two letters collide at the wrap
+ * rather than repeating the identical pair five times. Rejected for now:
+ * `turn`/`position` below are computed from each letter's index in this
+ * array added to the round number, which only cycles cleanly through
+ * `letterExerciseAt`'s three kinds if a given letter keeps the same index
+ * every round — varying the order would decouple a letter's own sighting
+ * count from its position, reopening the exact kind-repetition and
+ * sibling-collision bugs the extensive commentary two functions below this
+ * one already went through several rounds to fix. Filed forward instead
+ * (see queue) rather than risking that regression under this item's scope.
+ *
+ * Letters with no `confusableWith` and no variant pointing at them sort into
+ * their own singleton bucket, so they're placed same as before relative to
+ * one another — this only changes order among letters that actually share a
+ * bucket.
+ */
+function separateConfusables(letters: Letter[]): Letter[] {
+  const buckets = new Map<string, Letter[]>();
+  for (const l of letters) {
+    const key = l.confusableWith ?? l.id;
+    const bucket = buckets.get(key) ?? [];
+    bucket.push(l);
+    buckets.set(key, bucket);
+  }
+  const ordered = [...buckets.values()].sort((a, b) => b.length - a.length);
+  const n = letters.length;
+  const positions: number[] = [];
+  for (let i = 0; i < n; i += 2) positions.push(i);
+  for (let i = 1; i < n; i += 2) positions.push(i);
+  const result: Letter[] = new Array(n);
+  let pos = 0;
+  for (const bucket of ordered) {
+    for (const l of bucket) {
+      result[positions[pos]] = l;
+      pos++;
+    }
+  }
+  return result;
+}
+
+/**
  * Pick three distractors.
  *
  * `distinctCue` — the options must all *look* different: a picture question is
@@ -651,7 +745,14 @@ export function buildLessonExercises(
   const teachesScript = track !== 'roman';
 
   if (lesson.kind === 'letters' && lesson.letterIds && teachesScript) {
-    const letters = lesson.letterIds.map(getLetter).filter(Boolean) as Letter[];
+    // URD-022: reordered so visually confusable letters (daal/Daal/zaal,
+    // re/Re/ze/zhe, and every other `confusableWith` group in letters.ts)
+    // are almost never adjacent in the round-major sequence below — see
+    // `separateConfusables`'s own doc comment for the one group (`l-3`)
+    // where "almost" is doing real work. `siblingIndex`/`turnOffset`/
+    // `posOffset` below key off `lesson.letterIds` directly, not this
+    // reordered array, so they are unaffected by the reorder.
+    const letters = separateConfusables(lesson.letterIds.map(getLetter).filter(Boolean) as Letter[]);
     /**
      * Every letter met `SIGHTINGS_PER_LETTER` times, in rounds: round 0 shows
      * every letter once, then round 1 shows every letter again, and so on.
