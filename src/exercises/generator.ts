@@ -916,18 +916,15 @@ export function buildLessonExercises(
      *
      * "No clean fix" is about reassignment specifically, and it is
      * narrower than the first version of this comment claimed: the pick
-     * itself, two lines up, draws uniformly from all 28 phrases with no
-     * floor on how many are typeable. Biasing that draw — guarantee at
-     * least `produceCount` typeable phrases, fill the rest freely — would
-     * remove the residual for every future draw rather than only this one,
-     * and is the cheapest of the three ways to actually close this, not a
-     * fourth kind or a bigger lesson. Queued as URD-023 with that option
-     * named explicitly, after review found the first version of this
-     * comment had quietly narrowed to the two costlier fixes. Three kinds
-     * cannot split any lesson size under 40% each regardless — guarded in
-     * `P()` (units.ts) so that half of this problem cannot recur silently.
+     * itself draws uniformly from all 28 phrases with no floor on how many
+     * are typeable. Biasing that draw — guarantee at least `produceCount`
+     * typeable phrases, fill the rest freely — removes the residual for
+     * every future draw rather than only this one, and is the cheapest of
+     * the three ways to actually close this, not a fourth kind or a bigger
+     * lesson. This is that fix (URD-023): three kinds cannot split any
+     * lesson size under 40% each regardless — guarded in `P()` (units.ts)
+     * so that half of this problem cannot recur silently.
      */
-    const picks = seededShuffle(PHRASE_WORDS, lesson.id).slice(0, lesson.size);
     /**
      * Typeable, and not a fill-in-the-blank template. Two phrases in the
      * corpus ("My name is ...", "I am from ...") are literally templates —
@@ -941,9 +938,35 @@ export function buildLessonExercises(
      * reach `produce` at all.
      */
     const producible = (w: Word) => isTypeable(w) && !w.roman.includes('...') && !w.urdu.includes('...');
-    const produceEligible = picks.filter(producible);
-    const produceCount = Math.min(produceEligible.length, Math.ceil(picks.length / 3));
-    const produceIds = new Set(produceEligible.slice(0, produceCount).map((w) => w.id));
+    /**
+     * URD-023: the draw used to be one uniform pick of `lesson.size` from
+     * all 28 phrases, with `produceCount` computed *afterward* from whatever
+     * happened to land in it — so a draw of fewer than 2 typeable phrases
+     * (8.24% of draws, computed exactly: hypergeometric, 14 of 28 typeable,
+     * 6 drawn without replacement) could not be rescued by any reassignment
+     * of kinds among the 6 it had. Reassignment was never the right place to
+     * fix a fact about what got drawn.
+     *
+     * So the typeable share is guaranteed at the draw instead: `produceCount`
+     * is computed from the target lesson size against the *whole* pool's
+     * eligible count, not the post-draw one, then that many typeable phrases
+     * are drawn first, and the rest of the lesson is filled from everything
+     * left over (typeable phrases beyond `produceCount` included, same as
+     * before — they simply become `meet`/`recall` material). The two draws
+     * use different seed keys so the produce-eligible pick and the
+     * fill-the-rest pick don't shuffle in lockstep, and a final shuffle
+     * mixes the two groups together rather than leaving every produce pick
+     * clustered at the front of `picks` (which would otherwise bias the
+     * `meet`/`recall` alternation below, since that counter only advances on
+     * non-produce phrases).
+     */
+    const eligiblePool = PHRASE_WORDS.filter(producible);
+    const produceCount = Math.min(eligiblePool.length, Math.ceil(lesson.size / 3));
+    const produceDraw = seededShuffle(eligiblePool, `${lesson.id}:produce`).slice(0, produceCount);
+    const produceIds = new Set(produceDraw.map((w) => w.id));
+    const restPool = PHRASE_WORDS.filter((w) => !produceIds.has(w.id));
+    const restDraw = seededShuffle(restPool, lesson.id).slice(0, Math.max(0, lesson.size - produceDraw.length));
+    const picks = seededShuffle([...produceDraw, ...restDraw], `${lesson.id}:order`);
 
     let meetTurn = 0;
     picks.forEach((w) => {
