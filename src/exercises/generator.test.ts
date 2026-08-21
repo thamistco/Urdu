@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildLessonExercises,
   distractLetters,
+  distractorsFor,
   LETTER_CONTEXT_WORD,
   OPTIONS_PER_QUESTION,
   soundsOverlap,
@@ -133,6 +134,71 @@ describe('distractLetters', () => {
     for (const letter of LETTERS) {
       expect(distractLetters(letter, n)).toHaveLength(n);
     }
+  });
+});
+
+describe('URD-049: distractorsFor never offers a homograph of the target or of another option', () => {
+  // `meaningPick`/`wordFromMeaning` show `.urdu` as the text of each option
+  // (`check:answerable`'s own "two options are the same word" rule checks
+  // exactly this), so two distinct WORDS entries sharing a spelling but not
+  // an id — a real homograph pair, 40 of them across the corpus — could
+  // both land in one option set: different words by `.id` and by
+  // `.meaning`, but visually identical on screen. Checked against every
+  // real homograph in the corpus, not a synthetic sample, since this
+  // check:answerable failure was flaky specifically because it depended on
+  // which unseeded shuffle draw happened to surface a colliding pair.
+  const byUrdu = new Map<string, typeof WORDS>();
+  for (const w of WORDS) {
+    if (!byUrdu.has(w.urdu)) byUrdu.set(w.urdu, []);
+    byUrdu.get(w.urdu)!.push(w);
+  }
+  const homographGroups = [...byUrdu.values()].filter((g) => g.length > 1);
+
+  it('has at least one real homograph group to test against — a false pass if the corpus ever loses them all', () => {
+    expect(homographGroups.length).toBeGreaterThan(0);
+  });
+
+  it("never returns a distractor sharing the target's own spelling, forced against a single-candidate pool", () => {
+    // A pool of exactly one candidate — the target's own homograph sibling
+    // — makes this deterministic rather than relying on that one candidate
+    // happening to survive an unseeded shuffle among 2,281 real words. The
+    // original bug was flaky for exactly that reason: it depended on which
+    // draw happened to surface a colliding pair. `distinctMeaning: true`
+    // is deliberately set — a homograph pair has different meanings, so
+    // that guard alone must NOT be what stops this; only the `.urdu` guard
+    // this item added should.
+    for (const group of homographGroups) {
+      for (const word of group) {
+        const siblings = group.filter((w) => w.id !== word.id);
+        for (const sibling of siblings) {
+          const distractors = distractorsFor(word, [sibling], { distinctMeaning: true });
+          expect(
+            distractors.some((d) => d.id === sibling.id),
+            `${word.id} vs ${sibling.id}`
+          ).toBe(false);
+        }
+      }
+    }
+  });
+
+  it('never lets two distractors drawn together share a spelling with each other', () => {
+    // Every real homograph group in the corpus happens to have exactly 2
+    // members, so testing "two DISTRACTORS colliding with each other"
+    // (as opposed to one colliding with the target) needs a constructed
+    // case: two synthetic decoy words, sharing a spelling with each other
+    // but not with the real target, planted at the front of the pool so
+    // an unseeded shuffle can't make this test itself flaky.
+    const target = WORDS[0];
+    const decoyA = { ...WORDS[1], id: 'test-decoy-a', urdu: 'ٹیسٹ', meaning: 'test meaning one' };
+    const decoyB = { ...WORDS[2], id: 'test-decoy-b', urdu: 'ٹیسٹ', meaning: 'test meaning two' };
+    // Just the two decoys, not the whole corpus: `consider` visits every
+    // candidate in a finite pool this small regardless of shuffle order,
+    // so both decoys are guaranteed to be checked against each other here
+    // — a larger pool would make whether they're even considered together
+    // a matter of luck, the same flakiness this whole item exists to fix.
+    const distractors = distractorsFor(target, [decoyA, decoyB], { distinctMeaning: true });
+    const fromDecoys = distractors.filter((d) => d.id === decoyA.id || d.id === decoyB.id);
+    expect(fromDecoys.length).toBeLessThanOrEqual(1);
   });
 });
 

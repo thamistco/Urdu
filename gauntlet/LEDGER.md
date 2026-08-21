@@ -3702,3 +3702,36 @@ New queue item filed: URD-049 (check:answerable homograph-distractor
 flakiness, found by THE CRITIC, unrelated to this item's diff).
 
 branch: claude/gauntlet-sentence-lesson-size
+
+## CLAIMED · URD-049 · 2026-08-21T16:15Z
+files: src/exercises/generator.ts (distractorsFor)
+branch: claude/gauntlet-homograph-distractors
+
+## CRITIQUE · URD-049
+THE CRITIC: no BLOCKING. Confirmed the `usedUrdu.add` placement (before
+later distinctCue/distinctMeaning rejection checks) is a harmless
+conservative tradeoff, identical to the pre-existing usedCues/
+usedMeanings pattern, not a new mistake. Confirmed no export-naming
+collision. Independently reproduced: induced failure (both new tests
+fail clearly with the guard disabled, pass restored), and the 15/15
+clean check:answerable confirmation with the fix in place.
+
+## PASSED · URD-049 · 2026-08-21T16:45Z
+$ for i in 1..20; do npm run check:answerable; done
+  0 of 20 standalone runs failed (fix in place).
+
+$ (fix reverted) for i in 1..15; do npm run check:answerable; done
+  1 of 15 failed with "two options are the same word" — reproduced the
+  original flakiness, confirming the fix is responsible.
+
+$ npx vitest run
+  165 passed (165) — 3 new URD-049 tests, both deterministic (not
+  relying on random collision, unlike the bug they test for).
+
+$ npm run check:all
+  all 27 steps pass, confirmed twice.
+
+Induced failure: disabled the new usedUrdu guard, both new tests failed
+with clear messages — restored and reconfirmed clean.
+
+branch: claude/gauntlet-homograph-distractors

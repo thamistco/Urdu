@@ -429,14 +429,33 @@ function separateConfusables(letters: Letter[]): Letter[] {
 export const OPTIONS_PER_QUESTION = 4;
 const DISTRACTORS = OPTIONS_PER_QUESTION - 1;
 
-function distractorsFor(word: Word, pool: Word[], { distinctCue = false, distinctMeaning = false } = {}): Word[] {
+export function distractorsFor(
+  word: Word,
+  pool: Word[],
+  { distinctCue = false, distinctMeaning = false } = {}
+): Word[] {
   const chosen: Word[] = [];
   const usedCues = new Set<string>([cueOf(word)]);
   const usedMeanings = new Set<string>([word.meaning.toLowerCase()]);
+  // URD-049: two distinct vocabulary entries can be genuine Urdu homographs
+  // (identical spelling, different meaning — 40 such pairs exist, e.g.
+  // w-chashma/w-chashma2, چشمہ meaning both "glasses" and "spring"). Neither
+  // the id check below nor `distinctMeaning` catches this — they're
+  // different words by both those measures — but `meaningPick`/
+  // `wordFromMeaning`'s options show this same `.urdu` spelling on screen,
+  // so two homographs together is two options a learner cannot tell apart
+  // by what's written, exactly the failure `check:answerable`'s own
+  // "two options are the same word" rule exists to catch. Unconditional,
+  // like the `.id` check above it, not gated behind `distinctCue`/
+  // `distinctMeaning`: showing the identical spelling twice is never
+  // answerable, regardless of which other axis a caller cares about.
+  const usedUrdu = new Set<string>([word.urdu]);
   const consider = (candidates: Word[]) => {
     for (const c of shuffle(candidates)) {
       if (chosen.length >= DISTRACTORS) return;
       if (c.id === word.id || chosen.some((x) => x.id === c.id)) continue;
+      if (usedUrdu.has(c.urdu)) continue;
+      usedUrdu.add(c.urdu);
       if (distinctCue) {
         const cue = cueOf(c);
         if (usedCues.has(cue) || VERDICT_CUES.has(cue)) continue;
