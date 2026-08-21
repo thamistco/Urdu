@@ -1,5 +1,5 @@
 import { LETTERS, getLetter, Letter, PositionKey, POSITIONS } from '../data/letters';
-import { WORDS, getWord, wordsByTopic, glossOf, Word, PHRASES } from '../data/words';
+import { WORDS, getWord, wordsByTopic, glossOf, levelOfWord, Word, PHRASES } from '../data/words';
 import { Lesson, ALL_LESSONS } from '../data/units';
 import { getGrammar, type GrammarConcept, type GrammarDrill } from '../data/grammar';
 import { romanAll } from '../lib/translit';
@@ -75,6 +75,80 @@ const getAnyWord = (id: string): Word | undefined =>
  *  random nouns. */
 const poolFor = (w: Word): Word[] =>
   w.topic === 'phrases' ? PHRASE_WORDS : w.topic === 'sentences' ? SENTENCE_WORDS : wordsByTopic(w.topic);
+
+const LEVEL_RANK: Record<string, number> = { beginner: 0, elementary: 1, intermediate: 2, advanced: 3 };
+
+/**
+ * A real vocabulary word containing this letter's own glyph, for the
+ * letters lesson's context sighting (URD-020).
+ *
+ * Real, not synthetic — a first draft of this invented a new 40-word corpus
+ * from `LETTERS[i].word` (each letter's own curated example, e.g. الف →
+ * انار "pomegranate", already shown on `LetterLabScreen` but never before
+ * used by a teaching lesson). THE CRITIC found that BLOCKING: those ids
+ * existed nowhere in `voiceManifest.ts`, so a `listenTap` review question
+ * built from one — reachable in real play, once such a word is SRS-graded
+ * and comes due — asked the learner to identify a word from audio that does
+ * not exist, unanswerable except by guessing. Every entry in `WORDS`
+ * already has a real clip (`check:voice` already requires it), so drawing
+ * from there instead needs nothing new recorded.
+ *
+ * Matched against the word's actual Urdu text, not its roman transliteration
+ * — the old design's bug (URD-021): `letters.ts` stores every letter as one
+ * base codepoint, reshaped only by the script engine for position, so a
+ * plain substring check against `forms.isolated` finds the letter
+ * regardless of where in the word it sits, unlike the old `WORDS.find(w =>
+ * w.roman.toLowerCase().includes(l.sound[0]))`, which matched a
+ * transliteration substring that had nothing to do with whether the word
+ * actually contained the letter. Measured directly: every one of the 40
+ * letters has at least one real match (two are thin — `zhe` has exactly
+ * one, `hamza` three — but none has zero).
+ *
+ * Among the matches, the lowest CEFR level wins: a beginner meeting their
+ * first letters should read the simplest word available that shows one,
+ * not whichever happens to sit first in corpus order.
+ *
+ * Distinct within a teaching group (`Letter.group`, one group per lesson)
+ * wherever a distinct match exists: a word like پانی contains both alif and
+ * pe, and picking each letter's match independently, blind to what the
+ * others in its own lesson already picked, can hand two different letters
+ * in the same sitting the identical word — one fewer piece of real
+ * vocabulary shown, for no benefit. Groups are walked in `LETTERS`' own
+ * order and each letter takes the best match not already claimed by an
+ * earlier letter in the same group, falling back to a repeat only when a
+ * letter has no other match at all (rare — `zhe` has exactly one candidate
+ * in the whole corpus).
+ *
+ * A match immediately followed by `do-chashmi-he` (ھ) is avoided wherever a
+ * clean one exists: CURRICULUM CRITIC found `gaaf`'s best-by-level match,
+ * گھر ("ghar", house), puts گ directly before ھ — the aspirated "gh"
+ * digraph `do-chashmi-he`'s own note already names as a distinct sound,
+ * the same b→bh/k→kh pattern applying to g→gh here — so the word
+ * demonstrates a different sound than the letter being taught. This
+ * reproduces for any letter whose most common word happens to precede an
+ * aspirating combination, not just gaaf, so the guard is general rather
+ * than a one-letter special case.
+ */
+export const LETTER_CONTEXT_WORD: Map<string, Word> = (() => {
+  const map = new Map<string, Word>();
+  const usedByGroup = new Map<number, Set<string>>();
+  const ASPIRATE = 'ھ';
+  for (const l of LETTERS) {
+    const isDigraph = (w: Word) => l.id !== 'do-chashmi-he' && w.urdu.includes(l.forms.isolated + ASPIRATE);
+    const matches = WORDS.filter((w) => w.urdu.includes(l.forms.isolated)).sort((a, b) => {
+      const digraphDiff = Number(isDigraph(a)) - Number(isDigraph(b));
+      if (digraphDiff !== 0) return digraphDiff;
+      return LEVEL_RANK[levelOfWord(a)] - LEVEL_RANK[levelOfWord(b)];
+    });
+    if (!matches.length) continue;
+    const used = usedByGroup.get(l.group) ?? new Set<string>();
+    usedByGroup.set(l.group, used);
+    const best = matches.find((w) => !used.has(w.id)) ?? matches[0];
+    map.set(l.id, best);
+    used.add(best.id);
+  }
+  return map;
+})();
 
 // ---- per-item exercise builders -----------------------------------------
 
@@ -643,16 +717,54 @@ export function buildLessonExercises(
     ).findIndex((l) => l.id === lesson.id);
     const turnOffset = siblingIndex;
     const posOffset = siblingIndex * 3; // a step size coprime with POSITIONS.length (4), so it still cycles
+    /**
+     * URD-020: a learner meeting a completely new script used to spend
+     * 96.8% of their first hours on isolated glyphs — `letterTrace`/
+     * `letterForm`/`letterPick` never show a letter inside a real word, and
+     * the old design added exactly one context-word exercise for the whole
+     * lesson, regardless of how many letters it taught (measured: 276 of
+     * 285 exercises across all 9 letter lessons were isolated-glyph).
+     *
+     * One of each letter's `SIGHTINGS_PER_LETTER` sightings now shows it
+     * inside a real vocabulary word (`LETTER_CONTEXT_WORD`) instead of
+     * alone — replacing an isolated sighting rather than adding a new one,
+     * so total lesson length is unchanged (if anything, one exercise
+     * shorter than before, since the old single shared context word is
+     * gone). `contextRound` is offset by `idx` and `turnOffset` the same
+     * way `turn`/`position` are, for the same reason `posOffset` exists:
+     * two sibling lessons sharing a letter group (`l-1`/`l-1-2`) don't land
+     * every letter's context sighting on the identical round. THE CRITIC:
+     * this does NOT guarantee two letters in the same lesson never share a
+     * round — only 5 rounds are available (round 0 is reserved, see below),
+     * so any group past 5 letters (`l-1`, `l-1-2` at 6; `l-3` at 7) forces
+     * at least one round to carry two context words by pigeonhole. Still
+     * exactly one sighting per letter, never adjacent to itself, just not
+     * evenly spread once a group outgrows the round count.
+     *
+     * Never round 0: CURRICULUM CRITIC found that `(idx + turnOffset) %
+     * SIGHTINGS_PER_LETTER` puts the first letter's (`idx === 0`)
+     * context word at round 0 whenever `turnOffset` is 0 — true for every
+     * lesson except a later sibling — making a *whole word in a script the
+     * learner has never seen* the very first exercise of 8 of the 9 real
+     * letter lessons, including the first lesson in the entire course. A
+     * context sighting is supposed to reinforce a letter already met, not
+     * introduce it; mapping into rounds 1 through 5 instead guarantees
+     * every letter's round-0 sighting is always the isolated introduction
+     * before its context word ever appears.
+     */
+    const contextRound = (idx: number) => 1 + ((idx + turnOffset) % (SIGHTINGS_PER_LETTER - 1));
     for (let round = 0; round < SIGHTINGS_PER_LETTER; round++) {
       letters.forEach((l, idx) => {
+        if (round === contextRound(idx)) {
+          const w = LETTER_CONTEXT_WORD.get(l.id);
+          if (w) {
+            exercises.push(wordExercise(w, poolFor(w), track, 'meet', 0));
+            return;
+          }
+        }
         exercises.push(letterExerciseAt(l, round + idx + turnOffset, round + idx + posOffset));
       });
     }
-    // one word that features these letters, for context
-    const contextWords = letters
-      .map((l) => WORDS.find((w) => w.roman.toLowerCase().includes(l.sound[0])))
-      .filter(Boolean) as Word[];
-    if (contextWords[0]) exercises.push(wordExercise(contextWords[0], WORDS, track, 'meet', 0));
   }
 
   if (lesson.kind === 'phrases') {

@@ -461,10 +461,19 @@ export const LETTERS: Letter[] = [
     sound: 'g',
     connects: true,
     forms: connector('گ'),
-    word: 'گھر',
-    roman: 'ghar',
-    meaning: 'house',
-    emoji: '🏠',
+    // CURRICULUM CRITIC, URD-020: the previous example word, گھر (ghar,
+    // "house"), puts gaaf directly before do-chashmi-he — the aspirated "gh"
+    // digraph do-chashmi-he's own note already names as a distinct sound
+    // from a letter's plain one, the same pattern applying here as g→gh.
+    // Now newly promoted into a real, graded exercise (URD-020: this
+    // `word` field used to be unused by the lesson generator, only shown
+    // on `LetterLabScreen`), a learner hears "ghar," not gaaf's own plain
+    // "g". گلاب (gulab, "rose") keeps gaaf isolated from any digraph.
+    word: 'گلاب',
+    roman: 'gulab',
+    meaning: 'rose',
+    emoji: '🌹',
+    icon: 'flower',
     group: 6,
     note: 'Kaaf with a second stroke on top, the tell for a hard “g”.',
   },
@@ -606,11 +615,19 @@ export const LETTERS: Letter[] = [
       medial: T + 'یـ',
       final: 'ـے',
     },
-    word: 'میز',
-    roman: 'mez',
-    meaning: 'table',
-    emoji: '🪑',
-    icon: 'table',
+    // CURRICULUM CRITIC, URD-020: میز (mez, "table") — م ی ز, choti-ye not
+    // baRi-ye — does not contain this letter's own glyph anywhere, in any
+    // position. Only shown on `LetterLabScreen` before this fix; a lesson
+    // generator search that draws on `Letter.word` would have promoted this
+    // false example into a real, graded exercise. جوتے (joote, "shoes")
+    // ends in ے, the exact final-position "e/ai" sound this letter's own
+    // note below describes — چائے was tried first but `audit-content.js`
+    // caught it already belonging to `hamza` (its ئ, hamza on ye, sits in
+    // the same word), so the two letters would have shared one example.
+    word: 'جوتے',
+    roman: 'joote',
+    meaning: 'shoes',
+    emoji: '👟',
     group: 8,
     note: 'The “big” ye, a wide sweeping tail used at the end of words for the “e/ai” sound.',
   },

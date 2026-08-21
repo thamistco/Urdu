@@ -122,43 +122,6 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-020 — Letter lessons are almost entirely isolated-glyph recognition
-attempts: 0
-files: src/exercises/generator.ts
-definition of done: Across all 9 letter lessons, `letterTrace` + `letterForm`
-  + `letterPick` account for 276 of 285 exercises (96.8%); the remaining 9
-  are one context word per lesson. A learner meeting a completely new script
-  spends nearly all of their first hours on isolated glyphs and almost none
-  reading them inside real words. Raise the share of exercises that show a
-  letter inside an actual word — more than one context word per lesson, or a
-  dedicated "spot the letter in this word" exercise kind — without raising
-  total lesson length past the 3-8 minute band check:shape already holds
-  letter lessons to.
-verify: npm run check:shape -- --kind=letters
-notes: Found by the CURRICULUM CRITIC across two review rounds of URD-013,
-  confirmed unchanged by every fix in that item (the ratio was identical
-  before and after, since none of the three critique rounds touched exercise
-  *kind* composition, only ordering and scheduling). The interleaving fix
-  made the same lopsided material better *spread*, not less lopsided.
-
-## URD-021 — A letter group's context word should touch more than its first letter
-attempts: 0
-files: src/exercises/generator.ts
-definition of done: `contextWords[0]` in the letters-teaching branch keeps
-  only the first hit from mapping every letter in the group to a candidate
-  word, so a 7-letter lesson's one context word reinforces exactly 1 of the
-  7 letters just taught — verified for all 9 lessons, e.g. `l-3`'s context
-  word ("dil") only touches `daal`. The match itself is also weak: a single
-  character (`letter.sound[0]`) tested with `.includes`, so the word is
-  chosen for containing a letter somewhere, not for demonstrating its sound.
-  Either show one context word per letter (budget permitting) or pick a
-  single word that covers more of the group, with a real match rather than a
-  one-character substring test.
-verify: npm run check:shape -- --kind=letters
-notes: Found by the CURRICULUM CRITIC and independently by THE CRITIC while
-  reviewing URD-013; neither round of that item's fixes touched it, since
-  both were scoped to ordering, duplication and scheduling.
-
 ## URD-022 — Letters that look alike should not be drilled as if they don't
 attempts: 0
 files: src/exercises/generator.ts, src/data/letters.ts
@@ -795,3 +758,32 @@ notes: Found by THE CRITIC reviewing URD-019. Not blocking — traced every
   infrastructure, not just adding one more `.test.ts` file next to the
   others — scope it as that rather than underestimating it as "one more
   test."
+
+## URD-045 — A letter's context sighting never asks the learner to find the letter in the word
+attempts: 0
+files: src/exercises/types.ts, src/exercises/generator.ts, src/exercises/*.tsx
+definition of done: URD-020 gave every letter a real-word context sighting,
+  but the exercise kinds it can produce (`multipleChoice`/`meaningPick`/
+  `listenTap`) are the same whole-word recognition questions used for
+  ordinary vocabulary everywhere else in the app — none of them highlight
+  or ask about the specific taught letter inside the word. A learner
+  answers correctly by picture/meaning matching without ever needing to
+  find or name the letter's shape within it, so the sighting shows a letter
+  in context without testing that the learner can actually read it there.
+  Build a dedicated exercise kind that asks the learner to identify the
+  taught letter's position/occurrence inside its context word (e.g. tap
+  which tile/segment of the written word is the letter just taught), and
+  give it one of the context-sighting slots `LETTER_CONTEXT_WORD`
+  (`generator.ts`) already assigns.
+verify: a test asserting a letter lesson's context-sighting exercise
+  requires identifying the letter's position within the shown word, not
+  just its whole-word meaning.
+notes: Found by CURRICULUM CRITIC reviewing URD-020. Not blocking — URD-020
+  itself offered two designs ("more than one context word per lesson, or a
+  dedicated 'spot the letter' exercise kind") and correctly scoped its own
+  fix to the first, cheaper one, entirely within `generator.ts`. This is the
+  second, bigger design the item named but did not attempt — a new exercise
+  kind touches new UI (`src/exercises/*.tsx`), new answerability rules
+  (`check-answerable.js`), and `check:coverage`'s exercise-kind audit, not
+  just content-generation logic, so it is real, separate work rather than a
+  gap in URD-020's own delivery.
