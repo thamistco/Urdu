@@ -122,33 +122,6 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-026 — Sentences drill grammar the learner hasn't been taught yet, now 3x
-attempts: 0
-files: src/exercises/generator.ts (readableSentences), src/data/units.ts
-definition of done: `readableSentences` filters a sentence pool on
-  individual word forms only — it has no notion of whether the
-  *grammatical construction* a sentence illustrates (future tense,
-  ability, obligation, comparative...) has been taught by a `G()` lesson
-  yet. Measured against the real path order: `s-intermediate` (units.ts,
-  an elementary-unit lesson) draws sentences tagging g-future/g-ability/
-  g-obligation/g-comparative in 6 of 8 picks, all taught 90-115
-  lesson-positions later; `s-intermediate-2` draws 8 of 8 untaught. Give
-  `readableSentences` (or `S()`) a concept-readiness filter mirroring how
-  word-level readiness already works, or move the two offending lessons
-  later in the path so their prerequisite concepts are already taught.
-verify: a script cross-referencing each sentences lesson's drawn sentence
-  ids against ALL_LESSONS grammar-teaching order reports 0 lessons with a
-  drawn sentence whose tagged concept is taught later in the path.
-notes: Found by CURRICULUM CRITIC reviewing 0453fa7. Pre-existing — the
-  word-only filter and the two lessons' placement both predate this
-  commit — but this commit is what first pipes that exposure into SRS
-  (via meaningPick/wordFromMeaning's `gradeItem` calls) and triples how
-  often an under-taught construction is shown in one sitting. Same shape
-  as the letters SRS-defeat bug fixed generically this session
-  (src/lib/sessionGrading.ts), applied to grammar readiness instead of
-  scheduling — an existing gap this project has already been burned by
-  once, now amplified by a length change rather than caused by one.
-
 ## URD-027 — 68% of the sentence pool is never drawn by any lesson
 attempts: 0
 files: src/exercises/generator.ts, src/data/sentences.ts, scripts/
@@ -170,6 +143,15 @@ notes: Found by CURRICULUM CRITIC reviewing 0453fa7, who was explicitly
   class gauntlet/ROLES.md names as the project's founding motivation
   ("a full playthrough... reached 608 of its 2,281 words"), now confirmed
   present for sentences too and previously unmeasured.
+
+  FOOTNOTE from URD-026 (grammar-concept readiness filter): re-measure
+  before attempting this — URD-026's fix changed WHICH sentences are
+  reachable without changing the aggregate share. Reachability is now
+  81/256 (31.6%) still, but 41 of the original 81 reachable sentences were
+  replaced by 41 different ones (concept-gated out, others let back in).
+  The old per-level reachable-id lists this item's own numbers imply
+  (beginner 22/67 etc.) no longer name the same sentences — re-run the
+  measurement rather than reuse the cached list.
 
 ## URD-028 — check:coverage cannot see meaningPick/wordFromMeaning sentence-derived exercises
 attempts: 0

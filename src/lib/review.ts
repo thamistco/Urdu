@@ -81,6 +81,32 @@ export function taughtUpTo(lessonId: string): TaughtPool {
 }
 
 /**
+ * URD-026: which grammar concepts a `G()` lesson has already taught by the
+ * time a learner reaches `lessonId` — the same walk-the-path-and-break
+ * pattern `taughtUpTo` uses for letters and words, applied to grammar
+ * concepts instead, since nothing tracked concept readiness at all before
+ * this. Word-level readiness already existed (`readableFormsAt`,
+ * `generator.ts`) and caught a real bug (a sentence using a word before its
+ * teaching lesson) — this is the same guarantee for the grammatical
+ * *construction* a sentence illustrates, which the word-level filter cannot
+ * see: a sentence can pass every word through `readableFormsAt` while still
+ * being built entirely around a tense or case the learner has never met.
+ *
+ * A lesson id placed nowhere on the path returns every concept the course
+ * ever teaches, end to end — the same honest fallback `taughtUpTo` gives for
+ * letters/words, for the same reason (a synthetic practice lesson has no
+ * position to stop at).
+ */
+export function taughtConceptsUpTo(lessonId: string): ReadonlySet<string> {
+  const concepts = new Set<string>();
+  for (const l of ALL_LESSONS) {
+    if (l.kind === 'grammar' && l.conceptId) concepts.add(l.conceptId);
+    if (l.id === lessonId) break;
+  }
+  return concepts;
+}
+
+/**
  * What share of a review's fallback questions should be letters rather than
  * words, given how much of each the course has taught by that point.
  *
