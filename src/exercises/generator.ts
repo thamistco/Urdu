@@ -629,6 +629,73 @@ function sentenceExercise(sentence: Sentence, track: LearnTrack): Exercise | und
   return { kind: 'sentenceBuild', sentence, tiles, romanTiles };
 }
 
+/**
+ * URD-025: the meet-recall-produce climb shared by `sentences` lessons and
+ * `grammar`'s sentence-reinforcement tail — factored into one function so
+ * the two call sites cannot drift back out of sync the way they already
+ * had once (found as a line-for-line copy of the same structure, discovered
+ * when reviewing this item).
+ *
+ * A sentence is judged and graded as one opaque string — `sentenceBuild`
+ * (`produce`, tiles assembled into the sentence) is the only kind that
+ * makes the learner place its words in order; `meaningPick`/`wordFromMeaning`
+ * (`meet`/`recall`) both test whole-sentence recognition, never
+ * segmentation. `sentences.ts`'s own header and gauntlet/BENCHMARKS.md both
+ * name sentence-building as the exercise this app's word-order teaching
+ * depends on — the reason to choose Harf over a recognition-only app — so a
+ * climb giving it 1 of 3 reps per sentence handed the two recognition kinds,
+ * combined, 2 of 3 (66.7%) against production's 33.3%.
+ *
+ * `produce`, `meet`, and `recall` at 2:1:2 over 5 turns (40% / 20% / 40%)
+ * is what this function gives instead — not the 2:1:1-over-4 "produce is
+ * the outright majority" shape the item's own text names as one option.
+ * That shape was tried first and rejected here on a fact this file's own
+ * `check:shape` disagreement caught immediately: `MAX_SHARE` (check-shape.js)
+ * caps *every* exercise kind, including `produce`, at 40% of the lesson —
+ * so no ratio can put any one kind at or above 50% without check:shape's
+ * own share rule failing, which the item's own verify command runs. Worked
+ * out directly (not assumed): making `produce` strictly outnumber *each* of
+ * `meet` and `recall` individually, while every kind stays ≤40%, needs at
+ * least 10 turns per sentence (4 produce / 3 meet / 3 recall is the cheapest
+ * integer split satisfying both) — more than triple today's 3, which pushes
+ * every real sentences and grammar lesson well past the 8 minute ceiling
+ * (measured: an 8-sentence lesson at 10 turns each is 12 minutes). 2:1:2 is
+ * the best achievable shift within that hard ceiling: `produce` moves from
+ * tied-for-least to *tied for the single most frequent kind* (with
+ * `recall`, both at the 40% ceiling itself), and the combined-recognition
+ * share falls from 66.7% to 60% — `meet`, the purely passive recognition
+ * kind, is the one that gives up a turn, since `recall` (retrieval from
+ * meaning) is already a step closer to production than plain recognition
+ * and is kept level with `produce` rather than cut.
+ *
+ * `turn = (round + idx) % 5` cycles meet → produce → recall → produce →
+ * recall as `idx` increases by one, so the two `produce` turns (1 and 3)
+ * are never adjacent within a round — always separated by a `recall` in
+ * the cycle — the same reasoning the 3-turn version relied on for its own
+ * no-adjacent-repeat guarantee, re-verified for this cycle length directly
+ * against real generated output. The round-boundary caveat the 3-turn
+ * version documented — the last turn of one round and the first of the
+ * next can coincide — is unchanged in kind, just re-measured at this cycle
+ * length (see `generator.test.ts`'s URD-025 tests).
+ */
+function sentenceReinforceClimb(picks: Sentence[], pool: Word[], track: LearnTrack, exercises: Exercise[]): void {
+  const ROUNDS = 5;
+  for (let round = 0; round < ROUNDS; round++) {
+    picks.forEach((sen, idx) => {
+      const turn = (round + idx) % ROUNDS;
+      const w = SENTENCE_WORDS.find((x) => x.id === sen.id);
+      if (!w) return;
+      if (turn === 1 || turn === 3) {
+        const ex = sentenceExercise(sen, track);
+        if (ex) exercises.push(ex);
+      } else {
+        const ex = wordExercise(w, pool, track, turn === 0 ? 'meet' : 'recall', 1);
+        exercises.push(ex);
+      }
+    });
+  }
+}
+
 /** The same, for a grammar drill: its options are inflected forms, and the
  *  Roman track needs all four of them transliterated or none. */
 function grammarDrillExercise(concept: GrammarConcept, drill: GrammarDrill, track: LearnTrack): Exercise | undefined {
@@ -1171,38 +1238,43 @@ export function buildLessonExercises(
       const picks = seededShuffle(related, lesson.id).slice(0, GRAMMAR_SENTENCE_TARGET);
       // Below GRAMMAR_SENTENCE_TARGET *readable* sentences, the climb below
       // is still correct — `.slice` just returns what there is — but the
-      // lesson comes up short of the 3-8 minute band. Three concepts land
-      // there: g-pronouns and g-ability have only 5 tagged sentences each,
-      // all 5 readable. g-plurals has 4 tagged but only 3 readable at its
-      // lesson position — `readableSentences` above drops one for using a
-      // word ("میز") not yet taught there — so "tagged" and "usable" are not
-      // the same count and neither should be read off the other. Documented
-      // rather than solved by repeating one of the too-few sentences a 4th
-      // time, which would show the identical question twice in one sitting.
-      // See URD-029, which also tracks whether g-plurals' gap is cheaper to
-      // fix by repositioning or re-tagging than by treating it as pure
-      // content scarcity.
+      // lesson comes up short of the 3-8 minute band. Three concepts landed
+      // there before URD-025: g-pronouns and g-ability had only 5 tagged
+      // sentences each, all 5 readable; g-plurals had 4 tagged but only 3
+      // readable at its lesson position — `readableSentences` above drops
+      // one for using a word ("میز") not yet taught there — so "tagged" and
+      // "usable" are not the same count and neither should be read off the
+      // other. URD-025's extra `sentenceReinforceClimb` round happened to
+      // lengthen these three enough to move two of them into the band —
+      // g-pronouns (2.7→4.2 min) and g-ability (2.55→4.05 min) now clear it
+      // — but g-plurals (1.8→2.7 min) still falls short at 3 readable
+      // sentences, since no ratio of a fixed-size climb can add exercises
+      // beyond what's needed to keep each kind under check:shape's own 40%
+      // share ceiling. Not fixed here: g-plurals' shortfall is a content
+      // problem (too few readable sentences tagged to it), not a climb-ratio
+      // one, and this item's own files are the generator, not the sentence
+      // corpus. Left open, tracked by URD-029 (updated to reflect the
+      // current, smaller gap) rather than papered over with an extra round
+      // for one concept alone.
       //
       // Distractors are drawn from every sentence at this concept's level,
       // not just the handful picked for this lesson — the same reason
       // `sentences` gives `wordExercise` the whole level's pool rather than
-      // just its own picks: a small `picks` (as few as 4 for the thinnest
-      // concepts) is not enough source material for four distinct options.
+      // just its own picks: a small `picks` (as few as 3 for the thinnest
+      // concept) is not enough source material for four distinct options.
+      //
+      // Same climb, same ratio as `sentences` — not a lighter one, even
+      // though `grammarDrill` above already tests this concept's inflected
+      // forms directly. The two are complementary, not redundant: a drill's
+      // options are already-correct forms, so choosing among them tests
+      // which form is right; `sentenceBuild`'s tiles are also already
+      // correctly inflected, and what it tests is word ORDER — a skill
+      // `grammarDrill` never touches. Doubling `sentenceBuild` here doesn't
+      // re-drill what the drills already covered; it drills something nothing
+      // else in this lesson does. (CURRICULUM CRITIC asked this be said
+      // explicitly rather than left as a silent default — done here.)
       const reinforcePool = SENTENCE_WORDS.filter((w) => w.level === c.level);
-      for (let round = 0; round < 3; round++) {
-        picks.forEach((sen, idx) => {
-          const turn = (round + idx) % 3;
-          const w = SENTENCE_WORDS.find((x) => x.id === sen.id);
-          if (!w) return;
-          if (turn === 2) {
-            const ex = sentenceExercise(sen, track);
-            if (ex) exercises.push(ex);
-          } else {
-            const ex = wordExercise(w, reinforcePool, track, turn === 0 ? 'meet' : 'recall', 1);
-            exercises.push(ex);
-          }
-        });
-      }
+      sentenceReinforceClimb(picks, reinforcePool, track, exercises);
     }
   }
 
@@ -1213,59 +1285,21 @@ export function buildLessonExercises(
       lesson.size
     );
     /**
-     * Every sentence met three times — recognise its meaning, retrieve it
-     * from the meaning, then build it from tiles — the same meet-recall-
-     * produce climb `vocab` uses, and for the same reason `sentenceBuild`
-     * alone was: one exercise per sentence at the default size of 5 is 0.8
-     * minutes, an interruption rather than a sitting.
+     * Every sentence met five times through `sentenceReinforceClimb` (see its
+     * own doc comment for the full reasoning, including why 2:1:2 rather
+     * than a naive "give produce the majority" split): recognise its
+     * meaning once, retrieve it from the meaning twice, build it from tiles
+     * twice — `produce` tied for the single most frequent kind (URD-025)
+     * rather than tied for least, on the same climb `vocab` uses for its
+     * own three kinds.
      *
-     * `sentenceExercise` (the `produce` sighting) was the *only* kind a
-     * sentence could ever appear in, so simply asking for more sentences
-     * could not fix the length without also fixing the shape: past six
-     * exercises, a lesson built entirely from it is 100% one kind, exactly
-     * what `check:shape`'s share rule exists to catch — the same trap
-     * letters and phrases were both in before their own fixes. `meaningPick`
-     * (show the sentence, ask its meaning) and `wordFromMeaning` (show the
-     * meaning, ask for the sentence) are the two more kinds available
-     * without new UI, the same move `PHRASE_WORDS` made for phrases: reshape
-     * the content as a `Word` and let it flow through the exercises that
-     * already exist for one.
-     *
-     * Round-major, offset by the sentence's own position — the same
-     * structure letters landed on after shipping the wrong one first:
-     * locking the kind to the round alone put every sentence in a round
-     * through the identical kind, back to back, sentences-per-lesson times
-     * running. `turn = (round + idx) % 3` instead means every sentence still
-     * visits all three kinds across its three sightings (adding 0, 1, 2 to a
-     * fixed `idx` mod 3 is a permutation of the three), it just starts at a
-     * different one, so two CONSECUTIVE sentences within one round never
-     * share a kind.
-     *
-     * That guarantee stops at the round boundary, on purpose rather than by
-     * oversight: the last sentence of one round and the first of the next
-     * can land on the same turn (measured: `idx` 7 of an 8-sentence lesson
-     * closes round 0 on `recall`, and `idx` 0 opens round 1 on `recall`
-     * too), so the real worst case is two in a row, not zero. Left as is —
-     * two is under check:shape's MAX_RUN of 3 with room, and the fix for it
-     * (offsetting the round itself, the same lesson-to-lesson trick used for
-     * letters) buys uniformity the check does not ask for at the cost of
-     * complexity that would need its own re-verification.
+     * This call site and `grammar`'s sentence-reinforcement tail used to
+     * carry this logic twice, line for line — URD-025 factored it into one
+     * function specifically so the two cannot drift back out of sync the
+     * way they already had once.
      */
     const sentencePool = SENTENCE_WORDS.filter((w) => !lesson.level || w.level === lesson.level);
-    for (let round = 0; round < 3; round++) {
-      picks.forEach((sen, idx) => {
-        const turn = (round + idx) % 3;
-        const w = SENTENCE_WORDS.find((x) => x.id === sen.id);
-        if (!w) return;
-        if (turn === 2) {
-          const ex = sentenceExercise(sen, track);
-          if (ex) exercises.push(ex);
-        } else {
-          const ex = wordExercise(w, sentencePool, track, turn === 0 ? 'meet' : 'recall', 1);
-          exercises.push(ex);
-        }
-      });
-    }
+    sentenceReinforceClimb(picks, sentencePool, track, exercises);
   }
 
   if (lesson.kind === 'dialogue') {

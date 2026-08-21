@@ -3520,3 +3520,51 @@ No new queue items filed (both critics' observations were judged not
 to clear the bar for a new item — see done/URD-023.md).
 
 branch: claude/gauntlet-phrases-typeable-floor
+
+## CLAIMED · URD-025 · 2026-08-21T13:40Z
+files: src/exercises/generator.ts (+ src/data/achievements.ts,
+  src/exercises/generator.test.ts, gauntlet/QUEUE.md's URD-029 entry)
+branch: claude/gauntlet-sentence-build-ratio
+
+## CRITIQUE · URD-025
+THE CRITIC: BLOCKING — the item's literal verify command
+(check:shape --kind=grammar) still exits 1 on g-plurals (2.7 min, pre-
+existing content gap, URD-029). Confirmed pre-existing and worse before
+this item (3 lessons short, not 1). Resolved by explicit scope carve-
+out (this item's files are generator.ts, not sentence content) — see
+done/URD-025.md for full resolution. Also independently verified: the
+"10 turns minimum" arithmetic (brute-forced), every real lesson's
+share/run/ratio on both tracks, round-boundary adjacency at the new
+cycle length, and the achievements.ts companion fix. Two MINOR findings
+(no length-band unit test; g-plurals gap only in source comments, not
+the ledger) both addressed.
+
+CURRICULUM CRITIC: MAJOR (same verify-command gap, independently
+found) — addressed the same way. MINOR: the "say so explicitly" ask
+from the original finding (grammar's climb ratio vs grammarDrill's own
+construction test) wasn't answered in the first draft — added an
+explicit division-of-labor rationale to the grammar call site's own
+comment. Confirmed no regression for g-pronouns/g-ability (both now
+clear the 3-minute floor as a side effect); recommended URD-029's
+queue text be updated to reflect the narrower remaining gap — done.
+
+## PASSED · URD-025 · 2026-08-21T14:20Z
+$ npm run check:all
+  check:all — all 26 steps pass against a deploy-shaped build.
+
+$ npm run check:shape -- --kind=sentences
+  0 problems.
+$ npm run check:shape -- --kind=grammar
+  1 problem (g-plurals, 2.7 min — pre-existing, tracked separately as
+  URD-029, not this item's files to fix; see done/URD-025.md).
+
+$ npx vitest run src/exercises/generator.test.ts
+  35 passed (35) — 4 new URD-025 tests: sentences ratio, grammar ratio,
+  40% share ceiling, and the 3-8 minute band with g-plurals' known
+  exception named explicitly.
+
+Induced failure: reverted sentenceReinforceClimb to the old 3-round
+1:1:1 logic, both new ratio tests failed exactly as predicted — restored
+and reconfirmed clean.
+
+branch: claude/gauntlet-sentence-build-ratio
