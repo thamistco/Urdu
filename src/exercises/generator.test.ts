@@ -663,17 +663,21 @@ describe('URD-027: sibling "sentences" lessons at the same level draw disjoint s
   // what a sibling lesson at the same level had already drawn — measured:
   // only 81 of 256 sentences (31.6%) were ever reachable course-wide.
   // `sentencesForLesson` (generator.ts) now excludes whatever an earlier
-  // sibling already drew, so within a level, coverage reaches its real
-  // ceiling — the sum of that level's lesson sizes — rather than falling
-  // short of it to accidental overlap. `check:sentence-coverage`
-  // (scripts/) holds the same invariant whole-course; this is the fast,
-  // pure-logic companion.
+  // sibling already drew. `check:sentence-coverage` (scripts/) holds the
+  // same invariant whole-course; this is the fast, pure-logic companion.
+  //
+  // The real invariant is zero overlap, not "every lesson reaches its
+  // designed size" — URD-048 found a real case (`s-intermediate`/
+  // `s-intermediate-2`) where two siblings share a readable-at-position
+  // pool too thin to fill both combined slots distinctly, and
+  // `sentencesForLesson` deliberately draws a lesson short there rather
+  // than reuse a sibling's sentence. Asserting the stricter "always hits
+  // capacity" version here would fail on that honest, correct behavior.
   const LEVELS = ['beginner', 'elementary', 'intermediate', 'advanced'] as const;
 
-  it("reaches each level's full lesson-capacity ceiling, with zero overlap between siblings", () => {
+  it('never lets two sibling "sentences" lessons at the same level share a sentence', () => {
     for (const level of LEVELS) {
       const lessons = UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'sentences' && l.level === level);
-      const capacity = lessons.reduce((s, l) => s + l.size, 0);
       const seenIds = new Set<string>();
       let totalPicked = 0;
       for (const l of lessons) {
@@ -686,7 +690,6 @@ describe('URD-027: sibling "sentences" lessons at the same level draw disjoint s
       // equals the union's size — if a sibling had repeated another's pick,
       // the union would be smaller than the sum.
       expect(seenIds.size, level).toBe(totalPicked);
-      expect(seenIds.size, level).toBe(capacity);
     }
   });
 

@@ -812,11 +812,20 @@ function readableSentences(pool: Sentence[], lessonId: string): Sentence[] {
  * false 100%, the same "document the deliberate exemption" escape hatch
  * this item's own definition of done offers.
  *
- * Falls back to allowing a repeat only if a lesson's own readable-and-
- * unclaimed pool is too thin to fill it — not expected today (every real
- * level's readable pool is far larger than any one lesson's size, measured
- * directly) but a lesson with nothing new left to show is worse than one
- * with one repeat.
+ * Never reuses a sentence an earlier sibling already claimed, even if that
+ * leaves a lesson short of its own `size` — URD-048 (raising `sentences`-
+ * lesson size to close more of the reachability gap) found a real case
+ * where two adjacent siblings at the same level (`s-intermediate`,
+ * `s-intermediate-2`) share a readable-at-position pool too thin (16) to
+ * supply both their combined slots (20) distinctly. An earlier version of
+ * this function fell back to reusing a claimed sentence there — silently
+ * reintroducing the exact "a sibling repeats what another already showed"
+ * defect this whole function exists to prevent, discovered only because
+ * `check:sentence-coverage` measured the real union size rather than
+ * trusting the naive lesson-size-sum as an assumed ceiling. A lesson a
+ * little short of its designed length is a known, honest tradeoff;
+ * silently repeating a sibling's sentence is the bug this file's own
+ * history (URD-027) was written to close.
  *
  * CURRICULUM CRITIC, reviewing this item: raising the aggregate ceiling
  * says nothing about *which* sentences fill it, and a uniform random draw
@@ -871,8 +880,7 @@ function sentencesForLesson(lesson: Lesson): Sentence[] {
 
   const rest = unclaimed.filter((s) => !pickedIds.has(s.id));
   const need = lesson.size - picks.length;
-  const drawFrom = rest.length >= need ? rest : readable.filter((s) => !pickedIds.has(s.id));
-  return [...picks, ...seededShuffle(drawFrom, lesson.id).slice(0, need)];
+  return [...picks, ...seededShuffle(rest, lesson.id).slice(0, need)];
 }
 
 /** Every word form the course teaches anywhere, so an untaught-by-anyone form

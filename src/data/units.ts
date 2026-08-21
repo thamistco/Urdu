@@ -160,7 +160,25 @@ const G = (conceptId: string, title: string, subtitle: string, xp = 25, size = 6
  * rather than trusting this number, same as everywhere else `size` is a
  * budget and not a count.
  */
-const S = (level: Level, title: string, subtitle: string, xp = 20, size = 8): Lesson => ({
+/**
+ * URD-048: `size` was 8 — 45s of exercises per sentence
+ * (`sentenceReinforceClimb`, `generator.ts`, URD-025) is 6.0 minutes at 8,
+ * comfortably under `check:shape`'s 8-minute ceiling with room for 10.67
+ * sentences (450s) before crossing it. 10 is the largest value still
+ * inside the band (450s = 7.5 min), verified against real generated
+ * output rather than estimated: raises course-wide sentence-pool
+ * reachability (`sentencesForLesson`, URD-027) from 96/256 (37.5%) to
+ * 116/256 (45.3%), with zero new check:shape length/share/run violations.
+ * (115/256 was the pre-implementation estimate; the real number differs by
+ * one because raising `size` to 10 exposed a genuine position-scarcity
+ * case — `s-intermediate` and `s-intermediate-2` share a too-thin readable
+ * pool — that `sentencesForLesson` now handles by drawing one lesson short
+ * rather than reusing a sibling's sentence; see its own doc comment.) Not
+ * a complete fix for reachability — elementary alone would need size 35
+ * (~26 minutes) for full parity with its pool, more than 3x this ceiling
+ * — see URD-027/URD-048 in gauntlet/done for the rest of that story.
+ */
+const S = (level: Level, title: string, subtitle: string, xp = 20, size = 10): Lesson => ({
   id: uid(`s-${level}`),
   title,
   subtitle,
