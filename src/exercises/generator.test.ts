@@ -507,3 +507,66 @@ describe('URD-022: visually confusable letters are not drilled back to back', ()
     }
   });
 });
+
+describe('URD-023: a phrases lesson always draws enough typeable phrases to clear the share floor', () => {
+  /**
+   * A phrases lesson has exactly three reachable kinds (`typeWord`,
+   * `meaningPick`, `wordFromMeaning` — see the generator's own doc comment
+   * on the `phrases` branch), so no single kind may exceed 40% of the
+   * lesson (`check:shape`'s share rule). Before this fix, the draw of 6 from
+   * 28 phrases was uniform with no floor on how many were typeable, and
+   * `produceCount` was computed *after* the draw — so a draw of fewer than
+   * 2 typeable phrases (8.24% of draws, hypergeometric: 14 of 28 typeable, 6
+   * drawn) could not be rescued by any reassignment. Many synthetic lesson
+   * ids stand in for many draws, the same way the real course only ever
+   * exercises one seed.
+   */
+  const KINDS: Array<'typeWord' | 'meaningPick' | 'wordFromMeaning'> = ['typeWord', 'meaningPick', 'wordFromMeaning'];
+  const phrasesLesson = (id: string): Lesson => ({
+    id,
+    title: 'synthetic phrases lesson',
+    subtitle: '',
+    icon: '💬', // audit:emoji-ok — matches the real P() lesson's own icon (units.ts)
+    kind: 'phrases',
+    xp: 20,
+    size: 6,
+  });
+
+  it('never lets one exercise kind exceed 40% of the lesson, across many synthetic draws', () => {
+    for (let i = 0; i < 500; i++) {
+      const lesson = phrasesLesson(`synthetic-phrases-${i}`);
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      const counts = { typeWord: 0, meaningPick: 0, wordFromMeaning: 0 };
+      for (const e of exercises) {
+        if (e.kind in counts) counts[e.kind as keyof typeof counts]++;
+      }
+      const maxShare = Math.max(...KINDS.map((k) => counts[k])) / exercises.length;
+      expect(maxShare, `${lesson.id}: ${JSON.stringify(counts)}`).toBeLessThanOrEqual(0.4);
+    }
+  });
+
+  it('draws at least 2 typeable phrases into a 6-phrase lesson, every time', () => {
+    // The specific guarantee the fix makes at the draw, not just its
+    // downstream consequence (the share floor above) — asserted directly so
+    // a future change that keeps the share floor by some other accident
+    // still has to keep this property too.
+    for (let i = 0; i < 500; i++) {
+      const lesson = phrasesLesson(`synthetic-phrases-${i}`);
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      const produced = exercises.filter((e) => e.kind === 'typeWord').length;
+      expect(produced, lesson.id).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it('the real, shipped phrases lesson clears the floor', () => {
+    const lesson = UNITS.flatMap((u) => u.lessons).find((l) => l.kind === 'phrases');
+    expect(lesson, 'no phrases lesson found in the real course').toBeDefined();
+    const exercises = buildLessonExercises(lesson!, [], 'both', new Set());
+    const counts = { typeWord: 0, meaningPick: 0, wordFromMeaning: 0 };
+    for (const e of exercises) {
+      if (e.kind in counts) counts[e.kind as keyof typeof counts]++;
+    }
+    const maxShare = Math.max(...KINDS.map((k) => counts[k])) / exercises.length;
+    expect(maxShare, JSON.stringify(counts)).toBeLessThanOrEqual(0.4);
+  });
+});

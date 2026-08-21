@@ -122,32 +122,6 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-023 — Guarantee a phrases lesson has enough typeable phrases, not just reassign after drawing
-attempts: 0
-files: src/exercises/generator.ts
-definition of done: The phrases branch draws 6 phrases uniformly from all 28
-  with no floor on how many are typeable, then assigns exercise kinds among
-  whatever it drew. When fewer than 2 of the 6 are typeable — 8.24% of draws,
-  computed exactly (hypergeometric, 14 of 28 typeable, 6 drawn) — no
-  reassignment can keep any kind under check:shape's 40% share, which is a
-  fact about dividing six things three ways with two producible, not
-  something the assignment logic can fix after the fact. The lesson that
-  ships today draws 3 typeable and clears it, but that is this draw's luck.
-  Fix it at the draw, not the reassignment: bias `seededShuffle`'s pick so at
-  least `produceCount` of the drawn phrases are typeable, then fill the rest
-  freely. A test asserts every one of many synthetic lesson ids at size 6
-  clears the 40% share floor, not just the one that ships.
-verify: npm run check:shape -- --kind=phrases
-notes: Found by THE CRITIC reviewing URD-012, across two review rounds. The
-  first round's fix (target-based reassignment instead of greedy) closed the
-  ordering-dependence half of the problem; this is the other half, and
-  cheaper than the two alternatives named when it was first found — a fourth
-  exercise kind that doesn't depend on typeability, or growing the lesson
-  size so the law of large numbers does the work. check:shape does not catch
-  this today only because the one real lesson happens not to trigger it;
-  it would catch a future one before it shipped, which is why this is MAJOR
-  and not BLOCKING.
-
 ## URD-025 — A sentence-derived climb should lean on sentenceBuild, not recognition
 attempts: 0
 files: src/exercises/generator.ts

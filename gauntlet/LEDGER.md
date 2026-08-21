@@ -3476,3 +3476,47 @@ temporal separation alone does not provide). Both checked against
 QUEUE.md and done/ for duplicates first — none found.
 
 branch: claude/gauntlet-letter-confusability
+
+## CLAIMED · URD-023 · 2026-08-21T07:15Z
+files: src/exercises/generator.ts (+ src/exercises/generator.test.ts)
+branch: claude/gauntlet-phrases-typeable-floor
+
+## CRITIQUE · URD-023
+THE CRITIC: no BLOCKING. Verified the share-floor guarantee holds at
+every lesson size P() (units.ts) accepts, by hand and by script;
+confirmed no arithmetic underflow/duplication; confirmed determinism
+against seededShuffle's real implementation; independently recomputed
+the 8.24% hypergeometric figure. Flagged (non-blocking) that biasing
+the draw changes which 6 of 28 phrases the one shipped lesson teaches
+(measured: 1 of 6 survives), for curriculum judgment.
+
+CURRICULUM CRITIC: reviewed that flag, no MAJOR/MINOR. No project
+convention promises lesson-content stability across a code change for
+any lesson kind; check:coverage doesn't cover phrases; every other
+lesson kind already reshuffles under a content/algorithm edit the same
+way. Considered and declined a "keep old draw when it already clears
+the floor" refinement — real but low-value given one real lesson and
+no tracked progress-preservation concern.
+
+## PASSED · URD-023 · 2026-08-21T07:40Z
+$ npm run check:all
+  check:all — all 26 steps pass against a deploy-shaped build. No
+  failures anywhere in the run (checked the full log).
+
+$ npx vitest run src/exercises/generator.test.ts
+  31 passed (31) — 3 new URD-023 tests: share floor over 500 synthetic
+  draws, ≥2 typeable phrases over 500 synthetic draws, the real shipped
+  lesson directly.
+
+$ node -e "... 2000 synthetic phrases lessons at size 6 ..."
+  0 draws with fewer than 2 typeable phrases, 0 single-kind shares over
+  40%, out of 2000 — measured, not assumed.
+
+Induced failure: reverted to the old single-draw-then-reassign logic,
+both new tests failed exactly as predicted (a draw landing 1 typeable
+phrase, 50% share) — restored and reconfirmed clean.
+
+No new queue items filed (both critics' observations were judged not
+to clear the bar for a new item — see done/URD-023.md).
+
+branch: claude/gauntlet-phrases-typeable-floor
