@@ -122,28 +122,6 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-019 — Grade a lesson's own improvement, not just its first guess
-attempts: 0
-files: src/lib/sessionGrading.ts, src/lib/sessionGrading.test.ts, src/screens/LessonScreen.tsx
-definition of done: `shouldUpdateSrs` caps SRS advancement to the first
-  sighting of an item per lesson visit, which fixed a real bug (six correct
-  sightings walking a letter's interval to 98 days) but chose the wrong
-  sighting to trust: a learner who answers wrong, then right five times
-  running in the same sitting, leaves with identical SRS state to one who
-  answered wrong six times, because the first grade is the one that sticks.
-  Grade on the *last* sighting of an item in the session instead, still
-  capped to one `gradeItem` call per item per visit. A test asserts a
-  wrong-then-five-right sequence and an all-wrong sequence produce different
-  SRS states for the same item.
-verify: npm test -- src/lib/sessionGrading.test.ts
-notes: Found by the CURRICULUM CRITIC reviewing URD-013, who also gave the
-  fix: overwrite-and-defer rather than gate-and-skip, so the value stored is
-  always the most recent grade and `gradeItem` still fires once, after the
-  lesson's last sighting of that item rather than its first. Not blocking
-  when found — the scheduler-defeating bug is fixed, this is a policy
-  disagreement, not a broken promise — but it discards the strongest signal
-  a teaching lesson produces.
-
 ## URD-020 — Letter lessons are almost entirely isolated-glyph recognition
 attempts: 0
 files: src/exercises/generator.ts
@@ -752,3 +730,68 @@ notes: Found by CURRICULUM CRITIC reviewing URD-017. A structural
   makes one slot the norm in the first place — but a real coverage gap
   worth its own item, since fixing it well means changing how letters are
   *selected* across reviews, not just how many are asked per review.
+
+## URD-043 — A letter's last sighting in its lesson is usually the easy kind, not the hard one
+attempts: 0
+files: src/exercises/generator.ts
+definition of done: URD-019 grades an item's SRS state on the last of its
+  sightings this lesson visit (with a same/last-two-sightings-agree guard).
+  That is provably the hardest, most diagnostic demand for vocabulary — every
+  one of the 2,281 words' staggered climb ends on `produce` (`typeWord` or
+  `wordBuild`), 100% of the time, both tracks — but not for letters. Measured
+  directly across all 9 letter lessons: `letterExerciseAt`'s turn rotation
+  (`t = (round + idx + turnOffset) % 3`, cycling `letterTrace`(produce) →
+  `letterForm`(recognise) → `letterPick`(recognise)) lands a letter's *final*
+  round on a recognise-tier kind 67.4% of the time (31 of 46 letters
+  sampled), because `idx`/`turnOffset` shift which phase falls last largely
+  arbitrarily, unlike vocabulary's fixed ascending climb. Give the letter
+  pipeline the same property vocabulary already has: its last sighting is
+  reliably its hardest one.
+verify: a test building every real letter lesson and asserting each letter's
+  final sighting is `letterTrace` (produce), not `letterForm`/`letterPick`.
+notes: Found by CURRICULUM CRITIC reviewing URD-019. Not blocking — nothing
+  crashes, and URD-019's own last-two-sightings-agree guard (added during
+  this same critique) already cuts the practical risk of a single lucky
+  final guess from ~1-in-4 to ~1-in-16 regardless of which demand tier that
+  guess happens to be on — but the deeper mismatch this finding names is
+  real and separate: even a *confirmed* recognise-tier pair of sightings is
+  weaker evidence of recall than a confirmed produce-tier pair would be, and
+  today only vocabulary's pipeline is designed to guarantee the stronger
+  kind. Fixing this well means reordering the letter pipeline's turn
+  selection, which touches the same lessons URD-020/021/022 (letter-lesson
+  content composition) already have queued work against — check those for
+  overlap before starting, since a turn-ordering fix and a content-mix fix
+  could plausibly land as one change.
+
+## URD-044 — Nothing exercises the LessonScreen↔SRS-grading wiring end-to-end
+attempts: 0
+files: src/screens/LessonScreen.tsx, src/lib/sessionGrading.ts
+definition of done: `sessionGrading.test.ts` covers `recordSighting`/
+  `flushSessionGrades` in complete isolation from React, and `check-srs.js`
+  covers `srs.ts`'s SM-2 primitives in isolation from `sessionGrading.ts` —
+  grepping both for `sessionGrading|recordSighting|flushSessionGrades`
+  returns nothing. The actual bug URD-019 fixed (the wrong sighting winning)
+  lived entirely in the `LessonScreen`↔`sessionGrading` integration — the
+  ref/effect wiring that decides when a visit's pending grades get flushed —
+  and that integration has zero automated coverage anywhere in `npm run
+  check:all`. A future edit that "simplifies" the double-flush (the explicit
+  flush in `advance()` plus the unmount-safety-net effect) or reintroduces a
+  stale-closure bug in the `useEffect` dependency wiring would pass every
+  existing check. Add a test that plays a real lesson through `LessonScreen`
+  (or the smallest harness that exercises the same effect/ref wiring without
+  a full render) with a wrong-then-right sequence for one item, and asserts
+  the persisted `useProgressStore` SRS state afterward matches the last
+  sighting, not the first.
+verify: the new test passes, and reverting the double-flush or the
+  per-visit-Map wiring in `LessonScreen.tsx` back to the old single-gate
+  design makes it fail.
+notes: Found by THE CRITIC reviewing URD-019. Not blocking — traced every
+  claimed flush path in `LessonScreen.tsx` against the actual code (not just
+  its doc comments) and found all of them correct today — but there is
+  currently no component-level or integration test setup anywhere in this
+  project (no React Testing Library, no jsdom/happy-dom vitest environment;
+  `vitest.config.ts` runs pure-logic tests only, see its own doc comment).
+  Adding this properly means deciding on and wiring up that test
+  infrastructure, not just adding one more `.test.ts` file next to the
+  others — scope it as that rather than underestimating it as "one more
+  test."
