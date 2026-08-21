@@ -122,36 +122,38 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-027 — 68% of the sentence pool is never drawn by any lesson
+## URD-048 — Raise sentences-lesson size to close more of the reachability ceiling
 attempts: 0
-files: src/exercises/generator.ts, src/data/sentences.ts, scripts/
-definition of done: a coverage check (mirroring check:coverage's existing
-  word-level guarantee) proves every sentence in SENTENCES is drawn by at
-  least one sentences lesson at its level, or documents an explicit,
-  deliberate exemption for the ones that are not. Measured today: 81 of
-  256 sentences (31.6%) are ever drawn — beginner 22/67, elementary 16/69,
-  intermediate 24/63, advanced 19/57 — because each lesson does an
-  independent `seededShuffle(pool, lesson.id).slice(0, lesson.size)` with
-  no allocation across lessons at the same level, the same shape of gap
-  vocab had before wordIds replaced random topic sampling.
-verify: a new check:sentence-coverage script (or an addition to
-  check-coverage.js) exits 0 only when every sentence is reachable.
-notes: Found by CURRICULUM CRITIC reviewing 0453fa7, who was explicitly
-  asked to check whether this commit inherited vocab's coverage fix rather
-  than assume it did — it did not. Predates this commit (the draw
-  mechanism is unchanged; only `size` moved 5→8), but this is the same bug
-  class gauntlet/ROLES.md names as the project's founding motivation
-  ("a full playthrough... reached 608 of its 2,281 words"), now confirmed
-  present for sentences too and previously unmeasured.
-
-  FOOTNOTE from URD-026 (grammar-concept readiness filter): re-measure
-  before attempting this — URD-026's fix changed WHICH sentences are
-  reachable without changing the aggregate share. Reachability is now
-  81/256 (31.6%) still, but 41 of the original 81 reachable sentences were
-  replaced by 41 different ones (concept-gated out, others let back in).
-  The old per-level reachable-id lists this item's own numbers imply
-  (beginner 22/67 etc.) no longer name the same sentences — re-run the
-  measurement rather than reuse the cached list.
+files: src/data/units.ts
+definition of done: `S()`'s default `size` (units.ts) is 8, costing 45s of
+  exercises per sentence (`sentenceReinforceClimb`, URD-025) — 6.0 minutes
+  at size 8, comfortably under check:shape's 8-minute ceiling (up to 10.67
+  sentences fit, 450s). Raise it to 10, the largest value still inside the
+  band, verified directly against real generated output (not estimated):
+  moves course-wide reachable coverage from 96/256 (37.5%) to 115/256
+  (44.9%) with zero check:shape length/share/run violations introduced.
+  Full parity (matching every level's whole pool) is out of reach this way
+  — elementary alone would need size 35, ~26 minutes, more than 3x the
+  ceiling — so this closes part of the gap, not all of it, and should say
+  so rather than be mistaken for a complete fix.
+verify: npm run check:sentence-coverage (ceiling rows should show higher
+  reachable/pool ratios) && npm run check:shape -- --kind=sentences
+notes: Found by CURRICULUM CRITIC reviewing URD-027. That item raised
+  reachable coverage to the *current* lesson-capacity ceiling but left the
+  ceiling itself unraised, on the reasoning that closing the gap further
+  needed a units.ts change outside its own file scope. CURRICULUM CRITIC
+  computed and verified (by mutating the in-memory lesson size and
+  rerunning the real generator, not estimating) that a modest, in-band
+  size bump was available and unexplored. Not a duplicate of URD-027's own
+  fix (which changes WHICH sentences are drawn, not how many): this
+  changes how many, and composes with it — the sibling-exclusion and
+  concept-priority logic `sentencesForLesson` already has both apply
+  unchanged at a larger size, verified directly by CURRICULUM CRITIC
+  against g-future/g-compound (whose zero-reinforcement gap a size bump
+  alone does not close: re-measured at size=10, g-future stayed 0/6 before
+  URD-027's own concept-priority fix landed — re-verify against the
+  now-current generator.ts, since that fix already shipped after this
+  measurement was taken).
 
 ## URD-028 — check:coverage cannot see meaningPick/wordFromMeaning sentence-derived exercises
 attempts: 0

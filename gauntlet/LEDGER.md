@@ -3609,3 +3609,52 @@ check:order reported exactly 41 real violations (matching both critics'
 independent counts) — restored and reconfirmed clean.
 
 branch: claude/gauntlet-grammar-readiness
+
+## CLAIMED · URD-027 · 2026-08-21T15:00Z
+files: src/exercises/generator.ts, scripts/check-sentence-coverage.js
+  (new), scripts/check-all.js, package.json, .github/workflows/
+  deploy-preview.yml, src/exercises/generator.test.ts
+branch: claude/gauntlet-sentence-coverage
+
+## CRITIQUE · URD-027
+THE CRITIC: no BLOCKING. Verified sibling-exclusion recursion terminates
+and unions all earlier siblings correctly (hand-traced intermediate's
+real 4 siblings); verified URD-026 interaction composes correctly (a
+concept-gated sentence becomes drawable once taught, confirmed live);
+verified check-all.js's hyphen regex bug was real, latent, and correctly
+fixed (no other script name affected); induced failure reproduced the
+exact original 81/256 numbers. One MINOR (thin-pool fallback is coarse,
+confirmed never hit today).
+
+CURRICULUM CRITIC: two MAJOR. (1) the reachability gap concentrated on
+late-taught concepts, two (g-future, g-compound) at literal zero
+reinforcement — fixed with concept-priority slot assignment in
+sentencesForLesson, verified 0 of 25 concepts now at zero. (2) a cheap
+in-band ceiling raise (S() size 8→10) was available and unexplored —
+filed forward as URD-048 (requires units.ts, out of this item's scope).
+
+## PASSED · URD-027 · 2026-08-21T15:45Z
+$ npm run check:all
+  check:all — all 27 steps pass against a deploy-shaped build (new
+  check:sentence-coverage step included).
+
+$ npm run check:sentence-coverage
+  96 of 256 sentences reachable (37.5%, up from 81/256 = 31.6%); every
+  level reaches its exact capacity ceiling; 0 of 25 grammar concepts at
+  zero sentences-lesson reinforcement (was 2: g-future, g-compound).
+
+$ npx vitest run
+  161 passed — 2 new URD-027 tests (disjoint sibling draws at ceiling,
+  zero-reinforcement-concept guarantee).
+
+Induced failure, twice: (1) reverted sentencesForLesson's sibling
+exclusion, check:sentence-coverage reproduced the exact original 81/256
+and failed loudly; (2) reverted the concept-priority loop alone,
+reproduced g-future's exact 0/6 — both restored and reconfirmed clean.
+
+Also fixed, in the same branch: check-all.js's workflow-parser regex
+didn't admit a hyphen in a script name, silently mis-parsing the new
+check:sentence-coverage step — the first hyphenated check:* script ever
+added. Confirmed no other existing script name was affected.
+
+branch: claude/gauntlet-sentence-coverage

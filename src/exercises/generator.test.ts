@@ -12,6 +12,8 @@ import { getLetter, LETTERS, type Letter } from '../data/letters';
 import { resolveLesson, UNITS, type Lesson } from '../data/units';
 import { WORDS, getWord } from '../data/words';
 import { VERDICT_CUES, cueOf } from '../data/art';
+import { GRAMMAR } from '../data/grammar';
+import { SENTENCES } from '../data/sentences';
 
 /** Letter-type exercise kinds, as opposed to everything else a review can ask. */
 const LETTER_KINDS = new Set(['letterForm', 'letterPick', 'letterTrace']);
@@ -651,6 +653,61 @@ describe('URD-025: a sentence-derived climb leans on sentenceBuild, not just rec
         continue;
       }
       expect(minutes, `${l.id}: ${minutes.toFixed(2)} min`).toBeGreaterThanOrEqual(3.0);
+    }
+  });
+});
+
+describe('URD-027: sibling "sentences" lessons at the same level draw disjoint sentences', () => {
+  // Before this fix, each "sentences" lesson drew independently
+  // (`seededShuffle(pool, lesson.id).slice(0, size)`), with no notion of
+  // what a sibling lesson at the same level had already drawn — measured:
+  // only 81 of 256 sentences (31.6%) were ever reachable course-wide.
+  // `sentencesForLesson` (generator.ts) now excludes whatever an earlier
+  // sibling already drew, so within a level, coverage reaches its real
+  // ceiling — the sum of that level's lesson sizes — rather than falling
+  // short of it to accidental overlap. `check:sentence-coverage`
+  // (scripts/) holds the same invariant whole-course; this is the fast,
+  // pure-logic companion.
+  const LEVELS = ['beginner', 'elementary', 'intermediate', 'advanced'] as const;
+
+  it("reaches each level's full lesson-capacity ceiling, with zero overlap between siblings", () => {
+    for (const level of LEVELS) {
+      const lessons = UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'sentences' && l.level === level);
+      const capacity = lessons.reduce((s, l) => s + l.size, 0);
+      const seenIds = new Set<string>();
+      let totalPicked = 0;
+      for (const l of lessons) {
+        const exercises = buildLessonExercises(l, [], 'both', new Set());
+        const ids = new Set(exercises.filter((e) => e.kind === 'sentenceBuild').map((e) => e.sentence.id));
+        for (const id of ids) seenIds.add(id);
+        totalPicked += ids.size;
+      }
+      // Zero overlap: every lesson's own distinct sentence count summed
+      // equals the union's size — if a sibling had repeated another's pick,
+      // the union would be smaller than the sum.
+      expect(seenIds.size, level).toBe(totalPicked);
+      expect(seenIds.size, level).toBe(capacity);
+    }
+  });
+
+  it('never leaves a grammar concept with zero sentences shown by any "sentences" lesson', () => {
+    // CURRICULUM CRITIC, reviewing this item: a uniform random draw
+    // structurally favours a concept taught early in a level (more sibling
+    // lessons come after it, so more lottery tickets) over one taught late
+    // — measured before this fix, g-future and g-compound were shown to a
+    // learner nowhere except their own one-shot grammar lesson. Every
+    // concept with at least one readable, tagged sentence at some
+    // "sentences" lesson position must get at least one.
+    const reachable = new Set<string>();
+    for (const l of UNITS.flatMap((u) => u.lessons).filter((x) => x.kind === 'sentences')) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      for (const e of exercises) if (e.kind === 'sentenceBuild') reachable.add(e.sentence.id);
+    }
+    for (const concept of GRAMMAR) {
+      const tagged = SENTENCES.filter((s) => s.concept === concept.id);
+      if (!tagged.length) continue;
+      const reached = tagged.filter((s) => reachable.has(s.id));
+      expect(reached.length, `${concept.id}: 0 of ${tagged.length} tagged sentences ever reached`).toBeGreaterThan(0);
     }
   });
 });
