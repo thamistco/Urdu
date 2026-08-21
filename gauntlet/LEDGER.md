@@ -3568,3 +3568,44 @@ Induced failure: reverted sentenceReinforceClimb to the old 3-round
 and reconfirmed clean.
 
 branch: claude/gauntlet-sentence-build-ratio
+
+## CLAIMED · URD-026 · 2026-08-21T14:35Z
+files: src/lib/review.ts, src/exercises/generator.ts (readableSentences),
+  scripts/check-order.js, src/lib/review.test.ts
+branch: claude/gauntlet-grammar-readiness
+
+## CRITIQUE · URD-026
+THE CRITIC: no BLOCKING. Confirmed inclusive-self semantics on
+taughtConceptsUpTo are load-bearing (exclusive would empty all 25
+concepts' own pools, triggering the unfiltered-pool fallback). Confirmed
+0 fallback hits on real data, 0 id-namespace collisions in check-order.js's
+sentence recovery, and reproduced exactly 41 induced-failure violations
+matching the implementation's own claim. Confirmed units.ts correctly
+left untouched (check:shape identical with fix reverted or applied).
+
+CURRICULUM CRITIC: no MAJOR/MINOR blocking. Independently reproduced the
+same 41-violation count via a from-scratch reimplementation. Measured
+pool sizes post-filter (17-69 candidates vs 8 drawn, no repetition risk).
+Pushed back on the item's framing that repositioning two lessons was
+ever a real alternative given 9 of 12 lessons violated, not 2 — recorded
+in done/URD-026.md. Flagged URD-027 needs a re-measure footnote (the
+reachable sentence set churned by 41 members even though its aggregate
+size, 81/256, is unchanged) — added to URD-027's queue entry.
+
+## PASSED · URD-026 · 2026-08-21T15:05Z
+$ npm run check:all
+  check:all — all 26 steps pass against a deploy-shaped build (check:order
+  now includes the new grammar-concept-ordering section, 0 findings).
+
+$ npm run check:order
+  0 concept-ordering findings across 348 lessons.
+
+$ npx vitest run
+  160 passed (160) — 4 new URD-026 tests in review.test.ts covering
+  taughtConceptsUpTo's pure logic.
+
+Induced failure: reverted readableSentences' concept-filter clause,
+check:order reported exactly 41 real violations (matching both critics'
+independent counts) — restored and reconfirmed clean.
+
+branch: claude/gauntlet-grammar-readiness

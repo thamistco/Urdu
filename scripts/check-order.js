@@ -87,6 +87,8 @@ const { WORDS, PHRASES, TOPICS } = load('src/data/words.ts');
 const { GRAMMAR } = load('src/data/grammar.ts');
 const { SENTENCES, PASSAGES, DIALOGUES } = load('src/data/sentences.ts');
 const { GRAMMAR_TRANSLIT } = load('src/data/translit.ts');
+const { buildLessonExercises } = load('src/exercises/generator.ts');
+const { taughtConceptsUpTo } = load('src/lib/review.ts');
 
 const LEVELS = ['beginner', 'elementary', 'intermediate', 'advanced'];
 
@@ -404,7 +406,50 @@ for (const level of LEVELS) {
   }
 }
 
+/**
+ * URD-026: is every sentence a "sentences" or "grammar" lesson can actually
+ * draw tagged to a grammar concept the learner has already been taught — or
+ * to no concept at all?
+ *
+ * This is a different axis than the word/topic ordering above: a sentence
+ * can pass every word through `readableSentences`' vocabulary filter while
+ * still being built entirely around a tense or construction (future,
+ * ability, obligation, comparative...) no `grammar` lesson has taught yet.
+ * Measured before the fix: `s-intermediate` (an elementary-unit lesson) drew
+ * sentences tagging g-future/g-ability/g-obligation/g-comparative in 6 of 8
+ * picks, every one of those concepts taught 90-115 lesson-positions later;
+ * `s-intermediate-2` drew 8 of 8 untaught.
+ *
+ * Driven against the real generator (`buildLessonExercises`), not a
+ * reimplementation of `readableSentences`' filter — the same reason
+ * `check:answerable`/`check:shape` drive real generation rather than
+ * reasoning about the functions that produce it: a check that re-derives the
+ * same logic it is meant to catch a bug in can share the bug. `sentenceBuild`
+ * exercises carry their `sentence` directly; `meaningPick`/`wordFromMeaning`
+ * carry it reshaped as a `Word` (`SENTENCE_WORDS`, `generator.ts`) under the
+ * same id, so it is looked up back in `SENTENCES` to recover its `concept`
+ * tag.
+ */
 const uniq = (arr) => [...new Set(arr)];
+
+const conceptFindings = [];
+for (const lesson of ALL_LESSONS) {
+  if (lesson.kind !== 'sentences' && lesson.kind !== 'grammar') continue;
+  const taughtConcepts = taughtConceptsUpTo(lesson.id);
+  const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+  for (const ex of exercises) {
+    let sen;
+    if (ex.kind === 'sentenceBuild') sen = ex.sentence;
+    else if ((ex.kind === 'meaningPick' || ex.kind === 'wordFromMeaning') && ex.word) {
+      sen = SENTENCES.find((s) => s.id === ex.word.id);
+    }
+    if (sen && sen.concept && !taughtConcepts.has(sen.concept)) {
+      conceptFindings.push(`${lesson.id}: "${sen.words.join(' ')}" tags ${sen.concept}, not yet taught`);
+    }
+  }
+}
+const conceptUniq = uniq(conceptFindings);
+
 const positionUniq = uniq(positionFindings);
 const levelUniq = uniq(levelFindings);
 
@@ -436,6 +481,18 @@ if (levelUniq.length) {
   console.log('none — every sentence a "sentences" lesson could show uses only vocabulary from its own level.');
 }
 
+console.log(
+  `\n-- grammar-concept ordering (URD-026: every real "sentences"/"grammar" exercise, checked against` +
+    ` concepts taught at this exact lesson's position) --`
+);
+if (conceptUniq.length) {
+  console.log(`${conceptUniq.length} finding(s):`);
+  for (const f of conceptUniq.slice(0, 40)) console.log(`  ${f}`);
+  if (conceptUniq.length > 40) console.log(`  … and ${conceptUniq.length - 40} more`);
+} else {
+  console.log('none — every sentence a lesson can actually draw tags only a concept already taught, or none at all.');
+}
+
 if (unknownWords.size) {
   // Listed in full and by frequency rather than truncated. This is a backlog —
   // the words the course *uses* and never teaches — and the first version
@@ -452,6 +509,14 @@ if (positionUniq.length) {
   console.error(
     `${positionUniq.length} place(s) test a word before its topic's lesson is reached. ` +
       `This is a content-ordering problem, not a code bug — the fix is moving the word, the sentence, or the lesson.`
+  );
+  process.exit(1);
+}
+if (conceptUniq.length) {
+  console.error(
+    `${conceptUniq.length} place(s) draw a sentence tagged to a grammar concept before that concept's lesson is ` +
+      `reached. This is a content-ordering problem, not a code bug — the fix is re-tagging the sentence or moving ` +
+      `the lesson.`
   );
   process.exit(1);
 }

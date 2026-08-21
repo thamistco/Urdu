@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { UNITS } from '../data/units';
+import { UNITS, ALL_LESSONS } from '../data/units';
 import {
   taughtInUnit,
   taughtUpTo,
+  taughtConceptsUpTo,
   prioritizedPool,
   reviewWordPool,
   reviewLetterPool,
@@ -213,5 +214,48 @@ describe("reviewLetterShare — a review's letter share decays once the alphabet
   it("is exactly the letters' share of everything taught, not some other function of it", () => {
     expect(reviewLetterShare(['w1', 'w2', 'w3'], ['l1'])).toBeCloseTo(0.25);
     expect(reviewLetterShare([], [])).toBe(0.5);
+  });
+});
+
+describe('URD-026: taughtConceptsUpTo', () => {
+  // Real path order (measured directly, not assumed): g-pronouns is the
+  // first grammar concept taught; g-future is the 16th of 25, many lessons
+  // later. Named explicitly rather than picked arbitrarily, the same way
+  // taughtUpTo's own tests use real early/late review lessons.
+  it("does not include a concept the path hasn't reached yet", () => {
+    const early = taughtConceptsUpTo('g-pronouns');
+    expect(early.has('g-future')).toBe(false);
+    expect(early.has('g-obligation')).toBe(false);
+  });
+
+  it('includes a concept by the time its own lesson is reached — inclusive of the lesson itself', () => {
+    // Matches taughtUpTo's own inclusive boundary (a vocab lesson's own
+    // words count as taught by the time that lesson is reached); grammar
+    // concepts follow the same rule; a concept lesson's own reinforcement
+    // climb draws sentences tagged to itself, which would be impossible if
+    // "reached" excluded the lesson's own teaching.
+    const atItself = taughtConceptsUpTo('g-future');
+    expect(atItself.has('g-future')).toBe(true);
+    expect(atItself.has('g-pronouns')).toBe(true); // taught long before it
+    expect(atItself.has('g-obligation')).toBe(false); // taught one lesson later
+  });
+
+  it('accumulates monotonically along the real path — never loses a concept already taught', () => {
+    const grammarLessons = ALL_LESSONS.filter((l) => l.kind === 'grammar');
+    let prevSize = 0;
+    for (const l of grammarLessons) {
+      const size = taughtConceptsUpTo(l.id).size;
+      expect(size, l.id).toBeGreaterThanOrEqual(prevSize);
+      prevSize = size;
+    }
+    expect(prevSize).toBe(grammarLessons.length);
+  });
+
+  it('returns every concept the course teaches for a lesson id placed nowhere on the path', () => {
+    // The same honest fallback taughtUpTo gives for letters/words: a
+    // synthetic lesson with no position has nothing to stop the walk at.
+    const grammarLessons = ALL_LESSONS.filter((l) => l.kind === 'grammar');
+    const everything = taughtConceptsUpTo('not-a-real-lesson-id');
+    expect(everything.size).toBe(grammarLessons.length);
   });
 });

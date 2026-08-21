@@ -17,7 +17,14 @@ import {
 import { cueOf, VERDICT_CUES } from '../data/art';
 import { GLYPH_MASKS } from '../data/glyphMasks';
 import { shuffle, seededShuffle } from '../lib/shuffle';
-import { reviewWordPool, reviewLetterPool, taughtUpTo, taughtInUnit, reviewLetterShare } from '../lib/review';
+import {
+  reviewWordPool,
+  reviewLetterPool,
+  taughtUpTo,
+  taughtInUnit,
+  taughtConceptsUpTo,
+  reviewLetterShare,
+} from '../lib/review';
 import { Exercise, ItemRef } from './types';
 
 const rand = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
@@ -719,7 +726,8 @@ const readableFormsAt = (lessonId: string): Set<string> => {
 };
 
 /**
- * Only show a sentence the learner can actually read.
+ * Only show a sentence the learner can actually read, and only one whose
+ * grammar the learner has actually been taught.
  *
  * A sentence lesson used to take everything at its CEFR level, and a grammar
  * concept everything tagged with it, regardless of whether the vocabulary in
@@ -737,15 +745,37 @@ const readableFormsAt = (lessonId: string): Set<string> => {
  * unknown: proper nouns and inflected forms that no vocabulary entry owns would
  * otherwise disqualify most of the corpus.
  *
+ * URD-026: word-level readiness has no notion of the *construction* a
+ * sentence illustrates — a sentence can pass every word through and still be
+ * built entirely around a tense or case never taught. Measured against the
+ * real path order: `s-intermediate` (an elementary-unit lesson) drew
+ * sentences tagging g-future/g-ability/g-obligation/g-comparative in 6 of 8
+ * picks, every one of those concepts taught 90-115 lesson-positions later;
+ * `s-intermediate-2` drew 8 of 8 untaught. Not merely unread — since URD-025
+ * piped this exposure into SRS via `meaningPick`/`wordFromMeaning`'s
+ * `gradeItem` calls, a learner could be graded, and see the construction come
+ * due for review, before the lesson that teaches it. Fixed the same way word
+ * readiness was: a sentence tagged to a concept (`taughtConceptsUpTo`,
+ * `lib/review.ts`) not yet taught by the time this lesson is reached is
+ * dropped, the same all-or-nothing rule as the word filter — a sentence with
+ * no `concept` at all is left alone, exactly as an untaught-by-anyone word
+ * form is.
+ *
  * The unfiltered pool is the fallback, because a lesson with nothing in it is
- * worse than a lesson with one hard word. Measured across all 37 sentence and
- * grammar lessons on the path, the fallback is never reached — every one of
- * them has more fully readable sentences than it needs.
+ * worse than a lesson with one hard word or one under-taught construction.
+ * Measured across all 37 sentence and grammar lessons on the path with both
+ * filters applied, the fallback is never reached — every one of them still
+ * has more fully-readable, fully-taught sentences than it needs.
  */
 function readableSentences(pool: Sentence[], lessonId: string): Sentence[] {
   const forms = readableFormsAt(lessonId);
   const taughtAnywhere = TAUGHT_FORMS;
-  const ok = pool.filter((s) => (s.words ?? []).every((f: string) => !taughtAnywhere.has(f) || forms.has(f)));
+  const concepts = taughtConceptsUpTo(lessonId);
+  const ok = pool.filter(
+    (s) =>
+      (s.words ?? []).every((f: string) => !taughtAnywhere.has(f) || forms.has(f)) &&
+      (!s.concept || concepts.has(s.concept))
+  );
   return ok.length ? ok : pool;
 }
 
