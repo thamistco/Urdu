@@ -3735,3 +3735,51 @@ Induced failure: disabled the new usedUrdu guard, both new tests failed
 with clear messages — restored and reconfirmed clean.
 
 branch: claude/gauntlet-homograph-distractors
+
+## CLAIMED · URD-028 · 2026-08-21T17:00Z
+files: scripts/check-coverage.js
+branch: claude/gauntlet-coverage-sentence-words
+
+## CRITIQUE · URD-028
+THE CRITIC: no BLOCKING (two independent passes — the original dispatch's
+full verdict arrived late; a narrower follow-up got the verdict faster,
+and both agree). Both independently reproduced the exact 19-violation
+induced failure, confirmed SENTENCE_WORDS/SENTENCES id-compatibility by
+construction, confirmed both sentences- and grammar-kind lessons are
+covered (including via multipleChoice/listenTap shapes), confirmed the
+"coincidence" claim holds live across all 522 real lesson/track exercise
+sets with 0 exceptions, confirmed lint/typecheck/vitest clean, confirmed
+no stray diff. Two minor documentation-density observations only, not
+actioned.
+
+## PASSED · URD-028 · 2026-08-21T23:40Z
+$ npm run check:coverage
+  0 problems (before and after the fix, on real content — the
+  "coincidence" this item describes still holds today).
+
+Induced failure: temporarily made sentenceExercise always return
+undefined and readableSentences always return its input pool unfiltered
+in generator.ts. With wordsOf reverted to the OLD logic
+(ex.sentence.words only), check:coverage stayed silently green despite
+the induced violation — confirming the gap was real. With the NEW
+wordsOf, check:coverage correctly reported 19 real early-word
+violations. Restored generator.ts to its exact original content;
+git status --short showed no diff on that file afterward.
+
+$ npx tsc --noEmit
+  clean.
+
+$ npx vitest run
+  165 passed (165) — no new tests added; this project's "two kinds of
+  test, no overlap" convention puts a check-script's own whole-system
+  property under live induced-failure verification (above), not a
+  redundant vitest fixture assertion.
+
+$ npm run check:all
+  all 27 steps pass, confirmed on two separate solo runs (the first
+  attempt collided with a concurrently-running critic subagent's own
+  check:all, producing a spurious dist/ ENOENT at check:stability — not
+  a real regression; re-run alone came back clean, and the final
+  from-scratch confirmation run also passed clean end to end).
+
+branch: claude/gauntlet-coverage-sentence-words

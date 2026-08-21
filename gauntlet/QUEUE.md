@@ -122,39 +122,6 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-028 — check:coverage cannot see meaningPick/wordFromMeaning sentence-derived exercises
-attempts: 0
-files: scripts/check-coverage.js
-definition of done: check-coverage.js point 5 (lines ~163-197) already
-  scopes itself to `l.kind === 'sentences' || l.kind === 'grammar'`, but
-  only inspects `ex.sentence && ex.sentence.words` — a field only
-  sentenceBuild exercises carry. meaningPick/wordFromMeaning exercises
-  drawn from SENTENCE_WORDS carry `.word` instead (topic 'sentences'), so
-  2/3 of every sentences lesson's exercises AND 2/3 of every grammar
-  lesson's sentence-reinforcement exercises (added by URD-024's grammar
-  follow-up) are invisible to this check today. Extend it to also resolve
-  `ex.word` back to its sentence's words when `ex.word.topic ===
-  'sentences'` — one fix covers both lesson kinds, since both draw from
-  the same `SENTENCE_WORDS` pool.
-verify: re-run check:coverage after temporarily breaking a sentence's
-  meaningPick/wordFromMeaning path (e.g. feeding it an unteachable word id)
-  in both a sentences lesson and a grammar lesson, and confirm the check
-  now fails both, where today it would stay green for either.
-notes: Found by THE CRITIC reviewing 0453fa7 (sentences lessons). Reviewing
-  URD-024's grammar follow-up, THE CRITIC confirmed the same gap now
-  silently covers grammar lessons too — the file's scoping condition
-  already named `grammar`, so no new code change was needed for the check
-  to apply there, but the underlying defect it can't yet see now has twice
-  the surface. Verified this causes no live false-pass today only by
-  coincidence, for both lesson kinds: the round-robin structure guarantees
-  every sentence a lesson draws also gets a sentenceBuild turn in the same
-  lesson, and that turn happens to cover what the recognition turns don't.
-  That coincidence itself rests on `sentenceExercise` never returning
-  undefined on the roman track, which is true for all 256 sentences today
-  but maintained by discipline, not enforced — the generator's own comment
-  says as much. MAJOR, not BLOCKING: nothing is wrong today, but the check
-  would not catch it if something broke, in either lesson kind.
-
 ## URD-029 — One grammar concept stays short because its tagged-sentence pool is thin
 attempts: 0
 files: src/data/sentences.ts, src/data/units.ts
