@@ -42,13 +42,31 @@
  * measured indirectly but repeatedly: a real, non-diagnostic run past the
  * alphabet never completed a single lesson (0 of over 120 attempts, a dozen
  * seeds/`--start` positions), and the same content played cleanly (10/10)
- * the moment a throwaway patch made hearts irrelevant. Every one of those
- * seven kinds now reads the real answer off the same loaded content every
- * other check script reads (see "answer knowledge", above `ALL_LESSONS`
- * below) — the same *kind* of fix `typeWord` and `traceTheLetter` already
- * had, reading the transliteration or the glyph's own pixels rather than
- * asking the app for anything new, just applied to the six kinds that
- * needed it too.
+ * the moment a throwaway patch made hearts irrelevant. Six of those seven
+ * kinds now read the real answer off the same loaded content every other
+ * check script reads (see "answer knowledge", above `ALL_LESSONS` below) —
+ * the same *kind* of fix `typeWord` and `traceTheLetter` already had,
+ * reading the transliteration or the glyph's own pixels rather than asking
+ * the app for anything new. `listenTap` stays a random guess — its prompt
+ * is audio, and audio does not play at all in this headless driver (see
+ * the doc comment above `answerLetterForm`, where the two approaches tried
+ * against it are recorded).
+ *
+ * That fix is real and independently confirmed (`SOAK_DEBUG=1` shows the
+ * six kinds solving correctly far more often than falling back), but a
+ * repeat of the same real, non-diagnostic run above (`--start 90`, 15
+ * attempts, no hearts override) still completed zero lessons — not because
+ * the fix did not work, but because a real vocab lesson in this region runs
+ * 22-43 exercises (measured directly), and even a *perfect* solver still
+ * lets `listenTap`'s residual guess and the deliberate 25% `wrongOnPurpose`
+ * rate blend to roughly a third of exercises landing wrong; binomially,
+ * surviving 5 hearts through 25-40 tries at that rate is a 1-15% event, not
+ * a majority one. This is the same hearts-economy tension this file's own
+ * `--lessons` comment, lower down, already measured and attributed to
+ * URD-006 rather than to this item — finishing what this item promises (a
+ * majority of attempts completing) needs that tension addressed too, not
+ * just this fallback's own correctness, which is what URD-034 actually
+ * scoped and fixed.
  *
  * ## Why it is not in `check:all`
  *
@@ -93,6 +111,12 @@
  *                                      # see the queue for why. Prefer one
  *                                      # `--require` per lesson-kind family
  *                                      # and a `--start` landing on it.
+ *
+ * `SOAK_DEBUG=1` in the environment prints, per exercise, whether a named
+ * kind's real answer was found or fell back to a random guess, plus a
+ * one-line summary of the two totals at the end — the fastest way to tell
+ * "this kind isn't completing lessons" apart from "this kind's solver isn't
+ * finding anything," which look identical from the summary line alone.
  */
 
 const fs = require('fs');
@@ -193,7 +217,11 @@ const GRAMMAR_DRILLS = GRAMMAR.flatMap((c) => c.drills);
  * real content are compared the way they actually match: what a learner
  * would see, not the bytes an invisible bidi hint adds to one side only.
  */
-const normalize = (s) => s.replace(/[‎‏‪-‮]/g, '').trim().toLowerCase();
+const normalize = (s) =>
+  s
+    .replace(/[‎‏‪-‮]/g, '')
+    .trim()
+    .toLowerCase();
 
 /** Maps a colliding key to `null` rather than to either record — an
  *  ambiguous signal identifies nothing, and this file would rather fall
@@ -227,17 +255,6 @@ const wordBySignal = indexBy(
 );
 
 const letterByName = indexBy(LETTERS, (l) => l.name);
-/** Every letter's own four forms (isolated/initial/medial/final), each
- *  mapped back to the letter — `letterPick`'s options render only the
- *  isolated glyph, but `letterForm`'s prompt shows whichever form the
- *  question is actually asking about. */
-const letterByGlyph = indexBy(
-  LETTERS,
-  (l) => l.forms.isolated,
-  (l) => l.forms.initial,
-  (l) => l.forms.medial,
-  (l) => l.forms.final
-);
 const drillByMeaning = indexBy(GRAMMAR_DRILLS, (d) => d.meaning);
 
 /**
@@ -265,7 +282,12 @@ async function candidateOptions(page) {
       // Eyebrow line, split the same way elsewhere in this file, is the
       // identical shape of problem on the identifying side, not the
       // candidate side.
-      const lines = (await btns.nth(k).innerText().catch(() => ''))
+      const lines = (
+        await btns
+          .nth(k)
+          .innerText()
+          .catch(() => '')
+      )
         .split('\n')
         .map((l) => normalize(l))
         .filter(Boolean);
@@ -301,9 +323,9 @@ async function clickMatching(page, btns, candidates, expected, wrongOnPurpose) {
 /**
  * The four Word-based kinds share one shape: a prompt naming a real word by
  * one of its own fields, and options that include the same word among
- * distractors. `promptSignals` is every line of on-screen text the prompt
- * *could* be showing that word by (there is exactly one live match among
- * them per screen, the rest resolve to nothing); the first that resolves
+ * distractors. Every line of on-screen text is a candidate for the one the
+ * prompt is actually showing the word by — there is exactly one live match
+ * per screen, the rest resolve to nothing — and the first that resolves
  * through `wordBySignal` is the target.
  */
 async function answerWordChoice(page, text, wrongOnPurpose, knownWord) {
@@ -316,10 +338,6 @@ async function answerWordChoice(page, text, wrongOnPurpose, knownWord) {
       .filter(Boolean)
       .map((l) => wordBySignal.get(normalize(l)))
       .find(Boolean);
-  if (process.env.SOAK_DEBUG)
-    console.error(
-      `[debug] answerWordChoice: word=${word?.id} candidates=${JSON.stringify(candidates.map((c) => c.lines))}`
-    );
   if (!word) return false;
   // Whichever of the word's own three signals a candidate is currently
   // showing (urdu on the script track, roman on the Roman track, or the
@@ -329,7 +347,7 @@ async function answerWordChoice(page, text, wrongOnPurpose, knownWord) {
     if (await clickMatching(page, btns, candidates, signal, wrongOnPurpose)) return true;
   }
   if (process.env.SOAK_DEBUG)
-    console.error(`[debug] answerWordChoice: no candidate matched urdu=${word.urdu} roman=${word.roman}`);
+    console.error(`[debug] answerWordChoice: identified ${word.id} but no candidate matched any of its own signals`);
   return false;
 }
 
@@ -697,6 +715,18 @@ const NAMED_KIND_SOLVER = {
   grammarDrill: (page, text, wrong) => answerGrammarDrill(page, text, wrong),
 };
 
+/** SOAK_DEBUG-only bookkeeping, pulled out of `tapNamedKind` itself so its
+ *  own branching stays under this file's complexity budget. */
+function recordSolverOutcome(kind, solved, hadSolver) {
+  if (!process.env.SOAK_DEBUG) return;
+  if (solved) {
+    solverStats.solved = (solverStats.solved ?? 0) + 1;
+    return;
+  }
+  solverStats.fallback = (solverStats.fallback ?? 0) + 1;
+  console.error(`[debug] tapNamedKind: solver ${hadSolver ? 'FAILED' : 'MISSING'} for kind=${kind}, random fallback`);
+}
+
 /**
  * Answer a named kind for real when a solver exists and can identify the
  * screen (see the "answer knowledge" section above `ALL_LESSONS`); fall back
@@ -708,14 +738,9 @@ const NAMED_KIND_SOLVER = {
 async function tapNamedKind(page, text, wrongOnPurpose) {
   const kind = (NAMED_TAP_KIND.find(([re]) => re.test(text)) ?? [null, 'tap'])[1];
   const solver = NAMED_KIND_SOLVER[kind];
-  if (solver && (await solver(page, text, wrongOnPurpose).catch(() => false))) {
-    if (process.env.SOAK_DEBUG) solverStats.solved = (solverStats.solved ?? 0) + 1;
-    return kind;
-  }
-  if (process.env.SOAK_DEBUG) {
-    solverStats.fallback = (solverStats.fallback ?? 0) + 1;
-    console.error(`[debug] tapNamedKind: solver ${solver ? 'FAILED' : 'MISSING'} for kind=${kind}, random fallback`);
-  }
+  const solved = solver ? await solver(page, text, wrongOnPurpose).catch(() => false) : false;
+  recordSolverOutcome(kind, solved, !!solver);
+  if (solved) return kind;
 
   const btns = page.locator('[role="button"]');
   const n = await btns.count();
