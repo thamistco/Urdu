@@ -3930,3 +3930,98 @@ defect in this item, a distinct architectural limitation one level
 deeper).
 
 branch: claude/gauntlet-grammar-distractor-concept
+
+## CLAIMED · URD-032 · 2026-08-22T01:05Z
+files: src/screens/HomeScreen.tsx
+branch: claude/gauntlet-home-scroll-tightening
+
+## CRITIQUE · URD-032
+DESIGN CRITIC: no BLOCKING authority. Drove the real app, screenshotted
+the landing after opening a collapsed stage from scrolled-to-bottom —
+clean, the newly-opened stage's own header is unambiguously the visual
+anchor, no blank space, no side effect from the new `collapsable={false}`
+wrapper View, tap targets unaffected (372×94 to 372×130 across all four
+stage headers). Found one real MAJOR: frame-by-frame tracing of the
+"animated" scroll-to-open showed ~99% of the ~9,035px travel happened as
+an instantaneous, unanimated jump within a single frame gap (≤62ms) —
+the browser's own scrollTop clamp firing synchronously on the same-tick
+reflow from the previously-open stage collapsing — with only the final
+~349px actually easing in over ~320ms. Net effect: a hard teleport
+followed by a small corrective wobble, not one continuous motion. FIXED:
+deferred the `scrollTo` call out of `toggleLevel`'s own tick and into a
+`useEffect` keyed on `openLevel`, firing on the next animation frame
+after the collapse has already committed and the clamp has already
+happened invisibly, so the subsequent `scrollTo` glides smoothly from
+wherever the clamp landed instead of racing it. Re-verified via
+`check:home-scroll` (539px, deterministic) after the change; the
+frame-level re-trace was not repeated.
+
+THE CRITIC: found one BLOCKING, no other MAJOR, two MINOR (neither
+actioned — narrow, not required to un-block). BLOCKING: the mid-session
+auto-scroll re-arm never actually fires on the transition it exists
+for. The reset effect (keyed on `currentLevel`) was declared *after*
+the auto-scroll effect (keyed on `currentId`); a real stage advance
+changes both in the same commit, and React runs a component's effects
+in hook-declaration order within one commit, so the auto-scroll effect
+always ran first, read the guard as still `true` from its earlier
+mount-time fire, and bailed before the reset (declared later) ever
+landed. Reproduced in an isolated react/react-dom 18.3.1 + jsdom harness
+mirroring the two effects' declared order. FIXED: moved the `openLevel`
+state and the reset effect to before the auto-scroll effect, so the
+reset lands in the same commit but earlier in hook order. MINOR:
+`fixedHeaderHeight.current` has no floor/fallback if `onLayout` hasn't
+fired yet. MINOR: `check:home-scroll` exercises only the
+open-from-bottom scenario, not opening near the top or the collapse
+path (verified by reading `toggleLevel`'s `if (opening)` guard, not by
+a check).
+
+Independent verification note (not a critic finding, a lead
+observation while building the live reproduction the BLOCKING finding
+called for): a full working end-to-end test of the exact scenario
+(`scripts/check-stage-advance-scroll.js`) passed against the fixed
+build (619px, deterministic). Per this project's own "break a check on
+purpose and watch it fail" standard, the fix was then induced-failure
+tested — the two effects were temporarily swapped back to their
+original (buggy) order, rebuilt, and re-run — and the check **still
+passed**. Repeated against a build instrumented to log every render's
+`currentId`/`currentLevel` pair: confirmed the two always change
+together in one commit (matching the theory), but the auto-scroll
+effect's guard read `false` at the critical moment regardless of which
+effect was declared first. THE CRITIC's mechanism, cleanly reproduced in
+an isolated harness, does not reproduce against the real component, for
+a reason not fully root-caused this session. The reorder fix ships
+anyway (strictly safer regardless of mechanism, matches documented
+intent); `check:stage-advance-scroll` is committed to hold the observed
+behavior in place rather than assert the specific internal mechanism.
+
+## PASSED · URD-032 · 2026-08-22T02:10Z
+$ npm run check:home-scroll
+  scrolled to bottom (9574px), opened "Beginner. 81 of 81 lessons done.
+  Expand", landed at 539px — deterministic across repeat runs, fails
+  correctly under induced failure (reverted to y:0, reproduced the
+  pre-fix full-reset message).
+
+$ npm run check:stage-advance-scroll
+  scrolled away to 8362px, finished 'd-1' (a real lesson playthrough, no
+  reload), returned to Home landed at 619px with the new current lesson
+  visible — deterministic across repeat runs. Did NOT fail under the
+  specific induced fault (original effect order restored) — see
+  CRITIQUE above; reported plainly rather than smoothed over, per this
+  project's "a check that has never failed is a hypothesis."
+
+$ npx tsc --noEmit
+  clean.
+
+$ npx vitest run
+  171 passed (171) — no new unit tests; both parts of this fix are
+  whole-system scroll/timing behavior covered by the two check scripts
+  above, not pure logic, and this project's vitest config carries no
+  DOM environment to test component effects directly.
+
+$ npm run format:check
+  clean.
+
+$ npm run check:all
+  all 29 steps pass (up from 27), confirmed solo on the final tree.
+
+branch: claude/gauntlet-home-scroll-tightening
