@@ -4025,3 +4025,54 @@ $ npm run check:all
   all 29 steps pass (up from 27), confirmed solo on the final tree.
 
 branch: claude/gauntlet-home-scroll-tightening
+
+## CLAIMED · URD-033 · 2026-08-22T02:15Z
+files: src/data/achievements.ts
+branch: claude/gauntlet-achievement-tiers-reachable, cut from
+claude/gauntlet-home-scroll-tightening after URD-032 shipped.
+
+## CRITIQUE · URD-033
+Dispatched THE CRITIC only, matching URD-004's own precedent for the
+identical shape of fix — no lesson, word, screen, or exercise-behavior
+content changed (achievements re-tune is pure data + a test).
+
+THE CRITIC: no BLOCKING, no MAJOR. Independently reproduced every
+claimed number from scratch (course XP total 7220, `ALL_LESSONS.length`
+348, `WORDS.length` 2281, `LETTERS.length` 40 — all matching exactly);
+independently traced the `lettersLearned`-at-100%-of-ceiling claim
+through the exercise generator directly (every one of the 40 letters
+is both taught, via `letterIds`, and unconditionally graded across its
+`SIGHTINGS_PER_LETTER` rounds — no code path shows a letter without
+grading it), confirming 40/40 is genuinely reachable despite carrying
+no margin; confirmed scope (exactly two files touched, no UI hardcodes
+the old tier numbers, `AchievementsScreen.tsx` reads `tiers`
+dynamically); independently reproduced the induced-failure test
+(reverting to the old `[100, 500, 2000, 10000]` reproduces both clear
+test failures, restoring reconfirms clean). Two MINOR, neither
+actioned: the test's metric→ceiling map has no exhaustiveness guard
+against a future new course-bound metric silently passing through
+unchecked (speculative, no such metric exists today); a naming
+collision between the new `src/data/achievements.test.ts` and the
+pre-existing, unrelated `src/lib/achievements.test.ts` (confirmed not a
+bug, just a `git grep` trap).
+
+## PASSED · URD-033 · 2026-08-22T02:20Z
+$ npx vitest run src/data/achievements.test.ts
+  6/6 passed, including the induced-failure-confirmed scholar
+  reachability assertions.
+
+$ npx tsc --noEmit
+  clean.
+
+$ npx vitest run
+  177 passed (177) — up from 171, 6 new tests.
+
+$ npm run format:check
+  clean.
+
+Induced failure: reverted scholar's tiers to [100, 500, 2000, 10000],
+both new scholar-specific assertions failed with clear messages
+("expected 10000 to be less than or equal to 7220" /
+"expected 10000 to be less than 7220"); restored and reconfirmed clean.
+
+branch: claude/gauntlet-achievement-tiers-reachable

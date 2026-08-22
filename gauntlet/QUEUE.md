@@ -122,39 +122,6 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-033 — The Scholar achievement's top tier is unreachable in a playthrough, the same bug URD-004 just fixed elsewhere
-attempts: 0
-files: src/data/achievements.ts
-definition of done: `ACHIEVEMENTS`'s `scholar` entry (`src/data/achievements.ts:34-41`)
-  gates its top tier at 10,000 total XP. The real course total (sum of
-  every lesson's `.xp` across `ALL_LESSONS`) is ~7,220 XP — the top tier
-  needs 38.5% more than a single honest playthrough provides, the identical
-  bug class URD-004 fixed for `levelTitle`'s "Master" tier, in a sibling
-  XP-gated system that item was never scoped to touch. Re-space
-  `scholar`'s tiers (or the other achievements' tiers — `first-steps`,
-  `wordsmith`, `calligrapher`, `flame-keeper`, `perfect-*` etc. were not
-  individually re-checked when this was found; only `scholar` is confirmed
-  broken) so every tier is reachable within the course's real totals for
-  its metric, following URD-004's pattern: derive both numbers from real
-  content in a test rather than hardcoding either, so this doesn't go
-  stale the same way `levelTitle`'s thresholds did (twice).
-verify: a test in src/lib or src/data asserting every achievement's top
-  tier is reachable against the real course total for its metric
-  (`totalXp` from `ALL_LESSONS[].xp`, `lessonsCompleted` from
-  `ALL_LESSONS.length`, `wordsLearned` from `WORDS.length`, etc. — `streak`
-  is not course-bound and may need its own reasoning, not a course-total
-  comparison).
-notes: Found by THE CRITIC reviewing URD-004 (commit b28856a), specifically
-  while checking whether anything else in the app assumed level/XP
-  thresholds that fix didn't touch. Not blocking that item — different
-  file, different subsystem, URD-004 was narrowly scoped to `levelTitle`
-  — but real: a badge nobody can earn on one playthrough, discovered by
-  the exact question ("is the top tier reachable?") this project just
-  learned to ask. THE CRITIC's own caveat: `finishLesson` grants XP on
-  every replay (no once-only guard), so no tier is literally impossible,
-  only unreachable in one honest playthrough — the right target to design
-  against, matching how URD-004 itself was framed.
-
 ## URD-034 — The soak's generic answer-tap doesn't try to be correct
 attempts: 0
 files: scripts/soak.js
