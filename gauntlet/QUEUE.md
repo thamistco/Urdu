@@ -122,48 +122,6 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-029 — One grammar concept stays short because its tagged-sentence pool is thin
-attempts: 0
-files: src/data/sentences.ts, src/data/units.ts
-definition of done: g-plurals (2.70 min, 3 of 4 tagged sentences readable
-  at its lesson position) stays under check:shape's 3-minute floor.
-  Originally three concepts (g-plurals, g-pronouns, g-ability) — URD-025's
-  extra sentence-reinforcement round lengthened all three, and moved
-  g-pronouns (2.70→4.2 min) and g-ability (2.55→4.05 min) into the band;
-  only g-plurals remains short, its own gap also narrower now (1.80→2.70
-  min) but not closed. Check the cheaper fix first: one of its 4 tagged
-  sentences (`s-39`, "میز پر تین کتابیں ہیں") is dropped by
-  `readableSentences` only because "میز" isn't taught yet at g-plurals'
-  current path position — either move g-plurals a few positions later
-  (past wherever "میز" is taught), or re-tag a different, already-readable
-  sentence to `g-plurals`, before assuming new content authoring is
-  required.
-verify: npm run check:shape -- --kind=grammar reports 0 of 25 grammar
-  lessons under 3 minutes.
-notes: Found reviewing URD-024's grammar follow-up. Both THE CRITIC and
-  CURRICULUM CRITIC independently confirmed the degradation is graceful —
-  no crash, no repeated question, no truncation, just genuinely short —
-  and that leaving it documented rather than forced (matching URD-023's
-  precedent for phrases) is the right call for this item. CURRICULUM
-  CRITIC specifically flagged that the original code comment attributed
-  g-plurals' shortfall entirely to "4 tagged" sentences when the real
-  count feeding the climb is 3 readable of 4 tagged — fixed in the comment
-  as part of recording URD-024 passed, and folded into this item's DoD so
-  the placement-vs-content-scarcity distinction isn't lost.
-
-  UPDATED reviewing URD-025 (sentenceBuild ratio rebalance): THE CRITIC
-  found URD-025's own verify command (`check:shape -- --kind=grammar`)
-  still fails on this exact pre-existing residual (g-plurals only, now
-  2.70 min) and flagged it BLOCKING for that item on the letter of its own
-  verify line, even though URD-025 measurably improved the number and two
-  of the three original concepts now clear the floor entirely. Resolved
-  there by scope carve-out (this item's own files, `src/data/sentences.ts`
-  and `src/data/units.ts`, are content, not `generator.ts` — the file
-  URD-025 was scoped to) rather than by URD-025 attempting a generator-side
-  workaround for a content gap. Re-measure this item's own numbers once
-  attempted, since URD-025 already moved them once without anyone asking
-  it to.
-
 ## URD-030 — The grammar climb's distractor pool doesn't know which concept it's reinforcing
 attempts: 0
 files: src/exercises/generator.ts

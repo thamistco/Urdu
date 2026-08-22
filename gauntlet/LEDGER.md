@@ -3783,3 +3783,70 @@ $ npm run check:all
   from-scratch confirmation run also passed clean end to end).
 
 branch: claude/gauntlet-coverage-sentence-words
+
+## CLAIMED · URD-029 · 2026-08-21T23:59Z
+files: src/data/sentences.ts, src/exercises/generator.test.ts
+branch: claude/gauntlet-grammar-plurals-length
+
+## CRITIQUE · URD-029
+THE CRITIC: no BLOCKING on final HEAD. Independently verified every
+lesson-position number cited (g-plurals 46, تین 14, دوست 1, میز 34, پر
+132 — exactly "86 lesson-positions later" as claimed), g-possess's
+19→18 tagged count and that s-77 wasn't among its own current draw, and
+the pedagogical fit of دوست→دوست for the concept table's one
+undemonstrated row. Reproduced both induced failures live (the retag
+reversion, and — on an earlier, since-fixed commit — the stray s-257
+check:voice failure). Flagged and got fixed: a MAJOR (generator.test.ts
+comment described the abandoned s-257 approach, not what shipped) and a
+MINOR (a pre-existing, already-stale generator.ts comment blaming "میز"
+and calling the gap open). Also flagged, for the record rather than as a
+live block: an intermediate commit (2ff5db3) briefly shipped broken —
+the abandoned s-257 sentence was left in by mistake (git stash/pop
+artifact, not re-verified before committing), caught by re-running
+check:all solo per this project's own non-negotiable #1, fixed one
+commit later (fc3f463).
+
+CURRICULUM CRITIC: reviewed the since-reverted s-257 approach. MAJOR
+finding — it duplicated g-plurals' already-covered ‑ی→‑اں row (s-167)
+rather than filling the one genuinely empty row ("other masculine,
+unchanged", e.g. گھر→گھر), the pattern the concept's own explain text
+calls likeliest to trip a learner up. This finding was the deciding
+factor in abandoning s-257 for the final re-tag-based fix (s-77, دوست→
+دوست, which does fill that row). Agreed re-tagging one clean sentence is
+pedagogically preferable to relocating the lesson in the path.
+
+## PASSED · URD-029 · 2026-08-22T00:21Z
+$ npm run check:shape -- --kind=grammar
+  0 problems (was: 1 of 25 timed lessons under 3 minutes — g-plurals at
+  2.7 min).
+
+$ npm run check:order
+  0 findings in all three sections (position/level/grammar-concept
+  ordering), 256 sentences.
+
+$ npm run check:coverage / check:sentence-coverage / check:voice /
+  check:answerable / npm run audit
+  all clean, 256 sentences unchanged (no new content ultimately shipped
+  — two earlier approaches, s-15 and a new sentence s-257, were tried
+  and fully reverted; see gauntlet/done/URD-029.md for why).
+
+$ npx tsc --noEmit
+  clean.
+
+$ npx vitest run
+  165 passed (165) — updated the pre-existing test that was deliberately
+  built to fail loudly the moment this exact gap closed (it did).
+
+$ npm run check:all
+  all 27 steps pass, confirmed solo twice on the final tree.
+
+Induced failure: reverted s-77's tag back to g-possess, reproduced the
+exact original failure (g-plurals at 2.70 min, 18 exercises) — restored
+and reconfirmed clean.
+
+A process mistake (an abandoned sentence briefly shipped in an
+intermediate commit, caught by re-running check:all solo rather than
+trusting the commit message) is recorded in gauntlet/done/URD-029.md
+rather than smoothed over.
+
+branch: claude/gauntlet-grammar-plurals-length
