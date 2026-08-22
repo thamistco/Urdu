@@ -1145,116 +1145,107 @@ export function buildLessonExercises(
 
   if (lesson.kind === 'phrases') {
     /**
-     * Phrases share one icon, so a picture question is unanswerable: every
-     * option would show the same speech bubble, and `distinctCue` silently
-     * folds any attempt at `multipleChoice` or `listenTap` back to
-     * `meaningPick` anyway (see `wordExercise`'s `pictureOptions.length <
-     * DISTRACTORS` guard). That left exactly one kind reachable, so the
-     * lesson was `meaningPick`, every time — 100% one kind, 6 in a row,
-     * both failures `check:shape`'s run and share rules exist to catch.
+     * URD-A02: this used to draw `lesson.size` *distinct* phrases and give
+     * each exactly one exercise — so raising the size from 6 to 24 to clear
+     * `check:shape`'s length floor (the original fix) moved 24 of the app's
+     * 28 phrases from "seen once, ever" to "seen once, ever," just more of
+     * them at once. Nothing revisits a phrase after this lesson — no review
+     * pool, no second phrases lesson — so one sighting is also its lifetime
+     * total. That is the exact trap this file's own vocab pipeline exists to
+     * avoid (see the doc comment on the vocab branch below, and URD-A02's
+     * own queue note: "the trap is fixing this by raising the count alone").
+     * Caught by the curriculum critic reviewing that first fix, not by
+     * `check:shape` — its `MIN_SIGHTINGS` floor only scans `kind: 'vocab'`
+     * lessons, so a phrases lesson's sighting count was invisible to it
+     * before and after.
      *
-     * Two more kinds are genuinely available without a picture: `recall`
-     * (`wordFromMeaning`, show the English, pick the phrase) always works,
-     * and `produce` (`typeWord`) works for whichever phrases are both short
-     * enough to type and have a real answer to type — see `producible`
-     * below.
+     * The fix is the same one vocab already uses: fewer distinct items,
+     * each met more than once, rather than more items met once. `lesson.size`
+     * is now how many *distinct phrases* this lesson draws — the same role
+     * `wordIds.length` plays for a vocab lesson — not the exercise count
+     * that drawing-with-one-exercise-each conflated it with; the real
+     * exercise count here is `3 * size` (every phrase goes through all
+     * three passes below), and `check:shape` measures that real count, not
+     * this number, exactly as it does for every other kind.
      *
-     * Assignment is computed as a target up front, not decided phrase by
-     * phrase as the shuffle happens to present them. A first version did the
-     * latter — greedily giving each phrase whichever eligible kind had the
-     * fewest so far — and it reads as though it should bound every kind near
-     * a third no matter the order, but it does not: fed `[T, T, T, F, F, F]`
-     * (produce-eligible phrases clustered first) at this lesson's real size
-     * of 6, it lands on 1 produce / 3 recall / 2 meet, 50% on one kind. The
-     * greedy choice at each phrase only ever looks at counts so far, so a
-     * clustered run at the front commits ahead of what the back of the list
-     * will need. Computing `produceCount` from the whole pool first and
-     * splitting everything else in half removes that order dependence: for
-     * any order of the same 6 phrases with 2 or more of them typeable, it
-     * lands 2 produce / 2 meet / 2 recall.
-     *
-     * "2 or more typeable" is doing real work in that sentence, and this is
-     * the part with no clean fix *at this stage*. At this lesson's size,
-     * only `produceCount === 2` clears the 40% floor at all — worked out by
-     * hand and confirmed by brute force: 0 produced is 3/3 on meet/recall
-     * (50%), 1 produced still forces an odd 3/2 split of the other five
-     * (50%), and there is no fourth kind to absorb the slack. So once six
-     * phrases have been drawn with fewer than two of them typeable, no
-     * *reassignment* — greedy, target-based, or otherwise — can bring the
-     * lesson under the floor. Computed exactly (hypergeometric, 14 of the 28
-     * phrases typeable, 6 drawn without replacement): 8.24% of draws land
-     * fewer than 2 typeable. The one lesson that actually ships draws 3
-     * typeable (checked directly), clearing it with room, but that is this
-     * draw's luck, not a property this function guarantees for a different
-     * one — and `check:shape` is the backstop that would catch an unlucky
-     * one before it shipped, not this comment.
-     *
-     * "No clean fix" is about reassignment specifically, and it is
-     * narrower than the first version of this comment claimed: the pick
-     * itself draws uniformly from all 28 phrases with no floor on how many
-     * are typeable. Biasing that draw — guarantee at least `produceCount`
-     * typeable phrases, fill the rest freely — removes the residual for
-     * every future draw rather than only this one, and is the cheapest of
-     * the three ways to actually close this, not a fourth kind or a bigger
-     * lesson. This is that fix (URD-023): three kinds cannot split any
-     * lesson size under 40% each regardless — guarded in `P()` (units.ts)
-     * so that half of this problem cannot recur silently.
-     */
-    /**
-     * Typeable, and not a fill-in-the-blank template. Two phrases in the
-     * corpus ("My name is ...", "I am from ...") are literally templates —
-     * `isTypeable` counted the letters around the `...` and called them
-     * short enough, so the first version of this could hand a learner a
-     * `typeWord` prompt reading "My name is ..." with no way to answer it
-     * that `matchesWord`'s exact-skeleton comparison (`lib/roman.ts`) would
-     * accept: typing your own name adds letters the target doesn't have, and
-     * omitting the blank is not what the English asks for either. Neither
-     * failure mode existed before this change, because `phrases` could never
-     * reach `produce` at all.
+     * Phrases share one icon, so a picture question is unanswerable — every
+     * option would show the same speech bubble, and `distinctCue` folds any
+     * attempt at `multipleChoice`/`listenTap` back to `meaningPick` anyway
+     * (`wordExercise`'s `pictureOptions.length < DISTRACTORS` guard). That
+     * leaves the same three kinds available as before: `meet` (folds to
+     * `meaningPick`), `recall` (`wordFromMeaning`), `produce` (`typeWord`,
+     * where typeable). `produceExercise` already has exactly the fallback
+     * this needs for the untypeable remainder — see its own doc comment —
+     * so passing `teachesScript: false` (phrases are sentence-length; tile
+     * building was never one of this kind's three reachable kinds) reduces
+     * it to "type it if typeable, otherwise ask what it means again" rather
+     * than skipping a third sighting outright. Reusing `buildLessonExercises`
+     * vocab pipeline's own `GROUP`/staggered-cycle machinery below (same
+     * `passes` shape, same code) means phrases inherit the same
+     * measured-safe run/share behaviour vocab already has, rather than
+     * re-deriving it by hand for a second lesson kind.
      */
     const producible = (w: Word) => isTypeable(w) && !w.roman.includes('...') && !w.urdu.includes('...');
     /**
-     * URD-023: the draw used to be one uniform pick of `lesson.size` from
-     * all 28 phrases, with `produceCount` computed *afterward* from whatever
-     * happened to land in it — so a draw of fewer than 2 typeable phrases
-     * (8.24% of draws, computed exactly: hypergeometric, 14 of 28 typeable,
-     * 6 drawn without replacement) could not be rescued by any reassignment
-     * of kinds among the 6 it had. Reassignment was never the right place to
-     * fix a fact about what got drawn.
-     *
-     * So the typeable share is guaranteed at the draw instead: `produceCount`
-     * is computed from the target lesson size against the *whole* pool's
-     * eligible count, not the post-draw one, then that many typeable phrases
-     * are drawn first, and the rest of the lesson is filled from everything
-     * left over (typeable phrases beyond `produceCount` included, same as
-     * before — they simply become `meet`/`recall` material). The two draws
-     * use different seed keys so the produce-eligible pick and the
-     * fill-the-rest pick don't shuffle in lockstep, and a final shuffle
-     * mixes the two groups together rather than leaving every produce pick
-     * clustered at the front of `picks` (which would otherwise bias the
-     * `meet`/`recall` alternation below, since that counter only advances on
-     * non-produce phrases).
+     * Biased the same way the previous fix biased its draw (URD-023): a
+     * uniform draw across all 28 phrases risks too few typeable ones to
+     * keep `produce`'s fallback-to-`meet` share under 40% (worked out by
+     * hand and confirmed against a real run: an even split of typeable and
+     * untypeable picks pushes `meaningPick` to ~39-43% of the lesson,
+     * depending on how many of the untypeable third sighting falls back).
+     * Guaranteeing most of the draw is typeable keeps `produce` doing its
+     * own share of the work instead of folding back into `meet` — `size - 2`
+     * typeable, 2 untypeable, measured directly (below) to land under 40%
+     * with room, while still giving a couple of the corpus's untypeable
+     * phrases their first real repetition instead of leaving all 14 at zero.
      */
+    const typeableDraw = Math.min(PHRASE_WORDS.filter(producible).length, Math.max(0, lesson.size - 2));
     const eligiblePool = PHRASE_WORDS.filter(producible);
-    const produceCount = Math.min(eligiblePool.length, Math.ceil(lesson.size / 3));
-    const produceDraw = seededShuffle(eligiblePool, `${lesson.id}:produce`).slice(0, produceCount);
+    const produceDraw = seededShuffle(eligiblePool, `${lesson.id}:produce`).slice(0, typeableDraw);
     const produceIds = new Set(produceDraw.map((w) => w.id));
     const restPool = PHRASE_WORDS.filter((w) => !produceIds.has(w.id));
     const restDraw = seededShuffle(restPool, lesson.id).slice(0, Math.max(0, lesson.size - produceDraw.length));
     const picks = seededShuffle([...produceDraw, ...restDraw], `${lesson.id}:order`);
 
-    let meetTurn = 0;
-    picks.forEach((w) => {
-      if (produceIds.has(w.id)) {
-        exercises.push({ kind: 'typeWord', word: w });
-        return;
+    const GROUP = 2;
+    const groups: Word[][] = [];
+    for (let i = 0; i < picks.length; i += GROUP) groups.push(picks.slice(i, i + GROUP));
+
+    const passes: ((w: Word, i: number) => Exercise)[] = [
+      // Fixed at variant 1 (`meaningPick`), not vocab's varying `i % 3`.
+      // Every phrase shares one emoji (`💬`), so `distractorsFor`'s
+      // `distinctCue` pass can never find three more of the same cue inside
+      // `PHRASE_WORDS` — its own widen-if-too-uniform fallback
+      // (`if (chosen.length < DISTRACTORS) consider(WORDS)`) then reaches
+      // into the full 2,281-word vocabulary for picture distractors, which
+      // *looks* like a working `multipleChoice`/`listenTap` (four distinct
+      // pictures) but is not one: the correct option's own picture is still
+      // the generic bubble, so it is the visibly odd one out among three
+      // real object pictures, answerable by elimination without knowing
+      // what the phrase means. Confirmed live: the varying-variant version
+      // of this pass produced exactly that (`multipleChoice`/`listenTap`
+      // both appearing) before this fix pinned it to 1.
+      (w) => wordExercise(w, PHRASE_WORDS, track, 'meet', 1),
+      (w) => wordExercise(w, PHRASE_WORDS, track, 'recall'),
+      (w, i) => produceExercise(w, PHRASE_WORDS, track, false, i),
+    ];
+
+    for (let cycle = 0; cycle < groups.length + passes.length - 1; cycle++) {
+      const active = passes
+        .map((make, stage) => ({ make, g: cycle - stage }))
+        .filter(({ g }) => g >= 0 && g < groups.length);
+      // Same measured reason as the vocab pipeline below: without this, every
+      // cycle boundary puts `produce` next to `produce`.
+      if (cycle % 2 === 1) active.reverse();
+      const width = Math.max(...active.map(({ g }) => groups[g].length));
+      for (let slot = 0; slot < width; slot++) {
+        for (const { make, g } of active) {
+          const w = groups[g][slot];
+          if (!w) continue;
+          exercises.push(make(w, g * GROUP + slot));
+        }
       }
-      // Alternates by a counter of its own, not by position in `picks` — a
-      // run of consecutive produce picks (removed above) would otherwise
-      // desync a plain `i % 2` from what actually still needs assigning.
-      const demand = meetTurn++ % 2 === 0 ? 'meet' : 'recall';
-      exercises.push(wordExercise(w, PHRASE_WORDS, track, demand, 1));
-    });
+    }
   } else if (lesson.kind === 'vocab' && lesson.topic) {
     /**
      * A vocabulary lesson climbs: meet each word with a picture, come back to
@@ -1702,7 +1693,17 @@ export function buildLessonExercises(
   // not `lesson.size`. Leaving grammar out of this exemption would silently
   // cut every concept's new climb back down to 6, the same bug caught here
   // twice already.
-  const composed = lesson.kind === 'vocab' || lesson.kind === 'sentences' || lesson.kind === 'grammar';
+  //
+  // Phrases joins for the identical reason to sentences (URD-A02): `size`
+  // means *phrases drawn*, not exercises, since the meet-recall-produce
+  // climb this branch now runs (mirroring vocab's own) meets each one three
+  // times. Missing this exemption when that climb first shipped silently
+  // truncated every phrases lesson back down to `size` exercises — caught
+  // live, not in review: a 12-phrase, 36-exercise lesson measured at
+  // exactly 12 exercises and 6 distinct phrases the first time this was
+  // run, the exact shape of the two bugs this comment already names above.
+  const composed =
+    lesson.kind === 'vocab' || lesson.kind === 'sentences' || lesson.kind === 'grammar' || lesson.kind === 'phrases';
   return composed ? exercises : exercises.slice(0, lesson.size);
 }
 

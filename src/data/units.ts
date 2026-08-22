@@ -208,30 +208,55 @@ const D = (dialogueId: string, title: string, subtitle: string, xp = 25, size = 
   xp,
   size,
 });
-const P = (title: string, subtitle: string, xp = 20, size = 6): Lesson => {
+const P = (title: string, subtitle: string, xp = 30, size = 12): Lesson => {
   /**
-   * A phrases lesson has exactly three exercise kinds available to it (see
-   * the generator's `lesson.kind === 'phrases'` branch — phrases share one
-   * icon, so no picture-based kind is answerable). Three kinds can only ever
-   * hold check:shape's 40% single-kind-share floor when the most-populated
-   * kind still fits: `Math.ceil(size / 3) / size <= 0.4`. That fails at
-   * sizes 1, 2, 4 and 7 — the best possible split is 1 of 1, 1 of 2, 2 of 4
-   * and 3 of 7, all over 40%. No rebalancing inside the generator can get
-   * under the floor at those sizes; it is a fact about dividing by three, not
-   * a bug a smarter assignment fixes.
+   * URD-A02: `size` used to be both "how many distinct phrases this lesson
+   * draws" and "how many exercises it emits" — the generator's phrases
+   * branch gave each drawn phrase exactly one exercise. That meant every
+   * phrase this lesson ever taught got exactly one lifetime sighting (no
+   * review pool or second phrases lesson ever revisits one), and the fix
+   * for this lesson's own too-short length (raising size from 6 to 24) made
+   * that worse, not better: 24 of the app's 28 phrases moved from "seen
+   * once" to "seen once," just more of them in one sitting — caught by the
+   * curriculum critic reviewing that fix, not by `check:shape` (whose
+   * `MIN_SIGHTINGS` floor only scans `kind: 'vocab'` lessons).
    *
-   * Computed from the formula rather than a hardcoded list of bad sizes. An
-   * earlier version named 4 and 7 explicitly and missed 1 and 2 — the same
-   * "the comment claims more than the code checks" mistake this file's
-   * generator-side sibling was written to stop making, caught by review in
-   * the same sitting it was introduced. Checking the inequality directly
-   * means there is nothing to remember to keep in sync as the reasoning
-   * changes.
+   * The generator's phrases branch now runs the same 3-pass, meet/recall/
+   * produce climb the vocab branch already uses, so `size` here means what
+   * `wordIds.length` means for a vocab lesson — distinct items drawn — and
+   * the real exercise count is `3 * size`, not `size`. Ten times fewer
+   * phrases taught deeply beats four times more taught once.
+   *
+   * The share guard below is checked against that real formula rather than
+   * the old one-exercise-per-phrase count. The generator biases its draw
+   * toward typeable phrases — `typeableDraw = min(14, size - 2)` of them —
+   * so `produce` doesn't fold back into `meet`'s fallback too often (see the
+   * generator's own doc comment); the rest of the draw, `size - typeableDraw`
+   * phrases, is what the produce pass's fallback lands on. This is a worst
+   * case, not an exact count — those "rest" phrases are drawn from
+   * everything not already picked, which can itself include a few more
+   * typeable ones by luck, only ever *lowering* `meet`'s real share below
+   * what this guard computes. Solved by hand and confirmed against a real
+   * generated lesson at every size 6-20: safe from 10 through 17 inclusive;
+   * below 10 the worst-case `meet` share exceeds 40% (a 6-phrase lesson
+   * measured at 44.4%, the shape of the very bug URD-023 first fixed, now
+   * recurring at the new, three-times-larger exercise count); above 17 the
+   * guaranteed-typeable pool (14 of 28 phrases) can no longer supply
+   * `size - 2`, and the shortfall pushes `meet`'s share past 40% again from
+   * the other direction. No size outside that range is a bug to fix here —
+   * it is this lesson kind's whole reachable range at a 14-of-28-typeable
+   * corpus, the same "three kinds can't split some sizes under 40%
+   * regardless" fact the original guard existed to state, now for the new
+   * formula.
    */
-  if (Math.ceil(size / 3) / size > 0.4) {
+  const typeableDraw = Math.min(14, Math.max(0, size - 2));
+  const worstCaseUntypeableInProducePass = size - typeableDraw;
+  const meetShare = (size + worstCaseUntypeableInProducePass) / (3 * size);
+  if (meetShare > 0.4) {
     throw new Error(
-      `phrases lesson "${title}" has size ${size}; the most any single exercise kind can hold at this size is ` +
-        `${Math.ceil((Math.ceil(size / 3) / size) * 1000) / 10}%, over check:shape's 40% share floor — pick a different size.`
+      `phrases lesson "${title}" has size ${size}; meet/meaningPick would take ` +
+        `${Math.ceil(meetShare * 1000) / 10}% of its ${3 * size} exercises, over check:shape's 40% share ` +
+        `floor — pick a size from 10 to 17 (see the comment above this guard for why that is the reachable range).`
     );
   }
   return {
@@ -284,7 +309,7 @@ const PLANNED_UNITS: Unit[] = [
       V('first-words', 'First words', 'Everyday vocabulary', 15, 7),
       L(1, 'Position practice', 'Alone · start · middle · end'),
       V('greetings', 'Greetings', 'Say hello and thank you'),
-      P('Everyday phrases', 'Speak, don’t just read', 30, 24),
+      P('Everyday phrases', 'Speak, don’t just read'),
       REV('first-faces'),
     ],
   },
@@ -702,7 +727,7 @@ const PLANNED_UNITS: Unit[] = [
   {
     id: 'u28',
     level: 'intermediate',
-    color: JADE,
+    color: ROSE,
     title: 'Unit 28 · Field & Kitchen',
     subtitle: 'Holding, growing and cooking',
     lessons: [
@@ -927,6 +952,21 @@ const PLANNED_UNITS: Unit[] = [
        * this course's normal review floor, not a shortfall. The `60` xp and
        * "Grand review" / "Everything you know" framing stay, since finishing
        * the actual last unit of the path is still the moment they describe.
+       *
+       * The curriculum critic flagged this as a MAJOR: a review this size
+       * carrying that much xp and framing reads as overclaiming once its
+       * real content is measured. Overruled, not ignored (gauntlet/ROLES.md:
+       * a lead may overrule a critic if the ledger records why) — because
+       * this is not a new pattern this split introduced. Every CEFR-boundary
+       * review already does the identical thing: rev-asking-and-opposites
+       * (40xp), rev-your-first-readings (40xp) and rev-describing-people
+       * (45xp) all land at this course's own 22-exercise review floor too
+       * (measured directly, not assumed), each carrying elevated xp a
+       * milestone earns regardless of the review's own mechanical size. This
+       * review joining them at the floor, with the largest bonus for being
+       * the last milestone rather than a mid-course one, is that same
+       * escalating pattern (30 -> 40 -> 45 -> 60 as the course progresses),
+       * not a departure from it.
        */
       REV('the-wider-world', 'Grand review', 'Everything you know', 60),
     ],

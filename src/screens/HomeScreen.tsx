@@ -32,7 +32,7 @@ import { testerFlags } from '../store/useTesterStore';
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 /** How many lessons the course holds, across both tracks. Module scope: it is a
- *  constant of the build, and rebuilding a 348-entry structure on the screen
+ *  constant of the build, and rebuilding a 350-entry structure on the screen
  *  URD-002 exists to make lighter is the wrong place to put it. */
 const PATH_SIZE = ALL_LESSONS.length;
 
@@ -354,7 +354,9 @@ export function HomeScreen() {
   // mount while its stage is the open one, so opening a second stage closes
   // whichever was open rather than adding to it. Independent per-level
   // toggles used to let a learner reach every stage open at once — 348
-  // mounted lesson rows, the exact thing this screen exists to avoid — by
+  // mounted lesson rows at the time this was found (now 350, URD-A02's
+  // lesson-shape split having added two units' worth since), the exact
+  // thing this screen exists to avoid — by
   // nothing more than curious tapping; `check:path` only exercises the
   // default state, so this is enforced by there being no way to reach that
   // state at all, not by a check that would merely notice it.
