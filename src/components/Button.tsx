@@ -53,6 +53,32 @@ export function Button({
   icon?: ReactNode;
 }) {
   const isGhost = variant === 'ghost';
+  /**
+   * URD-036: `opacity: disabled ? 0.4 : 1` alone dims a variant's own fill,
+   * border and label together to a *muted version of the same colour* — a
+   * warm-gold `primary` button stays a shaped, coloured, tactile-looking
+   * pill at 40% opacity, still raised on its darker "edge" layer below.
+   * Found by DESIGN CRITIC comparing an enabled vs. disabled refill button
+   * at the same seed: "at a glance, before reading, a warm 40%-opacity gold
+   * pill still reads as 'a button,' just a slightly duller one."
+   *
+   * Two changes, not one, because either alone still reads as "this
+   * variant, but dim": swap every colour to this app's own existing
+   * inert-and-unavailable tone (`palette.ink700`/`ink800` — the same flat
+   * fill `HomeScreen.tsx` already gives a locked lesson row, rather than a
+   * new neutral invented for this one component), *and* flatten the 3D
+   * raised-pill effect disabled buttons no longer earn (`marginBottom: 0`
+   * collapses the "edge" shadow layer entirely, the same visual state a
+   * pressed button already uses mid-tap — a button that looks permanently
+   * pressed-flat reads as inert the way a temporarily-pressed one reads as
+   * "being tapped"). Full opacity throughout: the muted tones already read
+   * as unavailable on their own, and dimming them further just makes the
+   * label harder to read without adding a second signal.
+   */
+  const fill = disabled ? palette.ink700 : FILL[variant];
+  const edge = disabled ? palette.ink800 : EDGE[variant];
+  const text = disabled ? withAlpha(palette.paper, 0.4) : TEXT[variant];
+  const border = isGhost ? withAlpha(palette.cream, 0.2) : disabled ? withAlpha(palette.paper, 0.15) : palette.ink;
   return (
     <Pressable
       disabled={disabled || loading}
@@ -61,23 +87,22 @@ export function Button({
         onPress?.();
       }}
       style={({ pressed }) => ({
-        opacity: disabled ? 0.4 : 1,
         transform: [{ translateY: pressed ? 3 : 0 }],
       })}
       className={className}
     >
       {({ pressed }: { pressed: boolean }) => (
-        <View style={{ borderRadius: 16, backgroundColor: isGhost ? 'transparent' : EDGE[variant] }}>
+        <View style={{ borderRadius: 16, backgroundColor: isGhost ? 'transparent' : edge }}>
           <View
             style={{
-              backgroundColor: FILL[variant],
+              backgroundColor: fill,
               borderRadius: 16,
-              marginBottom: isGhost ? 0 : pressed ? 0 : 4,
+              marginBottom: isGhost || disabled ? 0 : pressed ? 0 : 4,
               // A flat fill reads as a coloured rectangle; a keyline around it
               // reads as ink on paper. Ghost buttons have no fill, so they keep
               // the faint outline that gives them an edge at all.
               borderWidth: isGhost ? 1 : 2,
-              borderColor: isGhost ? withAlpha(palette.cream, 0.2) : palette.ink,
+              borderColor: border,
             }}
             className="flex-row items-center justify-center py-4 px-5"
           >
@@ -86,7 +111,7 @@ export function Button({
             ) : (
               <>
                 {icon}
-                <Bold style={{ color: TEXT[variant] }} className="text-[15px] uppercase tracking-[1.5px]">
+                <Bold style={{ color: text }} className="text-[15px] uppercase tracking-[1.5px]">
                   {children}
                 </Bold>
               </>
