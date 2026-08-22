@@ -4280,4 +4280,12 @@ review.ts, review.test.ts and generator.test.ts, each verified against
 a fresh, independent recomputation rather than assumed correct from
 the old prose.
 
+After wiring check:shape into deploy-preview.yml, one check:all run
+failed at check:home-scroll ("no collapsed Expand header found") —
+investigated rather than re-run past: 5/5 standalone runs of
+check:home-scroll passed cleanly straight after, and a full check:all
+re-run (30/30) passed clean immediately after that. Recorded here as an
+observed one-off Playwright flake in that check, not attributed to
+this item's own changes, rather than silently rerun without comment.
+
 branch: claude/gauntlet-lesson-shape-remainder
