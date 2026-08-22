@@ -335,28 +335,32 @@ async function answerWordChoice(page, text, wrongOnPurpose, knownWord) {
 
 /**
  * `listenTap` has nothing to read: the prompt is audio, not text, until
- * after an answer is given. `bootAudioSniffer` (installed once, at page
- * creation) patches `HTMLMediaElement.play` to record the last-played
- * clip's `src`, which — like every other bundled voice clip in this repo —
- * carries the real word id as its own filename before the cache-busting
- * hash (`assets/voice/w-bartan.<hash>.mp3`; confirmed against a real build's
- * own output). Tapping the prompt's own speaker button plays the target
- * word specifically, so reading the sniffer straight after is exact — no
- * guessing which of the four options it was, the way `letterForm`/
- * `letterPick`/the other three Word-based kinds have to identify a target
- * from rendered text, because this one has none to read.
+ * after an answer is given, and no solver was found for it — see the queue
+ * for the full account.
+ *
+ * Two approaches were tried against the real running app. First, patching
+ * `HTMLMediaElement.play` at page creation to record the last-played clip's
+ * `src` (every bundled voice clip's filename carries the real word id
+ * before its cache-busting hash — confirmed against a real build's own
+ * output, e.g. `assets/voice/w-bartan.<hash>.mp3` — so reading it back would
+ * have been exact). It never fired once across a real run. Second, network-
+ * level instead of guessing which JS API expo-av's web build actually plays
+ * through: a `page.on('request', ...)` listener watching for any request
+ * whose URL matched a voice-clip path. Confirmed the button tap itself now
+ * lands correctly (an earlier version of this used a `text=` locator
+ * against `accessibilityLabel`'s string, which is not visible text and
+ * matched nothing) — but zero requests containing `mp3`, `voice`, or
+ * `audio` anywhere in their URL were ever observed, across multiple full
+ * lesson attempts, not just on this exercise. The clip is not merely
+ * cached from an earlier play (a stale cache would still be plausible,
+ * still exists) — no such request happens at all, meaning the audio is not
+ * playing in this headless driver in the first place; `playClip`
+ * (`lib/speech.ts`) swallows its own failure silently (`catch { return
+ * null; }`), so there is no error to chase either. This exercise's real
+ * wrong-rate is left as it was before this item — an honest, investigated
+ * gap, the same shape as `multipleChoice`'s picture-only "speaks" case
+ * below, not a regression this fix introduced.
  */
-async function answerListenTap(page, wrongOnPurpose) {
-  const played = await tap(page.locator('text=/Play the word again/i'), 0, 900);
-  if (!played) return false;
-  await page.waitForTimeout(350);
-  const src = await page.evaluate(() => window.__lastAudioSrc || '').catch(() => '');
-  const m = src.match(/\/voice(?:-m)?\/([^/]+)\.[0-9a-f]{16,}\.[a-z0-9]+(?:\?|$)/i);
-  const word = m ? WORDS.find((w) => w.id === m[1]) : undefined;
-  if (!word) return false;
-  const { btns, candidates } = await candidateOptions(page);
-  return clickMatching(page, btns, candidates, glossOf(word), wrongOnPurpose);
-}
 
 /**
  * `letterForm` shows the letter's own `name` in its Eyebrow caption
@@ -438,6 +442,7 @@ const rnd = () => {
 
 const failures = [];
 const kinds = new Map();
+const solverStats = {};
 /**
  * `attempts` counts every trip through the loop below — opening a lesson and
  * playing until it stops, for whatever reason. `lessonsCompleted` counts only
@@ -677,15 +682,16 @@ const NAMED_TAP_KIND = [
 ];
 
 /** One real solver per named kind, tried before ever falling back to a
- *  random guess. `reading` and `dialogue` have none — a comprehension
- *  answer lives in the passage/exchange's own meaning, not a lookup table,
- *  and stayed out of this item's scope (see the queue) — so they always
- *  fall through to the random pick below, same as before this fix. */
+ *  random guess. `listenTap` has none — see that gap's own doc comment,
+ *  above `answerLetterForm` — and neither do `reading`/`dialogue`, whose
+ *  comprehension answer lives in the passage/exchange's own meaning, not a
+ *  lookup table, and stayed out of this item's scope (see the queue). All
+ *  three always fall through to the random pick below, same as before this
+ *  fix. */
 const NAMED_KIND_SOLVER = {
   multipleChoice: (page, text, wrong) => answerWordChoice(page, text, wrong),
   meaningPick: (page, text, wrong) => answerWordChoice(page, text, wrong),
   wordFromMeaning: (page, text, wrong) => answerWordChoice(page, text, wrong),
-  listenTap: (page, _text, wrong) => answerListenTap(page, wrong),
   letterForm: (page, text, wrong) => answerLetterForm(page, text, wrong),
   letterPick: (page, text, wrong) => answerLetterPick(page, text, wrong),
   grammarDrill: (page, text, wrong) => answerGrammarDrill(page, text, wrong),
@@ -702,7 +708,14 @@ const NAMED_KIND_SOLVER = {
 async function tapNamedKind(page, text, wrongOnPurpose) {
   const kind = (NAMED_TAP_KIND.find(([re]) => re.test(text)) ?? [null, 'tap'])[1];
   const solver = NAMED_KIND_SOLVER[kind];
-  if (solver && (await solver(page, text, wrongOnPurpose).catch(() => false))) return kind;
+  if (solver && (await solver(page, text, wrongOnPurpose).catch(() => false))) {
+    if (process.env.SOAK_DEBUG) solverStats.solved = (solverStats.solved ?? 0) + 1;
+    return kind;
+  }
+  if (process.env.SOAK_DEBUG) {
+    solverStats.fallback = (solverStats.fallback ?? 0) + 1;
+    console.error(`[debug] tapNamedKind: solver ${solver ? 'FAILED' : 'MISSING'} for kind=${kind}, random fallback`);
+  }
 
   const btns = page.locator('[role="button"]');
   const n = await btns.count();
@@ -1102,19 +1115,6 @@ async function settleAttempt(page, url, why) {
   const browser = await chromium.launch({ executablePath: exe, headless: !HEADED });
   const page = await browser.newPage({ viewport: { width: 412, height: 900 }, deviceScaleFactor: 1 });
 
-  // `answerListenTap`'s only way to know what was played — see its own doc
-  // comment above. Installed before any navigation so it is in place for
-  // every page load a reload (hearts refill, recovery) creates, not just
-  // the first.
-  await page.addInitScript(() => {
-    window.__lastAudioSrc = null;
-    const play = HTMLMediaElement.prototype.play;
-    HTMLMediaElement.prototype.play = function (...args) {
-      window.__lastAudioSrc = this.currentSrc || this.src || null;
-      return play.apply(this, args);
-    };
-  });
-
   // Invariant 1, running the whole time rather than sampled.
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e).slice(0, 200)));
@@ -1161,6 +1161,7 @@ async function settleAttempt(page, url, why) {
   );
   const seen = [...kinds].map(([k, n]) => `${k} ${n}`).join(' · ');
   if (seen) console.log(`  exercise kinds exercised: ${seen}`);
+  if (process.env.SOAK_DEBUG) console.error(`[debug] solverStats: ${JSON.stringify(solverStats)}`);
 
   if (failures.length) {
     console.error(`\nsoak — ${failures.length} failure${failures.length === 1 ? '' : 's'}:\n`);
