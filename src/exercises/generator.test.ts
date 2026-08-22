@@ -577,18 +577,30 @@ describe('URD-022: visually confusable letters are not drilled back to back', ()
   });
 });
 
-describe('URD-023: a phrases lesson always draws enough typeable phrases to clear the share floor', () => {
+describe('URD-023/URD-A02: a phrases lesson always draws enough typeable phrases to clear the share floor', () => {
   /**
    * A phrases lesson has exactly three reachable kinds (`typeWord`,
    * `meaningPick`, `wordFromMeaning` — see the generator's own doc comment
    * on the `phrases` branch), so no single kind may exceed 40% of the
-   * lesson (`check:shape`'s share rule). Before this fix, the draw of 6 from
-   * 28 phrases was uniform with no floor on how many were typeable, and
-   * `produceCount` was computed *after* the draw — so a draw of fewer than
-   * 2 typeable phrases (8.24% of draws, hypergeometric: 14 of 28 typeable, 6
-   * drawn) could not be rescued by any reassignment. Many synthetic lesson
-   * ids stand in for many draws, the same way the real course only ever
-   * exercises one seed.
+   * lesson (`check:shape`'s share rule).
+   *
+   * URD-023 (original fix): the draw of 6 from 28 phrases used to be
+   * uniform with no floor on how many were typeable, and `produceCount` was
+   * computed *after* the draw — so a draw of fewer than 2 typeable phrases
+   * (8.24% of draws, hypergeometric: 14 of 28 typeable, 6 drawn) could not
+   * be rescued by any reassignment.
+   *
+   * URD-A02: `size` stopped meaning "phrases drawn, one exercise each" and
+   * started meaning "phrases drawn, three sightings each" (see the
+   * generator's own phrases-branch doc comment) — a synthetic 6-phrase
+   * lesson is no longer a real scenario this kind can be asked to produce;
+   * `units.ts`'s `P()` now throws building one outside 10-17, the range the
+   * new formula actually holds `meetShare <= 0.4` for (below 10, `meet`'s
+   * share of the now-3x exercise count exceeds it; above 17, the guaranteed-
+   * typeable pool — 14 of 28 phrases — runs out and the produce pass's
+   * fallback-to-`meet` share grows past it from the other direction). 12
+   * (this lesson's own real, shipped size) stands in for "many draws" the
+   * same way the real course only ever exercises one seed.
    */
   const KINDS: Array<'typeWord' | 'meaningPick' | 'wordFromMeaning'> = ['typeWord', 'meaningPick', 'wordFromMeaning'];
   const phrasesLesson = (id: string): Lesson => ({
@@ -598,7 +610,7 @@ describe('URD-023: a phrases lesson always draws enough typeable phrases to clea
     icon: '💬', // audit:emoji-ok — matches the real P() lesson's own icon (units.ts)
     kind: 'phrases',
     xp: 20,
-    size: 6,
+    size: 12,
   });
 
   it('never lets one exercise kind exceed 40% of the lesson, across many synthetic draws', () => {
@@ -614,7 +626,7 @@ describe('URD-023: a phrases lesson always draws enough typeable phrases to clea
     }
   });
 
-  it('draws at least 2 typeable phrases into a 6-phrase lesson, every time', () => {
+  it('draws at least size-2 typeable phrases into a 12-phrase lesson, every time', () => {
     // The specific guarantee the fix makes at the draw, not just its
     // downstream consequence (the share floor above) — asserted directly so
     // a future change that keeps the share floor by some other accident
@@ -623,7 +635,24 @@ describe('URD-023: a phrases lesson always draws enough typeable phrases to clea
       const lesson = phrasesLesson(`synthetic-phrases-${i}`);
       const exercises = buildLessonExercises(lesson, [], 'both', new Set());
       const produced = exercises.filter((e) => e.kind === 'typeWord').length;
-      expect(produced, lesson.id).toBeGreaterThanOrEqual(2);
+      expect(produced, lesson.id).toBeGreaterThanOrEqual(lesson.size - 2);
+    }
+  });
+
+  it('gives every drawn phrase exactly three sightings, not one', () => {
+    // URD-A02's own point: a phrases lesson is now a small climb, the same
+    // shape as vocab's, not a large one-shot draw. Every phrase this lesson
+    // teaches gets met, recalled and produced (or produced's own fallback),
+    // never just one of the three.
+    for (let i = 0; i < 200; i++) {
+      const lesson = phrasesLesson(`synthetic-phrases-sightings-${i}`);
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      const sightings = new Map<string, number>();
+      for (const e of exercises) {
+        if ('word' in e && e.word) sightings.set(e.word.id, (sightings.get(e.word.id) ?? 0) + 1);
+      }
+      expect(sightings.size, lesson.id).toBe(lesson.size);
+      for (const n of sightings.values()) expect(n, lesson.id).toBe(3);
     }
   });
 
