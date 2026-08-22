@@ -882,4 +882,38 @@ describe("URD-030: the grammar climb's sentence-reinforcement distractors are co
       expect(distractors.length - sameConcept.length, JSON.stringify(ex.options)).toBeGreaterThan(0);
     }
   });
+
+  // THE CRITIC, reviewing this item: `sentenceReinforceClimb` is shared with
+  // the plain `sentences` branch below, and a `sentences`-kind lesson's picks
+  // CAN carry a `.concept` (URD-027's concept-priority slotting sometimes
+  // puts one there) — so this fix's effect on `sentences`-kind lessons was
+  // real (measured: 380 of 576 concept-tagged exercises gained a same-concept
+  // distractor, up from a chance-level 21.5%) but had no test of its own.
+  // Not asserting an exact same-concept count here the way the g-plurals test
+  // above does — a `sentences`-kind lesson's picks span many different
+  // concepts with varying pool sizes, so the richness g-plurals happens to
+  // have (always ≥3 candidates) isn't guaranteed everywhere — only the
+  // invariant the cap actually promises: never fully saturated.
+  it('no sentences-kind lesson exercise saturates every distractor with the same concept', () => {
+    let sampledAtLeastOne = false;
+    for (const u of UNITS) {
+      for (const l of u.lessons) {
+        if (l.kind !== 'sentences') continue;
+        const exercises = buildLessonExercises(l, [], 'both');
+        const relevant = exercises.filter((e) => e.kind === 'wordFromMeaning' && 'word' in e) as {
+          word: { id: string; topic: string; concept?: string };
+          options: { id: string; concept?: string }[];
+        }[];
+        for (const ex of relevant.filter((e) => e.word.topic === 'sentences' && e.word.concept)) {
+          sampledAtLeastOne = true;
+          const distractors = ex.options.filter((o) => o.id !== ex.word.id);
+          const sameConcept = distractors.filter((d) => d.concept === ex.word.concept);
+          expect(sameConcept.length, `${l.id}: ${JSON.stringify(ex.options)}`).toBeLessThan(OPTIONS_PER_QUESTION - 1);
+        }
+      }
+    }
+    expect(sampledAtLeastOne, 'expected at least one sentences-kind lesson to emit a concept-tagged exercise').toBe(
+      true
+    );
+  });
 });

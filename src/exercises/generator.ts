@@ -744,9 +744,31 @@ function sentenceReinforceClimb(picks: Sentence[], pool: Word[], track: LearnTra
         // before this fix: only 26.9% (78 of 290) of the grammar climb's
         // meaningPick/wordFromMeaning exercises had even one same-concept
         // distractor, since `pool` was drawn with no concept-awareness at
-        // all. Undefined (not merely empty) when `sen` has no concept — a
-        // `sentences`-kind lesson's picks mostly won't — so `distractorsFor`
+        // all. Undefined (not merely empty) when `sen` has no concept — most
+        // `sentences`-kind lesson picks won't have one — so `distractorsFor`
         // falls back to its plain, unweighted draw exactly as before.
+        //
+        // THE CRITIC, reviewing this item: this function is shared by both
+        // call sites (the `grammar` branch's tail and the plain `sentences`
+        // branch below), and a `sentences`-kind lesson's picks CAN carry a
+        // `.concept` — `sentencesForLesson`'s own concept-priority slotting
+        // (URD-027) means they sometimes do. The item's own scope was
+        // written around "the grammar climb" alone, and this side effect on
+        // `sentences`-kind lessons went unmeasured and undisclosed here at
+        // first. Measured once flagged: 380 of 576 (66.0%) of `sentences`-
+        // kind lessons' own concept-tagged meaningPick/wordFromMeaning
+        // exercises now have a same-concept distractor too (up from a
+        // chance-level 21.5% before), the identical pattern as the grammar
+        // branch (0% of `meaningPick`, capped at `DISTRACTORS - 1` of
+        // `wordFromMeaning`) — the same mechanism, working identically,
+        // because it is the same shared function. Left in rather than
+        // special-cased away: the reasoning that makes a near-miss
+        // distractor better for a grammar lesson applies exactly as well to
+        // a sentences lesson reinforcing the same tagged construction, and
+        // splitting this function back into two branch-specific copies to
+        // avoid an unscoped-but-beneficial side effect is the exact
+        // drift this function was unified to prevent (see this function's
+        // own header comment).
         const preferred = sen.concept ? pool.filter((p) => p.concept === sen.concept && p.id !== sen.id) : undefined;
         const ex = wordExercise(w, pool, track, turn === 0 ? 'meet' : 'recall', 1, preferred);
         exercises.push(ex);
