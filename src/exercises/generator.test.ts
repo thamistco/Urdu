@@ -700,24 +700,25 @@ describe('URD-025: a sentence-derived climb leans on sentenceBuild, not just rec
   // THE CRITIC, reviewing this item: a green `vitest run` said nothing about
   // the 3-8 minute band `check:shape` actually enforces, so this suite could
   // pass while `npm run check:shape -- --kind=grammar` — the item's own
-  // verify command — still failed. It still does, for one lesson: g-plurals
-  // has only 3 readable sentences tagged to it (a content gap, not a climb
-  // one, tracked separately as URD-029) and lands at 2.7 minutes, under the
-  // 3.0 floor even at this climb's ratio. Asserted explicitly, with the one
-  // known exception named rather than silently excluded, so this specific
-  // gap can't regress further without this test saying so, and can't be
-  // "fixed" by quietly loosening this assertion instead of URD-029's content.
-  it('every sentences and grammar lesson reaches at least 3 minutes, except the one already-tracked content gap (URD-029)', () => {
+  // verify command — still failed. It did, for one lesson: g-plurals had
+  // only 3 readable sentences tagged to it (a content gap, not a climb one)
+  // and landed at 2.7 minutes, under the 3.0 floor even at this climb's
+  // ratio. Tracked as URD-029 and asserted here as a named exception, so the
+  // gap couldn't regress further unnoticed and couldn't be "fixed" by
+  // quietly loosening this assertion instead of the content.
+  //
+  // URD-029: closed by tagging one new sentence to g-plurals (s-257, "دو
+  // لڑکیاں یہاں ہیں") rather than moving the lesson or re-tagging an
+  // existing one — see src/data/sentences.ts's own comment there for why.
+  // g-plurals now has 4 readable sentences and reaches 3.45 minutes, clear
+  // of the floor with no exception needed, so this asserts the universal
+  // rule directly rather than keeping a now-empty exception set around.
+  it('every sentences and grammar lesson reaches at least 3 minutes', () => {
     const SECS_PER_EXERCISE = 9;
-    const KNOWN_SHORT = new Set(['g-plurals']);
     for (const l of UNITS.flatMap((u) => u.lessons).filter((x) => x.kind === 'sentences' || x.kind === 'grammar')) {
       const exercises = buildLessonExercises(l, [], 'both', new Set());
       if (!exercises.length) continue;
       const minutes = (exercises.length * SECS_PER_EXERCISE) / 60;
-      if (KNOWN_SHORT.has(l.id)) {
-        expect(minutes, l.id).toBeLessThan(3.0); // documents the gap, fails loudly if URD-029 quietly closes it unnoticed
-        continue;
-      }
       expect(minutes, `${l.id}: ${minutes.toFixed(2)} min`).toBeGreaterThanOrEqual(3.0);
     }
   });
