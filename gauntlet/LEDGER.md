@@ -3850,3 +3850,83 @@ trusting the commit message) is recorded in gauntlet/done/URD-029.md
 rather than smoothed over.
 
 branch: claude/gauntlet-grammar-plurals-length
+
+## CLAIMED · URD-030 · 2026-08-22T00:32Z
+files: src/data/words.ts, src/exercises/generator.ts
+branch: claude/gauntlet-grammar-distractor-concept
+
+## CRITIQUE · URD-030
+CURRICULUM CRITIC: MAJOR — an uncapped preferred-pool draw saturated
+every distractor slot whenever a concept had enough near-misses (580 of
+584 wordFromMeaning exercises had ALL three distractors same-concept,
+not "at least one"), collapsing a recall question into "tell these four
+near-identical sentences apart" with no option that just looks
+different. FIXED: capped preferred's own contribution at
+DISTRACTORS - 1 and excluded its members from the main pool's own draw,
+confirmed via a full distribution count (0:292, 1:0, 2:584, 3:0 across
+876 exercises — never saturated). Also flagged the check script's own
+"thin pool" comment as misleading (g-postpositions at 21 tagged
+sentences sat at the identical rate as g-plurals at 4) — FIXED, script
+now reports the exercise-kind breakdown and full distribution directly.
+Checked real content for homogeneity/ambiguity risk in small-pool
+concepts (g-plurals, g-comparative, g-passive) and found none genuinely
+unfair. No blocking authority; recommended ship-with-tweak, which is
+what happened.
+
+THE CRITIC: no BLOCKING. Independently verified the meaningPick 0%
+root cause by tracing distractorsFor/cueOf directly; reproduced the
+kind-separated measurement with an independent script; confirmed
+preferred defaults to a no-op for every other of the 6 existing
+distractorsFor/wordExercise call sites; confirmed no UI leak of the new
+concept field; confirmed both sentenceReinforceClimb call sites always
+have `sen` present in `pool`, so the self-exclusion never silently
+no-ops; confirmed the 4 new tests fail with a clear message when the
+cap is disabled and restore clean. Found one real MAJOR: the fix's
+effect on sentences-kind lessons (sentenceReinforceClimb is shared) was
+real but undisclosed/unmeasured/untested against this item's own
+grammar-only stated scope. FIXED: measured directly (380/576, 66.0%,
+up from a chance-level 21.5%), documented explicitly in the shared
+function's own comment with the reasoning for leaving it in rather than
+un-sharing the function, and added a dedicated test closing the
+"untested" gap. A second finding (a claim about the check script
+already separating by kind) was already resolved by the CURRICULUM
+CRITIC fix above by the time it was reported. Confirmed full check:all
+(27 steps) passing on its own, separately from the parent's run.
+
+## PASSED · URD-030 · 2026-08-22T00:50Z
+$ npm run check:grammar-distractors
+  584 of 876 grammar-climb exercises (66.7%) offer a same-concept
+  distractor — meaningPick 0/292 (structural, filed as URD-050),
+  wordFromMeaning 584/584 with exactly 2 of 3 same-concept and one
+  non-concept anchor, never 3 of 3.
+
+$ npm run check:answerable
+  114,600 exercises generated, all clean — still answerable.
+
+$ npx tsc --noEmit
+  clean.
+
+$ npx vitest run
+  171 passed (171) — 5 new URD-030 tests (2 isolate distractorsFor's
+  preferred parameter and cap with synthetic words, 1 against real
+  g-plurals content, 1 against real sentences-kind content, 1 proving
+  the reserved slot survives even when the main pool still contains
+  the capped-out preferred candidates).
+
+$ npm run format:check
+  clean.
+
+$ npm run check:all
+  all 27 steps pass, confirmed solo on the final tree.
+
+Induced failure: temporarily uncapped consider(preferred), all 4
+cap-dependent tests failed with clear messages; restored and
+reconfirmed clean.
+
+New queue item filed: URD-050 (meaningPick's structural inability to
+offer a same-concept sentence distractor at all, found while verifying
+this item's own fix landed where its verify command expected — not a
+defect in this item, a distinct architectural limitation one level
+deeper).
+
+branch: claude/gauntlet-grammar-distractor-concept
