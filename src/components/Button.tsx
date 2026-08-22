@@ -64,18 +64,41 @@ export function Button({
    *
    * Two changes, not one, because either alone still reads as "this
    * variant, but dim": swap every colour to this app's own existing
-   * inert-and-unavailable tone (`palette.ink700`/`ink800` — the same flat
-   * fill `HomeScreen.tsx` already gives a locked lesson row, rather than a
-   * new neutral invented for this one component), *and* flatten the 3D
-   * raised-pill effect disabled buttons no longer earn (`marginBottom: 0`
-   * collapses the "edge" shadow layer entirely, the same visual state a
+   * inert-and-unavailable *fill* (`palette.ink700`/`ink800` — the same flat
+   * colour `HomeScreen.tsx` already gives a locked lesson row's background,
+   * rather than a new neutral invented for this one component — though
+   * that row also layers a further `opacity: 0.7` on top, which this
+   * deliberately does not; see the contrast note below), *and* flatten the
+   * 3D raised-pill effect disabled buttons no longer earn (`marginBottom:
+   * 0` collapses the "edge" shadow layer entirely, the same visual state a
    * pressed button already uses mid-tap — a button that looks permanently
    * pressed-flat reads as inert the way a temporarily-pressed one reads as
    * "being tapped"). Full opacity throughout: the muted tones already read
    * as unavailable on their own, and dimming them further just makes the
    * label harder to read without adding a second signal.
+   *
+   * DESIGN CRITIC measured the disabled label's own contrast against this
+   * fill at 3.24:1 — below the 4.5:1 AA floor for normal text, though
+   * WCAG 1.4.3 explicitly exempts inactive/disabled controls from any
+   * contrast requirement, and the label reads fine at the size this app
+   * actually renders it. Noted rather than silently accepted: a future
+   * pass could afford to lighten the disabled text a little without
+   * undoing the muted-fill signal this fix depends on.
    */
-  const fill = disabled ? palette.ink700 : FILL[variant];
+  /**
+   * DESIGN CRITIC: this line originally read `disabled ? palette.ink700 :
+   * FILL[variant]` with no `isGhost` guard — unlike `edge` and `border`
+   * right below it, which both already do guard it. Before this fix that
+   * asymmetry was invisible: `fill` was always `FILL[variant]` regardless
+   * of `disabled`, and `FILL.ghost` is `'transparent'` already, so nothing
+   * ever showed through. The moment `fill` became disabled-dependent, a
+   * disabled ghost button started rendering a solid `ink700` box instead
+   * of staying transparent — reproduced live on `TracePad.tsx`'s disabled
+   * "Clear" button, indistinguishable from a disabled *primary* button
+   * beside it, contradicting the very comment two lines below this one
+   * ("Ghost buttons have no fill, so they keep the faint outline").
+   */
+  const fill = isGhost ? 'transparent' : disabled ? palette.ink700 : FILL[variant];
   const edge = disabled ? palette.ink800 : EDGE[variant];
   const text = disabled ? withAlpha(palette.paper, 0.4) : TEXT[variant];
   const border = isGhost ? withAlpha(palette.cream, 0.2) : disabled ? withAlpha(palette.paper, 0.15) : palette.ink;
