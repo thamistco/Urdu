@@ -122,47 +122,6 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-034 — The soak's generic answer-tap doesn't try to be correct
-attempts: 0
-files: scripts/soak.js
-definition of done: `answer()`'s fallback for 7 of 15 exercise kinds
-  (`tapNamedKind`, covering multipleChoice, meaningPick, listenTap,
-  wordFromMeaning, letterForm, letterPick, grammarDrill) and `solveMatching`
-  pick a uniformly random candidate with no attempt at correctness — the
-  `wrongOnPurpose` flag `playLesson` computes (`rnd() < 0.25`, intended to
-  mean "right 75% of the time, deliberately wrong 25%") is read by
-  `typeWord`, `letterTrace` and the tile-tray solvers, but never by these
-  two, which cover most of what a real lesson asks. Effective wrong-rate on
-  a random-guess kind with N options is `1 - 1/N`, typically 65-75% against
-  the documented 25% — measured indirectly but repeatedly this session: a
-  real, non-diagnostic soak run never completed a single lesson (0 of over
-  120 attempts, across a dozen seeds/`--start` positions), and the identical
-  content played cleanly (10/10 clean completions) the moment a throwaway,
-  unshipped patch made hearts irrelevant, isolating answer accuracy — not
-  the app's hearts economy (URD-006) — as the actual bottleneck. Give the
-  fallback a real correctness signal (reading the loaded lesson's known-
-  correct option via the same `load()` mechanism other check scripts use,
-  or an accessibility hint the app is willing to expose for testing) so it
-  gets it right except when `wrongOnPurpose`, the way `typeWord` already
-  does.
-verify: a real (non-diagnostic, no hearts override) `npm run soak` run
-  starting well into the vocabulary (e.g. `--start 90`) completes a
-  clear majority of its lesson attempts, not zero.
-notes: Found and root-caused while shipping URD-005. Two concrete
-  consequences of leaving this open, both worth knowing about rather than
-  rediscovering: (1) `matching` sits at the very end of every vocab lesson
-  and needs the lesson to actually finish to ever be seen, so
-  `--require matching` cannot pass against a real run today no matter the
-  budget — the solver itself is correct (verified via the same throwaway
-  patch: 8/8 matching boards solved cleanly once reachable), it simply
-  never gets reached; (2) since no lesson kind ever completes, the "current
-  lesson" a fresh attempt reopens never advances, so a single `--start`
-  value locks a whole run to one lesson's exercise-kind family — a
-  `--require` spanning two different lesson kinds (e.g. a vocab kind plus
-  a grammar kind) cannot be jointly satisfied by one real run, only by two
-  separate ones. Neither is a soak.js bug on its own; both are downstream
-  of this one.
-
 ## URD-035 — A grammar teaching card can crash to a blank screen
 attempts: 0
 files: src/exercises/GrammarExercises.tsx
@@ -192,6 +151,13 @@ notes: Found chasing down THE CRITIC's BLOCKING finding on URD-005 (that
   during the stage-reveal sequence, but that needs someone reading
   `GrammarExercises.tsx`'s `stages`/`shown` logic against real `GRAMMAR`
   concept data, not more soak driving.
+
+  Third independent reproduction found while shipping URD-034 (`--start
+  200 --track roman --seed 55`): same alternating "unanswerable
+  screen"/`TypeError: Cannot read properties of undefined (reading 'N')`
+  shape on `grammarTeach`, confirmed independent of URD-034's own driver
+  changes by re-running with its new grammarDrill solver forced back off
+  — identical failure either way.
 
 ## URD-036 — A disabled button should look disabled, not just say why it is
 attempts: 0

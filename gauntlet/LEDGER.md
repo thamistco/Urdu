@@ -4076,3 +4076,80 @@ both new scholar-specific assertions failed with clear messages
 "expected 10000 to be less than 7220"); restored and reconfirmed clean.
 
 branch: claude/gauntlet-achievement-tiers-reachable
+
+## CLAIMED · URD-034 · 2026-08-22T03:00Z
+files: scripts/soak.js
+branch: claude/gauntlet-soak-answer-correctness, cut from
+claude/gauntlet-achievement-tiers-reachable after URD-033 shipped.
+
+## CRITIQUE · URD-034
+Dispatched THE CRITIC only, matching URD-004's own precedent for the
+identical shape of fix — a driver-only fix to scripts/soak.js, no
+lesson, word, screen, or exercise-behavior content changed.
+
+THE CRITIC: no BLOCKING. Two MAJOR, both real, both fixed and
+re-verified live before shipping:
+
+1. The first draft's single case-sensitive `letterByName` index broke
+   `letterForm` for every letter (not just te/Te) because its Eyebrow
+   caption uppercases every name via CSS, while `letterPick` renders the
+   same name case-intact via plain `Txt` — confirmed live via
+   `SOAK_DEBUG=1` showing failures on plain letters like `pe`/`be`.
+   Fixed with a dual-index design (`letterByNameExact` for `letterPick`,
+   `lettersByNameFold` + a `letter.sound` tiebreak for `letterForm`);
+   re-verified `--start 0 --lessons 2` → 15/15 solved, zero fallbacks.
+2. `answerGrammarDrill` read `drill.romanOptions`, a field that only
+   exists on generator.ts's derived runtime exercise object, never on
+   the raw `GrammarDrill` record this file loads. Fixed by calling
+   `romanAll(drill.options)` directly, the same function generator.ts
+   itself calls. Re-verified: all 38 real drills resolve via `romanAll`
+   in isolation; live `--start 200 --track roman` → grammarDrill 3/3.
+
+Also caught: the binomial-survival figures in the module doc comment
+and done-file for n=33/n=40 were wrong (didn't even decrease
+monotonically with n) — corrected to the real computed values (see
+PASSED below).
+
+THE CRITIC's third pass, after both MAJORs were fixed and re-verified,
+passed clean.
+
+Independently, while re-verifying the grammarDrill fix on the Roman
+track, a real app crash surfaced (`--start 200 --track roman --seed
+55`: alternating unanswerable-screen/uncaught-TypeError on
+`grammarTeach`). Re-ran identically with the new grammarDrill solver
+forced off to rule out the driver as cause — crash reproduced
+unchanged, confirming it is independent of this item. Traced to an
+existing queue item, URD-035, which already describes the identical
+crash shape from two other seeds/lessons — recorded as a third
+reproduction there rather than filed as new.
+
+## PASSED · URD-034 · 2026-08-22T03:10Z
+$ SOAK_DEBUG=1 node scripts/soak.js --start 0 --lessons 2
+  solverStats {"solved":15}, zero fallbacks — all 40 letters via both
+  letterPick and letterForm.
+
+$ SOAK_DEBUG=1 node scripts/soak.js --start 200 --track roman --lessons 3
+  grammarDrill solved 3/3 via the romanAll fix.
+
+$ node -e (binomial recompute)
+  P(≤4 wrong of 25 at 33.5%) ≈ 4.5%, of 33 ≈ 0.5%, of 40 ≈ 0.06% —
+  corrected the module doc comment and done-file, which had
+  miscomputed the last two as ≈5.9%/≈1.6%.
+
+$ npx tsc --noEmit
+  clean.
+
+$ npm run lint
+  clean.
+
+$ npm run format:check
+  clean.
+
+Real non-diagnostic verify run (`--start 90`, no hearts override, 15
+attempts) still completes zero lessons — reported plainly, not
+smoothed over. The fix itself is 100% resolve rate on every kind it
+covers (independently confirmed above); the item's own verify command
+still fails for a reason measured directly (hearts-economy math, see
+done-file), attributable to URD-006, out of this item's scope.
+
+branch: claude/gauntlet-soak-answer-correctness
