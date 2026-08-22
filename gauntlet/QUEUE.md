@@ -122,37 +122,6 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-030 — The grammar climb's distractor pool doesn't know which concept it's reinforcing
-attempts: 0
-files: src/exercises/generator.ts
-definition of done: `reinforcePool` in the grammar branch (feeding
-  `meaningPick`/`wordFromMeaning` distractors) is every `SENTENCE_WORDS`
-  entry at the concept's CEFR level, drawn with no concept-awareness at
-  all — the same flat, unweighted draw `distractorsFor` already does for
-  plain vocabulary. Measured across all 290 meaningPick/wordFromMeaning
-  exercises the grammar climb currently emits: only 26.9% (78 of 290) have
-  even one distractor tagged to the same grammar concept as the correct
-  answer. The other 73.1% offer a correct sentence (e.g. a comparative)
-  against three topically unrelated options (e.g. "I like listening to
-  music" / "You should rest" / "The doctor gave medicine") — answerable by
-  topic/vocabulary recognition alone, without parsing the comparative
-  marker, passive auxiliary, or plural ending the lesson is actually
-  about. Bias the distractor draw toward same-level, different-concept
-  sentences that are near-misses in form, so a correct answer requires
-  noticing the construction, not just the topic.
-verify: a script measuring same-concept-distractor rate across all
-  generated grammar-climb meaningPick/wordFromMeaning exercises reports it
-  well above today's 26.9% (100% is not required — same-concept sentences
-  may not exist for every draw at small pool sizes — but the flat,
-  unweighted draw should no longer be the default).
-notes: Found by CURRICULUM CRITIC reviewing URD-024's grammar follow-up.
-  Distinct root cause from URD-025 (which is about the round ratio, not
-  which pool feeds distractors) — do not fold into it. Not BLOCKING: every
-  sampled exercise was still answerable, fluent, and free of exact-meaning
-  giveaways, so nothing is wrong, but the climb's implicit claim to
-  "reinforce this construction" is not backed by most of the questions it
-  actually asks.
-
 ## URD-032 — The path's stage-open scroll is a bigger jump than it needs to be, and can go stale mid-session
 attempts: 0
 files: src/screens/HomeScreen.tsx
