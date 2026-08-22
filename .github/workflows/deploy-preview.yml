@@ -198,6 +198,16 @@ jobs:
           CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
             npm run check:path
 
+      # URD-032: opening a collapsed course stage used to reset scroll all the
+      # way to the top (a deliberate trade once precise in-accordion measuring
+      # was tried and measured wrong live — see HomeScreen.tsx's own comment).
+      # This holds the tighter landing in place: near the accordion, header
+      # visible, never a full reset.
+      - name: Check opening a course stage lands near the accordion, not a full reset
+        run: |
+          CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
+            npm run check:home-scroll
+
       - name: SPA fallback + disable Jekyll
         run: |
           cp dist/index.html dist/404.html
