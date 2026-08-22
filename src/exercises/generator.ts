@@ -72,6 +72,7 @@ const SENTENCE_WORDS: Word[] = SENTENCES.map((s) => ({
   topic: 'sentences',
   level: s.level,
   register: pronounRegisterOf(s.words.join(' ')),
+  concept: s.concept, // URD-030: lets distractorsFor bias toward same-concept sentences
 }));
 
 const getAnyWord = (id: string): Word | undefined =>
@@ -432,7 +433,7 @@ const DISTRACTORS = OPTIONS_PER_QUESTION - 1;
 export function distractorsFor(
   word: Word,
   pool: Word[],
-  { distinctCue = false, distinctMeaning = false } = {}
+  { distinctCue = false, distinctMeaning = false, preferred = [] as Word[] } = {}
 ): Word[] {
   const chosen: Word[] = [];
   const usedCues = new Set<string>([cueOf(word)]);
@@ -469,6 +470,12 @@ export function distractorsFor(
       chosen.push(c);
     }
   };
+  // URD-030: tried first, so a caller with a same-concept "near-miss" pool
+  // (another sentence illustrating the exact construction being reinforced)
+  // gets first claim on the option set — a wrong answer that still requires
+  // noticing the construction, not just the topic. Empty by default, so
+  // every existing caller draws exactly as before.
+  consider(preferred);
   consider(pool); // prefer same-topic distractors
   if (chosen.length < DISTRACTORS) consider(WORDS); // widen if the topic is too uniform
   return chosen;
@@ -536,13 +543,14 @@ function wordExercise(
   pool: Word[],
   track: LearnTrack,
   demand: Demand = 'meet',
-  variant?: number
+  variant?: number,
+  preferred?: Word[]
 ): Exercise {
   if (demand === 'produce' && isTypeable(word)) {
     return { kind: 'typeWord', word };
   }
   if (demand === 'recall' || demand === 'produce') {
-    const opts = distractorsFor(word, pool, { distinctMeaning: true });
+    const opts = distractorsFor(word, pool, { distinctMeaning: true, preferred });
     return { kind: 'wordFromMeaning', word, options: shuffle([word, ...opts]) };
   }
 
@@ -554,7 +562,7 @@ function wordExercise(
   // correct answers. That was reachable all along and merely hidden, because one
   // of them spelled its register into its English ("yes (polite)") and so
   // compared unequal.
-  const pictureOptions = distractorsFor(word, pool, { distinctCue: true, distinctMeaning: true });
+  const pictureOptions = distractorsFor(word, pool, { distinctCue: true, distinctMeaning: true, preferred });
   // A picture question needs a full set of visually distinct options; if the
   // vocabulary cannot supply them, fall back to the text question rather than
   // asking a narrower one.
@@ -600,7 +608,7 @@ function wordExercise(
     // content to roughly a sixth, turning a near-unreachable gap into a
     // routine one. Measured before this fix: 689 of 19,170 sampled instances
     // (~3.6%) leaked a verdict icon onto a wrong option.
-    const opts = distractorsFor(word, pool, { distinctCue: true, distinctMeaning: true });
+    const opts = distractorsFor(word, pool, { distinctCue: true, distinctMeaning: true, preferred });
     return { kind: 'meaningPick', word, options: shuffle([word, ...opts]) };
   }
   if (v === 0) {
@@ -715,7 +723,18 @@ function sentenceReinforceClimb(picks: Sentence[], pool: Word[], track: LearnTra
         const ex = sentenceExercise(sen, track);
         if (ex) exercises.push(ex);
       } else {
-        const ex = wordExercise(w, pool, track, turn === 0 ? 'meet' : 'recall', 1);
+        // URD-030: when this sentence illustrates a grammar concept, other
+        // sentences illustrating the *same* concept (from `pool`, so already
+        // level-matched) are near-misses in form — a wrong option that still
+        // requires noticing the construction, not just the topic. Measured
+        // before this fix: only 26.9% (78 of 290) of the grammar climb's
+        // meaningPick/wordFromMeaning exercises had even one same-concept
+        // distractor, since `pool` was drawn with no concept-awareness at
+        // all. Undefined (not merely empty) when `sen` has no concept — a
+        // `sentences`-kind lesson's picks mostly won't — so `distractorsFor`
+        // falls back to its plain, unweighted draw exactly as before.
+        const preferred = sen.concept ? pool.filter((p) => p.concept === sen.concept && p.id !== sen.id) : undefined;
+        const ex = wordExercise(w, pool, track, turn === 0 ? 'meet' : 'recall', 1, preferred);
         exercises.push(ex);
       }
     });

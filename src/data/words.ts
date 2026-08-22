@@ -30,6 +30,14 @@ export type Word = {
   pronounce?: string;
   /** How formal the word is; see `Register` in data/vocab/types.ts. */
   register?: Register;
+  /** URD-030: the grammar concept this entry illustrates, carried over from
+   *  `Sentence.concept` on the synthetic `Word` objects `generator.ts` builds
+   *  for sentences (`SENTENCE_WORDS`). Never set on a real vocabulary entry —
+   *  only sentences are tagged to a grammar concept. Lets the grammar
+   *  reinforcement climb bias its distractor draw toward other sentences
+   *  illustrating the *same* construction, rather than drawing blind from
+   *  every sentence at the concept's level. */
+  concept?: string;
 };
 
 /**

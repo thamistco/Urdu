@@ -785,3 +785,77 @@ describe('URD-027: sibling "sentences" lessons at the same level draw disjoint s
     }
   });
 });
+
+describe('URD-030: distractorsFor prefers a caller-supplied pool before its main one', () => {
+  // Synthetic words, not real vocabulary: what matters is `preferred` being
+  // tried first, a property of `distractorsFor` itself, not of any real
+  // corpus content. Distinct `.meaning`s so `distinctMeaning: true` (the
+  // option every real caller of `preferred` also sets) doesn't reject any
+  // of them itself.
+  const target = { ...WORDS[0], id: 'test-target', urdu: 'ٹیسٹ-ٹ', meaning: 'test target' };
+  const preferredWords = ['a', 'b', 'c'].map((letter, i) => ({
+    ...WORDS[i + 1],
+    id: `test-preferred-${letter}`,
+    urdu: `ٹیسٹ-پ${i}`,
+    meaning: `preferred meaning ${letter}`,
+  }));
+  const poolWords = ['x', 'y', 'z'].map((letter, i) => ({
+    ...WORDS[i + 4],
+    id: `test-pool-${letter}`,
+    urdu: `ٹیسٹ-م${i}`,
+    meaning: `pool meaning ${letter}`,
+  }));
+
+  it('fills every distractor from `preferred` when it alone has enough candidates', () => {
+    const distractors = distractorsFor(target, poolWords, { distinctMeaning: true, preferred: preferredWords });
+    expect(distractors).toHaveLength(OPTIONS_PER_QUESTION - 1);
+    expect(distractors.every((d) => d.id.startsWith('test-preferred-'))).toBe(true);
+  });
+
+  it('widens to the main pool once `preferred` runs out', () => {
+    const distractors = distractorsFor(target, poolWords, {
+      distinctMeaning: true,
+      preferred: preferredWords.slice(0, 1),
+    });
+    expect(distractors).toHaveLength(OPTIONS_PER_QUESTION - 1);
+    const fromPreferred = distractors.filter((d) => d.id.startsWith('test-preferred-'));
+    const fromPool = distractors.filter((d) => d.id.startsWith('test-pool-'));
+    expect(fromPreferred).toHaveLength(1);
+    expect(fromPool.length).toBeGreaterThan(0);
+  });
+
+  it('omitting `preferred` draws exactly as before — every existing caller is unaffected', () => {
+    const withoutPreferred = distractorsFor(target, poolWords, { distinctMeaning: true });
+    expect(withoutPreferred.every((d) => d.id.startsWith('test-pool-'))).toBe(true);
+  });
+});
+
+describe("URD-030: the grammar climb's sentence-reinforcement distractors are concept-aware", () => {
+  // g-plurals (fixed by URD-029) has 4 readable sentences, all tagged
+  // g-plurals, all at the same level — so for any one of them, the other 3
+  // are a `preferred` pool of exactly `OPTIONS_PER_QUESTION - 1` same-concept
+  // candidates. `wordFromMeaning` doesn't require `distinctCue` (unlike
+  // `meaningPick`, where every sentence's shared 📝 cue collides with its
+  // own answer's cue regardless of this fix — a separate, structural
+  // limitation this item does not touch, filed as URD-050), so every one of
+  // its options should be filled from that preferred pool: a deterministic
+  // property of real content, not a shuffle-dependent one.
+  const lesson = resolveLesson('g-plurals')!;
+
+  it('every wordFromMeaning exercise for a g-plurals sentence offers only g-plurals distractors', () => {
+    const exercises = buildLessonExercises(lesson, [], 'both');
+    const relevant = exercises.filter((e) => e.kind === 'wordFromMeaning' && 'word' in e) as {
+      word: { id: string; topic: string; concept?: string };
+      options: { id: string; concept?: string }[];
+    }[];
+    const sentenceDerived = relevant.filter((ex) => ex.word.topic === 'sentences' && ex.word.concept);
+    expect(sentenceDerived.length, 'g-plurals should emit at least one such exercise').toBeGreaterThan(0);
+    for (const ex of sentenceDerived) {
+      const distractors = ex.options.filter((o) => o.id !== ex.word.id);
+      expect(
+        distractors.every((d) => d.concept === ex.word.concept),
+        JSON.stringify(ex.options)
+      ).toBe(true);
+    }
+  });
+});
