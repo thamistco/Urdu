@@ -1391,24 +1391,26 @@ export function buildLessonExercises(
       const picks = seededShuffle(related, lesson.id).slice(0, GRAMMAR_SENTENCE_TARGET);
       // Below GRAMMAR_SENTENCE_TARGET *readable* sentences, the climb below
       // is still correct — `.slice` just returns what there is — but the
-      // lesson comes up short of the 3-8 minute band. Three concepts landed
-      // there before URD-025: g-pronouns and g-ability had only 5 tagged
+      // lesson comes up short of the 3-8 minute band unless enough of a
+      // concept's tagged sentences are actually readable at its lesson
+      // position — "tagged" and "usable" are not the same count and neither
+      // should be read off the other. Three concepts landed short of the
+      // band before URD-025: g-pronouns and g-ability had only 5 tagged
       // sentences each, all 5 readable; g-plurals had 4 tagged but only 3
-      // readable at its lesson position — `readableSentences` above drops
-      // one for using a word ("میز") not yet taught there — so "tagged" and
-      // "usable" are not the same count and neither should be read off the
-      // other. URD-025's extra `sentenceReinforceClimb` round happened to
-      // lengthen these three enough to move two of them into the band —
-      // g-pronouns (2.7→4.2 min) and g-ability (2.55→4.05 min) now clear it
-      // — but g-plurals (1.8→2.7 min) still falls short at 3 readable
+      // readable (`s-39` was dropped by `readableSentences` above for using
+      // "پر", a postposition not yet taught at that position — a stale
+      // version of this comment once blamed "میز", which is actually taught
+      // well before this lesson). URD-025's extra `sentenceReinforceClimb`
+      // round happened to lengthen these three enough to move two of them
+      // into the band — g-pronouns (2.7→4.2 min) and g-ability (2.55→4.05
+      // min) — but g-plurals (1.8→2.7 min) still fell short at 3 readable
       // sentences, since no ratio of a fixed-size climb can add exercises
       // beyond what's needed to keep each kind under check:shape's own 40%
-      // share ceiling. Not fixed here: g-plurals' shortfall is a content
-      // problem (too few readable sentences tagged to it), not a climb-ratio
-      // one, and this item's own files are the generator, not the sentence
-      // corpus. Left open, tracked by URD-029 (updated to reflect the
-      // current, smaller gap) rather than papered over with an extra round
-      // for one concept alone.
+      // share ceiling. Not a climb-ratio problem — URD-025 correctly left it
+      // to URD-029, which closed it by re-tagging `s-77` ("میرے تین دوست
+      // ہیں", already readable there) from g-possess to g-plurals rather
+      // than touching this file: g-plurals now draws 4 readable sentences
+      // and clears the floor at 3.45 minutes.
       //
       // Distractors are drawn from every sentence at this concept's level,
       // not just the handful picked for this lesson — the same reason

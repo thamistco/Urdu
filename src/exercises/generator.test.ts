@@ -707,12 +707,16 @@ describe('URD-025: a sentence-derived climb leans on sentenceBuild, not just rec
   // gap couldn't regress further unnoticed and couldn't be "fixed" by
   // quietly loosening this assertion instead of the content.
   //
-  // URD-029: closed by tagging one new sentence to g-plurals (s-257, "دو
-  // لڑکیاں یہاں ہیں") rather than moving the lesson or re-tagging an
-  // existing one — see src/data/sentences.ts's own comment there for why.
-  // g-plurals now has 4 readable sentences and reaches 3.45 minutes, clear
-  // of the floor with no exception needed, so this asserts the universal
-  // rule directly rather than keeping a now-empty exception set around.
+  // URD-029: closed by re-tagging an existing sentence, s-77 ("میرے تین
+  // دوست ہیں"), from g-possess to g-plurals — see src/data/sentences.ts's
+  // own comment there for why (an earlier attempt authored a brand-new
+  // sentence instead; reverted, since this repo has no TTS credential to
+  // give a new sentence a voice clip, and separately because it duplicated
+  // a plural pattern g-plurals already covered rather than filling the one
+  // it didn't). g-plurals now has 4 readable sentences and reaches 3.45
+  // minutes, clear of the floor with no exception needed, so this asserts
+  // the universal rule directly rather than keeping a now-empty exception
+  // set around.
   it('every sentences and grammar lesson reaches at least 3 minutes', () => {
     const SECS_PER_EXERCISE = 9;
     for (const l of UNITS.flatMap((u) => u.lessons).filter((x) => x.kind === 'sentences' || x.kind === 'grammar')) {
