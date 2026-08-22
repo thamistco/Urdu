@@ -974,7 +974,13 @@ describe('URD-035: a grammarDrill exercise carries romanOptions on every track, 
     for (const u of UNITS) {
       for (const l of u.lessons) {
         if (l.kind !== 'grammar') continue;
-        for (const track of ['both', 'roman'] as const) {
+        // THE CRITIC: the first version of this only sampled `both`/`roman`,
+        // missing `script` — a real, independently reachable crash path,
+        // since `showRoman` is a learner-toggleable setting that only turns
+        // *off automatically* when switching *to* `script` (useSettingsStore
+        // .ts's `setTrack`), not a permanent lock; a learner can flip it back
+        // on while staying on `script` and hit the identical crash site.
+        for (const track of ['script', 'both', 'roman'] as const) {
           const exercises = buildLessonExercises(l, [], track);
           for (const e of exercises) {
             if (e.kind !== 'grammarDrill') continue;

@@ -4289,3 +4289,71 @@ observed one-off Playwright flake in that check, not attributed to
 this item's own changes, rather than silently rerun without comment.
 
 branch: claude/gauntlet-lesson-shape-remainder
+
+## CLAIMED · URD-035 · 2026-08-22T18:35Z
+files: src/exercises/GrammarExercises.tsx
+branch: claude/gauntlet-grammar-teach-crash, cut from
+claude/gauntlet-lesson-shape-remainder after URD-A02 shipped.
+
+## CRITIQUE · URD-035
+Dispatched THE CRITIC. First dispatch failed mid-review on a session
+spend limit (external resource constraint, not a finding); redispatched
+and completed.
+
+THE CRITIC: no BLOCKING. Independently reran every gate (tsc, vitest,
+lint, format:check) and the three live reproductions itself rather
+than trusting this session's own runs; independently reverted
+generator.ts and confirmed the new test fails with the exact claimed
+shape, then restored. Two MAJOR:
+
+1. scripts/soak.js's --track roman is a no-op (enterAsGuest never
+   writes `track` into the injected harf-settings, confirmed by
+   reading localStorage back after entry) — every soak run this
+   session invoked with --track roman, including this item's own
+   third reproduction, was actually driving the `both` track under a
+   misleading label. Real, but out of this item's own file scope and
+   doesn't invalidate the fix (re-verified against the real `both`
+   track this bug lives on) — filed forward as URD-051.
+2. The new test's first version sampled only ['both', 'roman'],
+   missing 'script' — an independently reachable crash path since
+   showRoman is a learner-toggleable setting, not a permanent lock.
+   Fixed in this branch: test now samples ['script', 'both', 'roman'].
+
+One MINOR, disclosed not fixed: the fallback caption (when
+romanOptions is genuinely undefined, unreachable by any real drill
+today) shows the un-filled prompt next to a correctly-filled sentence
+— not wrong, not the cleanest possible degrade either.
+
+## PASSED · URD-035 · 2026-08-22T19:05Z
+$ npm run soak -- --start 29 --lessons 3 --seed 7 --require grammarTeach
+  0 failures (was: uncaught error + blank screen, every attempt).
+
+$ npm run soak -- --start 45 --lessons 3 --seed 11 --require grammarTeach
+  0 failures (was: identical crash shape).
+
+$ npm run soak -- --start 200 --track roman --seed 55 --lessons 3
+  0 failures (was: identical crash shape; per THE CRITIC's finding
+  above this was never actually the Roman track, but the same real
+  bug on `both` either way).
+
+$ npx vitest run
+  180 passed (180) — 178 + 2 new. Confirmed the new test genuinely
+  regresses: reverted generator.ts alone, re-ran just the new test,
+  it failed with "g-pronouns (both): [...] expected undefined to be
+  defined" — the exact live-observed shape; restored and reconfirmed.
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npm run check:all
+  30/30.
+
+Root cause correction recorded plainly: the item's own prior notes
+blamed GrammarTeachExercise; the real site, found via a new
+SOAK_FULL_STACK=1 debug flag on scripts/soak.js printing the
+untruncated pageerror stack, is GrammarDrillExercise, the next screen
+in the same lesson. soak's own truncated error message and a
+post-crash screenshot could not distinguish the two; nobody had read
+the actual stack until this session.
+
+branch: claude/gauntlet-grammar-teach-crash
