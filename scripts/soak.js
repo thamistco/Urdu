@@ -60,9 +60,12 @@
  * 22-43 exercises (measured directly), and even a *perfect* solver still
  * lets `listenTap`'s residual guess and the deliberate 25% `wrongOnPurpose`
  * rate blend to roughly a third of exercises landing wrong; binomially,
- * surviving 5 hearts through 25-40 tries at that rate is a 1-15% event, not
- * a majority one. This is the same hearts-economy tension this file's own
- * `--lessons` comment, lower down, already measured and attributed to
+ * surviving 5 hearts (at most 4 wrong) through that many tries at a 33.5%
+ * per-exercise wrong rate is P(≤4 wrong of 25) ≈ 4.5%, of 33 ≈ 0.5%, of 40
+ * ≈ 0.06% — a rare event at every length in this range, not a majority one,
+ * and one that gets *rarer* as the lesson gets longer. This is the same
+ * hearts-economy tension this file's own `--lessons` comment, lower down,
+ * already measured and attributed to
  * URD-006 rather than to this item — finishing what this item promises (a
  * majority of attempts completing) needs that tension addressed too, not
  * just this fallback's own correctness, which is what URD-034 actually
@@ -202,6 +205,7 @@ const START_COMPLETED = Object.fromEntries(ALL_LESSONS.slice(0, START).map((l) =
 const { WORDS, glossOf } = load('src/data/words.ts');
 const { LETTERS, POSITIONS } = load('src/data/letters.ts');
 const { GRAMMAR } = load('src/data/grammar.ts');
+const { romanAll } = load('src/lib/translit.ts');
 const GRAMMAR_DRILLS = GRAMMAR.flatMap((c) => c.drills);
 
 /**
@@ -217,24 +221,45 @@ const GRAMMAR_DRILLS = GRAMMAR.flatMap((c) => c.drills);
  * real content are compared the way they actually match: what a learner
  * would see, not the bytes an invisible bidi hint adds to one side only.
  */
-const normalize = (s) =>
-  s
-    .replace(/[‎‏‪-‮]/g, '')
-    .trim()
-    .toLowerCase();
+const stripBidi = (s) => s.replace(/[‎‏‪-‮]/g, '').trim();
+const normalize = (s) => stripBidi(s).toLowerCase();
 
 /** Maps a colliding key to `null` rather than to either record — an
  *  ambiguous signal identifies nothing, and this file would rather fall
- *  back to guessing than guess confidently and wrong. */
-function indexBy(items, ...keyFns) {
+ *  back to guessing than guess confidently and wrong.
+ *
+ * Case-folds by default (`capitalize`-styled `Txt`/gloss text changes what
+ * `innerText` reports, so most on-screen text has to be compared
+ * case-insensitively to match the raw data at all) — pass
+ * `caseSensitive: true` where the source component never transforms case
+ * (see `letterByName`'s own comment for why that one needs both variants,
+ * for two different exercises reading the identical field). */
+function indexBy(items, keyFns, { caseSensitive = false } = {}) {
   const map = new Map();
+  const fold = caseSensitive ? stripBidi : normalize;
   for (const item of items) {
     for (const keyFn of keyFns) {
       const key = keyFn(item);
       if (!key) continue;
-      const k = normalize(key);
+      const k = fold(key);
       map.set(k, map.has(k) ? null : item);
     }
+  }
+  return map;
+}
+
+/** Like `indexBy`, but keeps every colliding item instead of nulling the
+ *  key out — for signals a second, independent field can still
+ *  disambiguate rather than needing to give up entirely. */
+function indexByMulti(items, keyFn, { caseSensitive = false } = {}) {
+  const map = new Map();
+  const fold = caseSensitive ? stripBidi : normalize;
+  for (const item of items) {
+    const key = keyFn(item);
+    if (!key) continue;
+    const k = fold(key);
+    if (!map.has(k)) map.set(k, []);
+    map.get(k).push(item);
   }
   return map;
 }
@@ -247,15 +272,34 @@ function indexBy(items, ...keyFns) {
  *  three is visible for the prompt vs. the options varies by kind and by
  *  learn track; folding all three into one map means the same lookup works
  *  regardless of which the current screen happens to show. */
-const wordBySignal = indexBy(
-  WORDS,
-  (w) => w.urdu,
-  (w) => w.roman,
-  (w) => glossOf(w)
-);
+const wordBySignal = indexBy(WORDS, [(w) => w.urdu, (w) => w.roman, (w) => glossOf(w)]);
 
-const letterByName = indexBy(LETTERS, (l) => l.name);
-const drillByMeaning = indexBy(GRAMMAR_DRILLS, (d) => d.meaning);
+/**
+ * Two different indexes over the identical field, because two different
+ * exercises render it through two different components.
+ *
+ * `letterPick` (`LetterExercises.tsx`) shows `letter.name` through a plain
+ * `Txt` — no case transform, so the raw name (`te`, `Te`, ...) reaches the
+ * screen exactly as written, and `caseSensitive: true` correctly resolves
+ * every one of the 40 letters, `te`/`Te` (dental ت vs. retroflex ٹ)
+ * included, since they are literally different strings when case is kept.
+ *
+ * `letterForm`'s Eyebrow caption (`{letter.name} · sounds like "..."`) goes
+ * through `Text.tsx`'s `Eyebrow`, which applies `uppercase` styling —
+ * `innerText` reports it as "TE · SOUNDS LIKE ...", both for `te` and for
+ * `Te`, so a case-sensitive lookup here fails for *every* letter (found
+ * live: `pe`, `be`, and every other single-case name failed too, not just
+ * the `te`/`Te` pair a first attempt at this fix mistakenly blamed).
+ * Case-INsensitive is what actually matches the all-caps rendering, but
+ * that refolds `te` and `Te` back into one ambiguous name — resolved by
+ * `letter.sound`, which the same Eyebrow line already embeds and which
+ * genuinely differs between the two ("t" vs. "ṭ (hard)"; see
+ * `identifyLetterForm`, below `answerLetterForm`).
+ */
+const letterByNameExact = indexBy(LETTERS, [(l) => l.name], { caseSensitive: true });
+const lettersByNameFold = indexByMulti(LETTERS, (l) => l.name);
+
+const drillByMeaning = indexBy(GRAMMAR_DRILLS, [(d) => d.meaning]);
 
 /**
  * The on-screen answer-shaped candidates, each with its own text — the same
@@ -381,25 +425,52 @@ async function answerWordChoice(page, text, wrongOnPurpose, knownWord) {
  */
 
 /**
+ * Identify the letter `letterForm`'s Eyebrow line names — case-insensitively
+ * (`lettersByNameFold`, since the Eyebrow's own `uppercase` styling means
+ * every name reaches the screen as all-caps, `TE` for both `te` and `Te`
+ * alike; see the comment on `letterByNameExact`/`lettersByNameFold` for the
+ * full account). Case-insensitive folds `te`/`Te` into one two-candidate
+ * bucket; `letter.sound` — embedded in the very same Eyebrow line
+ * ("sounds like ...") — genuinely differs between them ("t" vs. "ṭ (hard)")
+ * and breaks the tie. Any other name collision (none exist today — checked
+ * directly against the real `LETTERS` corpus) would fall through to `null`
+ * here rather than guess between more than two silently.
+ */
+function identifyLetterForm(lines) {
+  const nameLine = lines.find((l) => l.includes('·') && lettersByNameFold.get(normalize(l.split('·')[0])));
+  if (!nameLine) return undefined;
+  const candidates = lettersByNameFold.get(normalize(nameLine.split('·')[0]));
+  if (candidates.length === 1) return candidates[0];
+  return candidates.find((letter) => lines.some((l) => normalize(l).includes(normalize(letter.sound))));
+}
+
+/**
  * `letterForm` shows the letter's own `name` in its Eyebrow caption
  * ("alif · sounds like ...") and, in the prompt card, one specific glyph —
  * the very thing the question is asking the position of. Matching that
- * exact glyph against the identified letter's own four forms (not just
- * picking any letter with that name — there is only one, but the form
- * lookup is what actually answers the question) finds which `PositionKey`
- * it is; `POSITIONS`' own `label` (`Alone`/`Start`/`Middle`/`End`) is what
- * the option itself renders.
+ * exact glyph against the identified letter's own four forms finds which
+ * `PositionKey` it is; `POSITIONS`' own `label` (`Alone`/`Start`/`Middle`/
+ * `End`) is what the option itself renders.
  */
 async function answerLetterForm(page, text, wrongOnPurpose) {
   const lines = text
     .split('\n')
     .map((l) => l.trim())
     .filter(Boolean);
-  const line = lines.find((l) => l.includes('·') && letterByName.get(normalize(l.split('·')[0])));
-  const letter = line ? letterByName.get(normalize(line.split('·')[0])) : undefined;
-  if (!letter) return false;
+  const letter = identifyLetterForm(lines);
+  if (!letter) {
+    if (process.env.SOAK_DEBUG)
+      console.error(`[debug] answerLetterForm: no letter identified, lines=${JSON.stringify(lines)}`);
+    return false;
+  }
   const glyphLine = lines.find((l) => Object.values(letter.forms).some((glyph) => normalize(l) === normalize(glyph)));
-  if (!glyphLine) return false;
+  if (!glyphLine) {
+    if (process.env.SOAK_DEBUG)
+      console.error(
+        `[debug] answerLetterForm: letter=${letter.id} but no glyph line matched. forms=${JSON.stringify(letter.forms)} lines=${JSON.stringify(lines)}`
+      );
+    return false;
+  }
   const positionKey = Object.entries(letter.forms).find(([, glyph]) => normalize(glyph) === normalize(glyphLine))?.[0];
   const position = POSITIONS.find((p) => p.key === positionKey);
   if (!position) return false;
@@ -408,14 +479,16 @@ async function answerLetterForm(page, text, wrongOnPurpose) {
 }
 
 /** `letterPick` names the target by its own `name`, directly, in the prompt
- *  (not shared with any other letter — `letterByName` would already have
- *  indexed a collision to `null`); the correct option is the one whose own
- *  glyph is that letter's isolated form. */
+ *  — through a plain `Txt`, not `letterForm`'s `Eyebrow`, so the name
+ *  reaches the screen in its real case and `letterByNameExact` resolves
+ *  every letter, `te`/`Te` included, with no ambiguity to break (see that
+ *  index's own comment). The correct option is the one whose own glyph is
+ *  that letter's isolated form. */
 async function answerLetterPick(page, text, wrongOnPurpose) {
   const letter = text
     .split('\n')
     .map((l) => l.trim())
-    .map((l) => letterByName.get(normalize(l)))
+    .map((l) => letterByNameExact.get(stripBidi(l)))
     .find(Boolean);
   if (!letter) return false;
   const { btns, candidates } = await candidateOptions(page);
@@ -440,7 +513,19 @@ async function answerGrammarDrill(page, text, wrongOnPurpose) {
     .find(Boolean);
   if (!drill) return false;
   const { btns, candidates } = await candidateOptions(page);
-  const romanAnswer = drill.romanOptions?.[drill.options.indexOf(drill.answer)];
+  // THE CRITIC found `drill.romanOptions` does not exist on these raw
+  // `GrammarDrill` records at all — that field only lives on the *derived*
+  // exercise object `generator.ts` builds at lesson-build time
+  // (`GrammarExercises.tsx` reads `exercise.romanOptions`, a different
+  // object than `drill` here), so the original version of this line was
+  // always `undefined` and this solver silently reverted to a full random
+  // guess on the Roman track specifically — the exact shape of gap
+  // `listenTap` was honestly written up as having, undisclosed here.
+  // `romanAll` (`lib/translit.ts`) is the same function `generator.ts`
+  // itself calls to build that field, so calling it here directly derives
+  // the identical value rather than reading one that was never there.
+  const romanOptions = romanAll(drill.options);
+  const romanAnswer = romanOptions?.[drill.options.indexOf(drill.answer)];
   for (const signal of [drill.answer, romanAnswer]) {
     if (signal && (await clickMatching(page, btns, candidates, signal, wrongOnPurpose))) return true;
   }
