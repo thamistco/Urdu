@@ -24,52 +24,17 @@ of the next ones.
 reads its step list out of `.github/workflows/deploy-preview.yml`, so it cannot
 drift from what CI runs.
 
-`npm run check:shape` is the exception: it fails today, on purpose, and is
-deliberately not in check:all. It states the curriculum target in a form a
-machine can settle. Wire it into the workflow on the commit that makes it pass.
+`npm run check:shape` states the curriculum target in a form a machine can
+settle. It failed on purpose for most of this file's life, deliberately kept
+out of `check:all` until URD-A02 closed its last two problems; it passes now
+and is wired into `.github/workflows/deploy-preview.yml`, so `check:all`
+gates it like everything else.
 
 Items are dispatched to critics before they can be recorded PASSED; see
 gauntlet/ROLES.md. The measured targets the curriculum critic holds you to, and
 where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
-
-## URD-035 — A grammar teaching card can crash to a blank screen
-attempts: 0
-files: src/exercises/GrammarExercises.tsx
-definition of done: `GrammarTeachExercise` throws an uncaught
-  `TypeError: Cannot read properties of undefined (reading 'N')` (N varies:
-  observed 0, 1, 2, 3 across runs) partway through its reveal-a-stage flow
-  ("Show the pattern" → "Show examples" → "Got it"), reproduced on two
-  independent grammar concepts and seeds. The error is not caught by any
-  boundary — the screen goes blank (empty `document.body.innerText`) and
-  the app does not recover on its own. A test or a driver run should never
-  see this; a real learner tapping through a teaching card at ordinary
-  speed could.
-verify: npm run soak -- --start 29 --lessons 3 --seed 7 --require grammarTeach
-  reports 0 failures (today it reports an uncaught error and a blank
-  "unanswerable" screen every attempt).
-notes: Found chasing down THE CRITIC's BLOCKING finding on URD-005 (that
-  `reading`/`dialogue`/`grammarTeach` couldn't be named by `--require`,
-  which turned out to be hiding this — those screens use `<Button>`, not
-  `<Choice>`, so they were never actually being exercised at all before
-  this session, by `--require` or otherwise). Confirmed real and
-  reproducible: identical crash shape on `g-pronouns` (seed 7, `--start 29`)
-  and `g-gender` (seed 11, `--start 45`); ruled out a driver-timing race
-  first (added a 200ms settle wait after each reveal tap — no change).
-  Screenshots in `.soak/` from the reproducing runs show the blank result
-  directly. Root cause not diagnosed past this point — likely an array
-  index into `concept.table` or `concept.examples` going out of bounds
-  during the stage-reveal sequence, but that needs someone reading
-  `GrammarExercises.tsx`'s `stages`/`shown` logic against real `GRAMMAR`
-  concept data, not more soak driving.
-
-  Third independent reproduction found while shipping URD-034 (`--start
-  200 --track roman --seed 55`): same alternating "unanswerable
-  screen"/`TypeError: Cannot read properties of undefined (reading 'N')`
-  shape on `grammarTeach`, confirmed independent of URD-034's own driver
-  changes by re-running with its new grammarDrill solver forced back off
-  — identical failure either way.
 
 ## URD-036 — A disabled button should look disabled, not just say why it is
 attempts: 0
@@ -468,3 +433,37 @@ notes: Found while verifying URD-030's own fix landed where the item's
   Not BLOCKING for URD-030: every `meaningPick` exercise sampled remains
   fully answerable and honest, exactly as before — nothing broke, a
   ceiling on how far the improvement can reach was found, not a bug.
+
+## URD-051 — soak's --track flag never actually sets the app's learning track
+attempts: 0
+files: scripts/soak.js, scripts/lib/serve-dist.js
+definition of done: `npm run soak -- --track roman` actually plays the Roman
+  track — `enterAsGuest`'s injected `harf-settings` carries `track: 'roman'`,
+  not the guest default (`'both'`), verified by reading the real app's
+  `localStorage` back after entry, not by trusting the CLI flag's own name.
+verify: a script (or an assertion added to soak.js itself, gated behind a
+  flag so it isn't paid on every real run) that enters as a guest with
+  `--track roman`, reads back `localStorage['harf-settings']` in the page,
+  and confirms `state.track === 'roman'` reports true. Today it reports
+  `'both'`.
+notes: Found by THE CRITIC reviewing URD-035's fix, which cited `npm run
+  soak -- --start 200 --track roman --seed 55 --lessons 3` as one of three
+  independent reproductions of that item's crash. Verified directly: soak's
+  `--track roman` branch calls `enterAsGuest(page, url, { goal: 'speak' })`
+  (`scripts/soak.js`'s `TRACK === 'roman'` spread), and `enterAsGuest`
+  (`scripts/lib/serve-dist.js`) unconditionally writes `harf-settings` with
+  only `soundEnabled`/`hapticsEnabled`/`reducedMotion` — `goal` feeds an
+  unrelated onboarding field, never `track`. Reading `localStorage` back
+  after entry confirms `track` stays at the guest default, `'both'`, no
+  matter what `--track` says. Every soak run this session that passed
+  `--track roman` (including this item's own "roman-track" reproduction,
+  and whichever earlier items believed they were exercising the Roman
+  track specifically) was actually driving the `both` track under a
+  misleading label — the exact "the workflow said success and it was
+  wrong" pattern this project's own CLAUDE.md names as its first
+  non-negotiable, now found inside shared test infrastructure rather than
+  CI itself. Does not invalidate URD-035's fix (independently re-verified
+  live and via a passing/reverting unit test, both against the real
+  `both` track), but any future item that means to test Roman-track-
+  specific behavior via `npm run soak -- --track roman` is not testing
+  what its own invocation claims until this is fixed.
