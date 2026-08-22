@@ -7,7 +7,8 @@
  * question for "has this learner seen this at all", and the wrong one for "is
  * this review mostly about the unit it closes". Measured on real generated
  * output with nothing due: rev-gender-and-number (u6) drew 0-5% of its words
- * from u6 itself, and rev-the-wider-world (u39) drew 3-5% from u39. A unit's
+ * from u6 itself, and rev-the-wider-world (then a single, larger u39; split
+ * by URD-A02 into u40/u41) drew 3-5% from its own unit. A unit's
  * own dozen-or-so words are a rounding error against the hundreds taught
  * before it, so a flat course-wide pool all but guarantees a review is mostly
  * about everything except the unit whose name it carries.
@@ -113,14 +114,16 @@ export function taughtConceptsUpTo(lessonId: string): ReadonlySet<string> {
  * `fallbackReviewRefs` (`generator.ts`) used to split every review's
  * fallback content `Math.ceil(n / 2)` letters, `Math.floor(n / 2)` words,
  * unconditionally — the same fixed ratio at a review two units after the
- * alphabet finished and one thirty units after. Every `L(...)` lesson lives
- * in units 1-9 (`grep "L([0-9]" src/data/units.ts`), so a review that far out
- * has nothing new to say about letters, yet spent half its questions on them
- * anyway. Measured on real course data: cumulative letters-vs-words taught
- * gives a letter share of 18.2% at rev-first-faces (u1) — already below the
- * old fixed 50%, because most units teach several words alongside a letter
- * group — falling to 2.0% by rev-the-wider-world (u39), monotonically, as
- * word teaching keeps going long after the last letter lesson does.
+ * alphabet finished and one thirty-two units after. Every `L(...)` lesson
+ * lives in units 1-9 (`grep "L([0-9]" src/data/units.ts`), so a review that
+ * far out has nothing new to say about letters, yet spent half its questions
+ * on them anyway. Measured on real course data: cumulative letters-vs-words
+ * taught gives a letter share of 18.2% at rev-first-faces (u1) — already
+ * below the old fixed 50%, because most units teach several words alongside
+ * a letter group — falling to 2.0% by rev-the-wider-world (u41, the
+ * course's last unit after URD-A02 split its old, larger u39 in two),
+ * monotonically, as word teaching keeps going long after the last letter
+ * lesson does.
  *
  * The fix ties the split to that same measure instead of a constant: a
  * review's letter share is exactly the letters' share of everything taught

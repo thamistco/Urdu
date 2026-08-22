@@ -33,9 +33,14 @@ describe('taughtInUnit', () => {
   });
 
   it('scales to a unit with many vocabulary lessons', () => {
-    // u39 · "The Wider World": seven vocab topics split across lessons.
-    const u39 = taughtInUnit('rev-the-wider-world');
-    expect(u39!.words.length).toBeGreaterThan(100);
+    // u29 · "Senses & Seasons": six vocab topics split across lessons, 96
+    // words by the time its review is reached — re-measured after URD-A02
+    // split the old, single 'u39' (117 words, the previous holder of this
+    // test's target) into two smaller units, each sized and reviewed on its
+    // own half; see units.ts's own comment on the split for why that is the
+    // fix working as intended, not a regression to route around.
+    const u29 = taughtInUnit('rev-senses-and-seasons');
+    expect(u29!.words.length).toBeGreaterThan(50);
   });
 
   it('returns null for a lesson id placed in no unit', () => {
@@ -197,8 +202,9 @@ describe("reviewLetterShare — a review's letter share decays once the alphabet
     // regardless of how far the review sits from the alphabet units. Real
     // course data instead: rev-first-faces (u1) is still mid-alphabet, so a
     // meaningful share of everything taught so far is still letters;
-    // rev-the-wider-world (u39) is thirty units past the last letter lesson,
-    // so letters are a rounding error against the words taught since.
+    // rev-the-wider-world (u41, the course's last unit) is thirty-two units
+    // past the last letter lesson, so letters are a rounding error against
+    // the words taught since.
     const early = taughtUpTo('rev-first-faces');
     const late = taughtUpTo('rev-the-wider-world');
     const earlyShare = reviewLetterShare(early.words, early.letters);

@@ -242,7 +242,7 @@ describe("URD-017: Daily Review's letter share reflects this learner's position,
   });
 
   it("an on-path review's letter share is unaffected — still keyed on course position, not known", () => {
-    // rev-the-wider-world (u39) is placed on the path, so this fix's
+    // rev-the-wider-world (u41) is placed on the path, so this fix's
     // known-based branch must not apply to it regardless of what `known`
     // contains — course position stays the measure there.
     const allWords = Array.from({ length: 200 }, (_, i) => `w-fake-${i}`);
@@ -267,14 +267,15 @@ describe('URD-017: a review with any letters in scope always asks at least one',
   });
 
   it('holds even at a review size real content never happens to produce', () => {
-    // rev-the-wider-world's real size (39, set by coverTopics) is generous
-    // enough that Math.round alone never rounds its ~1.98% letter share
-    // down to 0. Its floor-set size — 22, coverTopics's own minimum — does:
-    // Math.round(22 * 0.0198) = Math.round(0.436) = 0 without the floor.
-    // A synthetic lesson sharing its id (so taughtUpTo/taughtInUnit resolve
-    // real course position) but a smaller size exercises the case current
-    // content doesn't, so this doesn't depend on staying lucky as units and
-    // reviews are added or resized.
+    // rev-the-wider-world's real size was 39 (set by coverTopics, generous
+    // enough that Math.round alone never rounded its ~1.98% letter share
+    // down to 0) until URD-A02 split its unit in two and this review's own
+    // half fell to 22 — coverTopics's own minimum, and exactly the size this
+    // test used to reach only synthetically: Math.round(22 * 0.0198) =
+    // Math.round(0.436) = 0 without the floor. The explicit `size: 22`
+    // override stays rather than trusting real content to keep landing here
+    // by coincidence, so this doesn't depend on staying lucky as units and
+    // reviews are added or resized again.
     const lesson = { ...resolveLesson('rev-the-wider-world')!, size: 22 };
     const exercises = buildLessonExercises(lesson, [], 'both', new Set());
     const letters = exercises.filter((e) => LETTER_KINDS.has(e.kind)).length;

@@ -284,7 +284,7 @@ const PLANNED_UNITS: Unit[] = [
       V('first-words', 'First words', 'Everyday vocabulary', 15, 7),
       L(1, 'Position practice', 'Alone · start · middle · end'),
       V('greetings', 'Greetings', 'Say hello and thank you'),
-      P('Everyday phrases', 'Speak, don’t just read'),
+      P('Everyday phrases', 'Speak, don’t just read', 30, 24),
       REV('first-faces'),
     ],
   },
@@ -684,15 +684,28 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
+    // URD-A02: was the first half of a single 13-lesson 'u27' — 1 over
+    // MAX_LESSONS_PER_UNIT. Split by theme (things you build and run with
+    // here, the field and kitchen in the unit after).
     id: 'u27',
     level: 'intermediate',
     color: GOLD,
-    title: 'Unit 27 · House & Field',
-    subtitle: 'Tools, materials and the land',
+    title: 'Unit 27 · Materials & Machines',
+    subtitle: 'What things are made of, and what runs them',
     lessons: [
       V('tools', 'Tools', 'Building and mending'),
       V('materials', 'Materials', 'What things are made of'),
       V('appliances', 'Appliances', 'Machines around the house'),
+      REV('materials-and-machines'),
+    ],
+  },
+  {
+    id: 'u28',
+    level: 'intermediate',
+    color: JADE,
+    title: 'Unit 28 · Field & Kitchen',
+    subtitle: 'Holding, growing and cooking',
+    lessons: [
       V('containers', 'Containers', 'Holding and carrying'),
       V('farm', 'Farm & field', 'Agriculture and livestock'),
       V('cooking', 'Cooking', 'In the kitchen, making food'),
@@ -701,10 +714,10 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u28',
+    id: 'u29',
     level: 'intermediate',
     color: JADE,
-    title: 'Unit 28 · Senses & Seasons',
+    title: 'Unit 29 · Senses & Seasons',
     subtitle: 'What you taste, hear and wear',
     lessons: [
       V('senses', 'Sounds & senses', 'What you perceive'),
@@ -717,10 +730,10 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u29',
+    id: 'u30',
     level: 'intermediate',
     color: BLUE,
-    title: 'Unit 29 · Together',
+    title: 'Unit 30 · Together',
     subtitle: 'Guests, weddings and showing respect',
     lessons: [
       V('social', 'Social life', 'People together'),
@@ -735,10 +748,10 @@ const PLANNED_UNITS: Unit[] = [
 
   // ══════════════ ADVANCED ══════════════
   {
-    id: 'u30',
+    id: 'u31',
     level: 'intermediate',
     color: ROSE,
-    title: 'Unit 30 · Describing People',
+    title: 'Unit 31 · Describing People',
     subtitle: 'Character, appearance and relationships',
     lessons: [
       V('appearance', 'Appearance', 'How someone looks'),
@@ -750,10 +763,10 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u31',
+    id: 'u32',
     level: 'advanced',
     color: GOLD,
-    title: 'Unit 31 · Fine Description',
+    title: 'Unit 32 · Fine Description',
     subtitle: 'Precision, judgement and degree',
     lessons: [
       V('describing-more', 'Fine description', 'Precise and expressive adjectives'),
@@ -764,10 +777,10 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u32',
+    id: 'u33',
     level: 'advanced',
     color: JADE,
-    title: 'Unit 32 · Mind & Feeling',
+    title: 'Unit 33 · Mind & Feeling',
     subtitle: 'Subtler emotions and ideas',
     lessons: [
       V('emotions', 'Emotions & mind', 'Hope, patience, longing'),
@@ -778,10 +791,10 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u33',
+    id: 'u34',
     level: 'advanced',
     color: BLUE,
-    title: 'Unit 33 · Thought & Belief',
+    title: 'Unit 34 · Thought & Belief',
     subtitle: 'Philosophy, faith and the sentences that pair up',
     lessons: [
       V('philosophy', 'Thought & philosophy', 'Reason, ethics and meaning'),
@@ -793,10 +806,10 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u34',
+    id: 'u35',
     level: 'advanced',
     color: ROSE,
-    title: 'Unit 34 · Culture & Faith',
+    title: 'Unit 35 · Culture & Faith',
     subtitle: 'Festivals, poetry and belief',
     lessons: [
       V('culture', 'Culture & faith', 'Festivals and tradition'),
@@ -808,10 +821,10 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u35',
+    id: 'u36',
     level: 'advanced',
     color: GOLD,
-    title: 'Unit 35 · Poetry & Story',
+    title: 'Unit 36 · Poetry & Story',
     subtitle: 'The literary heart of Urdu',
     lessons: [
       V('poetry', 'Poetry & music', 'The Urdu literary tradition'),
@@ -823,10 +836,10 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u36',
+    id: 'u37',
     level: 'advanced',
     color: JADE,
-    title: 'Unit 36 · The Modern World',
+    title: 'Unit 37 · The Modern World',
     subtitle: 'Technology, media and enterprise',
     lessons: [
       V('tech', 'Modern life', 'Technology and news'),
@@ -840,10 +853,10 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u37',
+    id: 'u38',
     level: 'advanced',
     color: BLUE,
-    title: 'Unit 37 · State & Society',
+    title: 'Unit 38 · State & Society',
     subtitle: 'Politics, law, economy and history',
     lessons: [
       V('politics', 'Politics', 'Power, parties and the state'),
@@ -856,10 +869,10 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u38',
+    id: 'u39',
     level: 'advanced',
     color: ROSE,
-    title: 'Unit 38 · Body & Medicine',
+    title: 'Unit 39 · Body & Medicine',
     subtitle: 'Clinical language and public help',
     lessons: [
       V('organs', 'Inside the body', 'Organs and inner workings'),
@@ -871,21 +884,51 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u39',
+    // URD-A02: was the second half of a single 15-lesson 'u39' — 2 over
+    // MAX_LESSONS_PER_UNIT. Split by theme (land/sky content here, travel and
+    // formal register in the unit after); see that unit's own comment for
+    // what this does to 'rev-the-wider-world', which moved there.
+    id: 'u40',
     level: 'advanced',
     color: GOLD,
-    title: 'Unit 39 · The Wider World',
-    subtitle: 'Land, sky, formal Urdu and mastery',
+    title: 'Unit 40 · Land & Sky',
+    subtitle: 'The natural world, and what threatens it',
     lessons: [
       V('nature2', 'The natural world', 'Rivers, deserts, seasons'),
       V('landscape', 'Landscape', 'The shape of the land'),
       V('sky', 'Sky & space', 'Above the horizon'),
       V('environment', 'Environment', 'Climate and conservation'),
+      REV('land-and-sky'),
+    ],
+  },
+  {
+    id: 'u41',
+    level: 'advanced',
+    color: JADE,
+    title: 'Unit 41 · Journeys & Mastery',
+    subtitle: 'Travel, life’s milestones, and formal Urdu',
+    lessons: [
       V('travel-more', 'Journeys', 'Planning and describing trips'),
       V('lifeevents', 'Life events', 'Birth, success, destiny'),
       V('formal', 'Formal & written', 'Letters, notices and officialese'),
       S('advanced', 'Complex sentences', 'Write the way Urdu writes'),
-      REV('the-wider-world', 'Grand review', 'Everything you know', 60, 15),
+      /**
+       * URD-A02: kept the pre-split id ('rev-the-wider-world') and its
+       * course-completion framing, because this unit is still genuinely the
+       * last one in the path — the split moved half its vocabulary to
+       * 'land-and-sky' above, not its position. `coverTopics` sizes every
+       * review from its OWN unit's words, so this review's real size drops
+       * from 39 (the old, single u39's 117 words / 3) to 22 (REVIEW_MIN,
+       * `travel-more`+`lifeevents`+`formal`'s 53 words / 3 rounds to 18,
+       * under the floor) — measured directly, not assumed, after the split.
+       * That is not a regression to route around: a review scoped to a
+       * smaller unit reviewing a smaller unit is the same design every other
+       * review in this course already uses (see review.ts), and 22 is still
+       * this course's normal review floor, not a shortfall. The `60` xp and
+       * "Grand review" / "Everything you know" framing stay, since finishing
+       * the actual last unit of the path is still the moment they describe.
+       */
+      REV('the-wider-world', 'Grand review', 'Everything you know', 60),
     ],
   },
 ];
