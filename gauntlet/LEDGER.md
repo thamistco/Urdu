@@ -4153,3 +4153,131 @@ still fails for a reason measured directly (hearts-economy math, see
 done-file), attributable to URD-006, out of this item's scope.
 
 branch: claude/gauntlet-soak-answer-correctness
+
+## CLAIMED · URD-A02 · 2026-08-22T17:40Z
+files: src/data/units.ts, src/exercises/generator.ts, src/exercises/generator.test.ts
+branch: claude/gauntlet-lesson-shape-remainder, cut from
+claude/gauntlet-soak-answer-correctness after URD-034 shipped. Closed
+this item's two remaining check:shape problems (the item itself has
+been open since URD-A02 attempt 1; this is attempt 2, closing what
+attempt 1 and the follow-on items it spawned — URD-010/012/013/029 and
+the sentences/grammar-length work — left open).
+
+## CRITIQUE · URD-A02
+Dispatched THE CRITIC and the curriculum critic, both explicitly named
+in this item's own queue entry ("this item is a rewrite of the
+decision made in 35fa67a, by the same hand that made it, which is
+exactly the situation the critics exist for").
+
+THE CRITIC: no BLOCKING. 5 MINOR, all fixed:
+1. New adjacent unit u28/u29 both JADE (a real regression this diff
+   introduced, confirmed by diffing against the pre-split file) —
+   recolored u28 to ROSE.
+2. Stale "348" lesson-count comments in HomeScreen.tsx (now 350) —
+   fixed both; progress.ts's own "348" is a historical migration count
+   and correctly left alone.
+3. Undocumented xp change on the phrases lesson (20->30) — resolved by
+   the phrases-branch rewrite below, which fully derives and documents
+   xp/size together.
+4. rev-house-and-field/materials-and-machines naming mismatch —
+   overruled: renaming a live, pre-existing lesson id for internal
+   naming tidiness would orphan real users' completion data against a
+   field nothing displays (REV()'s title/subtitle default regardless
+   of slug, confirmed no override at either call site).
+5. Historical ledger entries (URD-016/017) citing u39 — informational
+   only per THE CRITIC's own report; historical record, not rewritten.
+
+Curriculum critic: 2 MAJOR, both real.
+1. The phrases lesson's own length fix (size 6->24, drawn once each)
+   moved 24 of 28 phrases from "seen once, ever" to "seen once, ever"
+   — the same trap this item's own notes warn against ("the trap is
+   fixing this by raising the count alone"), just applied to phrases
+   and invisible to check:shape (MIN_SIGHTINGS only scans kind:
+   'vocab'). Fixed for real: the phrases branch (generator.ts) now
+   runs the same meet-recall-produce climb the vocab branch already
+   uses, biased toward typeable phrases. `size` in P() now means
+   distinct phrases drawn (12), not exercises (36, 3 sightings each,
+   verified directly — see PASSED). Two of my own bugs surfaced
+   building this and were caught before shipping, not after:
+   `buildLessonExercises`'s `composed` exemption list didn't include
+   `phrases`, silently truncating the new climb's 36 exercises back to
+   12 the first time it ran; and copying vocab's varying meet-variant
+   (`i % 3`) reintroduced a dead multipleChoice/listenTap path for
+   phrases (they share one emoji, so `distractorsFor`'s own widen-to-
+   the-whole-corpus fallback produced answerable-by-elimination
+   picture questions) — pinned to variant 1 (meaningPick) instead,
+   matching the original design's intent. The pre-existing URD-023
+   test suite's synthetic lesson (hardcoded size 6) was retargeted to
+   size 12 — 6 is now outside the new formula's safe range (10-17) and
+   fails for the same reason a real 6-phrase lesson now would.
+2. rev-the-wider-world's real size (39->22, REVIEW_MIN) against its
+   unchanged 60xp/"Grand review" framing. Overruled per ROLES.md (a
+   lead may overrule a critic if the ledger records why): every other
+   CEFR-boundary review already does the identical thing
+   (rev-asking-and-opposites 40xp, rev-your-first-readings 40xp,
+   rev-describing-people 45xp, all independently measured at this
+   course's own 22-exercise floor too) — an escalating milestone bonus
+   regardless of a review's own mechanical size, not a pattern this
+   split introduced.
+
+Also flagged, accepted as-is (MINOR): the split routes all of each
+pair's non-vocab variety into one half (u27/u40 pure vocab, u28/u41
+get the reading/sentence lesson) rather than balancing it — not
+unprecedented (u29, unchanged by this item, is also pure vocab at this
+size); and u41's "Journeys & Mastery" title covers a looser grouping
+than the other three new/split units' titles, a defensible but weaker
+throughline.
+
+THE CRITIC's re-check after both MAJORs were fixed and re-verified
+passed clean; the curriculum critic's asymmetric-split and title
+findings stand as accepted MINORs, not re-actioned.
+
+## PASSED · URD-A02 · 2026-08-22T18:20Z
+$ node scripts/check-shape.js
+  0 problems (was 2): 350 lessons, mean 4.2 min/lesson, 9.8 new
+  words/lesson, 24.3h course. Phrases lesson and all 41 units within
+  band.
+
+$ node -e (real phrases lesson, both tracks)
+  emitted 36, mins 5.40, counts {meaningPick:13, wordFromMeaning:12,
+  typeWord:11}, maxShare 36.1%, longestRun 3, distinctPhrases 12,
+  every phrase sighted exactly 3 times (min==max==3).
+
+$ node -e (review sizes)
+  rev-materials-and-machines 22, rev-house-and-field 22,
+  rev-land-and-sky 22, rev-the-wider-world 22 — all match hand-computed
+  predictions from each half's real word count exactly.
+
+$ npx tsc --noEmit
+  clean.
+
+$ npm run lint
+  clean.
+
+$ npm run format:check
+  clean (one round needed prettier --write on generator.ts's new
+  phrases branch; no logic change).
+
+$ npx vitest run
+  178 passed (178) — 177 + 1 new (phrases sightings-count assertion).
+  1 test failed and was fixed mid-session: review.test.ts's "scales to
+  a unit with many vocabulary lessons" hardcoded rev-the-wider-world's
+  pre-split 117-word count; retargeted to rev-senses-and-seasons (96
+  words, now the largest single-unit pool, unaffected by this item).
+
+$ npm run check:all
+  all 29 steps pass, confirmed twice more after the critic-fix round
+  (once mid-fix, once on the final committed state).
+
+Two units (old u27, 13 lessons; old u39, 15 lessons) split by theme
+into four (new u27/u28, u40/u41); every unit from old u28 through u38
+renumbered up by one to make room (id/title only — no lesson content,
+word assignment, or lesson order changed). No duplicate lesson or unit
+ids (independently confirmed by THE CRITIC via its own load of
+units.ts, not just this session's own check). Stale doc-comment
+references to the pre-split unit numbers/word counts fixed in
+review.ts, review.test.ts and generator.test.ts, each verified against
+a fresh, independent recomputation rather than assumed correct from
+the old prose.
+
+branch: claude/gauntlet-lesson-shape-remainder
