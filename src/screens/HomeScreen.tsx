@@ -336,6 +336,17 @@ export function HomeScreen() {
   const pathRef = useRef<ScrollView>(null);
   const currentNode = useRef<View>(null);
   const didAutoScroll = useRef(false);
+  // URD-032: the height of everything above the accordion (header, level
+  // card, continue card, today's-word card, jump-ahead hint) — see
+  // `toggleLevel` below for what this is for. Captured via `onLayout`
+  // rather than measured fresh at toggle time deliberately: this region's
+  // height never changes when a stage collapses or expands, so one
+  // measurement (updated whenever this content's own height legitimately
+  // changes, e.g. the jump-ahead hint disappearing on course completion)
+  // stays valid across every toggle, sidestepping both failure modes the
+  // comment on `toggleLevel` documents for measuring anything *inside* the
+  // accordion at toggle time.
+  const fixedHeaderHeight = useRef(0);
   useEffect(() => {
     if (didAutoScroll.current || showPathNotice || showTicksWiped) return;
     const t = setTimeout(() => {
@@ -383,8 +394,23 @@ export function HomeScreen() {
   // actual current stage as they advanced, and stopped the mount-time
   // auto-scroll below from ever firing again (it needs the current lesson's
   // row mounted, which requires its stage to be the open one).
+  //
+  // URD-032: re-opening the right stage here was only half the fix — THE
+  // CRITIC found, reviewing this same accordion again, that nothing then
+  // scrolled to reveal it. `didAutoScroll` below is a one-shot-per-mount
+  // guard, and this screen genuinely never remounts between lessons, so
+  // once it had fired once (on the very first Home visit of the session)
+  // it stayed fired forever, regardless of how many times `currentLevel`
+  // legitimately advanced afterward. A learner who finishes their stage's
+  // last lesson while scrolled away from it got the newly-current stage
+  // opened, correctly, with no scroll to show them it happened. Resetting
+  // the guard here — the one place that already knows `currentLevel` just
+  // changed for a real reason, not a remount — re-arms it for exactly that
+  // case, without turning it into an unconditional "scroll on every render"
+  // that would fight a learner who is deliberately looking elsewhere.
   useEffect(() => {
     setOpenLevel(undefined);
+    didAutoScroll.current = false;
   }, [currentLevel]);
 
   /**
@@ -408,21 +434,36 @@ export function HomeScreen() {
    * offset was stale at exactly the moment that mattered. Both looked
    * correct reading the code; both were wrong measured live.
    *
-   * Landing at the top of the screen instead needs no measurement at all,
-   * so it can't go stale the same way: whatever the browser does to the
-   * scroll position when a stage collapses, resetting to `y: 0` is always
-   * a valid position (the app's own header and "today's word" card, never
-   * empty, never mid-list), and confirmed by the exact defect DESIGN
-   * CRITIC filed — "no header in sight" — is definitionally impossible at
-   * the top of the page. It costs a bigger jump than scrolling directly to
-   * the new stage would; that trade was chosen deliberately once the
-   * precise version couldn't be made to work.
+   * Landing at the top of the screen needed no measurement at all, so it
+   * couldn't go stale the same way: whatever the browser does to the scroll
+   * position when a stage collapses, resetting to `y: 0` is always a valid
+   * position (the app's own header and "today's word" card, never empty,
+   * never mid-list), and confirmed by the exact defect DESIGN CRITIC filed —
+   * "no header in sight" — is definitionally impossible at the top of the
+   * page. That was the trade chosen once the precise, in-accordion version
+   * couldn't be made to work — but it costs a bigger jump (~8,000px) than
+   * scrolling directly to the new stage would.
+   *
+   * URD-032: DESIGN CRITIC measured the actual cost of that trade — ~500px
+   * of return scroll to get back past the fixed cards above the accordion,
+   * against the ~8,000px the bug being fixed would have cost — and found a
+   * middle ground neither failed approach above ruled out: `fixedHeaderHeight`
+   * (captured once via `onLayout`, not measured fresh at toggle time) is the
+   * height of everything ABOVE the accordion — content that never changes
+   * size when a stage inside the accordion collapses or expands. Landing
+   * there instead of `y: 0` still needs no fresh measurement at toggle time
+   * (so it can't go stale the way the two failed approaches did — nothing
+   * about it depends on which stage just collapsed or how tall it was), and
+   * it is still always a valid, labeled, non-empty position (the accordion's
+   * own collapsed stage list starts right there) — it just skips the fixed
+   * cards this same toggle doesn't need to re-show, roughly halving the
+   * return scroll.
    */
   const toggleLevel = (lvl: Level) => {
     feedback.tap();
     const opening = !isOpen(lvl);
     setOpenLevel(isOpen(lvl) ? 'none' : lvl);
-    if (opening) pathRef.current?.scrollTo({ y: 0, animated: true });
+    if (opening) pathRef.current?.scrollTo({ y: fixedHeaderHeight.current, animated: true });
   };
 
   const openLesson = (lesson: Lesson, _state: string) => {
@@ -434,26 +475,33 @@ export function HomeScreen() {
   return (
     <View className="flex-1 bg-ink">
       <Screen scrollRef={pathRef}>
-        {/* header */}
-        <Reveal>
-          <SafeAreaView edges={['top']}>
-            <View className="mb-4 flex-row items-start justify-between">
-              <View className="flex-1 pe-3">
-                <Eyebrow style={{ color: palette.gold }}>Harf · حرف</Eyebrow>
-                <Display className="mt-1 text-3xl leading-9">{GREETING[store.goal ?? 'curious']}</Display>
-              </View>
-              <View className="flex-row items-center gap-2">
-                <StatChip
-                  icon={<Illustration name="flame" tile={false} size={16} />}
-                  value={store.streak}
-                  color={palette.flame}
-                />
-                <StatChip
-                  icon={<Illustration name="gem" tile={false} size={16} />}
-                  value={store.gems}
-                  color={palette.jadeLight}
-                />
-                {/* TEMPORARY, and asked for knowingly: a one-tap way to walk
+        {/* everything above the accordion — see `fixedHeaderHeight` above */}
+        <View
+          collapsable={false}
+          onLayout={(e) => {
+            fixedHeaderHeight.current = e.nativeEvent.layout.height;
+          }}
+        >
+          {/* header */}
+          <Reveal>
+            <SafeAreaView edges={['top']}>
+              <View className="mb-4 flex-row items-start justify-between">
+                <View className="flex-1 pe-3">
+                  <Eyebrow style={{ color: palette.gold }}>Harf · حرف</Eyebrow>
+                  <Display className="mt-1 text-3xl leading-9">{GREETING[store.goal ?? 'curious']}</Display>
+                </View>
+                <View className="flex-row items-center gap-2">
+                  <StatChip
+                    icon={<Illustration name="flame" tile={false} size={16} />}
+                    value={store.streak}
+                    color={palette.flame}
+                  />
+                  <StatChip
+                    icon={<Illustration name="gem" tile={false} size={16} />}
+                    value={store.gems}
+                    color={palette.jadeLight}
+                  />
+                  {/* TEMPORARY, and asked for knowingly: a one-tap way to walk
                     the course from the first lesson again while testing.
                     Delete this Pressable to remove it — nothing else depends
                     on it, and the same thing lives permanently in Settings →
@@ -465,39 +513,39 @@ export function HomeScreen() {
                     it is the reason this comment says remove it. The dialog
                     now says plainly that this is a testing button, so nobody
                     reaches the confirm step thinking it is a feature. */}
-                <Pressable
-                  onPress={() => {
-                    feedback.tap();
-                    confirmAction(
-                      'Start the course over?',
-                      'A testing button: clears progress, streak, XP and memory on this device so the path can be walked from the first lesson again. There is no way to get them back.',
-                      'Reset',
-                      () => {
-                        store.resetAll();
-                        feedback.incorrect();
-                      }
-                    );
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel="Reset progress and start the course over (for testing)"
-                  hitSlop={6}
-                >
-                  <View
-                    className="h-8 w-8 items-center justify-center rounded-full border"
-                    style={{
-                      borderColor: withAlpha(palette.rose, 0.4),
-                      backgroundColor: withAlpha(palette.rose, 0.12),
+                  <Pressable
+                    onPress={() => {
+                      feedback.tap();
+                      confirmAction(
+                        'Start the course over?',
+                        'A testing button: clears progress, streak, XP and memory on this device so the path can be walked from the first lesson again. There is no way to get them back.',
+                        'Reset',
+                        () => {
+                          store.resetAll();
+                          feedback.incorrect();
+                        }
+                      );
                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Reset progress and start the course over (for testing)"
+                    hitSlop={6}
                   >
-                    <CycleMark size={16} color={palette.roseLight} />
-                  </View>
-                </Pressable>
+                    <View
+                      className="h-8 w-8 items-center justify-center rounded-full border"
+                      style={{
+                        borderColor: withAlpha(palette.rose, 0.4),
+                        backgroundColor: withAlpha(palette.rose, 0.12),
+                      }}
+                    >
+                      <CycleMark size={16} color={palette.roseLight} />
+                    </View>
+                  </Pressable>
+                </View>
               </View>
-            </View>
-          </SafeAreaView>
-        </Reveal>
+            </SafeAreaView>
+          </Reveal>
 
-        {/* URD-014: the learner who lost the most, told the least.
+          {/* URD-014: the learner who lost the most, told the least.
             An old profile's lesson-id migration empties completedLessons and
             skippedLessons, because a positional id from before the path was
             content-keyed genuinely cannot be translated. That is correct —
@@ -505,32 +553,32 @@ export function HomeScreen() {
             so the notice below it never fires for exactly this learner. This
             card is that second, separate truth, with its own honest copy:
             unlike a regroup, something really was dropped here. */}
-        {showTicksWiped && (
-          <Reveal delay={20} visible={store.ticksWipedByMigration} onExited={() => setShowTicksWiped(false)}>
-            <Card
-              className="mb-4"
-              accent={palette.gold}
-              accessibilityRole="alert"
-              accessibilityLabel={`${TICKS_WIPED_NOTICE_TITLE}. ${TICKS_WIPED_NOTICE_BODY}`}
-            >
-              <Bold className="text-base">{TICKS_WIPED_NOTICE_TITLE}</Bold>
-              <Txt className="mt-2 text-sm leading-6 text-paper/75">{TICKS_WIPED_NOTICE_BODY}</Txt>
-              <View className="mt-3 flex-row">
-                <Button
-                  variant="ghost"
-                  onPress={() => {
-                    feedback.tap();
-                    store.dismissTicksWipedNotice();
-                  }}
-                >
-                  Got it
-                </Button>
-              </View>
-            </Card>
-          </Reveal>
-        )}
+          {showTicksWiped && (
+            <Reveal delay={20} visible={store.ticksWipedByMigration} onExited={() => setShowTicksWiped(false)}>
+              <Card
+                className="mb-4"
+                accent={palette.gold}
+                accessibilityRole="alert"
+                accessibilityLabel={`${TICKS_WIPED_NOTICE_TITLE}. ${TICKS_WIPED_NOTICE_BODY}`}
+              >
+                <Bold className="text-base">{TICKS_WIPED_NOTICE_TITLE}</Bold>
+                <Txt className="mt-2 text-sm leading-6 text-paper/75">{TICKS_WIPED_NOTICE_BODY}</Txt>
+                <View className="mt-3 flex-row">
+                  <Button
+                    variant="ghost"
+                    onPress={() => {
+                      feedback.tap();
+                      store.dismissTicksWipedNotice();
+                    }}
+                  >
+                    Got it
+                  </Button>
+                </View>
+              </Card>
+            </Reveal>
+          )}
 
-        {/* Why the unit counts moved.
+          {/* Why the unit counts moved.
             The path has been rebuilt underneath people twice and will move
             again: once splitting each topic across enough lessons to cover its
             vocabulary, once regrouping those into sittings. What a returning
@@ -556,218 +604,219 @@ export function HomeScreen() {
             rather than on the render, so a notice drawn and never read is still
             owed. It records the path size with the flag, so the next regroup
             re-arms this without anyone bumping the persist version. */}
-        {showPathNotice && (
-          <Reveal delay={30} visible={pathNotice} onExited={() => setShowPathNotice(false)}>
-            <Card
-              className="mb-4"
-              accent={palette.gold}
-              accessibilityRole="alert"
-              accessibilityLabel={`Lessons were regrouped. ${NOTICE_BODY}`}
-            >
-              <Bold className="text-base">Lessons were regrouped</Bold>
-              <Txt className="mt-2 text-sm leading-6 text-paper/75">{NOTICE_BODY}</Txt>
-              <View className="mt-3 flex-row">
-                <Button
-                  variant="ghost"
-                  onPress={() => {
-                    feedback.tap();
-                    store.dismissPathNotice(PATH_SIZE);
-                  }}
-                >
-                  Got it
-                </Button>
+          {showPathNotice && (
+            <Reveal delay={30} visible={pathNotice} onExited={() => setShowPathNotice(false)}>
+              <Card
+                className="mb-4"
+                accent={palette.gold}
+                accessibilityRole="alert"
+                accessibilityLabel={`Lessons were regrouped. ${NOTICE_BODY}`}
+              >
+                <Bold className="text-base">Lessons were regrouped</Bold>
+                <Txt className="mt-2 text-sm leading-6 text-paper/75">{NOTICE_BODY}</Txt>
+                <View className="mt-3 flex-row">
+                  <Button
+                    variant="ghost"
+                    onPress={() => {
+                      feedback.tap();
+                      store.dismissPathNotice(PATH_SIZE);
+                    }}
+                  >
+                    Got it
+                  </Button>
+                </View>
+              </Card>
+            </Reveal>
+          )}
+
+          {/* level + daily goal */}
+          <Reveal delay={60}>
+            <Card className="mb-4">
+              <View className="mb-2 flex-row items-center justify-between">
+                <View className="flex-row items-center gap-2">
+                  <View className="rounded-lg px-2 py-1" style={{ backgroundColor: palette.gold }}>
+                    <Bold style={{ color: palette.ink }} className="text-xs">
+                      LVL {level}
+                    </Bold>
+                  </View>
+                  <Bold className="text-sm">{levelTitle(level)}</Bold>
+                </View>
+                <Txt className="text-xs text-paper/55">
+                  {store.todayXp}/{goal.xp} XP today
+                </Txt>
+              </View>
+              <ProgressBar progress={ratio} height={10} />
+              <View className="mt-3 flex-row items-center gap-2">
+                <Illustration name="sparkle" tile={false} size={16} />
+                <View className="flex-1">
+                  <ProgressBar progress={dailyRatio} color={palette.jade} height={8} />
+                </View>
+                <Txt className="text-[11px] text-paper/55">
+                  {dailyRatio >= 1 ? 'Goal met ✓' : `${Math.round(dailyRatio * 100)}%`}
+                </Txt>
               </View>
             </Card>
           </Reveal>
-        )}
 
-        {/* level + daily goal */}
-        <Reveal delay={60}>
-          <Card className="mb-4">
-            <View className="mb-2 flex-row items-center justify-between">
-              <View className="flex-row items-center gap-2">
-                <View className="rounded-lg px-2 py-1" style={{ backgroundColor: palette.gold }}>
-                  <Bold style={{ color: palette.ink }} className="text-xs">
-                    LVL {level}
-                  </Bold>
-                </View>
-                <Bold className="text-sm">{levelTitle(level)}</Bold>
-              </View>
-              <Txt className="text-xs text-paper/55">
-                {store.todayXp}/{goal.xp} XP today
-              </Txt>
-            </View>
-            <ProgressBar progress={ratio} height={10} />
-            <View className="mt-3 flex-row items-center gap-2">
-              <Illustration name="sparkle" tile={false} size={16} />
-              <View className="flex-1">
-                <ProgressBar progress={dailyRatio} color={palette.jade} height={8} />
-              </View>
-              <Txt className="text-[11px] text-paper/55">
-                {dailyRatio >= 1 ? 'Goal met ✓' : `${Math.round(dailyRatio * 100)}%`}
-              </Txt>
-            </View>
-          </Card>
-        </Reveal>
-
-        {/* Whatever the schedule says is slipping.
+          {/* Whatever the schedule says is slipping.
             The spaced-repetition engine has always been running — every answer
             updates a memory record, and review lessons draw from what is due —
             but nothing outside the Practice tab ever said so, so the one number
             that should decide how a session starts was invisible on the screen
             the learner lands on. Shown only when something is actually due;
             an empty queue is not worth a card. */}
-        {dueNow > 0 && (
-          <Reveal delay={75}>
-            <Pressable
-              onPress={() => {
-                feedback.tap();
-                nav.navigate('Lesson', { lessonId: 'practice-review' });
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={`Review ${dueNow} ${dueNow === 1 ? 'item' : 'items'} due now`}
-              style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
-            >
-              <View
-                className="mb-4 flex-row items-center gap-3 rounded-2xl border px-4 py-3"
-                style={{
-                  backgroundColor: withAlpha(palette.jade, 0.14),
-                  borderColor: withAlpha(palette.jade, 0.42),
+          {dueNow > 0 && (
+            <Reveal delay={75}>
+              <Pressable
+                onPress={() => {
+                  feedback.tap();
+                  nav.navigate('Lesson', { lessonId: 'practice-review' });
                 }}
+                accessibilityRole="button"
+                accessibilityLabel={`Review ${dueNow} ${dueNow === 1 ? 'item' : 'items'} due now`}
+                style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
               >
                 <View
-                  className="h-10 w-10 items-center justify-center rounded-full"
-                  style={{ backgroundColor: withAlpha(palette.jade, 0.22) }}
+                  className="mb-4 flex-row items-center gap-3 rounded-2xl border px-4 py-3"
+                  style={{
+                    backgroundColor: withAlpha(palette.jade, 0.14),
+                    borderColor: withAlpha(palette.jade, 0.42),
+                  }}
                 >
-                  <Illustration name="clock" tile={false} size={22} />
+                  <View
+                    className="h-10 w-10 items-center justify-center rounded-full"
+                    style={{ backgroundColor: withAlpha(palette.jade, 0.22) }}
+                  >
+                    <Illustration name="clock" tile={false} size={22} />
+                  </View>
+                  <View className="flex-1">
+                    <Eyebrow style={{ color: palette.jade }}>Due for review</Eyebrow>
+                    <Bold className="mt-0.5 text-[15px]">
+                      {dueNow} {dueNow === 1 ? 'thing' : 'things'} to bring back
+                    </Bold>
+                    <Txt className="text-xs text-paper/55">Reviewed now, they stick; left much longer, they go.</Txt>
+                  </View>
+                  <Txt style={{ color: palette.jade, fontSize: 20 }}>›</Txt>
                 </View>
-                <View className="flex-1">
-                  <Eyebrow style={{ color: palette.jade }}>Due for review</Eyebrow>
-                  <Bold className="mt-0.5 text-[15px]">
-                    {dueNow} {dueNow === 1 ? 'thing' : 'things'} to bring back
-                  </Bold>
-                  <Txt className="text-xs text-paper/55">Reviewed now, they stick; left much longer, they go.</Txt>
-                </View>
-                <Txt style={{ color: palette.jade, fontSize: 20 }}>›</Txt>
-              </View>
-            </Pressable>
-          </Reveal>
-        )}
+              </Pressable>
+            </Reveal>
+          )}
 
-        {/* the one obvious next action */}
-        {currentLesson && (
-          <Reveal delay={90}>
-            <Pressable
-              onPress={() => {
-                feedback.tap();
-                // Once the path is finished there is no "next" lesson — the
-                // course becomes its review queue.
-                nav.navigate('Lesson', { lessonId: finished ? 'practice-review' : currentLesson.id });
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={
-                finished
-                  ? 'Course complete. Open your daily review.'
-                  : `Continue: ${currentLesson.title}. ${currentLesson.subtitle}`
-              }
-              style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
-            >
-              <View
-                className="mb-4 flex-row items-center gap-3 rounded-2xl border px-4 py-3.5"
-                style={{
-                  backgroundColor: withAlpha(palette.gold, 0.14),
-                  borderColor: withAlpha(palette.gold, 0.42),
+          {/* the one obvious next action */}
+          {currentLesson && (
+            <Reveal delay={90}>
+              <Pressable
+                onPress={() => {
+                  feedback.tap();
+                  // Once the path is finished there is no "next" lesson — the
+                  // course becomes its review queue.
+                  nav.navigate('Lesson', { lessonId: finished ? 'practice-review' : currentLesson.id });
                 }}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  finished
+                    ? 'Course complete. Open your daily review.'
+                    : `Continue: ${currentLesson.title}. ${currentLesson.subtitle}`
+                }
+                style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
               >
                 <View
-                  className="h-12 w-12 items-center justify-center rounded-full"
-                  style={{ backgroundColor: withAlpha(palette.gold, 0.22) }}
+                  className="mb-4 flex-row items-center gap-3 rounded-2xl border px-4 py-3.5"
+                  style={{
+                    backgroundColor: withAlpha(palette.gold, 0.14),
+                    borderColor: withAlpha(palette.gold, 0.42),
+                  }}
                 >
-                  {finished ? (
-                    <Illustration name="medal" tile={false} size={26} />
-                  ) : (
-                    <LessonIcon kind={currentLesson.kind} topic={currentLesson.topic} size={26} />
-                  )}
+                  <View
+                    className="h-12 w-12 items-center justify-center rounded-full"
+                    style={{ backgroundColor: withAlpha(palette.gold, 0.22) }}
+                  >
+                    {finished ? (
+                      <Illustration name="medal" tile={false} size={26} />
+                    ) : (
+                      <LessonIcon kind={currentLesson.kind} topic={currentLesson.topic} size={26} />
+                    )}
+                  </View>
+                  <View className="flex-1">
+                    <Eyebrow style={{ color: palette.gold }}>
+                      {finished
+                        ? `All ${order.length} lessons done`
+                        : store.completedLessons[order[0]] || store.skippedLessons[order[0]]
+                          ? 'Continue'
+                          : 'Start here'}
+                    </Eyebrow>
+                    <Bold className="mt-0.5 text-[15px]">{finished ? 'Keep it warm' : currentLesson.title}</Bold>
+                    <Txt className="text-xs text-paper/55">
+                      {finished
+                        ? "You've made it through the whole course. Daily review keeps it fresh."
+                        : `${currentUnit ? currentUnit.title.replace(/ · .*/, '') : currentLesson.subtitle} · ${currentLesson.subtitle}`}
+                    </Txt>
+                  </View>
+                  <Txt style={{ color: palette.gold, fontSize: 20 }}>›</Txt>
                 </View>
-                <View className="flex-1">
-                  <Eyebrow style={{ color: palette.gold }}>
-                    {finished
-                      ? `All ${order.length} lessons done`
-                      : store.completedLessons[order[0]] || store.skippedLessons[order[0]]
-                        ? 'Continue'
-                        : 'Start here'}
-                  </Eyebrow>
-                  <Bold className="mt-0.5 text-[15px]">{finished ? 'Keep it warm' : currentLesson.title}</Bold>
-                  <Txt className="text-xs text-paper/55">
-                    {finished
-                      ? "You've made it through the whole course. Daily review keeps it fresh."
-                      : `${currentUnit ? currentUnit.title.replace(/ · .*/, '') : currentLesson.subtitle} · ${currentLesson.subtitle}`}
-                  </Txt>
-                </View>
-                <Txt style={{ color: palette.gold, fontSize: 20 }}>›</Txt>
-              </View>
-            </Pressable>
-          </Reveal>
-        )}
+              </Pressable>
+            </Reveal>
+          )}
 
-        {/* today's word + letter lab */}
-        <Reveal delay={120}>
-          <View className="mb-5 flex-row gap-3">
-            <Card paper className="flex-1" style={{ paddingVertical: 14 }}>
-              <Eyebrow style={{ color: withAlpha(palette.ink, 0.5) }} className="mb-2">
-                Today’s word
-              </Eyebrow>
-              <View className="flex-row items-center justify-between gap-2">
-                <View className="flex-1">
-                  <Lexeme
-                    urdu={word.urdu}
-                    roman={word.roman}
-                    track={track}
-                    size={28}
-                    color={palette.ink}
-                    align="left"
-                  />
-                  <Txt style={{ color: palette.ink }} className="text-xs opacity-60">
-                    {glossOf(word)}
-                  </Txt>
-                </View>
-                <WordArt word={word} size={46} />
-              </View>
-            </Card>
-            <Pressable
-              onPress={() => {
-                feedback.tap();
-                nav.navigate('LetterLab');
-              }}
-              style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.97 : 1 }] })}
-            >
-              <View
-                className="h-full w-24 items-center justify-center rounded-2xl border px-2 py-4"
-                style={{ borderColor: withAlpha(palette.gold, 0.3), backgroundColor: withAlpha(palette.gold, 0.1) }}
-              >
-                <Illustration name="pen" tile={false} size={40} />
-                <Eyebrow style={{ color: palette.gold, fontSize: 9 }} className="mt-3 text-center">
-                  Letter{'\n'}Lab
+          {/* today's word + letter lab */}
+          <Reveal delay={120}>
+            <View className="mb-5 flex-row gap-3">
+              <Card paper className="flex-1" style={{ paddingVertical: 14 }}>
+                <Eyebrow style={{ color: withAlpha(palette.ink, 0.5) }} className="mb-2">
+                  Today’s word
                 </Eyebrow>
-              </View>
-            </Pressable>
-          </View>
-        </Reveal>
-
-        {/* jump-ahead hint — pointless once there is nothing left to jump to */}
-        {!finished && (
-          <Reveal delay={150}>
-            <View
-              className="mb-1 flex-row items-center gap-2 rounded-xl px-3 py-2"
-              style={{ backgroundColor: withAlpha(palette.gold, 0.08) }}
-            >
-              <Illustration name="sparkle" tile={false} size={15} />
-              <Txt className="flex-1 text-[11px] text-paper/55">
-                Tap any lesson to jump ahead. Locked ones unlock as you pass them.
-              </Txt>
+                <View className="flex-row items-center justify-between gap-2">
+                  <View className="flex-1">
+                    <Lexeme
+                      urdu={word.urdu}
+                      roman={word.roman}
+                      track={track}
+                      size={28}
+                      color={palette.ink}
+                      align="left"
+                    />
+                    <Txt style={{ color: palette.ink }} className="text-xs opacity-60">
+                      {glossOf(word)}
+                    </Txt>
+                  </View>
+                  <WordArt word={word} size={46} />
+                </View>
+              </Card>
+              <Pressable
+                onPress={() => {
+                  feedback.tap();
+                  nav.navigate('LetterLab');
+                }}
+                style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.97 : 1 }] })}
+              >
+                <View
+                  className="h-full w-24 items-center justify-center rounded-2xl border px-2 py-4"
+                  style={{ borderColor: withAlpha(palette.gold, 0.3), backgroundColor: withAlpha(palette.gold, 0.1) }}
+                >
+                  <Illustration name="pen" tile={false} size={40} />
+                  <Eyebrow style={{ color: palette.gold, fontSize: 9 }} className="mt-3 text-center">
+                    Letter{'\n'}Lab
+                  </Eyebrow>
+                </View>
+              </Pressable>
             </View>
           </Reveal>
-        )}
+
+          {/* jump-ahead hint — pointless once there is nothing left to jump to */}
+          {!finished && (
+            <Reveal delay={150}>
+              <View
+                className="mb-1 flex-row items-center gap-2 rounded-xl px-3 py-2"
+                style={{ backgroundColor: withAlpha(palette.gold, 0.08) }}
+              >
+                <Illustration name="sparkle" tile={false} size={15} />
+                <Txt className="flex-1 text-[11px] text-paper/55">
+                  Tap any lesson to jump ahead. Locked ones unlock as you pass them.
+                </Txt>
+              </View>
+            </Reveal>
+          )}
+        </View>
 
         {/* the path, grouped into course stages */}
         {LEVEL_ORDER.map((lvl: Level) => {
