@@ -31,12 +31,24 @@
  * It answers deliberately wrongly some of the time, on a seeded coin flip, so
  * the wrong answer path, the hearts drain and the refill are exercised rather
  * than assumed. A run that only ever answers correctly never visits half the app.
- * That is the intent for `typeWord`, `letterTrace` and the tile-tray kinds
- * (`sentenceBuild`/`wordBuild`); the generic tap-fallback covering the other
- * seven kinds does not read this flag at all and picks uniformly at random
- * among the on-screen options regardless of it, so its real wrong-rate is
- * whatever `1 - 1/optionCount` works out to (typically 65-75%), not the 25%
- * this paragraph describes — see the queue for the open item on this.
+ *
+ * URD-034: this used to be true only for `typeWord`, `letterTrace` and the
+ * tile-tray kinds (`sentenceBuild`/`wordBuild`) — the generic tap-fallback
+ * covering the other seven kinds (multipleChoice, meaningPick, listenTap,
+ * wordFromMeaning, letterForm, letterPick, grammarDrill) never read this
+ * flag at all and picked uniformly at random among the on-screen options
+ * regardless of it, so its real wrong-rate was whatever `1 - 1/optionCount`
+ * worked out to (typically 65-75%), not the 25% this paragraph describes —
+ * measured indirectly but repeatedly: a real, non-diagnostic run past the
+ * alphabet never completed a single lesson (0 of over 120 attempts, a dozen
+ * seeds/`--start` positions), and the same content played cleanly (10/10)
+ * the moment a throwaway patch made hearts irrelevant. Every one of those
+ * seven kinds now reads the real answer off the same loaded content every
+ * other check script reads (see "answer knowledge", above `ALL_LESSONS`
+ * below) — the same *kind* of fix `typeWord` and `traceTheLetter` already
+ * had, reading the transliteration or the glyph's own pixels rather than
+ * asking the app for anything new, just applied to the six kinds that
+ * needed it too.
  *
  * ## Why it is not in `check:all`
  *
@@ -126,6 +138,292 @@ const REQUIRE = (arg('require', '') || '')
  */
 const { ALL_LESSONS } = load('src/data/units.ts');
 const START_COMPLETED = Object.fromEntries(ALL_LESSONS.slice(0, START).map((l) => [l.id, { best: 1, done: 1 }]));
+
+// ---------------------------------------------------------- answer knowledge
+//
+// URD-034: `tapNamedKind`'s fallback covered multipleChoice, meaningPick,
+// listenTap, wordFromMeaning, letterForm, letterPick and grammarDrill by
+// picking a uniformly random on-screen candidate — no attempt at
+// correctness, so its real wrong-rate was `1 - 1/optionCount` (typically
+// 65-75%) against the 25% `wrongOnPurpose` is supposed to mean. A real soak
+// run past the alphabet never completed a single lesson because of it (see
+// the module doc comment and the queue).
+//
+// The fix reads the same real content every other check script does
+// (`load()`), the same way `typeWord` already reads the transliteration off
+// the screen and `traceTheLetter` reads the glyph's own pixels — not by
+// asking the app to expose anything new, since this file's own scope is the
+// driver, not the app. Every one of these exercises follows one shape: the
+// prompt names a real word, letter or grammar drill by some fixed piece of
+// its own real content (its Urdu spelling, its English gloss, its name, or
+// its English translation), and the correct option is simply the one whose
+// own rendered content is the SAME record's. So: read the prompt's
+// identifying text, look up which real record it names, then find the
+// on-screen candidate whose own text is that same record's — no need to
+// reproduce the generator's random distractor draw at all, since the
+// correct option is never one of the distractors.
+//
+// Every lookup below is exact-match against a Map, not a fuzzy or partial
+// one: `capitalize` styling changes what a browser's own `innerText`
+// reports (confirmed live — a word stored as "sister" rendered and read
+// back as "Sister"), so every key on both sides is lower-cased before it is
+// compared, but never trimmed to a substring or truncated. A wrong match
+// found this way would be worse than the random guess it replaces — it
+// would look like a driver that knows the answer and confidently tap the
+// wrong one — so any word, letter or drill whose identifying text collides
+// with another's is deliberately indexed to `null` rather than to either
+// candidate (`indexBy` below), and a `null` or missing lookup falls back to
+// the original random-candidate behaviour this file already had, not a
+// crash and not a guess dressed up as knowledge.
+const { WORDS, glossOf } = load('src/data/words.ts');
+const { LETTERS, POSITIONS } = load('src/data/letters.ts');
+const { GRAMMAR } = load('src/data/grammar.ts');
+const GRAMMAR_DRILLS = GRAMMAR.flatMap((c) => c.drills);
+
+/**
+ * `Text.tsx`'s own `Urdu` component prepends an invisible right-to-left mark
+ * (`‏`) to every string it renders — real, needed so a card with only
+ * Urdu content still anchors right-to-left (see that file's own comment) —
+ * so every piece of script `innerText` reports carries one, and the raw
+ * data in `words.ts`/`letters.ts`/`grammar.ts` never does. Found live: the
+ * very first real run below matched every word correctly and then failed
+ * every single lookup anyway, `لے جانا` (data) against `‏لے جانا` (screen) —
+ * visually identical, one invisible character apart. Every comparison in
+ * this file goes through this first, on both sides, so on-screen text and
+ * real content are compared the way they actually match: what a learner
+ * would see, not the bytes an invisible bidi hint adds to one side only.
+ */
+const normalize = (s) => s.replace(/[‎‏‪-‮]/g, '').trim().toLowerCase();
+
+/** Maps a colliding key to `null` rather than to either record — an
+ *  ambiguous signal identifies nothing, and this file would rather fall
+ *  back to guessing than guess confidently and wrong. */
+function indexBy(items, ...keyFns) {
+  const map = new Map();
+  for (const item of items) {
+    for (const keyFn of keyFns) {
+      const key = keyFn(item);
+      if (!key) continue;
+      const k = normalize(key);
+      map.set(k, map.has(k) ? null : item);
+    }
+  }
+  return map;
+}
+
+/** One signal covering every text a word-based exercise (multipleChoice,
+ *  meaningPick, wordFromMeaning, listenTap) can show for either the target
+ *  or a candidate option: its Urdu spelling, its Roman transliteration, or
+ *  its English gloss (with a register suffix, exactly as `glossOf` — the
+ *  same function these exercises' own JSX calls — renders it). Which of the
+ *  three is visible for the prompt vs. the options varies by kind and by
+ *  learn track; folding all three into one map means the same lookup works
+ *  regardless of which the current screen happens to show. */
+const wordBySignal = indexBy(
+  WORDS,
+  (w) => w.urdu,
+  (w) => w.roman,
+  (w) => glossOf(w)
+);
+
+const letterByName = indexBy(LETTERS, (l) => l.name);
+/** Every letter's own four forms (isolated/initial/medial/final), each
+ *  mapped back to the letter — `letterPick`'s options render only the
+ *  isolated glyph, but `letterForm`'s prompt shows whichever form the
+ *  question is actually asking about. */
+const letterByGlyph = indexBy(
+  LETTERS,
+  (l) => l.forms.isolated,
+  (l) => l.forms.initial,
+  (l) => l.forms.medial,
+  (l) => l.forms.final
+);
+const drillByMeaning = indexBy(GRAMMAR_DRILLS, (d) => d.meaning);
+
+/**
+ * The on-screen answer-shaped candidates, each with its own text — the same
+ * bounding-box filter `tapNamedKind`'s random fallback already used (a
+ * button roughly where an option sits, not the header or a stray control
+ * behind it), but reading each candidate's own text as well as its position,
+ * so a solver below can match it against real content instead of guessing.
+ */
+async function candidateOptions(page) {
+  const btns = page.locator('[role="button"]');
+  const n = await btns.count();
+  const candidates = [];
+  for (let k = 0; k < n; k++) {
+    const b = await btns
+      .nth(k)
+      .boundingBox()
+      .catch(() => null);
+    if (b && b.y > 150 && b.y < 800 && b.width > 110 && b.height > 40) {
+      // Every line, not the whole button glued into one string: a Choice
+      // like listenTap's or meaningPick's own reverse direction pairs a
+      // picture (which renders as its own emoji or icon text) with the
+      // gloss on a second line, and a candidate's *whole* text never equals
+      // just the gloss — only one of its lines does. `answerLetterForm`'s
+      // Eyebrow line, split the same way elsewhere in this file, is the
+      // identical shape of problem on the identifying side, not the
+      // candidate side.
+      const lines = (await btns.nth(k).innerText().catch(() => ''))
+        .split('\n')
+        .map((l) => normalize(l))
+        .filter(Boolean);
+      candidates.push({ index: k, lines });
+    }
+  }
+  return { btns, candidates };
+}
+
+/**
+ * Click the candidate with a line matching `expected` (normalized, exact —
+ * see `normalize`'s own comment for why exact rather than substring) — or,
+ * on `wrongOnPurpose`, any *other* candidate, so the wrong-answer path gets
+ * exercised here the same way it already is for `typeWord` and
+ * `letterTrace`. Returns false (never throws) whenever it cannot find what
+ * it is looking for, so the caller can fall back to the old random pick
+ * rather than answering nothing at all.
+ */
+async function clickMatching(page, btns, candidates, expected, wrongOnPurpose) {
+  if (!expected) return false;
+  const target = normalize(expected);
+  const match = candidates.find((c) => c.lines.includes(target));
+  if (!match) return false;
+  const chosen = wrongOnPurpose ? candidates.find((c) => c !== match) : match;
+  if (!chosen) return false; // wrongOnPurpose with nothing else on screen to pick
+  await btns
+    .nth(chosen.index)
+    .click({ force: true })
+    .catch(() => {});
+  return true;
+}
+
+/**
+ * The four Word-based kinds share one shape: a prompt naming a real word by
+ * one of its own fields, and options that include the same word among
+ * distractors. `promptSignals` is every line of on-screen text the prompt
+ * *could* be showing that word by (there is exactly one live match among
+ * them per screen, the rest resolve to nothing); the first that resolves
+ * through `wordBySignal` is the target.
+ */
+async function answerWordChoice(page, text, wrongOnPurpose, knownWord) {
+  const { btns, candidates } = await candidateOptions(page);
+  const word =
+    knownWord ??
+    text
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((l) => wordBySignal.get(normalize(l)))
+      .find(Boolean);
+  if (process.env.SOAK_DEBUG)
+    console.error(
+      `[debug] answerWordChoice: word=${word?.id} candidates=${JSON.stringify(candidates.map((c) => c.lines))}`
+    );
+  if (!word) return false;
+  // Whichever of the word's own three signals a candidate is currently
+  // showing (urdu on the script track, roman on the Roman track, or the
+  // gloss on a reverse-recall kind) is the one worth trying — `clickMatching`
+  // itself just needs one that is actually present among the candidates.
+  for (const signal of [word.urdu, word.roman, glossOf(word)]) {
+    if (await clickMatching(page, btns, candidates, signal, wrongOnPurpose)) return true;
+  }
+  if (process.env.SOAK_DEBUG)
+    console.error(`[debug] answerWordChoice: no candidate matched urdu=${word.urdu} roman=${word.roman}`);
+  return false;
+}
+
+/**
+ * `listenTap` has nothing to read: the prompt is audio, not text, until
+ * after an answer is given. `bootAudioSniffer` (installed once, at page
+ * creation) patches `HTMLMediaElement.play` to record the last-played
+ * clip's `src`, which — like every other bundled voice clip in this repo —
+ * carries the real word id as its own filename before the cache-busting
+ * hash (`assets/voice/w-bartan.<hash>.mp3`; confirmed against a real build's
+ * own output). Tapping the prompt's own speaker button plays the target
+ * word specifically, so reading the sniffer straight after is exact — no
+ * guessing which of the four options it was, the way `letterForm`/
+ * `letterPick`/the other three Word-based kinds have to identify a target
+ * from rendered text, because this one has none to read.
+ */
+async function answerListenTap(page, wrongOnPurpose) {
+  const played = await tap(page.locator('text=/Play the word again/i'), 0, 900);
+  if (!played) return false;
+  await page.waitForTimeout(350);
+  const src = await page.evaluate(() => window.__lastAudioSrc || '').catch(() => '');
+  const m = src.match(/\/voice(?:-m)?\/([^/]+)\.[0-9a-f]{16,}\.[a-z0-9]+(?:\?|$)/i);
+  const word = m ? WORDS.find((w) => w.id === m[1]) : undefined;
+  if (!word) return false;
+  const { btns, candidates } = await candidateOptions(page);
+  return clickMatching(page, btns, candidates, glossOf(word), wrongOnPurpose);
+}
+
+/**
+ * `letterForm` shows the letter's own `name` in its Eyebrow caption
+ * ("alif · sounds like ...") and, in the prompt card, one specific glyph —
+ * the very thing the question is asking the position of. Matching that
+ * exact glyph against the identified letter's own four forms (not just
+ * picking any letter with that name — there is only one, but the form
+ * lookup is what actually answers the question) finds which `PositionKey`
+ * it is; `POSITIONS`' own `label` (`Alone`/`Start`/`Middle`/`End`) is what
+ * the option itself renders.
+ */
+async function answerLetterForm(page, text, wrongOnPurpose) {
+  const lines = text
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const line = lines.find((l) => l.includes('·') && letterByName.get(normalize(l.split('·')[0])));
+  const letter = line ? letterByName.get(normalize(line.split('·')[0])) : undefined;
+  if (!letter) return false;
+  const glyphLine = lines.find((l) => Object.values(letter.forms).some((glyph) => normalize(l) === normalize(glyph)));
+  if (!glyphLine) return false;
+  const positionKey = Object.entries(letter.forms).find(([, glyph]) => normalize(glyph) === normalize(glyphLine))?.[0];
+  const position = POSITIONS.find((p) => p.key === positionKey);
+  if (!position) return false;
+  const { btns, candidates } = await candidateOptions(page);
+  return clickMatching(page, btns, candidates, position.label, wrongOnPurpose);
+}
+
+/** `letterPick` names the target by its own `name`, directly, in the prompt
+ *  (not shared with any other letter — `letterByName` would already have
+ *  indexed a collision to `null`); the correct option is the one whose own
+ *  glyph is that letter's isolated form. */
+async function answerLetterPick(page, text, wrongOnPurpose) {
+  const letter = text
+    .split('\n')
+    .map((l) => l.trim())
+    .map((l) => letterByName.get(normalize(l)))
+    .find(Boolean);
+  if (!letter) return false;
+  const { btns, candidates } = await candidateOptions(page);
+  return clickMatching(page, btns, candidates, letter.forms.isolated, wrongOnPurpose);
+}
+
+/**
+ * `grammarDrill`'s prompt always shows `drill.meaning` — the one thing on
+ * screen that never changes shape with the gap unfilled or the track
+ * chosen, unlike `drill.prompt` (has the blank in it) or the Urdu sentence
+ * itself (absent entirely on the Roman track). The options render either
+ * `drill.answer` or, on the Roman track, its paired `romanOptions` entry —
+ * trying both against what is actually on screen, the same way
+ * `answerWordChoice` tries a word's three signals, covers either track
+ * without needing to know which one is active.
+ */
+async function answerGrammarDrill(page, text, wrongOnPurpose) {
+  const drill = text
+    .split('\n')
+    .map((l) => l.trim())
+    .map((l) => drillByMeaning.get(normalize(l)))
+    .find(Boolean);
+  if (!drill) return false;
+  const { btns, candidates } = await candidateOptions(page);
+  const romanAnswer = drill.romanOptions?.[drill.options.indexOf(drill.answer)];
+  for (const signal of [drill.answer, romanAnswer]) {
+    if (signal && (await clickMatching(page, btns, candidates, signal, wrongOnPurpose))) return true;
+  }
+  return false;
+}
 
 /** One generator for everything, so a seed replays a whole run. */
 let rngState = SEED >>> 0;
@@ -271,7 +569,7 @@ async function answer(page, text, wrongOnPurpose) {
   }
   const buttonOnly = await answerButtonOnlyScreen(page, text);
   if (buttonOnly !== undefined) return buttonOnly;
-  return tapNamedKind(page, text);
+  return tapNamedKind(page, text, wrongOnPurpose);
 }
 
 /**
@@ -378,9 +676,34 @@ const NAMED_TAP_KIND = [
   [/^Conversation · /im, 'dialogue'],
 ];
 
-/** The generic fallback: pick one of the answer-shaped controls at random. */
-async function tapNamedKind(page, text) {
+/** One real solver per named kind, tried before ever falling back to a
+ *  random guess. `reading` and `dialogue` have none — a comprehension
+ *  answer lives in the passage/exchange's own meaning, not a lookup table,
+ *  and stayed out of this item's scope (see the queue) — so they always
+ *  fall through to the random pick below, same as before this fix. */
+const NAMED_KIND_SOLVER = {
+  multipleChoice: (page, text, wrong) => answerWordChoice(page, text, wrong),
+  meaningPick: (page, text, wrong) => answerWordChoice(page, text, wrong),
+  wordFromMeaning: (page, text, wrong) => answerWordChoice(page, text, wrong),
+  listenTap: (page, _text, wrong) => answerListenTap(page, wrong),
+  letterForm: (page, text, wrong) => answerLetterForm(page, text, wrong),
+  letterPick: (page, text, wrong) => answerLetterPick(page, text, wrong),
+  grammarDrill: (page, text, wrong) => answerGrammarDrill(page, text, wrong),
+};
+
+/**
+ * Answer a named kind for real when a solver exists and can identify the
+ * screen (see the "answer knowledge" section above `ALL_LESSONS`); fall back
+ * to picking an answer-shaped control at random — this file's original
+ * behaviour for all seven of these kinds — whenever it cannot. Never worse
+ * than before: a solver failing to resolve just means one exercise reverts
+ * to a coin flip, the same coin flip every one of them used to be.
+ */
+async function tapNamedKind(page, text, wrongOnPurpose) {
   const kind = (NAMED_TAP_KIND.find(([re]) => re.test(text)) ?? [null, 'tap'])[1];
+  const solver = NAMED_KIND_SOLVER[kind];
+  if (solver && (await solver(page, text, wrongOnPurpose).catch(() => false))) return kind;
+
   const btns = page.locator('[role="button"]');
   const n = await btns.count();
   const candidates = [];
@@ -778,6 +1101,19 @@ async function settleAttempt(page, url, why) {
   const server = await serveDist(DIST, PORT);
   const browser = await chromium.launch({ executablePath: exe, headless: !HEADED });
   const page = await browser.newPage({ viewport: { width: 412, height: 900 }, deviceScaleFactor: 1 });
+
+  // `answerListenTap`'s only way to know what was played — see its own doc
+  // comment above. Installed before any navigation so it is in place for
+  // every page load a reload (hearts refill, recovery) creates, not just
+  // the first.
+  await page.addInitScript(() => {
+    window.__lastAudioSrc = null;
+    const play = HTMLMediaElement.prototype.play;
+    HTMLMediaElement.prototype.play = function (...args) {
+      window.__lastAudioSrc = this.currentSrc || this.src || null;
+      return play.apply(this, args);
+    };
+  });
 
   // Invariant 1, running the whole time rather than sampled.
   const errors = [];
