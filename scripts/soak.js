@@ -120,6 +120,16 @@
  * one-line summary of the two totals at the end — the fastest way to tell
  * "this kind isn't completing lessons" apart from "this kind's solver isn't
  * finding anything," which look identical from the summary line alone.
+ *
+ * `SOAK_FULL_STACK=1` prints an uncaught page error's real stack trace, not
+ * just the message `fail()` truncates to 200 characters for the summary.
+ * URD-035: that truncated message ("TypeError: Cannot read properties of
+ * undefined (reading '0')") was identical across every reproduction and
+ * named neither a file nor a component, so the bug was first misattributed
+ * to whichever screen the failing run's screenshot happened to land on
+ * (`GrammarTeachExercise`, one screen before the one that actually threw).
+ * The real stack — minified, but naming the actual component in the trace —
+ * is what found `GrammarDrillExercise` instead on the first real look.
  */
 
 const fs = require('fs');
@@ -1227,7 +1237,10 @@ async function settleAttempt(page, url, why) {
 
   // Invariant 1, running the whole time rather than sampled.
   const errors = [];
-  page.on('pageerror', (e) => errors.push(String(e).slice(0, 200)));
+  page.on('pageerror', (e) => {
+    errors.push(String(e).slice(0, 200));
+    if (process.env.SOAK_FULL_STACK) console.error('\n[FULL STACK]\n' + (e.stack || String(e)) + '\n');
+  });
 
   const url = `http://localhost:${PORT}/`;
   await enterAsGuest(page, url, {

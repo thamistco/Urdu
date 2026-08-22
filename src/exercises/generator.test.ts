@@ -15,6 +15,7 @@ import { WORDS, getWord } from '../data/words';
 import { VERDICT_CUES, cueOf } from '../data/art';
 import { GRAMMAR } from '../data/grammar';
 import { SENTENCES } from '../data/sentences';
+import { romanAll } from '../lib/translit';
 
 /** Letter-type exercise kinds, as opposed to everything else a review can ask. */
 const LETTER_KINDS = new Set(['letterForm', 'letterPick', 'letterTrace']);
@@ -945,5 +946,57 @@ describe("URD-030: the grammar climb's sentence-reinforcement distractors are co
     expect(sampledAtLeastOne, 'expected at least one sentences-kind lesson to emit a concept-tagged exercise').toBe(
       true
     );
+  });
+});
+
+describe('URD-035: a grammarDrill exercise carries romanOptions on every track, not only roman', () => {
+  /**
+   * `GrammarDrillExercise` (GrammarExercises.tsx) reads `romanOptions` the
+   * instant a learner picks an answer, on every track — it feeds the
+   * "show the pronunciation" caption `showRoman` defaults on for, not only
+   * the Roman track's own full-transliteration display. Before this fix,
+   * `grammarDrillExercise` (this file) only ever computed it for `track ===
+   * 'roman'`, so a script/`both` track pick read `undefined[i]` and crashed
+   * with an uncaught TypeError — reproduced live via soak on three
+   * independent seeds/concepts, initially misattributed to the *previous*
+   * screen (`GrammarTeachExercise`) because the truncated error message
+   * named neither a file nor a component.
+   *
+   * Every real drill in the corpus (checked directly, not assumed) has
+   * `romanAll`-transliatable options, so this holds for all 38 of them on
+   * every track today; the point of asserting it here is that a future
+   * concept whose options `romanAll` can't handle stays a component-level
+   * fallback (still fixed, see GrammarExercises.tsx) rather than silently
+   * regressing back to "only defined on the Roman track."
+   */
+  it('every real grammar drill exercise has romanOptions on the script, both and roman tracks alike', () => {
+    let sampled = 0;
+    for (const u of UNITS) {
+      for (const l of u.lessons) {
+        if (l.kind !== 'grammar') continue;
+        for (const track of ['both', 'roman'] as const) {
+          const exercises = buildLessonExercises(l, [], track);
+          for (const e of exercises) {
+            if (e.kind !== 'grammarDrill') continue;
+            sampled++;
+            expect(e.romanOptions, `${l.id} (${track}): ${JSON.stringify(e.drill.options)}`).toBeDefined();
+            expect(e.romanOptions?.length, l.id).toBe(e.drill.options.length);
+          }
+        }
+      }
+    }
+    expect(sampled, 'expected at least one real grammarDrill exercise to sample').toBeGreaterThan(0);
+  });
+
+  it('every real grammar concept has options romanAll can transliterate', () => {
+    // The generator-level guarantee the test above depends on: if this ever
+    // fails for a real concept, the test above would start failing too, but
+    // this names the actual cause (an untransliterable drill) rather than
+    // leaving it to be rediscovered from a missing-romanOptions message.
+    for (const c of GRAMMAR) {
+      for (const d of c.drills) {
+        expect(romanAll(d.options), `${c.id}/${d.id}: ${JSON.stringify(d.options)}`).toBeDefined();
+      }
+    }
   });
 });
