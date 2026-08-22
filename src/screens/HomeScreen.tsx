@@ -347,23 +347,6 @@ export function HomeScreen() {
   // comment on `toggleLevel` documents for measuring anything *inside* the
   // accordion at toggle time.
   const fixedHeaderHeight = useRef(0);
-  useEffect(() => {
-    if (didAutoScroll.current || showPathNotice || showTicksWiped) return;
-    const t = setTimeout(() => {
-      // `measure` reports pageY — position on screen. The list has not been
-      // scrolled yet at this point, so pageY is also the content offset we
-      // want. Accumulating nested onLayout values instead would mean summing
-      // three levels of parent-relative coordinates, which silently goes wrong
-      // the first time the tree gains a wrapper.
-      currentNode.current?.measure((_x, _y, _w, _h, _px, pageY) => {
-        if (typeof pageY === 'number' && pageY > 420) {
-          didAutoScroll.current = true;
-          pathRef.current?.scrollTo({ y: pageY - 200, animated: true });
-        }
-      });
-    }, 500);
-    return () => clearTimeout(t);
-  }, [currentId, showPathNotice, showTicksWiped]);
 
   // The course is long. Only one course stage is expanded at a time — the
   // others collapse to a progress line you can open when you want to look
@@ -408,10 +391,46 @@ export function HomeScreen() {
   // changed for a real reason, not a remount — re-arms it for exactly that
   // case, without turning it into an unconditional "scroll on every render"
   // that would fight a learner who is deliberately looking elsewhere.
+  //
+  // THE CRITIC, reviewing that fix, found this effect has to run — and land
+  // its `didAutoScroll.current = false` reset — *before* the auto-scroll
+  // effect below reads that same ref, in the same commit, or the reset
+  // arrives one render too late to matter: a real mid-session stage advance
+  // changes `currentId` and `currentLevel` together, and React runs a
+  // component's effects in hook-declaration order within one commit, so
+  // whichever of these two effects is declared first sees the ref as it was
+  // *before* the other one touches it. Declared after (as this was
+  // originally written), the auto-scroll effect ran first, read the guard
+  // as still `true` from its earlier mount-time fire, and bailed before this
+  // effect ever got to reset it — silently reproducing the exact bug this
+  // was meant to close, confirmed live by reordering the two effects, one
+  // way, then the other, and tracing which one saw the stale value.
+  // Declaring it here, ahead of the auto-scroll effect, is the fix: the
+  // reset lands in the same commit but earlier in hook order, so the
+  // auto-scroll effect below always sees the just-reset guard, not the
+  // stale one.
   useEffect(() => {
     setOpenLevel(undefined);
     didAutoScroll.current = false;
   }, [currentLevel]);
+
+  useEffect(() => {
+    if (didAutoScroll.current || showPathNotice || showTicksWiped) return;
+    const t = setTimeout(() => {
+      // `measure` reports pageY — position on screen. The list has not been
+      // scrolled yet at this point, so pageY is also the content offset we
+      // want. Accumulating nested onLayout values instead would mean summing
+      // three levels of parent-relative coordinates, which silently goes wrong
+      // the first time the tree gains a wrapper.
+      currentNode.current?.measure((_x, _y, _w, _h, _px, pageY) => {
+        if (typeof pageY === 'number' && pageY > 420) {
+          didAutoScroll.current = true;
+          pathRef.current?.scrollTo({ y: pageY - 200, animated: true });
+        }
+      });
+    }, 500);
+    return () => clearTimeout(t);
+  }, [currentId, showPathNotice, showTicksWiped]);
 
   /**
    * Opening a stage below the fold used to leave the scroll position exactly
@@ -458,13 +477,42 @@ export function HomeScreen() {
    * own collapsed stage list starts right there) — it just skips the fixed
    * cards this same toggle doesn't need to re-show, roughly halving the
    * return scroll.
+   *
+   * DESIGN CRITIC, measuring this landing frame by frame, found the scroll
+   * calling `scrollTo` in the same tick as `setOpenLevel` produced two
+   * disconnected motions rather than one: the state update's own reflow
+   * (the previously-open stage collapsing) triggers the browser's
+   * synchronous scrollTop clamp — the same real behavior that made the
+   * `onScroll`-tracked-offset approach above read stale — *before* the
+   * requested animated scroll has moved more than a few px, so ~99% of the
+   * distance happened as an instant, unanimated jump, with only the last
+   * couple hundred px actually easing in. Deferring the `scrollTo` call
+   * into an effect that fires after `openLevel` (and its collapse) has
+   * committed lets the clamp happen first, invisibly, off whatever the
+   * animation would have shown; the effect's own `scrollTo` then glides
+   * smoothly from wherever the clamp actually landed to
+   * `fixedHeaderHeight.current` — one continuous, comprehensible motion
+   * instead of a jump followed by a corrective wobble. `pendingScrollOpen`
+   * carries no measurement (unlike the two failed approaches) — it is
+   * only a "was this call an open" flag, so it cannot go stale the way a
+   * captured height or offset could.
    */
+  const pendingScrollOpen = useRef(false);
+
   const toggleLevel = (lvl: Level) => {
     feedback.tap();
-    const opening = !isOpen(lvl);
+    pendingScrollOpen.current = !isOpen(lvl);
     setOpenLevel(isOpen(lvl) ? 'none' : lvl);
-    if (opening) pathRef.current?.scrollTo({ y: fixedHeaderHeight.current, animated: true });
   };
+
+  useEffect(() => {
+    if (!pendingScrollOpen.current) return;
+    pendingScrollOpen.current = false;
+    const id = requestAnimationFrame(() => {
+      pathRef.current?.scrollTo({ y: fixedHeaderHeight.current, animated: true });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [openLevel]);
 
   const openLesson = (lesson: Lesson, _state: string) => {
     // Any lesson can be started — locked ones are "jump ahead". Even with 0
