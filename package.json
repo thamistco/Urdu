@@ -40,7 +40,8 @@
     "check:order": "node scripts/check-order.js",
     "check:coverage": "node scripts/check-coverage.js",
     "check:sentence-coverage": "node scripts/check-sentence-coverage.js",
-    "check:shape": "node scripts/check-shape.js"
+    "check:shape": "node scripts/check-shape.js",
+    "check:grammar-distractors": "node scripts/check-grammar-distractors.js"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "^0.2.3",
