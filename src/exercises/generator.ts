@@ -451,9 +451,9 @@ export function distractorsFor(
   // `distinctMeaning`: showing the identical spelling twice is never
   // answerable, regardless of which other axis a caller cares about.
   const usedUrdu = new Set<string>([word.urdu]);
-  const consider = (candidates: Word[]) => {
+  const consider = (candidates: Word[], cap: number = DISTRACTORS) => {
     for (const c of shuffle(candidates)) {
-      if (chosen.length >= DISTRACTORS) return;
+      if (chosen.length >= DISTRACTORS || chosen.length >= cap) return;
       if (c.id === word.id || chosen.some((x) => x.id === c.id)) continue;
       if (usedUrdu.has(c.urdu)) continue;
       usedUrdu.add(c.urdu);
@@ -475,8 +475,22 @@ export function distractorsFor(
   // gets first claim on the option set — a wrong answer that still requires
   // noticing the construction, not just the topic. Empty by default, so
   // every existing caller draws exactly as before.
-  consider(preferred);
-  consider(pool); // prefer same-topic distractors
+  //
+  // CURRICULUM CRITIC, reviewing this item: an uncapped `consider(preferred)`
+  // saturates every slot whenever a concept has enough near-misses (measured:
+  // 580 of 584 grammar-climb `wordFromMeaning` exercises ended up with ALL
+  // three distractors same-concept, not "at least one") — a recall question
+  // that has collapsed into "tell these four near-identical sentences apart"
+  // with no option left that just *looks* different. Capped at
+  // `DISTRACTORS - 1`, and `pool` below has `preferred`'s own members
+  // excluded (not just left to chance) — `pool` is typically a superset
+  // `preferred` was filtered from, so without the exclusion a big enough
+  // `preferred` pool would likely refill the reserved slot from itself
+  // anyway, undoing the cap. A near-miss pool that size or larger still
+  // gets a real bias (most of the option set), just never the whole thing.
+  const preferredIds = new Set(preferred.map((p) => p.id));
+  consider(preferred, DISTRACTORS - 1);
+  consider(pool.filter((p) => !preferredIds.has(p.id))); // prefer same-topic distractors
   if (chosen.length < DISTRACTORS) consider(WORDS); // widen if the topic is too uniform
   return chosen;
 }
