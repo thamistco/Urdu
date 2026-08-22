@@ -208,6 +208,17 @@ jobs:
           CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
             npm run check:home-scroll
 
+      # URD-032: finishing a stage's last lesson mid-session, scrolled away
+      # from it, used to leave the newly-current stage reopened off-screen
+      # with nothing scrolling to reveal it. Drives a real lesson to
+      # completion (no reload — the bug only exists because HomeScreen
+      # doesn't remount between lessons) and confirms the new stage is both
+      # open and scrolled into view.
+      - name: Check finishing a stage mid-session still scrolls the new one into view
+        run: |
+          CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
+            npm run check:stage-advance-scroll
+
       - name: SPA fallback + disable Jekyll
         run: |
           cp dist/index.html dist/404.html

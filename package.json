@@ -28,6 +28,7 @@
     "check:sizes": "node scripts/check-sizes.js",
     "check:path": "node scripts/check-path.js",
     "check:home-scroll": "node scripts/check-home-scroll.js",
+    "check:stage-advance-scroll": "node scripts/check-stage-advance-scroll.js",
     "check:all": "node scripts/check-all.js",
     "soak": "node scripts/soak.js",
     "build:web": "expo export --platform web --output-dir dist",
