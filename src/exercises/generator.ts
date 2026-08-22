@@ -777,13 +777,24 @@ function sentenceReinforceClimb(picks: Sentence[], pool: Word[], track: LearnTra
   }
 }
 
-/** The same, for a grammar drill: its options are inflected forms, and the
- *  Roman track needs all four of them transliterated or none. */
+/**
+ * The same, for a grammar drill: its options are inflected forms, and the
+ * Roman track needs all four of them transliterated or none.
+ *
+ * URD-035: computed on every track now, not only `'roman'`. `showRoman` (the
+ * caption `GrammarDrillExercise` shows once an answer is picked) defaults on
+ * for `script`/`both` too, not just `'roman'` — the component was calling
+ * into this data on every track already, it just wasn't there yet. Only the
+ * Roman track drops the drill entirely when a translit set can't be built
+ * (`romanAll` returning `undefined`), because there the transliteration
+ * *is* the exercise; script/`both` keep the drill either way, same as
+ * before this change — `GrammarDrillExercise` itself degrades the caption
+ * gracefully when this is missing rather than assuming it never is.
+ */
 function grammarDrillExercise(concept: GrammarConcept, drill: GrammarDrill, track: LearnTrack): Exercise | undefined {
-  if (track !== 'roman') return { kind: 'grammarDrill', concept, drill };
   const romanOptions = romanAll(drill.options);
-  if (!romanOptions) return undefined;
-  return { kind: 'grammarDrill', concept, drill, romanOptions };
+  if (track === 'roman' && !romanOptions) return undefined;
+  return { kind: 'grammarDrill', concept, drill, romanOptions: romanOptions ?? undefined };
 }
 
 /**
