@@ -122,43 +122,6 @@ notes: The trap is fixing this by raising the word count alone. Neither
   sit at 5, and moving it is how this item gets marked done without a learner's
   experience changing.
 
-## URD-032 — The path's stage-open scroll is a bigger jump than it needs to be, and can go stale mid-session
-attempts: 0
-files: src/screens/HomeScreen.tsx
-definition of done: Two related, non-blocking gaps in URD-002's accordion
-  fix, both found in round-2 critique of commit `1344973`:
-  (1) Opening a course stage resets scroll to the very top of the page
-  (past the greeting, level card, continue card and today's-word card)
-  rather than to the accordion itself. DESIGN CRITIC measured this costs
-  a real but short scroll back down (~500px, not the ~8000px round trip
-  the bug being fixed would have cost) — not disorienting, just not as
-  tight as it could be. A middle ground (landing just above the
-  accordion, skipping the fixed cards above it) would still guarantee a
-  labeled, non-empty state — the collapsed stage list itself is fully
-  labeled — while roughly halving the return scroll.
-  (2) The mount-time auto-scroll-to-current-lesson (`didAutoScroll` ref,
-  fires once per mount) does not re-fire when `currentLevel` advances
-  mid-session (e.g. a learner finishes their last lesson in a stage while
-  scrolled elsewhere). The accordion itself correctly re-opens the new
-  current stage now (URD-002's round-2 fix), but nothing scrolls to reveal
-  it if the learner isn't already looking at that part of the screen.
-verify: a script driving the real built app confirms (a) opening a stage
-  from a scrolled-down position lands within some tighter bound (e.g.
-  under 1000px of scroll to reach the newly-open content) than the current
-  full-reset, and (b) completing a stage's last lesson mid-session scrolls
-  the now-current stage into view without requiring a manual scroll.
-notes: Both found and measured (not just theorized) reviewing URD-002's
-  round-2 fix — DESIGN CRITIC measured the ~500px vs ~8000px distinction
-  directly; THE CRITIC found (2) while checking for effect-ordering risk
-  between the accordion's new `currentLevel`-reset effect and the
-  pre-existing mount-time auto-scroll. Neither blocked URD-002: the
-  current behavior is always labeled and never traps a learner, matching
-  the bar both critics graded against. Two precise-positioning approaches
-  were already tried and measured wrong against the real react-native-web
-  build while fixing URD-002 (documented in HomeScreen.tsx) — whoever
-  picks this up should read that history before trying `measureLayout` or
-  tracked-`onScroll`-offset again.
-
 ## URD-033 — The Scholar achievement's top tier is unreachable in a playthrough, the same bug URD-004 just fixed elsewhere
 attempts: 0
 files: src/data/achievements.ts
