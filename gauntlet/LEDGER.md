@@ -4357,3 +4357,67 @@ post-crash screenshot could not distinguish the two; nobody had read
 the actual stack until this session.
 
 branch: claude/gauntlet-grammar-teach-crash
+
+## CLAIMED · URD-036 · 2026-08-22T22:45Z
+files: src/components/Button.tsx
+branch: claude/gauntlet-disabled-button-look, cut from
+claude/gauntlet-grammar-teach-crash after URD-035 shipped.
+
+## CRITIQUE · URD-036
+Dispatched DESIGN CRITIC (this item's own verify command names it
+explicitly) and THE CRITIC (a shared-component change touching the
+whole app's visual language warranted a technical pass too).
+
+DESIGN CRITIC: no BLOCKING. Confirmed the core fix works (real
+screenshots of the exact scenario the item was found in: vivid raised
+gold pill vs. flat muted rectangle, unambiguous at a glance). One
+MAJOR: the fill computation missed an isGhost guard its edge/border
+siblings already had, so a disabled ghost button got a solid ink700
+fill instead of staying transparent — screenshot-proven on
+TracePad.tsx's Clear button. Fixed immediately. Two MINOR disclosed:
+disabled-label contrast at 3.24:1 (below AA, WCAG-exempt, legible in
+practice); a code comment overclaiming full parity with HomeScreen's
+locked-row convention (which also layers opacity 0.7, this doesn't).
+
+THE CRITIC: no BLOCKING. Found the disclosed MINORs above understated
+two real defects:
+1. border's own ternary checked isGhost before disabled, so ghost
+   buttons never got ANY disabled signal beyond the label dimming —
+   the exact failure this item exists to fix, relocated onto ghost.
+   Reachable in three real exercise components (SentenceReading,
+   WordBuild, RecallExercises), not an edge case. Fixed: disabled
+   checked first, giving every disabled button the same muted border.
+2. The 3.24:1 contrast is exactly the documented worst-case value
+   check:theme's own comment cites as why its 55%-floor rule exists —
+   passed check:theme only because that check pattern-matches Tailwind
+   classNames, not inline withAlpha() calls. Fixed: raised to 55%,
+   matching the project's own floor. check:theme's blind spot itself
+   filed forward as URD-052 (out of this item's file scope).
+One MINOR fixed in the same pass: edge's own missing isGhost guard
+(masked by a JSX-level ternary, same shape that produced finding 1
+above) — tidied to match fill. One MINOR latent bug fixed cheaply: the
+loading spinner's colour didn't branch on disabled (currently
+unreachable, no caller passes loading to this component today).
+
+## PASSED · URD-036 · 2026-08-22T23:20Z
+Screenshots (Out-of-hearts Refill button, gems below/above cost;
+TracePad Clear/Check before and after the ghost-border fix) confirm
+the disabled state reads as unavailable at a glance in every case
+checked, including the ghost variant after both critic rounds.
+
+$ node -e (contrast recompute, same WCAG relative-luminance formula)
+  40% (pre-fix): 3.24:1. 55% (shipped): 4.74:1 — clears AA's 4.5:1
+  floor, matches this project's own PAPER_FLOOR convention.
+
+$ npx tsc --noEmit / npm run lint / npm run format:check / npm run check:theme
+  clean.
+
+$ npx vitest run
+  180/180 — unchanged; no test exercises Button's rendering (this repo
+  has no React-component-render harness set up), so verification here
+  leaned entirely on real screenshots against the real built app.
+
+$ npm run check:all
+  30/30.
+
+branch: claude/gauntlet-disabled-button-look

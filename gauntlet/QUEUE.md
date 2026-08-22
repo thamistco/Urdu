@@ -36,32 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-036 — A disabled button should look disabled, not just say why it is
-attempts: 0
-files: src/components/Button.tsx
-definition of done: `Button`'s disabled state is `opacity: disabled ? 0.4 :
-  1` on an otherwise-unchanged fill, border and label — for the `primary`
-  variant (warm gold) this stays a shaped, coloured, clearly-tappable-looking
-  pill at 40% opacity, not a control that reads as unavailable at a glance.
-  Give disabled buttons a visual treatment (desaturating toward a neutral
-  tone, a different fill entirely, or similar) that a learner recognizes as
-  "will not respond" before they read anything next to it.
-verify: DESIGN CRITIC screenshots the same control enabled vs. disabled and
-  confirms the disabled state reads as unavailable at a glance, without
-  needing the surrounding copy to explain it.
-notes: Found by DESIGN CRITIC reviewing URD-006's lockout-screen fix,
-  comparing the refill button enabled (gems ≥ 40) against disabled
-  (gems < 40) at the same seed: "the only disabled cue is `opacity: disabled
-  ? 0.4 : 1` on the whole Pressable — fill, border and label text all dim
-  together to a muted orange, still shaped and sized exactly like a live
-  CTA... at a glance, before reading, a warm 40%-opacity gold pill still
-  reads as 'a button,' just a slightly duller one." URD-006's own fix (a
-  subtitle explaining *why* the button won't respond) closes the
-  explanation gap but not this one — flagged there as real but out of that
-  item's scope, since `Button` is shared across the whole app and changing
-  its disabled treatment needs its own review, not a decision folded into
-  an unrelated screen's copy fix.
-
 ## URD-037 — check:path has no floor, so a real regression could read as a pass
 attempts: 0
 files: scripts/check-path.js
@@ -467,3 +441,33 @@ notes: Found by THE CRITIC reviewing URD-035's fix, which cited `npm run
   `both` track), but any future item that means to test Roman-track-
   specific behavior via `npm run soak -- --track roman` is not testing
   what its own invocation claims until this is fixed.
+
+## URD-052 — check:theme's legibility floor only sees Tailwind classNames, not inline withAlpha()
+attempts: 0
+files: scripts/check-theme.js
+definition of done: `check:theme`'s `PAPER_FLOOR` rule also catches a
+  faded-text colour built with `withAlpha(palette.paper, N)` (or any other
+  token) directly in a component's `style` prop, not only a `text-paper/N`
+  Tailwind className — both are the same colour on screen, and only one of
+  them is currently checked.
+verify: with a real component temporarily reading
+  `withAlpha(palette.paper, 0.4)` for label text (a real value this repo
+  has actually shipped, not a synthetic worst case), `npm run check:theme`
+  reports it as a legibility-floor violation. Today it reports clean.
+notes: Found by THE CRITIC reviewing URD-036's disabled-button fix
+  (src/components/Button.tsx). That fix's first version read
+  `withAlpha(palette.paper, 0.4)` for a disabled button's label — composited
+  against `palette.ink700`, 3.24:1, exactly the documented worst-case value
+  `check:theme`'s own comment cites as the reason `PAPER_FLOOR` (55%) exists
+  at all ("57 strings below it... every one of them illegible"). It passed
+  `check:theme` anyway, because that check's floor rule pattern-matches the
+  Tailwind spelling `text-paper/(\d+)` in file text, and `withAlpha()` is a
+  different spelling of the identical colour. Fixed at the call site for
+  this one instance (raised to 55%, matching the floor directly rather than
+  leaning on WCAG's disabled-control exemption to justify a number this
+  project has already measured and rejected once) — but the check itself
+  is still blind to the next person who writes the same call differently.
+  A green `check:theme` on a file using `withAlpha` for text colour is not
+  evidence of anything; this is the same "the comment claims more than the
+  code checks" mistake this file's own generator-side sibling elsewhere in
+  this repo was written to stop making, now found in a different check.
