@@ -96,6 +96,16 @@ jobs:
       - name: Check that every sentence reachable given lesson capacity is reached
         run: npm run check:sentence-coverage
 
+      # URD-A02: a lesson can be perfectly correct — every word taught,
+      # nothing tested early, every question answerable — and still be the
+      # wrong size to sit through. Checked directly against the real
+      # generated output of every lesson and unit, not the path author's own
+      # size/lessons claims. Was deliberately excluded while it failed on
+      # purpose (see the script's own doc comment); wired in now that it
+      # passes, so a future regression here fails loudly instead of quietly.
+      - name: Check that every lesson is a sitting and every unit is a chapter
+        run: npm run check:shape
+
       - name: Check that spaced repetition does what it claims
         run: npm run check:srs
 

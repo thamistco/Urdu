@@ -39,13 +39,16 @@
  * and holds both, because moving only the word count produces a longer lesson
  * that teaches worse.
  *
- * ## This check fails today, on purpose
+ * ## Wired into check:all (URD-A02)
  *
- * It is not wired into `check:all` and it must not be until it passes. It exists
- * to state the target in a form that a machine can settle, so the queue item
- * that fixes the curriculum has something to be verified against. A gauntlet
- * item whose definition of done is "lessons feel right" is a drift generator;
- * one whose definition of done is "check:shape exits 0" is not.
+ * This failed on purpose for most of this file's life, deliberately excluded
+ * from `check:all` until it passed — it existed to state the target in a form
+ * a machine can settle, so the queue item that fixed the curriculum had
+ * something to be verified against. A gauntlet item whose definition of done
+ * is "lessons feel right" is a drift generator; one whose definition of done
+ * is "check:shape exits 0" is not. It passes now (0 problems, 350 lessons,
+ * 41 units) and is wired into `.github/workflows/deploy-preview.yml`, so a
+ * future regression here fails CI loudly instead of drifting back unnoticed.
  *
  * Run with:  npm run check:shape
  */
