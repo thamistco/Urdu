@@ -1398,14 +1398,6 @@ export const SENTENCES: Sentence[] = [
     concept: 'g-plurals',
   },
   {
-    id: 's-257',
-    words: ['دو', 'لڑکیاں', 'یہاں', 'ہیں'],
-    roman: 'do laṛkiyaañ yahaañ hain',
-    meaning: 'There are two girls here',
-    level: 'beginner',
-    concept: 'g-plurals',
-  },
-  {
     id: 's-168',
     words: ['میں', 'یہاں', 'ہوں'],
     roman: 'main yahaañ hoon',
