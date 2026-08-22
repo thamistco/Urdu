@@ -37,7 +37,23 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     description: 'Earn experience points.',
     icon: '📚',
     metric: 'totalXp',
-    tiers: [100, 500, 2000, 10000],
+    /**
+     * URD-033: the top tier used to sit at 10,000 XP against a course that
+     * pays out ~7,220 XP finished start to finish — the identical bug class
+     * URD-004 fixed for `levelTitle`'s "Master" tier (a sibling XP-gated
+     * system that item was never scoped to touch), found by THE CRITIC
+     * asking the same question of this one. Re-spaced to the same ~4-5x
+     * per-tier ratio as before, scaled so the top tier lands at ~69% of the
+     * real course total rather than 138% of it — comfortable room below the
+     * ceiling, not landing on it exactly, matching `levelTitle`'s own
+     * precedent (Master sits at ~76%). See `achievements.test.ts`, which
+     * derives the course total from real content and asserts this stays
+     * true rather than trusting these numbers to keep up with the course by
+     * hand — the course's own real total has only ever measured *lower*
+     * than assumed so far (11,552 → 7,220 XP across `levelTitle`'s history),
+     * never higher, so margin here is not a one-time nicety.
+     */
+    tiers: [50, 250, 1000, 5000],
   },
   {
     id: 'wordsmith',
