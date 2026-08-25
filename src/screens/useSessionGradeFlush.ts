@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { recordSighting, flushSessionGrades, type PendingGrades } from '../lib/sessionGrading';
 import type { SrsGrade } from '../lib/srs';
-import type { Exercise } from '../exercises/types';
+import type { Exercise, ItemRef } from '../exercises/types';
 
-type ItemRef = { id: string; type: string };
 export type ApplyGrade = (id: string, type: string, grade: SrsGrade) => void;
 
 /**
@@ -41,7 +40,6 @@ export function useSessionGradeFlush(exercises: readonly Exercise[], applyGrade:
     const thisVisit: PendingGrades = new Map();
     pendingGrades.current = thisVisit;
     return () => flushSessionGrades(thisVisit, applyGrade);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exercises, applyGrade]);
 
   /**
