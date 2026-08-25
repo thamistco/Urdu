@@ -43,6 +43,29 @@ const PORT = 8205;
 const { UNITS, ALL_LESSONS } = load('src/data/units.ts');
 const { LEVEL_ORDER, LEVEL_META } = load('src/data/words.ts');
 
+/** How many lesson rows a level's own units hold, in total — the same
+ *  computation `maxLevelLessons` below already does across every level,
+ *  named so a per-scenario floor can ask it for one level specifically. */
+const lessonCountForLevel = (lvl) => UNITS.filter((u) => u.level === lvl).reduce((n, u) => n + u.lessons.length, 0);
+
+/**
+ * Which level a learner with this progress would actually see open.
+ *
+ * Mirrors `HomeScreen.tsx`'s own `currentId`/`currentLevel` derivation
+ * exactly (first lesson in path order not completed or skipped, then that
+ * lesson's own unit's level; `'beginner'` — `LEVEL_ORDER[0]` — for a fresh
+ * guest with nothing completed) rather than assuming which level a
+ * scenario lands on. A hand-guessed floor here would drift the moment the
+ * course's own length or level boundaries moved, the same "the check
+ * stops meaning anything" failure this file's own `BOUND` cap already
+ * guards against for the upper bound.
+ */
+function expectedOpenLevel(completedLessons) {
+  const currentId = ALL_LESSONS.find((l) => !completedLessons[l.id])?.id ?? ALL_LESSONS[ALL_LESSONS.length - 1].id;
+  const unit = UNITS.find((u) => u.lessons.some((l) => l.id === currentId));
+  return unit?.level ?? LEVEL_ORDER[0];
+}
+
 /** THE CRITIC's round-2 review of this file noted the level-title regex
  *  below wasn't escaping metacharacters — harmless while every title is a
  *  plain word, but cheap to make actually safe rather than "safe today". */
@@ -136,6 +159,24 @@ async function main() {
             `course total of ${ALL_LESSONS.length} — check the level-collapse gate is still in place.`
         );
       }
+      // URD-037: this check used to assert only an upper bound, so a
+      // scenario mounting zero rows — the accordion silently failing to
+      // render anything, or opening a level with no lessons in it —
+      // passed exactly as cleanly as one mounting the expected 81 or 94.
+      // The floor is the exact level `HomeScreen.tsx`'s own `currentLevel`
+      // logic would open for this scenario's progress (`expectedOpenLevel`,
+      // mirroring that derivation directly rather than assuming which
+      // level a scenario lands on), so a genuine render failure fails
+      // loudly instead of reading as an excellent bound.
+      const expectedLevel = expectedOpenLevel(scenario.completedLessons);
+      const floor = lessonCountForLevel(expectedLevel);
+      if (n < floor) {
+        problems.push(
+          `${scenario.name}: only ${n} lesson rows mounted, under the floor of ${floor} — the ` +
+            `${expectedLevel} level (the one this progress should open) holds ${floor} lessons, ` +
+            `so mounting fewer means rows are missing, not just that the level is small.`
+        );
+      }
     }
 
     // A learner can also reach a multi-level-open state by tapping every
@@ -175,6 +216,20 @@ async function main() {
           `tapping every level open in turn: ${worst} lesson rows mounted at some point, over the bound of ` +
             `${BOUND}. Levels used to be independent toggles — a learner curious enough to open all of them ` +
             `reached the full unvirtualized course this way even with the default state fixed.`
+        );
+      }
+      // URD-037: tapping through every level should, at some point, land on
+      // the largest one — the worst-seen count should reach exactly
+      // `maxLevelLessons`, the same real count the upper bound above is
+      // computed from, not just be non-zero. A click that silently fails
+      // (a stale locator, a level whose header text stopped matching) would
+      // otherwise report a low "worst seen" and pass just as cleanly as a
+      // run that genuinely opened every level.
+      if (worst < maxLevelLessons) {
+        problems.push(
+          `tapping every level open in turn: only ${worst} lesson rows mounted at the worst point seen, ` +
+            `under the largest level's own ${maxLevelLessons} lessons — some level's header click may have ` +
+            `silently failed to open it rather than every level genuinely being reached.`
         );
       }
     }
