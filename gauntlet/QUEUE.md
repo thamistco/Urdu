@@ -36,36 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-038 — ذ ز ض ظ are avoided in listening questions, never actually taught apart
-attempts: 0
-files: src/data/letters.ts
-definition of done: URD-007 stopped `letterPick` from ever pairing two
-  same-sound letters (ذ ز ض ظ, and the te/toe, se/seen/swaad and
-  baRi-he/choti-he/do-chashmi-he groups) as options, which closes the
-  unanswerable-question bug — but none of these letters' `note` fields in
-  `letters.ts` teach a learner *which* letter a real word uses. Each note
-  only names the collision: zaal's says "another of the 'z' family", zoe's
-  says "another of the four ways Urdu spells 'z'". A learner who writes
-  Nastaliq directly, or hits a `wordBuild` tray whose randomly-drawn decoy
-  happens to be a same-sound rival, has no rule to reach for. Give at least
-  the ذ ز ض ظ group a real disambiguation cue — e.g. "ز is native Urdu
-  vocabulary, ذ ض ظ are almost always Arabic/Persian loanwords" if that
-  holds up, a short high-frequency-word anchor per letter, or similar —
-  either in the `note` field or a dedicated teaching moment.
-verify: a test or check asserting each of the four ز-sound letters' `note`
-  (or an added field) contains a disambiguation cue distinct from merely
-  naming the other three letters in the group, plus a manual read of the
-  four notes confirming the cue is actually true and usable.
-notes: Found by CURRICULUM CRITIC reviewing URD-007. Explicitly not
-  BLOCKING that item — URD-007's own definition of done named "not
-  generated" as a valid alternative to "taught by spelling context", and
-  the lead took that branch — but real: 204 of 2,281 words (8.9%) contain
-  one of these four letters. The gap is muted today because
-  `TypeWordExercise` matches Roman input (`skeleton()` in
-  `src/lib/roman.ts`), so a learner who types the Roman spelling never has
-  to choose the correct Urdu letter — but not eliminated, and not something
-  to rely on staying true if the Roman-matching logic ever tightens.
-
 ## URD-039 — A review's fallback content for a mastered unit never rotates, ever
 attempts: 0
 files: src/lib/review.ts
