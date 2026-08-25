@@ -4527,3 +4527,62 @@ $ npx vitest run
   183/183 (180 + 3 new).
 
 branch: claude/gauntlet-similar-letters-listening
+
+## CLAIMED · URD-039 · 2026-08-25T16:02Z
+files: src/lib/review.ts
+branch: claude/gauntlet-review-fallback-rotation, cut from
+claude/gauntlet-similar-letters-listening after URD-038 shipped.
+
+## CRITIQUE · URD-039
+Dispatched THE CRITIC only — a pure engagement/fairness fix to the
+review-generation pipeline, no new learner-facing teaching content and
+no screen/visual change, so neither CURRICULUM CRITIC nor DESIGN
+CRITIC's domain applies.
+
+THE CRITIC: no BLOCKING, no MAJOR. Independently confirmed
+`completedLessons[lesson.id]?.done` is a real, pre-existing
+per-completion counter (`useProgressStore.ts` `finishLesson`), not
+invented state, and that reading it via `getState()` inside
+`LessonScreen.tsx`'s exercise-building `useMemo` matches the existing
+non-reactive read pattern already used there for `srs`/`srsType`/
+`known`. Traced the navigation stack directly (`RootNavigator.tsx`) to
+confirm `Lesson` is pushed fresh on every entry — never the already-
+focused route — so the `useMemo` genuinely re-reads the just-updated
+`done` count on each real replay, not just in theory. Verified the fix
+against real course data beyond the two unit tests: ran
+`reviewWordPool` across 500 simulated visits on rev-gender-and-number's
+fully-known 20-word unit and confirmed all 20 words surface
+(85-118 times each, ~17-24% — close to the uniform 20% expected),
+directly answering the item's own complaint that 16 of 20 words never
+appeared. Confirmed every other `buildLessonExercises` caller
+(`achievements.ts`, every `scripts/check-*.js`) correctly omits the
+new `visit` param and gets the byte-identical default-0 behavior their
+existing expectations depend on — checked by rerunning them.
+
+One MINOR, fixed: the letter-rotation test compared a single fixed
+pair of visit numbers (0 vs 5); with only 4 letters to permute, nearby
+visits (4, 5, 6) happen to produce the identical ordering today, so
+that specific pair passing was closer to incidental than guaranteed.
+Rewritten to sample 20 visits and assert the orderings aren't all
+collapsed to one — the same style already used to prove the fix
+reaches the previously-unreachable words, and independent of which
+specific pair happens to differ.
+
+## PASSED · URD-039 · 2026-08-25T16:35Z
+$ npx vitest run src/lib/review.test.ts
+  29/29 passed (25 + 4 new). Reverted review.ts/generator.ts alone
+  (keeping the new tests) to confirm two of the four fail against the
+  pre-fix code with the exact regression the item names — the same
+  w-surkh/w-gulaabi/w-pyaazi/w-neela slice on every call; restored and
+  reconfirmed clean.
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npx vitest run
+  187/187 (183 + 4 new).
+
+$ npm run check:all
+  all 30 steps pass against a deploy-shaped build.
+
+branch: claude/gauntlet-review-fallback-rotation
