@@ -1599,7 +1599,17 @@ export function buildLessonExercises(
      */
     const unitConcepts = conceptsInUnit(lesson.id);
     const conceptBudget = unitConcepts.length;
-    const due = reviewRefs.filter(resolvable);
+    // THE CRITIC (re-review): capped defensively at `lesson.size`, not just
+    // trusted from the caller. Today's one real caller (`LessonScreen.tsx`)
+    // never asks for more due items than a review has slots
+    // (`dueBudget('review', size) === size`), so this never fires — but
+    // without it, a caller that ever did would set `refCap` to `due.length`
+    // above `lesson.size`, and the trailing `exercises.slice(0, lesson.size)`
+    // far below (review isn't in the `composed` exemption) would silently
+    // truncate real due items off the end — the exact class of bug this
+    // whole block exists to close, just via oversized input instead of a
+    // saturated queue.
+    const due = reviewRefs.filter(resolvable).slice(0, lesson.size);
     const refCap = Math.max(due.length, lesson.size - conceptBudget);
     const seenIds = new Set(due.map(key));
     const filler = fallbackReviewRefs(refCap, teachesScript, lesson.id, known, visit)

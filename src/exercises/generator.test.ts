@@ -1100,6 +1100,32 @@ describe('URD-040: a review touches the grammar concept(s) its own unit taught',
     expect(exercises.length).toBe(lesson.size);
   });
 
+  it("THE CRITIC (re-review): a due queue bigger than the review's own size still keeps its first lesson.size items", () => {
+    // No production caller sends more due refs than `dueBudget` promised
+    // (`LessonScreen.tsx` requests exactly `lesson.size`) — this invariant
+    // held even before the explicit `.slice(0, lesson.size)` on `due` below
+    // was added, as an emergent consequence of `refCap` never falling below
+    // `due.length` plus the function's own shared trailing
+    // `exercises.slice(0, lesson.size)` (review isn't in the `composed`
+    // exemption). The explicit slice makes it a structural guarantee at the
+    // point `due` is defined, rather than one that depends on reasoning
+    // about a second truncation point elsewhere in this function — the
+    // fix THE CRITIC asked for so this doesn't quietly depend on
+    // `LessonScreen`'s own behavior forever. This test locks that in.
+    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const taught = taughtUpTo(lesson.id).words;
+    const due = taught.slice(0, lesson.size + 5).map((id) => ({ id, type: 'word' as const }));
+    const known = new Set(taught);
+    const exercises = buildLessonExercises(lesson, due, 'both', known);
+    const actuallyProduced = new Set(exercises.flatMap((e) => itemsOf(e)).map((r) => r.id));
+    // The first `lesson.size` due items — the ones a well-behaved caller
+    // would actually have sent — must all survive; only the excess this
+    // caller had no business sending in the first place is dropped.
+    const wellBehavedDue = due.slice(0, lesson.size);
+    expect(wellBehavedDue.every((d) => actuallyProduced.has(d.id))).toBe(true);
+    expect(exercises.length).toBe(lesson.size);
+  });
+
   it('CURRICULUM CRITIC: which drill a concept surfaces rotates across replays, not the same one forever', () => {
     // g-to-be has 3 real drills — a first version of this fix always asked
     // for c.drills[0], so every replay of rev-saying-who-you-are showed the
