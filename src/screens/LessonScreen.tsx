@@ -16,7 +16,7 @@ import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { announce, invalidateSpeech } from '../lib/speech';
 import { dueQueue, dueBudget, type SrsGrade } from '../lib/srs';
-import { recordSighting, flushSessionGrades, type PendingGrades } from '../lib/sessionGrading';
+import { useSessionGradeFlush } from './useSessionGradeFlush';
 import { REFILL_COST, gemsShortOfRefill, minutesUntilNextHeart } from '../lib/gamification';
 import { useProgressStore, type ItemType } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -196,29 +196,14 @@ export function LessonScreen() {
 
   /**
    * Which items this lesson visit has sighted, and each one's most recent
-   * grade — not yet applied to SRS. See the doc comment on `recordSighting`
-   * (`lib/sessionGrading.ts`) for why this defers rather than applying every
-   * sighting immediately, and why it defers to the *last* sighting rather
-   * than the first (URD-019).
-   *
-   * Flushed, not just reset, whenever `exercises` changes or this screen
-   * unmounts — a new lesson visit (including the same lesson reopened) or
-   * leaving the lesson altogether, by any route: finishing it normally,
-   * hitting ✕, or running out of hearts and leaving. Whatever was pending
-   * for the visit that just ended is applied before a fresh session starts
-   * tracking its own; nothing pending is ever silently dropped by a route
-   * this component didn't anticipate.
+   * grade — not yet applied to SRS. See `useSessionGradeFlush`'s own doc
+   * comment for the ref/effect wiring this delegates to (URD-044 extracted
+   * it out of this component so it could be tested without a full render),
+   * and the doc comment on `recordSighting` (`lib/sessionGrading.ts`) for
+   * why grading defers to the *last* sighting rather than the first
+   * (URD-019).
    */
-  const pendingGrades = useRef<PendingGrades>(new Map());
-  useEffect(() => {
-    // A new `Map` per visit, closed over by this effect's own cleanup rather
-    // than read back off the ref later — so the cleanup always flushes
-    // exactly the visit it belongs to, never one a later reset has already
-    // replaced `pendingGrades.current` with.
-    const thisVisit: PendingGrades = new Map();
-    pendingGrades.current = thisVisit;
-    return () => flushSessionGrades(thisVisit, applyGrade);
-  }, [exercises, applyGrade]);
+  const { record: recordItemGrade, flushNow: flushPendingGrades } = useSessionGradeFlush(exercises, applyGrade);
 
   const current = exercises[idx];
   /** The clip the feedback banner offers to replay, when there is one. */
@@ -251,7 +236,7 @@ export function LessonScreen() {
       // out by exactly the same amount. They are not the same evidence, so a
       // correct answer on an exercise that supplied no options counts as easy.
       const grade = !result.correct ? 'again' : demandOf(exercises[idx]) === 'produce' ? 'easy' : 'good';
-      result.items.forEach((it) => recordSighting(pendingGrades.current, it, grade));
+      result.items.forEach((it) => recordItemGrade(it, grade));
       if (result.correct) {
         setCorrectCount((c) => c + 1);
       } else if (!isTeaching(exercises[idx])) {
@@ -267,7 +252,7 @@ export function LessonScreen() {
     // against exercise 0 — which in a grammar lesson is the teaching card, and
     // `isTeaching` therefore suppressed the heart loss for every wrong answer in
     // the lesson. Grammar cost nothing to get wrong.
-    [loseHeart, exercises, idx]
+    [loseHeart, exercises, idx, recordItemGrade]
   );
 
   // Stop this lesson's audio the instant the screen is left, however that
@@ -289,7 +274,7 @@ export function LessonScreen() {
       // rewards while silently losing its SRS grading. Safe to call before
       // the effect's own unmount-time flush later finds an already-emptied
       // map and does nothing.
-      flushSessionGrades(pendingGrades.current, applyGrade);
+      flushPendingGrades();
       const r = finishLesson({
         lessonId: lesson.id,
         correct: correctCount,
