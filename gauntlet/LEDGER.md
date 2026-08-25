@@ -4859,6 +4859,66 @@ files: src/exercises/generator.ts
 branch: claude/gauntlet-letter-final-sighting-hard, cut from
 claude/gauntlet-review-letter-coverage after URD-042 shipped.
 
+## CLAIMED · URD-044 · 2026-08-25T18:26Z
+files: src/screens/LessonScreen.tsx, src/screens/useSessionGradeFlush.ts
+  (new), src/screens/useSessionGradeFlush.test.ts (new), vitest.config.ts,
+  package.json, package-lock.json
+branch: claude/gauntlet-lessonscreen-srs-integration-test, cut from
+claude/gauntlet-letter-final-sighting-hard after URD-043 shipped.
+
+## CRITIQUE · URD-044
+Investigated `vitest.config.ts` (pure-logic tests only, no jsdom/RTL) and
+`LessonScreen.tsx`'s ref/effect wiring first. Chose to extract the wiring
+into a standalone hook (`useSessionGradeFlush`) rather than add a
+jsdom/React-Testing-Library stack — disproportionate infrastructure for a
+React Native, not web, component tree, for one non-blocking item — and
+test the extracted hook with `react-test-renderer` (React Native's own
+DOM-free test renderer, already a `react`-peer, pinned to `18.3.1` to match
+the installed `react` version exactly). The test file uses
+`React.createElement` rather than JSX specifically so it can stay a plain
+`.test.ts`, sidestepping whether vitest's esbuild/vite pipeline agrees with
+this project's inherited `tsconfig.json` `jsx: "react-native"` setting.
+
+Verified the refactor is behavior-preserving before writing the new test:
+`npx tsc --noEmit`, `npm run lint`, `npm run format:check` clean, and
+`npx vitest run` unchanged at 209/209. Verified the new test's key
+integration case is a real regression detector, not assumed: reverted the
+effect's dependency array to a mount-once `[]` (so a visit change never
+resets the Map or flushes) and confirmed the visit-change test failed with
+the exact matching shape (expected the previous visit's flush, got
+nothing); restored and reconfirmed clean (213/213).
+
+Dispatched THE CRITIC only (real app/tooling code; no curriculum or visual
+content in this item's scope). No BLOCKING. One MAJOR: the item's own
+problem statement — "nothing exercises the LessonScreen↔SRS-grading wiring
+end-to-end" — is only half-closed. `useSessionGradeFlush.test.ts` gives
+real, mutation-tested coverage of the *hook's* ref/effect timing (THE
+CRITIC independently mutation-tested three broken variants: removing the
+cleanup, removing `pending.clear()`, and flushing the ref instead of the
+closed-over Map — the first two failed correctly, the third passed for a
+real reason, React's guaranteed cleanup-before-next-effect ordering makes
+those two expressions equivalent at the moment cleanup runs, not a test
+hole) — but the three real call sites inside `LessonScreen.tsx` itself
+(the `useSessionGradeFlush(exercises, applyGrade)` call, `recordItemGrade`
+inside `onGraded`, `flushPendingGrades()` inside `advance()`) are still
+verified only by `tsc`/manual review, not by any test. Not blocking — a
+full rendered-`LessonScreen` test would need react-navigation/store/native-
+module mocking disproportionate to this item and would cut against this
+project's own "two kinds of test, no overlap" rule — but logged forward as
+URD-055 rather than silently treated as closed, per THE CRITIC's own
+recommendation, so the next reader doesn't assume more safety-net exists
+than actually does.
+
+Two MINOR, both fixed: a dead `eslint-disable-next-line
+react-hooks/exhaustive-deps` comment in `useSessionGradeFlush.ts` that
+suppressed nothing (confirmed by removing it and re-running eslint
+directly on the file: still zero errors) — deleted; and a second,
+undocumented local `ItemRef` type duplicating one already exported from
+`src/exercises/types.ts` (which the file already imports `Exercise` from)
+— replaced the local declaration with the existing, narrower-typed import.
+Re-verified `tsc`/lint/format/`vitest run` clean (213/213) after both
+fixes.
+
 ## CRITIQUE · URD-043
 Dispatched THE CRITIC (real generator code) and CURRICULUM CRITIC
 (this item's own discoverer, reviewing URD-019 — whether a letter's

@@ -36,39 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-044 — Nothing exercises the LessonScreen↔SRS-grading wiring end-to-end
-attempts: 0
-files: src/screens/LessonScreen.tsx, src/lib/sessionGrading.ts
-definition of done: `sessionGrading.test.ts` covers `recordSighting`/
-  `flushSessionGrades` in complete isolation from React, and `check-srs.js`
-  covers `srs.ts`'s SM-2 primitives in isolation from `sessionGrading.ts` —
-  grepping both for `sessionGrading|recordSighting|flushSessionGrades`
-  returns nothing. The actual bug URD-019 fixed (the wrong sighting winning)
-  lived entirely in the `LessonScreen`↔`sessionGrading` integration — the
-  ref/effect wiring that decides when a visit's pending grades get flushed —
-  and that integration has zero automated coverage anywhere in `npm run
-  check:all`. A future edit that "simplifies" the double-flush (the explicit
-  flush in `advance()` plus the unmount-safety-net effect) or reintroduces a
-  stale-closure bug in the `useEffect` dependency wiring would pass every
-  existing check. Add a test that plays a real lesson through `LessonScreen`
-  (or the smallest harness that exercises the same effect/ref wiring without
-  a full render) with a wrong-then-right sequence for one item, and asserts
-  the persisted `useProgressStore` SRS state afterward matches the last
-  sighting, not the first.
-verify: the new test passes, and reverting the double-flush or the
-  per-visit-Map wiring in `LessonScreen.tsx` back to the old single-gate
-  design makes it fail.
-notes: Found by THE CRITIC reviewing URD-019. Not blocking — traced every
-  claimed flush path in `LessonScreen.tsx` against the actual code (not just
-  its doc comments) and found all of them correct today — but there is
-  currently no component-level or integration test setup anywhere in this
-  project (no React Testing Library, no jsdom/happy-dom vitest environment;
-  `vitest.config.ts` runs pure-logic tests only, see its own doc comment).
-  Adding this properly means deciding on and wiring up that test
-  infrastructure, not just adding one more `.test.ts` file next to the
-  others — scope it as that rather than underestimating it as "one more
-  test."
-
 ## URD-045 — A letter's context sighting never asks the learner to find the letter in the word
 attempts: 0
 files: src/exercises/types.ts, src/exercises/generator.ts, src/exercises/*.tsx
@@ -326,3 +293,37 @@ notes: Found by CURRICULUM CRITIC reviewing URD-041. Pre-existing —
   late-course reviews — roughly the ~32.5% share `connects: false` letters
   hold of the alphabet. Not blocking URD-041, whose own scope (vary the
   kind) is otherwise sound and doesn't touch `letters.ts`'s form data.
+
+## URD-055 — LessonScreen's three call sites into the SRS-grading wiring are untested
+attempts: 0
+files: src/screens/LessonScreen.tsx, src/screens/useSessionGradeFlush.ts
+definition of done: URD-044 gave `useSessionGradeFlush`'s own ref/effect
+  timing a real, mutation-tested suite — but the hook is exercised there
+  only through a synthetic `Harness` that always calls `record`/`flushNow`
+  correctly by construction. The three real call sites inside
+  `LessonScreen.tsx` have zero automated coverage: the `useSessionGradeFlush(
+  exercises, applyGrade)` call itself, `recordItemGrade(it, grade)` inside
+  `onGraded`, and the explicit `flushPendingGrades()` inside `advance()` (the
+  one whose own comment explains it exists so closing the app from the
+  results screen doesn't silently lose SRS grading while keeping the
+  rewards). If a future edit drops that `flushPendingGrades()` call from
+  `advance()`, or drops `recordItemGrade` from `onGraded`'s body, nothing in
+  `check:all` catches it — the exact "app is lying about what it graded" bug
+  class URD-044 exists to guard against, one file over from where it used
+  to live. A full rendered-`LessonScreen` test would need react-navigation/
+  store/native-module mocking disproportionate to this (and would cut
+  against this project's own "two kinds of test, no overlap" rule — neither
+  bucket is "render one screen component") — so this likely wants a narrow
+  seam: e.g. exporting `LessonScreen`'s body logic (not its JSX) as a
+  testable function, or a thin fake-hook-return spy asserting the three call
+  sites are actually reached with the right arguments during a scripted
+  `onGraded`/`advance()` sequence, without rendering real UI.
+verify: a test that fails if `flushPendingGrades()` is deleted from
+  `advance()`, or if `recordItemGrade` is deleted from `onGraded`'s body —
+  reverting either one makes the new test fail with a concrete, matching
+  shape.
+notes: Found by THE CRITIC reviewing URD-044. Not blocking — the doc
+  comments URD-044 added are honest about testing the extracted hook, not
+  "LessonScreen end-to-end," so this isn't a dishonesty finding, just a real
+  remaining gap the ledger should name plainly rather than let readers
+  assume URD-044 closed in full.
