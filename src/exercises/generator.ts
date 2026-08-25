@@ -1205,6 +1205,55 @@ export function buildLessonExercises(
      * `letterForm` — every real letter×position combination has one
      * (confirmed directly, 160 of 160), so this never silently downgrades
      * to the softer kind it exists to avoid.
+     *
+     * CURRICULUM CRITIC, two findings on this pairing, both real:
+     *
+     * 1. An earlier version of this comment justified clustering a
+     *    letter's last two sightings by claiming it "mirrors how
+     *    vocabulary already sequences recall→produce close together" —
+     *    checked against the vocab lesson's own staggered-pass design
+     *    (the `meet g[0] recall g-1[0] produce g-2[0] ...` comment
+     *    further down this file) and real generated timing, this is
+     *    false: a vocabulary word's successive sightings land 3-7
+     *    exercises apart specifically *because* "massed repetition inside
+     *    ten seconds is not spacing" (that comment's own words). The
+     *    real justification is structural, not precedent: round-major
+     *    can't give every letter a true-final `letterTrace` without either
+     *    the multi-letter run or the share-ceiling problem measured above,
+     *    so letter-major pairing for just these two rounds is what closes
+     *    both, not an appeal to how vocabulary already works.
+     *
+     *    Whether the adjacency itself still costs something is a separate,
+     *    real question, and the answer here is that `letterTrace`
+     *    (`TraceExercise.tsx`) names the letter and position outright
+     *    ("{letter.name} · {position}") and asks the learner to draw it —
+     *    a motor-formation check on a letter the exercise already
+     *    identifies, not a blind-recall check the way vocabulary's
+     *    `typeWord`/`wordBuild` are (prompted only by a meaning, naming
+     *    nothing). A recognise-tier answer glimpsed one exercise earlier
+     *    doesn't hand the learner anything `letterTrace` wasn't already
+     *    handing them by naming the letter. Vocabulary's spacing rule
+     *    protects a different kind of exercise than this one.
+     *
+     * 2. `contextRound`'s range (1 through `tailRound`) means the context
+     *    sighting can land on `tailRound` itself — measured directly:
+     *    exactly one letter per lesson, 9 of 9 real lessons, has its
+     *    `tailRound` slot be the context word rather than
+     *    `letterForm`/`letterPick`. Real, and not what the paragraph above
+     *    described. Left as is rather than narrowing `contextRound` further
+     *    to exclude it: the context exercise shows the letter's glyph
+     *    embedded in a whole word, at whatever position that word actually
+     *    uses (checked directly: `l-1`'s `te`/`w-dost` pairing shows `te`
+     *    in `دوست`'s word-final position, then traces it in `isolated` —
+     *    a different position, not the identical glyph the recognise-tier
+     *    alternative would show), and asks about the word's *meaning*, not
+     *    the letter directly — a weaker, more indirect exposure of the
+     *    glyph than the recognise-tier drill it occasionally replaces,
+     *    not a stronger one. Narrowing further would only worsen the
+     *    pigeonhole collision this file already accepts (a group bigger
+     *    than the round capacity forces two letters onto one context
+     *    round) for a modality-adjacency risk measured to be milder than
+     *    the alternative it would replace it with.
      */
     const tailRound = SIGHTINGS_PER_LETTER - 2;
     const finalRound = SIGHTINGS_PER_LETTER - 1;
