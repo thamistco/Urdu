@@ -209,11 +209,25 @@ export function reviewWordPool(
   known: ReadonlySet<string>,
   courseWideWords: readonly string[],
   courseWideLetters: readonly string[],
-  corpus: readonly string[]
+  corpus: readonly string[],
+  /**
+   * URD-039: how many times this review has already been completed —
+   * `completedLessons[lessonId]?.done` in the progress store, `0` for a
+   * lesson id nothing has been graded on yet. Folded into the shuffle seed
+   * so the fallback slice rotates as a learner replays the same review,
+   * rather than reproducing byte-identically forever. See `prioritizedPool`'s
+   * doc comment for why *which* tier this affects at all is limited: once a
+   * learner has graded a unit's whole word list, `seen(unit?.words ?? [])`
+   * is the entire unit in one tier, and a fixed seed always sliced off the
+   * same subset of it — measured directly on rev-gender-and-number (u6, 20
+   * words all known): the same 4 words on every single call, the other 16
+   * never once surfacing this way.
+   */
+  visit = 0
 ): string[] {
   const unit = lessonId ? taughtInUnit(lessonId) : null;
   const seen = (ids: readonly string[]) => ids.filter((id) => known.has(id));
-  const seedBase = `${lessonId ?? 'review'}:words`;
+  const seedBase = `${lessonId ?? 'review'}:words:${visit}`;
   if (anythingKnown(known, courseWideWords, courseWideLetters)) {
     return prioritizedPool([seen(unit?.words ?? []), seen(courseWideWords)], seedBase);
   }
@@ -226,11 +240,13 @@ export function reviewLetterPool(
   known: ReadonlySet<string>,
   courseWideWords: readonly string[],
   courseWideLetters: readonly string[],
-  corpus: readonly string[]
+  corpus: readonly string[],
+  /** URD-039: see `reviewWordPool`'s `visit` parameter. */
+  visit = 0
 ): string[] {
   const unit = lessonId ? taughtInUnit(lessonId) : null;
   const seen = (ids: readonly string[]) => ids.filter((id) => known.has(id));
-  const seedBase = `${lessonId ?? 'review'}:letters`;
+  const seedBase = `${lessonId ?? 'review'}:letters:${visit}`;
   if (anythingKnown(known, courseWideWords, courseWideLetters)) {
     return prioritizedPool([seen(unit?.letters ?? []), seen(courseWideLetters)], seedBase);
   }

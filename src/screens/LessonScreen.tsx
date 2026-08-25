@@ -164,7 +164,12 @@ export function LessonScreen() {
     // `fallbackReviewRefs` for why a review with nothing due yet needs this
     // rather than trusting a topic's word list to mean "shown".
     const known = new Set(Object.keys(srs));
-    return buildLessonExercises(lesson, due, track, known);
+    // URD-039: how many times this exact lesson has already been completed —
+    // folded into the review fallback's shuffle seed so a unit whose every
+    // word the learner already knows doesn't offer the same fixed subset of
+    // it on every single replay. See `buildLessonExercises`'s `visit` param.
+    const visit = useProgressStore.getState().completedLessons[lesson.id]?.done ?? 0;
+    return buildLessonExercises(lesson, due, track, known, visit);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lesson.id, track]);
 

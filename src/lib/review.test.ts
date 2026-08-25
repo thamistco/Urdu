@@ -196,6 +196,48 @@ describe('reviewWordPool / reviewLetterPool — a review draws mostly from the u
   });
 });
 
+describe("URD-039: a review's fallback rotates once the whole unit is already known", () => {
+  it('offers a different slice of a fully-known unit on different visits, not the same one forever', () => {
+    // rev-gender-and-number (u6): 20 words, all graded — the exact shape
+    // measured in the item: with `visit` fixed at its old implicit 0, the
+    // same 4 words (w-surkh, w-gulaabi, w-pyaazi, w-neela) came back on
+    // every single call and the other 16 never surfaced this way at all.
+    const unitWords = taughtInUnit('rev-gender-and-number')!.words;
+    expect(unitWords.length).toBe(20);
+    const known = new Set(unitWords);
+    const visit0 = reviewWordPool('rev-gender-and-number', known, unitWords, [], [], 0).slice(0, 4);
+    const visit1 = reviewWordPool('rev-gender-and-number', known, unitWords, [], [], 1).slice(0, 4);
+    expect(visit0).not.toEqual(visit1);
+  });
+
+  it('is still deterministic for the same visit — a rotation, not fresh randomness on every render', () => {
+    const unitWords = taughtInUnit('rev-gender-and-number')!.words;
+    const known = new Set(unitWords);
+    const a = reviewWordPool('rev-gender-and-number', known, unitWords, [], [], 3);
+    const b = reviewWordPool('rev-gender-and-number', known, unitWords, [], [], 3);
+    expect(a).toEqual(b);
+  });
+
+  it('defaults to visit 0 when omitted, matching every pre-URD-039 caller', () => {
+    const unitWords = taughtInUnit('rev-gender-and-number')!.words;
+    const known = new Set(unitWords);
+    const withDefault = reviewWordPool('rev-gender-and-number', known, unitWords, [], []);
+    const explicit0 = reviewWordPool('rev-gender-and-number', known, unitWords, [], [], 0);
+    expect(withDefault).toEqual(explicit0);
+  });
+
+  it('rotates on the letter side too', () => {
+    const unitLetters = taughtInUnit('rev-gender-and-number')!.letters;
+    const known = new Set(unitLetters);
+    const visit0 = reviewLetterPool('rev-gender-and-number', known, [], unitLetters, [], 0);
+    const visit5 = reviewLetterPool('rev-gender-and-number', known, [], unitLetters, [], 5);
+    // Only 4 letters in this unit, so a full-pool comparison (not a 4-slice)
+    // is the meaningful one — the same 4 ids, reordered.
+    expect(visit0).not.toEqual(visit5);
+    expect([...visit0].sort()).toEqual([...visit5].sort());
+  });
+});
+
 describe("reviewLetterShare — a review's letter share decays once the alphabet is behind it", () => {
   it('is higher for a review early in the course than one late in it', () => {
     // URD-017: the old split was a flat Math.ceil(n/2)/Math.floor(n/2)
