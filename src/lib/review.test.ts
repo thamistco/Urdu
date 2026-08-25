@@ -355,10 +355,27 @@ describe('URD-042: reviewLetterPool guarantees full-course letter coverage, not 
     // only when literally nothing is graded; here we force the *restricted*
     // branch by graduating a single, unrelated word so the letter side has
     // no known letters of its own).
-    const lesson = ALL_LESSONS.find((l) => l.kind === 'review' && l.id === 'rev-the-wider-world')!;
-    const taught = taughtUpTo(lesson.id);
-    const known = new Set([taught.words[0]]); // one known word, zero known letters
-    const pool = reviewLetterPool(lesson.id, known, taught.words, taught.letters, [], 0, 30);
-    expect(pool).toEqual([]);
+    //
+    // THE CRITIC: a first version of this test targeted only
+    // rev-the-wider-world — the one review lesson (of 41) with no coverage
+    // assignment at all — so the `assigned` guard this test names was
+    // never actually exercised; it passed even with the guard
+    // deliberately removed. Swept across every real review instead, each
+    // with its own real `reviewIndex`, so this reaches an assigned review
+    // for real.
+    let checked = 0;
+    reviews.forEach((lesson, reviewIndex) => {
+      const taught = taughtUpTo(lesson.id);
+      // Needs at least one already-taught word to graduate — the very
+      // first review or two can predate any vocabulary lesson at all, and
+      // an empty `known` there falls into the different ("nothing known
+      // at all") branch this test isn't about.
+      if (taught.words.length === 0) return;
+      const known = new Set(taught.words.slice(0, 1)); // one known word, zero known letters
+      const pool = reviewLetterPool(lesson.id, known, taught.words, taught.letters, [], 0, reviewIndex);
+      expect(pool, lesson.id).toEqual([]);
+      checked++;
+    });
+    expect(checked).toBeGreaterThan(0);
   });
 });

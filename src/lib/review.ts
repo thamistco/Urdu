@@ -408,18 +408,33 @@ export function reviewLetterPool(
     : prioritizedLetterPool([unit?.letters ?? [], courseWideLetters, corpus], rotation);
   /**
    * URD-042: force this review's assigned coverage letter (if it has one)
-   * to the very front — the actual full-coverage guarantee,
-   * `rotatingCoverageOrder` alone only improves the odds. Only if it's
-   * already a legitimate candidate for *this specific call* (present in
-   * `pool`, which already reflects whatever `known`-restriction applies):
-   * a learner who hasn't actually been graded on their assigned letter yet
-   * doesn't get it forced on them — `check:srs`'s "never surface material
-   * outside what the learner has been graded on" still holds. That review
-   * simply doesn't fulfill its assignment for *that* learner's state,
-   * which is a real, honest gap for an individual mid-course, not the
-   * whole-course sweep this item's own verify text checks.
+   * to the very front on its first visit — the actual full-coverage
+   * guarantee, `rotatingCoverageOrder` alone only improves the odds. Only
+   * if it's already a legitimate candidate for *this specific call*
+   * (present in `pool`, which already reflects whatever `known`-restriction
+   * applies): a learner who hasn't actually been graded on their assigned
+   * letter yet doesn't get it forced on them — `check:srs`'s "never
+   * surface material outside what the learner has been graded on" still
+   * holds. That review simply doesn't fulfill its assignment for *that*
+   * learner's state, which is a real, honest gap for an individual
+   * mid-course, not the whole-course sweep this item's own verify text
+   * checks.
+   *
+   * CURRICULUM CRITIC: `visit === 0` only — a first version forced the
+   * assignment on every visit unconditionally, which silently reintroduced
+   * URD-039's own bug on the letter axis: with `letterCount === 1` (the
+   * norm from about u14 on, URD-017), `fallbackReviewRefs` takes exactly
+   * `pool[0]`, so forcing the assigned letter every time froze 40 of 41
+   * reviews to one single letter forever, for every replay, for every
+   * learner — reproduced live, `rev-together` drew `daal` and only `daal`
+   * across 6 sampled visits. The whole-course coverage guarantee only
+   * needs each review's *first* visit to surface its assignment — a
+   * learner playing the course straight through meets every letter once,
+   * same as before — while every visit after that returns to the same
+   * `rotation`-driven variety URD-039 already established, undoing none
+   * of it.
    */
-  const assigned = lessonId ? letterCoverageAssignment().get(lessonId) : undefined;
+  const assigned = visit === 0 && lessonId ? letterCoverageAssignment().get(lessonId) : undefined;
   if (assigned && pool.includes(assigned)) {
     return [assigned, ...pool.filter((id) => id !== assigned)];
   }

@@ -1272,11 +1272,48 @@ describe('URD-042: every letter gets review exposure somewhere across the whole 
     // invariant: a learner graded on words but zero letters gets a
     // correctly-empty letter pool (URD-016), not every letter ever
     // taught forced in to satisfy this item's own assignment.
-    const lesson = resolveLesson('rev-the-wider-world')!;
-    const taught = taughtUpTo(lesson.id).words;
-    const known = new Set(taught.slice(0, 5)); // words only, no letters
-    const exercises = buildLessonExercises(lesson, [], 'both', known, 0);
-    const letterExercises = exercises.filter((e) => LETTER_KIND_SET.has(e.kind));
-    expect(letterExercises).toHaveLength(0);
+    //
+    // THE CRITIC: a first version of this test targeted only
+    // rev-the-wider-world — which turns out to be the one review lesson
+    // (of 41) with no coverage assignment at all (everything already
+    // claimed by the review before it), so the `assigned` guard this test
+    // is meant to pin was never actually exercised: it passed purely on
+    // URD-016's own pre-existing guarantee, and kept passing when the
+    // guard was deliberately removed. Swept across every real review
+    // instead — 40 of 41 do carry an assignment, so this reaches the
+    // guard for real.
+    for (const u of UNITS) {
+      for (const lesson of u.lessons) {
+        if (lesson.kind !== 'review') continue;
+        const taught = taughtUpTo(lesson.id).words;
+        const known = new Set(taught.slice(0, 5)); // words only, no letters
+        const exercises = buildLessonExercises(lesson, [], 'both', known, 0);
+        const letterExercises = exercises.filter((e) => LETTER_KIND_SET.has(e.kind));
+        expect(letterExercises, lesson.id).toHaveLength(0);
+      }
+    }
+  });
+
+  it('CURRICULUM CRITIC (MAJOR): a review with a coverage assignment still varies its letter across repeat visits, not frozen forever', () => {
+    // A first version forced the assigned coverage letter to the front on
+    // EVERY visit unconditionally -- with letterCount === 1 (the norm from
+    // about u14 on, URD-017), fallbackReviewRefs takes exactly pool[0], so
+    // every one of the ~40 reviews with an assignment drew one single
+    // letter forever, for every replay, for every learner: reproduced
+    // live, rev-together drew daal and only daal across 6 sampled visits --
+    // silently reintroducing URD-039's own bug on the letter axis. The
+    // coverage guarantee only needs a review's *first* visit to surface
+    // its assignment; every visit after that must return to the normal
+    // rotation.
+    const lesson = resolveLesson('rev-together')!;
+    const lettersAcrossVisits = new Set(
+      Array.from({ length: 6 }, (_, visit) =>
+        buildLessonExercises(lesson, [], 'both', new Set(), visit)
+          .filter((e) => LETTER_KIND_SET.has(e.kind))
+          .map((e) => (e as { letter: { id: string } }).letter.id)
+          .join(',')
+      )
+    );
+    expect(lettersAcrossVisits.size).toBeGreaterThan(1);
   });
 });
