@@ -270,7 +270,7 @@ export const LETTERS: Letter[] = [
     meaning: 'a little',
     emoji: '🤏',
     group: 3,
-    note: 'Daal with one dot above. Another of the “z” family.',
+    note: 'Daal with one dot above. One of three “z” spellings inherited from Arabic/Persian, not Urdu’s everyday “z” (that’s ز, ze): anchor it to this word, ذرا (zara, “a little”), rather than guessing.',
     confusableWith: 'daal',
   },
   {
@@ -311,7 +311,7 @@ export const LETTERS: Letter[] = [
     meaning: 'earth / land',
     emoji: '🌍',
     group: 3,
-    note: 'Re with one dot above. The everyday “z”.',
+    note: 'Re with one dot above. The everyday “z”, the one to reach for by default in native and Persian vocabulary alike (زندگی/zindagi “life”, بازار/bazaar “market”). ذ ض ظ, not this, are the three reserved for words borrowed from Arabic.',
     confusableWith: 're',
   },
   {
@@ -381,7 +381,7 @@ export const LETTERS: Letter[] = [
     meaning: 'multiply / strike',
     emoji: '✖️',
     group: 4,
-    note: 'Swaad with one dot above. In Urdu it sounds like ze, one of four letters spelling “z”.',
+    note: 'Swaad with one dot above. One of three “z” spellings inherited from Arabic/Persian, not Urdu’s everyday “z” (that’s ز, ze): anchor it to this word, ضرب (zarb, “multiply/strike”), rather than guessing.',
     confusableWith: 'swaad',
   },
 
@@ -410,7 +410,7 @@ export const LETTERS: Letter[] = [
     meaning: 'vessel',
     emoji: '🏺',
     group: 5,
-    note: 'To’e with one dot above. Another of the four ways Urdu spells “z”.',
+    note: 'To’e with one dot above. One of three “z” spellings inherited from Arabic/Persian, not Urdu’s everyday “z” (that’s ز, ze): anchor it to this word, ظرف (zarf, “vessel”), rather than guessing.',
     confusableWith: 'toe',
   },
   {
