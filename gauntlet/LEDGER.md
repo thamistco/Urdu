@@ -4467,3 +4467,63 @@ $ npx vitest run
   180/180 — unchanged, no test touches this script.
 
 branch: claude/gauntlet-check-path-floor
+
+## CLAIMED · URD-038 · 2026-08-25T15:40Z
+files: src/data/letters.ts
+branch: claude/gauntlet-similar-letters-listening, cut from
+claude/gauntlet-check-path-floor after URD-037 shipped.
+
+## CRITIQUE · URD-038
+Dispatched both THE CRITIC and CURRICULUM CRITIC — real learner-facing
+content plus a new test, not a pure tooling change.
+
+THE CRITIC: no BLOCKING, no MAJOR. Independently ran every gate,
+confirmed the diff was text-only (word/roman/meaning/emoji/group/
+confusableWith/forms unchanged for all four letters), confirmed the
+test genuinely fails against the pre-fix wording, confirmed `note`
+reaches a real screen (LetterLabScreen.tsx, reachable from Home, not
+dead data). Two MINOR about the test's own robustness (keyword-match
+isn't semantic-truth verification; a `roman` value could theoretically
+collide by coincidence if this letter group ever grew) — neither
+actionable today.
+
+CURRICULUM CRITIC: two MAJOR, both real, both fixed:
+1. zwaad and zoe's anchor words (their own decorative `word` field)
+   are never actually taught anywhere in the app outside letters.ts
+   itself — confirmed by diffing against generator.ts's own
+   LETTER_CONTEXT_WORD map (the mechanism URD-020/URD-021 built for
+   exactly this purpose), only 1 of 4 notes matched it. Re-anchored
+   all three of zaal/zwaad/zoe to LETTER_CONTEXT_WORD.get(id) directly.
+2. ze's note claimed a false reverse exclusivity ("the other three,
+   not ze, are reserved for Arabic loanwords") — falsified by real
+   Arabic loanwords in the corpus that use ze (zakaat "alms", izzat
+   "honour", ijaazat "permission"), because Arabic's own zay letter is
+   the same shape. Fixed to state only the direction that holds.
+
+Both fixes verified as real regressions the test now catches: reverted
+letters.ts to the pre-fix commit, both assertions failed with the
+exact shape each critic named; restored and reconfirmed clean.
+
+CURRICULUM CRITIC's remaining MINOR (se/seen/swaad, baRi-he/choti-he/
+do-chashmi-he, te/toe have the identical gap) filed forward as
+URD-053, out of this item's own four-letter-group scope.
+
+## PASSED · URD-038 · 2026-08-25T16:10Z
+Investigated before writing, not assumed: read all 207 real
+occurrences of ذ/ز/ض/ظ in the corpus by hand. ze: 121 words (58%),
+everyday nouns. zaal/zwaad/zoe: 18/39/29, overwhelmingly formal/
+religious/administrative Arabic-origin vocabulary — zero exceptions
+found among the 86 words checked for the one-way claim the shipped
+notes make.
+
+$ npx vitest run src/data/letters.test.ts
+  3/3 passed, both critic-identified regressions confirmed to actually
+  fail against the pre-fix wording when reverted.
+
+$ npx tsc --noEmit / npm run lint / npm run format:check / npm run check:writing
+  clean.
+
+$ npx vitest run
+  183/183 (180 + 3 new).
+
+branch: claude/gauntlet-similar-letters-listening
