@@ -634,7 +634,26 @@ for (const l of ALL_LESSONS.filter((x) => x.kind === 'letters').filter(judged)) 
   const ex = buildLessonExercises(l, [], 'both');
   const ids = ex.map((e) => letterIdOfExercise(e, l));
   const n = (l.letterIds || []).length;
-  const rounds = n > 0 ? ex.length / n : 0;
+  /**
+   * URD-043: `rounds` used to be `ex.length / n`, assuming the whole
+   * sequence is round-major throughout — the same assumption
+   * `generator.test.ts`'s identical rule made, and the same fix applies
+   * here: forcing every letter's true final sighting to `letterTrace`
+   * pairs each letter's last two sightings back-to-back, letter by letter,
+   * rather than round-major, for that tail — real, deliberate, and no
+   * longer uniform. Counting fresh, non-consecutive occurrences of the
+   * sequence's own first letter measures how many times a full pass
+   * through the group actually restarts, directly from the real sequence,
+   * rather than assuming a shape that no longer always holds. Reduces to
+   * the old `ex.length / n` count whenever the sequence really is uniform
+   * round-major throughout, so this is a generalization, not a special
+   * case for one design.
+   */
+  const firstId = ids[0];
+  let rounds = 0;
+  for (let i = 0; i < ids.length; i++) {
+    if (ids[i] === firstId && (i === 0 || ids[i - 1] !== firstId)) rounds++;
+  }
 
   const found = [];
   for (let i = 0; i < ids.length - 1; i++) {
