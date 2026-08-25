@@ -36,37 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-042 — Half the alphabet gets no review exposure across the back two-thirds of the course
-attempts: 0
-files: src/lib/review.ts, src/exercises/generator.ts
-definition of done: with only one letter slot per review from roughly u14
-  on (URD-017), and `reviewLetterPool`'s per-review pool shuffled with a
-  seed keyed on `lessonId` alone, each review effectively draws one letter
-  from an independent shuffle of the full 46-letter course-wide pool.
-  Measured directly: tallying every letter that appears in a
-  `letterForm`/`letterPick`/`letterTrace` exercise across all reviews u10
-  through u39 (30 reviews) with nothing due, only 21 of 40 letters (52.5%)
-  are ever touched; 19 never appear, including `be`/`pe` — the very first
-  letter pair taught, in `l-1` — and three of the four Urdu "z"-sound
-  letters (`zaal`, `ze`, `zhe`). Since the shuffle is seeded (deterministic,
-  not per-play), this is the fixed, reproducible content of the course
-  today, not sampling noise that might average out. Give letter selection
-  across reviews some notion of coverage — round-robin, a stored
-  last-reviewed-letter cursor, or similar — so a learner who studies the
-  whole course actually meets every letter again somewhere in it, not just
-  the ones an independent per-review shuffle happened to surface first.
-verify: a test simulating every review lesson in course order and asserting
-  every letter in `LETTERS` is drawn by at least one of them.
-notes: Found by CURRICULUM CRITIC reviewing URD-017. A structural
-  consequence of two independently-reasonable pre-existing designs
-  (per-review independent shuffle; one letter slot per late review) meeting
-  for the first time once URD-017 made "one letter slot" the norm rather
-  than "four or five." Not blocking, and not something URD-017 itself
-  promised to fix — its own acceptance bar ("reaching near zero") is what
-  makes one slot the norm in the first place — but a real coverage gap
-  worth its own item, since fixing it well means changing how letters are
-  *selected* across reviews, not just how many are asked per review.
-
 ## URD-043 — A letter's last sighting in its lesson is usually the easy kind, not the hard one
 attempts: 0
 files: src/exercises/generator.ts
