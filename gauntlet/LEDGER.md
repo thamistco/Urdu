@@ -4586,3 +4586,90 @@ $ npm run check:all
   all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-review-fallback-rotation
+
+## CLAIMED · URD-040 · 2026-08-25T16:16Z
+files: src/lib/review.ts, src/exercises/generator.ts
+branch: claude/gauntlet-review-grammar-concepts, cut from
+claude/gauntlet-review-fallback-rotation after URD-039 shipped.
+
+## CRITIQUE · URD-040
+Dispatched THE CRITIC (real generator/review-pipeline code) and
+CURRICULUM CRITIC (whether the content this adds actually serves
+consolidating a concept, the item's own stated purpose) — both
+domains this item genuinely touches.
+
+Two full review rounds, real findings both times, both fixed and
+independently re-verified rather than taken on faith:
+
+**Round 1.** CURRICULUM CRITIC: one MAJOR — the concept-exercise pick
+was always `c.drills[0]`, so every replay of the same review showed
+the identical prompt/blank/answer for a multi-drill concept
+(`g-to-be` has 3) forever, directly contradicting the staleness
+principle URD-039 (the item just before this one) had just adopted
+for words/letters. Fixed by rotating the starting drill by
+`visit % c.drills.length`, still falling back through the rest in
+rotated order for a drill that doesn't render on the current track.
+
+THE CRITIC (same round): one BLOCKING — reserving the grammar-concept
+budget by shrinking the pool `due` itself was capped against silently
+dropped real, scheduler-flagged due items whenever the due queue
+alone already reached `lesson.size` (the ordinary case `dueBudget`'s
+own contract produces, not an edge case). Reproduced live: a full
+22-item due queue for rev-saying-who-you-are dropped two due words.
+Fixed by making `refCap` never fall below `due.length` — the concept
+budget now only eats into the filler/top-up pool, and a fully-
+saturated due queue correctly skips the concept exercise(s) that
+don't fit rather than bumping a due item or exceeding `lesson.size`.
+Also one MAJOR (silent under-fill if every one of a concept's drills
+ever failed to render — not live today, no real concept hits it) and
+two MINOR (concept exercises always land at the fixed end position;
+a defensive `Math.max(0, ...)` guarding a case unreachable in today's
+data) filed as notes, not blocking.
+
+**Round 2** (re-dispatched THE CRITIC specifically to verify round
+1's BLOCKING and MAJOR fixes, not a fresh review): confirmed both
+independently by direct re-execution — a realistic 22-item due queue
+(drawn from `taughtUpTo`, not arbitrary corpus ids) survives whole;
+`g-to-be`'s drill pick now cycles `d1→d2→d3→d1` across visits 0-3.
+One new latent MINOR: the survives-oversized-input guarantee held
+only via the interaction of two separate truncation points in the
+function, not a single explicit one — hardened by capping `due` at
+`lesson.size` explicitly at the point it's defined, a no-op for real
+behavior (no caller sends more than `lesson.size` due refs today) but
+now structural rather than incidental. The two round-1 MINORs remain
+filed-forward, unchanged.
+
+## PASSED · URD-040 · 2026-08-25T16:58Z
+Confirmed both fixes are real regressions their tests catch, not just
+plausible: reverted generator.ts alone (keeping each new test) for
+both the stale-drill and dropped-due-item fixes; each failed with the
+exact shape its critic named; restored and reconfirmed clean.
+
+$ npx vitest run src/exercises/generator.test.ts
+  59/59 passed (53 + 6 new).
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npx vitest run
+  197/197 (191 + 6 new).
+
+$ npm run check:srs / check:shape / check:answerable / check:order /
+  check:coverage / check:sentence-coverage / check:grammar-distractors
+  / check:path
+  no new problems from any of them, rerun individually after each
+  fix round.
+
+$ npm run check:all
+  first full run on the fully-fixed tree failed once at check:path
+  ("0 lesson rows mounted" against a floor of 81) — investigated
+  rather than assumed: 3/3 standalone check:path reruns immediately
+  after were clean (81/81), and a full fresh check:all rerun passed
+  30/30 clean, check:path included (81/81). Recorded as an observed
+  flake, the same shape already noted in this ledger for
+  check:home-scroll during URD-A02 — not attributed to this item's
+  own change, since nothing in this diff touches HomeScreen or its
+  mounting logic, and a real regression there would not have cleared
+  on an unmodified rerun.
+
+branch: claude/gauntlet-review-grammar-concepts

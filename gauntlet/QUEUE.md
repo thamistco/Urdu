@@ -36,29 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-040 — Review lessons never touch the grammar concepts or sentences that name their own unit
-attempts: 0
-files: src/lib/review.ts, src/exercises/generator.ts
-definition of done: `taughtByLessons` (`lib/review.ts`) only counts
-  `kind: 'letters'` and `kind: 'vocab'` lessons; `itemsOf` (`generator.ts`)
-  returns `[]` for grammar, sentence, reading and dialogue exercises by
-  design, since none of those are SRS-gradable. Concretely,
-  rev-saying-who-you-are (u4, "Saying Who You Are") draws its entire review
-  from `V('rooms')`/`V('adjectives')` and never once touches `g-pronouns` or
-  `g-to-be` — the two grammar concepts the unit is named for and organized
-  around. Give a unit review some way to touch the grammar concepts (and
-  ideally the sentence-building practice) its own lessons taught, not only
-  its vocabulary.
-verify: a test asserting a review whose unit includes a grammar lesson
-  (e.g. rev-saying-who-you-are) generates at least one exercise referencing
-  that unit's own `conceptId`, once a mechanism for it exists.
-notes: Found by CURRICULUM CRITIC reviewing URD-016, as a bonus while
-  checking whether review content matches "what the unit was actually
-  about." Pre-existing — grammar/sentence content has never fed the
-  SRS/review system, unrelated to URD-016's own change — but a real gap
-  worth its own item rather than folding into a scoping fix that was never
-  about which *kinds* of lesson a review can draw from.
-
 ## URD-041 — A review's one letter slot always lands on the same position, and so always the same exercise kind
 attempts: 0
 files: src/exercises/generator.ts
