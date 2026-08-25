@@ -4421,3 +4421,49 @@ $ npm run check:all
   30/30.
 
 branch: claude/gauntlet-disabled-button-look
+
+## CLAIMED · URD-037 · 2026-08-25T15:00Z
+files: scripts/check-path.js
+branch: claude/gauntlet-check-path-floor, cut from
+claude/gauntlet-disabled-button-look after URD-036 shipped.
+
+## CRITIQUE · URD-037
+Dispatched THE CRITIC only, matching URD-004's own precedent for this
+shape of fix — a pure tooling-correctness change to a check script, no
+lesson/word/screen/exercise-behavior changed.
+
+THE CRITIC: no BLOCKING, no MAJOR. Independently recomputed every
+level's real lesson count from src/data/units.ts directly (beginner
+81, elementary 84, intermediate 95, advanced 90 — exact match to the
+script's own output); independently confirmed HomeScreen.tsx's `order`
+equals ALL_LESSONS by id for every scenario this file runs (default
+track 'both', unitsForTrack only filters for 'roman', no scenario ever
+sets track); independently reproduced the induced-failure test end to
+end (isOpen forced false -> 3 failing floors, real exit 1; reverted,
+git diff empty, clean pass again); reran the click-driven "tapping
+every level" scenario 3 times for flakiness (stable). Three MINOR, all
+fixed: a comment claiming skippedLessons was checked when it wasn't
+(now is, inert either way — no scenario populates it, and the gap's
+direction was safe, a floor too low rather than too high); a
+duplicated maxLevelLessons computation that could reuse the new
+lessonCountForLevel helper (now does); a stale "81 or 94" comment
+where the real number is 95.
+
+## PASSED · URD-037 · 2026-08-25T15:30Z
+$ node scripts/check-path.js (real app, real content)
+  0 problems: fresh guest 81, deep learner 95, tapping-every-level
+  worst 95 (bound 115) — unchanged from before this fix.
+
+$ node scripts/check-path.js (isOpen forced to always return false)
+  3 problems, real exit code 1 (checked directly, not through a pipe):
+  each scenario's own floor named and violated. Reverted; git diff on
+  HomeScreen.tsx empty; reconfirmed clean pass with the original
+  numbers.
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npx vitest run
+  180/180 — unchanged, no test touches this script.
+
+branch: claude/gauntlet-check-path-floor

@@ -36,31 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-037 — check:path has no floor, so a real regression could read as a pass
-attempts: 0
-files: scripts/check-path.js
-definition of done: `check:path` asserts only an upper bound (`n` mounted
-  rows over `BOUND` fails); nothing asserts a *lower* bound, so a scenario
-  that mounts zero rows — the accordion silently failing to render anything
-  — passes exactly as cleanly as one mounting the expected 81 or 94. Add a
-  floor per scenario (e.g. "fresh guest" should mount at least the lessons
-  in an open level's own unit, not zero) so a genuine render failure fails
-  loudly instead of reading as an excellent bound.
-verify: temporarily force the accordion's `isOpen(lvl)` gate to always
-  `false` (mounting nothing) and confirm check:path now fails; today it
-  would report "0 lesson rows mounted (bound: 114)" and exit 0.
-notes: Found incidentally verifying URD-006 — `npm run check:all`, run
-  twice back to back, reported a different scenario mounting 0 rows each
-  time ("learner deep into the course: 0" once, "fresh guest: 0" the other),
-  while `npm run check:path` run alone, three times in a row, reported the
-  normal 81/94/94 every time. So this is a real flake under check:all's
-  full-sequence load (not reproduced standalone, not investigated further
-  here — a timing race between the build and the check, or system load from
-  running 25 steps back to back, is the likely cause) that the check's own
-  bound cannot catch either way, since "0" is a legal reading. Unrelated to
-  URD-006's own change (no file this item touched is anywhere near
-  `check-path.js` or `HomeScreen.tsx`'s accordion).
-
 ## URD-038 — ذ ز ض ظ are avoided in listening questions, never actually taught apart
 attempts: 0
 files: src/data/letters.ts
