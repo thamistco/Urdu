@@ -4919,6 +4919,27 @@ undocumented local `ItemRef` type duplicating one already exported from
 Re-verified `tsc`/lint/format/`vitest run` clean (213/213) after both
 fixes.
 
+## PASSED · URD-044 · 2026-08-25T18:44Z
+The key regression this item exists to guard against verified as real,
+not assumed: reverted `useSessionGradeFlush`'s effect dependency array to
+a mount-once `[]` and confirmed the visit-change test failed with the
+exact matching shape (expected the previous visit's flush, got nothing);
+restored and reconfirmed clean. THE CRITIC independently mutation-tested
+three further broken variants on scratch copies (own report, not rerun
+here): two failed correctly, one passed for a real reason (React's
+cleanup-before-next-effect ordering), not a test hole.
+
+$ npx vitest run
+  213/213 (209 + 4 new).
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npm run check:all
+  all 30 steps pass against a deploy-shaped build.
+
+branch: claude/gauntlet-lessonscreen-srs-integration-test
+
 ## CRITIQUE · URD-043
 Dispatched THE CRITIC (real generator code) and CURRICULUM CRITIC
 (this item's own discoverer, reviewing URD-019 — whether a letter's
