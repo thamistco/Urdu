@@ -227,14 +227,26 @@ describe("URD-039: a review's fallback rotates once the whole unit is already kn
   });
 
   it('rotates on the letter side too', () => {
+    // THE CRITIC: a single fixed pair of visit numbers (0 vs 5, say) can
+    // coincidentally land on the same ordering with only 4 letters to
+    // permute — visits 4, 5 and 6 all happen to produce the identical order
+    // today, which would make a pair chosen at random flaky against a future
+    // shuffle-algorithm change even though the rotation itself is real.
+    // Sampling many visits and asserting the orderings aren't all identical
+    // doesn't depend on which specific pair happens to differ right now.
     const unitLetters = taughtInUnit('rev-gender-and-number')!.letters;
     const known = new Set(unitLetters);
-    const visit0 = reviewLetterPool('rev-gender-and-number', known, [], unitLetters, [], 0);
-    const visit5 = reviewLetterPool('rev-gender-and-number', known, [], unitLetters, [], 5);
+    const orderings = new Set(
+      Array.from({ length: 20 }, (_, visit) =>
+        reviewLetterPool('rev-gender-and-number', known, [], unitLetters, [], visit).join(',')
+      )
+    );
     // Only 4 letters in this unit, so a full-pool comparison (not a 4-slice)
-    // is the meaningful one — the same 4 ids, reordered.
-    expect(visit0).not.toEqual(visit5);
-    expect([...visit0].sort()).toEqual([...visit5].sort());
+    // is the meaningful one — every ordering is a reshuffle of the same 4 ids.
+    expect(orderings.size).toBeGreaterThan(1);
+    for (const ordering of orderings) {
+      expect(ordering.split(',').sort()).toEqual([...unitLetters].sort());
+    }
   });
 });
 
