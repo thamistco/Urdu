@@ -390,3 +390,39 @@ notes: Found by CURRICULUM CRITIC reviewing URD-038, which explicitly
   itself unverified — check it against the real word corpus the way
   URD-038 did before writing anything, rather than assuming the same split
   applies.
+
+## URD-054 — letterForm asks a learner to tell apart two glyphs that are pixel-identical for non-connecting letters
+attempts: 0
+files: src/exercises/LetterExercises.tsx, src/data/letters.ts, src/exercises/generator.ts
+definition of done: `LetterFormExercise` shows only the bare glyph
+  `letter.forms[position]` and asks "which position is this?", graded
+  strictly against the one `position` value generated. For the letters
+  where `connects: false` (13 of 40 — `alif`, `re`, `Re`, `baRi-ye`, `daal`
+  and others), `letter.forms.isolated === letter.forms.initial` and
+  `letter.forms.medial === letter.forms.final` as literal identical
+  strings (e.g. `alif`: isolated and initial are both "ا") — a
+  non-connecting letter has only two visually distinct shapes, not four,
+  because it never joins to what follows. A learner shown the `initial`
+  glyph for `alif` sees something pixel-identical to the `isolated` glyph,
+  with no other context to disambiguate, and answering `isolated` is
+  marked flatly wrong. Either accept either visually-identical answer for
+  a non-connector, or stop generating the ambiguous position pairs
+  (isolated vs initial, medial vs final) for a letter whose `connects` is
+  false, asking only the one real distinction (joined vs unjoined) it
+  actually has.
+verify: a test asserting that for every letter with `connects: false`,
+  `letterForm` never generates a question whose correct answer and at
+  least one *other* option in `POSITIONS` are visually identical glyphs
+  for that letter — or, if the chosen fix is "accept either", a test that
+  grading a non-connector's ambiguous pair either way scores correct.
+notes: Found by CURRICULUM CRITIC reviewing URD-041. Pre-existing —
+  confirmed live already in letter-teaching lessons too (e.g. `l-1-2`,
+  "Position practice", built specifically to drill positions, draws
+  `alif` at `final` and `medial`, the identical pair) — not introduced by
+  URD-041, but newly *reachable in review* by that fix: before it, review's
+  one letter slot could never draw `letterForm` at all (see URD-041's own
+  history), so review had zero exposure to this ambiguity; after it, the
+  ambiguous pairing hit 4 of 10 real `letterForm` draws sampled across
+  late-course reviews — roughly the ~32.5% share `connects: false` letters
+  hold of the alphabet. Not blocking URD-041, whose own scope (vary the
+  kind) is otherwise sound and doesn't touch `letters.ts`'s form data.
