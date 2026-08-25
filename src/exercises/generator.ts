@@ -159,6 +159,32 @@ export const LETTER_CONTEXT_WORD: Map<string, Word> = (() => {
   return map;
 })();
 
+/**
+ * URD-045: `LETTER_CONTEXT_WORD`'s sighting used to go through `wordExercise`
+ * like any ordinary vocabulary word — `multipleChoice`/`meaningPick`/
+ * `listenTap`, picture or meaning matching — which a learner answers without
+ * ever looking at the word's script closely enough to find the letter inside
+ * it. This asks directly: tap which tile of the word is the letter just
+ * taught.
+ *
+ * Tiles are the word's own characters, split the same way `wordBuild`'s own
+ * `target` is (`Array.from(word.urdu)`, whitespace dropped) — one base
+ * codepoint per letter, per URD-021 — but never shuffled: this is "find it
+ * where the word actually put it," not a build, so scrambling the tiles
+ * would erase the one thing being asked about.
+ *
+ * `letter.forms.isolated` is one base Unicode codepoint per letter (see
+ * `connector`/`nonConnector`, `data/letters.ts`), so `tiles[i] ===
+ * letter.forms.isolated` identifies every tile that really is this letter,
+ * unambiguously — no other letter shares that codepoint. A word with more
+ * than one occurrence of the taught letter (rare, not excluded) has more
+ * than one right answer; the component grades any of them as correct.
+ */
+function letterSpotExercise(letter: Letter, word: Word): Exercise {
+  const tiles = Array.from(word.urdu).filter((c) => c.trim().length > 0);
+  return { kind: 'letterSpot', letter, word, tiles };
+}
+
 // ---- per-item exercise builders -----------------------------------------
 
 /**
@@ -1262,7 +1288,7 @@ export function buildLessonExercises(
         if (round === contextRound(idx)) {
           const w = LETTER_CONTEXT_WORD.get(l.id);
           if (w) {
-            exercises.push(wordExercise(w, poolFor(w), track, 'meet', 0));
+            exercises.push(letterSpotExercise(l, w));
             return;
           }
         }
@@ -1274,7 +1300,7 @@ export function buildLessonExercises(
       if (tailRound === contextRound(idx)) {
         const w = LETTER_CONTEXT_WORD.get(l.id);
         if (w) {
-          exercises.push(wordExercise(w, poolFor(w), track, 'meet', 0));
+          exercises.push(letterSpotExercise(l, w));
           pushedContext = true;
         }
       }
@@ -2128,6 +2154,7 @@ export function itemsOf(ex: Exercise): ItemRef[] {
     case 'letterForm':
     case 'letterPick':
     case 'letterTrace':
+    case 'letterSpot':
       return [{ id: ex.letter.id, type: 'letter' }];
     case 'multipleChoice':
     case 'meaningPick':

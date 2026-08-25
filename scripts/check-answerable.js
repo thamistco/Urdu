@@ -249,6 +249,14 @@ function check(ex, track) {
       if (roman) fail('script exercise on the Roman track', `${ex.kind} ${ex.letter.id}`);
       break;
 
+    case 'letterSpot':
+      if (roman) fail('script exercise on the Roman track', `letterSpot ${ex.letter.id}`);
+      // The letter being asked about must actually be among the tiles, or the
+      // question has no right answer on screen at all.
+      if (!ex.tiles.includes(ex.letter.forms.isolated))
+        fail('letterSpot asks about a letter missing from its own tiles', `${ex.letter.id} — ${ex.word.id}`);
+      break;
+
     case 'reading':
       if (!ex.passage.question.options.includes(ex.passage.question.answer))
         fail('passage answer is not among its options', ex.passage.id);
