@@ -1687,18 +1687,30 @@ export function buildLessonExercises(
     /**
      * URD-040: one exercise per grammar concept this review's own unit
      * taught (see `unitConcepts` above) — the fix itself, not just budget
-     * for it. `c.drills` is hand-authored, specific fill-in-the-blank
-     * content, not interchangeable, so this asks for the first one that
-     * actually renders on the current track rather than always the first
-     * drill outright: `grammarDrillExercise` returns `undefined` on the
-     * Roman track for a drill whose options don't fully transliterate (see
-     * its own doc comment, URD-035), and a concept can have more than one
-     * drill to fall back through before conceding none of them do.
+     * for it.
+     *
+     * CURRICULUM CRITIC: a first version always asked for `c.drills[0]`
+     * (falling back through the rest only if it failed to render) — every
+     * replay of the same review showing the identical prompt, blank and
+     * correct answer, forever. Exactly the staleness URD-039 (the item just
+     * before this one, chained onto the same `visit` counter) exists to
+     * kill for the word/letter side; a concept with more than one drill
+     * (`g-to-be` has 3) would let a learner stop reasoning about the
+     * concept and start recalling "the answer to this exact screen is
+     * ہوں". Rotating the start point by `visit` — still falling back
+     * through the rest of `c.drills` in rotated order, since a concept can
+     * have a drill that only renders on some tracks (`grammarDrillExercise`
+     * returns `undefined` on Roman for a drill whose options don't fully
+     * transliterate, URD-035) — cycles through every real drill across
+     * replays instead of pinning one forever, the same fix in spirit as
+     * `prioritizedPool`'s per-visit seed.
      */
     for (const conceptId of unitConcepts) {
       const c = getGrammar(conceptId);
       if (!c) continue;
-      const ex = c.drills.map((d) => grammarDrillExercise(c, d, track)).find((e): e is Exercise => !!e);
+      const start = c.drills.length ? visit % c.drills.length : 0;
+      const rotated = [...c.drills.slice(start), ...c.drills.slice(0, start)];
+      const ex = rotated.map((d) => grammarDrillExercise(c, d, track)).find((e): e is Exercise => !!e);
       if (ex) exercises.push(ex);
     }
   }

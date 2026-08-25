@@ -1056,4 +1056,47 @@ describe('URD-040: a review touches the grammar concept(s) its own unit taught',
       expect(exercises.length).toBe(lesson.size);
     }
   });
+
+  it('CURRICULUM CRITIC: which drill a concept surfaces rotates across replays, not the same one forever', () => {
+    // g-to-be has 3 real drills — a first version of this fix always asked
+    // for c.drills[0], so every replay of rev-saying-who-you-are showed the
+    // literal same prompt/blank/answer for g-to-be, forever: a learner
+    // stops reasoning about the concept and starts recalling "the answer to
+    // this exact screen". Threading `visit` (URD-039's replay counter, this
+    // branch's own base) through the drill pick fixes it the same way
+    // URD-039 fixed the identical staleness for words/letters.
+    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const drillIdsFor = (visit: number) => {
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set(), visit);
+      return exercises
+        .filter((e) => e.kind === 'grammarDrill')
+        .filter((e) => e.concept.id === 'g-to-be')
+        .map((e) => e.drill.id);
+    };
+    const seenAcrossVisits = new Set(Array.from({ length: 6 }, (_, visit) => drillIdsFor(visit).join(',')));
+    expect(seenAcrossVisits.size).toBeGreaterThan(1);
+  });
+
+  it('the same visit reproduces the identical drill pick — a rotation, not fresh randomness on every render', () => {
+    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const pickAt = (visit: number) =>
+      buildLessonExercises(lesson, [], 'both', new Set(), visit)
+        .filter((e) => e.kind === 'grammarDrill')
+        .map((e) => e.drill.id);
+    expect(pickAt(2)).toEqual(pickAt(2));
+  });
+
+  it('defaults to visit 0 when omitted, matching every pre-URD-040 caller', () => {
+    // A full exercise-array comparison isn't meaningful here: distractor
+    // selection elsewhere in this file draws on unseeded `Math.random`
+    // (`rand`, top of this file), so two calls with identical arguments
+    // already differ in ways unrelated to `visit`. The drill *pick* itself
+    // is what `visit` controls, so that's what omitting it should match.
+    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const drillIds = (exercises: ReturnType<typeof buildLessonExercises>) =>
+      exercises.filter((e) => e.kind === 'grammarDrill').map((e) => `${e.concept.id}:${e.drill.id}`);
+    const withDefault = drillIds(buildLessonExercises(lesson, [], 'both'));
+    const explicit0 = drillIds(buildLessonExercises(lesson, [], 'both', new Set(), 0));
+    expect(withDefault).toEqual(explicit0);
+  });
 });
