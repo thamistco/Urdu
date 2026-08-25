@@ -23,6 +23,7 @@ import {
   taughtUpTo,
   taughtInUnit,
   taughtConceptsUpTo,
+  conceptsInUnit,
   reviewLetterShare,
 } from '../lib/review';
 import { Exercise, ItemRef } from './types';
@@ -1567,9 +1568,25 @@ export function buildLessonExercises(
     // did — a due letter and an unrelated due word for the same string looking
     // like a duplicate of each other.
     const key = (r: ItemRef) => `${r.type}:${r.id}`;
+    /**
+     * URD-040: grammar concept(s) this review's own unit taught, if any —
+     * see `conceptsInUnit`'s doc comment. Reserved out of `lesson.size` up
+     * front, the same "cap before, don't trim after" principle the letter/
+     * word split above already follows: appending a concept exercise after
+     * `refs` had already claimed every slot would leave it to the trailing
+     * `.slice(0, lesson.size)` far below, which cuts from the end and would
+     * silently drop exactly the exercise this fix exists to add. `.length`
+     * is 0 for most units (grammar teaching clusters early in the course,
+     * same as letters) and never above 2 for any unit measured — a rounding
+     * error against a review's floor of 22, not a meaningful bite out of the
+     * vocabulary review this budget used to be spent entirely on.
+     */
+    const unitConcepts = conceptsInUnit(lesson.id);
+    const conceptBudget = unitConcepts.length;
+    const refSize = Math.max(0, lesson.size - conceptBudget);
     const due = reviewRefs.filter(resolvable);
     const seenIds = new Set(due.map(key));
-    const filler = fallbackReviewRefs(lesson.size, teachesScript, lesson.id, known, visit)
+    const filler = fallbackReviewRefs(refSize, teachesScript, lesson.id, known, visit)
       .filter((r) => !seenIds.has(key(r)))
       .filter(resolvable);
     const refs = [...due, ...filler];
@@ -1594,14 +1611,14 @@ export function buildLessonExercises(
      * this early and is the same "more topping up, not less" principle the due
      * queue itself is built on.
      */
-    if (refs.length < lesson.size) {
+    if (refs.length < refSize) {
       const have = new Set(refs.map(key));
-      const more = fallbackReviewRefs(lesson.size * 2, false, lesson.id, known, visit)
+      const more = fallbackReviewRefs(refSize * 2, false, lesson.id, known, visit)
         .filter((r) => !have.has(key(r)))
         .filter(resolvable);
-      refs.push(...more.slice(0, lesson.size - refs.length));
+      refs.push(...more.slice(0, refSize - refs.length));
     }
-    refs.length = Math.min(refs.length, lesson.size);
+    refs.length = Math.min(refs.length, refSize);
 
     // Counts words only, separately from `i` (which also counts letters).
     // THE CRITIC, URD-018: the turn used to be `i % 4` directly, and
@@ -1666,6 +1683,24 @@ export function buildLessonExercises(
         else if (w) exercises.push(wordExercise(w, poolFor(w), track, 'recall'));
       }
     });
+
+    /**
+     * URD-040: one exercise per grammar concept this review's own unit
+     * taught (see `unitConcepts` above) — the fix itself, not just budget
+     * for it. `c.drills` is hand-authored, specific fill-in-the-blank
+     * content, not interchangeable, so this asks for the first one that
+     * actually renders on the current track rather than always the first
+     * drill outright: `grammarDrillExercise` returns `undefined` on the
+     * Roman track for a drill whose options don't fully transliterate (see
+     * its own doc comment, URD-035), and a concept can have more than one
+     * drill to fall back through before conceding none of them do.
+     */
+    for (const conceptId of unitConcepts) {
+      const c = getGrammar(conceptId);
+      if (!c) continue;
+      const ex = c.drills.map((d) => grammarDrillExercise(c, d, track)).find((e): e is Exercise => !!e);
+      if (ex) exercises.push(ex);
+    }
   }
 
   // Weave up to two due review items in near the front of a normal lesson.

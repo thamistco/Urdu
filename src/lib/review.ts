@@ -51,6 +51,36 @@ export function taughtInUnit(lessonId: string): TaughtPool | null {
 }
 
 /**
+ * Grammar concept ids taught by a `G(...)` lesson in the same unit as
+ * `lessonId` — the grammar-side equivalent of `taughtInUnit`'s letters and
+ * words.
+ *
+ * URD-040: a review only ever drew on `taughtInUnit`'s vocabulary, never on
+ * the grammar concept(s) its own unit's grammar lesson(s) taught — even
+ * though a review exists to consolidate everything the unit covered.
+ * rev-saying-who-you-are (u4, "Saying Who You Are") drew its entire review
+ * from `V('rooms')`/`V('adjectives')` and never once touched `g-pronouns`
+ * or `g-to-be`, the two concepts the unit is organized around and named
+ * for.
+ *
+ * `[]`, not an error, for a unit with no grammar lesson of its own — the
+ * common case, since grammar teaching clusters early in the course the same
+ * way letters do (measured: at most 2 concepts in any one unit, most units
+ * past the first several have 0). Also `[]` for a lesson id placed in no
+ * unit at all, matching `taughtInUnit`'s own `null`-for-letters-and-words
+ * rule applied to a plain array instead.
+ */
+export function conceptsInUnit(lessonId: string): readonly string[] {
+  const unit = UNITS.find((u) => u.lessons.some((l) => l.id === lessonId));
+  if (!unit) return [];
+  const concepts = new Set<string>();
+  for (const l of unit.lessons) {
+    if (l.kind === 'grammar' && l.conceptId) concepts.add(l.conceptId);
+  }
+  return [...concepts];
+}
+
+/**
  * What the path has actually taught by the time a given lesson is reached —
  * every letter and word introduced strictly before it, course-wide.
  *
