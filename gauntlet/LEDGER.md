@@ -4754,3 +4754,102 @@ $ npm run check:all
   like, not a regression.
 
 branch: claude/gauntlet-review-letter-position-rotation
+
+## CLAIMED · URD-042 · 2026-08-25T17:23Z
+files: src/lib/review.ts, src/exercises/generator.ts
+branch: claude/gauntlet-review-letter-coverage, cut from
+claude/gauntlet-review-letter-position-rotation after URD-041 shipped.
+
+## CRITIQUE · URD-042
+Dispatched THE CRITIC (real generator/review-pipeline code) and
+CURRICULUM CRITIC (this item's own discoverer, reviewing URD-017 —
+whether the alphabet is actually retained across the course is
+squarely curriculum-severity).
+
+Real findings from both, across two rounds, all fixed and
+independently re-verified — not taken on faith at any point.
+
+**Round 1.** CURRICULUM CRITIC verified the core coverage claim
+directly (40/40 letters, matching the fix's own measurement) and
+found one MAJOR: the "assigned coverage letter" was forced to the
+front of `reviewLetterPool`'s output unconditionally on every visit —
+with `letterCount === 1` (the norm from about u14 on, URD-017), that
+froze 40 of 41 reviews to one single letter forever, for every
+replay, silently reintroducing URD-039's own repeat-visit-staleness
+bug on the letter axis. Reproduced live: `rev-together` drew `daal`
+and only `daal` across 6 sampled visits.
+
+THE CRITIC (same round) independently confirmed the coverage claim
+and the known-restriction invariant, then found a second, different
+MAJOR: two new tests meant to pin the known-restriction guard both
+targeted `rev-the-wider-world` — the one review lesson (of 41) with
+no coverage assignment at all — so the guard they claimed to test was
+never actually exercised. Proved this by injecting the exact bug
+(removing the `pool.includes(assigned)` check) and watching both
+tests still pass.
+
+Both fixed: the force is now gated on `visit === 0` (a learner playing
+the course straight through still meets every letter once; every
+later visit returns to the normal rotation); both tests retargeted to
+sweep every real review instead of one hardcoded lesson.
+
+**Round 2** (THE CRITIC re-dispatched specifically to verify round
+1's two fixes): confirmed both genuinely resolved by direct
+re-execution — `rev-together`/`rev-the-modern-world` now vary across
+visits while the visit=0 full-course sweep stays 40/40; the
+retargeted tests, with the exact bug reintroduced, now fail and name
+`rev-first-faces` (an assigned review), not `rev-the-wider-world`.
+Found one new MINOR: `generator.test.ts`'s retargeted test lacked the
+empty-taught-words guard `review.test.ts`'s sibling test already has
+for the same edge case (inert against today's real content — no
+review currently has zero taught words at its position — but a
+latent false-failure risk against a future content change). Fixed:
+added the identical guard.
+
+CURRICULUM CRITIC's own remaining observations, recorded but not
+acted on: the deterministic once-per-course assignment has no
+curricular logic behind *which* review reinforces *which* letter
+(a pure fixed-shuffle artifact) — defensible for reinforcement
+content, not new instruction, but worth naming; two of the
+latest-taught letters (`do-chashmi-he`, `noon-ghunna`) land their
+guarantee in the final 2 of 41 reviews, under-protecting exactly the
+hardest-taught letters against ordinary learner attrition; the 40/40
+guarantee is a clean-room ("nothing due") measurement, weaker in
+practice once real due-queue content competes for the same filler
+slots. None blocking — real, worth a future look, not required by
+this item's own definition of done.
+
+THE CRITIC's own informational note: the claim-queue algorithm is
+tight (exactly one review of slack — 32 unclaimed letters absorbed by
+32 fully-eligible reviews) given today's course shape; fragile to a
+future content edit, but the sweep test that already exists would
+catch a regression there directly.
+
+## PASSED · URD-042 · 2026-08-25T17:53Z
+Every fix verified as a real regression its own test catches: reverted
+the relevant code alone (keeping each new/retargeted test) for the
+visit-staleness fix, the vacuous-test retargeting, and (via THE
+CRITIC's own re-review) the guard-symmetry fix; each failed with the
+exact shape its critic named; restored and reconfirmed clean.
+
+$ npx vitest run
+  206/206 (200 + 6 new/reworked).
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npm run check:srs / check:answerable / check:shape / check:order /
+  check:coverage
+  no new problems, rerun individually after each fix round.
+
+$ npm run check:all
+  first full run (this item's own, separate from a concurrent
+  subagent check:all mid-review) failed once at check:path with an
+  ENOENT on dist/index.html — a second, independent check:all
+  (THE CRITIC's own verification run) rebuilding the same shared
+  dist/ directory at the same moment, the identical race class
+  already noted in URD-041's own ledger entry, not a defect in this
+  item. A clean standalone run afterward, and a final fresh run
+  covering the last symmetry-fix commit, both passed all 30 steps.
+
+branch: claude/gauntlet-review-letter-coverage
