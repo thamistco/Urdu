@@ -270,7 +270,7 @@ export const LETTERS: Letter[] = [
     meaning: 'a little',
     emoji: '🤏',
     group: 3,
-    note: 'Daal with one dot above. One of three “z” spellings inherited from Arabic/Persian, not Urdu’s everyday “z” (that’s ز, ze): anchor it to this word, ذرا (zara, “a little”), rather than guessing.',
+    note: 'Daal with one dot above. One of three “z” spellings inherited from Arabic/Persian, not Urdu’s everyday “z” (that’s ز, ze): anchor it to the word this lesson actually shows it in, کاغذ (kaaghaz, “paper”), rather than guessing.',
     confusableWith: 'daal',
   },
   {
@@ -311,7 +311,7 @@ export const LETTERS: Letter[] = [
     meaning: 'earth / land',
     emoji: '🌍',
     group: 3,
-    note: 'Re with one dot above. The everyday “z”, the one to reach for by default in native and Persian vocabulary alike (زندگی/zindagi “life”, بازار/bazaar “market”). ذ ض ظ, not this, are the three reserved for words borrowed from Arabic.',
+    note: 'Re with one dot above. The everyday “z”, the one to reach for by default in native and Persian vocabulary alike (زندگی/zindagi “life”, بازار/bazaar “market”), and in most Arabic loanwords too. ذ ض ظ never occur outside a handful of Arabic/Persian loanwords, so seeing one of those three does mean “borrowed”, but seeing this one doesn’t rule borrowing out.',
     confusableWith: 're',
   },
   {
@@ -381,7 +381,7 @@ export const LETTERS: Letter[] = [
     meaning: 'multiply / strike',
     emoji: '✖️',
     group: 4,
-    note: 'Swaad with one dot above. One of three “z” spellings inherited from Arabic/Persian, not Urdu’s everyday “z” (that’s ز, ze): anchor it to this word, ضرب (zarb, “multiply/strike”), rather than guessing.',
+    note: 'Swaad with one dot above. One of three “z” spellings inherited from Arabic/Persian, not Urdu’s everyday “z” (that’s ز, ze): anchor it to the word this lesson actually shows it in, ضرورت (zaroorat, “necessity”), rather than guessing.',
     confusableWith: 'swaad',
   },
 
@@ -410,7 +410,7 @@ export const LETTERS: Letter[] = [
     meaning: 'vessel',
     emoji: '🏺',
     group: 5,
-    note: 'To’e with one dot above. One of three “z” spellings inherited from Arabic/Persian, not Urdu’s everyday “z” (that’s ز, ze): anchor it to this word, ظرف (zarf, “vessel”), rather than guessing.',
+    note: 'To’e with one dot above. One of three “z” spellings inherited from Arabic/Persian, not Urdu’s everyday “z” (that’s ز, ze): anchor it to the word this lesson actually shows it in, منظر (manzar, “scene/view”), rather than guessing.',
     confusableWith: 'toe',
   },
   {
