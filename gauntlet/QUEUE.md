@@ -36,43 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-041 — A review's one letter slot always lands on the same position, and so always the same exercise kind
-attempts: 0
-files: src/exercises/generator.ts
-definition of done: `letterExerciseAt(letter, turn, positionIndex)` picks
-  `letterTrace` whenever `turn % 3 === 0` and a glyph mask exists — true for
-  every glyph sampled. `buildLessonExercises`'s review branch calls
-  `letterExerciseAt(l, i, i)` where `i` is the item's index within `refs`
-  (due items first, then the interleaved fallback); the fallback's own
-  interleave (`fallbackReviewRefs`) always places its first letter at index
-  0 of the mixed array. So whenever a review has no letters due (the common
-  case from about u14 on, now that URD-017 usually reserves exactly one
-  letter slot) that slot lands at `i=0` and is `letterTrace`, every time,
-  never `letterForm` or `letterPick`. Measured directly on real generated
-  reviews with nothing due: u14 through u39 (26 straight reviews) all draw
-  `letterTrace` and only `letterTrace` for their one letter question.
-  `letterForm` — the joining-position drill the app is specifically built
-  around — never appears in that entire stretch. Vary the position (and so
-  the kind) a lone review letter lands on, rather than letting it be
-  whatever a fixed loop index happens to produce.
-verify: a test that builds several real late-course reviews (u14+) with
-  nothing due and asserts the letter exercise kinds drawn are not identical
-  across all of them.
-notes: Found independently from two angles reviewing URD-017: THE CRITIC
-  (MINOR) — "the sole letter exercise lands in the same relative position
-  every time, once letterCount is 1" — and CURRICULUM CRITIC (MAJOR,
-  curriculum severity) — "the one letter slot late-course is spent entirely
-  on tracing, never on the app's own core position-form skill." Same root
-  cause (turn/positionIndex tied to a loop index that stopped varying once
-  URD-017 shrank the typical letter count to ~1), described from two
-  different angles — filed as one item rather than two. Pre-existing
-  selection logic (`letterExerciseAt`), made into the dominant outcome
-  rather than one of several by URD-017 lowering the letter count that
-  used to cycle through positions 0, 2, 4... and so through all three
-  kinds. Not blocking — nothing crashes or answers incorrectly, and
-  `letterTrace` is itself a legitimate exercise kind, just no longer one of
-  three.
-
 ## URD-042 — Half the alphabet gets no review exposure across the back two-thirds of the course
 attempts: 0
 files: src/lib/review.ts, src/exercises/generator.ts
