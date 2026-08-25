@@ -1006,3 +1006,54 @@ describe('URD-035: a grammarDrill exercise carries romanOptions on every track, 
     }
   });
 });
+
+describe('URD-040: a review touches the grammar concept(s) its own unit taught', () => {
+  it('rev-saying-who-you-are (u4) asks about both g-pronouns and g-to-be, the concepts the unit is named for and organized around', () => {
+    // The item's own measured example: this review used to draw entirely
+    // from V('rooms')/V('adjectives') and never once touch either concept.
+    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const exercises = buildLessonExercises(lesson, [], 'both');
+    const seen = new Set(exercises.filter((e) => e.kind === 'grammarDrill').map((e) => e.concept.id));
+    expect(seen).toEqual(new Set(['g-pronouns', 'g-to-be']));
+  });
+
+  it('every unit review touches every grammar concept its own unit taught, on every track', () => {
+    let unitsWithConcepts = 0;
+    for (const u of UNITS) {
+      const reviewLesson = u.lessons.find((l) => l.kind === 'review');
+      if (!reviewLesson) continue;
+      const unitConcepts = new Set(
+        u.lessons.filter((l) => l.kind === 'grammar' && l.conceptId).map((l) => l.conceptId as string)
+      );
+      if (unitConcepts.size === 0) continue; // most units teach no grammar concept of their own
+      unitsWithConcepts++;
+      for (const track of ['script', 'both', 'roman'] as const) {
+        const exercises = buildLessonExercises(reviewLesson, [], track);
+        const seen = new Set(exercises.filter((e) => e.kind === 'grammarDrill').map((e) => e.concept.id));
+        expect(seen, `${reviewLesson.id} (${track})`).toEqual(unitConcepts);
+      }
+    }
+    expect(unitsWithConcepts, 'expected at least one real unit with a grammar concept to sample').toBeGreaterThan(0);
+  });
+
+  it("does not grow a review's total exercise count -- the concept exercise(s) are budgeted out of the existing size, not appended past it", () => {
+    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const exercises = buildLessonExercises(lesson, [], 'both');
+    expect(exercises.length).toBe(lesson.size);
+  });
+
+  it('leaves a review with no grammar concept of its own unaffected', () => {
+    const reviewsWithNoConcept = UNITS.filter((u) => u.lessons.every((l) => l.kind !== 'grammar')).flatMap((u) =>
+      u.lessons.filter((l) => l.kind === 'review')
+    );
+    expect(reviewsWithNoConcept.length).toBeGreaterThan(0);
+    for (const lesson of reviewsWithNoConcept) {
+      const exercises = buildLessonExercises(lesson, [], 'both');
+      expect(
+        exercises.some((e) => e.kind === 'grammarDrill'),
+        lesson.id
+      ).toBe(false);
+      expect(exercises.length).toBe(lesson.size);
+    }
+  });
+});
