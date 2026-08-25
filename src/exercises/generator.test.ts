@@ -832,6 +832,34 @@ describe('URD-022: visually confusable letters are not drilled back to back', ()
       expect(found, `${l.id}: expected exactly ${expected} forced adjacencies, found ${found}`).toBe(expected);
     }
   });
+
+  it('no two round-boundary confusable-pair occurrences involve the identical two specific letters twice', () => {
+    // URD-046: the item's own verify text, applied directly. Before this
+    // fix, `l-3` (the only real lesson with a forced adjacency) showed
+    // `zhe` then `re` at every one of its 4 wrap transitions — reinforcing
+    // the identical two letters repeatedly, a worse version of the risk
+    // `separateConfusables` exists to reduce than hitting different pairs
+    // once each would be. Checked as an *unordered* pair — "re then zhe"
+    // reversed is still the identical two letters, not a different one.
+    let checkedARealForcedCase = false;
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      const ids = exercises.map((e) => letterIdOf(e, l));
+      const pairKeys: string[] = [];
+      for (let i = 0; i < ids.length - 1; i++) {
+        if (bucketKeyOf(ids[i]) === bucketKeyOf(ids[i + 1]) && ids[i] !== ids[i + 1]) {
+          pairKeys.push([ids[i], ids[i + 1]].sort().join(','));
+        }
+      }
+      if (pairKeys.length === 0) continue; // no forced adjacency in this lesson at all
+      if (pairKeys.length > 1) checkedARealForcedCase = true;
+      expect(new Set(pairKeys).size, `${l.id}: ${JSON.stringify(pairKeys)}`).toBe(pairKeys.length);
+    }
+    // Sanity-check this test actually exercised a real repeated-adjacency
+    // case (l-3, today) and didn't just pass vacuously against lessons with
+    // zero or one forced collision, where uniqueness is trivial.
+    expect(checkedARealForcedCase, 'no lesson with more than one forced adjacency was found to check').toBe(true);
+  });
 });
 
 describe('URD-023/URD-A02: a phrases lesson always draws enough typeable phrases to clear the share floor', () => {

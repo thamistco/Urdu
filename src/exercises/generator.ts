@@ -484,36 +484,54 @@ function letterExerciseAt(letter: Letter, turn: number, positionIndex: number): 
  * endpoints. A different arrangement that didn't use both endpoints for
  * this bucket would have fewer than 4 non-adjacent slots available to it,
  * which isn't enough room for 4 letters.) So `l-3`'s wrap always pairs two
- * `re`-family letters, every single round transition — 5 times over the
- * lesson's 6 rounds, not once. A first version of this comment claimed
- * "one unavoidable pair" — true of a single linear pass, false of what the
- * lesson actually plays, and CURRICULUM CRITIC caught the gap by running
- * the real generator output rather than trusting this reasoning in
- * isolation. Measured directly on `l-3`'s real 42-exercise output: exactly
- * 5 occurrences, every one `zhe` then `re`, zero anywhere else in this
- * lesson and zero anywhere in any other real letter lesson — still a large
- * improvement on the pre-fix baseline (raw `letterIds` order put 5 pairs
- * of confusable letters back to back *within a single round*, so 30 across
- * `l-3`'s 6 rounds), just not the perfect elimination first claimed.
+ * `re`-family letters — measured directly on the real 42-exercise output
+ * (re-measured for URD-046, not assumed from an older count: URD-043's
+ * later letter-major tail restructuring changed how many of the lesson's
+ * passes are actually round-major, so a stale figure here would be exactly
+ * the kind of assumption this file's own history warns against): 4
+ * occurrences, every one `zhe` then `re`, at the three transitions between
+ * this function's own round-major passes (rounds 0→1, 1→2, 2→3) plus one
+ * more where the round-major portion hands off to the separate letter-major
+ * tail pass — still a large improvement on the pre-fix baseline (raw
+ * `letterIds` order put 5 pairs of confusable letters back to back *within
+ * a single round*, so 30 across `l-3`'s 6 rounds).
  *
- * Varying the order round to round instead of reusing one fixed order was
- * considered, to at least spread *which* two letters collide at the wrap
- * rather than repeating the identical pair five times. Rejected for now:
- * `turn`/`position` below are computed from each letter's index in this
- * array added to the round number, which only cycles cleanly through
- * `letterExerciseAt`'s three kinds if a given letter keeps the same index
- * every round — varying the order would decouple a letter's own sighting
- * count from its position, reopening the exact kind-repetition and
- * sibling-collision bugs the extensive commentary two functions below this
- * one already went through several rounds to fix. Filed forward instead
- * (see queue) rather than risking that regression under this item's scope.
+ * URD-046: the three round-major transitions above showed the *identical*
+ * pair every time — reinforcing `zhe`/`re` specifically, three times over,
+ * is a worse version of the risk this function exists to reduce than
+ * hitting three different pairs once each would be. `rotation` (default 0,
+ * so every existing caller is unaffected) rotates each bucket's own member
+ * order (by `rotation % (bucket.length - 1)`, not `% bucket.length` — see
+ * the rotation code below for why that one-shorter period is what actually
+ * spreads the wrap across different pairs rather than alternating between
+ * two) before slotting members into that bucket's positions — still the
+ * *same fixed position-set* per bucket (`{0,2,4,6}` for the largest,
+ * `{1,3,5}` for the next, and so on), so the "zero internal adjacency"
+ * property above is untouched: those positions are mutually non-adjacent
+ * regardless of which specific member fills each. Only *which letter* ends
+ * up at the array's two endpoints (and so, which letter's exercise is
+ * adjacent to the next round's first) changes.
+ *
+ * This does NOT touch `turn`/`position` stability. Those are computed from
+ * a letter's *identity* index — its position in the round-0 call, looked
+ * up once via a fixed id→index map built from that single call — never
+ * from where a rotated call happens to place it. A letter's own sighting
+ * count and kind-cycle stay exactly as before; only the *visiting order*
+ * within a round varies, which is all a wrap-adjacency depends on. An
+ * earlier version of this comment rejected varying the order at all,
+ * reasoning that any reordering would need to double as the identity index
+ * and so reopen the kind-repetition/sibling-collision bugs the two
+ * functions below this one already fought through several rounds to fix —
+ * true only because that version conflated "which order are letters
+ * emitted in this round" with "what is this letter's permanent id," which
+ * do not have to be the same call.
  *
  * Letters with no `confusableWith` and no variant pointing at them sort into
- * their own singleton bucket, so they're placed same as before relative to
- * one another — this only changes order among letters that actually share a
+ * their own singleton bucket, so rotation is a no-op for them (nothing to
+ * rotate) — this only changes order among letters that actually share a
  * bucket.
  */
-function separateConfusables(letters: Letter[]): Letter[] {
+function separateConfusables(letters: Letter[], rotation = 0): Letter[] {
   const buckets = new Map<string, Letter[]>();
   for (const l of letters) {
     const key = l.confusableWith ?? l.id;
@@ -529,7 +547,33 @@ function separateConfusables(letters: Letter[]): Letter[] {
   const result: Letter[] = new Array(n);
   let pos = 0;
   for (const bucket of ordered) {
-    for (const l of bucket) {
+    /**
+     * Rotating by `rotation % bucket.length` directly was tried first and
+     * measured, not assumed correct: on `l-3`'s real 4-member `re`-family
+     * bucket it did stop the wrap from showing the identical pair every
+     * time, but only ever alternated between two pairs (`{zhe,Re}` and
+     * `{re,ze}`), each still twice over the lesson's four wrap transitions
+     * — because comparing round `r`'s *last* slot to round `r+1`'s *first*
+     * slot is always a distance of exactly two rotation-steps apart, and
+     * for an even-sized bucket, two consecutive rotations differing by any
+     * step coprime with the bucket size still lands on a bucket-index
+     * distance that is even, which for a 4-member bucket has only two
+     * possible edges to land on. Rotating by `rotation % (bucket.length -
+     * 1)` instead — a period one shorter than the bucket itself — breaks
+     * that resonance: checked directly against `l-3`'s real output, all
+     * four wrap transitions now land on four different specific pairs
+     * (`{re,zhe}`, `{zhe,ze}`... — recomputed per real run, see
+     * generator.test.ts's own URD-046 assertions for the live numbers).
+     * `Math.max(1, ...)` guards `bucket.length <= 2` (a singleton bucket
+     * needs no rotation at all; a two-member bucket has only one other
+     * arrangement, so a period of 1 just never rotates it — no real letter
+     * lesson has a forced-adjacency bucket that small today, and this
+     * doesn't regress the ones that do have one).
+     */
+    const period = Math.max(1, bucket.length - 1);
+    const offset = (((rotation % period) + period) % period) % bucket.length;
+    const spun = [...bucket.slice(offset), ...bucket.slice(0, offset)];
+    for (const l of spun) {
       result[positions[pos]] = l;
       pos++;
     }
@@ -1183,7 +1227,13 @@ export function buildLessonExercises(
     // where "almost" is doing real work. `siblingIndex`/`turnOffset`/
     // `posOffset` below key off `lesson.letterIds` directly, not this
     // reordered array, so they are unaffected by the reorder.
-    const letters = separateConfusables(lesson.letterIds.map(getLetter).filter(Boolean) as Letter[]);
+    const groupLetters = lesson.letterIds.map(getLetter).filter(Boolean) as Letter[];
+    const letters = separateConfusables(groupLetters);
+    // URD-046: a letter's permanent identity index — used for `turn`/
+    // `position` math, which must stay round-invariant — looked up from
+    // this single, unrotated call, never from a per-round rotated one
+    // below. See `separateConfusables`'s own doc comment.
+    const idxOf = new Map(letters.map((l, i) => [l.id, i]));
     /**
      * Every letter met `SIGHTINGS_PER_LETTER` times, in rounds: round 0 shows
      * every letter once, then round 1 shows every letter again, and so on.
@@ -1393,7 +1443,14 @@ export function buildLessonExercises(
     const tailRound = SIGHTINGS_PER_LETTER - 2;
     const finalRound = SIGHTINGS_PER_LETTER - 1;
     for (let round = 0; round < tailRound; round++) {
-      letters.forEach((l, idx) => {
+      // URD-046: visited in THIS round's own rotated order (varies which
+      // letter sits at the round's two ends, so a forced confusable-bucket
+      // wrap pairs a different two letters at each transition) — but every
+      // letter's `idx` still comes from `idxOf`, the single unrotated call,
+      // so `turn`/`position` are exactly as round-invariant as before.
+      const roundOrder = separateConfusables(groupLetters, round);
+      roundOrder.forEach((l) => {
+        const idx = idxOf.get(l.id)!;
         if (round === contextRound(idx)) {
           const w = LETTER_CONTEXT_WORD.get(l.id);
           if (w) {
