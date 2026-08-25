@@ -4673,3 +4673,84 @@ $ npm run check:all
   on an unmodified rerun.
 
 branch: claude/gauntlet-review-grammar-concepts
+
+## CLAIMED · URD-041 · 2026-08-25T16:44Z
+files: src/exercises/generator.ts
+branch: claude/gauntlet-review-letter-position-rotation, cut from
+claude/gauntlet-review-grammar-concepts after URD-040 shipped.
+
+## CRITIQUE · URD-041
+Dispatched THE CRITIC (real generator code) and CURRICULUM CRITIC
+(this item's own second angle — the one letter slot spent entirely
+on the easy kind, never the app's core position-form skill — is
+squarely curriculum-severity, and this item's own notes name
+CURRICULUM CRITIC as one of its two original discoverers).
+
+Both: no BLOCKING, no MAJOR against this item's own scope. THE
+CRITIC independently re-derived `reviewIndex`'s correctness (a strict
+0..40 sequence across all 41 real review lessons, no duplicates or
+gaps; `practice-review` is the only `kind: 'review'` lesson off-path,
+correctly floored to 0), confirmed `GLYPH_MASKS` is 100% complete
+(160/160 combos) so the fix's period-3 cycle is guaranteed, not
+lucky, and confirmed the coprime-step arithmetic handles large/edge
+`visit` values (tested up to 999999) correctly. CURRICULUM CRITIC
+independently ran the real generator across 28 real u14+ reviews and
+confirmed a clean three-way kind split (10/9/9) replacing the old
+26-for-26 `letterTrace` monoculture, and confirmed both original
+angles (position always fixed; kind always the easy one) are resolved
+by the same root-cause fix, not just one.
+
+CURRICULUM CRITIC found one real MAJOR — pre-existing, not introduced
+by this item, but newly *reachable in review* because of it:
+`letterForm` is ambiguous for the 13 of 40 `connects: false` letters
+(isolated/initial and medial/final glyphs are literally identical
+strings for a non-connector, e.g. `alif`), and review's one letter
+slot could never draw `letterForm` at all before this fix, so review
+had zero exposure to the ambiguity — after it, roughly 4 of 10 real
+`letterForm` draws hit exactly this pairing. Filed forward as
+**URD-054** rather than fixed here: it touches `letters.ts`'s form
+data model and `LetterExercises.tsx`'s grading, well outside this
+item's own scope (vary the kind, not the form data). THE CRITIC
+independently confirmed the same finding and concurred with scoping
+it out, cross-referencing URD-054 explicitly.
+
+THE CRITIC also caught one MINOR housekeeping issue: a stray
+untracked `verify041.js` (a debug harness left in the repo root
+during this round's investigation) broke `format:check`/`check:all`
+until deleted — confirmed by direct reproduction both ways. Deleted
+before the final `check:all` run below.
+
+## PASSED · URD-041 · 2026-08-25T17:21Z
+Confirmed the fix is a real regression its own tests catch: reverted
+generator.ts alone (keeping the two most targeted new tests), both
+failed with "expected 1 to be greater than 1" — the exact
+single-kind collapse the item names; restored and reconfirmed clean.
+
+$ npx vitest run src/exercises/generator.test.ts
+  62/62 passed (59 + 3 new).
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean (after deleting the stray verify041.js noted above).
+
+$ npx vitest run
+  200/200 (197 + 3 new).
+
+$ npm run check:srs / check:answerable / check:shape / check:order /
+  check:coverage
+  no new problems, rerun individually.
+
+$ npm run check:all
+  A first full run failed once at check:path with an ENOENT on
+  dist/index.html — investigated rather than assumed: the process
+  tree showed a second, concurrent `npm run check:all` invocation
+  (started by THE CRITIC's own subagent, independently verifying this
+  same fix) rebuilding the same shared `dist/` directory at the same
+  moment — a real race between two independent check:all runs on
+  shared build output, not a defect in this item's own change. Two
+  separate clean full runs afterward (THE CRITIC's own, and a second
+  one run standalone here with nothing else touching `dist/`
+  concurrently) both passed all 30 steps, check:path included
+  (81/81) — confirming the ENOENT was exactly the race it looked
+  like, not a regression.
+
+branch: claude/gauntlet-review-letter-position-rotation
