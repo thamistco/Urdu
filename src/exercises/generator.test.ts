@@ -4,6 +4,7 @@ import {
   buildLessonExercises,
   distractLetters,
   distractorsFor,
+  itemsOf,
   LETTER_CONTEXT_WORD,
   OPTIONS_PER_QUESTION,
   soundsOverlap,
@@ -16,6 +17,7 @@ import { VERDICT_CUES, cueOf } from '../data/art';
 import { GRAMMAR } from '../data/grammar';
 import { SENTENCES } from '../data/sentences';
 import { romanAll } from '../lib/translit';
+import { taughtUpTo } from '../lib/review';
 
 /** Letter-type exercise kinds, as opposed to everything else a review can ask. */
 const LETTER_KINDS = new Set(['letterForm', 'letterPick', 'letterTrace']);
@@ -1055,6 +1057,47 @@ describe('URD-040: a review touches the grammar concept(s) its own unit taught',
       ).toBe(false);
       expect(exercises.length).toBe(lesson.size);
     }
+  });
+
+  it('THE CRITIC (BLOCKING): a due queue that already fills the review never loses a due item to make room for the grammar concept', () => {
+    // A first version reserved the concept budget by shrinking the pool
+    // `due` itself was capped against, so a due queue at exactly
+    // `dueBudget`'s own promised size (the ordinary case, not an edge one)
+    // silently lost its last `conceptBudget` items — real, scheduler-
+    // flagged material — to make room for a grammarDrill that isn't even
+    // SRS-gradable. Reproduced live pre-fix: a full 22-item due queue for
+    // rev-saying-who-you-are dropped two due words.
+    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const taught = taughtUpTo(lesson.id).words;
+    const due = taught.slice(0, lesson.size).map((id) => ({ id, type: 'word' as const }));
+    const known = new Set(taught);
+    const exercises = buildLessonExercises(lesson, due, 'both', known);
+    const actuallyProduced = new Set(exercises.flatMap((e) => itemsOf(e)).map((r) => r.id));
+    expect(
+      due.every((d) => actuallyProduced.has(d.id)),
+      'every due item must survive'
+    ).toBe(true);
+    // A fully-saturated due queue leaves no guaranteed room, so the concept
+    // exercise is the one that gracefully doesn't fit this visit — not a
+    // silent violation of `lesson.size`, and not a dropped due item.
+    expect(exercises.length).toBe(lesson.size);
+    expect(exercises.some((e) => e.kind === 'grammarDrill')).toBe(false);
+  });
+
+  it('still surfaces the grammar concept(s) when the due queue leaves genuine room', () => {
+    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const taught = taughtUpTo(lesson.id).words;
+    const due = taught.slice(0, lesson.size - 5).map((id) => ({ id, type: 'word' as const }));
+    const known = new Set(taught);
+    const exercises = buildLessonExercises(lesson, due, 'both', known);
+    const actuallyProduced = new Set(exercises.flatMap((e) => itemsOf(e)).map((r) => r.id));
+    expect(
+      due.every((d) => actuallyProduced.has(d.id)),
+      'every due item must survive'
+    ).toBe(true);
+    const seen = new Set(exercises.filter((e) => e.kind === 'grammarDrill').map((e) => e.concept.id));
+    expect(seen).toEqual(new Set(['g-pronouns', 'g-to-be']));
+    expect(exercises.length).toBe(lesson.size);
   });
 
   it('CURRICULUM CRITIC: which drill a concept surfaces rotates across replays, not the same one forever', () => {
