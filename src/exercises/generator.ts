@@ -1145,12 +1145,69 @@ export function buildLessonExercises(
      * learner has never seen* the very first exercise of 8 of the 9 real
      * letter lessons, including the first lesson in the entire course. A
      * context sighting is supposed to reinforce a letter already met, not
-     * introduce it; mapping into rounds 1 through 5 instead guarantees
+     * introduce it; mapping into rounds 1 through 4 instead guarantees
      * every letter's round-0 sighting is always the isolated introduction
      * before its context word ever appears.
+     *
+     * URD-043: also never the final round (`SIGHTINGS_PER_LETTER - 1`) —
+     * see the comment on `isFinalRound` below for why. Narrows where a
+     * context sighting can land from 5 rounds (1-5) to 4 (1-4), which
+     * pushes the pigeonhole collision `contextRound`'s own comment already
+     * names (a letter group bigger than the round capacity forces two
+     * letters' context words onto the same round) from "bigger than 5" to
+     * "5 or bigger" — measured: `l-2`/`l-7`/`l-8` (5 letters each) join
+     * `l-1`/`l-1-2`/`l-3` (6-7 letters) in hitting it, six of nine real
+     * letter lessons now instead of three. Still exactly one context
+     * sighting per letter, never adjacent to itself, just less evenly
+     * spread — the same tradeoff this comment already accepted, at a
+     * lower threshold.
      */
-    const contextRound = (idx: number) => 1 + ((idx + turnOffset) % (SIGHTINGS_PER_LETTER - 1));
-    for (let round = 0; round < SIGHTINGS_PER_LETTER; round++) {
+    const contextRound = (idx: number) => 1 + ((idx + turnOffset) % (SIGHTINGS_PER_LETTER - 2));
+    /**
+     * URD-043: vocabulary's own staggered climb ends on `produce`
+     * (`typeWord`/`wordBuild`) for every one of 2,281 words, on both
+     * tracks, 100% of the time — the property URD-019 grades an item's
+     * SRS state against ("the last of its sightings this lesson visit is
+     * the hardest, most diagnostic one"). Letters never had that property:
+     * `turn = round + idx + turnOffset` ties which kind lands last to
+     * `idx`, which shifts per letter and per lesson largely arbitrarily,
+     * unlike vocabulary's fixed ascending climb. Measured directly across
+     * all 9 real letter lessons: a letter's final round landed on a
+     * recognise-tier kind (`letterForm`/`letterPick`) 67.4% of the time (31
+     * of 46 letters sampled) — worse evidence of real recall than a
+     * confirmed produce-tier pair would be, even with URD-019's own
+     * last-two-sightings-agree guard already cutting the practical risk of
+     * a single lucky guess.
+     *
+     * `tailRound` (the second-to-last round) and `finalRound` (the last)
+     * are handled letter-major, not round-major, immediately below — a
+     * first version forced `turn = 0` round-major on `finalRound` alone,
+     * which correctly made every letter's true last sighting `letterTrace`
+     * but grouped every letter's forced-trace exercise into one contiguous
+     * block (round-major visits every letter within a round before moving
+     * on), producing a run of `letters.length` (4-7) identical
+     * `letterTrace` exercises in a row — the exact repetition problem this
+     * file's own comment above already rejected once for "round alone,"
+     * just reintroduced by forcing one round's *kind* rather than its
+     * *content*. Measured: 9 of 9 real letter lessons exceeded
+     * `check:shape`'s 3-in-a-row ceiling, worst `l-3` at 7 straight.
+     *
+     * Pairing each letter's own `tailRound` and `finalRound` exercises back
+     * to back — letter by letter — instead fixes both problems at once:
+     * `tailRound` is restricted to `letterForm`/`letterPick` only (never
+     * `t === 0`), so the sequence for consecutive letters alternates
+     * non-trace, trace, non-trace, trace, ... and no two `letterTrace`
+     * exercises are ever adjacent, while each letter's own two-exercise
+     * pair still ends its personal sequence on the forced `letterTrace`.
+     * `letterExerciseAt`'s own `t === 0` branch needs a glyph mask to
+     * actually choose `letterTrace` rather than falling through to
+     * `letterForm` — every real letter×position combination has one
+     * (confirmed directly, 160 of 160), so this never silently downgrades
+     * to the softer kind it exists to avoid.
+     */
+    const tailRound = SIGHTINGS_PER_LETTER - 2;
+    const finalRound = SIGHTINGS_PER_LETTER - 1;
+    for (let round = 0; round < tailRound; round++) {
       letters.forEach((l, idx) => {
         if (round === contextRound(idx)) {
           const w = LETTER_CONTEXT_WORD.get(l.id);
@@ -1162,6 +1219,21 @@ export function buildLessonExercises(
         exercises.push(letterExerciseAt(l, round + idx + turnOffset, round + idx + posOffset));
       });
     }
+    letters.forEach((l, idx) => {
+      let pushedContext = false;
+      if (tailRound === contextRound(idx)) {
+        const w = LETTER_CONTEXT_WORD.get(l.id);
+        if (w) {
+          exercises.push(wordExercise(w, poolFor(w), track, 'meet', 0));
+          pushedContext = true;
+        }
+      }
+      if (!pushedContext) {
+        const turn = 1 + ((tailRound + idx + turnOffset) % 2); // never letterTrace here
+        exercises.push(letterExerciseAt(l, turn, tailRound + idx + posOffset));
+      }
+      exercises.push(letterExerciseAt(l, 0, finalRound + idx + posOffset)); // always letterTrace
+    });
   }
 
   if (lesson.kind === 'phrases') {

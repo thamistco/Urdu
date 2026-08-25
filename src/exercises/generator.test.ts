@@ -513,6 +513,71 @@ describe('URD-020: a letter lesson shows letters inside real words, not only in 
   });
 });
 
+describe("URD-043: a letter's final sighting in its own lesson is always the hardest kind", () => {
+  const LETTER_KIND_SET = new Set(['letterForm', 'letterPick', 'letterTrace']);
+  const letterLessons = () => UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'letters');
+  // The reverse of LETTER_CONTEXT_WORD — which letter a given context word's
+  // exercise belongs to — since a context sighting's own exercise object
+  // carries `.word`, not `.letter`.
+  const letterOfContextWord = new Map<string, string>();
+  for (const [letterId, w] of LETTER_CONTEXT_WORD) letterOfContextWord.set(w.id, letterId);
+
+  it("the item's own verify text, applied directly: every real letter lesson, every letter, final sighting is letterTrace", () => {
+    // Before this fix: `turn = round + idx + turnOffset` ties which kind
+    // lands last to idx, which shifts per letter and per lesson largely
+    // arbitrarily. Measured directly across all 9 real letter lessons: a
+    // letter's final round landed on a recognise-tier kind
+    // (letterForm/letterPick) 67.4% of the time (31 of 46 letters sampled).
+    for (const lesson of letterLessons()) {
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      const lastKindFor = new Map<string, string>();
+      for (const e of exercises) {
+        if (LETTER_KIND_SET.has(e.kind)) {
+          lastKindFor.set((e as { letter: { id: string } }).letter.id, e.kind);
+        } else if ('word' in e) {
+          const letterId = letterOfContextWord.get((e as { word: { id: string } }).word.id);
+          if (letterId) lastKindFor.set(letterId, e.kind);
+        }
+      }
+      for (const letterId of lesson.letterIds!) {
+        expect(lastKindFor.get(letterId), `${lesson.id}/${letterId}`).toBe('letterTrace');
+      }
+    }
+  });
+
+  it('holds on the script track too, not only both', () => {
+    for (const lesson of letterLessons()) {
+      const exercises = buildLessonExercises(lesson, [], 'script', new Set());
+      const lastKindFor = new Map<string, string>();
+      for (const e of exercises) {
+        if (LETTER_KIND_SET.has(e.kind)) {
+          lastKindFor.set((e as { letter: { id: string } }).letter.id, e.kind);
+        } else if ('word' in e) {
+          const letterId = letterOfContextWord.get((e as { word: { id: string } }).word.id);
+          if (letterId) lastKindFor.set(letterId, e.kind);
+        }
+      }
+      for (const letterId of lesson.letterIds!) {
+        expect(lastKindFor.get(letterId), `${lesson.id}/${letterId}`).toBe('letterTrace');
+      }
+    }
+  });
+
+  it("a letter's context sighting never lands on the lesson's final round either", () => {
+    // A context sighting is a `meet`-tier word exercise, not produce — if
+    // one ever landed on the true final round, that would be the letter's
+    // actual last sighting regardless of what letterExerciseAt would have
+    // given, defeating the guarantee above. `contextRound`'s own range
+    // (1 through SIGHTINGS_PER_LETTER - 2) should make this structurally
+    // impossible, not just usually true.
+    for (const lesson of letterLessons()) {
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      const last = exercises[exercises.length - 1];
+      expect(LETTER_KIND_SET.has(last.kind), lesson.id).toBe(true);
+    }
+  });
+});
+
 describe('URD-022: visually confusable letters are not drilled back to back', () => {
   const letterLessons = () => UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'letters');
   const ISOLATED_LETTER_KINDS = new Set(['letterForm', 'letterPick', 'letterTrace']);
@@ -568,8 +633,38 @@ describe('URD-022: visually confusable letters are not drilled back to back', ()
 
       const exercises = buildLessonExercises(l, [], 'both', new Set());
       const ids = exercises.map((e) => letterIdOf(e, l));
-      const rounds = n > 0 ? exercises.length / n : 0;
-      const expected = perTransitionForced * Math.max(0, rounds - 1);
+      /**
+       * URD-043: `rounds` used to be `exercises.length / n`, assuming the
+       * whole sequence is round-major throughout — one full pass through
+       * every letter, repeated identically, so many times that `n` divides
+       * evenly. Forcing every letter's true final sighting to
+       * `letterTrace` (see `generator.ts`'s `tailRound`/`finalRound`) pairs
+       * each letter's last two sightings back-to-back instead, letter by
+       * letter, for exactly those two rounds — real, deliberate, and not
+       * uniform round-major anymore for that tail. Measured directly: the
+       * old formula still computed `rounds = 6` for `l-3` (exercise count
+       * is unchanged), expecting 5 forced wrap-adjacencies, but the real
+       * sequence only has 4 — the tail's letter-major pairing removes one
+       * wrap without adding a new one, and the fixed formula silently kept
+       * assuming the old shape.
+       *
+       * Counting fresh, non-consecutive occurrences of the sequence's own
+       * first letter — how many times a full pass through the group
+       * genuinely restarts — measures the real structure directly instead
+       * of assuming it: a letter-major tail pair puts the same letter twice
+       * in a row, which is one letter appearing twice, not two passes
+       * restarting, and this counts it as such. Reduces to the exact old
+       * `exercises.length / n` count whenever the sequence really is
+       * uniform round-major throughout (every occurrence of the first
+       * letter is a fresh restart, since letters within a round never
+       * repeat), so this is a generalization, not a special case.
+       */
+      const firstId = ids[0];
+      let passes = 0;
+      for (let i = 0; i < ids.length; i++) {
+        if (ids[i] === firstId && (i === 0 || ids[i - 1] !== firstId)) passes++;
+      }
+      const expected = perTransitionForced * Math.max(0, passes - 1);
 
       let found = 0;
       for (let i = 0; i < ids.length - 1; i++) {
