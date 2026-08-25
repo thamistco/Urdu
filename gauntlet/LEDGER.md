@@ -4853,3 +4853,111 @@ $ npm run check:all
   covering the last symmetry-fix commit, both passed all 30 steps.
 
 branch: claude/gauntlet-review-letter-coverage
+
+## CLAIMED · URD-043 · 2026-08-25T17:53Z
+files: src/exercises/generator.ts
+branch: claude/gauntlet-letter-final-sighting-hard, cut from
+claude/gauntlet-review-letter-coverage after URD-042 shipped.
+
+## CRITIQUE · URD-043
+Dispatched THE CRITIC (real generator code) and CURRICULUM CRITIC
+(this item's own discoverer, reviewing URD-019 — whether a letter's
+last sighting is genuinely diagnostic is squarely curriculum-severity).
+
+Before dispatch, two intermediate designs were tried and rejected by
+real measurement, not assumption: forcing every letter's final round
+to `letterTrace` round-major created a run of 4-7 consecutive
+identical exercises (`check:shape`'s 3-in-a-row ceiling, not gating
+`check:all` but real, caught it — worst `l-3` at 7 straight); fixing
+that by restricting the round-major-only rotation still pushed
+`letterTrace`'s overall share too high (`check:shape`'s 40%
+ceiling, worst `l-1` at 42%). The shipped design — letter-major
+pairing for just the last two rounds, restricting the non-final one
+to recognise-tier kinds only — closed both. That same restructuring
+also broke an existing GATING unit test (URD-022's confusable-
+adjacency exact-count check, `l-3`'s oversized `re`-family) and
+`check:shape`'s identical sub-check, both of which assumed the whole
+sequence stays uniform round-major throughout; fixed by generalizing
+the formula to directly count fresh passes through the letter group
+from the real sequence, rather than assuming a shape that no longer
+always held — verified this reduces to the exact old count whenever
+the sequence really is uniform round-major (a generalization, not a
+special case).
+
+THE CRITIC: no BLOCKING, no MAJOR. Independently re-derived the core
+claim (46/46 letters, both tracks, true final sighting `letterTrace`)
+and the generalized "count fresh passes" formula's correctness,
+swept all 9 real lessons' bucket sizes to confirm only `l-3` is
+affected, and confirmed `check:shape`, the full test suite, and every
+relevant check script clean. Two MINOR: a stale doc-comment
+cross-reference to a symbol (`isFinalRound`) that no longer exists,
+left over from an earlier draft — fixed; and the `pushedContext`
+fallback (a letter with no `LETTER_CONTEXT_WORD` entry) is correct
+but currently dead code against real content (all 40 real letters
+have a context word) — noted, not queued as its own item, since it
+mirrors an identical, already-accepted pattern one block up in the
+same function.
+
+CURRICULUM CRITIC found two real MAJORs, both about the same
+letter-major pairing:
+
+1. A prior comment justified the pairing by claiming it "mirrors how
+   vocabulary already sequences recall→produce close together" —
+   checked against the vocab lesson's own staggered-pass design and
+   real generated timing, this is false: a vocabulary word's
+   successive sightings land 3-7 exercises apart specifically because
+   massed repetition inside ten seconds is not spacing (that
+   design's own stated reason). The pairing's real justification is
+   structural (round-major can't guarantee a true-final `letterTrace`
+   without one of the two rejected designs' own problems), not a
+   vocab precedent that doesn't exist.
+2. `contextRound`'s range can coincide with the tail round — measured
+   directly: exactly one letter per lesson, 9 of 9 real lessons, has
+   its second-to-last sighting be the context word instead of a
+   recognise-tier drill, undocumented by the prior comment.
+
+Lead overrule, reasoning recorded here as this project's own process
+allows: finding 1 was fixed by correcting the comment to state the
+real (structural) justification and to record why the adjacency
+itself doesn't cost what it would for vocabulary — `letterTrace`
+(`TraceExercise.tsx`) names the letter and position outright and asks
+the learner to draw it, a motor-formation check on an
+already-identified letter, not the blind-recall check vocabulary's
+spacing rule protects. Finding 2 was documented rather than coded
+around: verified concretely (`l-1`'s `te`/`w-dost` pairing: the
+context word shows `te` in a different position than the one traced
+immediately after) that the context-word sighting is a milder, not
+stronger, exposure than the recognise-tier alternative it occasionally
+replaces — different modality, different position, asking about
+meaning rather than the letter directly. Narrowing `contextRound`
+further to avoid this would only worsen the pigeonhole collision this
+file already accepts, for a risk measured to be lower than the
+alternative it would trade for.
+
+## PASSED · URD-043 · 2026-08-25T18:26Z
+Every code fix verified as a real regression its own test catches:
+reverted generator.ts alone (keeping the new tests), all 3 URD-043
+tests failed with the item's own measured shape; restored and
+reconfirmed clean. The comment corrections (both critic rounds) carry
+no behavior change, verified by an unchanged 209/209 test count and
+an unchanged `check:shape` clean report after each.
+
+$ npx vitest run
+  209/209 (206 + 3 new).
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npm run check:shape
+  0 problems (re-measured after each fix round, including the
+  confusable-adjacency formula fix).
+
+$ npm run check:answerable / check:order / check:coverage / check:srs
+  no new problems.
+
+$ npm run check:all
+  a first run passed all 30 steps clean (before the CURRICULUM
+  CRITIC comment-fix commits); a final fresh run covering those
+  commits also passed all 30 steps clean.
+
+branch: claude/gauntlet-letter-final-sighting-hard
