@@ -1661,11 +1661,44 @@ export function buildLessonExercises(
     // complete reversion to pre-fix behaviour. A dedicated counter that
     // increments once per word, independent of how letters are interleaved
     // around them, has no step-size/modulus relationship to break.
+    /**
+     * URD-041: `letterExerciseAt(l, i, i)` alone ties a review's letter kind
+     * to `i`, the item's raw position within `refs` — and `fallbackReviewRefs`'s
+     * own interleave always places its first letter at index 0 of the mixed
+     * array (letter before word at every step). Once URD-017 shrank the
+     * typical review letter count to ~1 (true from about u14 on), that one
+     * slot lands at `i=0` every time, and `letterExerciseAt`'s `t === 0`
+     * branch is `letterTrace` whenever a glyph mask exists — true for every
+     * glyph sampled. Measured directly: u14 through u39, 26 straight
+     * reviews with nothing due, all drew `letterTrace` and only
+     * `letterTrace` for their one letter question — never `letterForm`, the
+     * joining-position drill the app is specifically built around.
+     *
+     * `reviewIndex` — which review lesson, in path order, this is among
+     * every review lesson, the same "not a hash" technique `turnOffset`/
+     * `posOffset` above use for letter-teaching lessons, for the identical
+     * reason: a hash can only change collision odds, never rule them out,
+     * and this file has already been burned by one that collided on the
+     * unlucky pair. `-1` for a lesson not placed on the path at all
+     * (`practice-review`, the synthetic Daily Review screen) — `visit`
+     * alone still varies there, and floored at 0 rather than left negative.
+     * Combined with `visit` (URD-039's own per-completion counter) so the
+     * kind varies both across different real reviews *and* across repeat
+     * visits to the identical one, rather than collapsing to whatever a
+     * fixed loop index happens to produce.
+     */
+    const reviewIndex = Math.max(
+      0,
+      ALL_LESSONS.filter((l) => l.kind === 'review').findIndex((l) => l.id === lesson.id)
+    );
+    const letterTurnOffset = reviewIndex + visit;
+    const letterPosOffset = letterTurnOffset * 3; // coprime step, same technique as posOffset above
+
     let wordTurn = 0;
     refs.forEach((ref, i) => {
       if (ref.type === 'letter') {
         const l = teachesScript ? getLetter(ref.id) : undefined;
-        if (l) exercises.push(letterExerciseAt(l, i, i));
+        if (l) exercises.push(letterExerciseAt(l, i + letterTurnOffset, i + letterPosOffset));
       } else {
         const w = getAnyWord(ref.id);
         // Review is where the harder demands belong: a word is only here
