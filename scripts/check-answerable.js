@@ -251,10 +251,17 @@ function check(ex, track) {
 
     case 'letterSpot':
       if (roman) fail('script exercise on the Roman track', `letterSpot ${ex.letter.id}`);
-      // The letter being asked about must actually be among the tiles, or the
-      // question has no right answer on screen at all.
-      if (!ex.tiles.includes(ex.letter.forms.isolated))
+      // At least one tile must be the right answer, or the question has no
+      // right answer on screen at all. `tiles` entries can be multi-character
+      // display clusters (real neighbouring context) rather than the bare
+      // glyph, so this checks the precomputed `correct` flags, not the tile
+      // strings themselves.
+      if (!ex.correct.some(Boolean))
         fail('letterSpot asks about a letter missing from its own tiles', `${ex.letter.id} — ${ex.word.id}`);
+      if (ex.tiles.length < 4)
+        fail('letterSpot offers fewer than 4 tiles', `${ex.letter.id} — ${ex.word.id} (${ex.tiles.length})`);
+      if (ex.tiles.length !== ex.correct.length || ex.tiles.length !== ex.fromWord.length)
+        fail('letterSpot tiles/correct/fromWord are out of sync', `${ex.letter.id} — ${ex.word.id}`);
       break;
 
     case 'reading':
