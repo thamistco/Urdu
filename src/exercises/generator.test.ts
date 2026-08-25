@@ -1169,3 +1169,59 @@ describe('URD-040: a review touches the grammar concept(s) its own unit taught',
     expect(withDefault).toEqual(explicit0);
   });
 });
+
+describe("URD-041: a review's letter exercise(s) don't always land on the same kind", () => {
+  const LETTER_KIND_SET = new Set(['letterForm', 'letterPick', 'letterTrace']);
+  /** The letter exercise kinds a review draws, with nothing due, on `both`. */
+  const letterKindsOf = (lessonId: string, visit = 0) => {
+    const lesson = resolveLesson(lessonId)!;
+    const exercises = buildLessonExercises(lesson, [], 'both', new Set(), visit);
+    return exercises.filter((e) => LETTER_KIND_SET.has(e.kind)).map((e) => e.kind);
+  };
+
+  it('several real late-course reviews (u14+) draw different letter exercise kinds, not the same one every time', () => {
+    // The item's own measured bug: `letterExerciseAt(l, i, i)` ties the kind
+    // to `i`, the item's raw index within `refs` — and `fallbackReviewRefs`'s
+    // own interleave always places its one letter at index 0 once URD-017
+    // shrank the typical review letter count to ~1 (true from about u14 on).
+    // `t === 0` is `letterTrace` whenever a glyph mask exists, true for
+    // every glyph sampled — so all 26 straight reviews from u14 through u39
+    // drew `letterTrace`, and only `letterTrace`, before this fix.
+    const lateReviews = UNITS.filter((u) => Number(u.id.slice(1)) >= 14)
+      .flatMap((u) => u.lessons)
+      .filter((l) => l.kind === 'review');
+    expect(lateReviews.length).toBeGreaterThan(1);
+    const kindSequences = lateReviews.map((l) => letterKindsOf(l.id).join(','));
+    // Every one of these reviews has exactly one letter exercise (measured
+    // in the item itself), so a kind sequence is a single kind here — but
+    // written against the general sequence, not assumed down to a single
+    // string, in case a future content change ever gives one of them more.
+    expect(new Set(kindSequences).size).toBeGreaterThan(1);
+  });
+
+  it('every real review with any letters at all has all three kinds reachable across its own real siblings, not just one', () => {
+    // The stronger form of the property above: not just "two reviews
+    // differ from each other" but "the full set of three kinds this app is
+    // built around actually gets used somewhere across the reviews that
+    // have a letter to ask about" — `letterForm`, the joining-position
+    // drill URD-041's own notes single out as the one that used to never
+    // appear at all in this stretch.
+    const reviewsWithLetters = UNITS.flatMap((u) => u.lessons)
+      .filter((l) => l.kind === 'review')
+      .filter((l) => letterKindsOf(l.id).length > 0);
+    const seen = new Set(reviewsWithLetters.flatMap((l) => letterKindsOf(l.id)));
+    expect(seen).toEqual(LETTER_KIND_SET);
+  });
+
+  it('the same review also rotates its letter kind across repeat visits, not just across different reviews', () => {
+    // `visit` (URD-039's per-completion counter) is folded into the same
+    // offset, so replaying the identical review doesn't lock onto whatever
+    // kind its fixed path position happens to draw, the same staleness
+    // concern URD-039/URD-040 already closed for words/letters and grammar
+    // drills respectively.
+    const kindsAcrossVisits = new Set(
+      Array.from({ length: 6 }, (_, visit) => letterKindsOf('rev-the-wider-world', visit).join(','))
+    );
+    expect(kindsAcrossVisits.size).toBeGreaterThan(1);
+  });
+});
