@@ -1021,7 +1021,16 @@ export function buildLessonExercises(
    * fallback below, to keep a topic/lesson-order guess honest against what
    * was truly shown.
    */
-  known: ReadonlySet<string> = new Set()
+  known: ReadonlySet<string> = new Set(),
+  /**
+   * URD-039: how many times this exact lesson has already been completed —
+   * `completedLessons[lesson.id]?.done` in the progress store, `0` before a
+   * learner has ever finished it once. Used only to rotate the review
+   * fallback's shuffle seed (see `fallbackReviewRefs`/`reviewWordPool`) so a
+   * unit whose every word is already known doesn't slice off the same fixed
+   * subset on every single replay.
+   */
+  visit = 0
 ): Exercise[] {
   const exercises: Exercise[] = [];
   // On the Roman track the learner has said they are not learning the
@@ -1560,7 +1569,7 @@ export function buildLessonExercises(
     const key = (r: ItemRef) => `${r.type}:${r.id}`;
     const due = reviewRefs.filter(resolvable);
     const seenIds = new Set(due.map(key));
-    const filler = fallbackReviewRefs(lesson.size, teachesScript, lesson.id, known)
+    const filler = fallbackReviewRefs(lesson.size, teachesScript, lesson.id, known, visit)
       .filter((r) => !seenIds.has(key(r)))
       .filter(resolvable);
     const refs = [...due, ...filler];
@@ -1587,7 +1596,7 @@ export function buildLessonExercises(
      */
     if (refs.length < lesson.size) {
       const have = new Set(refs.map(key));
-      const more = fallbackReviewRefs(lesson.size * 2, false, lesson.id, known)
+      const more = fallbackReviewRefs(lesson.size * 2, false, lesson.id, known, visit)
         .filter((r) => !have.has(key(r)))
         .filter(resolvable);
       refs.push(...more.slice(0, lesson.size - refs.length));
@@ -1756,7 +1765,9 @@ function fallbackReviewRefs(
   n: number,
   withLetters = true,
   lessonId?: string,
-  known: ReadonlySet<string> = new Set()
+  known: ReadonlySet<string> = new Set(),
+  /** URD-039: see `reviewWordPool`'s `visit` parameter. */
+  visit = 0
 ): ItemRef[] {
   const taught = lessonId ? taughtUpTo(lessonId) : null;
   // No lesson context (practice review, say) falls back to the foundational
@@ -1775,7 +1786,8 @@ function fallbackReviewRefs(
     known,
     courseWords,
     courseLetters,
-    WORDS.slice(0, 120).map((w) => w.id)
+    WORDS.slice(0, 120).map((w) => w.id),
+    visit
   );
 
   if (!withLetters) {
@@ -1786,7 +1798,8 @@ function fallbackReviewRefs(
     known,
     courseWords,
     courseLetters,
-    LETTERS.slice(0, 20).map((l) => l.id)
+    LETTERS.slice(0, 20).map((l) => l.id),
+    visit
   );
   // THE CRITIC, URD-017: a lesson id `taughtUpTo` cannot place on the path —
   // `practice-review`, the synthetic Daily Review screen, is the one that
