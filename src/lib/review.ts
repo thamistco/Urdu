@@ -22,6 +22,7 @@
 
 import { UNITS, ALL_LESSONS, type Lesson } from '../data/units';
 import { wordsByTopic } from '../data/words';
+import { LETTERS } from '../data/letters';
 import { seededShuffle } from './shuffle';
 
 export type TaughtPool = { readonly letters: readonly string[]; readonly words: readonly string[] };
@@ -198,6 +199,113 @@ export function prioritizedPool(tiers: readonly (readonly string[])[], seedBase:
 }
 
 /**
+ * URD-042: rotates one fixed shuffle of `candidates` by `reviewIndex`,
+ * rather than reshuffling independently per review the way `prioritizedPool`
+ * does — the actual fix, not a style choice.
+ *
+ * An independent per-review shuffle of the same small, closed letter pool
+ * leaves real gaps purely by chance: each review only samples the *top* of
+ * its own draw, with no memory of what any other review already surfaced.
+ * Measured directly on real course content before this fix: 19 of 40
+ * letters, including `be`/`pe` — the very first pair taught, in `l-1` — and
+ * three of the four Urdu "z"-sound letters, never appeared in a single
+ * `letterForm`/`letterPick`/`letterTrace` exercise across 30 real reviews
+ * with nothing due.
+ *
+ * Rotating one shared permutation instead means consecutive reviews (in
+ * path order) walk consecutive starting points through the identical
+ * ordering — so every candidate is guaranteed to surface within one lap
+ * (`candidates.length` reviews), the guarantee independent reshuffling never
+ * made no matter how many reviews accumulate. The shuffle itself is fixed
+ * (keyed on a constant, not on `lessonId` or `reviewIndex`) precisely so
+ * that rotating it is meaningful — rotating a *different* shuffle every
+ * time would be back to independent sampling with extra steps.
+ */
+export function rotatingCoverageOrder(candidates: readonly string[], reviewIndex: number): string[] {
+  if (candidates.length === 0) return [];
+  const order = seededShuffle(candidates, 'review-letter-coverage');
+  const offset = ((reviewIndex % order.length) + order.length) % order.length;
+  return [...order.slice(offset), ...order.slice(0, offset)];
+}
+
+/**
+ * The letter-side equivalent of `prioritizedPool`, rotating each tier via
+ * `rotatingCoverageOrder` instead of reshuffling it fresh per call. See that
+ * function's own comment for why: words (2,281 of them) have no realistic
+ * coverage pressure across ~41 reviews drawing a handful each, but letters
+ * (40, drawing as few as one per review from about u14 on, URD-017) do.
+ */
+function prioritizedLetterPool(tiers: readonly (readonly string[])[], reviewIndex: number): string[] {
+  const chosen: string[] = [];
+  const have = new Set<string>();
+  for (const tier of tiers) {
+    const fresh = tier.filter((id) => !have.has(id));
+    for (const id of rotatingCoverageOrder(fresh, reviewIndex)) {
+      chosen.push(id);
+      have.add(id);
+    }
+  }
+  return chosen;
+}
+
+/**
+ * Which review lesson (by id) is responsible for guaranteeing each letter's
+ * first review appearance — computed once for the whole course, not per
+ * call.
+ *
+ * `rotatingCoverageOrder` alone still can't guarantee full coverage: the
+ * candidate set it rotates (`courseWideLetters`) is itself cumulative, so
+ * it *grows* across the first several reviews rather than staying fixed.
+ * Rotating a growing set isn't walking one stable permutation — a review's
+ * `reviewIndex` offset can land on a letter that review's own position
+ * hasn't taught yet, and that offset's one shot at ever being "first" for
+ * that letter is gone, not deferred. Measured directly: rotation alone
+ * (no assignment) still missed 6 of 40 letters across all 41 real reviews,
+ * even though total letter-question capacity across all reviews (58,
+ * measured directly) comfortably exceeds the alphabet (40).
+ *
+ * This walks every review lesson in path order once, treating a single
+ * fixed shuffle of all 40 letters (the same shuffle `rotatingCoverageOrder`
+ * itself rotates, so the two mechanisms agree on one canonical ordering
+ * rather than drifting apart) as a claim queue: each review claims the
+ * earliest still-unclaimed letter in that queue already taught by its own
+ * position (`taughtUpTo`). Since every letter is taught by the time the
+ * course's last review is reached, and total capacity exceeds the
+ * alphabet, every letter is guaranteed a claiming review before the
+ * course ends — a review lesson not on the path (`practice-review`) is
+ * never in `reviews` here and so never claims one, which is correct: it
+ * isn't positioned anywhere for "taught by this point" to mean anything.
+ */
+function computeLetterCoverageAssignment(): ReadonlyMap<string, string> {
+  const reviews = ALL_LESSONS.filter((l) => l.kind === 'review');
+  const queue = seededShuffle(
+    LETTERS.map((l) => l.id),
+    'review-letter-coverage'
+  );
+  const unclaimed = new Set(queue);
+  const assignment = new Map<string, string>();
+  for (const review of reviews) {
+    if (unclaimed.size === 0) break;
+    const eligible = new Set(taughtUpTo(review.id).letters);
+    const claim = queue.find((id) => unclaimed.has(id) && eligible.has(id));
+    if (claim) {
+      assignment.set(review.id, claim);
+      unclaimed.delete(claim);
+    }
+  }
+  return assignment;
+}
+
+// `ALL_LESSONS` (and so this assignment) is fixed at build time — computed
+// once, lazily, the first time it's actually needed, rather than on every
+// module load or every call.
+let coverageAssignmentCache: ReadonlyMap<string, string> | null = null;
+function letterCoverageAssignment(): ReadonlyMap<string, string> {
+  if (!coverageAssignmentCache) coverageAssignmentCache = computeLetterCoverageAssignment();
+  return coverageAssignmentCache;
+}
+
+/**
  * The word pool a review should draw from, in priority order: words from its
  * own unit the learner has already been graded on, then the rest of the
  * unit's words, then the same two tiers course-wide, then a fixed corpus
@@ -264,7 +372,13 @@ export function reviewWordPool(
   return prioritizedPool([unit?.words ?? [], courseWideWords, corpus], seedBase);
 }
 
-/** The letter-side equivalent of `reviewWordPool`. See its comment. */
+/**
+ * The letter-side equivalent of `reviewWordPool` — except tiers are ordered
+ * by `prioritizedLetterPool`'s rotation, not `prioritizedPool`'s independent
+ * per-call shuffle. See `rotatingCoverageOrder`'s comment for why letters
+ * specifically need this and words (2,281 of them, no realistic coverage
+ * pressure) don't.
+ */
 export function reviewLetterPool(
   lessonId: string | undefined,
   known: ReadonlySet<string>,
@@ -272,15 +386,44 @@ export function reviewLetterPool(
   courseWideLetters: readonly string[],
   corpus: readonly string[],
   /** URD-039: see `reviewWordPool`'s `visit` parameter. */
-  visit = 0
+  visit = 0,
+  /**
+   * URD-042: which review lesson, in path order, this is among every
+   * review lesson (`0` for a lesson not placed on the path at all, like
+   * `practice-review` — see `generator.ts`'s own `reviewIndex`). Combined
+   * additively with `visit` into a single rotation offset: `reviewIndex`
+   * alone varies coverage across *different* reviews (this item's own
+   * fix), `visit` alone still varies the same review's own pick across
+   * *repeat* visits (URD-039, unaffected by this change — a lesson id
+   * omitted or not on the path always contributes `reviewIndex = 0`, so
+   * `visit` is the only axis that moves there, exactly as before).
+   */
+  reviewIndex = 0
 ): string[] {
   const unit = lessonId ? taughtInUnit(lessonId) : null;
   const seen = (ids: readonly string[]) => ids.filter((id) => known.has(id));
-  const seedBase = `${lessonId ?? 'review'}:letters:${visit}`;
-  if (anythingKnown(known, courseWideWords, courseWideLetters)) {
-    return prioritizedPool([seen(unit?.letters ?? []), seen(courseWideLetters)], seedBase);
+  const rotation = reviewIndex + visit;
+  const pool = anythingKnown(known, courseWideWords, courseWideLetters)
+    ? prioritizedLetterPool([seen(unit?.letters ?? []), seen(courseWideLetters)], rotation)
+    : prioritizedLetterPool([unit?.letters ?? [], courseWideLetters, corpus], rotation);
+  /**
+   * URD-042: force this review's assigned coverage letter (if it has one)
+   * to the very front — the actual full-coverage guarantee,
+   * `rotatingCoverageOrder` alone only improves the odds. Only if it's
+   * already a legitimate candidate for *this specific call* (present in
+   * `pool`, which already reflects whatever `known`-restriction applies):
+   * a learner who hasn't actually been graded on their assigned letter yet
+   * doesn't get it forced on them — `check:srs`'s "never surface material
+   * outside what the learner has been graded on" still holds. That review
+   * simply doesn't fulfill its assignment for *that* learner's state,
+   * which is a real, honest gap for an individual mid-course, not the
+   * whole-course sweep this item's own verify text checks.
+   */
+  const assigned = lessonId ? letterCoverageAssignment().get(lessonId) : undefined;
+  if (assigned && pool.includes(assigned)) {
+    return [assigned, ...pool.filter((id) => id !== assigned)];
   }
-  return prioritizedPool([unit?.letters ?? [], courseWideLetters, corpus], seedBase);
+  return pool;
 }
 
 /** Has the learner been graded on anything at all reachable from this review — of either type? */

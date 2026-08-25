@@ -1569,6 +1569,23 @@ export function buildLessonExercises(
     // like a duplicate of each other.
     const key = (r: ItemRef) => `${r.type}:${r.id}`;
     /**
+     * URD-041/URD-042: which review lesson, in path order, this is among
+     * every review lesson — the same "not a hash" technique `turnOffset`/
+     * `posOffset` above use for letter-teaching lessons, for the identical
+     * reason: a hash can only change collision odds, never rule them out,
+     * and this file has already been burned by one that collided on the
+     * unlucky pair. `-1` for a lesson not placed on the path at all
+     * (`practice-review`, the synthetic Daily Review screen), floored at 0.
+     * Computed once, up here, so both `fallbackReviewRefs` below (URD-042's
+     * letter *coverage*) and `letterExerciseAt` further down (URD-041's
+     * letter *kind*) key off the identical value rather than two
+     * independently-derived ones that could drift apart.
+     */
+    const reviewIndex = Math.max(
+      0,
+      ALL_LESSONS.filter((l) => l.kind === 'review').findIndex((l) => l.id === lesson.id)
+    );
+    /**
      * URD-040: grammar concept(s) this review's own unit taught, if any —
      * see `conceptsInUnit`'s doc comment.
      *
@@ -1612,7 +1629,7 @@ export function buildLessonExercises(
     const due = reviewRefs.filter(resolvable).slice(0, lesson.size);
     const refCap = Math.max(due.length, lesson.size - conceptBudget);
     const seenIds = new Set(due.map(key));
-    const filler = fallbackReviewRefs(refCap, teachesScript, lesson.id, known, visit)
+    const filler = fallbackReviewRefs(refCap, teachesScript, lesson.id, known, visit, reviewIndex)
       .filter((r) => !seenIds.has(key(r)))
       .filter(resolvable);
     const refs = [...due, ...filler];
@@ -1639,7 +1656,7 @@ export function buildLessonExercises(
      */
     if (refs.length < refCap) {
       const have = new Set(refs.map(key));
-      const more = fallbackReviewRefs(refCap * 2, false, lesson.id, known, visit)
+      const more = fallbackReviewRefs(refCap * 2, false, lesson.id, known, visit, reviewIndex)
         .filter((r) => !have.has(key(r)))
         .filter(resolvable);
       refs.push(...more.slice(0, refCap - refs.length));
@@ -1674,23 +1691,11 @@ export function buildLessonExercises(
      * `letterTrace` for their one letter question — never `letterForm`, the
      * joining-position drill the app is specifically built around.
      *
-     * `reviewIndex` — which review lesson, in path order, this is among
-     * every review lesson, the same "not a hash" technique `turnOffset`/
-     * `posOffset` above use for letter-teaching lessons, for the identical
-     * reason: a hash can only change collision odds, never rule them out,
-     * and this file has already been burned by one that collided on the
-     * unlucky pair. `-1` for a lesson not placed on the path at all
-     * (`practice-review`, the synthetic Daily Review screen) — `visit`
-     * alone still varies there, and floored at 0 rather than left negative.
-     * Combined with `visit` (URD-039's own per-completion counter) so the
-     * kind varies both across different real reviews *and* across repeat
-     * visits to the identical one, rather than collapsing to whatever a
-     * fixed loop index happens to produce.
+     * `reviewIndex` (computed once, above) combined with `visit` (URD-039's
+     * per-completion counter) so the kind varies both across different real
+     * reviews *and* across repeat visits to the identical one, rather than
+     * collapsing to whatever a fixed loop index happens to produce.
      */
-    const reviewIndex = Math.max(
-      0,
-      ALL_LESSONS.filter((l) => l.kind === 'review').findIndex((l) => l.id === lesson.id)
-    );
     const letterTurnOffset = reviewIndex + visit;
     const letterPosOffset = letterTurnOffset * 3; // coprime step, same technique as posOffset above
 
@@ -1883,7 +1888,9 @@ function fallbackReviewRefs(
   lessonId?: string,
   known: ReadonlySet<string> = new Set(),
   /** URD-039: see `reviewWordPool`'s `visit` parameter. */
-  visit = 0
+  visit = 0,
+  /** URD-042: see `reviewLetterPool`'s `reviewIndex` parameter. */
+  reviewIndex = 0
 ): ItemRef[] {
   const taught = lessonId ? taughtUpTo(lessonId) : null;
   // No lesson context (practice review, say) falls back to the foundational
@@ -1915,7 +1922,8 @@ function fallbackReviewRefs(
     courseWords,
     courseLetters,
     LETTERS.slice(0, 20).map((l) => l.id),
-    visit
+    visit,
+    reviewIndex
   );
   // THE CRITIC, URD-017: a lesson id `taughtUpTo` cannot place on the path —
   // `practice-review`, the synthetic Daily Review screen, is the one that

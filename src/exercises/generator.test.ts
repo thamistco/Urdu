@@ -11,7 +11,7 @@ import {
   soundTokens,
 } from './generator';
 import { getLetter, LETTERS, type Letter } from '../data/letters';
-import { resolveLesson, UNITS, type Lesson } from '../data/units';
+import { resolveLesson, UNITS, ALL_LESSONS, type Lesson } from '../data/units';
 import { WORDS, getWord } from '../data/words';
 import { VERDICT_CUES, cueOf } from '../data/art';
 import { GRAMMAR } from '../data/grammar';
@@ -1223,5 +1223,60 @@ describe("URD-041: a review's letter exercise(s) don't always land on the same k
       Array.from({ length: 6 }, (_, visit) => letterKindsOf('rev-the-wider-world', visit).join(','))
     );
     expect(kindsAcrossVisits.size).toBeGreaterThan(1);
+  });
+});
+
+describe('URD-042: every letter gets review exposure somewhere across the whole course', () => {
+  const LETTER_KIND_SET = new Set(['letterForm', 'letterPick', 'letterTrace']);
+
+  it('simulating every real review lesson in course order, with nothing due, draws every letter in LETTERS at least once', () => {
+    // The item's own verify text, applied directly. Before this fix: only
+    // 21 of 40 letters (52.5%), measured at the time the item was written;
+    // re-measured before this fix shipped, on the tree as it stood then:
+    // 30 of 40 (75%, improved incidentally by URD-039/041's own visit/
+    // reviewIndex threading, but still a real gap) — 19, then 6, letters,
+    // including be/pe (the very first pair taught, in l-1) and three of
+    // the four Urdu "z"-sound letters, never drawn by a single review.
+    const reviews = ALL_LESSONS.filter((l) => l.kind === 'review');
+    expect(reviews.length).toBeGreaterThan(1);
+    const touched = new Set<string>();
+    for (const lesson of reviews) {
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set(), 0);
+      for (const e of exercises) {
+        if (LETTER_KIND_SET.has(e.kind)) touched.add((e as { letter: { id: string } }).letter.id);
+      }
+    }
+    const missing = LETTERS.filter((l) => !touched.has(l.id)).map((l) => l.id);
+    expect(missing, `never drawn by any review: ${missing.join(', ')}`).toEqual([]);
+  });
+
+  it('holds on the script track too, not only both', () => {
+    // roman drops letter lessons (and so review's letter side) from the
+    // path entirely (`unitsForTrack`, `data/units.ts`) — not this
+    // coverage guarantee's job to hold on a track with no letters to
+    // cover at all.
+    const reviews = ALL_LESSONS.filter((l) => l.kind === 'review');
+    const touched = new Set<string>();
+    for (const lesson of reviews) {
+      const exercises = buildLessonExercises(lesson, [], 'script', new Set(), 0);
+      for (const e of exercises) {
+        if (LETTER_KIND_SET.has(e.kind)) touched.add((e as { letter: { id: string } }).letter.id);
+      }
+    }
+    const missing = LETTERS.filter((l) => !touched.has(l.id)).map((l) => l.id);
+    expect(missing).toEqual([]);
+  });
+
+  it("never surfaces a letter the learner hasn't actually been graded on, even while pursuing coverage", () => {
+    // The coverage guarantee must never override check:srs's own
+    // invariant: a learner graded on words but zero letters gets a
+    // correctly-empty letter pool (URD-016), not every letter ever
+    // taught forced in to satisfy this item's own assignment.
+    const lesson = resolveLesson('rev-the-wider-world')!;
+    const taught = taughtUpTo(lesson.id).words;
+    const known = new Set(taught.slice(0, 5)); // words only, no letters
+    const exercises = buildLessonExercises(lesson, [], 'both', known, 0);
+    const letterExercises = exercises.filter((e) => LETTER_KIND_SET.has(e.kind));
+    expect(letterExercises).toHaveLength(0);
   });
 });

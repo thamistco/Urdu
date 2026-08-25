@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { UNITS, ALL_LESSONS } from '../data/units';
+import { LETTERS } from '../data/letters';
 import {
   taughtInUnit,
   taughtUpTo,
@@ -317,5 +318,47 @@ describe('URD-026: taughtConceptsUpTo', () => {
     const grammarLessons = ALL_LESSONS.filter((l) => l.kind === 'grammar');
     const everything = taughtConceptsUpTo('not-a-real-lesson-id');
     expect(everything.size).toBe(grammarLessons.length);
+  });
+});
+
+describe('URD-042: reviewLetterPool guarantees full-course letter coverage, not just per-review variety', () => {
+  // Simulates the real review sequence directly against reviewLetterPool
+  // itself — lower-level than generator.test.ts's full buildLessonExercises
+  // simulation, and pinned to this function's own contract rather than the
+  // whole exercise pipeline around it.
+  const reviews = ALL_LESSONS.filter((l) => l.kind === 'review');
+
+  it('the top pick across every real review, in path order, touches every letter at least once', () => {
+    // Rotating each review's own candidate pool independently
+    // (`rotatingCoverageOrder` alone) still measured 6 of 40 letters never
+    // once at the top of any review's pool, because the candidate set
+    // itself grows across the first several reviews rather than staying
+    // fixed — a rotation offset landing on a not-yet-taught letter wastes
+    // that offset's one shot at ever being "first" for it. The assignment
+    // mechanism (`letterCoverageAssignment`, internal) exists to close
+    // that, guaranteeing every letter is claimed by some review before the
+    // course ends.
+    const touched = new Set<string>();
+    reviews.forEach((lesson, reviewIndex) => {
+      const taught = taughtUpTo(lesson.id);
+      const pool = reviewLetterPool(lesson.id, new Set(), [], taught.letters, [], 0, reviewIndex);
+      if (pool.length) touched.add(pool[0]);
+    });
+    const missing = LETTERS.map((l) => l.id).filter((id) => !touched.has(id));
+    expect(missing, `never a top pick: ${missing.join(', ')}`).toEqual([]);
+  });
+
+  it('never promotes a letter the learner has not actually been graded on', () => {
+    // The coverage assignment must yield to the existing known-restriction
+    // rather than override it — a learner graded on nothing at all reachable
+    // from this review gets a correctly-empty pool (`anythingKnown` false
+    // only when literally nothing is graded; here we force the *restricted*
+    // branch by graduating a single, unrelated word so the letter side has
+    // no known letters of its own).
+    const lesson = ALL_LESSONS.find((l) => l.kind === 'review' && l.id === 'rev-the-wider-world')!;
+    const taught = taughtUpTo(lesson.id);
+    const known = new Set([taught.words[0]]); // one known word, zero known letters
+    const pool = reviewLetterPool(lesson.id, known, taught.words, taught.letters, [], 0, 30);
+    expect(pool).toEqual([]);
   });
 });
