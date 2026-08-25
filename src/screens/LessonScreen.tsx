@@ -64,6 +64,7 @@ function answerLabel(ex: Exercise): string {
       return POSITIONS.find((p) => p.key === ex.position)?.label ?? '';
     case 'letterPick':
     case 'letterTrace':
+    case 'letterSpot':
       return `${ex.letter.name}: ${ex.letter.forms.isolated}`;
     case 'multipleChoice':
     case 'meaningPick':
@@ -100,6 +101,7 @@ function audioOf(ex: Exercise): { id: string; urdu: string; roman?: string } | n
     case 'wordBuild':
     case 'wordFromMeaning':
     case 'typeWord':
+    case 'letterSpot':
       return { id: ex.word.id, urdu: ex.word.urdu, roman: ex.word.roman };
     default:
       return null;

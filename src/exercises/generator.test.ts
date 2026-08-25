@@ -18,6 +18,7 @@ import { GRAMMAR } from '../data/grammar';
 import { SENTENCES } from '../data/sentences';
 import { romanAll } from '../lib/translit';
 import { taughtUpTo } from '../lib/review';
+import type { Exercise } from './types';
 
 /** Letter-type exercise kinds, as opposed to everything else a review can ask. */
 const LETTER_KINDS = new Set(['letterForm', 'letterPick', 'letterTrace']);
@@ -509,6 +510,59 @@ describe('URD-020: a letter lesson shows letters inside real words, not only in 
         .filter((e) => !ISOLATED_LETTER_KINDS.has(e.kind) && 'word' in e)
         .map((e) => (e as { word: { id: string } }).word.id);
       expect(new Set(contextWordIds).size, l.id).toBe(contextWordIds.length);
+    }
+  });
+});
+
+describe("URD-045: a letter's context sighting asks the learner to find it in the word, not just its meaning", () => {
+  const letterLessons = () => UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'letters');
+  type SpotEx = Extract<Exercise, { kind: 'letterSpot' }>;
+  const isSpot = (e: Exercise): e is SpotEx => e.kind === 'letterSpot';
+
+  it('every context sighting is a letterSpot exercise, not the ordinary meaning/picture question every other word gets', () => {
+    // URD-020 gave every letter a context word; URD-045's own complaint is
+    // that the exercise kind it went through (multipleChoice/meaningPick/
+    // listenTap) never actually asked about the letter's position inside
+    // that word — a learner could answer by picture or meaning alone.
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      const spots = exercises.filter(isSpot);
+      expect(spots.length, l.id).toBe(l.letterIds!.length);
+    }
+  });
+
+  it("every letterSpot's tiles actually contain the letter it asks about", () => {
+    // The question has no right answer on screen at all otherwise —
+    // check-answerable.js's own gate for this, re-asserted here as a fast
+    // unit test rather than only the slower, generator-driving script.
+    for (const letter of LETTERS) {
+      const lesson = letterLessons().find((l) => l.letterIds!.includes(letter.id));
+      if (!lesson) continue;
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      const spotForLetter = exercises.filter(isSpot).find((e) => e.letter.id === letter.id);
+      expect(spotForLetter, `${letter.id}: no letterSpot exercise generated`).toBeDefined();
+      expect(spotForLetter!.tiles, `${letter.id}: its letterSpot's tiles never contain its own glyph`).toContain(
+        letter.forms.isolated
+      );
+    }
+  });
+
+  it("a letterSpot's tiles are the word's own characters, in the word's own order — never shuffled", () => {
+    // Unlike wordBuild's tray, this is "find it where the word actually put
+    // it": scrambling would erase the one thing being asked about.
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      for (const e of exercises.filter(isSpot)) {
+        const expected = Array.from(e.word.urdu).filter((c) => c.trim().length > 0);
+        expect(e.tiles, `${l.id}: ${e.word.id}`).toEqual(expected);
+      }
+    }
+  });
+
+  it('never appears on the Roman track, same as every other script-only letter exercise', () => {
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'roman', new Set());
+      expect(exercises.some(isSpot), l.id).toBe(false);
     }
   });
 });

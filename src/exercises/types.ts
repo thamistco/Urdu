@@ -48,6 +48,16 @@ export type Exercise =
       position: PositionKey;
     }
   | {
+      /** show the letter inside a real word; tap which tile of the word it is */
+      kind: 'letterSpot';
+      letter: Letter;
+      word: Word;
+      /** the word's own characters, in reading order — not shuffled, unlike
+       *  `wordBuild`'s tray: the learner is finding the letter where the word
+       *  actually put it, not reassembling a scrambled one. */
+      tiles: string[];
+    }
+  | {
       /** show the meaning, pick the Urdu — the harder direction */
       kind: 'wordFromMeaning';
       word: Word;
