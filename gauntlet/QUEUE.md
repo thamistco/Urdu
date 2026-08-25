@@ -36,38 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-043 — A letter's last sighting in its lesson is usually the easy kind, not the hard one
-attempts: 0
-files: src/exercises/generator.ts
-definition of done: URD-019 grades an item's SRS state on the last of its
-  sightings this lesson visit (with a same/last-two-sightings-agree guard).
-  That is provably the hardest, most diagnostic demand for vocabulary — every
-  one of the 2,281 words' staggered climb ends on `produce` (`typeWord` or
-  `wordBuild`), 100% of the time, both tracks — but not for letters. Measured
-  directly across all 9 letter lessons: `letterExerciseAt`'s turn rotation
-  (`t = (round + idx + turnOffset) % 3`, cycling `letterTrace`(produce) →
-  `letterForm`(recognise) → `letterPick`(recognise)) lands a letter's *final*
-  round on a recognise-tier kind 67.4% of the time (31 of 46 letters
-  sampled), because `idx`/`turnOffset` shift which phase falls last largely
-  arbitrarily, unlike vocabulary's fixed ascending climb. Give the letter
-  pipeline the same property vocabulary already has: its last sighting is
-  reliably its hardest one.
-verify: a test building every real letter lesson and asserting each letter's
-  final sighting is `letterTrace` (produce), not `letterForm`/`letterPick`.
-notes: Found by CURRICULUM CRITIC reviewing URD-019. Not blocking — nothing
-  crashes, and URD-019's own last-two-sightings-agree guard (added during
-  this same critique) already cuts the practical risk of a single lucky
-  final guess from ~1-in-4 to ~1-in-16 regardless of which demand tier that
-  guess happens to be on — but the deeper mismatch this finding names is
-  real and separate: even a *confirmed* recognise-tier pair of sightings is
-  weaker evidence of recall than a confirmed produce-tier pair would be, and
-  today only vocabulary's pipeline is designed to guarantee the stronger
-  kind. Fixing this well means reordering the letter pipeline's turn
-  selection, which touches the same lessons URD-020/021/022 (letter-lesson
-  content composition) already have queued work against — check those for
-  overlap before starting, since a turn-ordering fix and a content-mix fix
-  could plausibly land as one change.
-
 ## URD-044 — Nothing exercises the LessonScreen↔SRS-grading wiring end-to-end
 attempts: 0
 files: src/screens/LessonScreen.tsx, src/lib/sessionGrading.ts
