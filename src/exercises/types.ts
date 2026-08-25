@@ -52,10 +52,32 @@ export type Exercise =
       kind: 'letterSpot';
       letter: Letter;
       word: Word;
-      /** the word's own characters, in reading order — not shuffled, unlike
-       *  `wordBuild`'s tray: the learner is finding the letter where the word
-       *  actually put it, not reassembling a scrambled one. */
+      /**
+       * One button per tappable tile, in display order. A tile whose
+       * `fromWord` flag is true shows one of the word's own characters,
+       * wrapped with its real neighbouring character(s) — so the OS's own
+       * Arabic/Nastaliq shaping renders it in the true joined form it takes
+       * in that word, not a synthesized isolated glyph standing in for it.
+       * `fromWord: false` entries are decoys, added only when the word is
+       * too short to give a genuine multiple-choice floor
+       * (`letterSpotTiles`'s own doc comment, `generator.ts`) — spliced in
+       * without disturbing the real tiles' own relative reading order.
+       */
       tiles: string[];
+      /** Parallel to `tiles`. */
+      fromWord: boolean[];
+      /** Parallel to `tiles`: whether tapping this index is the right
+       *  answer — decided at generation time against the word's own
+       *  characters, before any decoy padding, so the component never has
+       *  to re-derive which of several multi-character display strings
+       *  represents the taught letter. */
+      correct: boolean[];
+      /** Parallel to `tiles`: whether a real space in the word follows this
+       *  tile — `LETTER_CONTEXT_WORD` includes two genuine multi-word
+       *  phrases, and the prompt above shows their real spaces, so the tile
+       *  row renders a wider gap at the same point rather than silently
+       *  flattening two or three words into one undifferentiated run. */
+      wordBreakAfter: boolean[];
     }
   | {
       /** show the meaning, pick the Urdu — the harder direction */

@@ -6,6 +6,7 @@ import {
   distractorsFor,
   itemsOf,
   LETTER_CONTEXT_WORD,
+  letterSpotTiles,
   OPTIONS_PER_QUESTION,
   soundsOverlap,
   soundTokens,
@@ -531,32 +532,136 @@ describe("URD-045: a letter's context sighting asks the learner to find it in th
     }
   });
 
-  it("every letterSpot's tiles actually contain the letter it asks about", () => {
-    // The question has no right answer on screen at all otherwise —
-    // check-answerable.js's own gate for this, re-asserted here as a fast
-    // unit test rather than only the slower, generator-driving script.
+  it('every letterSpot has at least one tile marked as the right answer', () => {
+    // CURRICULUM CRITIC: tiles can be multi-character display clusters (real
+    // neighbouring context, not the bare glyph), so "the letter is among the
+    // tiles" has to be checked against the precomputed `correct` flags, not
+    // by string-matching the tile text itself — check-answerable.js's own
+    // gate for this, re-asserted here as a fast unit test.
     for (const letter of LETTERS) {
       const lesson = letterLessons().find((l) => l.letterIds!.includes(letter.id));
       if (!lesson) continue;
       const exercises = buildLessonExercises(lesson, [], 'both', new Set());
       const spotForLetter = exercises.filter(isSpot).find((e) => e.letter.id === letter.id);
       expect(spotForLetter, `${letter.id}: no letterSpot exercise generated`).toBeDefined();
-      expect(spotForLetter!.tiles, `${letter.id}: its letterSpot's tiles never contain its own glyph`).toContain(
-        letter.forms.isolated
-      );
+      expect(spotForLetter!.correct.some(Boolean), `${letter.id}: no tile is marked correct`).toBe(true);
     }
   });
 
-  it("a letterSpot's tiles are the word's own characters, in the word's own order — never shuffled", () => {
+  it("a letterSpot's real tiles preserve the word's own reading order and carry true neighbouring context — never shuffled, never an isolated glyph", () => {
     // Unlike wordBuild's tray, this is "find it where the word actually put
-    // it": scrambling would erase the one thing being asked about.
+    // it": scrambling would erase the one thing being asked about. Decoy
+    // padding (below) is allowed to interleave extra tiles, but must never
+    // reorder the real ones relative to each other.
+    //
+    // CURRICULUM CRITIC's core finding: an isolated glyph is exactly the
+    // shape letterForm/letterPick already drill, so a tile that only ever
+    // showed that shape could be solved without reading the word at all.
+    // `letterSpotTiles` is pure and deterministic for the real tiles (only
+    // decoy selection/placement is randomized), so calling it fresh and
+    // filtering its own `fromWord` reproduces the exact real cluster
+    // strings — with their true neighbouring context already embedded — a
+    // real build should have used, regardless of where decoys happened to
+    // land in either call.
     for (const l of letterLessons()) {
       const exercises = buildLessonExercises(l, [], 'both', new Set());
       for (const e of exercises.filter(isSpot)) {
-        const expected = Array.from(e.word.urdu).filter((c) => c.trim().length > 0);
-        expect(e.tiles, `${l.id}: ${e.word.id}`).toEqual(expected);
+        const actualReal = e.tiles.filter((_, i) => e.fromWord[i]);
+        const fresh = letterSpotTiles(e.letter, e.word);
+        const freshReal = fresh.tiles.filter((_, i) => fresh.fromWord[i]);
+        expect(actualReal, `${l.id}: ${e.word.id}`).toEqual(freshReal);
       }
     }
+  });
+
+  it('always offers at least 4 tiles — the same recognise-tier guess floor every other letter exercise has', () => {
+    // CURRICULUM CRITIC: khe/daal/toe/laam's assigned context words are only
+    // 2 characters long — a straight coin flip without a floor, unlike
+    // letterPick/letterForm's fixed 4-option convention.
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      for (const e of exercises.filter(isSpot)) {
+        expect(e.tiles.length, `${l.id}: ${e.word.id}`).toBeGreaterThanOrEqual(4);
+      }
+    }
+  });
+
+  it('a two-letter word never puts two real tiles on screen with the identical rendered text', () => {
+    // Caught by the lead's own screenshot review, not assumed clean: for a
+    // real word exactly 2 characters long (khe/daal/toe/laam's assigned
+    // words), both positions' full left+own+right context is the whole
+    // word, so both clusters render as the same string — a learner cannot
+    // visually tell "the daal tile" from "the laam tile" in دل, only one of
+    // which grades correct. `letterSpotTiles` merges that pair into one
+    // tile rather than shipping the ambiguity; this locks the merge in for
+    // every real two-letter case in the actual corpus, not just one example.
+    let checked = 0;
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      for (const e of exercises.filter(isSpot)) {
+        const realTiles = e.tiles.filter((_, i) => e.fromWord[i]);
+        const uniqueRealTiles = new Set(realTiles);
+        expect(uniqueRealTiles.size, `${l.id}: ${e.word.id} — ${JSON.stringify(realTiles)}`).toBe(realTiles.length);
+        if (Array.from(e.word.urdu).filter((c) => c.trim().length > 0).length === 2) checked++;
+      }
+    }
+    // Sanity-check this test actually exercised the 2-letter case at all,
+    // not just vacuously passing because no such word was ever drawn.
+    expect(checked, 'no 2-character letterSpot word was generated to check').toBeGreaterThan(0);
+  });
+
+  it('a decoy tile is never one of the word’s own characters, never marked correct, and always one of the 40 taught letters', () => {
+    // A screenshot at 320px width caught a real defect a string-only test
+    // never would: an early draft drew decoys from `ALPHABET`
+    // (`buildTilesFor`'s own pool — every character appearing anywhere in
+    // the vocabulary corpus, combining marks included), and one landed as a
+    // bare kasra/damma — a nearly invisible floating mark next to full
+    // letter-sized tiles, not a plausible wrong answer. Decoys must be one
+    // of the 40 taught letters' own isolated glyphs instead.
+    const taughtGlyphs = new Set(LETTERS.map((l) => l.forms.isolated));
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      for (const e of exercises.filter(isSpot)) {
+        const realChars = new Set(Array.from(e.word.urdu).filter((c) => c.trim().length > 0));
+        e.tiles.forEach((t, i) => {
+          if (e.fromWord[i]) return;
+          expect(e.correct[i], `${l.id}: ${e.word.id} decoy "${t}" marked correct`).toBe(false);
+          expect(realChars.has(t), `${l.id}: ${e.word.id} decoy "${t}" duplicates a real character`).toBe(false);
+          expect(taughtGlyphs.has(t), `${l.id}: ${e.word.id} decoy "${t}" is not a taught letter's glyph`).toBe(true);
+        });
+      }
+    }
+  });
+
+  it('tiles, fromWord, correct and wordBreakAfter always stay the same length', () => {
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      for (const e of exercises.filter(isSpot)) {
+        expect(e.fromWord.length, `${l.id}: ${e.word.id}`).toBe(e.tiles.length);
+        expect(e.correct.length, `${l.id}: ${e.word.id}`).toBe(e.tiles.length);
+        expect(e.wordBreakAfter.length, `${l.id}: ${e.word.id}`).toBe(e.tiles.length);
+      }
+    }
+  });
+
+  it("marks a word break exactly where LETTER_CONTEXT_WORD's own multi-word phrases actually have a space", () => {
+    // DESIGN CRITIC: baRi-he's خدا حافظ and hamza's ان شاء اللہ are genuine
+    // multi-word phrases — the prompt above shows their real spaces, so the
+    // tile row must mark the same seam rather than flattening two or three
+    // words into one undifferentiated run of tiles.
+    let checkedAPhrase = false;
+    for (const [letterId, word] of LETTER_CONTEXT_WORD) {
+      const rawWords = word.urdu.split(' ').filter(Boolean);
+      if (rawWords.length < 2) continue;
+      checkedAPhrase = true;
+      const letter = getLetter(letterId)!;
+      const { tiles, fromWord, wordBreakAfter } = letterSpotTiles(letter, word);
+      const realBreaks = tiles.filter((_, i) => fromWord[i] && wordBreakAfter[i]).length;
+      // One break per space the real phrase actually has, no more, no fewer.
+      const expectedBreaks = rawWords.length - 1;
+      expect(realBreaks, `${letterId}: ${word.id} (${word.urdu})`).toBe(expectedBreaks);
+    }
+    expect(checkedAPhrase, 'no multi-word LETTER_CONTEXT_WORD entry found to check').toBe(true);
   });
 
   it('never appears on the Roman track, same as every other script-only letter exercise', () => {

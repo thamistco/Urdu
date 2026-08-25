@@ -167,22 +167,131 @@ export const LETTER_CONTEXT_WORD: Map<string, Word> = (() => {
  * it. This asks directly: tap which tile of the word is the letter just
  * taught.
  *
- * Tiles are the word's own characters, split the same way `wordBuild`'s own
- * `target` is (`Array.from(word.urdu)`, whitespace dropped) — one base
- * codepoint per letter, per URD-021 — but never shuffled: this is "find it
- * where the word actually put it," not a build, so scrambling the tiles
- * would erase the one thing being asked about.
+ * CURRICULUM CRITIC, first draft: tiles rendered each character in its bare
+ * `forms.isolated` glyph, the exact same shape `letterForm`/`letterPick`
+ * already drill in isolation — `connector`/`nonConnector` (`data/letters.ts`)
+ * show *why* that's wrong: a base codepoint with no neighbouring character
+ * renders isolated by construction, so a row of lone codepoints could never
+ * show the letter's true joined shape, and a learner could solve the
+ * question by isolated-glyph matching alone, never reading the word above
+ * it at all — reopening, in a new shape, the exact hole URD-045 was filed to
+ * close.
  *
- * `letter.forms.isolated` is one base Unicode codepoint per letter (see
- * `connector`/`nonConnector`, `data/letters.ts`), so `tiles[i] ===
- * letter.forms.isolated` identifies every tile that really is this letter,
- * unambiguously — no other letter shares that codepoint. A word with more
- * than one occurrence of the taught letter (rare, not excluded) has more
- * than one right answer; the component grades any of them as correct.
+ * Fixed by giving every real tile its true neighbouring character(s), taken
+ * directly from the word's own text (`raw`, `positions` below) rather than
+ * synthesized: two real, adjacent codepoints rendered as one uninterrupted
+ * text run get shaped by the OS's own Arabic/Nastaliq engine exactly as they
+ * shape in the word itself — the same reason `WordBuild.tsx`'s own assembled
+ * row reads the placed tiles as one run instead of isolated glyphs. This
+ * needs no shaping logic of its own: it is the same real substring of the
+ * same real word, so it renders identically to how that letter actually
+ * looks there. A letter at the edge of its own word (or, for the two
+ * multi-word entries in `LETTER_CONTEXT_WORD`, at the edge of its own word
+ * *within* the phrase, on the far side of a space) correctly gets no
+ * synthetic neighbour and renders in its true edge shape instead.
+ *
+ * CURRICULUM CRITIC, second finding: three of `LETTER_CONTEXT_WORD`'s
+ * shortest assignments (`khe`/`daal`/`toe`/`laam`, all 2-tile words) gave a
+ * 50% guess floor — worse than every other recognise-tier letter exercise,
+ * which fixes `OPTIONS_PER_QUESTION` (4) options regardless of content.
+ * Fixed by padding any word shorter than that floor with decoy tiles drawn
+ * from the 40 taught letters' own isolated glyphs (see the floor-padding
+ * code below for why not `ALPHABET`, `buildTilesFor`'s own decoy pool) and
+ * excluded from the word's own characters, so a decoy can never
+ * accidentally look like a second right answer. Decoys are spliced into
+ * random gaps rather than replacing anything, so they never disturb the
+ * real tiles' own relative reading order — `fromWord` marks which tiles are
+ * real, `correct` marks which are the right answer, both decided here
+ * rather than left for the component to re-derive from the (now possibly
+ * multi-character) display strings.
  */
+export function letterSpotTiles(
+  letter: Letter,
+  word: Word
+): { tiles: string[]; fromWord: boolean[]; correct: boolean[]; wordBreakAfter: boolean[] } {
+  const raw = Array.from(word.urdu);
+  const isReal = (i: number) => i >= 0 && i < raw.length && raw[i].trim().length > 0;
+
+  const tiles: string[] = [];
+  const fromWord: boolean[] = [];
+  const correct: boolean[] = [];
+  const wordBreakAfter: boolean[] = [];
+  const realChars = new Set<string>();
+  for (let i = 0; i < raw.length; i++) {
+    if (!isReal(i)) continue;
+    const left = isReal(i - 1) ? raw[i - 1] : '';
+    const right = isReal(i + 1) ? raw[i + 1] : '';
+    const cluster = left + raw[i] + right;
+    const isCorrect = raw[i] === letter.forms.isolated;
+    // DESIGN CRITIC: `LETTER_CONTEXT_WORD` includes two genuine multi-word
+    // phrases (`baRi-he`'s خدا حافظ, `hamza`'s ان شاء اللہ) — the prompt
+    // above shows their real spaces, but the old tile row silently dropped
+    // them, flattening two or three words into one undifferentiated run of
+    // tiles with no seam where the prompt plainly has one. Recorded here
+    // per real tile (not per decoy — decoys never represent a position in
+    // the word at all) and rendered as a wider gap in `LetterSpot.tsx`, so
+    // the tile row's grouping matches what the prompt actually reads.
+    const breaksAfter = i + 1 < raw.length && raw[i + 1].trim().length === 0;
+    realChars.add(raw[i]);
+    /**
+     * DESIGN CRITIC (lead's own pass, screenshotting the real component):
+     * exactly two real characters — the whole real reason `khe`/`daal`/
+     * `toe`/`laam` need decoy padding at all — means both positions' full
+     * left+own+right context IS the whole word, so both clusters render as
+     * the identical string ("دل" for both `daal` and `laam`), leaving two
+     * tiles a learner cannot visually tell apart, only one of which grades
+     * correct. A longer real word never collides this way (each position's
+     * cluster differs from its neighbours' as soon as a third character
+     * exists to break the symmetry), so this only ever fires for that one
+     * two-letter shape. Merging them into a single tile — correct if either
+     * position was — keeps every character's true joined shape on screen
+     * (nothing here is isolated) while removing the ambiguous duplicate
+     * rather than resolving it by guesswork.
+     */
+    if (tiles.length > 0 && tiles[tiles.length - 1] === cluster) {
+      correct[correct.length - 1] = correct[correct.length - 1] || isCorrect;
+      wordBreakAfter[wordBreakAfter.length - 1] = wordBreakAfter[wordBreakAfter.length - 1] || breaksAfter;
+      continue;
+    }
+    tiles.push(cluster);
+    fromWord.push(true);
+    correct.push(isCorrect);
+    wordBreakAfter.push(breaksAfter);
+  }
+
+  // A minimum multiple-choice floor, matching every other recognise-tier
+  // letter exercise's fixed option count (`OPTIONS_PER_QUESTION`) rather
+  // than inheriting whatever length the assigned vocabulary word happens
+  // to have. Decoys are drawn from the 40 taught letters' own isolated
+  // glyphs, not `ALPHABET` (every character appearing anywhere in the
+  // vocabulary corpus, `buildTilesFor`'s own pool) — checked directly with
+  // a real screenshot: `ALPHABET` includes bare combining marks (kasra,
+  // damma) and hamza-carrier variants that exist in real words but were
+  // never any letter's own taught glyph, and one landed as a decoy tile
+  // rendering as a barely-visible floating mark next to full letter-sized
+  // tiles either side of it — plausible enough as vocabulary-corpus noise
+  // for `wordBuild`'s tray (already-placed tiles, never themselves tap
+  // targets standing in for "a letter"), wrong for a tile whose entire job
+  // is to look like a real letter this task is about spotting.
+  const LETTER_GLYPHS: string[] = LETTERS.map((l) => l.forms.isolated);
+  const floor = OPTIONS_PER_QUESTION;
+  const shortfall = Math.max(0, floor - tiles.length);
+  if (shortfall > 0) {
+    const decoyPool = shuffle(LETTER_GLYPHS.filter((c) => !realChars.has(c)));
+    for (const decoy of decoyPool.slice(0, shortfall)) {
+      const at = Math.floor(Math.random() * (tiles.length + 1));
+      tiles.splice(at, 0, decoy);
+      fromWord.splice(at, 0, false);
+      correct.splice(at, 0, false);
+      wordBreakAfter.splice(at, 0, false);
+    }
+  }
+  return { tiles, fromWord, correct, wordBreakAfter };
+}
+
 function letterSpotExercise(letter: Letter, word: Word): Exercise {
-  const tiles = Array.from(word.urdu).filter((c) => c.trim().length > 0);
-  return { kind: 'letterSpot', letter, word, tiles };
+  const { tiles, fromWord, correct, wordBreakAfter } = letterSpotTiles(letter, word);
+  return { kind: 'letterSpot', letter, word, tiles, fromWord, correct, wordBreakAfter };
 }
 
 // ---- per-item exercise builders -----------------------------------------

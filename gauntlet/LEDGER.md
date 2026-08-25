@@ -5042,3 +5042,161 @@ $ npm run check:all
   commits also passed all 30 steps clean.
 
 branch: claude/gauntlet-letter-final-sighting-hard
+
+## CLAIMED · URD-045 · 2026-08-25T22:58Z
+files: src/exercises/types.ts, src/exercises/generator.ts,
+  src/exercises/LetterSpot.tsx (new), src/exercises/letterSpotGrading.ts
+  (new), src/exercises/index.tsx, src/exercises/common.tsx,
+  src/screens/LessonScreen.tsx, scripts/check-answerable.js
+branch: claude/gauntlet-letter-spot-exercise, cut from
+claude/gauntlet-lessonscreen-srs-integration-test after URD-044 shipped.
+
+## CRITIQUE · URD-045
+New exercise kind `letterSpot`: shows a letter's `LETTER_CONTEXT_WORD`
+sighting as one real, correctly-joined line of script, then asks the
+learner to tap which tile of the word is the letter just taught — replacing
+the old `wordExercise` call (`multipleChoice`/`meaningPick`/`listenTap`),
+answerable by picture or meaning alone without ever finding the letter's
+shape. Tiles carry their own real neighbouring character(s) so each renders
+its true joined shape (initial/medial/final/isolated, whichever the word
+actually uses), not a synthesized isolated glyph — the same reason
+`WordBuild.tsx`'s assembled row reads its tiles as one run. Grades the
+letter (`{id: letter.id, type: 'letter'}`), matching `letterForm`/
+`letterPick`/`letterTrace`'s own convention.
+
+Dispatched THE CRITIC, CURRICULUM CRITIC (a new pedagogical exercise
+design) and DESIGN CRITIC (a new rendered screen) in parallel. Between
+dispatch and this entry, this account's session-wide usage limit was hit
+mid-review (all three subagents failed simultaneously, "You've hit your
+session limit"); THE CRITIC and CURRICULUM CRITIC were re-dispatched once
+it reset and returned clean second attempts. No BLOCKING from THE CRITIC.
+
+**CURRICULUM CRITIC, two MAJOR findings, both fixed, not overruled:**
+
+1. Tiles rendered each character in its bare `forms.isolated` glyph — the
+   exact shape `letterForm`/`letterPick` already drill — so a learner could
+   solve "which tile is X" by isolated-glyph matching alone, never reading
+   the joined word above at all, reopening the exact hole this item was
+   filed to close. Fixed: each real tile now embeds its true neighbouring
+   character(s) taken directly from the word's own text, so native
+   Arabic/Nastaliq shaping renders the exact joined shape that letter takes
+   in that word — no shaping logic of this component's own, since it's a
+   real substring of the real word.
+2. Three of `LETTER_CONTEXT_WORD`'s shortest assignments (khe/daal/toe/laam,
+   2-character words) gave a straight 50% guess floor, unlike every other
+   recognise-tier letter exercise's fixed 4-option convention. Fixed: pad
+   any word shorter than the floor with decoy tiles (drawn from the 40
+   taught letters' own glyphs, excluded from the real word's own
+   characters), spliced in without disturbing the real tiles' relative
+   order.
+
+**THE CRITIC (second dispatch), one MAJOR, fixed:** mutated
+`LetterSpot.tsx`'s inline correctness check to "always true, regardless of
+tapped tile" and found nothing anywhere — not `generator.test.ts`, not
+`check-answerable.js`, not `check-shape.js` — would catch a learner told
+"correct" no matter what they tapped; a real component render test isn't a
+cheap fix (confirmed directly: importing anything from `LetterSpot.tsx`
+pulls in real `react-native` view primitives, whose Flow-syntax source
+vitest's bundler cannot parse at all — a real, verified infrastructure
+wall, not assumed). Fixed the same way URD-044 fixed an analogous gap:
+extracted the one line that decides right from wrong into a dependency-free
+module (`letterSpotGrading.ts`), gave it a real unit test, and confirmed
+the exact "always true" mutation now fails 3 of 4 cases with the matching
+shape.
+
+**Lead's own DESIGN CRITIC pass** (the dispatched subagent burned three
+long dispatches across a session-limit interruption without ever returning
+a scored verdict — see notes below): built a temporary in-app harness route
+(rendering `LetterSpotExercise` directly with real generator output,
+discarded before shipping, never committed) and screenshotted it at 390px
+and 320px widths. Found and fixed two real defects neither text-only test
+nor the automated checks would have caught:
+
+3. For a 2-character real word (khe/daal/toe/laam), both real positions'
+   full left+own+right context is the whole word, so both tiles rendered
+   the *identical* string — a learner cannot tell "the daal tile" from "the
+   laam tile" in دل, only one of which grades correct. Fixed: merge two
+   real tiles whose computed display text collides into one (correct if
+   either position was), rather than shipping an unresolvable visual tie —
+   verified this only ever fires for the exact two-letter case (a third
+   character breaks the symmetry for every longer real word, checked
+   directly across all 40 letters).
+4. A decoy tile landed as a bare combining diacritic mark (drawn from
+   `ALPHABET`, `buildTilesFor`'s own pool — every character appearing
+   anywhere in the vocabulary corpus, kasra/damma/hamza-carriers included) —
+   a nearly invisible floating mark next to full letter-sized tiles, not a
+   plausible wrong answer. Fixed: decoys now draw only from the 40 taught
+   letters' own isolated glyphs.
+
+**Late DESIGN CRITIC report** (after the lead had already shipped fixes for
+3 and 4 above, from a genuinely contaminated review — the subagent's own
+report flags that some of its screenshots were taken against the lead's
+in-progress, uncommitted harness edits mid-flight, not the reviewed commit)
+surfaced a fifth, real, independently-verified-via-data finding:
+
+5. `LETTER_CONTEXT_WORD` has two genuine multi-word phrases (baRi-he's خدا
+   حافظ, hamza's ان شاء اللہ) — the prompt shows their real spaces, but the
+   tile row silently dropped them, flattening two or three words into one
+   undifferentiated run with no seam where the prompt plainly has one.
+   Fixed: track which real tiles have a genuine word-break following them
+   and render a wider gap there, verified against every real multi-word
+   `LETTER_CONTEXT_WORD` entry and against a screenshot showing the gap
+   lands exactly between خدا and حافظ.
+
+Fixing finding 5's gap via `marginLeft`/`marginRight` broke a gating check
+this item hadn't touched before, `check:direction` (URD-008) — caught by
+a full `check:all` run, not assumed clean. Fixed to `marginStart`/
+`marginEnd` (this app's own direction never actually flips, so today's
+rendering is identical — confirmed by re-screenshotting) and extended
+`Choice` (`common.tsx`) to accept them, the first caller of a style prop
+that component didn't have before.
+
+Every fix verified as a real regression its own test catches: reverted
+each in turn (the neighbour-context clustering, the decoy source, the
+2-tile merge, the word-break tracking) and confirmed the matching test
+failed with the item's own measured shape before restoring.
+
+Notes on process: the dispatched DESIGN CRITIC subagent spent three long
+turns (~550K tokens combined) across a session-limit interruption without
+ever returning a severity-scored verdict on the reviewed commit — twice
+reporting only "standing by for a background driver," once (after the
+lead had already taken over, screenshotted, and shipped two fixes)
+returning a real but partially self-flagged-as-contaminated report. The
+lead did not wait a fourth time: took over the visual review directly once
+it became clear the dispatched attempt was not converging, which is how
+findings 3 and 4 were actually caught. Sent the subagent a stand-down
+message once its own useful finding (5) arrived late; it cleaned up its
+own stray scratch files on request. This is a deviation from a fully
+independent third-party design review for part of this item — recorded
+here plainly rather than silently — but the review still happened, with
+real screenshots and two real defects found and fixed that a
+report-writing-only critic could not have caught without also rendering
+the app.
+
+## PASSED · URD-045 · 2026-08-25T23:34Z
+Every fix (neighbour-context clustering, decoy source, 2-tile merge,
+word-break tracking) verified as a real regression its own test catches —
+reverted each alone and confirmed the matching test failed with the item's
+own measured shape, then restored and reconfirmed clean.
+
+$ npx vitest run
+  226/226 — 213 at URD-044's own PASSED, plus 9 new in generator.test.ts's
+  URD-045 block and 4 new in letterSpotGrading.test.ts.
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npm run check:answerable
+  every generated exercise answerable; letterSpot 276 on the `both` track,
+  0 on `roman`.
+
+$ npm run check:shape
+  clean, unchanged targets.
+
+$ npm run check:all
+  all 30 steps pass against a deploy-shaped build — including
+  `check:direction`, which a mid-review fix (`marginLeft`/`marginRight`
+  for the word-break gap) genuinely broke before being corrected to
+  `marginStart`/`marginEnd` and re-verified.
+
+branch: claude/gauntlet-letter-spot-exercise

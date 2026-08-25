@@ -36,35 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-045 — A letter's context sighting never asks the learner to find the letter in the word
-attempts: 0
-files: src/exercises/types.ts, src/exercises/generator.ts, src/exercises/*.tsx
-definition of done: URD-020 gave every letter a real-word context sighting,
-  but the exercise kinds it can produce (`multipleChoice`/`meaningPick`/
-  `listenTap`) are the same whole-word recognition questions used for
-  ordinary vocabulary everywhere else in the app — none of them highlight
-  or ask about the specific taught letter inside the word. A learner
-  answers correctly by picture/meaning matching without ever needing to
-  find or name the letter's shape within it, so the sighting shows a letter
-  in context without testing that the learner can actually read it there.
-  Build a dedicated exercise kind that asks the learner to identify the
-  taught letter's position/occurrence inside its context word (e.g. tap
-  which tile/segment of the written word is the letter just taught), and
-  give it one of the context-sighting slots `LETTER_CONTEXT_WORD`
-  (`generator.ts`) already assigns.
-verify: a test asserting a letter lesson's context-sighting exercise
-  requires identifying the letter's position within the shown word, not
-  just its whole-word meaning.
-notes: Found by CURRICULUM CRITIC reviewing URD-020. Not blocking — URD-020
-  itself offered two designs ("more than one context word per lesson, or a
-  dedicated 'spot the letter' exercise kind") and correctly scoped its own
-  fix to the first, cheaper one, entirely within `generator.ts`. This is the
-  second, bigger design the item named but did not attempt — a new exercise
-  kind touches new UI (`src/exercises/*.tsx`), new answerability rules
-  (`check-answerable.js`), and `check:coverage`'s exercise-kind audit, not
-  just content-generation logic, so it is real, separate work rather than a
-  gap in URD-020's own delivery.
-
 ## URD-046 — A letter lesson's one unavoidable confusable pair always collides identically, every round
 attempts: 0
 files: src/exercises/generator.ts
