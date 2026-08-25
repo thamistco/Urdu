@@ -59,9 +59,20 @@ const lessonCountForLevel = (lvl) => UNITS.filter((u) => u.level === lvl).reduce
  * course's own length or level boundaries moved, the same "the check
  * stops meaning anything" failure this file's own `BOUND` cap already
  * guards against for the upper bound.
+ *
+ * `skippedLessons` too, not just `completedLessons` — THE CRITIC noted an
+ * earlier version of this checked only the latter while claiming to mirror
+ * both. Inert today (no scenario here, nor `enterAsGuest`, ever populates
+ * `skippedLessons`), but a real gap between the claim and the code
+ * regardless, and one whose direction of error is the wrong kind to leave:
+ * ignoring a skip only ever lands this on an earlier-or-equal level than
+ * the real app, computing a floor too *low* to catch a real regression
+ * rather than too high to false-fail a working one.
  */
-function expectedOpenLevel(completedLessons) {
-  const currentId = ALL_LESSONS.find((l) => !completedLessons[l.id])?.id ?? ALL_LESSONS[ALL_LESSONS.length - 1].id;
+function expectedOpenLevel(completedLessons, skippedLessons = {}) {
+  const currentId =
+    ALL_LESSONS.find((l) => !completedLessons[l.id] && !skippedLessons[l.id])?.id ??
+    ALL_LESSONS[ALL_LESSONS.length - 1].id;
   const unit = UNITS.find((u) => u.lessons.some((l) => l.id === currentId));
   return unit?.level ?? LEVEL_ORDER[0];
 }
@@ -95,9 +106,7 @@ async function main() {
   const problems = [];
 
   try {
-    const maxLevelLessons = Math.max(
-      ...LEVEL_ORDER.map((lvl) => UNITS.filter((u) => u.level === lvl).reduce((n, u) => n + u.lessons.length, 0))
-    );
+    const maxLevelLessons = Math.max(...LEVEL_ORDER.map(lessonCountForLevel));
     // Headroom for the level headers (one per level, always rendered) plus
     // the continue card / letter lab / other fixed Home-screen buttons — a
     // small constant, not a fraction of the course, so it can't quietly grow
@@ -162,13 +171,13 @@ async function main() {
       // URD-037: this check used to assert only an upper bound, so a
       // scenario mounting zero rows — the accordion silently failing to
       // render anything, or opening a level with no lessons in it —
-      // passed exactly as cleanly as one mounting the expected 81 or 94.
+      // passed exactly as cleanly as one mounting the expected 81 or 95.
       // The floor is the exact level `HomeScreen.tsx`'s own `currentLevel`
       // logic would open for this scenario's progress (`expectedOpenLevel`,
       // mirroring that derivation directly rather than assuming which
       // level a scenario lands on), so a genuine render failure fails
       // loudly instead of reading as an excellent bound.
-      const expectedLevel = expectedOpenLevel(scenario.completedLessons);
+      const expectedLevel = expectedOpenLevel(scenario.completedLessons, scenario.skippedLessons);
       const floor = lessonCountForLevel(expectedLevel);
       if (n < floor) {
         problems.push(
