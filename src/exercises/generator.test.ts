@@ -1286,6 +1286,13 @@ describe('URD-042: every letter gets review exposure somewhere across the whole 
       for (const lesson of u.lessons) {
         if (lesson.kind !== 'review') continue;
         const taught = taughtUpTo(lesson.id).words;
+        // THE CRITIC (re-review): needs at least one already-taught word to
+        // graduate — the very first review or two can predate any
+        // vocabulary lesson at all, and an empty `known` there falls into
+        // the different ("nothing known at all") branch this test isn't
+        // about, the same guard `review.test.ts`'s sibling test already
+        // takes for the identical scenario.
+        if (taught.length === 0) continue;
         const known = new Set(taught.slice(0, 5)); // words only, no letters
         const exercises = buildLessonExercises(lesson, [], 'both', known, 0);
         const letterExercises = exercises.filter((e) => LETTER_KIND_SET.has(e.kind));
