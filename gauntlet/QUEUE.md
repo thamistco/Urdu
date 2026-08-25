@@ -446,3 +446,32 @@ notes: Found by THE CRITIC reviewing URD-036's disabled-button fix
   evidence of anything; this is the same "the comment claims more than the
   code checks" mistake this file's own generator-side sibling elsewhere in
   this repo was written to stop making, now found in a different check.
+
+## URD-053 — se/seen/swaad, baRi-he/choti-he/do-chashmi-he and te/toe have the same undisambiguated-collision gap URD-038 fixed for ذ ز ض ظ
+attempts: 0
+files: src/data/letters.ts
+definition of done: every letter in these three same-sound groups gets the
+  same real disambiguation cue URD-038 gave the four z-sound letters — which
+  one is the everyday/native default (if one is), and for the rest, an
+  anchor to the word `LETTER_CONTEXT_WORD` (generator.ts) actually shows
+  during that letter's own lesson, not the letter's own decorative `word`
+  field.
+verify: a test extending (or mirroring) `src/data/letters.test.ts`'s own
+  pattern for every letter in these three groups — each note names the real
+  pattern (not just "another of the N ways Urdu spells X") and, where the
+  note cites an anchor word, that word matches `LETTER_CONTEXT_WORD.get(id)`
+  exactly, the same two properties URD-038's test checks for the z-group.
+notes: Found by CURRICULUM CRITIC reviewing URD-038, which explicitly
+  scoped itself to "at least the ذ ز ض ظ group" per its own queue entry —
+  left open there on purpose, not overlooked, but nothing tracked the rest
+  until now. Today: `se` ("In Urdu it sounds exactly like seen, one of
+  three letters spelling the same s") and `baRi-he` ("In Urdu it sounds the
+  same as choṭī he, an ordinary h") name the collision with zero cue.
+  `swaad` ("the spelling is inherited from Arabic") and `toe`/`te` ("In
+  Urdu it sounds like te"/"the soft dental t") gesture at the real pattern
+  but don't commit to an anchor word the way URD-038's fixed notes now do.
+  Whether "everyday vs Arabic-loanword" holds for these groups the same way
+  it measurably does for ذ ز ض ظ (verified directly there, not assumed) is
+  itself unverified — check it against the real word corpus the way
+  URD-038 did before writing anything, rather than assuming the same split
+  applies.
