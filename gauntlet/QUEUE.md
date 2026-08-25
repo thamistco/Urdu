@@ -36,38 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-039 — A review's fallback content for a mastered unit never rotates, ever
-attempts: 0
-files: src/lib/review.ts
-definition of done: `prioritizedPool`'s per-tier shuffle seed
-  (`` `${lessonId}:words:${i}` `` / `` `${lessonId}:letters:${i}` ``) has no
-  source of variation across replays of the same review by the same learner
-  — same lesson, same `known` set, byte-identical output, every time. Once a
-  learner has graded every word in a unit (the common case for a unit small
-  enough that a fresh review of it is even reachable), the fallback always
-  slices off the same fixed subset of that unit's words and never surfaces
-  the rest. Give repeated reviews of the same unit some source of variation
-  once the learner already knows everything in scope — a rotation keyed on
-  something that actually changes between visits (visit count, a stored
-  per-review cursor, or similar), not a a value fixed by `lessonId` alone.
-verify: a test seeding a review's `known` set to the closing unit's full
-  word list, calling the pool-selection twice with state representing two
-  different real visits (however "visit" ends up being modeled), and
-  asserting the two calls' chosen words differ when the unit has more words
-  than the review's word-slot count.
-notes: Found independently by both THE CRITIC and CURRICULUM CRITIC
-  reviewing URD-016. Measured on rev-gender-and-number (u6, 20 words) with
-  the whole unit known: the same 4 words
-  (w-surkh, w-gulaabi, w-pyaazi, w-neela) are offered on every single call,
-  and the other 16 never appear via this fallback under any circumstance.
-  On rev-the-wider-world (u39, 117 words) only 19 (16%) can ever surface
-  this way. Pre-existing behavior (seeded, not random, content selection is
-  this project's deliberate convention — see `lib/shuffle.ts`'s own
-  docstring) made newly visible, not newly broken, by URD-016 shrinking the
-  pool a fallback draws from down to a single unit's dozen-to-hundred words,
-  where a shuffle quirk that barely mattered against a course-wide pool of
-  thousands now determines the entire fallback's content. Not blocking.
-
 ## URD-040 — Review lessons never touch the grammar concepts or sentences that name their own unit
 attempts: 0
 files: src/lib/review.ts, src/exercises/generator.ts
