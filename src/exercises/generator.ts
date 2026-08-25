@@ -1150,7 +1150,8 @@ export function buildLessonExercises(
      * before its context word ever appears.
      *
      * URD-043: also never the final round (`SIGHTINGS_PER_LETTER - 1`) —
-     * see the comment on `isFinalRound` below for why. Narrows where a
+     * see the comment on `tailRound`/`finalRound` below for why. Narrows
+     * where a
      * context sighting can land from 5 rounds (1-5) to 4 (1-4), which
      * pushes the pigeonhole collision `contextRound`'s own comment already
      * names (a letter group bigger than the round capacity forces two
