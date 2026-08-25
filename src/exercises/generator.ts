@@ -1570,23 +1570,39 @@ export function buildLessonExercises(
     const key = (r: ItemRef) => `${r.type}:${r.id}`;
     /**
      * URD-040: grammar concept(s) this review's own unit taught, if any —
-     * see `conceptsInUnit`'s doc comment. Reserved out of `lesson.size` up
-     * front, the same "cap before, don't trim after" principle the letter/
-     * word split above already follows: appending a concept exercise after
-     * `refs` had already claimed every slot would leave it to the trailing
-     * `.slice(0, lesson.size)` far below, which cuts from the end and would
-     * silently drop exactly the exercise this fix exists to add. `.length`
-     * is 0 for most units (grammar teaching clusters early in the course,
-     * same as letters) and never above 2 for any unit measured — a rounding
-     * error against a review's floor of 22, not a meaningful bite out of the
-     * vocabulary review this budget used to be spent entirely on.
+     * see `conceptsInUnit`'s doc comment.
+     *
+     * THE CRITIC (BLOCKING): a first version reserved this budget by
+     * shrinking the pool `due` itself was capped against —
+     * `refs.length = Math.min(refs.length, lesson.size - conceptBudget)`
+     * truncates `due ++ filler` from the end, and `due` sits at the front
+     * only by construction, not by protection. Whenever the due queue
+     * alone already reached `lesson.size` — the *ordinary* state
+     * `dueBudget`'s own contract produces, not a rare overfull edge case —
+     * that cap silently dropped the last `conceptBudget` due items:
+     * genuinely overdue, scheduler-flagged material, to make room for a
+     * grammar drill that isn't even SRS-gradable. Reproduced live:
+     * rev-saying-who-you-are fed a full 22-item due queue dropped
+     * w-maan and w-baap — the exact "the words you got wrong come back
+     * first" guarantee `check:srs` exists to hold, contradicted by this
+     * function's own comment on `due` two screens up.
+     *
+     * `refCap` never falls below `due.length` now — the concept budget
+     * only ever eats into the *filler* pool's target, and even then only
+     * whatever room is left after `due`. A fully-saturated due queue gets
+     * no grammar concept exercise that visit rather than bumping a real
+     * due item out (see `conceptRoom` below) — an honest trade, not an
+     * unconditional guarantee, but the item's own definition of done never
+     * asked for one, and dropping scheduler-flagged content to make room
+     * for decorative grammar practice is worse than occasionally skipping
+     * the practice.
      */
     const unitConcepts = conceptsInUnit(lesson.id);
     const conceptBudget = unitConcepts.length;
-    const refSize = Math.max(0, lesson.size - conceptBudget);
     const due = reviewRefs.filter(resolvable);
+    const refCap = Math.max(due.length, lesson.size - conceptBudget);
     const seenIds = new Set(due.map(key));
-    const filler = fallbackReviewRefs(refSize, teachesScript, lesson.id, known, visit)
+    const filler = fallbackReviewRefs(refCap, teachesScript, lesson.id, known, visit)
       .filter((r) => !seenIds.has(key(r)))
       .filter(resolvable);
     const refs = [...due, ...filler];
@@ -1611,14 +1627,14 @@ export function buildLessonExercises(
      * this early and is the same "more topping up, not less" principle the due
      * queue itself is built on.
      */
-    if (refs.length < refSize) {
+    if (refs.length < refCap) {
       const have = new Set(refs.map(key));
-      const more = fallbackReviewRefs(refSize * 2, false, lesson.id, known, visit)
+      const more = fallbackReviewRefs(refCap * 2, false, lesson.id, known, visit)
         .filter((r) => !have.has(key(r)))
         .filter(resolvable);
-      refs.push(...more.slice(0, refSize - refs.length));
+      refs.push(...more.slice(0, refCap - refs.length));
     }
-    refs.length = Math.min(refs.length, refSize);
+    refs.length = Math.min(refs.length, refCap);
 
     // Counts words only, separately from `i` (which also counts letters).
     // THE CRITIC, URD-018: the turn used to be `i % 4` directly, and
@@ -1705,7 +1721,17 @@ export function buildLessonExercises(
      * replays instead of pinning one forever, the same fix in spirit as
      * `prioritizedPool`'s per-visit seed.
      */
-    for (const conceptId of unitConcepts) {
+    // THE CRITIC (BLOCKING): `refCap` above can equal `due.length` rather
+    // than `lesson.size - conceptBudget` whenever the due queue alone
+    // already fills the review, which leaves no guaranteed room here.
+    // `conceptRoom` — not `unitConcepts.length` — is what actually gets
+    // spent, so a fully-saturated due queue skips the concept exercise(s)
+    // that don't fit rather than pushing `exercises` past `lesson.size`,
+    // where the trailing `exercises.slice(0, lesson.size)` two functions
+    // down would cut them off the end anyway, or (worse) forcing them in
+    // by shrinking `refs` and dropping a real due item after all.
+    const conceptRoom = Math.max(0, lesson.size - exercises.length);
+    for (const conceptId of unitConcepts.slice(0, conceptRoom)) {
       const c = getGrammar(conceptId);
       if (!c) continue;
       const start = c.drills.length ? visit % c.drills.length : 0;
