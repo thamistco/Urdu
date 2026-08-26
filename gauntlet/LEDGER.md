@@ -5200,3 +5200,100 @@ $ npm run check:all
   `marginStart`/`marginEnd` and re-verified.
 
 branch: claude/gauntlet-letter-spot-exercise
+
+## CLAIMED · URD-046 · 2026-08-25T23:39Z
+files: src/exercises/generator.ts, src/exercises/generator.test.ts
+branch: claude/gauntlet-confusable-pair-rotation, cut from
+claude/gauntlet-letter-spot-exercise after URD-045 shipped.
+
+## CRITIQUE · URD-046
+`separateConfusables` spreads a lesson's visually-confusable letters apart
+within a round, but a residual "wrap" adjacency (last letter of round r
+next to first letter of round r+1) is mathematically forced whenever a
+confusable bucket is at least half the group size — true only of `l-3`'s
+4-member `re` family in its 7-letter group, confirmed the only real lesson
+this affects. Before this fix that forced wrap always paired the identical
+two letters, `zhe` then `re`, at all 4 of `l-3`'s round transitions
+(re-measured directly for this item, not assumed from URD-022's own stale
+"5 occurrences" figure — URD-043's later letter-major tail restructuring
+had already changed that count to 4 without anyone updating the comment).
+
+Fix: `separateConfusables` takes an optional `rotation` (default 0, every
+existing caller unaffected) that rotates each confusable bucket's own
+member order before slotting members into that bucket's *same fixed
+position-set* — varies which letter sits at a round's two ends without
+touching which positions a bucket occupies, so the "zero internal
+adjacency" property is untouched. The round-major generation loop calls
+this with `round` for each round's *visiting order*, while every letter's
+`turn`/`position` index is looked up from a separate, permanent, unrotated
+map built once — so kind-cycling and position-cycling stay completely
+round-invariant; only adjacency varies.
+
+First rotation formula tried and rejected by direct measurement, not
+assumed correct: `rotation % bucket.length` stopped the identical-pair
+repeat, but only ever alternated between two pairs (`{Re,zhe}`/`{re,ze}`),
+each still twice — a real, structural resonance for l-3's even-sized
+(4-member) bucket: comparing a round's last slot to the next round's first
+is always exactly two rotation-steps apart, and for a 4-member bucket any
+coprime step still lands on an even bucket-index distance, which only
+reaches two of the bucket's possible edges. Fixed by rotating with period
+`bucket.length - 1` instead of `bucket.length` — checked directly, all 4 of
+`l-3`'s wrap transitions now land on 4 genuinely distinct unordered pairs.
+
+Dispatched THE CRITIC (real generator logic, and this is exactly the class
+of "did the fix actually work, or does it just look like it did" claim
+this file's own history has been burned by before) and CURRICULUM CRITIC
+(a confusable-letter drilling design question). Both returned clean
+verdicts — no BLOCKING, no MAJOR.
+
+THE CRITIC independently re-derived the whole claim from the real
+generated output rather than trusting the diff: dumped every letter's
+`(kind, position)` sequence across all 9 real letter lessons, old commit
+vs. new, and confirmed byte-for-byte identical except for `l-3`'s own
+emission order (first divergence at the first rotated round, as expected)
+— directly proving `turn`/`position`/kind stability rather than accepting
+the doc comment's claim of it. Also mutated the fix twice (no rotation;
+naive `% bucket.length`) and confirmed the new test fails both ways with
+exactly the shape the doc comments predict. One MINOR, fixed: a redundant
+trailing `% bucket.length` in the offset computation that could never
+change the result (`period` is already `<= bucket.length` by
+construction) — removed, with a comment explaining why it was dead rather
+than load-bearing.
+
+CURRICULUM CRITIC independently measured all 9 letter lessons and
+confirmed `l-3` is the only one with any forced adjacency, that the 4
+realized pairs are genuinely distinct (not the rejected 2-pairs-twice
+outcome), and that varying the pair (rather than concentrating repetition
+on one) matches both this app's own stated philosophy (URD-022's
+definition of done: "risks teaching the confusion rather than resolving
+it") and the general interleaving-vs-blocking literature on category
+learning — found no curriculum argument favoring the old, unvaried design.
+Also confirmed this correctly leaves URD-047's own separate gap (a
+discrimination exercise kind) untouched — this item only varies *which*
+letters get kept apart, not whether any are ever asked to be told apart.
+One MINOR, fixed: a doc-comment's illustrative example pair (`{zhe,ze}`)
+did not match the real measured pairs — corrected to the actual measured
+set and pointed at the test (which re-measures live) rather than
+hardcoding an example that could go stale again.
+
+## PASSED · URD-046 · 2026-08-26T00:14Z
+Both critic-found MINORs fixed and reverified. The core fix itself
+verified as a real regression its own test catches: reverted the rotation
+entirely (reproduced the original "identical pair, 4 times" bug exactly),
+then tried the naive `% bucket.length` modulus (reproduced the "2 pairs,
+twice each" intermediate exactly) — both confirmed independently by THE
+CRITIC via its own mutation testing, not only by the lead.
+
+$ npx vitest run
+  227/227 (226 at URD-045's own PASSED, plus 1 new).
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npm run check:shape
+  clean, unchanged targets.
+
+$ npm run check:all
+  all 30 steps pass against a deploy-shaped build.
+
+branch: claude/gauntlet-confusable-pair-rotation
