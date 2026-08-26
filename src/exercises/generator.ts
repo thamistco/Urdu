@@ -289,6 +289,59 @@ export function letterSpotTiles(
   return { tiles, fromWord, correct, wordBreakAfter };
 }
 
+/**
+ * Every letter that shares a `confusableWith` bucket with this one, drawn
+ * only from the letters a given lesson actually teaches.
+ *
+ * Measured across the real corpus: 29 of 40 letters have at least one bucket
+ * partner, and every one of those partners is taught in the *same* lesson as
+ * the letter itself — zero exceptions across all 9 real letter lessons. So a
+ * contrast question never has to show a letter the learner has not met, and
+ * this returns empty rather than reaching outside the lesson when it somehow
+ * would (a singleton bucket, or a group that ever stops co-teaching a pair).
+ */
+function confusableMatesIn(letter: Letter, lessonLetters: Letter[]): Letter[] {
+  const key = letter.confusableWith ?? letter.id;
+  return lessonLetters.filter((l) => l.id !== letter.id && (l.confusableWith ?? l.id) === key);
+}
+
+/**
+ * URD-047: URD-022 spreads a lesson's visually confusable letters apart in
+ * time so they are rarely drilled back to back, and URD-046 varies which pair
+ * collides when one adjacency is mathematically forced. Both reduce
+ * interference in the moment; neither ever asks the learner to tell the two
+ * apart, which is the skill URD-022's own definition of done named ("risks
+ * teaching the confusion rather than resolving it") and did not deliver. This
+ * confronts the pair directly, once per letter that has a partner.
+ *
+ * Prompted by NAME, not by sound. Sound is shown as a secondary line but
+ * cannot carry the question: measured across all 13 real multi-member
+ * buckets, exactly one pair collides on sound — `alif` ("a / aa") and
+ * `alif-madda` ("aa") share the token `aa` — so a sound-prompted contrast
+ * would be a question with two right answers for that one bucket, the exact
+ * defect `check:answerable`'s own `soundsOverlap` rule exists to catch in
+ * `letterPick` (URD-007). Names never collide, so the name leads.
+ *
+ * `options` is the bucket and nothing else — 2, 3, or 4 letters — and is
+ * deliberately NOT padded up to `OPTIONS_PER_QUESTION`. That floor exists
+ * (see its own doc comment, and `check:answerable`'s `OPTION_FLOOR`) because
+ * a two-option question is a coin flip a learner can be promoted by guessing
+ * through, and it is right for every question that draws its distractors from
+ * the whole vocabulary. It is wrong here, and adopting it anyway would make
+ * this question measure stricter while testing less: a learner who cannot
+ * tell ز from ذ but can rule out ب and ک still faces the identical 50/50 on
+ * the only distinction being asked about. Padding would move the *reported*
+ * guess rate from 50% to 25% without moving the real one at all — a check
+ * that looks more rigorous and sees less, which is the shape of thing this
+ * project's own history says to distrust. The genuine guess risk is instead
+ * carried where the codebase already carries it: this is one sighting of six,
+ * and URD-019's last-two-sightings-must-agree rule (`sessionGrading.ts`)
+ * means a single lucky guess here does not by itself move the schedule.
+ */
+function letterContrastExercise(letter: Letter, mates: Letter[]): Exercise {
+  return { kind: 'letterContrast', letter, options: shuffle([letter, ...mates]) };
+}
+
 function letterSpotExercise(letter: Letter, word: Word): Exercise {
   const { tiles, fromWord, correct, wordBreakAfter } = letterSpotTiles(letter, word);
   return { kind: 'letterSpot', letter, word, tiles, fromWord, correct, wordBreakAfter };
@@ -1357,6 +1410,23 @@ export function buildLessonExercises(
      */
     const contextRound = (idx: number) => 1 + ((idx + turnOffset) % (SIGHTINGS_PER_LETTER - 2));
     /**
+     * URD-047: the round that becomes a `letterContrast` for any letter that
+     * has a confusable partner in this lesson, replacing one isolated-glyph
+     * sighting rather than adding a seventh — the same "replace, don't add"
+     * rule URD-020's context sighting already follows, so lesson length is
+     * unchanged.
+     *
+     * Offset by exactly 2 from `contextRound` over the same modulus, which
+     * makes the two provably never coincide (`x % 4` and `(x + 2) % 4` differ
+     * for every `x`) rather than merely rarely coinciding — a letter can
+     * never lose both its context sighting and a drill to the same round, and
+     * neither ever lands on round 0 (the isolated introduction, which must
+     * stay the learner's first look at the letter) or on `finalRound` (which
+     * URD-043 reserves for `letterTrace`, so a letter's last sighting is
+     * always its hardest).
+     */
+    const contrastRound = (idx: number) => 1 + ((idx + turnOffset + 2) % (SIGHTINGS_PER_LETTER - 2));
+    /**
      * URD-043: vocabulary's own staggered climb ends on `produce`
      * (`typeWord`/`wordBuild`) for every one of 2,281 words, on both
      * tracks, 100% of the time — the property URD-019 grades an item's
@@ -1465,19 +1535,36 @@ export function buildLessonExercises(
             return;
           }
         }
+        if (round === contrastRound(idx)) {
+          const mates = confusableMatesIn(l, groupLetters);
+          if (mates.length) {
+            exercises.push(letterContrastExercise(l, mates));
+            return;
+          }
+        }
         exercises.push(letterExerciseAt(l, round + idx + turnOffset, round + idx + posOffset));
       });
     }
     letters.forEach((l, idx) => {
-      let pushedContext = false;
+      let pushedTail = false;
       if (tailRound === contextRound(idx)) {
         const w = LETTER_CONTEXT_WORD.get(l.id);
         if (w) {
           exercises.push(letterSpotExercise(l, w));
-          pushedContext = true;
+          pushedTail = true;
+        }
+      } else if (tailRound === contrastRound(idx)) {
+        // Recognise-tier like the `letterForm`/`letterPick` it replaces, so
+        // this keeps `tailRound`'s own "never `letterTrace` here" property
+        // (see the comment above) — the letter-major pair still reads
+        // non-trace then trace, and no two traces end up adjacent.
+        const mates = confusableMatesIn(l, groupLetters);
+        if (mates.length) {
+          exercises.push(letterContrastExercise(l, mates));
+          pushedTail = true;
         }
       }
-      if (!pushedContext) {
+      if (!pushedTail) {
         const turn = 1 + ((tailRound + idx + turnOffset) % 2); // never letterTrace here
         exercises.push(letterExerciseAt(l, turn, tailRound + idx + posOffset));
       }
@@ -2328,6 +2415,7 @@ export function itemsOf(ex: Exercise): ItemRef[] {
     case 'letterPick':
     case 'letterTrace':
     case 'letterSpot':
+    case 'letterContrast':
       return [{ id: ex.letter.id, type: 'letter' }];
     case 'multipleChoice':
     case 'meaningPick':

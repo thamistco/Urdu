@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import { LetterFormExercise, LetterPickExercise } from './LetterExercises';
+import { LetterFormExercise, LetterPickExercise, LetterContrastExercise } from './LetterExercises';
 import { TraceExercise } from './TraceExercise';
 import { LetterSpotExercise } from './LetterSpot';
 import { MultipleChoiceExercise, MeaningPickExercise, ListenTapExercise } from './WordChoiceExercises';
@@ -33,6 +33,7 @@ const EXERCISE_COMPONENTS: { [K in ExerciseKind]: ComponentType<ExerciseProps<Ex
   letterPick: LetterPickExercise,
   letterTrace: TraceExercise,
   letterSpot: LetterSpotExercise,
+  letterContrast: LetterContrastExercise,
   multipleChoice: MultipleChoiceExercise,
   meaningPick: MeaningPickExercise,
   listenTap: ListenTapExercise,

@@ -95,6 +95,8 @@ const OPTION_FLOOR = 4;
 const optionCounts = new Map();
 const answerAt = new Map();
 let optionQuestions = 0;
+const exemptAnswerAt = new Map();
+const exemptSizes = new Map();
 
 /**
  * The kinds that are genuinely "pick one of these", and so have a guess rate.
@@ -109,16 +111,60 @@ let optionQuestions = 0;
  * `letterForm` is excluded too: its four options are the four joining
  * positions, which is the entire set that exists. There is no fifth.
  */
-const CHOICE_KINDS = new Set(['letterPick', 'multipleChoice', 'meaningPick', 'listenTap', 'wordFromMeaning']);
+const CHOICE_KINDS = new Set([
+  'letterPick',
+  'multipleChoice',
+  'meaningPick',
+  'listenTap',
+  'wordFromMeaning',
+  'letterContrast',
+]);
+
+/**
+ * Kinds whose option *count* is not held to `OPTION_FLOOR`, while their answer
+ * *position* still is.
+ *
+ * These are two separate properties that happen to be measured together, and
+ * URD-047 is the first kind where they come apart. `letterContrast` shows a
+ * letter against its own `confusableWith` bucket and nothing else — 2 to 4
+ * options, because that is how many letters are genuinely confusable with it
+ * — and padding it to four with letters the learner can rule out on sight
+ * would move the *reported* guess rate from 50% to 25% without moving the
+ * real one, since the distinction being tested is still the same pair (see
+ * `letterContrastExercise`, `generator.ts`).
+ *
+ * The position check still applies and is the reason this is an exemption
+ * rather than an exclusion: that check exists because a broken shuffle once
+ * put the answer first 43.7% of the time, and a two-option question with a
+ * favourite seat is not a 50% guess, it is a free answer. Dropping the kind
+ * out of `CHOICE_KINDS` entirely would have silently stopped measuring that.
+ */
+const FLOOR_EXEMPT_KINDS = new Set(['letterContrast']);
 
 function recordOptions(ex) {
   if (!CHOICE_KINDS.has(ex.kind)) return;
   if (!Array.isArray(ex.options) || !ex.options.length) return;
   const answerId = (ex.word || ex.letter || {}).id;
   if (!answerId) return;
-  optionCounts.set(ex.options.length, (optionCounts.get(ex.options.length) || 0) + 1);
   const at = ex.options.findIndex((o) => o.id === answerId);
   if (at < 0) return;
+  // An exempt kind has a different number of options, so folding it into the
+  // histogram below would quietly make "even would be 25% each" untrue —
+  // 2-option questions can only ever land in seats 0 and 1. Measured in its
+  // own tally instead, so both stay honest.
+  if (FLOOR_EXEMPT_KINDS.has(ex.kind)) {
+    // Keyed by option count as well as seat: an exempt kind's questions are
+    // not all the same size (a `letterContrast` bucket is 2, 3 or 4 letters),
+    // and seats 2 and 3 simply do not exist for a two-option question. A flat
+    // tally across all of them says the answer "favours" seat 0 at 50% when
+    // that is just what a mostly-two-option population looks like — the first
+    // draft of this check did exactly that and failed on its own arithmetic.
+    const key = `${ex.options.length}:${at}`;
+    exemptAnswerAt.set(key, (exemptAnswerAt.get(key) || 0) + 1);
+    exemptSizes.set(ex.options.length, (exemptSizes.get(ex.options.length) || 0) + 1);
+    return;
+  }
+  optionCounts.set(ex.options.length, (optionCounts.get(ex.options.length) || 0) + 1);
   answerAt.set(at, (answerAt.get(at) || 0) + 1);
   optionQuestions++;
 }
@@ -248,6 +294,31 @@ function check(ex, track) {
     case 'letterTrace':
       if (roman) fail('script exercise on the Roman track', `${ex.kind} ${ex.letter.id}`);
       break;
+
+    case 'letterContrast': {
+      if (roman) fail('script exercise on the Roman track', `letterContrast ${ex.letter.id}`);
+      // The answer has to be on screen.
+      if (!ex.options.some((o) => o.id === ex.letter.id))
+        fail('letterContrast does not offer its own answer', ex.letter.id);
+      // Every option must be from the answer's own confusable bucket. This is
+      // the whole point of the kind: an option the learner can rule out on
+      // sight is a distractor this exercise is not supposed to have, and its
+      // presence would mean the question had quietly degraded into a
+      // `letterPick` wearing a different prompt.
+      const key = ex.letter.confusableWith || ex.letter.id;
+      for (const o of ex.options) {
+        if ((o.confusableWith || o.id) !== key)
+          fail('letterContrast offers a letter from outside the confusable bucket', `${ex.letter.id} — ${o.id}`);
+      }
+      // Two is the floor here rather than OPTION_FLOOR's four, deliberately —
+      // see `letterContrastExercise`'s doc comment in generator.ts. A bucket
+      // of one is not a contrast at all and means the generator emitted this
+      // for a letter with no partner.
+      if (ex.options.length < 2) fail('letterContrast has nothing to contrast against', ex.letter.id);
+      if (new Set(ex.options.map((o) => o.id)).size !== ex.options.length)
+        fail('letterContrast offers the same letter twice', ex.letter.id);
+      break;
+    }
 
     case 'letterSpot':
       if (roman) fail('script exercise on the Roman track', `letterSpot ${ex.letter.id}`);
@@ -452,10 +523,59 @@ if (optionQuestions) {
   }
 }
 
+/**
+ * The floor-exempt kinds get the same uniformity question asked separately,
+ * per option count — a two-option question with a favourite seat is not a 50%
+ * guess, it is a free answer, and that is exactly the failure the band above
+ * exists to catch.
+ *
+ * The band has to scale to the sample, though, and this sample is small: the
+ * whole course contains exactly one three-member confusable bucket and one
+ * four-member one (`l-3`'s `daal` and `re` families), so those groups get ~18
+ * and ~24 generations against the main histogram's 73,000. A first draft
+ * applied the 40% band to all of them regardless and failed immediately on
+ * pure noise — and differently on each run, 61% then 33% at the same seat,
+ * which is the tell. A check that fails on noise gets muted, and a muted check
+ * is worse than no check.
+ *
+ * So: the 40% band applies only where there is enough data for it to mean
+ * something (30+ expected per seat). Below that, the weaker property is
+ * asserted instead — no seat may hold 80% or more — which is useless against
+ * a subtle bias but catches the failure that actually matters here, an
+ * options array that was never shuffled at all. That one puts the answer at
+ * seat 0 every single time, and 24 samples detect it overwhelmingly.
+ */
+const MIN_EXPECTED_FOR_BAND = 30;
+if (exemptSizes.size) {
+  const label = [...FLOOR_EXEMPT_KINDS].join('/');
+  for (const [size, total] of [...exemptSizes.entries()].sort((a, b) => a[0] - b[0])) {
+    const seats = [];
+    for (let i = 0; i < size; i++) seats.push(exemptAnswerAt.get(`${size}:${i}`) || 0);
+    const expected = total / size;
+    const banded = expected >= MIN_EXPECTED_FOR_BAND;
+    console.log(
+      `answer position, ${label} (${size} options, ${total}): ` +
+        seats.map((c, i) => `${i}:${((c / total) * 100).toFixed(1)}%`).join('  ') +
+        (banded ? '' : '  — too few to band; checked only for a stuck seat')
+    );
+    seats.forEach((count, position) => {
+      const share = count / total;
+      const bad = banded ? Math.abs(count - expected) / expected > 0.4 : share >= 0.8;
+      if (bad)
+        fail(
+          'the correct answer favours a position',
+          `${label} with ${size} options lands at ${position} ` +
+            `${(share * 100).toFixed(1)}% of the time — the shuffle is not uniform`
+        );
+    });
+  }
+}
+
 if (problems.length) {
   console.log(`\n${seen.size} kinds of unanswerable question:`);
   for (const p of problems) console.log('  •', p);
   for (const [rule, n] of seen) if (n > 3) console.log(`  (${rule} — ${n} occurrences in total)`);
   process.exit(1);
 }
+
 console.log('\nevery generated exercise is answerable from what it puts on screen');

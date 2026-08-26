@@ -48,6 +48,21 @@ export type Exercise =
       position: PositionKey;
     }
   | {
+      /**
+       * URD-047: pose a letter directly against the ones it is actually
+       * confusable with — its whole `confusableWith` bucket, nothing else —
+       * and ask which is which.
+       *
+       * `options` is 2 to 4 letters, deliberately not padded to
+       * `OPTIONS_PER_QUESTION`. See `letterContrastExercise`'s doc comment
+       * (`generator.ts`) for why padding this particular question with
+       * non-confusable letters would measure stricter while testing less.
+       */
+      kind: 'letterContrast';
+      letter: Letter;
+      options: Letter[];
+    }
+  | {
       /** show the letter inside a real word; tap which tile of the word it is */
       kind: 'letterSpot';
       letter: Letter;
