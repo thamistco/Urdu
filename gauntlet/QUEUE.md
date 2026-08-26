@@ -268,3 +268,54 @@ notes: Found by THE CRITIC reviewing URD-044. Not blocking — the doc
   "LessonScreen end-to-end," so this isn't a dishonesty finding, just a real
   remaining gap the ledger should name plainly rather than let readers
   assume URD-044 closed in full.
+
+## URD-056 — check:all can corrupt its own build if two runs overlap, and nothing stops it
+attempts: 0
+files: scripts/check-all.js
+definition of done: `scripts/check-all.js` already carries a comment (near
+  the top, by the `dist/` rebuild) recording that two concurrent runs
+  corrupt each other's build — the project has known this long enough to
+  write it down and has never guarded it. The failure mode is real and has
+  fired repeatedly: a run started while another holds `dist/` dies on
+  `ENOENT: no such file or directory, open 'dist/index.html'`, which reads
+  like a regression in whatever the lead was working on rather than a
+  collision, and has been misdiagnosed that way at least twice (URD-041,
+  URD-042) before being correctly traced by inspecting the process tree.
+  On URD-045 the lead killed a run by hand purely to dodge it, losing 3-5
+  minutes and a discarded build. Take a lockfile before the `dist/`
+  rebuild, exit with a message naming the holding PID if it is already
+  held, and release it on normal exit and on signal.
+verify: start two `check:all` runs and watch the second refuse by name
+  rather than racing — a guard that has never been seen to fire is a
+  hypothesis (non-negotiable 2), so the test must actually observe the
+  refusal, not just assert the lockfile helper in isolation.
+notes: Found by the OVERSEER reviewing URD-045. Not blocking — the lead can
+  avoid it by remembering, and mostly does; that is exactly the argument
+  for a guard, since "the lead remembers" is not a mechanism. Note the
+  hazard is worse than plain lost time: a corrupted `dist/` makes the
+  *next* check report a failure that has nothing to do with the code.
+
+## URD-057 — a subagent's scratch file in src/ or scripts/ silently breaks the next gating run
+attempts: 0
+files: scripts/check-all.js, scripts/check-*.js (a new one, likely)
+definition of done: `npm run lint` globs `src/**/*.{ts,tsx}` and
+  `scripts/**/*.js`, and `format:check` globs the same, with no scratch
+  exclusion in either `.gitignore` or `.prettierignore`. So any file a
+  dispatched critic leaves in those directories becomes a gating failure
+  for whoever runs next, attributed to their work rather than to the
+  stray file. This has now happened on at least two separate items
+  (URD-041's `verify041.js` broke `format:check`; URD-045 accumulated five
+  — `scripts/critic-letterspot.js`, `scripts/debug-nav.js`,
+  `scripts/debug-lesson0.js`, and two `src/exercises/__scratch_*.test.ts`).
+  Fail loudly and by name: list untracked files under `src/` and
+  `scripts/` and fail naming them, so the lead is told rather than having
+  to hunt through a confusing lint error.
+verify: create an untracked file under `src/`, run the check, and watch it
+  fail naming that exact path; remove it and watch the check pass.
+notes: Found by the OVERSEER reviewing URD-045, alongside a dispatch-prompt
+  rule (now in ROLES.md) telling critics not to write there in the first
+  place. Both are wanted: the rule reduces the incidence, this makes the
+  residue legible. Deliberately do NOT fix this by adding ignore patterns
+  to `.prettierignore`/`.gitignore` — a scratch file that silently passes
+  the checks is worse than one that breaks them, because it can then sit
+  in the tree indefinitely and get committed by an unrelated `git add -A`.
