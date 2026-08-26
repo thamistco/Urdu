@@ -513,7 +513,14 @@ function categoryMapKeys() {
  * context word for the whole lesson" fails loudly.
  */
 const MIN_LETTER_CONTEXT_SHARE = 0.1;
-const ISOLATED_LETTER_KINDS = new Set(['letterTrace', 'letterForm', 'letterPick']);
+// `letterContrast` (URD-047) belongs here even though it is not a single
+// isolated glyph: it shows a letter against its confusable bucket, still
+// script-in-isolation rather than a letter inside a real word, which is the
+// distinction this set actually draws. Leaving it out would have counted it
+// toward the context share below and let that rule pass for the wrong
+// reason, and would have made `letterIdOfExercise` return undefined for it,
+// silently shrinking the sequence the confusable-adjacency rule walks.
+const ISOLATED_LETTER_KINDS = new Set(['letterTrace', 'letterForm', 'letterPick', 'letterContrast']);
 
 const thinContext = ALL_LESSONS.filter((l) => l.kind === 'letters')
   .filter(judged)

@@ -423,7 +423,7 @@ describe('URD-018: review gives the learner a real chance to read Urdu and say w
 });
 
 describe('URD-020: a letter lesson shows letters inside real words, not only in isolation', () => {
-  const ISOLATED_LETTER_KINDS = new Set(['letterForm', 'letterPick', 'letterTrace']);
+  const ISOLATED_LETTER_KINDS = new Set(['letterForm', 'letterPick', 'letterTrace', 'letterContrast']);
   const letterLessons = () => UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'letters');
 
   it('every letter in every real lesson gets exactly one context sighting — no letter zero, none doubled', () => {
@@ -673,7 +673,12 @@ describe("URD-045: a letter's context sighting asks the learner to find it in th
 });
 
 describe("URD-043: a letter's final sighting in its own lesson is always the hardest kind", () => {
-  const LETTER_KIND_SET = new Set(['letterForm', 'letterPick', 'letterTrace']);
+  // Includes `letterContrast` (URD-047): this block asks what a letter's
+  // LAST sighting in its teaching lesson is, and a contrast exercise is one
+  // of the sightings that can occupy a round. The two review-lesson blocks
+  // below deliberately keep the three-kind set — `letterContrast` is emitted
+  // only by the `letters` branch, never by review.
+  const LETTER_KIND_SET = new Set(['letterForm', 'letterPick', 'letterTrace', 'letterContrast']);
   const letterLessons = () => UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'letters');
   // The reverse of LETTER_CONTEXT_WORD — which letter a given context word's
   // exercise belongs to — since a context sighting's own exercise object
@@ -739,7 +744,7 @@ describe("URD-043: a letter's final sighting in its own lesson is always the har
 
 describe('URD-022: visually confusable letters are not drilled back to back', () => {
   const letterLessons = () => UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'letters');
-  const ISOLATED_LETTER_KINDS = new Set(['letterForm', 'letterPick', 'letterTrace']);
+  const ISOLATED_LETTER_KINDS = new Set(['letterForm', 'letterPick', 'letterTrace', 'letterContrast']);
   const bucketKeyOf = (letterId: string) => getLetter(letterId)?.confusableWith ?? letterId;
 
   /**
@@ -859,6 +864,105 @@ describe('URD-022: visually confusable letters are not drilled back to back', ()
     // case (l-3, today) and didn't just pass vacuously against lessons with
     // zero or one forced collision, where uniqueness is trivial.
     expect(checkedARealForcedCase, 'no lesson with more than one forced adjacency was found to check').toBe(true);
+  });
+});
+
+describe('URD-047: a confusable letter is posed directly against its partner, not only kept apart from it', () => {
+  const letterLessons = () => UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'letters');
+  type ContrastEx = Extract<Exercise, { kind: 'letterContrast' }>;
+  const isContrast = (e: Exercise): e is ContrastEx => e.kind === 'letterContrast';
+  const bucketOf = (id: string) => getLetter(id)?.confusableWith ?? id;
+  /** The letters of `lesson` that share this letter's bucket, itself excluded. */
+  const matesIn = (id: string, lesson: Lesson) =>
+    (lesson.letterIds ?? []).filter((o) => o !== id && bucketOf(o) === bucketOf(id));
+
+  it("the item's own verify text: every letter with a partner in its lesson gets exactly one exercise posing it against that partner", () => {
+    // URD-022 spread confusable letters apart in time and URD-046 varied which
+    // pair collides where one adjacency is forced — both reduce interference,
+    // neither ever asks the learner to tell the two apart. Measured before
+    // this fix: zero exercises anywhere in the course put a letter against its
+    // own confusable bucket.
+    let checkedAny = false;
+    for (const lesson of letterLessons()) {
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      const contrastFor = new Map<string, number>();
+      for (const e of exercises.filter(isContrast)) {
+        contrastFor.set(e.letter.id, (contrastFor.get(e.letter.id) ?? 0) + 1);
+      }
+      for (const id of lesson.letterIds ?? []) {
+        const expected = matesIn(id, lesson).length > 0 ? 1 : 0;
+        if (expected) checkedAny = true;
+        expect(contrastFor.get(id) ?? 0, `${lesson.id}/${id}`).toBe(expected);
+      }
+    }
+    expect(checkedAny, 'no letter with an in-lesson confusable partner was found to check').toBe(true);
+  });
+
+  it("a contrast's options are exactly that letter's own bucket as this lesson teaches it — no outsiders, none missing", () => {
+    // An option the learner can rule out on sight is a distractor this kind is
+    // not supposed to have: with one, the question quietly degrades into a
+    // letterPick wearing a different prompt, which is the thing it replaced.
+    for (const lesson of letterLessons()) {
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      for (const e of exercises.filter(isContrast)) {
+        const want = [e.letter.id, ...matesIn(e.letter.id, lesson)].sort();
+        const got = e.options.map((o) => o.id).sort();
+        expect(got, `${lesson.id}/${e.letter.id}`).toEqual(want);
+      }
+    }
+  });
+
+  it('a letter with no confusable partner in its lesson never gets one', () => {
+    for (const lesson of letterLessons()) {
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      for (const e of exercises.filter(isContrast)) {
+        expect(matesIn(e.letter.id, lesson).length, `${lesson.id}/${e.letter.id}`).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('replaces a sighting rather than adding one — every letter still gets exactly SIGHTINGS_PER_LETTER', () => {
+    // The same "replace, don't add" rule URD-020's context sighting follows,
+    // so a lesson does not get longer each time a kind is introduced.
+    const LETTERISH = new Set(['letterForm', 'letterPick', 'letterTrace', 'letterContrast']);
+    for (const lesson of letterLessons()) {
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      const sightings = new Map<string, number>();
+      for (const e of exercises) {
+        const wordId = 'word' in e ? e.word.id : undefined;
+        const id = LETTERISH.has(e.kind)
+          ? (e as { letter: { id: string } }).letter.id
+          : (lesson.letterIds ?? []).find((lid) => wordId && LETTER_CONTEXT_WORD.get(lid)?.id === wordId);
+        if (id) sightings.set(id, (sightings.get(id) ?? 0) + 1);
+      }
+      for (const id of lesson.letterIds ?? []) {
+        expect(sightings.get(id), `${lesson.id}/${id}`).toBe(6);
+      }
+    }
+  });
+
+  it('never lands on the same round as that letter’s context sighting, so a letter never loses both', () => {
+    // contextRound and contrastRound are offset by 2 over the same modulus,
+    // which makes them provably never coincide rather than rarely coinciding.
+    // Checked through the real output: a letter that has both should show one
+    // letterSpot AND one letterContrast, never one replacing the other.
+    for (const lesson of letterLessons()) {
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      for (const id of lesson.letterIds ?? []) {
+        if (matesIn(id, lesson).length === 0) continue;
+        if (!LETTER_CONTEXT_WORD.get(id)) continue;
+        const spots = exercises.filter((e) => e.kind === 'letterSpot' && e.letter.id === id).length;
+        const contrasts = exercises.filter((e) => isContrast(e) && e.letter.id === id).length;
+        expect([spots, contrasts], `${lesson.id}/${id}`).toEqual([1, 1]);
+      }
+    }
+  });
+
+  it('never appears on the Roman track, same as every other script-only letter exercise', () => {
+    for (const lesson of letterLessons()) {
+      const exercises = buildLessonExercises(lesson, [], 'roman', new Set());
+      expect(exercises.some(isContrast), lesson.id).toBe(false);
+    }
   });
 });
 

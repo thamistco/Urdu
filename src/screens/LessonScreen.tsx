@@ -65,6 +65,7 @@ function answerLabel(ex: Exercise): string {
     case 'letterPick':
     case 'letterTrace':
     case 'letterSpot':
+    case 'letterContrast':
       return `${ex.letter.name}: ${ex.letter.forms.isolated}`;
     case 'multipleChoice':
     case 'meaningPick':
@@ -94,6 +95,7 @@ function audioOf(ex: Exercise): { id: string; urdu: string; roman?: string } | n
   switch (ex.kind) {
     case 'letterPick':
     case 'letterTrace':
+    case 'letterContrast':
       return { id: ex.letter.id, urdu: ex.letter.forms.isolated, roman: ex.letter.name };
     case 'multipleChoice':
     case 'meaningPick':
