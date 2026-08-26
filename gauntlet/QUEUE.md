@@ -36,36 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-046 — A letter lesson's one unavoidable confusable pair always collides identically, every round
-attempts: 0
-files: src/exercises/generator.ts
-definition of done: `separateConfusables` (URD-022) spreads visually
-  confusable letters apart within a lesson's rounds, but the round-major
-  loop reuses one fixed order every round, so wherever a bucket forces one
-  residual adjacency (only `l-3`'s 4-letter `re` family — a bucket exactly
-  `ceil(groupSize/2)` — real corpus today), it is the identical pair,
-  `zhe` then `re`, at all 5 of the lesson's round transitions, not a
-  varied one. Reinforcing the exact same two letters back to back five
-  times is a worse version of the risk this item names ("teaching the
-  confusion") than hitting five different pairs once each would be. Vary
-  which specific bucket member sits at each end of the round across
-  rounds — without changing which letter has which stable index, since
-  `turn`/`position` below are computed from a letter's own index plus the
-  round number and only cycle correctly if that index never moves (see
-  `separateConfusables`'s own doc comment, and the multi-round history two
-  functions below it, for what breaks if a letter's index depends on the
-  round) — so a learner who does see the forced collision sees a different
-  pair of the family each time, not one pair five times over.
-verify: a test asserting that across a lesson's round transitions, no two
-  round-boundary confusable-pair occurrences involve the identical two
-  specific letters twice, for every real letter lesson where a forced
-  adjacency exists.
-notes: Found designing URD-022's fix. Not blocking — URD-022 itself already
-  reduced `l-3`'s confusable-adjacent count from 30 (5 pairs internal to
-  every one of 6 rounds, under the pre-fix raw ordering) to 5 (the same one
-  pair, once per round transition), a real, measured improvement; this is
-  a further refinement to *which* pair recurs, not whether one does.
-
 ## URD-047 — A confusable letter pair is only ever kept apart, never asked to be told apart
 attempts: 0
 files: src/exercises/types.ts, src/exercises/generator.ts, src/exercises/*.tsx

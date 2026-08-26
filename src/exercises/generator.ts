@@ -561,9 +561,11 @@ function separateConfusables(letters: Letter[], rotation = 0): Letter[] {
      * possible edges to land on. Rotating by `rotation % (bucket.length -
      * 1)` instead — a period one shorter than the bucket itself — breaks
      * that resonance: checked directly against `l-3`'s real output, all
-     * four wrap transitions now land on four different specific pairs
-     * (`{re,zhe}`, `{zhe,ze}`... — recomputed per real run, see
-     * generator.test.ts's own URD-046 assertions for the live numbers).
+     * four wrap transitions now land on four different specific pairs —
+     * `{Re,zhe}`, `{re,ze}`, `{Re,re}`, `{re,zhe}` — see
+     * generator.test.ts's own URD-046 assertion, which re-measures this
+     * directly rather than hardcoding it, so it can't go stale the way an
+     * illustrative example in a comment can.
      * `Math.max(1, ...)` guards `bucket.length <= 2` (a singleton bucket
      * needs no rotation at all; a two-member bucket has only one other
      * arrangement, so a period of 1 just never rotates it — no real letter
@@ -571,7 +573,12 @@ function separateConfusables(letters: Letter[], rotation = 0): Letter[] {
      * doesn't regress the ones that do have one).
      */
     const period = Math.max(1, bucket.length - 1);
-    const offset = (((rotation % period) + period) % period) % bucket.length;
+    // No trailing `% bucket.length` here: `period` is already at most
+    // `bucket.length`, so this expression is already in `[0, period - 1]`,
+    // a subset of `[0, bucket.length - 1]` — THE CRITIC, URD-046, caught an
+    // earlier draft's redundant extra modulo, which read as if it guarded
+    // `period > bucket.length`, a case that can't structurally happen.
+    const offset = ((rotation % period) + period) % period;
     const spun = [...bucket.slice(offset), ...bucket.slice(0, offset)];
     for (const l of spun) {
       result[positions[pos]] = l;
