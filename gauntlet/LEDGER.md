@@ -5157,8 +5157,8 @@ each in turn (the neighbour-context clustering, the decoy source, the
 failed with the item's own measured shape before restoring.
 
 Notes on process: the dispatched DESIGN CRITIC subagent spent three long
-turns (~550K tokens combined) across a session-limit interruption without
-ever returning a severity-scored verdict on the reviewed commit — twice
+turns across a session-limit interruption without ever returning a
+severity-scored verdict on the reviewed commit — twice
 reporting only "standing by for a background driver," once (after the
 lead had already taken over, screenshotted, and shipped two fixes)
 returning a real but partially self-flagged-as-contaminated report. The
@@ -5200,6 +5200,71 @@ $ npm run check:all
   `marginStart`/`marginEnd` and re-verified.
 
 branch: claude/gauntlet-letter-spot-exercise
+
+## OVERSIGHT · URD-045 · 2026-08-26T00:22Z
+First run of the OVERSEER role (added this session, `gauntlet/ROLES.md`).
+Process only; the fix itself was out of brief and was not read.
+
+dispatch cost (successful dispatch of each, from the task notifications
+rather than estimated — the CRITIQUE entry above originally said "~550K
+tokens combined" for the DESIGN CRITIC, which was 2.2x the real figure,
+and has been corrected):
+  CURRICULUM CRITIC   85,806 tok /  27 calls / 1 wake / verdict yes
+  THE CRITIC         110,422 tok /  54 calls / 1 wake / verdict yes
+  DESIGN CRITIC      253,607 tok / 207 calls / 3 wakes / verdict NO
+  lead, in-app harness       — / ~15 min / 2 findings
+
+The DESIGN CRITIC dispatch was 56% of the review layer's tokens and 72%
+of its tool calls for 20% of its findings, and returned no scored
+verdict. Six findings, each carrying a process change now applied:
+
+1. It was blocked on rendering infrastructure nobody told it to build,
+   twice reporting only "standing by for a background driver." The lead
+   solved the same problem in ~15 minutes with a temporary route
+   rendering the component against real generator output. ROLES.md's
+   DESIGN CRITIC section now says to build that route rather than wait.
+2. The lead waited for a *third* non-verdict wake-up before taking over.
+   ROLES.md's "usually after the second" is now a hard rule.
+3. One account-wide usage limit killed all three critics mid-review, and
+   because critics batch findings to the end, 196,228 tokens were paid
+   twice for review work partly already done. Dispatch prompts now ask
+   for findings reported as confirmed, not batched.
+4. Four `check:all` runs, two of them earned. One was speculative
+   (before the work was done); one the lead killed by hand to dodge a
+   `dist/` race that `scripts/check-all.js` line 26 has documented as a
+   known hazard for long enough to write it down and never guard. Filed
+   as URD-056. The `check:direction` failure was not waste — that is the
+   check working.
+5. Five stray subagent scratch files under `src/` and `scripts/`, both
+   of which `lint` and `format:check` glob with no scratch exclusion, so
+   a stray file breaks a gating check for whoever runs next — which has
+   now happened on two separate items. Dispatch prompts now forbid it;
+   filed as URD-057 to make it fail loudly rather than rely on the rule.
+6. The cost figure in this ledger was estimated rather than copied from
+   the notification that carried it. Fixed above, and `dispatch cost:`
+   lines are now a CRITIQUE-entry convention in ROLES.md — applied
+   directly rather than queued, since it is one paragraph. The cheapest
+   change here, and the one that makes most future OVERSEER runs
+   unnecessary, which is the point.
+
+Praise, specific: dispatching all three critics in parallel rather than
+sequentially saved roughly an hour of wall clock on an item that ran ~36
+minutes CLAIMED to PASSED, and should stay the default. The
+harness-route technique is the highest-yield thing on this item by a
+wide margin and is now the documented first move for any item touching a
+rendered component.
+
+On the role itself, from its own report: this run found nothing the lead
+had not already noticed — its entire product was converting the lead's
+own candour into rules, which is editing rather than detection, and it
+only worked because the dispatch metadata was handed to it. Its own
+recommendation was "keep, but narrow the brief to match what it actually
+does," which has been applied to ROLES.md. Rules 1 and 3 alone would
+have saved roughly 450K tokens on an item like this one, against this
+run's 60,268.
+
+branch: claude/gauntlet-letter-contrast-exercise (recorded retroactively;
+URD-045 itself shipped on claude/gauntlet-letter-spot-exercise)
 
 ## CLAIMED · URD-046 · 2026-08-25T23:39Z
 files: src/exercises/generator.ts, src/exercises/generator.test.ts
