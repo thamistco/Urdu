@@ -36,31 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-047 — A confusable letter pair is only ever kept apart, never asked to be told apart
-attempts: 0
-files: src/exercises/types.ts, src/exercises/generator.ts, src/exercises/*.tsx
-definition of done: URD-022 spreads a lesson's visually confusable letters
-  (`daal`/`Daal`/`zaal`, `re`/`Re`/`ze`/`zhe`, and every other
-  `confusableWith` pair in `letters.ts`) apart in time so they are rarely
-  drilled back to back, which prevents momentary interference but never
-  actually tests whether a learner can tell the two apart — the specific
-  skill this item's own definition of done names ("risks teaching the
-  confusion rather than resolving it"). Add a discrimination exercise kind
-  that poses a `confusableWith` pair directly against each other (e.g.
-  "here are ز and ذ — which one is ze?") for at least one of a lesson's
-  sightings of each letter that has a `confusableWith` partner, so the pair
-  is confronted directly at least once, not only ever kept apart.
-verify: a test asserting every letter with a `confusableWith` partner gets
-  at least one exercise, somewhere in its teaching lesson, that poses it
-  directly against that partner.
-notes: Found by CURRICULUM CRITIC reviewing URD-022, who judged pure
-  temporal separation addresses interference-in-the-moment but not the
-  longer-term discrimination skill a learner needs for two letters they
-  will keep encountering. Checked for duplicates in QUEUE.md and done/ —
-  none found. Not blocking — URD-022's own definition of done offered
-  separation as one legitimate, complete option and the fix satisfies it;
-  this is a complementary, not corrective, addition.
-
 ## URD-050 — meaningPick can never offer another sentence as a distractor, at all
 attempts: 0
 files: src/exercises/generator.ts, src/data/art.ts
@@ -419,3 +394,34 @@ notes: Found by THE CRITIC and CURRICULUM CRITIC independently while
   that cannot reach is the base letter's own correct-answer panel, where "no
   dot" is precisely the thing worth saying and nothing says it. That needs
   content, which is why it is filed rather than fixed.
+
+## URD-063 — soak.js cannot act on a letterSpot screen at all, which blocks every letter lesson
+attempts: 0
+files: scripts/soak.js, src/exercises/LetterSpot.tsx
+definition of done: `scripts/soak.js` has no `NAMED_TAP_KIND` entry for
+  `letterSpot` (URD-045) at all — it falls to the generic `'tap'` fallback,
+  same gap URD-047's own `letterContrast` had until this item. But
+  `letterSpot` fails harder than a mislabelled random guess: its tiles
+  (`LetterSpot.tsx`, sized to a bare glyph plus `my-1` margin, no width
+  class) measure under `candidateOptions`'s `b.width > 110` floor, so soak
+  finds zero acted-on-able candidates on the screen and reports it
+  unanswerable outright — not wrong-more-often, unplayable. Measured directly
+  (`npm run soak -- --lessons 8 --require letterContrast`, this session): 8
+  of 8 attempts failed on the exact same `letterSpot` screen ("Which tile is
+  alif?"), 0 lessons completed, and the run never got far enough into a
+  letter lesson to reach `letterContrast` either. `letterSpot` renders in
+  every letter-teaching lesson (URD-045), so today `npm run soak` cannot
+  finish a single one.
+verify: a solver entry plus a tile width that clears the floor (mirror
+  URD-047's own fix to `letterContrast`'s width — a percentage tuned to one
+  viewport is not enough, verify at both soak's fixed 412px and check:sizes'
+  320px floor); then `npm run soak -- --lessons 8 --require letterSpot`
+  completing at least one letter lesson, where today it completes zero.
+notes: Found while resolving THE CRITIC's URD-047 finding 4, which named
+  this as "adjacent, not URD-047's fault" — confirmed by running soak for
+  real rather than assuming the `letterContrast` fix alone was enough to
+  verify against a live run. Filed rather than fixed: `letterSpot`'s tiles
+  are sized around the word's own real glyph clusters (multi-character in
+  places — see that component's own comment), not a fixed bucket size like
+  `letterContrast`'s, so the width fix is a real layout decision, not a
+  copy-paste of this item's.
