@@ -319,3 +319,103 @@ notes: Found by the OVERSEER reviewing URD-045, alongside a dispatch-prompt
   to `.prettierignore`/`.gitignore` — a scratch file that silently passes
   the checks is worse than one that breaks them, because it can then sit
   in the tree indefinitely and get committed by an unrelated `git add -A`.
+
+## URD-059 — the answer-position band's own stated justification does not survive arithmetic
+attempts: 0
+files: scripts/check-answerable.js
+definition of done: the 40% relative band on answer position justifies itself
+  with "the bias it replaced put the answer first 43.7% of the time against a
+  fair 33.3% ... nothing that loose gets through a 40% band." 43.7/33.3 is a
+  31% deviation, inside a 40% band — and with the residue split across the
+  other two seats, no seat exceeds it either. The historical bug the band
+  names as its reason for existing would have passed the band. Found by THE
+  CRITIC reviewing URD-047, which copied both the band and the sentence into
+  a new block before replacing its own copy with a z-test (see
+  `SIGMA_LIMIT` in the same file for the shape that does scale). Replace the
+  fixed relative band on the main histogram the same way, or restate the
+  justification honestly if the band is kept for another reason.
+verify: reconstruct the historical bias (answer first 43.7% of ~73,000
+  three-option questions) as a mutation and watch the check fail on it — it
+  currently would not, which is the whole finding.
+notes: Pre-existing, and genuinely low-risk today: the real shuffle is
+  uniform (measured 49.94/50.06 over 200,000 two-element draws). The defect
+  is that the check is weaker than it claims, which CLAUDE.md non-negotiable 3
+  treats as a first-class problem rather than a nit.
+
+## URD-060 — six sightings cannot cover four joining forms once two are position-free
+attempts: 0
+files: src/exercises/generator.ts
+definition of done: the four joining forms are this app's central thesis, but
+  a letter's `SIGHTINGS_PER_LETTER` (6) sightings now include two that carry
+  no position at all — URD-020's `letterSpot` and URD-047's `letterContrast`
+  — and of the four that remain, roughly a third render as `letterPick`,
+  which also has no position (it asks which glyph makes a sound, with no form
+  to show). So the arithmetic does not close: measured after URD-047's
+  `nextPos` fix, 4 of 46 letter-slots still never see their `final` form and
+  36 of 46 miss at least one of the four. `nextPos` already stopped the
+  position cycle SKIPPING a step, which took `final` from 25 of 46 to 4 —
+  the residue needs the kind/position interaction changed, not the counter.
+  Options: give `letterPick` a position (show the prompt glyph in a form
+  rather than isolated), raise `SIGHTINGS_PER_LETTER`, or let the two
+  position-free kinds displace a `letterPick` rather than a form-bearing
+  sighting.
+verify: a test asserting every letter in every real letter lesson is shown
+  all four joining forms — the ceiling currently asserted in
+  `generator.test.ts` ("`final` reaches all but a handful") tightened to zero.
+notes: Found by CURRICULUM CRITIC reviewing URD-047, whose measurement of the
+  regression that item caused (14 of 46 missing `final` before, 25 after) is
+  what surfaced the older, larger gap underneath it. URD-047 fixed its own
+  regression and improved on the pre-existing number; this is the rest.
+
+## URD-061 — the discrimination skill is practised twice in one lesson and never again
+attempts: 0
+files: src/exercises/generator.ts, src/lib/review.ts
+definition of done: `letterContrast` (URD-047) is emitted only by the
+  `letters` branch. Measured across the whole course: 33 instances, all in
+  `kind: 'letters'` lessons, zero anywhere else — and driving the first 20
+  review lessons with all 40 letters due emits `letterForm` 152 /
+  `letterPick` 150 / `letterTrace` 153 and `letterContrast` 0. So for a pair
+  like ص/ض or ط/ظ — near-identical shapes, and for a beginner near-identical
+  sounds — a learner is asked to tell them apart twice, about six exercises
+  apart, on a single day, and the SRS never asks again. Every other skill in
+  the app is spaced; this is the only kind that is not. Make `letterContrast`
+  reachable from review, so the discrimination survives the lesson that
+  taught it.
+verify: a test asserting a review lesson with confusable letters due can emit
+  `letterContrast`, and that across the course's reviews every letter with a
+  confusable partner meets one at least once after its teaching lesson.
+notes: Found by CURRICULUM CRITIC reviewing URD-047 and judged its most
+  serious finding, against BENCHMARKS.md's "enough times, in enough different
+  shapes, to survive until tomorrow" — this shape has no tomorrow. Not fixed
+  in URD-047 because reaching review means `reviewLetterPool` has to know
+  about buckets and about which letters are co-known, which is real design
+  rather than a call-site change.
+
+## URD-062 — a base letter's note names its own shape, not the mark that separates it from its variants
+attempts: 0
+files: src/data/letters.ts
+definition of done: every confusable bucket is one base letter
+  (`confusableWith` unset) plus its variants, and the curated notes were
+  written to that shape: a variant's note contrasts it against its base
+  ("Daal with one dot above", "Kaaf with a second stroke on top"), while a
+  base's describes it standing alone ("A soft angled stroke...", "Three
+  teeth..."). URD-047's contrast exercise reveals a note after answering, and
+  for the 13 base letters that note does not name the distinguishing mark.
+  Two are worse than unhelpful when read after a wrong answer: `kaaf`'s "The
+  stroke on top is part of the letter, not an accent. Do not drop it." is
+  read by a learner who just wrongly tapped `gaaf` — which is kaaf with a
+  *second* stroke on top — as endorsing what they picked; `seen`'s "Three
+  teeth" is equally true of `sheen`, the letter they confused it with. Give
+  each base letter's note a clause naming what its variants add and it does
+  not have.
+verify: a test asserting every base letter in a multi-member bucket has a
+  note whose first sentence names the distinguishing mark (a dot, a stroke, a
+  madda) or explicitly its absence.
+notes: Found by THE CRITIC and CURRICULUM CRITIC independently while
+  reviewing URD-047. URD-047 mitigated the wrong-answer case in code without
+  touching content — `contrastNotesFor` shows the tapped letter's line
+  alongside the target's, and since a bucket holds exactly one base, any
+  wrong answer necessarily involves a variant whose line IS contrastive. What
+  that cannot reach is the base letter's own correct-answer panel, where "no
+  dot" is precisely the thing worth saying and nothing says it. That needs
+  content, which is why it is filed rather than fixed.

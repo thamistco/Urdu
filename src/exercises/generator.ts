@@ -1295,6 +1295,40 @@ export function buildLessonExercises(
     // below. See `separateConfusables`'s own doc comment.
     const idxOf = new Map(letters.map((l, i) => [l.id, i]));
     /**
+     * How many position-bearing sightings this letter has already had.
+     *
+     * The four joining forms are this app's whole thesis, and `positionIndex`
+     * used to be derived from the ROUND number — which silently stops
+     * covering the later positions the moment a round can be spent on
+     * something that carries no position. Two now can: URD-020's `letterSpot`
+     * and URD-047's `letterContrast`. Measured across all 9 real letter
+     * lessons, on the `final` form specifically (last in `POSITIONS`, so the
+     * first to fall off the end when rounds are skipped): 14 of 46
+     * letter-slots never saw it before URD-047, and 25 of 46 did not after —
+     * a real regression this item caused, found by the CURRICULUM CRITIC.
+     *
+     * Counting the position-bearing sightings themselves, rather than the
+     * round they happen to fall on, closes the skip: `seq + idx + posOffset`
+     * advances once per exercise that actually takes a position, so the cycle
+     * cannot lose a step to a round spent elsewhere. `idx`/`posOffset` still
+     * rotate WHICH form a letter starts on, so two letters in a round are
+     * still not shown the same form and two sibling lessons still differ.
+     *
+     * This does not reach full coverage, and cannot: `letterPick` carries no
+     * position at all (it asks which glyph makes a sound, with no form to
+     * show), so of a letter's four position-bearing sightings roughly a third
+     * render no form. Six sightings minus two position-free kinds cannot
+     * cover four forms once a third of the remainder is also position-free.
+     * Closing that needs the kind/position interaction redesigned rather than
+     * the counter fixed — filed as URD-060.
+     */
+    const posSeq = new Map<string, number>();
+    const nextPos = (id: string, idx: number) => {
+      const seq = posSeq.get(id) ?? 0;
+      posSeq.set(id, seq + 1);
+      return seq + idx + posOffset;
+    };
+    /**
      * Every letter met `SIGHTINGS_PER_LETTER` times, in rounds: round 0 shows
      * every letter once, then round 1 shows every letter again, and so on.
      *
@@ -1395,7 +1429,7 @@ export function buildLessonExercises(
      * before its context word ever appears.
      *
      * URD-043: also never the final round (`SIGHTINGS_PER_LETTER - 1`) —
-     * see the comment on `tailRound`/`finalRound` below for why. Narrows
+     * see the comment on `tailRound` and the final sighting below for why. Narrows
      * where a
      * context sighting can land from 5 rounds (1-5) to 4 (1-4), which
      * pushes the pigeonhole collision `contextRound`'s own comment already
@@ -1421,7 +1455,7 @@ export function buildLessonExercises(
      * for every `x`) rather than merely rarely coinciding — a letter can
      * never lose both its context sighting and a drill to the same round, and
      * neither ever lands on round 0 (the isolated introduction, which must
-     * stay the learner's first look at the letter) or on `finalRound` (which
+     * stay the learner's first look at the letter) or on the final round (which
      * URD-043 reserves for `letterTrace`, so a letter's last sighting is
      * always its hardest).
      */
@@ -1442,9 +1476,9 @@ export function buildLessonExercises(
      * last-two-sightings-agree guard already cutting the practical risk of
      * a single lucky guess.
      *
-     * `tailRound` (the second-to-last round) and `finalRound` (the last)
+     * `tailRound` (the second-to-last round) and the final round (the last)
      * are handled letter-major, not round-major, immediately below — a
-     * first version forced `turn = 0` round-major on `finalRound` alone,
+     * first version forced `turn = 0` round-major on the final round alone,
      * which correctly made every letter's true last sighting `letterTrace`
      * but grouped every letter's forced-trace exercise into one contiguous
      * block (round-major visits every letter within a round before moving
@@ -1455,7 +1489,7 @@ export function buildLessonExercises(
      * *content*. Measured: 9 of 9 real letter lessons exceeded
      * `check:shape`'s 3-in-a-row ceiling, worst `l-3` at 7 straight.
      *
-     * Pairing each letter's own `tailRound` and `finalRound` exercises back
+     * Pairing each letter's own `tailRound` and final-round exercises back
      * to back — letter by letter — instead fixes both problems at once:
      * `tailRound` is restricted to `letterForm`/`letterPick` only (never
      * `t === 0`), so the sequence for consecutive letters alternates
@@ -1518,7 +1552,6 @@ export function buildLessonExercises(
      *    the alternative it would replace it with.
      */
     const tailRound = SIGHTINGS_PER_LETTER - 2;
-    const finalRound = SIGHTINGS_PER_LETTER - 1;
     for (let round = 0; round < tailRound; round++) {
       // URD-046: visited in THIS round's own rotated order (varies which
       // letter sits at the round's two ends, so a forced confusable-bucket
@@ -1542,7 +1575,7 @@ export function buildLessonExercises(
             return;
           }
         }
-        exercises.push(letterExerciseAt(l, round + idx + turnOffset, round + idx + posOffset));
+        exercises.push(letterExerciseAt(l, round + idx + turnOffset, nextPos(l.id, idx)));
       });
     }
     letters.forEach((l, idx) => {
@@ -1566,9 +1599,9 @@ export function buildLessonExercises(
       }
       if (!pushedTail) {
         const turn = 1 + ((tailRound + idx + turnOffset) % 2); // never letterTrace here
-        exercises.push(letterExerciseAt(l, turn, tailRound + idx + posOffset));
+        exercises.push(letterExerciseAt(l, turn, nextPos(l.id, idx)));
       }
-      exercises.push(letterExerciseAt(l, 0, finalRound + idx + posOffset)); // always letterTrace
+      exercises.push(letterExerciseAt(l, 0, nextPos(l.id, idx))); // always letterTrace
     });
   }
 

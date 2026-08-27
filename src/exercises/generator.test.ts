@@ -964,6 +964,38 @@ describe('URD-047: a confusable letter is posed directly against its partner, no
       expect(exercises.some(isContrast), lesson.id).toBe(false);
     }
   });
+
+  it('does not cost the four joining forms — `final` still reaches all but a handful of letters', () => {
+    // CURRICULUM CRITIC, URD-047: replacing a sighting with a position-free
+    // kind used to eat a step of the position cycle, because `positionIndex`
+    // came from the round number. Measured on the `final` form (last in
+    // POSITIONS, so first to fall off the end): 14 of 46 letter-slots never
+    // saw it before this item, 25 of 46 after — a real regression. Counting
+    // position-bearing sightings instead (`nextPos`, generator.ts) takes it
+    // to 4, better than before the item existed.
+    //
+    // Asserted as a ceiling rather than zero because zero is not reachable
+    // here: `letterPick` carries no position at all, so a letter's four
+    // position-bearing sightings do not yield four rendered forms. See
+    // URD-060. The ceiling is what stops this silently regressing again.
+    let noFinal = 0;
+    let slots = 0;
+    for (const lesson of letterLessons()) {
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      const formsOf = new Map<string, Set<string>>();
+      for (const e of exercises) {
+        if (e.kind !== 'letterForm' && e.kind !== 'letterTrace') continue;
+        if (!formsOf.has(e.letter.id)) formsOf.set(e.letter.id, new Set());
+        formsOf.get(e.letter.id)!.add(e.position);
+      }
+      for (const id of lesson.letterIds ?? []) {
+        slots++;
+        if (!formsOf.get(id)?.has('final')) noFinal++;
+      }
+    }
+    expect(slots).toBeGreaterThan(0);
+    expect(noFinal, `${noFinal} of ${slots} letter-slots never show their final form`).toBeLessThanOrEqual(4);
+  });
 });
 
 describe('URD-023/URD-A02: a phrases lesson always draws enough typeable phrases to clear the share floor', () => {
