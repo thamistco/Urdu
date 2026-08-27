@@ -72,7 +72,7 @@ function TesterPanel() {
             setWrong(false);
           }}
           placeholder="username"
-          placeholderTextColor={withAlpha(palette.paper, 0.3)}
+          placeholderTextColor={withAlpha(palette.paper, 0.55)}
           autoCapitalize="none"
           autoCorrect={false}
           className="mb-2 rounded-xl px-3 py-2.5"
@@ -85,7 +85,7 @@ function TesterPanel() {
             setWrong(false);
           }}
           placeholder="password"
-          placeholderTextColor={withAlpha(palette.paper, 0.3)}
+          placeholderTextColor={withAlpha(palette.paper, 0.55)}
           secureTextEntry
           autoCapitalize="none"
           autoCorrect={false}

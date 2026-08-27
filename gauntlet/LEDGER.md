@@ -5645,3 +5645,73 @@ $ npm run check:all
   all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-soak-track-flag
+
+## CLAIMED · URD-052 · 2026-08-27T14:55Z
+files: scripts/check-theme.js, src/screens/LetterLabScreen.tsx,
+  src/screens/SettingsScreen.tsx
+branch: claude/gauntlet-theme-alpha-floor, cut from
+claude/gauntlet-soak-track-flag after URD-051 shipped.
+
+## CRITIQUE · URD-052
+`check:theme`'s `PAPER_FLOOR` rule now also catches
+`withAlpha(palette.paper, N)` written inline at a genuine text-colour site
+(`color:`/`placeholderTextColor=`), converting the 0-1 fraction to the
+same percentage `text-paper/N` already uses and applying the identical
+55% floor. Deliberately scoped to text-colour props only — the same
+faded paper is also a legitimate `borderColor`/`backgroundColor`
+elsewhere (a disabled button's border, a step-indicator dot, a drop-zone
+outline), none of which are a WCAG text-contrast question. Verified
+against all 7 real `withAlpha(palette.paper, …)` call sites at the time
+of the fix: exactly the 3 genuine text instances flagged, the 4
+border/background instances correctly left alone.
+
+Fixed the 3 real violations this newly caught, raised to 55%:
+`LetterLabScreen.tsx`'s position-label caption (0.4→0.55),
+`SettingsScreen.tsx`'s two placeholder texts (0.3→0.55 each).
+Revert-verified in both directions: each of the 3 fixes fails with the
+predicted shape when reverted; the false-positive exclusion still holds
+even at an extreme 5% border alpha.
+
+Dispatched THE CRITIC alone, into its own isolated worktree with the
+uncommitted diff pasted directly into the prompt (per the ROLES.md rule
+this session added/amended after URD-050/051).
+
+THE CRITIC: no BLOCKING, two MAJOR, both live-reproduced and filed
+forward rather than fixed here. (1) Variable indirection: the regex only
+sees `withAlpha` written directly after `color:`, not through a local
+variable — `Button.tsx`'s own idiom for every other colour it computes.
+Set that variable back to the file's documented worst-case (0.4),
+confirmed `check:theme` reported clean, reverted. No live regression
+today (the real value is already 0.55) but the exact file whose real bug
+motivated this item can regress the same way silently. Filed as
+**URD-065**. (2) Multi-line ternary: the regex excludes newlines, so a
+Prettier-wrapped ternary evades it — reproduced against the real
+`LetterLabScreen.tsx` line (108 chars, single-line only by margin against
+this project's 120-char printWidth). Checked directly that the naive fix
+(allow newlines) risks misattributing a sibling property's value to the
+wrong key — a new false-positive class, not a free improvement. Filed as
+**URD-066**. Both findings are about the check's claimed scope exceeding
+its actual reach, not a live bug — confirmed no bare-variable or
+wrapped-ternary shape exists in the tree today. Rewrote the fix's own doc
+comment to say precisely what it catches rather than the broader claim
+the first draft made, the same overclaim this item exists to fix, caught
+one layer deeper in the fix that corrected it.
+
+## PASSED · URD-052 · 2026-08-27T15:20Z
+No BLOCKING; both MAJORs filed forward as real coverage gaps in the check
+itself, not live app defects.
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npx vitest run
+  245/245, unchanged — no test-covered app logic touched.
+
+$ npm run check:theme
+  clean; revert-verified in both directions (3 real fixes fail reverted,
+  false-positive exclusion holds at an extreme value).
+
+$ npm run check:all
+  all 30 steps pass against a deploy-shaped build.
+
+branch: claude/gauntlet-theme-alpha-floor

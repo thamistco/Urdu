@@ -156,7 +156,7 @@ export function LetterLabScreen() {
                       {letter.forms[p.key]}
                     </Urdu>
                     <Eyebrow
-                      style={{ color: active ? palette.gold : withAlpha(palette.paper, 0.4), fontSize: 9 }}
+                      style={{ color: active ? palette.gold : withAlpha(palette.paper, 0.55), fontSize: 9 }}
                       className="mt-1"
                     >
                       {p.label}
