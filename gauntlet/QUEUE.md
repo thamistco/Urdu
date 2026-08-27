@@ -36,51 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-050 — meaningPick can never offer another sentence as a distractor, at all
-attempts: 0
-files: src/exercises/generator.ts, src/data/art.ts
-definition of done: URD-030 made the grammar climb's distractor pool
-  concept-aware, but measured directly (not assumed): its fix only ever
-  reaches `wordFromMeaning` exercises. `meaningPick`'s call to
-  `distractorsFor` sets `distinctCue: true`, and `cueOf` (`data/art.ts`)
-  falls through to `emo:${word.emoji}` for any sentence-derived `Word` —
-  every sentence in the course shares the identical literal `'📝'` emoji,
-  with no per-sentence override the way real vocabulary gets `NUMERALS`/
-  `COLOURS`/`WORD_ICON`. `distinctCue`'s `usedCues` set is seeded with the
-  *correct answer's own* cue before any candidate is even considered, so
-  when the answer is itself a sentence, every other sentence — same
-  concept or not, `preferred` pool or plain — collides with that seed and
-  is rejected outright. Measured: 0 of 292 grammar-climb `meaningPick`
-  exercises offer a same-concept distractor, both before and after
-  URD-030's fix — not because the pool isn't concept-aware (it now is,
-  identically to `wordFromMeaning`'s pool), but because `meaningPick`
-  structurally cannot offer *any* sentence as a distractor for a
-  sentence-answer, regardless of pool. Give sentences some way to be
-  cue-distinct from one another (e.g. keying `cueOf` for a `topic ===
-  'sentences'` word off something more specific than the shared emoji —
-  its own `id`, say, the same way `NUMERALS`/`WORD_ICON` key off a word's
-  `id` today for the words that need it) without breaking whatever
-  `distinctCue` protects against for real vocabulary (a picture-based
-  question showing two options with the same picture).
-verify: a script or test measuring the same-concept-distractor rate
-  specifically among `meaningPick` exercises (as `check:grammar-
-  distractors.js`, added by URD-030, already separates by kind) reports
-  it above 0%, without `check:answerable`'s own picture-distinctness
-  rules regressing for real vocabulary.
-notes: Found while verifying URD-030's own fix landed where the item's
-  verify command expected. Not a defect in URD-030 — its fix does exactly
-  what its own definition of done asked ("the pool ... no longer the
-  default") and raised the *overall* same-concept rate from 19.6% to
-  66.7% by fully saturating `wordFromMeaning` (0/292→100% is impossible;
-  292/292 achieved everywhere `wordFromMeaning`'s own preferred pool has
-  ≥1 usable candidate). This is a distinct, deeper architectural
-  limitation `meaningPick` alone has, worth its own item rather than
-  folding into URD-030's (whose own files/scope are the distractor *pool*,
-  not the cue system `meaningPick`'s picture-question design depends on).
-  Not BLOCKING for URD-030: every `meaningPick` exercise sampled remains
-  fully answerable and honest, exactly as before — nothing broke, a
-  ceiling on how far the improvement can reach was found, not a bug.
-
 ## URD-051 — soak's --track flag never actually sets the app's learning track
 attempts: 0
 files: scripts/soak.js, scripts/lib/serve-dist.js

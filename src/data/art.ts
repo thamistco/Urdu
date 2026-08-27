@@ -400,11 +400,43 @@ export const VERDICT_CUES = new Set([
   'emo:🆗',
 ]);
 
-/** The picture a word shows: illustration, numeral, swatch, or its emoji. */
+/**
+ * The picture a word shows: illustration, numeral, swatch, or its emoji.
+ *
+ * URD-050: every sentence in the course shares one literal emoji ('📝'), so
+ * `emo:📝` used to be every sentence-derived `Word`'s cue — the *correct
+ * answer's own* cue seeds `distractorsFor`'s `usedCues` before any candidate
+ * is considered, so a sentence question could never offer another sentence
+ * as a distractor at all, regardless of pool, concept-tagging or anything
+ * else `distractorsFor` was given. Sentences get a cue keyed off their own
+ * id instead — unique the same way `NUMERALS`/`WORD_ICON` already key a
+ * real word's cue off its id where the shared-emoji fallback would
+ * otherwise collide two things that do not look alike. `SHARED_CUES` still
+ * only scans `WORDS` (real vocabulary), which is why this cannot affect
+ * `pictureIdentifies`'s own claim about which real words share a picture.
+ *
+ * A sentence's own `WordArt` icon (see `components/Illustration.tsx`) still
+ * renders the same literal '📝' regardless of this — this cue is what
+ * generation-time distractor selection compares, not what the screen draws.
+ * That is a deliberate, disclosed trade rather than an oversight: unlike
+ * `listenTap`/`matching` (checked by `check-answerable.js`'s own
+ * `distinct(options.map(cueOf))` rule), `meaningPick`'s options are never
+ * checked for shared pictures at all — every option already carries its own
+ * English caption underneath the icon, so two options sharing that icon
+ * never made the question unanswerable, only less decorative. And
+ * sentence-topic words never reach `listenTap`/`matching` in the first
+ * place: `sentenceReinforceClimb`'s `meet` turn forces `wordExercise`'s
+ * `variant` to `1` (`meaningPick`), its `recall` turn returns
+ * `wordFromMeaning` before `variant` is even read, and no other call site
+ * feeds `SENTENCE_WORDS` into a matching board or a `listenTap` option set
+ * — so the one check that *would* have caught a same-icon regression never
+ * sees a sentence to check.
+ */
 export function cueOf(word: Word): string {
   if (NUMERALS[word.id]) return `num:${NUMERALS[word.id]}`;
   if (COLOURS[word.id]) return `col:${COLOURS[word.id].color}`;
   if (WORD_ICON[word.id]) return `ico:${WORD_ICON[word.id]}`;
+  if (word.topic === 'sentences') return `sen:${word.id}`;
   return `emo:${word.emoji}`;
 }
 
