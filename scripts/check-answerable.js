@@ -385,6 +385,27 @@ for (const track of TRACKS) {
       }
     }
   }
+
+  /**
+   * The floor-exempt kinds need their own, larger sample.
+   *
+   * `letterContrast` is emitted only by the 9 letter lessons, so the main loop
+   * above yields ~26 two-option, ~3 three-option and ~4 four-option generations
+   * per pass — 18 and 24 in total against the main histogram's 73,000. THE
+   * CRITIC, URD-047: a first version simply documented that as "too few to
+   * band" and fell back to a weaker rule, which let a measured 65%-biased
+   * two-option shuffle pass three runs running. The sample was self-inflicted:
+   * letter lessons are few and cheap, so this just generates more of them.
+   */
+  const EXEMPT_PASSES = 40;
+  for (const lesson of unitsForTrack('both').flatMap((u) => u.lessons)) {
+    if (lesson.kind !== 'letters') continue;
+    for (let pass = 0; pass < EXEMPT_PASSES; pass++) {
+      for (const ex of buildLessonExercises(lesson, [], 'both')) {
+        if (FLOOR_EXEMPT_KINDS.has(ex.kind)) recordOptions(ex);
+      }
+    }
+  }
 }
 
 // ---- nothing on the Roman path may promise the alphabet -------------------
@@ -526,50 +547,81 @@ if (optionQuestions) {
 /**
  * The floor-exempt kinds get the same uniformity question asked separately,
  * per option count — a two-option question with a favourite seat is not a 50%
- * guess, it is a free answer, and that is exactly the failure the band above
- * exists to catch.
+ * guess, it is a free answer.
  *
- * The band has to scale to the sample, though, and this sample is small: the
- * whole course contains exactly one three-member confusable bucket and one
- * four-member one (`l-3`'s `daal` and `re` families), so those groups get ~18
- * and ~24 generations against the main histogram's 73,000. A first draft
- * applied the 40% band to all of them regardless and failed immediately on
- * pure noise — and differently on each run, 61% then 33% at the same seat,
- * which is the tell. A check that fails on noise gets muted, and a muted check
- * is worse than no check.
+ * Two rules, because they catch different things and neither catches both.
  *
- * So: the 40% band applies only where there is enough data for it to mean
- * something (30+ expected per seat). Below that, the weaker property is
- * asserted instead — no seat may hold 80% or more — which is useless against
- * a subtle bias but catches the failure that actually matters here, an
- * options array that was never shuffled at all. That one puts the answer at
- * seat 0 every single time, and 24 samples detect it overwhelmingly.
+ * **No empty seat.** A seat the answer never occupies is the signature of a
+ * shuffle that cannot reach part of the row. It is also close to impossible by
+ * chance even on a small sample — a fair 3-option shuffle leaves a given seat
+ * empty over n draws with probability (2/3)^n — so this is safe to assert
+ * flatly. THE CRITIC, URD-047: a first version had a `share >= 0.8` fallback
+ * instead, which could not see a mutation that killed seats 2 and 3 outright,
+ * because the answer split across the two live seats never reached 80%.
+ *
+ * **A deviation test that scales with the sample.** The fixed 40% relative
+ * band used elsewhere in this file does not: at two options it only fires
+ * outside [30%, 70%], so a measured mutation putting the answer in seat 0
+ * 65% of the time passed it three runs running. Worse, the band gets *weaker*
+ * in relative terms as the sample grows, which is backwards. A z-score
+ * against the binomial standard deviation tightens as it should — 4 sigma is
+ * about 6e-5 per seat by chance, and the whole run asks it of roughly nine
+ * seats.
+ *
+ * (The same 40% band is used for the main histogram above, where its own
+ * stated justification does not survive arithmetic: 43.7% against a fair
+ * 33.3% is a 31% deviation, inside a 40% band, so the historical bug it
+ * names as its reason would have passed it. That is pre-existing and out of
+ * this item's scope — filed as URD-059 rather than changed here, since the
+ * main histogram's 73,000 samples make a z-test there a different
+ * conversation. It is repeated here only so the next reader does not copy
+ * the reasoning again, as this item did.)
  */
-const MIN_EXPECTED_FOR_BAND = 30;
+const SIGMA_LIMIT = 4;
 if (exemptSizes.size) {
   const label = [...FLOOR_EXEMPT_KINDS].join('/');
   for (const [size, total] of [...exemptSizes.entries()].sort((a, b) => a[0] - b[0])) {
     const seats = [];
     for (let i = 0; i < size; i++) seats.push(exemptAnswerAt.get(`${size}:${i}`) || 0);
-    const expected = total / size;
-    const banded = expected >= MIN_EXPECTED_FOR_BAND;
+    const p = 1 / size;
+    const expected = total * p;
+    const sd = Math.sqrt(total * p * (1 - p));
     console.log(
       `answer position, ${label} (${size} options, ${total}): ` +
-        seats.map((c, i) => `${i}:${((c / total) * 100).toFixed(1)}%`).join('  ') +
-        (banded ? '' : '  — too few to band; checked only for a stuck seat')
+        seats.map((c, i) => `${i}:${((c / total) * 100).toFixed(1)}%`).join('  ')
     );
     seats.forEach((count, position) => {
-      const share = count / total;
-      const bad = banded ? Math.abs(count - expected) / expected > 0.4 : share >= 0.8;
-      if (bad)
+      const where = `${label} with ${size} options at seat ${position}`;
+      if (count === 0) {
+        fail('the correct answer never reaches a position', `${where}: the shuffle cannot put it there`);
+        return;
+      }
+      const z = Math.abs(count - expected) / sd;
+      if (z > SIGMA_LIMIT)
         fail(
           'the correct answer favours a position',
-          `${label} with ${size} options lands at ${position} ` +
-            `${(share * 100).toFixed(1)}% of the time — the shuffle is not uniform`
+          `${where}: ${((count / total) * 100).toFixed(1)}% of ${total}, ` +
+            `${z.toFixed(1)} sigma from fair — the shuffle is not uniform`
         );
     });
   }
 }
+
+/**
+ * A floor-exempt kind that is not also a choice kind is not measured at all —
+ * `recordOptions` returns before it ever consults the exemption. THE CRITIC,
+ * URD-047: the obvious future edit is to add a new two-option kind to
+ * `FLOOR_EXEMPT_KINDS` alone, whose name reads exactly like the right list to
+ * add it to, and that would silently stop measuring both its count and its
+ * position. The first draft of this item had that same defect and fixed the
+ * instance; this closes the trap.
+ */
+for (const kind of FLOOR_EXEMPT_KINDS) {
+  if (!CHOICE_KINDS.has(kind))
+    fail('a floor-exempt kind is not measured at all', `${kind} is not in CHOICE_KINDS, so its position is unchecked`);
+}
+if (!exemptSizes.size && FLOOR_EXEMPT_KINDS.size)
+  fail('a floor-exempt kind generated nothing to measure', [...FLOOR_EXEMPT_KINDS].join('/'));
 
 if (problems.length) {
   console.log(`\n${seen.size} kinds of unanswerable question:`);
