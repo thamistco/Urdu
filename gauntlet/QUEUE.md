@@ -36,40 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-051 — soak's --track flag never actually sets the app's learning track
-attempts: 0
-files: scripts/soak.js, scripts/lib/serve-dist.js
-definition of done: `npm run soak -- --track roman` actually plays the Roman
-  track — `enterAsGuest`'s injected `harf-settings` carries `track: 'roman'`,
-  not the guest default (`'both'`), verified by reading the real app's
-  `localStorage` back after entry, not by trusting the CLI flag's own name.
-verify: a script (or an assertion added to soak.js itself, gated behind a
-  flag so it isn't paid on every real run) that enters as a guest with
-  `--track roman`, reads back `localStorage['harf-settings']` in the page,
-  and confirms `state.track === 'roman'` reports true. Today it reports
-  `'both'`.
-notes: Found by THE CRITIC reviewing URD-035's fix, which cited `npm run
-  soak -- --start 200 --track roman --seed 55 --lessons 3` as one of three
-  independent reproductions of that item's crash. Verified directly: soak's
-  `--track roman` branch calls `enterAsGuest(page, url, { goal: 'speak' })`
-  (`scripts/soak.js`'s `TRACK === 'roman'` spread), and `enterAsGuest`
-  (`scripts/lib/serve-dist.js`) unconditionally writes `harf-settings` with
-  only `soundEnabled`/`hapticsEnabled`/`reducedMotion` — `goal` feeds an
-  unrelated onboarding field, never `track`. Reading `localStorage` back
-  after entry confirms `track` stays at the guest default, `'both'`, no
-  matter what `--track` says. Every soak run this session that passed
-  `--track roman` (including this item's own "roman-track" reproduction,
-  and whichever earlier items believed they were exercising the Roman
-  track specifically) was actually driving the `both` track under a
-  misleading label — the exact "the workflow said success and it was
-  wrong" pattern this project's own CLAUDE.md names as its first
-  non-negotiable, now found inside shared test infrastructure rather than
-  CI itself. Does not invalidate URD-035's fix (independently re-verified
-  live and via a passing/reverting unit test, both against the real
-  `both` track), but any future item that means to test Roman-track-
-  specific behavior via `npm run soak -- --track roman` is not testing
-  what its own invocation claims until this is fixed.
-
 ## URD-052 — check:theme's legibility floor only sees Tailwind classNames, not inline withAlpha()
 attempts: 0
 files: scripts/check-theme.js
@@ -380,3 +346,26 @@ notes: Found while resolving THE CRITIC's URD-047 finding 4, which named
   places — see that component's own comment), not a fixed bucket size like
   `letterContrast`'s, so the width fix is a real layout decision, not a
   copy-paste of this item's.
+
+## URD-064 — soak's --track flag accepts any string and writes it straight into storage
+attempts: 0
+files: scripts/soak.js
+definition of done: `const TRACK = arg('track', 'both')` (`soak.js`) does no
+  validation against the real `LearnTrack` enum (`'script' | 'roman' |
+  'both'`, `useSettingsStore.ts`) — a typo like `--track roams` now writes
+  `{track: 'roams'}` straight into `harf-settings` via URD-051's
+  `trackSettingsFor`, and `generator.ts`'s own `track !== 'roman'` checks
+  treat anything that isn't literally `'roman'` as script-teaching, with no
+  error anywhere in the chain. Fail loudly at startup instead: reject an
+  unrecognised `--track` value by name, before the browser ever opens.
+verify: `npm run soak -- --track roams` exits non-zero with a message
+  naming the bad value and the three it accepts, rather than silently
+  running with a track the app itself doesn't recognise.
+notes: Found by THE CRITIC reviewing URD-051 — the same "silently wrong,
+  not caught" shape that item fixed, just one layer up (the CLI arg itself,
+  rather than what `enterAsGuest` did with it once parsed). Pre-existing:
+  the unchecked `arg()` call was already there before URD-051, which only
+  gave the string somewhere real to land. Not blocking for URD-051 — every
+  value `soak.js` itself ever passes is one of the three valid strings, and
+  `check:soak-track` only exercises those three, so this is a hardening
+  item for a human mistyping the flag, not a defect in generated content.

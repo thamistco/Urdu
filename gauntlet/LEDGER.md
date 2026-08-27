@@ -5574,3 +5574,74 @@ $ npm run check:all
   all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-meaningpick-sentence-distractor
+
+## CLAIMED · URD-051 · 2026-08-27T14:15Z
+files: scripts/soak.js, scripts/lib/serve-dist.js, scripts/check-soak-track.js
+  (new), package.json
+branch: claude/gauntlet-soak-track-flag, cut from
+claude/gauntlet-meaningpick-sentence-distractor after URD-050 shipped.
+
+## CRITIQUE · URD-051
+`enterAsGuest` (`serve-dist.js`) gained a fourth argument, `settings`, that
+merges into the `harf-settings` write the same way its existing third
+argument (`state`) already merges into `harf-progress`'s — the two stores
+were being confused for each other (`--track roman` set `goal: 'speak'`,
+an unrelated onboarding field, and never touched `track` at all).
+`soak.js` now passes `trackSettingsFor(TRACK)` as that argument, pulled
+into its own top-level helper rather than a third inline ternary (the
+run-loop IIFE was already at this file's own ESLint complexity ceiling).
+
+New `scripts/check-soak-track.js` (`npm run check:soak-track`, deliberately
+not part of `check:all` — the item's own text calls for this, matching
+`check:grammar-distractors`' precedent) drives the real exported bundle
+and reads `localStorage['harf-settings']` back for `--track roman`,
+`--track script`, and no override. Revert-verified: reverting the fix
+reproduces the original bug exactly and the check fails with that shape.
+
+Confirmed end-to-end, not just at the storage layer: a live `--track
+roman` soak run produced no script/letter content at all, while the
+default track on an identical seed produced real Nastaliq tile-matching
+content — independently corroborated by THE CRITIC's own live comparative
+spot-check.
+
+Dispatched THE CRITIC alone (test-infrastructure fix, no UI/curriculum
+content), into its own isolated worktree per the rule this session added
+right after URD-050.
+
+THE CRITIC: PASS, no BLOCKING. Confirmed all 7 pre-existing
+`enterAsGuest` callers are unaffected by the new parameter's default; ran
+its own build, its own `check:soak-track` run, and its own mutation test
+(revert → fails with the predicted shape → restore → passes); read
+`useSettingsStore.ts`'s `persist` config directly and confirmed no
+`partialize`/custom `merge` that could drop or transform `track`; ran its
+own live comparative soak spot-check as concrete end-to-end proof. Two
+MINORs filed forward rather than fixed here: URD-064 (`--track`'s CLI arg
+accepts any string, no validation against the real enum — pre-existing,
+one layer up) and an unrelated, already-known `letterPick` solver gap that
+surfaced incidentally during the spot-check (occurred under the default
+track, not the roman path under test, unconnected to this diff).
+
+Process finding: the isolated worktree only carries committed history, so
+it couldn't see this branch's own uncommitted WIP and improvised a
+diff-and-copy workaround, costing real turns. Folded straight back into
+the same ROLES.md rule this session already wrote, rather than left for a
+third recurrence to surface it again.
+
+## PASSED · URD-051 · 2026-08-27T14:50Z
+No BLOCKING or MAJOR findings; both MINORs filed forward (URD-064, and an
+unrelated pre-existing gap noted for the record only).
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npx vitest run
+  245/245, unchanged — this item touches no test-covered app code.
+
+$ npm run check:soak-track
+  all three cases (roman/script/unset) read back correctly from real
+  localStorage; revert-verified to fail with the predicted shape.
+
+$ npm run check:all
+  all 30 steps pass against a deploy-shaped build.
+
+branch: claude/gauntlet-soak-track-flag
