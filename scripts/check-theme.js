@@ -239,18 +239,79 @@ for (const t of tokens) {
  * This is a class-name rule rather than a rendered measurement, which makes it
  * cheap and slightly conservative: it cannot see that a given line happens to
  * sit on a darker card. That is the right way round for a floor.
+ *
+ * URD-052: `text-paper/40` is not the only way to write this colour. A
+ * component's `style` prop can build the identical faded paper with
+ * `withAlpha(palette.paper, 0.4)` directly — same hex, same alpha, same
+ * pixel on screen — and until this fix that spelling was invisible here:
+ * this rule pattern-matched the Tailwind className in file *text*, so a
+ * `withAlpha` call read as ordinary code, not as a colour to hold to the
+ * floor. Found live: `Button.tsx`'s disabled-label fix first read
+ * `withAlpha(palette.paper, 0.4)` — 3.24:1 against `ink700`, the exact
+ * worst-case value the table above measured and named the reason 55% is
+ * the floor — and `check:theme` reported clean.
+ *
+ * Matched only for `palette.paper` specifically, not `withAlpha` in
+ * general — this floor is about the one colour body text is set in on
+ * this app's own grounds (the table above), not a claim about every token
+ * `withAlpha` ever fades. A different token's own legibility is a
+ * different measurement this rule does not make.
+ *
+ * Matched only when it is assigned to a *text* colour prop — `color:` (a
+ * style object's own text colour) or `placeholderTextColor=` (a
+ * `TextInput`'s placeholder, which is text too) — not `withAlpha
+ * (palette.paper, …)` wherever it appears. The same faded paper is also a
+ * legitimate, unrelated `borderColor`/`backgroundColor` in this app (a
+ * disabled button's border, a step-indicator dot, a drop-zone's dashed
+ * outline) — none of those put paper-coloured *text* on screen, so none of
+ * them are a WCAG text-contrast question at all, and a rule this specific
+ * would report three false positives for every real one it caught if it
+ * matched the token everywhere. `color`/`Color` is deliberately
+ * case-sensitive here — `borderColor`/`backgroundColor` are a different
+ * identifier, not a substring match away from `color`.
+ *
+ * THE CRITIC, reviewing this item: this only catches the value written
+ * *inline* — `color: withAlpha(palette.paper, 0.4)` — on one physical
+ * line, not through a variable (`const text = disabled ? withAlpha(...) :
+ * ...; ... style={{ color: text }}`, `Button.tsx`'s own idiom for every
+ * other colour in that file) and not across a ternary Prettier has wrapped
+ * onto several lines. Live-reproduced against both gaps in this repo: a
+ * genuine 0.4 regression, written either way, passes `check:theme` clean.
+ * Filed forward as URD-065/URD-066 rather than fixed here — closing them
+ * needs either real parsing (this file is deliberately regex-based, "cheap
+ * and slightly conservative," not an AST walk) or a materially different
+ * approach, not a wider character class. So: this closes the literal-
+ * inline case this item's own text named, and is not yet "no faded paper
+ * text below 55 anywhere" — say precisely what was checked rather than
+ * claiming the broader win.
  */
 const PAPER_FLOOR = 55;
+const WITH_ALPHA_PAPER =
+  /\b(?:color|placeholderTextColor)\s*[:=]\s*\{?\s*[^\n{}]*?withAlpha\(\s*palette\.paper\s*,\s*([\d.]+)\s*\)/g;
 for (const file of files) {
   const src = stripComments(fs.readFileSync(file, 'utf8'));
+  const lineAt = (index) => src.slice(0, index).split('\n').length;
   for (const m of src.matchAll(/text-paper\/(\d+)/g)) {
     const pct = Number(m[1]);
     if (pct >= PAPER_FLOOR) continue;
-    const line = src.slice(0, m.index).split('\n').length;
     bad(
       file,
-      line,
+      lineAt(m.index),
       `\`text-paper/${pct}\` is under the ${PAPER_FLOOR}% legibility floor — it fails WCAG AA on every ground in this app`
+    );
+  }
+  for (const m of src.matchAll(WITH_ALPHA_PAPER)) {
+    // `withAlpha` takes a 0-1 fraction (see its own definition in
+    // colors.ts) where `text-paper/N` names a 0-100 percentage — rounded
+    // rather than compared as a float, so 0.55 (which is not exactly
+    // representable in binary) reads as the floor itself, not one hair
+    // under it.
+    const pct = Math.round(Number(m[1]) * 100);
+    if (pct >= PAPER_FLOOR) continue;
+    bad(
+      file,
+      lineAt(m.index),
+      `\`withAlpha(palette.paper, ${m[1]})\` is under the ${PAPER_FLOOR}% legibility floor — it fails WCAG AA on every ground in this app`
     );
   }
 }

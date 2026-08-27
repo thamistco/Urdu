@@ -36,36 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-052 — check:theme's legibility floor only sees Tailwind classNames, not inline withAlpha()
-attempts: 0
-files: scripts/check-theme.js
-definition of done: `check:theme`'s `PAPER_FLOOR` rule also catches a
-  faded-text colour built with `withAlpha(palette.paper, N)` (or any other
-  token) directly in a component's `style` prop, not only a `text-paper/N`
-  Tailwind className — both are the same colour on screen, and only one of
-  them is currently checked.
-verify: with a real component temporarily reading
-  `withAlpha(palette.paper, 0.4)` for label text (a real value this repo
-  has actually shipped, not a synthetic worst case), `npm run check:theme`
-  reports it as a legibility-floor violation. Today it reports clean.
-notes: Found by THE CRITIC reviewing URD-036's disabled-button fix
-  (src/components/Button.tsx). That fix's first version read
-  `withAlpha(palette.paper, 0.4)` for a disabled button's label — composited
-  against `palette.ink700`, 3.24:1, exactly the documented worst-case value
-  `check:theme`'s own comment cites as the reason `PAPER_FLOOR` (55%) exists
-  at all ("57 strings below it... every one of them illegible"). It passed
-  `check:theme` anyway, because that check's floor rule pattern-matches the
-  Tailwind spelling `text-paper/(\d+)` in file text, and `withAlpha()` is a
-  different spelling of the identical colour. Fixed at the call site for
-  this one instance (raised to 55%, matching the floor directly rather than
-  leaning on WCAG's disabled-control exemption to justify a number this
-  project has already measured and rejected once) — but the check itself
-  is still blind to the next person who writes the same call differently.
-  A green `check:theme` on a file using `withAlpha` for text colour is not
-  evidence of anything; this is the same "the comment claims more than the
-  code checks" mistake this file's own generator-side sibling elsewhere in
-  this repo was written to stop making, now found in a different check.
-
 ## URD-053 — se/seen/swaad, baRi-he/choti-he/do-chashmi-he and te/toe have the same undisambiguated-collision gap URD-038 fixed for ذ ز ض ظ
 attempts: 0
 files: src/data/letters.ts
@@ -369,3 +339,69 @@ notes: Found by THE CRITIC reviewing URD-051 — the same "silently wrong,
   value `soak.js` itself ever passes is one of the three valid strings, and
   `check:soak-track` only exercises those three, so this is a hardening
   item for a human mistyping the flag, not a defect in generated content.
+
+## URD-065 — check:theme's withAlpha rule cannot see a faded text colour reached through a variable
+attempts: 0
+files: scripts/check-theme.js
+definition of done: URD-052 taught `check:theme` to catch
+  `withAlpha(palette.paper, N)` written *inline* at a `color:`/
+  `placeholderTextColor=` site, but `Button.tsx` — the exact file whose
+  real regression motivated URD-052 — reaches its disabled-label colour
+  through a variable instead: `const text = disabled ?
+  withAlpha(palette.paper, 0.55) : TEXT[variant]`, then `style={{ color:
+  text }}` several lines later. URD-052's rule only ever looks at the
+  token immediately following `color:`/`placeholderTextColor=`, so it
+  never sees the `withAlpha` call at all when it's one hop away through a
+  local variable — the same idiom this file already uses for every other
+  colour it computes (`fill`, `edge`, `border` are all built the same
+  way). Catch this shape too, or say plainly in the check's own doc
+  comment that it only covers the literal-inline case (already done, by
+  THE CRITIC's finding, as of URD-052's own fix) and is not the general
+  claim its name suggests.
+verify: with `Button.tsx`'s `text` variable temporarily set back to `0.4`
+  (the file's own documented worst-case value, 3.24:1 against `ink700`),
+  `npm run check:theme` reports it as a legibility-floor violation. Today
+  it reports clean.
+notes: Found by THE CRITIC reviewing URD-052, live-reproduced against the
+  real file (reverted after). Not blocking that item — no real content
+  regresses today, `Button.tsx`'s own value is already `0.55` — this is a
+  coverage gap in the check itself, the same "the comment claims more
+  than the code checks" mistake URD-052 exists to fix, now found one
+  layer deeper in the fix it made. Closing it needs either a small
+  forward data-flow trace (a local `const NAME = ... withAlpha(...) ...`
+  followed by `NAME` reaching a text-colour prop within the same
+  function) or accepting that a regex-based check cannot see through
+  indirection and saying so — this file is deliberately "cheap and
+  slightly conservative," not an AST walk, per its own header comment.
+
+## URD-066 — check:theme's withAlpha rule cannot see a faded text colour whose ternary wraps onto multiple lines
+attempts: 0
+files: scripts/check-theme.js
+definition of done: URD-052's `WITH_ALPHA_PAPER` regex excludes newlines
+  from the gap between `color:`/`placeholderTextColor=` and the
+  `withAlpha` call (`[^\n{}]*?`), so a ternary Prettier wraps onto several
+  lines — which it will do the moment the expression crosses this
+  project's configured `printWidth` (120; the real
+  `LetterLabScreen.tsx:159` line this item fixed sits at 108 characters,
+  single-line only by margin) — evades the check entirely. Catch a
+  wrapped ternary too, without reopening the false-positive risk a
+  newline-permissive version was found to have (a `color:`/
+  `placeholderTextColor=` key followed, across a comma, by an unrelated
+  sibling property whose own value happens to be a `withAlpha
+  (palette.paper, …)` call would be misattributed as the *first* prop's
+  value if newlines and commas are simply allowed through).
+verify: with the real `LetterLabScreen.tsx:159` line reformatted onto
+  Prettier's own natural multi-line ternary shape (value temporarily set
+  back to `0.4`), `npm run check:theme` reports it as a legibility-floor
+  violation. Today it reports clean.
+notes: Found by THE CRITIC reviewing URD-052, live-reproduced against the
+  real file (reverted after). Not blocking that item for the same reason
+  URD-065 isn't: no real content regresses today, every real site this
+  fix touches is currently single-line. Genuinely harder than it looks —
+  a naive fix (drop the `\n` exclusion) was checked directly and shown to
+  risk misattributing a sibling property's value to the wrong key, which
+  would be a new class of false positive worse than the false negative it
+  closes. Likely needs the same real parsing URD-065 would need, or a
+  bound smarter than "no newlines" (e.g. stop at the next `key:` pattern,
+  not just the next brace) — worth solving both in one pass since they
+  share a root cause (this file is regex-based, not an AST walk).
