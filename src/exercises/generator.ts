@@ -2184,7 +2184,36 @@ export function buildLessonExercises(
         wordTurn++;
         if (w && (turn === 2 || turn === 5)) exercises.push(produceExercise(w, poolFor(w), track, teachesScript, i));
         else if (w && turn === 4) exercises.push(wordExercise(w, poolFor(w), track, 'meet', 1));
-        else if (w && turn === 1) exercises.push(wordExercise(w, poolFor(w), track, 'meet', 2));
+        else if (w && turn === 1)
+          // THE CRITIC, reviewing URD-050: `turn === 1` forces variant 2
+          // (`listenTap`) unconditionally, and a due review item can be a
+          // previously-graded sentence just as easily as a real word
+          // (`itemsOf` tags a sentence answered via meaningPick/
+          // wordFromMeaning/listenTap the same `{type: 'word'}` way, and
+          // `dueQueue` surfaces it back untouched). Before URD-050,
+          // `distractorsFor`'s `distinctCue` pass on a sentence answer's
+          // pool (`SENTENCE_WORDS`) always failed — every sentence shared
+          // one emoji — so it fell through to `consider(WORDS)` and filled
+          // `listenTap`'s options with real, visually-distinct vocabulary.
+          // URD-050 gave sentences a cue unique per id specifically so
+          // `meaningPick`/`wordFromMeaning` could draw same-concept
+          // *sentence* distractors instead of that fallback — but the same
+          // `distractorsFor` call backs this `listenTap` branch too, and
+          // once sentences satisfy `distinctCue` against each other
+          // directly, the widen-to-`WORDS` fallback never triggers here
+          // either: `listenTap` then renders four *other sentences*,
+          // every one showing the identical literal '📝' `WordArt` icon
+          // (that icon reads `word.emoji` directly, never `cueOf` — see
+          // that function's own comment in `data/art.ts`), silently
+          // defeating `check-answerable.js`'s own `distinct(options.map
+          // (cueOf))` guard against exactly this. Measured directly before
+          // this fix: 2,028 of 122,304 sampled review exercises were a
+          // sentence-answered `listenTap`, all 2,028 with all 4 options
+          // sentences. `sentenceReinforceClimb`'s own `meet` turn already
+          // never uses variant 2 for a sentence for this reason — this is
+          // the one other call site that could still reach it, since a
+          // review's due queue mixes words and sentences the same way.
+          exercises.push(wordExercise(w, poolFor(w), track, 'meet', w.topic === 'sentences' ? 1 : 2));
         else if (w) exercises.push(wordExercise(w, poolFor(w), track, 'recall'));
       }
     });

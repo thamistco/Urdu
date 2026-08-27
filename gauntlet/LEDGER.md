@@ -5485,3 +5485,92 @@ $ npm run check:all
   all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-letter-contrast-exercise
+
+## CLAIMED · URD-050 · 2026-08-27T12:30Z
+files: src/data/art.ts, src/exercises/generator.ts,
+  src/exercises/generator.test.ts
+branch: claude/gauntlet-meaningpick-sentence-distractor, cut from
+claude/gauntlet-letter-contrast-exercise after URD-047 shipped.
+
+## CRITIQUE · URD-050
+`cueOf` now returns `sen:${word.id}` for any Word with `topic ===
+'sentences'` — unique per sentence, the same way `NUMERALS`/`WORD_ICON`
+already key real words with bespoke art off their own id. Every sentence in
+the course previously shared one literal emoji, so `distractorsFor`'s
+`distinctCue` guard rejected every other sentence as a distractor for a
+sentence answer, regardless of pool or concept-tagging — 0 of 292
+grammar-climb `meaningPick` exercises ever offered a same-concept
+distractor, not a rate problem but a structural one. Fixed: 292/292
+(100%), matching `wordFromMeaning`'s own rate and saturating at the
+identical `DISTRACTORS - 1` cap URD-030 already put in place — no change
+to that cap's code, only to `meaningPick`'s ability to reach it.
+
+Dispatched THE CRITIC and CURRICULUM CRITIC. No DESIGN CRITIC — no UI
+component changed, only distractor selection.
+
+THE CRITIC, one BLOCKING, found and fixed: the safety argument (sentences
+never reach `listenTap`/`matching`, the two kinds `check-answerable.js`
+does check for shared cues) held for `matching` but was false for
+`listenTap` — the review loop's `turn === 1` branch forces `wordExercise`'s
+variant to `2` (`listenTap`) for whatever due item lands there, and a due
+item can be a previously-graded sentence exactly as easily as a real word.
+Before this fix, that branch's `distinctCue` pass on a sentence fell
+through to real, visually-distinct vocabulary; after, sentences satisfy
+each other directly, so it rendered four *other sentences*, every option
+showing the identical shared icon — silently defeating
+`check-answerable.js`'s own `distinct(options.map(cueOf))` guard, because
+that check never simulates a due queue and so never reaches this path.
+Measured directly (a due queue seeded with real sentence ids, 60 real
+review lessons, both tracks, 3 visits): 492 of 492 sentence-answered
+`listenTap` exercises had all-sentence options. Independently reproduced
+(492/492) and fixed by routing a sentence-topic due item to variant 1
+(`meaningPick`) instead of 2 — the same convention `sentenceReinforceClimb`
+already uses for its own `meet` turn, for the identical reason. Added a
+permanent regression test, since `check-answerable.js` structurally cannot
+catch this on its own; revert-verified it fails with the exact shape
+(0 → 492/492 with the fix removed, 0/0 restored).
+
+Process note: mid-review, contention surfaced on this session's shared,
+non-isolated working tree between the two concurrently-dispatched critics
+— CURRICULUM CRITIC's own before/after comparison stashed `art.ts`, which
+briefly left the working tree in the unfixed state while THE CRITIC (and,
+separately, the lead) were reading it, and once left `vitest.config.ts`
+modified. Both were traced and reverted correctly (by the critics
+themselves and independently reconfirmed by the lead) before anything was
+committed — no work was lost, but it cost real turns on both sides and the
+lead declined to commit at one point specifically because the tree was
+mid-mutation by a still-running agent. Worth an OVERSEER note about
+concurrent dispatches sharing one checkout.
+
+CURRICULUM CRITIC, no BLOCKING or MAJOR: confirmed the identical decorative
+icon across four sentence options was never load-bearing for this kind
+(check-answerable.js's own guard checks meaning/urdu text only) and is
+unmoved by this fix either way. Generated real before/after examples for
+g-plurals and g-comparative: before, a same-concept sentence question's
+distractors were single unrelated vocabulary words, answerable by shape
+alone without reading the Urdu; after, the distractors are genuinely
+same-construction sentences, a legitimate test of the grammar concept
+rather than a vocabulary-recall trap — judged stronger than this item's
+own "adds variety" framing gives it credit for.
+
+## PASSED · URD-050 · 2026-08-27T14:05Z
+The one BLOCKING finding fixed and revert-verified; no MAJOR/MINOR findings
+from either critic.
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npx vitest run
+  245/245 (13 new: URD-050's own generator.test.ts block).
+
+$ npm run check:grammar-distractors
+  876/876 (100.0%); meaningPick 292/292, wordFromMeaning 584/584 — both at
+  the DISTRACTORS - 1 cap, neither over it.
+
+$ npm run check:answerable / npm run check:shape
+  clean, unchanged targets and exercise-kind counts.
+
+$ npm run check:all
+  all 30 steps pass against a deploy-shaped build.
+
+branch: claude/gauntlet-meaningpick-sentence-distractor

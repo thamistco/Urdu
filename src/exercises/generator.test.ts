@@ -14,7 +14,7 @@ import {
 import { getLetter, LETTERS, type Letter } from '../data/letters';
 import { resolveLesson, UNITS, ALL_LESSONS, type Lesson } from '../data/units';
 import { WORDS, getWord } from '../data/words';
-import { VERDICT_CUES, cueOf } from '../data/art';
+import { VERDICT_CUES, cueOf, NUMERALS, COLOURS, WORD_ICON } from '../data/art';
 import { GRAMMAR } from '../data/grammar';
 import { SENTENCES } from '../data/sentences';
 import { romanAll } from '../lib/translit';
@@ -1309,13 +1309,19 @@ describe('URD-030: distractorsFor prefers a caller-supplied pool before its main
 describe("URD-030: the grammar climb's sentence-reinforcement distractors are concept-aware", () => {
   // g-plurals (fixed by URD-029) has 4 readable sentences, all tagged
   // g-plurals — so for any one of them, the other 3 are a `preferred` pool
-  // richer than the `DISTRACTORS - 1` cap allows to be used. `wordFromMeaning`
-  // doesn't require `distinctCue` (unlike `meaningPick`, where every
-  // sentence's shared 📝 cue collides with its own answer's cue regardless of
-  // this fix — a separate, structural limitation this item does not touch,
-  // filed as URD-050), so exactly `DISTRACTORS - 1` of its options should be
-  // g-plurals, and exactly one should not: a deterministic property of real
-  // content (this pool is always this rich), not a shuffle-dependent one.
+  // richer than the `DISTRACTORS - 1` cap allows to be used. At the time
+  // this test was written, `wordFromMeaning` was the only kind this reached
+  // in practice — `meaningPick` required `distinctCue`, and every sentence's
+  // shared 📝 cue collided with its own answer's cue regardless of this fix,
+  // a separate, structural limitation filed as URD-050 rather than touched
+  // here. URD-050 gave sentences a `cueOf` keyed off their own id instead
+  // (see that function's own comment in `data/art.ts`), so `meaningPick` now
+  // reaches the identical cap through the identical mechanism — see that
+  // item's own describe block below for its test, kept separate rather than
+  // folded in here since it is a different item's own claim. So exactly
+  // `DISTRACTORS - 1` of `wordFromMeaning`'s options should be g-plurals,
+  // and exactly one should not: a deterministic property of real content
+  // (this pool is always this rich), not a shuffle-dependent one.
   const lesson = resolveLesson('g-plurals')!;
 
   it('every wordFromMeaning exercise for a g-plurals sentence has a same-concept majority and one non-concept anchor', () => {
@@ -1366,6 +1372,158 @@ describe("URD-030: the grammar climb's sentence-reinforcement distractors are co
     expect(sampledAtLeastOne, 'expected at least one sentences-kind lesson to emit a concept-tagged exercise').toBe(
       true
     );
+  });
+});
+
+describe('URD-050: meaningPick can offer another sentence as a distractor', () => {
+  // Every sentence in the course shares one literal emoji ('📝'), so
+  // `cueOf`'s old fallback made every sentence-derived `Word`'s cue
+  // identical — and `distractorsFor` seeds `usedCues` with the *correct
+  // answer's own* cue before considering any candidate, so a sentence
+  // question's `distinctCue: true` pass (meaningPick's own guard, matching
+  // wordFromMeaning's `distinctMeaning`-only guard) rejected every other
+  // sentence outright, regardless of pool or concept. Measured directly
+  // before this fix: 0 of 292 grammar-climb meaningPick exercises offered
+  // any same-concept distractor — not a rate problem, a structural one.
+
+  it('cueOf gives two different sentences two different cues, so neither collides with the other', () => {
+    // The real defect was two sentences sharing one literal emoji, but
+    // `cueOf` checks `topic === 'sentences'` before it ever reads `.emoji` —
+    // the fixture doesn't need to reproduce the shared emoji to exercise
+    // that branch, only the topic.
+    const a = { ...WORDS[0], id: 'test-sentence-a', topic: 'sentences' };
+    const b = { ...WORDS[1], id: 'test-sentence-b', topic: 'sentences' };
+    expect(cueOf(a)).not.toBe(cueOf(b));
+    // Still keyed to the word, not merely unique per call — the same word
+    // must always report the same cue, or `usedCues` couldn't recognise a
+    // repeat within a single `distractorsFor` pass.
+    expect(cueOf(a)).toBe(cueOf({ ...a }));
+  });
+
+  it('a real vocabulary word (non-sentence) is unaffected — still cued by its own emoji', () => {
+    // Excludes anything with a bespoke `NUMERALS`/`COLOURS`/`WORD_ICON` entry
+    // — those already take priority over the emoji fallback for reasons of
+    // their own, unrelated to this fix, so a word with one of those would
+    // pass this assertion for the wrong reason.
+    const w = WORDS.find((x) => x.topic !== 'sentences' && !NUMERALS[x.id] && !COLOURS[x.id] && !WORD_ICON[x.id]);
+    expect(w, 'expected at least one plain-emoji word in WORDS').toBeDefined();
+    expect(cueOf(w!)).toBe(`emo:${w!.emoji}`);
+  });
+
+  // The identical g-plurals property URD-030's own test above proves for
+  // `wordFromMeaning` — this item gives `meaningPick` the same mechanism, so
+  // it should now show the same deterministic saturation-minus-one shape.
+  const lesson = resolveLesson('g-plurals')!;
+
+  it('every meaningPick exercise for a g-plurals sentence has a same-concept majority and one non-concept anchor', () => {
+    const exercises = buildLessonExercises(lesson, [], 'both');
+    const relevant = exercises.filter((e) => e.kind === 'meaningPick' && 'word' in e) as {
+      word: { id: string; topic: string; concept?: string };
+      options: { id: string; concept?: string }[];
+    }[];
+    const sentenceDerived = relevant.filter((ex) => ex.word.topic === 'sentences' && ex.word.concept);
+    expect(sentenceDerived.length, 'g-plurals should emit at least one such exercise').toBeGreaterThan(0);
+    for (const ex of sentenceDerived) {
+      const distractors = ex.options.filter((o) => o.id !== ex.word.id);
+      const sameConcept = distractors.filter((d) => d.concept === ex.word.concept);
+      expect(sameConcept.length, JSON.stringify(ex.options)).toBe(OPTIONS_PER_QUESTION - 2);
+      expect(distractors.length - sameConcept.length, JSON.stringify(ex.options)).toBeGreaterThan(0);
+    }
+  });
+
+  it('no grammar-climb meaningPick exercise saturates every distractor with the same concept', () => {
+    let sampledAtLeastOne = false;
+    for (const u of UNITS) {
+      for (const l of u.lessons) {
+        if (l.kind !== 'grammar') continue;
+        const exercises = buildLessonExercises(l, [], 'both');
+        const relevant = exercises.filter((e) => e.kind === 'meaningPick' && 'word' in e) as {
+          word: { id: string; topic: string; concept?: string };
+          options: { id: string; concept?: string }[];
+        }[];
+        for (const ex of relevant.filter((e) => e.word.topic === 'sentences' && e.word.concept)) {
+          sampledAtLeastOne = true;
+          const distractors = ex.options.filter((o) => o.id !== ex.word.id);
+          const sameConcept = distractors.filter((d) => d.concept === ex.word.concept);
+          expect(sameConcept.length, `${l.id}: ${JSON.stringify(ex.options)}`).toBeLessThan(OPTIONS_PER_QUESTION - 1);
+        }
+      }
+    }
+    expect(sampledAtLeastOne, 'expected at least one grammar-climb lesson to emit a concept-tagged meaningPick').toBe(
+      true
+    );
+  });
+
+  // The regression this fix must never reopen: a real vocabulary meaningPick
+  // question (the one kind `check-answerable.js` does NOT check for shared
+  // cues — see `cueOf`'s own comment for why) still gets distinct-cued
+  // distractors when the pool can supply them, same as before this item.
+  it('a real vocabulary meaningPick question still gets distinct-cued distractors, unaffected by the sentence fix', () => {
+    let sampled = 0;
+    for (const u of UNITS) {
+      for (const l of u.lessons) {
+        if (l.kind !== 'vocab') continue;
+        const exercises = buildLessonExercises(l, [], 'both');
+        for (const ex of exercises) {
+          if (ex.kind !== 'meaningPick' || !('word' in ex)) continue;
+          const w = ex as { word: { id: string; topic: string }; options: { id: string }[] };
+          if (w.word.topic === 'sentences') continue;
+          sampled++;
+          const cues = w.options.map((o) => cueOf(o as unknown as Parameters<typeof cueOf>[0]));
+          expect(new Set(cues).size, JSON.stringify(w.options)).toBe(cues.length);
+        }
+      }
+    }
+    expect(sampled, 'expected at least one real-vocabulary meaningPick exercise').toBeGreaterThan(0);
+  });
+
+  // THE CRITIC, reviewing this item: BLOCKING — giving sentences a cue
+  // unique per id doesn't only unblock `meaningPick`'s own `distinctCue`
+  // pass, it unblocks *every* `distractorsFor` call that shares the same
+  // pool, including the review loop's `turn === 1` branch (generator.ts),
+  // which forces `wordExercise`'s variant to `2` (`listenTap`) for whatever
+  // due item lands there — a due item can be a previously-graded sentence,
+  // not only a real word (`itemsOf` tags a sentence answered via any word
+  // kind the same `{type: 'word'}` way `dueQueue` surfaces it back under).
+  // Before this fix, a sentence's `distinctCue` pass on `SENTENCE_WORDS`
+  // always failed (shared emoji) and fell through to real, visually-
+  // distinct vocabulary; after, sentences satisfy each other directly, so
+  // `listenTap` rendered four *other sentences* — every option showing the
+  // identical literal '📝' icon (`WordArt` renders `word.emoji` directly,
+  // never `cueOf`), silently defeating `check-answerable.js`'s own
+  // `distinct(options.map(cueOf))` guard against exactly that, because that
+  // check never simulates a due queue at all. Measured directly before the
+  // fix (a due queue seeded with real sentence ids against 60 real review
+  // lessons, both tracks, 3 visits each): 492 of 492 sentence-answered
+  // `listenTap` exercises had all 4 options be other sentences. Fixed by
+  // routing a sentence-topic due item to variant 1 (`meaningPick`) instead
+  // of 2 in that one branch, the same convention `sentenceReinforceClimb`
+  // already uses for its own `meet` turn.
+  it('a sentence due for review never becomes a listenTap exercise', () => {
+    const reviewLesson = ALL_LESSONS.find((l) => l.kind === 'review')!;
+    const due = SENTENCES.slice(0, 8).map((s) => ({ id: s.id, type: 'word' as const }));
+    let sampled = 0;
+    for (const track of ['both', 'roman'] as const) {
+      for (let visit = 0; visit < 3; visit++) {
+        const exercises = buildLessonExercises(reviewLesson, due, track, new Set(), visit);
+        for (const ex of exercises) {
+          if (ex.kind !== 'listenTap' || !('word' in ex)) continue;
+          const w = ex as { word: { topic: string }; options: { topic: string }[] };
+          if (w.word.topic !== 'sentences') continue;
+          sampled++;
+          expect(
+            w.options.some((o) => o.topic !== 'sentences'),
+            'a sentence listenTap must not have every option be another sentence — they all show the same icon'
+          ).toBe(true);
+        }
+      }
+    }
+    // Today's fix routes every sentence away from listenTap entirely, so
+    // `sampled` staying at 0 is the passing state — asserted this way
+    // rather than requiring `sampled > 0` so the test still means something
+    // if a future change lets a sentence reach listenTap again with a
+    // genuinely mixed option set.
+    expect(sampled).toBe(0);
   });
 });
 
