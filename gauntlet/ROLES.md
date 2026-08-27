@@ -217,6 +217,19 @@ mode, CURRICULUM CRITIC's design-judgment reviews) does not need this; the
 tell is whether the dispatch prompt tells it to run `git stash`, revert a
 file, or otherwise change what's on disk even temporarily.
 
+One gap this immediately ran into, on the very next item after it was
+written: a worktree only carries *committed* history, so a critic dispatched
+into one to review this run's own uncommitted work-in-progress branch finds
+nothing there — the diff being reviewed does not exist yet as a commit. On
+URD-051 the dispatched critic improvised its own way past this (diffed the
+two checkouts directly, copied the changed files into its worktree by hand),
+which worked but cost real turns rediscovering a problem the dispatch prompt
+should have solved for it. Say so up front instead: either paste the diff
+into the dispatch prompt directly, or make a throwaway WIP commit on the
+branch before dispatching (the worktree is created from a branch tip, so a
+committed WIP state is visible to it) and clean the commit up afterward
+(`git reset --soft`/amend) rather than leaving it in the shipped history.
+
 A critic that wakes twice without a severity-scored verdict is done. Send it a
 stand-down, do that review yourself, and record both in the CRITIQUE entry. The
 lead is not obliged to be patient with a dispatch that is not converging, and on

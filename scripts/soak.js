@@ -1230,6 +1230,17 @@ async function settleAttempt(page, url, why) {
   }
 }
 
+/**
+ * URD-051: the `settings` override `enterAsGuest` writes into
+ * `harf-settings` for `--track` — pulled out to its own function rather
+ * than an inline ternary in the IIFE below, which was already at this
+ * file's own complexity ceiling. Empty for the guest default (`'both'`) so
+ * a plain `npm run soak` writes nothing new here.
+ */
+function trackSettingsFor(track) {
+  return track === 'both' ? {} : { track };
+}
+
 (async () => {
   const { exe, chromium } = findRunner();
 
@@ -1251,10 +1262,19 @@ async function settleAttempt(page, url, why) {
   });
 
   const url = `http://localhost:${PORT}/`;
-  await enterAsGuest(page, url, {
-    ...(TRACK === 'roman' ? { goal: 'speak' } : {}),
-    ...(START > 0 ? { completedLessons: START_COMPLETED } : {}),
-  });
+  await enterAsGuest(
+    page,
+    url,
+    {
+      ...(TRACK === 'roman' ? { goal: 'speak' } : {}),
+      ...(START > 0 ? { completedLessons: START_COMPLETED } : {}),
+    },
+    // `--track` names the *app's* learn-track setting (`useSettingsStore.ts`),
+    // which lives in `harf-settings`, not `harf-progress` — `goal` above is a
+    // separate, pre-existing onboarding field this file already set for
+    // `roman` and does not replace.
+    trackSettingsFor(TRACK)
+  );
   await page.reload();
   await page.waitForTimeout(2200);
 
