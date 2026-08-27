@@ -200,6 +200,23 @@ for the absence of:
   hazard `scripts/check-all.js` has carried a comment about for longer than it
   has carried a guard.
 
+A fourth belongs there too, found the same way the first three were — by
+paying for its absence: **dispatch critics whose own method needs to mutate a
+tracked file (`git stash` for a before/after comparison, temporarily reverting
+a fix to confirm a test fails) with `isolation: "worktree"`, not into the
+lead's own checkout.** On URD-050 two critics ran in parallel in the shared
+tree; one's `git stash` on the exact file under review left the working tree
+in the unfixed state mid-review, which both the other critic and the lead
+separately walked into — the lead declined to commit at one point specifically
+because the tree was mid-mutation by a still-running agent, and both critics
+spent real turns tracing an edit neither had made. Nothing was lost — every
+stash got found and popped correctly — but a worktree makes the whole class of
+finding impossible rather than merely recoverable, at the cost the isolation
+flag already exists to pay. A critic that only reads (THE CRITIC's usual
+mode, CURRICULUM CRITIC's design-judgment reviews) does not need this; the
+tell is whether the dispatch prompt tells it to run `git stash`, revert a
+file, or otherwise change what's on disk even temporarily.
+
 A critic that wakes twice without a severity-scored verdict is done. Send it a
 stand-down, do that review yourself, and record both in the CRITIQUE entry. The
 lead is not obliged to be patient with a dispatch that is not converging, and on
