@@ -5362,3 +5362,126 @@ $ npm run check:all
   all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-confusable-pair-rotation
+
+## CLAIMED · URD-047 · 2026-08-26T20:31Z
+files: src/exercises/types.ts, src/exercises/generator.ts,
+  src/exercises/LetterExercises.tsx, src/exercises/letterContrastNotes.ts
+  (new), src/exercises/index.tsx, src/screens/LessonScreen.tsx,
+  scripts/check-shape.js, scripts/check-answerable.js, scripts/soak.js
+branch: claude/gauntlet-letter-contrast-exercise, cut from
+claude/gauntlet-confusable-pair-rotation after URD-046 shipped.
+
+## CRITIQUE · URD-047
+New exercise kind `letterContrast`: poses a letter directly against its
+`confusableWith` bucket-mates — options are exactly the bucket and nothing
+else, the one thing `letterPick`'s alphabet-wide distractors cannot test.
+Wired into one of a letter's `SIGHTINGS_PER_LETTER` slots via
+`contrastRound(idx)`, proven never to coincide with the existing
+context-word round (`contextRound`/`contrastRound` are the same modulus
+offset by exactly +2). A wrong answer's reveal panel
+(`letterContrastNotes.ts`) is guaranteed — proven exhaustively, not
+spot-checked — to always show at least one genuinely contrastive line,
+since every bucket has exactly one base letter.
+
+Self-caught before any critic saw the code, three defects: a noise-failing
+position-check band in `check-answerable.js` (self-caught by watching an
+18/24-sample bucket's pass/fail flip run to run with no code change),
+replaced with an `EXEMPT_PASSES` extra-sampling pass plus a `SIGMA_LIMIT=4`
+z-test and an absolute "no seat may be empty" rule; a `python3`
+string-replace that deleted `check-answerable.js`'s own failure-reporting
+block (caught because the exit code didn't match the printed output, not
+because a test failed); and an orphan-row wrap in the 3-option tile layout,
+caught via a temporary design-harness screenshot at 320px (never
+committed).
+
+Dispatched THE CRITIC (real generator/check-script logic) and CURRICULUM
+CRITIC (a discrimination-skill design question). No independent DESIGN
+CRITIC dispatch — the visual review was performed directly by the lead via
+the same harness-and-screenshot technique, at both 320px and soak's fixed
+412px, disclosed here rather than presented as independent.
+
+THE CRITIC, three findings, all resolved: (1) independently rediscovered
+the position-check weakness above and confirmed the fix against two of its
+own mutations (a 65%-biased shuffle, permanently-dead seats) that the
+original band passed and the z-test catches; (2) the main histogram's own
+40%-band comment does not survive its own arithmetic (43.7/33.3 is a 31%
+deviation, inside a 40% band) — pre-existing, filed forward as **URD-059**
+rather than fixed, out of this item's file scope; (3), delivered later via
+a peer message after its own dispatch had already reported complete once:
+`soak.js` had no entry for `letterContrast` at all (fell to the generic
+`'tap'` fallback) and the 3-option tile width (107.84px at soak's fixed
+412px viewport) fell under `candidateOptions`'s 110px floor. Fixed:
+replaced the percentage-width tiles with `flex-1` — three tiles always sum
+to exactly the row's width, so there is no viewport at which they wrap
+(confirmed 116px at 412px, no wrap at 320px, both via real screenshots) —
+and added the two-line `soak.js` solver entry THE CRITIC itself proposed
+(`letterContrast` reuses `answerLetterPick` verbatim; both kinds render the
+letter's own name on its own text line).
+
+CURRICULUM CRITIC, four MAJOR: (1) real regression, fixed — introducing
+position-free sighting kinds let the 4-position joining-form cycle
+silently skip a step, since position was derived from round number.
+Measured: parent commit already had 14/46 letter-slots missing `final`;
+this item's pre-fix code made it 25/46. Fixed with `nextPos`/`posSeq`,
+which counts position-bearing sightings rather than rounds — result 4/46,
+better than the parent's own 14. Revert-verified. (2) a reveal-panel
+`accessibilityLabel` overrode the glyph a screen reader would otherwise
+announce with a position already known — removed. (3) the residual
+joining-form gap underneath fix 1 (4/46 still missing `final`, 36/46
+missing at least one of four forms) is real and pre-existing, larger than
+this item's own regression — filed forward as **URD-060**, needs the
+kind/position interaction redesigned. (4) `letterContrast` is reachable
+only from a letter's teaching lesson, never review — filed forward as
+**URD-061**, judged the most serious finding (every other skill in this
+app is spaced; this one is drilled twice in one day and never again) —
+needs `reviewLetterPool` to know about confusable buckets, real design
+work. Plus one MAJOR independently found by both critics: the 13 base
+letters' own notes describe the letter standing alone, not the mark
+separating it from its variants, and two (`kaaf`, `seen`) read as
+endorsing a wrong answer just tapped — filed forward as **URD-062**, needs
+new content.
+
+Five further MINORs (an over-narrow test heuristic; a `check:direction`
+violation from a physical `ml-2`; an over-broad edit that put
+`letterContrast` into review lessons' own kind-set, breaking URD-041/042's
+tests; a dead `finalRound` binding; a nonexistent `ContextEx` cast in a
+test) all fixed directly, each revert-verified.
+
+Found while verifying THE CRITIC's soak.js fix against a real run, not
+assumed: `npm run soak -- --lessons 8 --require letterContrast` never
+reaches `letterContrast` at all today — it fails on the very first letter
+lesson's `letterSpot` screen (URD-045) every one of 8 attempts, 0 lessons
+completed. `letterSpot` has no `soak.js` solver entry either, and its
+tiles measure under the 110px candidate floor, so soak finds nothing
+tappable and reports the screen outright unanswerable. Filed forward as
+**URD-063** — predates this item (THE CRITIC named it in passing as
+"adjacent, not URD-047's fault") and needs a layout decision specific to
+`letterSpot`'s own variable-width tiles. This item's verification rests on
+the unit tests and direct DOM measurements, not a completed live-soak run,
+which a real run could not reach.
+
+## PASSED · URD-047 · 2026-08-27T13:20Z
+All BLOCKING/MAJOR findings from both critics fixed and reverified; four
+filed forward as scoped, out-of-file, or genuinely pre-existing (URD-059,
+060, 061, 062), plus one more found during this item's own final
+verification (URD-063).
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npx vitest run
+  239/239 (12 new: URD-047's own generator.test.ts block, seven tests;
+  letterContrastNotes.test.ts, five tests).
+
+$ npm run check:answerable
+  clean. letterContrast: 2236 two-option, 258 three-option, 344 four-option
+  instances, all answerable, all bucket-only, position checked at
+  EXEMPT_PASSES-raised sample sizes via the z-test.
+
+$ npm run check:shape
+  clean, unchanged targets (350 lessons, 24.3 hours).
+
+$ npm run check:all
+  all 30 steps pass against a deploy-shaped build.
+
+branch: claude/gauntlet-letter-contrast-exercise

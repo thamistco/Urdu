@@ -108,21 +108,26 @@ export function LetterContrastExercise({ exercise, locked, onGraded }: ExerciseP
       </PromptCard>
       <View className="h-4" />
       <Question>Which one is {letter.name}?</Question>
-      <View className="flex-row flex-wrap justify-center">
+      <View className={options.length === 3 ? 'flex-row justify-center' : 'flex-row flex-wrap justify-center'}>
         {options.map((o) => {
           const state = picked == null ? 'idle' : o.id === letter.id ? 'correct' : o.id === picked ? 'wrong' : 'muted';
           // Width by option count, so no bucket size leaves an orphan tile
           // alone on a final row. A bucket is 2, 3 or 4 letters: two and four
-          // lay out as full rows at 44%, but three at 44% wraps 2 + 1, which
-          // is the exact "orphan sitting alone on a row, which looks like a
-          // mistake" that `OPTIONS_PER_QUESTION`'s own doc comment gives as
-          // the reason this app asks four-option questions and not five.
-          // Three across is a full row instead. The exact numbers are
-          // measured at 320px, the narrowest size `check:sizes` holds the app
-          // to, and they are tight: 30% with the usual `m-1.5` came to just
-          // over the content width there and wrapped anyway, which is how
-          // this comment came to have numbers in it at all.
-          const width = options.length === 3 ? 'm-1 w-[29%]' : 'm-1.5 w-[44%]';
+          // lay out as full rows at 44% each (two per row, four wraps into
+          // two rows of two). Three is the awkward count — 44% wraps 2 + 1,
+          // which is the exact "orphan sitting alone on a row, which looks
+          // like a mistake" that `OPTIONS_PER_QUESTION`'s own doc comment
+          // gives as the reason this app asks four-option questions and not
+          // five. A percentage width tuned to fit three across at one
+          // viewport turned out not to generalize: 31% cleared soak.js's
+          // 110px tap-target floor at its fixed 412px viewport, but wrapped
+          // 2 + 1 anyway at 320px, the narrowest width `check:sizes` holds
+          // the app to — measured via a screenshot, not assumed. `flex-1`
+          // has no such viewport-specific tuning: three flex-1 tiles always
+          // sum to exactly the row's width, so there is no width at which
+          // they wrap, while still measuring 110+px at soak's 412px
+          // viewport because the row is the full prompt-card width there.
+          const width = options.length === 3 ? 'm-1 flex-1' : 'm-1.5 w-[44%]';
           return (
             <Choice
               key={o.id}
@@ -151,7 +156,7 @@ export function LetterContrastExercise({ exercise, locked, onGraded }: ExerciseP
           {contrastNotesFor(letter, options.find((o) => o.id === picked) ?? letter).map((line) => (
             <View key={line.letter.id} className="flex-row items-baseline justify-center">
               <Urdu style={{ color: palette.gold, ...urduGlyph(18) }}>{line.letter.forms.isolated}</Urdu>
-              <Txt className="ml-2 flex-1 text-sm text-paper/80">{line.text}</Txt>
+              <Txt className="ms-2 flex-1 text-sm text-paper/80">{line.text}</Txt>
             </View>
           ))}
         </View>

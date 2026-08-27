@@ -784,6 +784,7 @@ async function answerButtonOnlyScreen(page, text) {
 // never reaches this lookup at all.)
 const NAMED_TAP_KIND = [
   [/Which position is this letter showing\?/i, 'letterForm'],
+  [/Which one is /i, 'letterContrast'],
   [/Which letter is this\?/i, 'letterPick'],
   [/Which word is this\?|Which word means this\?/i, 'multipleChoice'],
   [/What does it mean\?/i, 'meaningPick'],
@@ -807,6 +808,13 @@ const NAMED_KIND_SOLVER = {
   wordFromMeaning: (page, text, wrong) => answerWordChoice(page, text, wrong),
   letterForm: (page, text, wrong) => answerLetterForm(page, text, wrong),
   letterPick: (page, text, wrong) => answerLetterPick(page, text, wrong),
+  // `letterContrast`'s prompt card renders `letter.name` as its own line,
+  // same as `letterPick`'s does (just in the other slot, alongside the
+  // sound instead of under it) — `answerLetterPick`'s exact-line lookup
+  // doesn't care which slot it came from, so it drops in unchanged. See
+  // URD-047's ledger for why this kind was missing here at all: it did not
+  // exist when this table was written.
+  letterContrast: (page, text, wrong) => answerLetterPick(page, text, wrong),
   grammarDrill: (page, text, wrong) => answerGrammarDrill(page, text, wrong),
 };
 
