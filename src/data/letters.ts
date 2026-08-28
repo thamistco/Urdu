@@ -146,7 +146,7 @@ export const LETTERS: Letter[] = [
     meaning: 'star',
     emoji: '⭐',
     group: 1,
-    note: 'Two dots above. Soft dental t, tongue on the teeth, not the ridge.',
+    note: 'Two dots above. Soft dental t, tongue on the teeth, not the ridge. The everyday “t”, the one to reach for by default in native and Persian vocabulary alike (دوست/dost “friend”, بات/baat “talk / matter”), and in most Arabic loanwords too. ط never occurs outside Arabic/Persian loanwords, so seeing that one does mean “borrowed”, but seeing this one doesn’t rule borrowing out.',
   },
   {
     id: 'Te',
@@ -174,7 +174,7 @@ export const LETTERS: Letter[] = [
     meaning: 'fruit',
     emoji: '🍇',
     group: 2,
-    note: 'Three dots above. In Urdu it sounds exactly like seen, one of three letters spelling the same “s”.',
+    note: 'Three dots above. One of three letters spelling the same “s”, inherited from Arabic, not Urdu’s everyday “s” (that’s س, seen): anchor it to the word this lesson actually shows it in, متاثر (mutasir, “impressed”), rather than guessing.',
   },
   {
     id: 'jeem',
@@ -214,7 +214,7 @@ export const LETTERS: Letter[] = [
     meaning: 'sweet dish',
     emoji: '🍮',
     group: 2,
-    note: 'A dotless deep curve. In Urdu it sounds the same as choṭī he, an ordinary h.',
+    note: 'A dotless deep curve. It sounds the same as choṭī he, inherited from Arabic, not Urdu’s everyday “h” (that’s ہ, choṭī he): anchor it to the word this lesson actually shows it in, خدا حافظ (khuda haafiz, “goodbye”), rather than guessing.',
   },
   {
     id: 'khe',
@@ -341,7 +341,7 @@ export const LETTERS: Letter[] = [
     meaning: 'apple',
     emoji: '🍎',
     group: 4,
-    note: 'Three teeth. When it joins forward the teeth flatten almost to a line.',
+    note: 'Three teeth. When it joins forward the teeth flatten almost to a line. The everyday “s”, the one to reach for by default in native and Persian vocabulary alike (دوست/dost “friend”, سبزی/sabzi “vegetable”), and in most Arabic loanwords too. ث and ص never occur outside Arabic/Persian loanwords, so seeing one of those two does mean “borrowed”, but seeing this one doesn’t rule borrowing out.',
   },
   {
     id: 'sheen',
@@ -368,7 +368,7 @@ export const LETTERS: Letter[] = [
     meaning: 'soap',
     emoji: '🧼',
     group: 4,
-    note: 'A wide loop with a tail. In Urdu it sounds the same as seen, the spelling is inherited from Arabic.',
+    note: 'A wide loop with a tail. It sounds the same as seen, inherited from Arabic, not Urdu’s everyday “s” (that’s س, seen): anchor it to the word this lesson actually shows it in, صفر (sifar, “zero”), rather than guessing.',
   },
   {
     id: 'zwaad',
@@ -397,7 +397,7 @@ export const LETTERS: Letter[] = [
     meaning: 'parrot',
     emoji: '🦜',
     group: 5,
-    note: 'A loop with an upright stroke. In Urdu it sounds like te, the soft dental t.',
+    note: 'A loop with an upright stroke. It sounds like te, inherited from Arabic, not Urdu’s everyday “t” (that’s ت, te): anchor it to the word this lesson actually shows it in, خط (khat, “letter”), rather than guessing.',
   },
   {
     id: 'zoe',
@@ -586,7 +586,7 @@ export const LETTERS: Letter[] = [
     meaning: 'elephant',
     emoji: '🐘',
     group: 8,
-    note: 'The “small” h. Its four faces look remarkably different, watch them shift.',
+    note: 'The “small” h. Its four faces look remarkably different, watch them shift. The everyday “h”, the one to reach for by default in native and Persian vocabulary alike (بہن/behen “sister”, ہاں/haañ “yes”), and in most Arabic loanwords too. ح never occurs outside Arabic/Persian loanwords, so seeing that one does mean “borrowed”, but seeing this one doesn’t rule borrowing out.',
   },
   {
     id: 'do-chashmi-he',

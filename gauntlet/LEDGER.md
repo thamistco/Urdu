@@ -5715,3 +5715,79 @@ $ npm run check:all
   all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-theme-alpha-floor
+
+## CLAIMED · URD-053 · 2026-08-27T15:25Z
+files: src/data/letters.ts, src/data/letters.test.ts
+branch: claude/gauntlet-letter-collision-notes, cut from
+claude/gauntlet-theme-alpha-floor after URD-052 shipped.
+
+## CRITIQUE · URD-053
+Extended URD-038's z-group disambiguation-note treatment to three more
+same-sound collisions: se/seen/swaad (s), baRi-he/choti-he (h), te/toe
+(t). One real correction to the item's own title: `do-chashmi-he` does
+NOT belong — verified directly its `sound` field is `'h (aspirate)'`, a
+genuinely distinct phoneme, not a second spelling of plain h
+(`LETTERS.filter(l => l.sound === 'h')` returns exactly
+`[baRi-he, choti-he]`). Each default letter (seen, choti-he, te) is named
+as the everyday default without overclaiming the reverse; each
+loanword-only letter (se, swaad, baRi-he, toe) is anchored to its real
+`LETTER_CONTEXT_WORD` entry, verified by direct query, not assumed. The
+everyday/loanword split was verified against the real corpus before
+writing anything (counts: se 19, seen 373, swaad 83, baRi-he 106, choti-he
+419, te 435, toe 53 of 2,281 words) — swaad/baRi-he's larger counts
+correctly get no "a handful of" framing, unlike the z-group's genuinely
+rare zaal/zwaad/zoe.
+
+Dispatched THE CRITIC and CURRICULUM CRITIC, each into its own isolated
+worktree with the uncommitted diff pasted directly into the prompt. Both
+dispatches failed on first attempt with an account-wide API rate limit
+before doing any work; both retries succeeded.
+
+Both retries independently reported the identical BLOCKING finding, and
+both were false alarms from the same cause: recreating the diff from the
+prompt's pasted text, both found the new notes' apostrophes unescaped
+inside single-quoted strings — which, if true of the real file, would be
+a real syntax error. Both correctly flagged this as possibly a
+transcription artifact of the pasted diff rather than the real branch,
+and named the exact check that would settle it. Verified immediately: the
+real file (edited throughout via the Edit tool, never through the pasted
+text) uses this file's own proper curly-quote convention throughout —
+`npx tsc --noEmit` and `npx vitest run` both clean, run directly against
+the real committed-branch file. The finding is void, an artifact of
+pasting a diff containing Unicode punctuation into a dispatch prompt, not
+a codebase defect. Everything else both critics checked — corpus counts
+(independently re-derived by each), sound-field exclusivity, all four
+anchor words (verified against real `LETTER_CONTEXT_WORD`), the
+non-overclaim safety check, the `do-chashmi-he` exclusion's linguistic
+merits, mutation testing of all four new assertions — came back clean
+from both, independently.
+
+CURRICULUM CRITIC, one real MINOR, filed forward as **URD-067**: `choti-he`
+and `do-chashmi-he` share a teaching group ("the h family") and are taught
+back to back with no `confusableWith` link between them, unlike `khe`
+which links to `baRi-he` despite being in a different group — a different
+axis of confusion (visual shape, not sound) than this item touches, and
+pre-existing. Not blocking.
+
+Process note for next time: when a dispatch prompt embeds a diff
+containing curly quotes or other non-ASCII punctuation, verify the real
+file directly (not just trust the pasted text) before trusting a critic's
+syntax-level finding derived only from hand-recreating that diff — this
+cost two redundant "is this real" round-trips that a single direct
+`tsc`/`grep` check by the lead resolved in seconds once each finding
+arrived.
+
+## PASSED · URD-053 · 2026-08-27T16:05Z
+No BLOCKING (the reported one was a transcription artifact, verified void
+directly); one MINOR filed forward (URD-067).
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npx vitest run
+  249/249 (4 new tests in letters.test.ts's URD-053 block).
+
+$ npm run check:all
+  all 30 steps pass against a deploy-shaped build.
+
+branch: claude/gauntlet-letter-collision-notes
