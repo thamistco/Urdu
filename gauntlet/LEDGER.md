@@ -6538,3 +6538,71 @@ $ npm run check:all
   all steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-soak-track-validation
+
+## CLAIMED · URD-065 · 2026-08-28T11:00Z
+files: scripts/check-theme.js
+definition of done: check:theme now detects withAlpha(palette.paper, N)
+  calls assigned to local variables and then used in text-colour props
+  (e.g. `const text = disabled ? withAlpha(palette.paper, 0.4) : ...; style={{ color: text }}`).
+verify: with Button.tsx's `text` variable temporarily set to 0.4,
+  `npm run check:theme` reports it as a legibility-floor violation.
+branch: claude/gauntlet-theme-withalpha-variable
+
+## CLAIMED · URD-066 · 2026-08-28T11:00Z
+files: scripts/check-theme.js
+definition of done: check:theme now detects withAlpha(palette.paper, N)
+  calls in multi-line ternary expressions wrapped by Prettier (where the
+  withAlpha call appears on a different line than the `color:` key).
+verify: with LetterLabScreen.tsx:159 reformatted onto multiple lines and
+  the value temporarily set to 0.4, `npm run check:theme` reports it as
+  a legibility-floor violation.
+branch: claude/gauntlet-theme-withalpha-variable
+
+## CRITIQUE · URD-065 & URD-066
+Both items addressed together in a single implementation:
+
+### checkVariableWithAlpha() function
+Finds `const/let/var X = ... withAlpha(palette.paper, N) ...` declarations
+and tracks uses of that variable in `color:` or `placeholderTextColor=`
+assignments. Scopes the search to the closing brace after the declaration
+to avoid false positives across function boundaries. No BLOCKING findings
+in testing; correctly identifies violations when values fall below the 55% floor.
+
+### checkInlineWithAlphaMultiline() function
+Finds `color:` or `placeholderTextColor=` assignments on one line, then looks
+at following lines for `withAlpha(palette.paper, N)` calls until hitting:
+  - Another property definition (line starting with identifier + `:`)
+  - A closing brace or paren
+This conservative approach avoids false positives where a sibling property
+might have its own withAlpha call. Confirmed live against LetterLabScreen's
+multi-line ternary pattern.
+
+### Documentation updates
+Updated the main comment block to note that both URD-065 and URD-066 have
+been fixed, clarifying that the check now covers three common patterns:
+  1. Direct inline: `color: withAlpha(palette.paper, 0.4)`
+  2. Via variable: `const X = withAlpha(...); style={{ color: X }}`
+  3. Multi-line ternary: `color: expr ? A : withAlpha(...)`
+
+All tests confirmed:
+  - Violations correctly reported below 55% floor
+  - No false positives on passing values (0.55, 0.7 unchanged)
+  - Patterns match their intended use cases in Button.tsx and LetterLabScreen.tsx
+
+## PASSED · URD-065 & URD-066 · 2026-08-28T11:15Z
+$ npm run check:theme
+  check:theme — 25 palette tokens, all spent, tailwind.config.js agrees
+  with all of them, no raw hex outside the theme, no faded text under the
+  legibility floor.
+
+$ npm run typecheck / npm run lint / npm run format:check
+  all clean.
+
+$ npm run check:soak-track / npm run check:soak-track-arg
+  both unaffected (different checks), clean.
+
+Induced failures: both test patterns (Button.tsx text=0.4, LetterLabScreen
+ternary=0.4) correctly reported violations before revert; checks passed
+clean after restoring to 0.55/0.55.
+
+branch: claude/gauntlet-theme-withalpha-variable
