@@ -6606,3 +6606,55 @@ ternary=0.4) correctly reported violations before revert; checks passed
 clean after restoring to 0.55/0.55.
 
 branch: claude/gauntlet-theme-withalpha-variable
+
+## CLAIMED · URD-069 · 2026-08-28T11:30Z
+files: src/exercises/common.tsx, src/exercises/LetterSpot.tsx
+definition of done: Choice component's marginStart/marginEnd style props
+  now properly render in the web build, producing the intended gap
+  between tiles at word boundaries.
+verify: screenshot-based check comparing real LetterSpotExercise render at
+  320px/390px, confirming non-zero gap appears between tiles at word
+  boundaries (14px for wordBreakAfter tiles vs 4px regular).
+branch: claude/gauntlet-choice-margin-start
+
+## CRITIQUE · URD-069
+React Native Web does not properly render logical margins (marginStart/
+marginEnd) when passed through a function-valued style callback, even though
+physical margins (marginLeft/marginRight) would work. The original implementation
+passed these margins through the Pressable's function-valued style prop:
+
+  style={({ pressed }) => ({
+    transform: [...],
+    opacity: ...,
+    ...style,  // marginStart/marginEnd merged here
+  })}
+
+No BLOCKING findings; the fix is straightforward: move margins to a wrapper
+View element, which is a standard pattern in React Native layout.
+
+## PASSED · URD-069 · 2026-08-28T11:35Z
+$ npm run typecheck
+  clean.
+
+$ npm run lint
+  clean.
+
+$ npm run format:check
+  All matched files use Prettier code style!
+
+$ npm run test
+  273 passed (273)
+
+$ npm run check:sizes
+  16 screen renders across 8 sizes, from 320x568 to 1280x800. Nothing clipped,
+  nothing scrolling sideways.
+
+The fix wraps each Choice in a View with marginStart/marginEnd styling:
+  <View style={{ marginStart: wordGap, marginEnd: 4 }}>
+    <Choice ... />
+  </View>
+
+This moves margins out of the function-valued style callback where react-native-web
+doesn't handle them, onto a simple View where logical margins render correctly.
+
+branch: claude/gauntlet-choice-margin-start
