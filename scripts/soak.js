@@ -1086,14 +1086,27 @@ async function solveMatching(page) {
  * Both outcomes are legitimate answers, which is the point: the run needs to
  * visit the refusal path as well as the accepting one.
  */
+/**
+ * Calculate the drawing area dimensions, adapting to the caption's position.
+ * Returns null if the drawing area would be too small to be useful.
+ */
+function calcDrawingArea(captionBox) {
+  const screenMargin = 10; // Leave margin from screen top
+  const minDrawingHeight = 150; // Don't bother if drawing area is too small
+  const maxDrawingHeight = 330; // Ideal height
+  const available = captionBox.y - screenMargin;
+  const height = Math.min(maxDrawingHeight, available);
+  if (height < minDrawingHeight) return null;
+  return { x: captionBox.x - 4, y: captionBox.y - height, width: 348, height };
+}
+
 async function traceTheLetter(page, wrongOnPurpose) {
   const panel = await onScreen(page.locator('text=/Draw over the grey letter/i'), 0, 900);
   if (!panel) return false;
   const box = await panel.boundingBox().catch(() => null);
   if (!box) return false;
-  // The caption sits at the foot of the card; the drawing area is above it.
-  const area = { x: box.x - 4, y: box.y - 330, width: 348, height: 330 };
-  if (area.y < 0) return false;
+  const area = calcDrawingArea(box);
+  if (!area) return false;
 
   let png;
   try {
