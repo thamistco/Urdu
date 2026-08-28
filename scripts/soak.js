@@ -1172,6 +1172,8 @@ async function traceTheLetter(page, wrongOnPurpose) {
     console.log('[traceTheLetter] CHECK button tapped:', checkTapped);
     if (!checkTapped) console.log('[traceTheLetter] FAIL: CHECK button not found or not tappable');
   }
+  // Wait for the app to process the grade and update the screen
+  if (checkTapped) await page.waitForTimeout(500);
   return checkTapped;
 }
 
