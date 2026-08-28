@@ -6239,3 +6239,92 @@ $ npm run check:all
   a regression.
 
 branch: claude/gauntlet-letter-form-coverage
+
+## CLAIMED · URD-061 · 2026-08-28T07:20Z
+files: src/exercises/generator.ts, src/exercises/generator.test.ts
+branch: claude/gauntlet-letter-contrast-review, cut from
+claude/gauntlet-letter-form-coverage after URD-060 shipped.
+
+## CRITIQUE · URD-061
+Inside the `review` branch of `buildLessonExercises`, a due letter with a
+confusable mate can now render as `letterContrastExercise` instead of its
+usual `letterExerciseAt` kind — `due` is the SRS flagging the letter as
+needing reinforcement, the same argument the word side of this loop
+makes for spending due turns on harder demands. Mates come from
+`taughtUpTo(lesson.id).letters` (course-wide, deduped by id), capped at
+one `letterContrast` per review, chosen by rotation rather than always
+the first eligible letter.
+
+Dispatched both THE CRITIC and CURRICULUM CRITIC via the WIP-commit
+pattern. Both found real, independently-verified defects the first
+version's own tests could not catch.
+
+**THE CRITIC (BLOCKING, fixed): an off-path review (Daily Review) could
+show a confusable mate the learner had never met.** `taughtUpTo` returns
+the whole course for a lesson placed nowhere on the path — true of
+`practice-review`. `fallbackReviewRefs` already hit this exact trap once
+(URD-017) and restricts to `known` off-path; the first version didn't
+reapply that here. Reproduced live (independently, twice): a learner
+known only on `re` got offered a contrast against `Re`/`ze`/`zhe` —
+letters never taught. Fixed by mirroring `fallbackReviewRefs`'s own
+`onPath`/`known` restriction. Regression test added and revert-verified.
+
+**CURRICULUM CRITIC (MAJOR, fixed): "first due letter wins" permanently
+starved some bucket members, for any bucket of 3+.** `dueQueue` sorts
+soonest-overdue-first, a stable order once cards are graded identically
+— whichever member edges ahead keeps winning forever. Simulated against
+the real corpus's two 3+-member buckets across an 8-year horizon: `zaal`
+and `ze`/`zhe` never won once. Confirmed the mechanism directly
+(reversing due-queue order flips the winner). Fixed by rotating the
+choice among every eligible due letter via `(reviewIndex + visit) %
+eligible.length`, the same technique `letterTurnOffset`/`posOffset`
+already use elsewhere in this file. Re-simulated with realistic
+per-lesson visit tracking (a first re-simulation attempt used an
+unrealistic global visit counter and wrongly looked skewed — caught and
+corrected before trusting it): every bucket member now wins repeatedly,
+never starved to zero. The original "first review only" coverage test
+was itself shown to be false confidence (always passed regardless of
+fairness, since its due queue always listed the tested letter first) and
+was rewritten to walk every post-teaching review instead.
+
+Also independently re-verified both of my own earlier fixes (dedup,
+one-per-review cap) by reverting each and confirming the named
+regression reproduces exactly as described.
+
+Two MINORs from THE CRITIC noted, not changed: the Roman-track test is
+trivially true (gated by pre-existing logic, not URD-061's own code);
+the one-per-review cap still slightly favours whichever bucket member
+the rotation currently favours in a persistently-co-due pair, though
+self-correcting, not starve-to-zero. CURRICULUM CRITIC's note that a
+letter winning the slot loses that visit's own position-form exposure is
+real but narrow, and doesn't reopen URD-060's teaching-lesson coverage
+guarantee.
+
+## PASSED · URD-061 · 2026-08-28T07:45Z
+No unresolved BLOCKING; one real BLOCKING finding (off-path untaught
+mate) and one real MAJOR (starved bucket member) both fixed and
+re-verified beyond the repros that found them, including a realistic
+SRS simulation correcting my own first, flawed re-verification attempt.
+Two MINORs noted, not acted on.
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npx vitest run
+  267/267, including 6 new tests (a review with confusable letters due
+  can emit letterContrast; every one of 29 letters-with-a-mate wins the
+  slot across its post-teaching reviews; exact bucket, no duplicates;
+  never on Roman; the off-path BLOCKING regression; the 3+-member
+  rotation-fairness test).
+
+$ node scripts/check-answerable.js
+  clean.
+
+$ npm run check:shape
+  clean — the 84%/19-in-a-row regression this item's own cap prevents
+  does not recur.
+
+$ npm run check:all
+  all steps pass against a deploy-shaped build.
+
+branch: claude/gauntlet-letter-contrast-review

@@ -1046,6 +1046,163 @@ describe('URD-047: a confusable letter is posed directly against its partner, no
   });
 });
 
+describe('URD-061: a confusable letter meets its partner again in review, not only on the day it was taught', () => {
+  type ContrastEx = Extract<Exercise, { kind: 'letterContrast' }>;
+  const isContrast = (e: Exercise): e is ContrastEx => e.kind === 'letterContrast';
+  const reviewLessons = () => UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'review');
+  const bucketOf = (id: string) => getLetter(id)?.confusableWith ?? id;
+  const matesOf = (id: string) =>
+    LETTERS.filter((l) => l.id !== id && bucketOf(l.id) === bucketOf(id)).map((l) => l.id);
+  /** Every letter with at least one bucket partner anywhere in the corpus. */
+  const withMates = () => LETTERS.filter((l) => matesOf(l.id).length > 0);
+
+  it('a review lesson with confusable letters due can emit letterContrast', () => {
+    // Before this fix, zero instances existed anywhere outside a `letters`
+    // lesson (measured across the whole course) — a review's due queue could
+    // carry a confusable letter and never once pose it against its partner.
+    const lesson = reviewLessons().find((l) => l.id !== 'practice-review');
+    expect(lesson, 'need at least one real review lesson to test against').toBeTruthy();
+    const letter = withMates()[0];
+    const dueRefs = [letter.id, ...matesOf(letter.id)].map((id) => ({ id, type: 'letter' as const }));
+    const exercises = buildLessonExercises(lesson!, dueRefs, 'both', new Set());
+    expect(
+      exercises.some((e) => isContrast(e) && e.letter.id === letter.id),
+      lesson!.id
+    ).toBe(true);
+  });
+
+  it("across the course's reviews, every letter with a confusable partner meets one at least once after its teaching lesson", () => {
+    // Not a sample: every one of the 29 letters the real corpus gives a
+    // bucket partner.
+    //
+    // CURRICULUM CRITIC (MAJOR): a first version of this test checked only
+    // the *first* real review lesson placed after the letter's teaching
+    // lesson, always with the letter itself listed first in the due queue
+    // — which passed regardless of whether the underlying selection rule
+    // was fair, because it always handed that one review's contrast slot
+    // to the letter under test by construction. Confirmed live: reversing
+    // the due queue's own order (mates first, letter last) changed the
+    // winner every time, on the exact same lesson/letters, under the
+    // "first due wins" rule that test was meant to guard.
+    //
+    // The one contrast slot per review now rotates among every letter due
+    // with a mate (`(reviewIndex + visit) % eligible.length`, see the
+    // generator's own comment on `contrastCandidates`), so a specific
+    // letter is not promised to win its very first post-teaching
+    // encounter — only that it wins *some* encounter, as the rotation's
+    // index cycles through every residue across consecutive reviews.
+    // Checked here across every real review lesson from the teaching
+    // lesson onward, not just the first, which is exactly what the
+    // rotation promises and the only way this test can actually exercise
+    // the fairness a "first due wins" rule would have broken silently.
+    let checkedAny = false;
+    for (const letter of withMates()) {
+      const mates = matesOf(letter.id);
+      const dueRefs = [letter.id, ...mates].map((id) => ({ id, type: 'letter' as const }));
+      const reviewsAfterTeaching = reviewLessons().filter((r) => taughtUpTo(r.id).letters.includes(letter.id));
+      expect(
+        reviewsAfterTeaching.length,
+        `no review lesson placed after ${letter.id}'s teaching lesson`
+      ).toBeGreaterThan(0);
+      checkedAny = true;
+      const everHit = reviewsAfterTeaching.some((r) => {
+        const exercises = buildLessonExercises(r, dueRefs, 'both', new Set());
+        return exercises.some((e) => isContrast(e) && e.letter.id === letter.id);
+      });
+      expect(everHit, `${letter.id} never won the contrast slot across ${reviewsAfterTeaching.length} reviews`).toBe(
+        true
+      );
+    }
+    expect(checkedAny).toBe(true);
+  });
+
+  it('the contrast slot rotates rather than always going to the same bucket member, for a bucket of 3 or more', () => {
+    // CURRICULUM CRITIC's own repro: with `daal`/`Daal`/`zaal` all due
+    // together across consecutive real reviews, "first due wins" gave the
+    // slot to whichever member's due-order happened to be first, every
+    // single time — `zaal` never won across an 8-year simulated horizon.
+    // The rotation instead varies with `reviewIndex`, which increases by
+    // exactly one across consecutive real review lessons, so within any
+    // run of reviews at least as long as the bucket, every member must win
+    // at least once. Checked directly against the two real buckets of size
+    // 3+ rather than simulated: every member of both wins the slot across
+    // the course's own real reviews, not just the largest one.
+    const buckets = [
+      ['daal', 'Daal', 'zaal'],
+      ['re', 'Re', 'ze', 'zhe'],
+    ];
+    for (const bucket of buckets) {
+      const dueRefs = bucket.map((id) => ({ id, type: 'letter' as const }));
+      const winners = new Set<string>();
+      for (const review of reviewLessons()) {
+        const exercises = buildLessonExercises(review, dueRefs, 'both', new Set());
+        const winner = exercises.find(isContrast)?.letter.id;
+        if (winner) winners.add(winner);
+      }
+      expect([...winners].sort(), bucket.join('/')).toEqual([...bucket].sort());
+    }
+  });
+
+  it("a review's letterContrast options are exactly that letter's own bucket — no outsiders, none missing, no duplicate", () => {
+    // The bucket pool a review draws from is the whole course-so-far
+    // (`taughtUpTo`), not one lesson's own small `letterIds` group the way
+    // the `letters` branch's own equivalent test checks it — and
+    // `taughtUpTo` itself can list a letter twice (a sibling lesson
+    // re-teaching an earlier group), which is exactly the duplicate-mate
+    // bug this exercises: reproduced live before the dedup fix, `alif`
+    // offered a contrast against two copies of `alif-madda`.
+    for (const review of reviewLessons()) {
+      for (const letter of withMates()) {
+        const mates = matesOf(letter.id);
+        const dueRefs = [letter.id, ...mates].map((id) => ({ id, type: 'letter' as const }));
+        const exercises = buildLessonExercises(review, dueRefs, 'both', new Set());
+        for (const e of exercises.filter(isContrast)) {
+          if (e.letter.id !== letter.id) continue;
+          const want = [letter.id, ...mates].sort();
+          const got = e.options.map((o) => o.id).sort();
+          expect(got, `${review.id}/${letter.id}`).toEqual(want);
+        }
+      }
+    }
+  });
+
+  it('never appears on the Roman track', () => {
+    const lesson = reviewLessons().find((l) => l.id !== 'practice-review');
+    const letter = withMates()[0];
+    const dueRefs = [letter.id, ...matesOf(letter.id)].map((id) => ({ id, type: 'letter' as const }));
+    const exercises = buildLessonExercises(lesson!, dueRefs, 'roman', new Set());
+    expect(exercises.some(isContrast)).toBe(false);
+  });
+
+  it("THE CRITIC (BLOCKING): an off-path review never offers a confusable mate the learner hasn't actually been graded on", () => {
+    // `practice-review` (the synthetic Daily Review screen) is placed on no
+    // unit, so `taughtUpTo` — used everywhere else in this file for an
+    // honest "what has the learner seen" — falls back to the *entire*
+    // course. `fallbackReviewRefs` already hit this exact trap once
+    // (THE CRITIC, URD-017) and fixed it by restricting to `known` off the
+    // path; this describe block's own `taughtLetterObjs` needs the same
+    // restriction or it reintroduces the identical bug one call site over.
+    //
+    // A learner graded on `re` alone (say, from backing out of `l-3` after
+    // its first few exercises — `useSessionGradeFlush` flushes on unmount,
+    // not only on completion, so a partial group can reach SRS) has never
+    // met `Re`/`ze`/`zhe`, `re`'s own confusable-bucket mates. Daily Review
+    // must never put them on screen as answer choices.
+    const lesson = resolveLesson('practice-review');
+    expect(lesson, 'practice-review must resolve to a real lesson').toBeTruthy();
+    const due = [{ id: 're', type: 'letter' as const }];
+    const known = new Set(['re']);
+    const exercises = buildLessonExercises(lesson!, due, 'both', known);
+    const contrast = exercises.find((e) => isContrast(e) && e.letter.id === 're');
+    expect(contrast, 'must not fire a contrast the learner cannot answer from what they know').toBeUndefined();
+
+    // And once the learner really has met the whole bucket, it should fire.
+    const metKnown = new Set(['re', 'Re', 'ze', 'zhe']);
+    const metExercises = buildLessonExercises(lesson!, due, 'both', metKnown);
+    expect(metExercises.some((e) => isContrast(e) && e.letter.id === 're')).toBe(true);
+  });
+});
+
 describe('URD-023/URD-A02: a phrases lesson always draws enough typeable phrases to clear the share floor', () => {
   /**
    * A phrases lesson has exactly three reachable kinds (`typeWord`,

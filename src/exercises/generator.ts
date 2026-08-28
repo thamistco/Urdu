@@ -2178,11 +2178,116 @@ export function buildLessonExercises(
     const letterTurnOffset = reviewIndex + visit;
     const letterPosOffset = letterTurnOffset * 3; // coprime step, same technique as posOffset above
 
+    /**
+     * URD-061: the confusable-bucket mates a review is allowed to show
+     * alongside a letter, drawn from the whole course-so-far rather than
+     * one lesson's own small group the way `confusableMatesIn`'s only
+     * other caller (the `letters` branch above) scopes it — a review can
+     * draw a letter from any unit the path has reached, not just its own
+     * teaching lesson's handful of siblings.
+     *
+     * THE CRITIC (BLOCKING): a first version took `taughtUpTo(lesson.id)`
+     * raw, which returns the *entire* course's letters for a lesson id
+     * placed nowhere on the path — true of `practice-review`, the
+     * synthetic Daily Review screen, by that function's own documented
+     * fallback. `fallbackReviewRefs` two screens down already hit this
+     * identical trap once (THE CRITIC, URD-017) and fixed it by
+     * restricting to `known` off-path; this new code reused the same
+     * off-path lesson id without reapplying that restriction. Reproduced
+     * live: a learner who has only ever been graded on `re` (say, from
+     * backing out of `l-3` early — `useSessionGradeFlush` flushes on
+     * unmount, not only on completion, so a partial group can reach SRS)
+     * opened Daily Review and was offered a `letterContrast` for `re`
+     * against `Re`/`ze`/`zhe` — three glyphs never taught, as answer
+     * choices, on the one screen that exists to reinforce only what was
+     * already met. Fixed the same way `fallbackReviewRefs` already does:
+     * `onPath` uses the real course position for a lesson placed on the
+     * path, `known` for one that is not.
+     *
+     * Deduped by id before it ever reaches `confusableMatesIn`. Measured
+     * directly: `taughtUpTo`'s own list carries the same letter id twice
+     * whenever a sibling lesson re-teaches a group (`l-1-2`, "Position
+     * practice", re-teaches all six of `l-1`'s letters in their joining
+     * forms) — harmless for `taughtUpTo`'s existing callers, but
+     * `confusableMatesIn`'s plain `.filter()` has no dedup of its own, so
+     * feeding it a doubled list put a bucket mate into `letterContrast`'s
+     * own `options` twice — the identical glyph offered as two separate
+     * tiles, one of them unreachable as "correct" no matter which is
+     * tapped. Reproduced live before this dedup: every review from
+     * `rev-first-faces` on offered `alif` a contrast against two copies of
+     * `alif-madda`.
+     */
+    const onPathForContrast = taughtInUnit(lesson.id) !== null;
+    const taughtLetterObjs = teachesScript
+      ? [
+          ...new Map(
+            taughtUpTo(lesson.id)
+              .letters.filter((id) => onPathForContrast || known.has(id))
+              .map((id) => [id, getLetter(id)])
+          ).values(),
+        ].filter((l): l is Letter => !!l)
+      : [];
+
+    /**
+     * URD-061: `letterContrast` (URD-047) used to be reachable only from a
+     * letter's own teaching lesson — drilled once, about six exercises
+     * later, and the SRS never asked again, the one skill in the app that
+     * wasn't spaced (CURRICULUM CRITIC, reviewing URD-047). Firing it here
+     * instead of a due letter's usual `letterExerciseAt` kind puts the
+     * discrimination check exactly where the SRS already says
+     * reinforcement belongs: `due` is the scheduler flagging a letter as
+     * needing to come back, the identical argument the word side of this
+     * same loop makes for spending its own due turns on the harder
+     * recall/produce demands rather than easy recognition.
+     *
+     * At most one per review, however many due letters have a mate —
+     * `check:shape` caught the uncapped version live: its own "every
+     * letter due at once" state converted nearly a whole review to
+     * `letterContrast`, since most letters with a taught mate have one,
+     * measuring 84% one kind and 19 straight in one real review.
+     *
+     * CURRICULUM CRITIC (MAJOR): picking simply "the first due letter with
+     * a mate" made that one slot a prize permanently won by whichever
+     * bucket member happened to be first in `due`'s own order, not a
+     * rotating one, for any bucket of 3 or more members — `dueQueue`
+     * (`lib/srs.ts`) sorts due cards by how overdue they are, an order
+     * that barely moves once two cards are graded identically, so
+     * whichever card's due timestamp happened to edge ahead kept winning
+     * every time the group came due together, for as long as that lead
+     * held. Simulated against the real corpus's two 3+-member buckets
+     * (`daal`/`Daal`/`zaal`; `re`/`Re`/`ze`/`zhe`) using this app's own
+     * SM-2 across an 8-year, ~19-review horizon at perfect recall: `zaal`
+     * and `ze`/`zhe` never won even once — reproduced directly by
+     * reversing a due queue's own order and watching the winner flip with
+     * it. Fixed by choosing among every letter in `due` that has a mate —
+     * not just the first — by `(reviewIndex + visit) % eligible.length`,
+     * the same "vary across different real reviews and across repeat
+     * visits to the identical one" technique `letterTurnOffset`/
+     * `posOffset` already use elsewhere in this file for exactly this
+     * reason, rather than a fixed array position.
+     */
+    const contrastCandidates: { i: number; letter: Letter; mates: Letter[] }[] = [];
+    due.forEach((ref, i) => {
+      if (ref.type !== 'letter') return;
+      const l = teachesScript ? getLetter(ref.id) : undefined;
+      if (!l) return;
+      const mates = confusableMatesIn(l, taughtLetterObjs);
+      if (mates.length) contrastCandidates.push({ i, letter: l, mates });
+    });
+    const contrastChoice =
+      contrastCandidates.length > 0 ? contrastCandidates[(reviewIndex + visit) % contrastCandidates.length] : null;
+
     let wordTurn = 0;
     refs.forEach((ref, i) => {
       if (ref.type === 'letter') {
         const l = teachesScript ? getLetter(ref.id) : undefined;
-        if (l) exercises.push(letterExerciseAt(l, i + letterTurnOffset, i + letterPosOffset));
+        if (l) {
+          if (contrastChoice && contrastChoice.i === i) {
+            exercises.push(letterContrastExercise(contrastChoice.letter, contrastChoice.mates));
+          } else {
+            exercises.push(letterExerciseAt(l, i + letterTurnOffset, i + letterPosOffset));
+          }
+        }
       } else {
         const w = getAnyWord(ref.id);
         // Review is where the harder demands belong: a word is only here
