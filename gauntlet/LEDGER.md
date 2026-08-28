@@ -6478,3 +6478,63 @@ $ npm run check:all
   all steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-lettersspot-soak
+
+## CLAIMED · URD-064 · 2026-08-28T10:05Z
+files: scripts/soak.js, scripts/check-soak-track-arg.js, package.json
+branch: claude/gauntlet-soak-track-validation, cut from
+claude/gauntlet-lettersspot-soak after URD-063 shipped.
+
+## CRITIQUE · URD-064
+`soak.js` gained `VALID_TRACKS` plus an immediate check right after
+`TRACK` is computed — an unrecognised value prints the bad value and the
+three accepted ones and exits 1, before any dist/Chromium check. A new
+check script (`check-soak-track-arg.js`, `npm run check:soak-track-arg`)
+spawns the real `soak.js` and asserts this without needing a build or a
+browser.
+
+Dispatched THE CRITIC via the WIP-commit pattern, who found two real
+MAJORs, both fixed and re-verified.
+
+**MAJOR (fixed): the check script's fixed 5s `spawnSync` timeout was
+unreliable and leaked zombie Chromium processes on every run.** THE
+CRITIC measured that even `--lessons 0` still costs ~10 real seconds
+(full browser launch + guest onboarding) before the loop bound is ever
+checked — the fixed 5s timeout hit every time, not only when slow, and
+`spawnSync`'s timeout kill never reached the grandchild Chromium,
+confirmed live via `ps` (ten zombie processes after every run). The
+check's own assertion couldn't have told a clean pass from a
+force-killed one either. Rewritten to resolve on the child's first line
+of output (proving validation passed or failed) rather than waiting for
+completion, killing the whole process group via `process.kill(-pid,
+'SIGKILL')`. Re-verified: ~21s for all 8 spawns, zero zombies before or
+after, confirmed both on a clean run and on THE CRITIC's own mutation
+(validation removed → 4 named problems, still zero leaks).
+
+**MAJOR (fixed): `--track=value` silently fell through to the default,
+exit 0, no error** — `arg()` only ever matched `--name value`, never
+`--name=value`, for every flag in the file, not only `--track`.
+Reproduced live before fixing. Fixed `arg()`/`has()` to check the `=`
+form first; verified every real flag both ways, plus the space form
+unchanged and an empty `--track=` falling back correctly.
+
+## PASSED · URD-064 · 2026-08-28T10:30Z
+No unresolved BLOCKING; two real MAJORs (test-harness reliability/leak,
+and a second silent-failure path for the exact flag this item is about)
+both fixed and re-verified beyond the repros that found them.
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npx vitest run
+  273/273, unchanged.
+
+$ node scripts/check-soak-track-arg.js
+  clean, both space- and equals-separated forms, no process leaks.
+
+$ npm run check:soak-track
+  unaffected (different mechanism), clean.
+
+$ npm run check:all
+  all steps pass against a deploy-shaped build.
+
+branch: claude/gauntlet-soak-track-validation
