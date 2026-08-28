@@ -36,35 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-062 — a base letter's note names its own shape, not the mark that separates it from its variants
-attempts: 0
-files: src/data/letters.ts
-definition of done: every confusable bucket is one base letter
-  (`confusableWith` unset) plus its variants, and the curated notes were
-  written to that shape: a variant's note contrasts it against its base
-  ("Daal with one dot above", "Kaaf with a second stroke on top"), while a
-  base's describes it standing alone ("A soft angled stroke...", "Three
-  teeth..."). URD-047's contrast exercise reveals a note after answering, and
-  for the 13 base letters that note does not name the distinguishing mark.
-  Two are worse than unhelpful when read after a wrong answer: `kaaf`'s "The
-  stroke on top is part of the letter, not an accent. Do not drop it." is
-  read by a learner who just wrongly tapped `gaaf` — which is kaaf with a
-  *second* stroke on top — as endorsing what they picked; `seen`'s "Three
-  teeth" is equally true of `sheen`, the letter they confused it with. Give
-  each base letter's note a clause naming what its variants add and it does
-  not have.
-verify: a test asserting every base letter in a multi-member bucket has a
-  note whose first sentence names the distinguishing mark (a dot, a stroke, a
-  madda) or explicitly its absence.
-notes: Found by THE CRITIC and CURRICULUM CRITIC independently while
-  reviewing URD-047. URD-047 mitigated the wrong-answer case in code without
-  touching content — `contrastNotesFor` shows the tapped letter's line
-  alongside the target's, and since a bucket holds exactly one base, any
-  wrong answer necessarily involves a variant whose line IS contrastive. What
-  that cannot reach is the base letter's own correct-answer panel, where "no
-  dot" is precisely the thing worth saying and nothing says it. That needs
-  content, which is why it is filed rather than fixed.
-
 ## URD-063 — soak.js cannot act on a letterSpot screen at all, which blocks every letter lesson
 attempts: 0
 files: scripts/soak.js, src/exercises/LetterSpot.tsx

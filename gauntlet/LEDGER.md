@@ -6328,3 +6328,73 @@ $ npm run check:all
   all steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-letter-contrast-review
+
+## CLAIMED · URD-062 · 2026-08-28T07:55Z
+files: src/data/letters.ts, src/data/letters.test.ts
+branch: claude/gauntlet-base-letter-notes, cut from
+claude/gauntlet-letter-contrast-review after URD-061 shipped.
+
+## CRITIQUE · URD-062
+All 13 base letters' `note` fields edited so their first sentence — the
+only part `contrastLine` ever shows in the post-answer panel — names the
+mark separating the base from its variant(s), or explicitly its absence
+(dots, strokes, madda, retroflex mark, or, for one pair, tail shape).
+
+Dispatched both THE CRITIC and CURRICULUM CRITIC via the WIP-commit
+pattern. Both found a real defect the first version missed.
+
+**CURRICULUM CRITIC (MAJOR, fixed): `choti-ye`'s original clause named
+an invisible fact.** The first draft described "joining within a word"
+(`connects: true` vs `false`) but `LetterContrastExercise` renders only
+`forms.isolated` for every tile — never a joined form. A learner reading
+about word-joining while staring at two static, unconnected glyphs is
+being told something they cannot see. Fixed by naming the actual visible
+difference (tail shape), mirroring language `baRi-ye`'s own note already
+uses.
+
+**THE CRITIC (MAJOR, fixed): the first test table was keyword-gameable,
+proven by mutation.** A loose `/dot|retroflex/i`-per-base regex only
+proves a keyword is present — reproduced live: rewriting `daal`'s note to
+mention "a single dot of ink where the pen first touches the page" (true
+of nothing about `Daal`/`zaal`) still passed. Fixed by requiring the
+variant's own id by name for the 11 single-variant buckets, "madda" (a
+specific diacritic name) for `alif`, and *both* "dot" and "retroflex" for
+the two multi-variant buckets. Re-verified against the exact repro: now
+correctly fails it. THE CRITIC's MINOR (test reimplemented `contrastLine`'s
+split instead of importing it) fixed in the same pass.
+
+Everything else both critics checked was clean: the 13-bucket count and
+every other clause's factual accuracy, the kaaf/seen fixes reading
+correctly in the exact wrong-answer moment, quote/apostrophe hygiene, no
+truncation of any note's remaining text, and `letterContrastNotes.test.ts`'s
+own guarantees (unaffected — they operate on variant notes only).
+
+A third defect, caught by `check:writing` (not by either critic) when
+running the full gate before the final commit: 8 of 13 new clauses used
+an em dash, and one spelled a variant's hyphenated data id
+(`noon-ghunna`) directly into prose — both forbidden by house style.
+Fixed by rewriting with the punctuation each sentence actually needed
+(mostly a semicolon), and by naming `noon-ghunna`/`baRi-ye` in prose by
+their space-separated `name` field instead of their hyphenated id,
+matching the convention already used for `choṭī he`.
+
+## PASSED · URD-062 · 2026-08-28T08:12Z
+No unresolved BLOCKING; two real MAJORs from the critics plus one
+self-caught house-style violation, all fixed and re-verified.
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npx vitest run
+  273/273, including 6 new tests in a new URD-062 describe block.
+
+$ node scripts/check-writing.js
+  clean — this is what caught the em-dash/hyphenated-id defect above.
+
+$ node scripts/check-answerable.js / npm run check:shape
+  both clean.
+
+$ npm run check:all
+  all steps pass against a deploy-shaped build.
+
+branch: claude/gauntlet-base-letter-notes
