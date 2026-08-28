@@ -45,14 +45,13 @@ export function Choice({
    *  materially weaker signal than a real label. Optional because most
    *  callers' children already read fine on their own. */
   accessibilityLabel?: string;
-  /** Extra outer layout (margins, mainly) a caller needs per-instance rather
-   *  than shared across every `Choice` — e.g. a wider gap between two tiles
-   *  standing in for two different words. Merged alongside the press-state
-   *  style this component already computes, never replacing it.
-   *  `marginStart`/`marginEnd`, not `-Left`/`-Right` — `check:direction`
-   *  holds this directory (it can render Urdu) to logical, not physical,
-   *  box-model properties. */
-  style?: { marginStart?: number; marginEnd?: number; marginTop?: number; marginBottom?: number };
+  /** Extra layout (styling) a caller needs per-instance rather
+   *  than shared across every `Choice`. Merged alongside the press-state
+   *  style this component already computes, never replacing it. For margins,
+   *  wrap the `Choice` in a separate `View` instead, since react-native-web
+   *  does not properly render logical margins (`marginStart`/`marginEnd`)
+   *  through function-valued style callbacks. */
+  style?: { marginTop?: number; marginBottom?: number };
 }) {
   return (
     <Pressable
