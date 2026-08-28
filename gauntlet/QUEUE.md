@@ -36,30 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-061 — the discrimination skill is practised twice in one lesson and never again
-attempts: 0
-files: src/exercises/generator.ts, src/lib/review.ts
-definition of done: `letterContrast` (URD-047) is emitted only by the
-  `letters` branch. Measured across the whole course: 33 instances, all in
-  `kind: 'letters'` lessons, zero anywhere else — and driving the first 20
-  review lessons with all 40 letters due emits `letterForm` 152 /
-  `letterPick` 150 / `letterTrace` 153 and `letterContrast` 0. So for a pair
-  like ص/ض or ط/ظ — near-identical shapes, and for a beginner near-identical
-  sounds — a learner is asked to tell them apart twice, about six exercises
-  apart, on a single day, and the SRS never asks again. Every other skill in
-  the app is spaced; this is the only kind that is not. Make `letterContrast`
-  reachable from review, so the discrimination survives the lesson that
-  taught it.
-verify: a test asserting a review lesson with confusable letters due can emit
-  `letterContrast`, and that across the course's reviews every letter with a
-  confusable partner meets one at least once after its teaching lesson.
-notes: Found by CURRICULUM CRITIC reviewing URD-047 and judged its most
-  serious finding, against BENCHMARKS.md's "enough times, in enough different
-  shapes, to survive until tomorrow" — this shape has no tomorrow. Not fixed
-  in URD-047 because reaching review means `reviewLetterPool` has to know
-  about buckets and about which letters are co-known, which is real design
-  rather than a call-site change.
-
 ## URD-062 — a base letter's note names its own shape, not the mark that separates it from its variants
 attempts: 0
 files: src/data/letters.ts
