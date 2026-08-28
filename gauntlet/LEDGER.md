@@ -5911,3 +5911,79 @@ $ npm run check:all
   all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-lessonscreen-grade-flush
+
+## CLAIMED · URD-056 · 2026-08-28T01:05Z
+files: scripts/check-all.js, scripts/check-all-lock.js (new), .gitignore,
+  package.json
+branch: claude/gauntlet-checkall-lockfile, cut from
+claude/gauntlet-lessonscreen-grade-flush after URD-055 shipped.
+
+## CRITIQUE · URD-056
+`check-all.js` takes a gitignored lockfile before its step loop; a second
+run finds it held by a still-alive PID and refuses by name rather than
+racing the `dist/` rebuild, or finds a dead PID's stale lock and takes it
+over. Released on normal exit and via SIGINT/SIGTERM handlers, guarded so
+a losing run can never delete the winner's lock. New `check-all-lock.js`
+(`npm run check:all-lock`) is the demanded verify command: spawns two
+real `check-all.js` processes, asserts the loser actually refuses by
+name, stops the survivor without paying for two full pipelines.
+
+Dispatched THE CRITIC via a WIP-commit review (reset after) rather than a
+pasted diff. THE CRITIC confirmed stale-lock takeover, SIGKILL recovery,
+a live-but-unrelated-PID collision, and an empty/corrupt-lockfile
+hypothesis it raised and then disproved directly — all via real
+adversarial tests against the actual script, not reasoning alone.
+
+**MAJOR (fixed): registering a signal handler at all removed the old
+immediate-kill-on-signal behavior for a process stuck mid-step**, since
+Node can't run a handler until a blocking `execSync` step returns — a
+plain `kill`/Ctrl-C on a genuinely hung step now does nothing until it
+finishes, worse than before this fix existed, where the signal's default
+disposition killed it immediately. `kill -9` still always works. Fixed:
+the refusal message now says `kill -9` explicitly, and a comment above
+the handlers discloses the full mechanism, not just that it's imperfect.
+
+Re-verified by hand and found a second, real consequence live:
+`check-all-lock.js`'s own first draft assumed SIGTERM always releases the
+lock within 300ms and hung for the length of a real step the one time the
+survivor was genuinely mid-step when signalled, then reported a false
+"release-on-signal is not working" once force-killed from outside.
+Rewritten to race a short wait against an escalation to SIGKILL, treating
+either outcome as correct — proven across several consecutive real runs,
+landing in both branches. Also corrected an unmeasured timing claim ("the
+loser refuses in well under a second") after a real run in this session's
+own sandbox took ~25s under its own background contention; widened the
+timeouts to match what was actually measured rather than assumed.
+
+Two MINORs acknowledged with a one-line comment rather than fixed:
+`isAlive` checks PID liveness only, not identity (narrow — needs PID
+reuse after a killed run); `releaseLock`'s read-then-unlink has an
+academic TOCTOU window, agreed as not worth hardening for a
+single-developer/CI tool.
+
+The post-dispatch fixes (message wording, disclosure comments, and the
+real logic fix to `check-all-lock.js`'s own hang) were not re-reviewed by
+a second dispatch — the core lock mechanism THE CRITIC exhaustively
+tested in `check-all.js` did not change; the one logic change was
+confined to the lead's own verification script, self-verified by 5+
+consecutive real runs plus one full real `check:all` pass.
+
+## PASSED · URD-056 · 2026-08-28T01:35Z
+No BLOCKING; one real MAJOR fixed and re-verified live; two MINORs
+acknowledged rather than fixed.
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npx vitest run
+  259/259, unchanged — no test-covered app logic touched.
+
+$ npm run check:all-lock
+  5+ consecutive clean runs, both the graceful and SIGKILL-escalation
+  paths observed and reported honestly.
+
+$ npm run check:all
+  one full real run (unguarded, no second process racing it): all 30
+  steps pass, lock released cleanly at the end.
+
+branch: claude/gauntlet-checkall-lockfile
