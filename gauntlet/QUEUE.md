@@ -36,28 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-059 — the answer-position band's own stated justification does not survive arithmetic
-attempts: 0
-files: scripts/check-answerable.js
-definition of done: the 40% relative band on answer position justifies itself
-  with "the bias it replaced put the answer first 43.7% of the time against a
-  fair 33.3% ... nothing that loose gets through a 40% band." 43.7/33.3 is a
-  31% deviation, inside a 40% band — and with the residue split across the
-  other two seats, no seat exceeds it either. The historical bug the band
-  names as its reason for existing would have passed the band. Found by THE
-  CRITIC reviewing URD-047, which copied both the band and the sentence into
-  a new block before replacing its own copy with a z-test (see
-  `SIGMA_LIMIT` in the same file for the shape that does scale). Replace the
-  fixed relative band on the main histogram the same way, or restate the
-  justification honestly if the band is kept for another reason.
-verify: reconstruct the historical bias (answer first 43.7% of ~73,000
-  three-option questions) as a mutation and watch the check fail on it — it
-  currently would not, which is the whole finding.
-notes: Pre-existing, and genuinely low-risk today: the real shuffle is
-  uniform (measured 49.94/50.06 over 200,000 two-element draws). The defect
-  is that the check is weaker than it claims, which CLAUDE.md non-negotiable 3
-  treats as a first-class problem rather than a nit.
-
 ## URD-060 — six sightings cannot cover four joining forms once two are position-free
 attempts: 0
 files: src/exercises/generator.ts
