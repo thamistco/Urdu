@@ -1106,13 +1106,22 @@ async function traceTheLetter(page, wrongOnPurpose) {
   const box = await panel.boundingBox().catch(() => null);
   if (!box) return false;
   const area = calcDrawingArea(box);
-  if (!area) return false;
+  if (!area) {
+    if (process.env.SOAK_DEBUG) console.log('[traceTheLetter] No viable drawing area');
+    return false;
+  }
+
+  if (process.env.SOAK_DEBUG) {
+    console.log('[traceTheLetter] box=', { x: Math.round(box.x), y: Math.round(box.y), w: Math.round(box.width), h: Math.round(box.height) });
+    console.log('[traceTheLetter] area=', { x: Math.round(area.x), y: Math.round(area.y), w: area.width, h: area.height });
+  }
 
   let png;
   try {
     const { PNG } = require(path.join(ROOT, 'node_modules', 'pngjs'));
     png = PNG.sync.read(await page.screenshot({ clip: area }));
-  } catch {
+  } catch (e) {
+    if (process.env.SOAK_DEBUG) console.log('[traceTheLetter] Screenshot failed:', e.message);
     return false;
   }
 
@@ -1125,6 +1134,7 @@ async function traceTheLetter(page, wrongOnPurpose) {
       if (lum < 200) pts.push({ x, y });
     }
   }
+  if (process.env.SOAK_DEBUG) console.log('[traceTheLetter] Dark pixels found:', pts.length);
   if (pts.length < 12) return false;
 
   // Nearest neighbour from the topmost pixel: a stroke order, not a raster scan,
@@ -1142,13 +1152,17 @@ async function traceTheLetter(page, wrongOnPurpose) {
     path0.push(pts.splice(bi, 1)[0]);
   }
 
+  if (process.env.SOAK_DEBUG) console.log('[traceTheLetter] Path traced:', path0.length, 'pixels');
+
   const walk = wrongOnPurpose ? path0.slice(0, Math.max(4, Math.floor(path0.length / 3))) : path0;
   await page.mouse.move(area.x + walk[0].x, area.y + walk[0].y);
   await page.mouse.down();
   for (const p of walk) await page.mouse.move(area.x + p.x, area.y + p.y);
   await page.mouse.up();
   await page.waitForTimeout(200);
-  return tap(page.locator('text=/^CHECK$/i'), 0, 900);
+  const checkTapped = await tap(page.locator('text=/^CHECK$/i'), 0, 900);
+  if (process.env.SOAK_DEBUG) console.log('[traceTheLetter] CHECK button tapped:', checkTapped);
+  return checkTapped;
 }
 
 /**
