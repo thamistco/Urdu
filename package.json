@@ -31,6 +31,7 @@
     "check:stage-advance-scroll": "node scripts/check-stage-advance-scroll.js",
     "check:soak-track": "node scripts/check-soak-track.js",
     "check:all-lock": "node scripts/check-all-lock.js",
+    "check:clean-tree": "node scripts/check-clean-tree.js",
     "check:all": "node scripts/check-all.js",
     "soak": "node scripts/soak.js",
     "build:web": "expo export --platform web --output-dir dist",

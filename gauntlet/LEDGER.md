@@ -5987,3 +5987,65 @@ $ npm run check:all
   steps pass, lock released cleanly at the end.
 
 branch: claude/gauntlet-checkall-lockfile
+
+## CLAIMED · URD-057 · 2026-08-28T01:40Z
+files: scripts/check-all.js, scripts/check-clean-tree.js (new),
+  scripts/lib/clean-tree.js (new), package.json
+branch: claude/gauntlet-scratch-file-guard, cut from
+claude/gauntlet-checkall-lockfile after URD-056 shipped.
+
+## CRITIQUE · URD-057
+`strayFiles()` (`lib/clean-tree.js`) lists every untracked file under
+`src/`/`scripts/` via `git status --porcelain -uall`; `check-clean-tree.js`
+runs it standalone, and `check-all.js` runs the same function as an
+unconditional early guard before the workflow is even parsed, so a stray
+file fails immediately and by name rather than surfacing as a confusing
+`lint`/`format:check` failure several steps in. `-uall` specifically
+because without it an untracked directory collapses to one line instead
+of naming the file inside — verified directly. Verified against the
+item's own exact verify text (create/fail-by-name/remove/pass) for both
+directories and via `check:all` itself.
+
+Dispatched THE CRITIC via a WIP-commit review (reset after).
+
+**BLOCKING (fixed): `strayFiles()` silently dropped any stray path
+containing a space or other character `git status --porcelain` quotes**
+— exactly the "Untitled 1.ts"-shaped name a tool actually defaults to.
+THE CRITIC reproduced it live: a false all-clear from this check while
+the real `format:check` correctly flagged the same file. Fixed by adding
+`-z` (NUL-separated, no quoting at all) to the `git status` call.
+Re-verified against the exact repro plus the original directory-
+collapsing case together, both correctly named.
+
+**MAJOR (acknowledged via comment, not fixed): git-status-based, so
+structurally blind to gitignored files** — not live today (no existing
+ignore pattern touches these directories' file types), but this repo's
+ESLint has no gitignore integration of its own, so a future ignore
+pattern would make a file invisible here while `lint` still fails on it.
+THE CRITIC confirmed the asymmetry directly (Prettier skips a gitignored
+file even named explicitly; eslint does not). Disclosed rather than
+built around — closing it fully means re-implementing lint's own file
+discovery, not scanning git's view of the tree.
+
+MINOR, not gating: a transient self-referential message mismatch when
+this check's own two new files aren't yet staged — self-resolves once
+they are.
+
+## PASSED · URD-057 · 2026-08-28T01:55Z
+One real BLOCKING fixed and re-verified against the exact repro; one
+MAJOR acknowledged via comment; one non-gating MINOR.
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npx vitest run
+  259/259, unchanged — no test-covered app logic touched.
+
+$ npm run check:clean-tree
+  verified against the item's own text plus THE CRITIC's space/directory
+  adversarial cases; tree confirmed clean after each.
+
+$ npm run check:all
+  all 30 steps pass, new guard included as an early step.
+
+branch: claude/gauntlet-scratch-file-guard
