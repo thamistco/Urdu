@@ -216,6 +216,7 @@ const { WORDS, glossOf } = load('src/data/words.ts');
 const { LETTERS, POSITIONS } = load('src/data/letters.ts');
 const { GRAMMAR } = load('src/data/grammar.ts');
 const { romanAll } = load('src/lib/translit.ts');
+const { letterSpotTiles, LETTER_CONTEXT_WORD } = load('src/exercises/generator.ts');
 const GRAMMAR_DRILLS = GRAMMAR.flatMap((c) => c.drills);
 
 /**
@@ -366,13 +367,33 @@ async function candidateOptions(page) {
  * was chosen) can pass all four of its forms and match whichever one is
  * actually on screen, the same way `answerLetterForm` already checks a
  * glyph against every entry in `letter.forms` rather than assuming one.
+ *
+ * THE CRITIC (MAJOR, URD-063): "several" used to mean two different things
+ * this function conflated. For `letterPick`, every string in `expected` is
+ * a different rendering of the *same* one answer — exactly one candidate
+ * on screen can ever match, so excluding just that one `match` object left
+ * every other real candidate correctly available to `wrongOnPurpose`.
+ * `answerLetterSpot` is the first caller where `expected` can hold
+ * *several genuinely different correct answers at once* (a word can hold
+ * the taught letter more than once — see `LetterSpot.tsx`'s own comment —
+ * and every occurrence is its own right tile). `candidates.find((c) => c
+ * !== match)` only ever excluded that one object, so on a screen with two
+ * correct tiles it could — and, reproduced directly by feeding it a
+ * synthetic multi-correct screen, did — hand `wrongOnPurpose` a *second
+ * correct* tile instead of a wrong one. Dormant in the real corpus today
+ * (measured: 0 of 40 letters' assigned `LETTER_CONTEXT_WORD` currently
+ * produce more than one correct tile) but not something a future content
+ * edit should be able to silently break, since `clickMatching` itself
+ * would report success either way. Fixed by excluding every candidate that
+ * matches any target, not just the one object found first.
  */
 async function clickMatching(page, btns, candidates, expected, wrongOnPurpose) {
   if (!expected) return false;
   const targets = (Array.isArray(expected) ? expected : [expected]).map(normalize);
-  const match = candidates.find((c) => c.lines.some((l) => targets.includes(l)));
+  const isMatch = (c) => c.lines.some((l) => targets.includes(l));
+  const match = candidates.find(isMatch);
   if (!match) return false;
-  const chosen = wrongOnPurpose ? candidates.find((c) => c !== match) : match;
+  const chosen = wrongOnPurpose ? candidates.find((c) => !isMatch(c)) : match;
   if (!chosen) return false; // wrongOnPurpose with nothing else on screen to pick
   await btns
     .nth(chosen.index)
@@ -513,6 +534,52 @@ async function answerLetterPick(page, text, wrongOnPurpose) {
   if (!letter) return false;
   const { btns, candidates } = await candidateOptions(page);
   return clickMatching(page, btns, candidates, Object.values(letter.forms), wrongOnPurpose);
+}
+
+/**
+ * URD-063: `letterSpot`'s question ("Which tile is {letter.name}?") names
+ * the target directly, case preserved — a plain `Txt` (`Question`), the
+ * same shape `letterPick`'s prompt already resolves via `letterByNameExact`
+ * with no ambiguity, not `letterForm`'s uppercase `Eyebrow`.
+ *
+ * Unlike every other named kind here, the correct answer isn't found by
+ * matching the target's own glyph or forms against on-screen option text —
+ * a tile is a 1-3 character cluster carrying the word's own real
+ * neighbouring context (`letterSpotTiles`, `generator.ts`), not the bare
+ * glyph `letterForm`/`letterPick` show, so which cluster is "correct" isn't
+ * something this file could recover from the tile's own text alone (a
+ * decoy tile can share characters with a real one, and a word can repeat
+ * the target letter in more than one real position). Recomputing
+ * `letterSpotTiles` directly — the exact function that built this exercise
+ * — against the same word the app always draws for this letter
+ * (`LETTER_CONTEXT_WORD`) gives the real answer without reverse-engineering
+ * it from the screen, the same principle every solver in this file already
+ * follows (read the real content, not the generator's own random draw).
+ *
+ * `letterSpotTiles` is not itself deterministic (decoy choice and the
+ * shuffle both draw on `Math.random()`), so this recompute is not
+ * guaranteed to reproduce the exact same tile *array* the real exercise
+ * built. That is safe here only because `correctTiles` (below) never
+ * depends on which decoys were drawn: a decoy is always a single isolated
+ * glyph excluded from the word's own characters (never `correct`), and
+ * every real tile in the current corpus is a 2+ character cluster, so a
+ * decoy string can never coincide with a correct one. THE CRITIC: this is
+ * a true, currently-load-bearing property of today's data, not something
+ * enforced anywhere — a future word short enough to produce a 1-character
+ * real tile could collide with a decoy and silently confuse this solver.
+ */
+async function answerLetterSpot(page, text, wrongOnPurpose) {
+  const m = text.match(/Which tile is (.+?)\?/i);
+  if (!m) return false;
+  const letter = letterByNameExact.get(stripBidi(m[1]));
+  if (!letter) return false;
+  const word = LETTER_CONTEXT_WORD.get(letter.id);
+  if (!word) return false;
+  const { tiles, correct } = letterSpotTiles(letter, word);
+  const correctTiles = tiles.filter((_, i) => correct[i]);
+  if (!correctTiles.length) return false;
+  const { btns, candidates } = await candidateOptions(page);
+  return clickMatching(page, btns, candidates, correctTiles, wrongOnPurpose);
 }
 
 /**
@@ -796,6 +863,7 @@ const NAMED_TAP_KIND = [
   [/Which position is this letter showing\?/i, 'letterForm'],
   [/Which one is /i, 'letterContrast'],
   [/Which letter is this\?/i, 'letterPick'],
+  [/Which tile is /i, 'letterSpot'],
   [/Which word is this\?|Which word means this\?/i, 'multipleChoice'],
   [/What does it mean\?/i, 'meaningPick'],
   [/Which one did you hear\?/i, 'listenTap'],
@@ -825,6 +893,7 @@ const NAMED_KIND_SOLVER = {
   // URD-047's ledger for why this kind was missing here at all: it did not
   // exist when this table was written.
   letterContrast: (page, text, wrong) => answerLetterPick(page, text, wrong),
+  letterSpot: (page, text, wrong) => answerLetterSpot(page, text, wrong),
   grammarDrill: (page, text, wrong) => answerGrammarDrill(page, text, wrong),
 };
 

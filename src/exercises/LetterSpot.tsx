@@ -82,7 +82,25 @@ export function LetterSpotExercise({ exercise, showRoman, locked, onGraded }: Ex
               state={state}
               disabled={picked != null || locked}
               onPress={() => choose(i)}
-              className="my-1"
+              // URD-063: no width class at all, before this — a tile
+              // measured only whatever a bare 1-3 character glyph cluster
+              // plus `Choice`'s own `px-3` padding happened to need,
+              // nowhere near a real tap target and, worse, under
+              // `scripts/soak.js`'s `b.width > 110` floor for "is this an
+              // acted-on-able candidate at all" — so soak found zero
+              // candidates on every real `letterSpot` screen and reported
+              // the whole lesson unanswerable, not merely mis-graded.
+              // `min-w-[116px]` clears that floor with margin, at both
+              // soak's fixed 412px viewport and `check:sizes`'s 320px
+              // floor: unlike `letterContrast`'s fixed 2-4 option count,
+              // this row holds a variable number of tiles (4 to 8 across
+              // the real corpus, `LETTER_CONTEXT_WORD`'s longest words),
+              // so a percentage-of-row width doesn't apply here the way it
+              // does there — a fixed minimum per tile, left free to grow
+              // for a wider cluster, and to wrap via the row's own
+              // `flex-wrap` rather than needing every tile to share one
+              // row, is the right shape for a tile count that isn't fixed.
+              className="my-1 min-w-[116px]"
               style={{ marginStart: wordGap, marginEnd: 4 }}
               accessibilityLabel={`Tile ${i + 1} of ${tiles.length}`}
             >
