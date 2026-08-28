@@ -5856,3 +5856,58 @@ $ npm run check:all
   all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-letterform-non-connector
+
+## CLAIMED · URD-055 · 2026-08-28T00:40Z
+files: src/screens/lessonScreenWiring.test.ts (new)
+branch: claude/gauntlet-lessonscreen-grade-flush, cut from
+claude/gauntlet-letterform-non-connector after URD-054 shipped.
+
+## CRITIQUE · URD-055
+New test reads the real `LessonScreen.tsx` as text, strips comments,
+extracts the `advance` and `onGraded` function bodies by brace-depth
+matching, and asserts `flushPendingGrades()` appears inside `advance()`
+before `finishLesson(...)`, `recordItemGrade(` appears inside `onGraded`,
+and both names really alias `useSessionGradeFlush`'s `record`/`flushNow`.
+Deliberately a third kind of test (neither pure-logic unit nor whole-
+system check), disclosed as such — a full render needs mocking this
+project's own "two kinds of test" rule already calls disproportionate,
+and the alternative (extracting both closures into small pure functions,
+the same technique URD-045/URD-054 already used elsewhere in this
+codebase) is a real production-code change, not a free one, given how
+tightly `advance`/`onGraded` couple to several `useState` setters.
+
+Revert-verified five mutations against the real file: delete
+`flushPendingGrades()`, comment it out instead (the specific gap a naive
+`toContain` would miss), reorder it after `finishLesson`, delete
+`recordItemGrade(...)`, comment that out too — all five fail with the
+predicted shape, `git diff` empty after each revert.
+
+Dispatched THE CRITIC alone, using a throwaway WIP commit (reset after)
+rather than a pasted diff, per this session's ROLES.md rule.
+
+THE CRITIC: no BLOCKING, no MAJOR. Independently re-ran all five
+mutations with the same results, confirmed both anchor strings are
+unique in the file, confirmed tsc/lint/format/full-suite all clean. Three
+MINORs, all accepted rather than fixed: the brace scan isn't string/
+template-literal-aware beyond the comment-strip pass (no such string
+exists in either function body today, and the test's own doc comment
+already discloses the trade); `onGradedBody`'s length-guard margin is the
+tighter of the two (19%, real but modest); and the pure-function-
+extraction alternative would be more refactor-resistant, which THE
+CRITIC named explicitly while agreeing the chosen approach is defensible
+given the real cost that alternative would carry.
+
+## PASSED · URD-055 · 2026-08-28T01:00Z
+No BLOCKING or MAJOR; three MINORs accepted, none requiring a code
+change.
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npx vitest run
+  259/259 (4 new tests in lessonScreenWiring.test.ts).
+
+$ npm run check:all
+  all 30 steps pass against a deploy-shaped build.
+
+branch: claude/gauntlet-lessonscreen-grade-flush

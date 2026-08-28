@@ -36,40 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-055 — LessonScreen's three call sites into the SRS-grading wiring are untested
-attempts: 0
-files: src/screens/LessonScreen.tsx, src/screens/useSessionGradeFlush.ts
-definition of done: URD-044 gave `useSessionGradeFlush`'s own ref/effect
-  timing a real, mutation-tested suite — but the hook is exercised there
-  only through a synthetic `Harness` that always calls `record`/`flushNow`
-  correctly by construction. The three real call sites inside
-  `LessonScreen.tsx` have zero automated coverage: the `useSessionGradeFlush(
-  exercises, applyGrade)` call itself, `recordItemGrade(it, grade)` inside
-  `onGraded`, and the explicit `flushPendingGrades()` inside `advance()` (the
-  one whose own comment explains it exists so closing the app from the
-  results screen doesn't silently lose SRS grading while keeping the
-  rewards). If a future edit drops that `flushPendingGrades()` call from
-  `advance()`, or drops `recordItemGrade` from `onGraded`'s body, nothing in
-  `check:all` catches it — the exact "app is lying about what it graded" bug
-  class URD-044 exists to guard against, one file over from where it used
-  to live. A full rendered-`LessonScreen` test would need react-navigation/
-  store/native-module mocking disproportionate to this (and would cut
-  against this project's own "two kinds of test, no overlap" rule — neither
-  bucket is "render one screen component") — so this likely wants a narrow
-  seam: e.g. exporting `LessonScreen`'s body logic (not its JSX) as a
-  testable function, or a thin fake-hook-return spy asserting the three call
-  sites are actually reached with the right arguments during a scripted
-  `onGraded`/`advance()` sequence, without rendering real UI.
-verify: a test that fails if `flushPendingGrades()` is deleted from
-  `advance()`, or if `recordItemGrade` is deleted from `onGraded`'s body —
-  reverting either one makes the new test fail with a concrete, matching
-  shape.
-notes: Found by THE CRITIC reviewing URD-044. Not blocking — the doc
-  comments URD-044 added are honest about testing the extracted hook, not
-  "LessonScreen end-to-end," so this isn't a dishonesty finding, just a real
-  remaining gap the ledger should name plainly rather than let readers
-  assume URD-044 closed in full.
-
 ## URD-056 — check:all can corrupt its own build if two runs overlap, and nothing stops it
 attempts: 0
 files: scripts/check-all.js
