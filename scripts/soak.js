@@ -1068,6 +1068,73 @@ async function solveMatching(page) {
 }
 
 /**
+ * The drawing surface's own rect, read off the pad element rather than inferred
+ * from where the caption sits.
+ *
+ * URD-068: the rect used to be guessed from the caption's bounding box —
+ * `{ x: caption.x - 4, y: caption.y - 330, width: 348, height: 330 }`. The
+ * caption is a short centred line (measured: 138px wide at x=137), so its left
+ * edge is nowhere near the pad's (measured: 34), and 348 wide from x=133 runs
+ * 69px off the right of a 412px viewport. Replaying that clip offline against a
+ * real dead-end screenshot measured the damage: of 1578 sampled dark pixels,
+ * 842 — 53% — were page background *outside* the pad (lum 24.7), because the
+ * clip overhung the pad above and to the right while missing its whole left
+ * third. Worse, the walk starts at the topmost dark pixel, and that was
+ * (135, 114): background, 12px *above* the pad. So `mouse.down()` landed off
+ * the drawing surface, RN-web never granted the pad's responder, not one stroke
+ * was recorded, `Clear`/`Check` stayed `disabled` — and `tap`'s
+ * `click({ force: true })` reported success against a disabled button, so the
+ * driver believed it had answered. The screen sat unchanged until the idle
+ * counter fired: a "dead end" that was this geometry, not the app.
+ *
+ * `TracePad` labels the surface for screen readers ("Drawing area. Trace …"),
+ * which react-native-web renders as a real `aria-label`, so the element can be
+ * asked for its own box instead. The inset clears the pad's own 2px ink border,
+ * which is darker than the glyph and would otherwise be the topmost "glyph"
+ * pixel every time.
+ */
+async function traceArea(page) {
+  const pad = await onScreen(page.locator('[aria-label^="Drawing area"]'), 0, 900);
+  if (!pad) return null;
+  const box = await pad.boundingBox().catch(() => null);
+  // A pad this small is not the drawing surface; refuse rather than trace junk.
+  if (!box || box.width < 120 || box.height < 120) return null;
+  const inset = 4;
+  return { x: box.x + inset, y: box.y + inset, width: box.width - inset * 2, height: box.height - inset * 2 };
+}
+
+/**
+ * The glyph's pixels, in stroke order: nearest neighbour from the topmost point,
+ * so the drawn line stays inside the letter instead of jumping across gaps.
+ * Parchment is the lightest thing on the pad (measured: lum 220) and the model
+ * glyph a tone below it (measured: 193), so 200 separates them.
+ */
+function glyphStroke(png) {
+  const pts = [];
+  for (let y = 2; y < png.height - 2; y += 4) {
+    for (let x = 2; x < png.width - 2; x += 4) {
+      const i = (png.width * y + x) << 2;
+      const lum = (png.data[i] + png.data[i + 1] + png.data[i + 2]) / 3;
+      if (lum < 200) pts.push({ x, y });
+    }
+  }
+  if (pts.length < 12) return null;
+  pts.sort((a, b) => a.y - b.y || a.x - b.x);
+  const stroke = [pts.shift()];
+  while (pts.length && stroke.length < 220) {
+    const last = stroke[stroke.length - 1];
+    let bi = 0;
+    let bd = Infinity;
+    for (let i = 0; i < pts.length; i++) {
+      const d = (pts[i].x - last.x) ** 2 + (pts[i].y - last.y) ** 2;
+      if (d < bd) [bd, bi] = [d, i];
+    }
+    stroke.push(pts.splice(bi, 1)[0]);
+  }
+  return stroke;
+}
+
+/**
  * Trace the letter by actually tracing it.
  *
  * The first version of this harness scribbled across the panel and reported the
@@ -1086,95 +1153,38 @@ async function solveMatching(page) {
  * Both outcomes are legitimate answers, which is the point: the run needs to
  * visit the refusal path as well as the accepting one.
  */
-/**
- * Calculate the drawing area dimensions, adapting to the caption's position.
- * Returns null if the drawing area would be too small to be useful.
- */
-function calcDrawingArea(captionBox) {
-  const screenMargin = 10; // Leave margin from screen top
-  const minDrawingHeight = 150; // Don't bother if drawing area is too small
-  const maxDrawingHeight = 330; // Ideal height
-  const available = captionBox.y - screenMargin;
-  const height = Math.min(maxDrawingHeight, available);
-  if (height < minDrawingHeight) return null;
-  return { x: captionBox.x - 4, y: captionBox.y - height, width: 348, height };
-}
-
 async function traceTheLetter(page, wrongOnPurpose) {
-  const panel = await onScreen(page.locator('text=/Draw over the grey letter/i'), 0, 900);
-  if (!panel) return false;
-  const box = await panel.boundingBox().catch(() => null);
-  if (!box) return false;
-  const area = calcDrawingArea(box);
-  if (!area) {
-    if (process.env.SOAK_DEBUG) console.log('[traceTheLetter] No viable drawing area');
-    return false;
-  }
-
-  if (process.env.SOAK_DEBUG) {
-    console.log('[traceTheLetter] box=', { x: Math.round(box.x), y: Math.round(box.y), w: Math.round(box.width), h: Math.round(box.height) });
-    console.log('[traceTheLetter] area=', { x: Math.round(area.x), y: Math.round(area.y), w: area.width, h: area.height });
-  }
+  const area = await traceArea(page);
+  if (!area) return false;
 
   let png;
   try {
     const { PNG } = require(path.join(ROOT, 'node_modules', 'pngjs'));
     png = PNG.sync.read(await page.screenshot({ clip: area }));
-  } catch (e) {
-    if (process.env.SOAK_DEBUG) console.log('[traceTheLetter] Screenshot failed:', e.message);
+  } catch {
     return false;
   }
 
-  // Parchment is the lightest thing in the panel; the glyph is a tone below it.
-  const pts = [];
-  for (let y = 2; y < png.height - 2; y += 4) {
-    for (let x = 2; x < png.width - 2; x += 4) {
-      const i = (png.width * y + x) << 2;
-      const lum = (png.data[i] + png.data[i + 1] + png.data[i + 2]) / 3;
-      if (lum < 200) pts.push({ x, y });
-    }
-  }
+  const stroke = glyphStroke(png);
   if (process.env.SOAK_DEBUG) {
-    console.log('[traceTheLetter] Screenshot size:', png.width, 'x', png.height);
-    console.log('[traceTheLetter] Dark pixels found:', pts.length);
+    const r = (n) => Math.round(n);
+    console.log(`[trace] pad ${r(area.x)},${r(area.y)} ${r(area.width)}x${r(area.height)} → ${stroke ? stroke.length : 0} pts`);
   }
-  if (pts.length < 12) {
-    if (process.env.SOAK_DEBUG) console.log('[traceTheLetter] FAIL: Not enough dark pixels (need 12, got', pts.length + ')');
-    return false;
-  }
+  if (!stroke) return false;
 
-  // Nearest neighbour from the topmost pixel: a stroke order, not a raster scan,
-  // so the drawn line stays inside the glyph instead of jumping across gaps.
-  pts.sort((a, b) => a.y - b.y || a.x - b.x);
-  const path0 = [pts.shift()];
-  while (pts.length && path0.length < 220) {
-    const last = path0[path0.length - 1];
-    let bi = 0;
-    let bd = Infinity;
-    for (let i = 0; i < pts.length; i++) {
-      const d = (pts[i].x - last.x) ** 2 + (pts[i].y - last.y) ** 2;
-      if (d < bd) [bd, bi] = [d, i];
-    }
-    path0.push(pts.splice(bi, 1)[0]);
-  }
-
-  if (process.env.SOAK_DEBUG) console.log('[traceTheLetter] Path traced:', path0.length, 'pixels');
-
-  const walk = wrongOnPurpose ? path0.slice(0, Math.max(4, Math.floor(path0.length / 3))) : path0;
-  if (process.env.SOAK_DEBUG) console.log('[traceTheLetter] Walk:', walk.length, 'pixels to simulate');
+  const walk = wrongOnPurpose ? stroke.slice(0, Math.max(4, Math.floor(stroke.length / 3))) : stroke;
   await page.mouse.move(area.x + walk[0].x, area.y + walk[0].y);
   await page.mouse.down();
   for (const p of walk) await page.mouse.move(area.x + p.x, area.y + p.y);
   await page.mouse.up();
   await page.waitForTimeout(200);
-  const checkTapped = await tap(page.locator('text=/^CHECK$/i'), 0, 900);
-  if (process.env.SOAK_DEBUG) {
-    console.log('[traceTheLetter] CHECK button tapped:', checkTapped);
-    if (!checkTapped) console.log('[traceTheLetter] FAIL: CHECK button not found or not tappable');
-  }
-  // Wait for the app to process the grade and update the screen
-  if (checkTapped) await page.waitForTimeout(500);
-  return checkTapped;
+  // Invariant for this solver: a stroke that registered removes the caption and
+  // enables Check. Without this the driver cannot tell a real answer from a
+  // force-click against a disabled button, which is exactly how URD-068 hid.
+  const drew = !(await onScreen(page.locator('text=/Draw over the grey letter/i'), 0, 900));
+  if (process.env.SOAK_DEBUG && !drew) console.log('[trace] no stroke registered — pointer missed the pad');
+  if (!drew) return false;
+  return tap(page.locator('text=/^CHECK$/i'), 0, 900);
 }
 
 /**
