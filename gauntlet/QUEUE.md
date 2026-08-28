@@ -36,32 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-056 — check:all can corrupt its own build if two runs overlap, and nothing stops it
-attempts: 0
-files: scripts/check-all.js
-definition of done: `scripts/check-all.js` already carries a comment (near
-  the top, by the `dist/` rebuild) recording that two concurrent runs
-  corrupt each other's build — the project has known this long enough to
-  write it down and has never guarded it. The failure mode is real and has
-  fired repeatedly: a run started while another holds `dist/` dies on
-  `ENOENT: no such file or directory, open 'dist/index.html'`, which reads
-  like a regression in whatever the lead was working on rather than a
-  collision, and has been misdiagnosed that way at least twice (URD-041,
-  URD-042) before being correctly traced by inspecting the process tree.
-  On URD-045 the lead killed a run by hand purely to dodge it, losing 3-5
-  minutes and a discarded build. Take a lockfile before the `dist/`
-  rebuild, exit with a message naming the holding PID if it is already
-  held, and release it on normal exit and on signal.
-verify: start two `check:all` runs and watch the second refuse by name
-  rather than racing — a guard that has never been seen to fire is a
-  hypothesis (non-negotiable 2), so the test must actually observe the
-  refusal, not just assert the lockfile helper in isolation.
-notes: Found by the OVERSEER reviewing URD-045. Not blocking — the lead can
-  avoid it by remembering, and mostly does; that is exactly the argument
-  for a guard, since "the lead remembers" is not a mechanism. Note the
-  hazard is worse than plain lost time: a corrupted `dist/` makes the
-  *next* check report a failure that has nothing to do with the code.
-
 ## URD-057 — a subagent's scratch file in src/ or scripts/ silently breaks the next gating run
 attempts: 0
 files: scripts/check-all.js, scripts/check-*.js (a new one, likely)
