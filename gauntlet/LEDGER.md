@@ -5791,3 +5791,68 @@ $ npm run check:all
   all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-letter-collision-notes
+
+## CLAIMED · URD-054 · 2026-08-28T00:10Z
+files: src/exercises/LetterExercises.tsx, src/exercises/letterFormGrading.ts
+  (new), src/exercises/letterFormGrading.test.ts (new)
+branch: claude/gauntlet-letterform-non-connector, cut from
+claude/gauntlet-letter-collision-notes after URD-053 shipped.
+
+## CRITIQUE · URD-054
+Took the "accept either" branch of the item's own two offered fixes.
+`LetterFormExercise` now grades by rendered glyph (`isCorrectPosition`,
+mirroring URD-045's `isCorrectTap` extraction) rather than position name
+— a non-connecting letter (13 of 40) only has two visually distinct
+shapes, and grading strictly by name marked a learner wrong for correctly
+reading a glyph shown under its other real name. Same comparison drives
+which buttons show correct; a new explanatory line appears only when a
+learner picks the glyph's other name, confirmed to render cleanly via a
+real harness screenshot.
+
+Two real exceptions surfaced verifying the premise against actual data:
+`hamza` (medial/final are genuinely different marks, not the usual
+collapse) and `baRi-ye` (all four forms pairwise distinct — borrows
+choti-ye's connecting shape for initial/medial). Comparing glyphs
+directly gets both right for free, without a hand-maintained per-letter
+table. New exhaustive test sweeps all 40 letters × 16 position pairs
+against direct glyph equality. Revert-verified against plain name-equality
+and against the naive "collapse initial→isolated" mistake a less careful
+fix might make.
+
+Made a throwaway WIP commit before dispatching THE CRITIC and reset it
+after, per this session's own ROLES.md rule — avoided the diff-
+transcription false alarm that cost real turns on the previous two items.
+
+THE CRITIC: no BLOCKING. Independently recomputed exactly 13 non-
+connectors and exactly 2 exceptions (hamza, baRi-ye) — no third missed.
+Proved zero regression risk for connecting letters two ways (exhaustive
+test + direct algebra on `connector()`'s definition). Noted a nice side-
+effect: `scripts/soak.js`'s `answerLetterForm` solver's glyph-matching
+always resolves to the *first* matching key in declaration order, which
+was a latent ~50%-of-cases false-wrong bug for non-connectors under the
+old grading — this fix repairs it for free, no `soak.js` change needed.
+
+Two real MINOR findings, both fixed: a doc-comment letter-count typo (15
+vs the real 13), and the baRi-ye-named test asserted only raw `forms`
+data without calling `isCorrectPosition` at all — a plausible mutation
+specific to baRi-ye would have passed it silently. THE CRITIC proved this
+by mutation; fixed by asserting `isCorrectPosition` against all 16 of
+baRi-ye's own position pairs directly, revert-verified against the exact
+mutation that found the gap.
+
+## PASSED · URD-054 · 2026-08-28T00:35Z
+No BLOCKING; both MINORs fixed before shipping.
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npx vitest run
+  255/255 (6 new tests in letterFormGrading.test.ts).
+
+$ npm run check:answerable
+  clean, unchanged exercise-kind counts.
+
+$ npm run check:all
+  all 30 steps pass against a deploy-shaped build.
+
+branch: claude/gauntlet-letterform-non-connector
