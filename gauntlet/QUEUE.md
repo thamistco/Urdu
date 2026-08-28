@@ -36,37 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-063 — soak.js cannot act on a letterSpot screen at all, which blocks every letter lesson
-attempts: 0
-files: scripts/soak.js, src/exercises/LetterSpot.tsx
-definition of done: `scripts/soak.js` has no `NAMED_TAP_KIND` entry for
-  `letterSpot` (URD-045) at all — it falls to the generic `'tap'` fallback,
-  same gap URD-047's own `letterContrast` had until this item. But
-  `letterSpot` fails harder than a mislabelled random guess: its tiles
-  (`LetterSpot.tsx`, sized to a bare glyph plus `my-1` margin, no width
-  class) measure under `candidateOptions`'s `b.width > 110` floor, so soak
-  finds zero acted-on-able candidates on the screen and reports it
-  unanswerable outright — not wrong-more-often, unplayable. Measured directly
-  (`npm run soak -- --lessons 8 --require letterContrast`, this session): 8
-  of 8 attempts failed on the exact same `letterSpot` screen ("Which tile is
-  alif?"), 0 lessons completed, and the run never got far enough into a
-  letter lesson to reach `letterContrast` either. `letterSpot` renders in
-  every letter-teaching lesson (URD-045), so today `npm run soak` cannot
-  finish a single one.
-verify: a solver entry plus a tile width that clears the floor (mirror
-  URD-047's own fix to `letterContrast`'s width — a percentage tuned to one
-  viewport is not enough, verify at both soak's fixed 412px and check:sizes'
-  320px floor); then `npm run soak -- --lessons 8 --require letterSpot`
-  completing at least one letter lesson, where today it completes zero.
-notes: Found while resolving THE CRITIC's URD-047 finding 4, which named
-  this as "adjacent, not URD-047's fault" — confirmed by running soak for
-  real rather than assuming the `letterContrast` fix alone was enough to
-  verify against a live run. Filed rather than fixed: `letterSpot`'s tiles
-  are sized around the word's own real glyph clusters (multi-character in
-  places — see that component's own comment), not a fixed bucket size like
-  `letterContrast`'s, so the width fix is a real layout decision, not a
-  copy-paste of this item's.
-
 ## URD-064 — soak's --track flag accepts any string and writes it straight into storage
 attempts: 0
 files: scripts/soak.js
@@ -189,3 +158,88 @@ notes: Found by CURRICULUM CRITIC reviewing URD-053, judging the
   URD-053 — that item's own scope is the same-sound disambiguation notes,
   and `do-chashmi-he`'s own note already correctly explains its real
   phonetic role independent of this gap.
+
+## URD-068 — traceTheLetter's solver dead-ends on a real letterTrace screen, newly reachable now that URD-063 unblocked letterSpot
+attempts: 0
+files: scripts/soak.js
+definition of done: `scripts/soak.js --seed 4 --lessons 8` (real run, this
+  session) hits a genuine "dead end" failure — 4 identical, unchanged
+  screenshots of "be · start / trace the letter" — never reachable before
+  URD-063, because every earlier attempt on that seed hard-failed on the
+  very first `letterSpot` screen instead (confirmed directly: the same
+  seed against the pre-URD-063 code reproduces 5/5 `unanswerable screen`
+  failures on that first `letterSpot`, never reaching `be`'s trace screen
+  at all). `traceTheLetter` (`soak.js`) reads the glyph off a screenshot
+  of the drawing panel and walks a nearest-neighbour path through its dark
+  pixels; on this specific screen it returns `false` — no trace is drawn,
+  the "Draw over the grey letter" caption and blank grey glyph sit
+  unchanged across every retry — and the driver has no other move for a
+  `letterTrace` screen, so the same screen repeats until the idle counter
+  (4) fires. Root cause not yet isolated: candidates include the drawing
+  area's computed bounding box (`area = { x: box.x - 4, y: box.y - 330,
+  ... }`) landing off-panel for this specific letter/position/viewport
+  combination, or the panel's rendered glyph mask being too light for the
+  `lum < 200` threshold to find at least 12 points, or something specific
+  to `be`'s own glyph or the `alone`/`initial` position. Adjacent to
+  URD-063, not that item's fault — nothing in this file's tracing logic
+  changed there.
+verify: reproduce `--seed 4` losing to this exact dead end, instrument
+  `traceTheLetter` to log why it returns `false` on this specific screen
+  (empty `pts`, an out-of-bounds `area`, or something else), fix the real
+  cause, and confirm `--seed 4 --lessons 8` no longer dead-ends on it —
+  screenshots on real re-runs should show at least a partial trace drawn
+  before either passing or being correctly refused.
+notes: Found running URD-063's own verify command
+  (`npm run soak -- --lessons 8 --require letterSpot`, several seeds) to
+  check whether letterSpot's fix let a letter lesson complete — it did not
+  reproduce a completion in ~85 attempts across 6 runs (0/85), and this
+  dead end is one of the reasons why: a real, load-bearing failure mode
+  that letterSpot's own earlier hard-failure had been masking simply by
+  making sure no run ever got far enough to reach it. The other reason
+  (hearts economy attrition making full-lesson survival low-probability
+  per attempt even with every named kind solving correctly) is already
+  documented and accepted elsewhere in this file's own comments, from an
+  earlier item — not new, and not this item's to fix either.
+
+## URD-069 — Choice's marginStart/marginEnd style prop renders as zero gap in the real web build
+attempts: 0
+files: src/exercises/common.tsx, src/exercises/LetterSpot.tsx
+definition of done: `Choice` (`common.tsx`) accepts a `style` prop typed
+  `{ marginStart?; marginEnd?; marginTop?; marginBottom? }`, merged into
+  its `Pressable`'s own function-valued `style` callback
+  (`style={({ pressed }) => ({ ...computed, ...style })}`). `LetterSpot.tsx`
+  passes `style={{ marginStart: wordGap, marginEnd: 4 }}` specifically so
+  a wider gap falls between tiles that cross a real word boundary in a
+  multi-word phrase (`baRi-he`'s خدا حافظ, `hamza`'s ان شاء اللہ) — the
+  component's own doc comment says so directly ("rendered as a wider gap
+  in LetterSpot.tsx, so the tile row's grouping matches what the prompt
+  actually reads"). Measured directly against the real exported web build
+  (a design-harness render of `LetterSpotExercise` against real generator
+  output, screenshotted and inspected via `getBoundingClientRect`/
+  `getComputedStyle`, at 320/390/1280px): every adjacent tile pair
+  touches at 0px, regardless of whether `wordGap` was 4 or 14, and the
+  rendered `<button>`'s own class list and inline attributes carry no
+  margin at all — only `transform`/`opacity` from the same style object
+  made it through. The sibling `my-1` Tailwind className on the identical
+  element correctly produces a real 4px vertical margin, so the mechanism
+  that's broken is specifically react-native-web's handling of a
+  `marginStart`/`marginEnd` key passed through a *function-valued*
+  `style` prop on `Pressable`, not styling generally.
+verify: a screenshot-based check (or a lighter DOM-inspection script,
+  matching this file's own design-harness convention) confirming a
+  measurable, non-zero gap renders between two tiles on either side of a
+  real `wordBreakAfter` boundary, for a real multi-word `LETTER_CONTEXT_WORD`
+  phrase (`baRi-he` or `hamza`), at both 320px and 390px — not merely that
+  the prop is passed, since that already appeared to be the case before
+  this was caught.
+notes: Found by DESIGN CRITIC reviewing URD-063 (the `letterSpot` tile
+  width fix) — confirmed real and pre-existing (the `style` prop this bug
+  lives in is untouched by that item's diff; only the tile's `className`
+  changed there), so not that item's fault and not blocking it, but
+  directly undercuts this exact component's own stated reason for the
+  style prop's existence, confirmed live rather than assumed from the
+  prop being passed. Likely fix: move the gap onto a className-based
+  margin (matching how `my-1` already works reliably) or wrap each tile
+  in a plain `View` carrying the margin, rather than the inline
+  logical-margin object passed through `Pressable`'s function-style path
+  — not yet root-caused why only that path drops it.

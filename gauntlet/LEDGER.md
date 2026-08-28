@@ -6398,3 +6398,83 @@ $ npm run check:all
   all steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-base-letter-notes
+
+## CLAIMED · URD-063 · 2026-08-28T08:15Z
+files: scripts/soak.js, src/exercises/LetterSpot.tsx
+branch: claude/gauntlet-lettersspot-soak, cut from
+claude/gauntlet-base-letter-notes after URD-062 shipped.
+
+## CRITIQUE · URD-063
+`LetterSpot.tsx`'s tile gained `min-w-[116px]` (previously no width
+constraint — a bare glyph cluster plus padding, measuring under soak's
+own `b.width > 110` tap-target floor). `soak.js` gained a `letterSpot`
+entry in `NAMED_TAP_KIND` and a real solver, `answerLetterSpot`:
+recomputes `letterSpotTiles` directly (the exact function that built the
+real exercise) against the word the app always draws for the target
+letter (`LETTER_CONTEXT_WORD`), for ground-truth correct-tile strings.
+
+Reproduced the original bug directly first: stashed the diff, ran
+`--seed 4 --lessons 8` — failed 5/5 on the first real letterSpot screen,
+matching the queue item's repro.
+
+Dispatched THE CRITIC and DESIGN CRITIC via the WIP-commit pattern.
+
+**THE CRITIC (MAJOR, fixed): `clickMatching`'s `wrongOnPurpose` path
+could pick a second correct tile instead of a wrong one**, since
+`candidates.find((c) => c !== match)` only excludes the one object found
+first — harmless for every prior caller (single true match only), but
+`answerLetterSpot` is the first caller where a word can hold the target
+letter more than once. Reproduced by THE CRITIC against a synthetic
+multi-correct screen; dormant in the real corpus today (0/40 letters
+currently produce >1 correct tile, confirmed independently twice). Fixed
+by excluding every candidate matching any target. Re-verified with a
+standalone repro of the exact scenario.
+
+THE CRITIC also caught that citing `check:sizes` as layout evidence was
+misleading (it never opens a lesson) — corrected in the write-up.
+
+**DESIGN CRITIC built a design-harness render and gave a clean bill of
+health on the width fix**: proportionate against sibling exercise tiles,
+no clipping, worst real cases (7-8 tiles) wrap sensibly at 320/390px with
+no orphaned tile.
+
+**DESIGN CRITIC found a real, pre-existing MAJOR, filed separately
+(URD-069), not fixed here**: `Choice`'s `marginStart`/`marginEnd` via a
+function-valued `style` prop renders as zero gap on web at every tested
+viewport, defeating the multi-word tile-gap feature — confirmed live,
+untouched by this diff.
+
+**The item's own literal verify criterion — at least one letter lesson
+completing — did not reproduce across ~85 attempts in 6 runs, disclosed
+honestly.** `letterSpot` itself is fully fixed (0 related failures, 100%
+solver success on every real invocation, matched independently by THE
+CRITIC). Completion is separately blocked by a genuine new `traceTheLetter`
+dead end (filed as URD-068, confirmed absent from the pre-fix baseline)
+and the already-documented, out-of-scope hearts-economy attrition from an
+earlier item.
+
+## PASSED · URD-063 · 2026-08-28T09:58Z
+No unresolved BLOCKING; one real MAJOR (clickMatching multi-correct bug)
+fixed and re-verified; one pre-existing MAJOR found and correctly filed
+separately (URD-069) rather than fixed out of scope; the item's own
+"completes a lesson" verify criterion not achieved, disclosed honestly
+with a filed follow-up (URD-068) rather than claimed.
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npx vitest run
+  273/273, unchanged.
+
+$ npm run check:sizes
+  clean (does not itself exercise the letterSpot screen, per THE CRITIC).
+
+$ npm run soak (several seeds, several lesson budgets)
+  0 letterSpot-related failures throughout; solver succeeds on every
+  real invocation, matched independently by THE CRITIC on an identical
+  seed.
+
+$ npm run check:all
+  all steps pass against a deploy-shaped build.
+
+branch: claude/gauntlet-lettersspot-soak
