@@ -92,6 +92,21 @@ const { romanRevealsMeaning } = load('src/lib/giveaway.ts');
  * built.
  */
 const OPTION_FLOOR = 4;
+
+/**
+ * How many standard deviations from fair a position's answer count may sit
+ * before this fails — shared by every uniformity check in this file (the
+ * main histogram below, and the floor-exempt kinds further down).
+ *
+ * URD-059: this replaced a fixed 40% relative band that did not scale with
+ * the sample and did not survive its own stated justification — see the
+ * main histogram's own comment, at its use below, for the arithmetic. A
+ * z-score against the binomial standard deviation tightens as the sample
+ * grows, the way a real uniformity check should: 4 sigma is about 6e-5 by
+ * chance per seat asked, regardless of how many draws that seat's count
+ * was built from.
+ */
+const SIGMA_LIMIT = 4;
 const optionCounts = new Map();
 const answerAt = new Map();
 let optionQuestions = 0;
@@ -520,7 +535,30 @@ if (optionQuestions) {
       );
   }
 
-  const positions = [...answerAt.entries()].sort((a, b) => a[0] - b[0]);
+  /**
+   * THE CRITIC: built from the full seat range, not just `answerAt`'s own
+   * observed keys — a seat the shuffle can genuinely never reach has no
+   * entry in that map at all (nothing ever called `.set` for it), so
+   * reading positions from its keys alone makes an entirely-dead seat
+   * *absent* rather than a real `count === 0` row, silently shrinking
+   * `positions.length` (and therefore the `expected`/`p` this section's
+   * own z-test depends on) instead of surfacing the dead seat directly.
+   * Live-mutated to reproduce exactly this (a seat the shuffle
+   * structurally could not reach): before this fix the histogram printed
+   * one fewer entry, `expected` silently recomputed for the wrong seat
+   * count, and the "never reaches a position" message below never fired
+   * — not preempted, unreachable, because the loop it lives in never saw
+   * that seat at all. The z-test still failed overall on the surviving
+   * seats' own skew, so this was never a silent-pass regression, but the
+   * diagnostic shown was for the wrong distribution. `sizes` (just above)
+   * is the real number of options every non-exempt question in this
+   * section actually offers — asserted uniform by the floor check
+   * directly above, the same premise this section's `p`/`expected` were
+   * already resting on before this fix touched anything.
+   */
+  const seatCount = Math.max(...sizes.map(([size]) => size));
+  const positions = [];
+  for (let i = 0; i < seatCount; i++) positions.push([i, answerAt.get(i) || 0]);
   const expected = optionQuestions / positions.length;
   console.log(
     `answer position: ${positions.map(([i, c]) => `${i}:${((c / optionQuestions) * 100).toFixed(1)}%`).join('  ')}` +
@@ -528,18 +566,38 @@ if (optionQuestions) {
   );
 
   /**
-   * Generous on purpose. This runs over a random sample, so it must not fail on
-   * ordinary variation — but the bias it replaced put the answer first 43.7% of
-   * the time against a fair 33.3%, half again as often as it should be, and
-   * nothing that loose gets through a 40% band.
+   * URD-059: this used to be a fixed 40% relative band, justified by "the
+   * bias it replaced put the answer first 43.7% of the time against a fair
+   * 33.3% ... nothing that loose gets through a 40% band" — but 43.7/33.3
+   * is a 31% deviation, inside a 40% band. The historical bug this comment
+   * names as the reason the band exists would have passed the band. Found
+   * by THE CRITIC reviewing URD-047, which copied both the band and this
+   * sentence into a new block before replacing its own copy with the
+   * z-test below — see `SIGMA_LIMIT`'s own comment, near `OPTION_FLOOR`,
+   * for why a z-score is the shape that scales and a fixed percentage is not.
+   *
+   * At this section's own real sample size (measured, not assumed:
+   * ~73,000 across both tracks and 6 passes), a z-test is not weaker for
+   * being larger — the opposite: the real distribution's worst seat here
+   * measures z well under 2 on a real run (varies run to run, as any
+   * measurement of true randomness does — checked across several runs,
+   * never close to `SIGMA_LIMIT`), so this is not trading a loose check
+   * for a flaky one at scale, the way a naive percentage band would if
+   * tightened instead of replaced.
    */
+  const p = 1 / positions.length;
+  const sd = Math.sqrt(optionQuestions * p * (1 - p));
   for (const [position, count] of positions) {
-    const off = Math.abs(count - expected) / expected;
-    if (off > 0.4)
+    if (count === 0) {
+      fail('the correct answer never reaches a position', `position ${position}: the shuffle cannot put it there`);
+      continue;
+    }
+    const z = Math.abs(count - expected) / sd;
+    if (z > SIGMA_LIMIT)
       fail(
         'the correct answer favours a position',
         `it lands at ${position} ${((count / optionQuestions) * 100).toFixed(1)}% of the time, ` +
-          `expected about ${((1 / positions.length) * 100).toFixed(1)}% — the shuffle is not uniform`
+          `expected about ${((1 / positions.length) * 100).toFixed(1)}% — ${z.toFixed(1)} sigma from fair, the shuffle is not uniform`
       );
   }
 }
@@ -559,25 +617,12 @@ if (optionQuestions) {
  * instead, which could not see a mutation that killed seats 2 and 3 outright,
  * because the answer split across the two live seats never reached 80%.
  *
- * **A deviation test that scales with the sample.** The fixed 40% relative
- * band used elsewhere in this file does not: at two options it only fires
- * outside [30%, 70%], so a measured mutation putting the answer in seat 0
- * 65% of the time passed it three runs running. Worse, the band gets *weaker*
- * in relative terms as the sample grows, which is backwards. A z-score
- * against the binomial standard deviation tightens as it should — 4 sigma is
- * about 6e-5 per seat by chance, and the whole run asks it of roughly nine
- * seats.
- *
- * (The same 40% band is used for the main histogram above, where its own
- * stated justification does not survive arithmetic: 43.7% against a fair
- * 33.3% is a 31% deviation, inside a 40% band, so the historical bug it
- * names as its reason would have passed it. That is pre-existing and out of
- * this item's scope — filed as URD-059 rather than changed here, since the
- * main histogram's 73,000 samples make a z-test there a different
- * conversation. It is repeated here only so the next reader does not copy
- * the reasoning again, as this item did.)
+ * **A deviation test that scales with the sample**, via the shared
+ * `SIGMA_LIMIT` (see its own comment, near `OPTION_FLOOR`, for why — this
+ * is the exact same reasoning URD-059 later applied to the main histogram
+ * above, which used to have its own weaker fixed-percentage version of
+ * this rule).
  */
-const SIGMA_LIMIT = 4;
 if (exemptSizes.size) {
   const label = [...FLOOR_EXEMPT_KINDS].join('/');
   for (const [size, total] of [...exemptSizes.entries()].sort((a, b) => a[0] - b[0])) {

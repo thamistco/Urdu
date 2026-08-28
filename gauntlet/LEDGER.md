@@ -6049,3 +6049,65 @@ $ npm run check:all
   all 30 steps pass, new guard included as an early step.
 
 branch: claude/gauntlet-scratch-file-guard
+
+## CLAIMED · URD-059 · 2026-08-28T02:10Z
+files: scripts/check-answerable.js
+branch: claude/gauntlet-answerable-position-band, cut from
+claude/gauntlet-scratch-file-guard after URD-057 shipped.
+
+## CRITIQUE · URD-059
+The main answer-position histogram now uses the same z-test the
+floor-exempt section already had (shared `SIGMA_LIMIT = 4`, hoisted to
+one declaration) plus a "no seat may be empty" rule mirroring that
+section's own. The old 40%-band and its self-refuting justification
+comment ("43.7% against 33.3% ... nothing that loose gets through a 40%
+band" — 31% deviation, inside a 40% band) are gone.
+
+Verified two ways against the item's own verify text: a pure arithmetic
+reconstruction of the literal historical numbers (old band: 31.1%/15.5%/
+15.5% relative deviation, all pass/miss; new z-test: z=59.4/29.7/29.7,
+all correctly fail), and a live mutation against the real script at two
+bias levels (32%/33% relative deviation, both under the old band, both
+correctly caught by the new z-test with real sigma values, reverted
+cleanly). Measured the real distribution's worst-seat z across several
+runs (0.15–1.53, always far under 4) to confirm the switch doesn't trade
+a loose check for a flaky one at ~73,000 samples.
+
+Dispatched THE CRITIC via a WIP-commit review (reset after).
+
+**MAJOR (fixed): the new "no seat may be empty" rule was unreachable dead
+code, and produced a misleading diagnostic when it should have fired.**
+`positions` was built from `answerAt`'s own observed keys — a
+structurally-unreachable seat has no Map entry at all, so it's absent,
+never a real `count === 0` row. THE CRITIC proved this live: mutating one
+seat to be unreachable silently shrank the histogram and recomputed
+`expected`/`p` for the wrong seat count; the "never reaches a position"
+message never fired — unreachable, not preempted (the z-test still
+failed overall on the surviving skew, so never a silent pass, but the
+diagnostic was for the wrong distribution). Fixed by building `positions`
+from the real seat range (derived from `sizes`, already asserted uniform
+by the floor check above) rather than only observed keys. Re-verified
+against the exact repro: both the z-test and the "never reaches a
+position" message now fire together, correctly.
+
+MINOR (fixed in passing): the doc comment's "z ≈ 1.3" claim was one
+unseeded run's snapshot, reworded to describe the observed range instead.
+
+## PASSED · URD-059 · 2026-08-28T02:30Z
+No BLOCKING; one real MAJOR fixed and re-verified against the exact
+repro; one MINOR fixed in passing.
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npx vitest run
+  259/259, unchanged — no test-covered app logic touched.
+
+$ node scripts/check-answerable.js
+  clean; both mutation tests (arithmetic reconstruction + live script
+  mutation) confirmed and reverted.
+
+$ npm run check:all
+  all 30 steps pass against a deploy-shaped build.
+
+branch: claude/gauntlet-answerable-position-band
