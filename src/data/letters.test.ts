@@ -86,3 +86,79 @@ describe('URD-038: the four z-sound letters each carry a real disambiguation cue
     }
   });
 });
+
+/**
+ * URD-053: URD-038 scoped itself to "at least the ذ ز ض ظ group" — three
+ * more same-sound collisions get the identical treatment here: se/seen/
+ * swaad (all "s"), baRi-he/choti-he (both "h"), te/toe (both "t"). Each
+ * group's default letter is named as the one to reach for in native and
+ * Persian vocabulary alike, and each loanword-only letter is anchored to
+ * `LETTER_CONTEXT_WORD`, not a decorative field — the identical shape
+ * URD-038's own describe block above checks for the z-group.
+ *
+ * `do-chashmi-he` (ھ) was in this item's own title alongside baRi-he and
+ * choti-he, but does NOT belong in this fix: its `sound` is `'h
+ * (aspirate)'`, not `'h'` — a real, distinct phoneme (it aspirates the
+ * preceding consonant, k→kh, b→bh) rather than a second spelling of plain
+ * h, and its own note already correctly describes that role. Treating it
+ * as a third member of a same-sound collision would be inaccurate, not
+ * merely incomplete — checked directly (below) rather than assumed, and
+ * left alone.
+ *
+ * The "everyday vs Arabic/Persian-loanword" split was verified against the
+ * real corpus for all three groups before writing anything, the same way
+ * URD-038 did for the z-group — not assumed to transfer. Real counts
+ * (`WORDS.filter(w => w.urdu.includes(glyph)).length`): se 19, seen 373,
+ * swaad 83; baRi-he 106, choti-he 419; te 435, toe 53. Every word sampled
+ * containing a loanword-only letter (se, swaad, baRi-he, toe) reads as
+ * Arabic-root vocabulary (حساب/hisaab, صبر/sabr, خط/khat, مصالحہ/masaala,
+ * among many others) — none of the "a handful" framing URD-038 used for
+ * zaal/zwaad/zoe (18/39/29 words) fits swaad or baRi-he's much larger
+ * real counts, so their notes say "never occur outside Arabic/Persian
+ * loanwords" without a rarity claim the numbers don't support.
+ */
+describe('URD-053: the s, h and t same-sound collisions each carry a real disambiguation cue', () => {
+  it('do-chashmi-he is correctly excluded — it is a distinct aspirate phoneme, not a second "h" spelling', () => {
+    const doChashmiHe = getLetter('do-chashmi-he')!;
+    expect(doChashmiHe.sound).not.toBe('h');
+    expect(doChashmiHe.sound).toMatch(/aspirate/i);
+  });
+
+  it('every expected letter in each group is actually in the corpus with the right sound, and nothing else shares it', () => {
+    const groups: [string, string[]][] = [
+      ['s', ['se', 'seen', 'swaad']],
+      ['h', ['baRi-he', 'choti-he']],
+      ['t', ['te', 'toe']],
+    ];
+    for (const [sound, ids] of groups) {
+      for (const id of ids) {
+        const letter = getLetter(id);
+        expect(letter, id).toBeDefined();
+        expect(letter!.sound, id).toBe(sound);
+      }
+      const allWithSound = LETTERS.filter((l) => l.sound === sound).map((l) => l.id);
+      expect(allWithSound.sort(), sound).toEqual([...ids].sort());
+    }
+  });
+
+  it('seen, choti-he and te are each named as the everyday default, without overclaiming the reverse', () => {
+    for (const id of ['seen', 'choti-he', 'te']) {
+      const letter = getLetter(id)!;
+      expect(letter.note, id).toMatch(/everyday/i);
+      // Same non-overclaim URD-038 checks for ze: real Arabic loanwords can
+      // and do use the everyday letter too, so the note must never say the
+      // everyday letter is reserved for or excluded from anything.
+      expect(letter.note, id).not.toMatch(/reserved for words borrowed/i);
+    }
+  });
+
+  it('se, swaad, baRi-he and toe each name the real Arabic/Persian-loanword pattern, anchored to the word the real lesson shows', () => {
+    for (const id of ['se', 'swaad', 'baRi-he', 'toe']) {
+      const letter = getLetter(id)!;
+      expect(letter.note, id).toMatch(/arabic/i);
+      const contextWord = LETTER_CONTEXT_WORD.get(id);
+      expect(contextWord, `${id}: expected a real LETTER_CONTEXT_WORD entry`).toBeDefined();
+      expect(letter.note, id).toContain(contextWord!.roman);
+    }
+  });
+});

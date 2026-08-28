@@ -36,35 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-053 — se/seen/swaad, baRi-he/choti-he/do-chashmi-he and te/toe have the same undisambiguated-collision gap URD-038 fixed for ذ ز ض ظ
-attempts: 0
-files: src/data/letters.ts
-definition of done: every letter in these three same-sound groups gets the
-  same real disambiguation cue URD-038 gave the four z-sound letters — which
-  one is the everyday/native default (if one is), and for the rest, an
-  anchor to the word `LETTER_CONTEXT_WORD` (generator.ts) actually shows
-  during that letter's own lesson, not the letter's own decorative `word`
-  field.
-verify: a test extending (or mirroring) `src/data/letters.test.ts`'s own
-  pattern for every letter in these three groups — each note names the real
-  pattern (not just "another of the N ways Urdu spells X") and, where the
-  note cites an anchor word, that word matches `LETTER_CONTEXT_WORD.get(id)`
-  exactly, the same two properties URD-038's test checks for the z-group.
-notes: Found by CURRICULUM CRITIC reviewing URD-038, which explicitly
-  scoped itself to "at least the ذ ز ض ظ group" per its own queue entry —
-  left open there on purpose, not overlooked, but nothing tracked the rest
-  until now. Today: `se` ("In Urdu it sounds exactly like seen, one of
-  three letters spelling the same s") and `baRi-he` ("In Urdu it sounds the
-  same as choṭī he, an ordinary h") name the collision with zero cue.
-  `swaad` ("the spelling is inherited from Arabic") and `toe`/`te` ("In
-  Urdu it sounds like te"/"the soft dental t") gesture at the real pattern
-  but don't commit to an anchor word the way URD-038's fixed notes now do.
-  Whether "everyday vs Arabic-loanword" holds for these groups the same way
-  it measurably does for ذ ز ض ظ (verified directly there, not assumed) is
-  itself unverified — check it against the real word corpus the way
-  URD-038 did before writing anything, rather than assuming the same split
-  applies.
-
 ## URD-054 — letterForm asks a learner to tell apart two glyphs that are pixel-identical for non-connecting letters
 attempts: 0
 files: src/exercises/LetterExercises.tsx, src/data/letters.ts, src/exercises/generator.ts
@@ -405,3 +376,37 @@ notes: Found by THE CRITIC reviewing URD-052, live-reproduced against the
   bound smarter than "no newlines" (e.g. stop at the next `key:` pattern,
   not just the next brace) — worth solving both in one pass since they
   share a root cause (this file is regex-based, not an AST walk).
+
+## URD-067 — choti-he and do-chashmi-he share a teaching group and a visual family but have no confusableWith link
+attempts: 0
+files: src/data/letters.ts
+definition of done: `choti-he` (ہ) and `do-chashmi-he` (ھ) sit in the same
+  teaching group (`group: 8`, the file's own comment literally reads "the
+  h family") and are taught back to back, yet neither names the other via
+  `confusableWith` — unlike `khe`, which does link to `baRi-he`
+  (`confusableWith: 'baRi-he'`) despite being in a different group
+  entirely. The two glyphs differ only by the two "eyes" (dots) `do
+  chashmi he`'s name describes, the same kind of close visual pair
+  `confusableWith` exists to keep apart within a lesson's rounds
+  (`bucketKeyOf`/`letterContrast`, generator.ts) and drill directly
+  against each other (URD-047). Decide, against the real rendered glyphs
+  at the sizes the app actually draws them, whether this is a genuine
+  visual confusable pair that belongs in the same bucket, or whether the
+  two "eyes" are visually distinct enough at those sizes that no link is
+  warranted — either way, say so on purpose rather than by omission.
+verify: a test in the same shape as `src/data/letters.test.ts`'s existing
+  `confusableWith`-bucket invariants (one base per bucket, etc.) covering
+  whichever answer is chosen — either asserting `do-chashmi-he` and
+  `choti-he` share a bucket the way `khe`/`baRi-he` do, or a comment on
+  both entries stating why they deliberately don't, checked against a
+  real rendered comparison (a design-harness screenshot at the app's own
+  letter-lab size, per this project's established harness technique) not
+  assumed from the glyphs' Unicode names alone.
+notes: Found by CURRICULUM CRITIC reviewing URD-053, judging the
+  `do-chashmi-he` sound-collision exclusion (correct — it's a genuinely
+  distinct aspirate phoneme, not a second spelling of plain h) but noting
+  this is a *different* axis of potential confusion (visual shape, not
+  sound) that URD-053 never touched and that predates it. Not blocking
+  URD-053 — that item's own scope is the same-sound disambiguation notes,
+  and `do-chashmi-he`'s own note already correctly explains its real
+  phonetic role independent of this gap.
