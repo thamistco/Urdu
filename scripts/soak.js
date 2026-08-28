@@ -1134,8 +1134,14 @@ async function traceTheLetter(page, wrongOnPurpose) {
       if (lum < 200) pts.push({ x, y });
     }
   }
-  if (process.env.SOAK_DEBUG) console.log('[traceTheLetter] Dark pixels found:', pts.length);
-  if (pts.length < 12) return false;
+  if (process.env.SOAK_DEBUG) {
+    console.log('[traceTheLetter] Screenshot size:', png.width, 'x', png.height);
+    console.log('[traceTheLetter] Dark pixels found:', pts.length);
+  }
+  if (pts.length < 12) {
+    if (process.env.SOAK_DEBUG) console.log('[traceTheLetter] FAIL: Not enough dark pixels (need 12, got', pts.length + ')');
+    return false;
+  }
 
   // Nearest neighbour from the topmost pixel: a stroke order, not a raster scan,
   // so the drawn line stays inside the glyph instead of jumping across gaps.
@@ -1155,13 +1161,17 @@ async function traceTheLetter(page, wrongOnPurpose) {
   if (process.env.SOAK_DEBUG) console.log('[traceTheLetter] Path traced:', path0.length, 'pixels');
 
   const walk = wrongOnPurpose ? path0.slice(0, Math.max(4, Math.floor(path0.length / 3))) : path0;
+  if (process.env.SOAK_DEBUG) console.log('[traceTheLetter] Walk:', walk.length, 'pixels to simulate');
   await page.mouse.move(area.x + walk[0].x, area.y + walk[0].y);
   await page.mouse.down();
   for (const p of walk) await page.mouse.move(area.x + p.x, area.y + p.y);
   await page.mouse.up();
   await page.waitForTimeout(200);
   const checkTapped = await tap(page.locator('text=/^CHECK$/i'), 0, 900);
-  if (process.env.SOAK_DEBUG) console.log('[traceTheLetter] CHECK button tapped:', checkTapped);
+  if (process.env.SOAK_DEBUG) {
+    console.log('[traceTheLetter] CHECK button tapped:', checkTapped);
+    if (!checkTapped) console.log('[traceTheLetter] FAIL: CHECK button not found or not tappable');
+  }
   return checkTapped;
 }
 
