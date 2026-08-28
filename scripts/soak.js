@@ -1168,7 +1168,9 @@ async function traceTheLetter(page, wrongOnPurpose) {
   const stroke = glyphStroke(png);
   if (process.env.SOAK_DEBUG) {
     const r = (n) => Math.round(n);
-    console.log(`[trace] pad ${r(area.x)},${r(area.y)} ${r(area.width)}x${r(area.height)} → ${stroke ? stroke.length : 0} pts`);
+    console.log(
+      `[trace] pad ${r(area.x)},${r(area.y)} ${r(area.width)}x${r(area.height)} → ${stroke ? stroke.length : 0} pts`
+    );
   }
   if (!stroke) return false;
 
