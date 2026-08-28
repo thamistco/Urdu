@@ -5,26 +5,43 @@ import { Urdu, Txt, Bold, Eyebrow, urduGlyph } from '../components/Text';
 import { POSITIONS, PositionKey } from '../data/letters';
 import { feedback } from '../lib/feedback';
 import { contrastNotesFor } from './letterContrastNotes';
+import { isCorrectPosition } from './letterFormGrading';
 import type { ExerciseProps, Exercise } from './types';
 
 type FormEx = Extract<Exercise, { kind: 'letterForm' }>;
 type PickEx = Extract<Exercise, { kind: 'letterPick' }>;
 type ContrastEx = Extract<Exercise, { kind: 'letterContrast' }>;
 
-/** "Where does this letter sit?" — the app's core position-form skill. */
+/**
+ * "Where does this letter sit?" — the app's core position-form skill.
+ *
+ * URD-054: grading is by rendered glyph, not position name — see
+ * `isCorrectPosition` (`letterFormGrading.ts`) for why. In short: a
+ * non-connecting letter only has two visually distinct shapes, not four,
+ * and used to mark a learner wrong for correctly reading one of them.
+ */
 export function LetterFormExercise({ exercise, locked, onGraded }: ExerciseProps<FormEx>) {
   const { letter, position } = exercise;
   const [picked, setPicked] = useState<PositionKey | null>(null);
 
+  const sameShape = (key: PositionKey) => isCorrectPosition(letter, position, key);
+
   const choose = (key: PositionKey) => {
     if (picked || locked) return;
     setPicked(key);
-    const correct = key === position;
+    const correct = sameShape(key);
     correct
       ? feedback.correctAnnounce(letter.id, letter.forms.isolated, letter.name)
       : feedback.incorrectAnnounce(letter.id, letter.forms.isolated, letter.name);
     onGraded({ items: [{ id: letter.id, type: 'letter' }], correct });
   };
+
+  // A non-connector's two shapes each answer to two names — true only when
+  // `picked` is the *other* name for the same shape `position` already has,
+  // never for `connects: true` letters (whose four shapes are always
+  // distinct) and never when `picked === position` itself (nothing to
+  // explain there).
+  const pickedATwin = picked != null && picked !== position && sameShape(picked);
 
   return (
     <View>
@@ -38,7 +55,7 @@ export function LetterFormExercise({ exercise, locked, onGraded }: ExerciseProps
       <Question>Which position is this letter showing?</Question>
       <View className="flex-row flex-wrap justify-between">
         {POSITIONS.map((p) => {
-          const state = picked == null ? 'idle' : p.key === position ? 'correct' : p.key === picked ? 'wrong' : 'muted';
+          const state = picked == null ? 'idle' : sameShape(p.key) ? 'correct' : p.key === picked ? 'wrong' : 'muted';
           return (
             <Choice
               key={p.key}
@@ -53,6 +70,12 @@ export function LetterFormExercise({ exercise, locked, onGraded }: ExerciseProps
           );
         })}
       </View>
+      {pickedATwin && (
+        <Txt className="mt-1 text-center text-xs text-paper/55">
+          {letter.name} never joins forward, so “{POSITIONS.find((p) => p.key === position)!.label}” and “
+          {POSITIONS.find((p) => p.key === picked)!.label}” look the same here — both are right.
+        </Txt>
+      )}
     </View>
   );
 }
