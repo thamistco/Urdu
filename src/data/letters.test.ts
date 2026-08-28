@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { LETTERS, getLetter } from './letters';
 import { LETTER_CONTEXT_WORD } from '../exercises/generator';
+import { contrastLine } from '../exercises/letterContrastNotes';
 
 /**
  * URD-038: four letters (zaal ذ, ze ز, zwaad ض, zoe ظ) all sound like plain
@@ -160,5 +161,132 @@ describe('URD-053: the s, h and t same-sound collisions each carry a real disamb
       expect(contextWord, `${id}: expected a real LETTER_CONTEXT_WORD entry`).toBeDefined();
       expect(letter.note, id).toContain(contextWord!.roman);
     }
+  });
+});
+
+/**
+ * URD-062: every confusable bucket is one base letter (`confusableWith`
+ * unset) plus its variants, and the notes were written to that shape — a
+ * variant's note contrasts it against its base ("Daal with one dot above"),
+ * while a base's note describes it standing alone. `letterContrastExercise`
+ * (URD-047) reveals a note after answering, and `contrastLine`
+ * (`letterContrastNotes.ts`) is the only part of it a learner ever sees at
+ * that moment — its own doc comment already proves a wrong tap is always
+ * contrastive (a bucket holds exactly one base, so a wrong answer always
+ * involves a variant), but that guarantee says nothing about the *correct*
+ * answer's own panel, which is the base's line whenever the target was the
+ * base. Before this item, all 13 bases described themselves standing alone,
+ * naming nothing that separates them from their own variant(s) — two were
+ * actively misleading: `kaaf`'s "The stroke on top is part of the letter,
+ * not an accent. Do not drop it." is read by a learner who just wrongly
+ * tapped `gaaf` (kaaf with a *second* stroke) as endorsing what they saw;
+ * `seen`'s "Three teeth" is equally true of `sheen`, the letter it was
+ * confused with.
+ *
+ * Found by THE CRITIC and CURRICULUM CRITIC independently while reviewing
+ * URD-047.
+ */
+describe('URD-062: a base letter’s note names the mark that separates it from its variants', () => {
+  /**
+   * Every letter that is a bucket's base, keyed to the mark its own note
+   * now names — checked against `contrastLine` itself (`letterContrastNotes.ts`),
+   * not a reimplementation of its split, since that function's own output,
+   * not the whole `note` field, is what a learner actually sees.
+   *
+   * THE CRITIC: an earlier version of this table used a loose keyword regex
+   * for every base (`/dot|retroflex/i` for `daal`, say), and a mutation
+   * proved it gameable — a `daal` note rewritten to mention "a single dot of
+   * ink where the pen first touches the page" (true of nothing about `Daal`
+   * or `zaal`) still passed, because the check only proves a keyword is
+   * present, not that it correctly names the real mark. Tightened two ways
+   * below: the 11 buckets with exactly one variant now require that
+   * variant's own id to appear by name (unambiguous and cheap — nothing
+   * else in the corpus is named "gaaf" or "zwaad"), and the two buckets
+   * with more than one variant (`daal`: `Daal`/`zaal`; `re`: `Re`/`ze`/`zhe`)
+   * require *both* "dot" and "retroflex" to appear, not just one, since a
+   * bucket that size can only be honestly described as lacking both marks a
+   * single-keyword-either check would let a mutation dodge one of.
+   */
+  // Values are the variant's *prose* name, not always its data `id` — house
+  // style (`check:writing`) forbids a hyphen in any user-facing string, so a
+  // variant whose id is hyphenated (`noon-ghunna`, `baRi-ye`) is named in
+  // running text by its space-separated `name` field instead
+  // (`noon ghunna`, `baṛī ye`), exactly the convention the corpus's own
+  // untouched notes already use for `baRi-he`/`choti-he` ("choṭī he").
+  const NAMES_VARIANT: Record<string, string> = {
+    be: 'pe',
+    jeem: 'che',
+    'baRi-he': 'khe',
+    seen: 'sheen',
+    swaad: 'zwaad',
+    toe: 'zoe',
+    ain: 'ghain',
+    kaaf: 'gaaf',
+    noon: 'noon ghunna',
+    'choti-ye': 'baṛī ye',
+  };
+  const REQUIRES_BOTH_MARKS: Record<string, [RegExp, RegExp]> = {
+    daal: [/dot/i, /retroflex/i],
+    re: [/dot/i, /retroflex/i],
+  };
+  // `alif`'s own bucket has one variant (`alif-madda`), but "alif-madda" is
+  // not how the note names the mark and never would be — nobody would
+  // write a sentence naming a sibling letter by its data id rather than the
+  // actual diacritic. "madda" is the real, specific term (a named Arabic
+  // diacritic, not a generic word like "dot"), unique enough in this corpus
+  // that a mutation could not stumble into it by accident the way `daal`'s
+  // "dot" mutation did — checked on its own rather than folded into
+  // `NAMES_VARIANT`.
+  const UNIQUE_TERM: Record<string, RegExp> = { alif: /madda/i };
+
+  it('every multi-member confusable bucket in the real corpus is accounted for — 13, matching the item’s own count', () => {
+    const buckets = new Map<string, string[]>();
+    for (const l of LETTERS) {
+      const key = l.confusableWith ?? l.id;
+      if (!buckets.has(key)) buckets.set(key, []);
+      buckets.get(key)!.push(l.id);
+    }
+    const multiMemberBases = [...buckets.entries()].filter(([, ids]) => ids.length > 1).map(([base]) => base);
+    expect(multiMemberBases.length).toBe(13);
+    expect(multiMemberBases.sort()).toEqual(
+      [...Object.keys(NAMES_VARIANT), ...Object.keys(REQUIRES_BOTH_MARKS), ...Object.keys(UNIQUE_TERM)].sort()
+    );
+  });
+
+  it('alif names the actual diacritic (madda), a term specific enough not to appear by accident', () => {
+    for (const [base, pattern] of Object.entries(UNIQUE_TERM)) {
+      expect(contrastLine(getLetter(base)!), base).toMatch(pattern);
+    }
+  });
+
+  it('every single-variant base names that variant by id in the line a learner actually sees', () => {
+    for (const [base, variantId] of Object.entries(NAMES_VARIANT)) {
+      const letter = getLetter(base);
+      expect(letter, base).toBeDefined();
+      // Word-boundary match, not a bare substring — `re` sits inside other
+      // ids too, and this table's own ids are short enough that a loose
+      // substring check would be almost as gameable as the regex it replaced.
+      expect(contrastLine(letter!), base).toMatch(new RegExp(`\\b${variantId}\\b`, 'i'));
+    }
+  });
+
+  it('daal and re each name both marks their multiple variants carry — a dot and the retroflex mark', () => {
+    for (const [base, patterns] of Object.entries(REQUIRES_BOTH_MARKS)) {
+      const letter = getLetter(base);
+      expect(letter, base).toBeDefined();
+      const line = contrastLine(letter!);
+      for (const p of patterns) expect(line, `${base}: ${p}`).toMatch(p);
+    }
+  });
+
+  it('kaaf’s note no longer reads as endorsing gaaf’s extra stroke to a learner who just tapped it', () => {
+    const line = contrastLine(getLetter('kaaf')!);
+    expect(line).toMatch(/gaaf/i);
+    expect(line).toMatch(/second/i);
+  });
+
+  it('seen’s note no longer describes a shape sheen equally has', () => {
+    const line = contrastLine(getLetter('seen')!);
+    expect(line).toMatch(/sheen/i);
   });
 });

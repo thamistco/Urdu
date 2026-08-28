@@ -92,7 +92,7 @@ export const LETTERS: Letter[] = [
     emoji: '🍎',
     icon: 'pomegranate',
     group: 1,
-    note: 'A single upright stroke. It never joins to the letter after it, a natural break in the word.',
+    note: 'A single upright stroke, no madda (wavy hat) on top. It never joins to the letter after it, a natural break in the word.',
   },
   {
     id: 'alif-madda',
@@ -119,7 +119,7 @@ export const LETTERS: Letter[] = [
     meaning: 'cat',
     emoji: '🐈',
     group: 1,
-    note: 'One dot below. The bowl stays shallow in Nastaliq, it sits, it does not scoop.',
+    note: 'One dot below, not pe’s three. The bowl stays shallow in Nastaliq, it sits, it does not scoop.',
   },
   {
     id: 'pe',
@@ -187,7 +187,7 @@ export const LETTERS: Letter[] = [
     meaning: 'ship / plane',
     emoji: '✈️',
     group: 2,
-    note: 'A deep hook with one dot inside. The dot rides low, tucked in the belly.',
+    note: 'A deep hook with one dot inside, not che’s three. The dot rides low, tucked in the belly.',
   },
   {
     id: 'che',
@@ -214,7 +214,7 @@ export const LETTERS: Letter[] = [
     meaning: 'sweet dish',
     emoji: '🍮',
     group: 2,
-    note: 'A dotless deep curve. It sounds the same as choṭī he, inherited from Arabic, not Urdu’s everyday “h” (that’s ہ, choṭī he): anchor it to the word this lesson actually shows it in, خدا حافظ (khuda haafiz, “goodbye”), rather than guessing.',
+    note: 'A dotless deep curve; khe adds one dot above it. It sounds the same as choṭī he, inherited from Arabic, not Urdu’s everyday “h” (that’s ہ, choṭī he): anchor it to the word this lesson actually shows it in, خدا حافظ (khuda haafiz, “goodbye”), rather than guessing.',
   },
   {
     id: 'khe',
@@ -243,7 +243,7 @@ export const LETTERS: Letter[] = [
     meaning: 'heart',
     emoji: '❤️',
     group: 3,
-    note: 'A soft angled stroke. It never joins forward, so the next letter starts fresh.',
+    note: 'A soft angled stroke, no dot and no retroflex mark. It never joins forward, so the next letter starts fresh.',
   },
   {
     id: 'Daal',
@@ -284,7 +284,7 @@ export const LETTERS: Letter[] = [
     meaning: 'bread',
     emoji: '🫓',
     group: 3,
-    note: 'A shallow curve that dips below the line. Lightly rolled r.',
+    note: 'A shallow curve that dips below the line, no dots and no retroflex mark. Lightly rolled r.',
   },
   {
     id: 'Re',
@@ -341,7 +341,7 @@ export const LETTERS: Letter[] = [
     meaning: 'apple',
     emoji: '🍎',
     group: 4,
-    note: 'Three teeth. When it joins forward the teeth flatten almost to a line. The everyday “s”, the one to reach for by default in native and Persian vocabulary alike (دوست/dost “friend”, سبزی/sabzi “vegetable”), and in most Arabic loanwords too. ث and ص never occur outside Arabic/Persian loanwords, so seeing one of those two does mean “borrowed”, but seeing this one doesn’t rule borrowing out.',
+    note: 'Three teeth, no dots above them; sheen has three. When it joins forward the teeth flatten almost to a line. The everyday “s”, the one to reach for by default in native and Persian vocabulary alike (دوست/dost “friend”, سبزی/sabzi “vegetable”), and in most Arabic loanwords too. ث and ص never occur outside Arabic/Persian loanwords, so seeing one of those two does mean “borrowed”, but seeing this one doesn’t rule borrowing out.',
   },
   {
     id: 'sheen',
@@ -368,7 +368,7 @@ export const LETTERS: Letter[] = [
     meaning: 'soap',
     emoji: '🧼',
     group: 4,
-    note: 'A wide loop with a tail. It sounds the same as seen, inherited from Arabic, not Urdu’s everyday “s” (that’s س, seen): anchor it to the word this lesson actually shows it in, صفر (sifar, “zero”), rather than guessing.',
+    note: 'A wide loop with a tail, no dot above; zwaad has one. It sounds the same as seen, inherited from Arabic, not Urdu’s everyday “s” (that’s س, seen): anchor it to the word this lesson actually shows it in, صفر (sifar, “zero”), rather than guessing.',
   },
   {
     id: 'zwaad',
@@ -397,7 +397,7 @@ export const LETTERS: Letter[] = [
     meaning: 'parrot',
     emoji: '🦜',
     group: 5,
-    note: 'A loop with an upright stroke. It sounds like te, inherited from Arabic, not Urdu’s everyday “t” (that’s ت, te): anchor it to the word this lesson actually shows it in, خط (khat, “letter”), rather than guessing.',
+    note: 'A loop with an upright stroke, no dot above; zoe has one. It sounds like te, inherited from Arabic, not Urdu’s everyday “t” (that’s ت, te): anchor it to the word this lesson actually shows it in, خط (khat, “letter”), rather than guessing.',
   },
   {
     id: 'zoe',
@@ -424,7 +424,7 @@ export const LETTERS: Letter[] = [
     meaning: 'glasses',
     emoji: '👓',
     group: 5,
-    note: 'It shifts shape completely, so its four forms look very different. In Urdu it is not a throat sound: it usually just carries a vowel, or is silent.',
+    note: 'It shifts shape completely, so its four forms look very different, and carries no dot; ghain has one above. In Urdu it is not a throat sound: it usually just carries a vowel, or is silent.',
   },
   {
     id: 'ghain',
@@ -479,7 +479,7 @@ export const LETTERS: Letter[] = [
     meaning: 'book',
     emoji: '📖',
     group: 6,
-    note: 'The stroke on top is part of the letter, not an accent. Do not drop it.',
+    note: 'One stroke on top, part of the letter and not an accent; gaaf adds a second stroke above it. Do not drop it.',
   },
   {
     id: 'gaaf',
@@ -543,7 +543,7 @@ export const LETTERS: Letter[] = [
     meaning: 'name',
     emoji: '✍️',
     group: 7,
-    note: 'Deep bowl, one dot above. Joined forward it looks like be, the dot is the only tell.',
+    note: 'Deep bowl, one dot above; noon ghunna has none. Joined forward it looks like be, the dot is the only tell.',
   },
   {
     id: 'noon-ghunna',
@@ -630,7 +630,7 @@ export const LETTERS: Letter[] = [
     meaning: 'memory',
     emoji: '💭',
     group: 8,
-    note: 'Serves as “y” and the long vowel “ee”. Two dots below appear in some styles.',
+    note: 'Serves as “y” and the long vowel “ee” with a small hooked tail, not baṛī ye’s long sweeping one. Two dots below appear in some styles.',
   },
   {
     id: 'baRi-ye',
