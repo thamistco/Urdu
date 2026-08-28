@@ -188,9 +188,17 @@ export function LetterContrastExercise({ exercise, locked, onGraded }: ExerciseP
   );
 }
 
-/** "Which letter makes this sound?" — pick the glyph. */
+/**
+ * "Which letter makes this sound?" — pick the glyph.
+ *
+ * URD-060: every option renders at `exercise.position`, not always
+ * `isolated` — see this exercise's own type comment (`types.ts`) for why
+ * all of them share the one position rather than each keeping its own:
+ * a joining stroke only the correct tile carried would answer the
+ * question by shape alone.
+ */
 export function LetterPickExercise({ exercise, locked, onGraded }: ExerciseProps<PickEx>) {
-  const { letter, options } = exercise;
+  const { letter, options, position } = exercise;
   const [picked, setPicked] = useState<string | null>(null);
 
   const choose = (id: string) => {
@@ -226,7 +234,7 @@ export function LetterPickExercise({ exercise, locked, onGraded }: ExerciseProps
               onPress={() => choose(o.id)}
               className="mb-3 w-[48%]"
             >
-              <Urdu style={{ color: palette.paper, ...urduGlyph(32) }}>{o.forms.isolated}</Urdu>
+              <Urdu style={{ color: palette.paper, ...urduGlyph(32) }}>{o.forms[position]}</Urdu>
             </Choice>
           );
         })}

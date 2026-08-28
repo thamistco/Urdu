@@ -36,31 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-060 — six sightings cannot cover four joining forms once two are position-free
-attempts: 0
-files: src/exercises/generator.ts
-definition of done: the four joining forms are this app's central thesis, but
-  a letter's `SIGHTINGS_PER_LETTER` (6) sightings now include two that carry
-  no position at all — URD-020's `letterSpot` and URD-047's `letterContrast`
-  — and of the four that remain, roughly a third render as `letterPick`,
-  which also has no position (it asks which glyph makes a sound, with no form
-  to show). So the arithmetic does not close: measured after URD-047's
-  `nextPos` fix, 4 of 46 letter-slots still never see their `final` form and
-  36 of 46 miss at least one of the four. `nextPos` already stopped the
-  position cycle SKIPPING a step, which took `final` from 25 of 46 to 4 —
-  the residue needs the kind/position interaction changed, not the counter.
-  Options: give `letterPick` a position (show the prompt glyph in a form
-  rather than isolated), raise `SIGHTINGS_PER_LETTER`, or let the two
-  position-free kinds displace a `letterPick` rather than a form-bearing
-  sighting.
-verify: a test asserting every letter in every real letter lesson is shown
-  all four joining forms — the ceiling currently asserted in
-  `generator.test.ts` ("`final` reaches all but a handful") tightened to zero.
-notes: Found by CURRICULUM CRITIC reviewing URD-047, whose measurement of the
-  regression that item caused (14 of 46 missing `final` before, 25 after) is
-  what surfaced the older, larger gap underneath it. URD-047 fixed its own
-  regression and improved on the pre-existing number; this is the rest.
-
 ## URD-061 — the discrimination skill is practised twice in one lesson and never again
 attempts: 0
 files: src/exercises/generator.ts, src/lib/review.ts

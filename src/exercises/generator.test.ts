@@ -11,7 +11,7 @@ import {
   soundsOverlap,
   soundTokens,
 } from './generator';
-import { getLetter, LETTERS, type Letter } from '../data/letters';
+import { getLetter, LETTERS, POSITIONS, type Letter } from '../data/letters';
 import { resolveLesson, UNITS, ALL_LESSONS, type Lesson } from '../data/units';
 import { WORDS, getWord } from '../data/words';
 import { VERDICT_CUES, cueOf, NUMERALS, COLOURS, WORD_ICON } from '../data/art';
@@ -138,6 +138,41 @@ describe('distractLetters', () => {
     // 3 ever needed, and worth knowing the moment it stops being true.
     for (const letter of LETTERS) {
       expect(distractLetters(letter, n)).toHaveLength(n);
+    }
+  });
+
+  it('URD-060: given a position, never offers two options with the identical glyph there', () => {
+    // baRi-ye and choti-ye share no reading at all (they are not a
+    // soundsOverlap pair) yet render the identical stroke at `initial` and
+    // `medial` — confirmed directly against the real letter data. Once
+    // `letterPick` renders every option at one assigned position instead of
+    // always `isolated`, that pairing (and any other letters that happen to
+    // share a glyph at some position) becomes a genuinely unanswerable
+    // question: two option tiles with nothing on screen to tell them apart.
+    // Every letter, every position, not a sample — this is exactly the
+    // shape of bug a random sample could hide for years (THE CRITIC and
+    // CURRICULUM CRITIC each independently measured well under 10% of draws
+    // hitting it for the one pair that happens to exist today).
+    for (const letter of LETTERS) {
+      for (const p of POSITIONS) {
+        const options = [letter, ...distractLetters(letter, n, p.key)];
+        const glyphs = options.map((o) => o.forms[p.key]);
+        expect(new Set(glyphs).size).toBe(glyphs.length);
+      }
+    }
+  });
+
+  it('URD-060: still returns as many distractors as asked for once a position is given', () => {
+    // The new exclusion competes with the same 3-distractor floor the
+    // no-position test above already holds — worth its own assertion since
+    // a position argument shrinks the eligible pool further (sound overlap
+    // *and* glyph collision both rule candidates out now), and a silent
+    // drop to fewer than n options is exactly how a floor gets crossed
+    // without anyone noticing (see OPTIONS_PER_QUESTION's own history).
+    for (const letter of LETTERS) {
+      for (const p of POSITIONS) {
+        expect(distractLetters(letter, n, p.key)).toHaveLength(n);
+      }
     }
   });
 });
@@ -965,36 +1000,49 @@ describe('URD-047: a confusable letter is posed directly against its partner, no
     }
   });
 
-  it('does not cost the four joining forms — `final` still reaches all but a handful of letters', () => {
+  it('reaches all four joining forms for every letter in every real letter lesson — tightened to zero (URD-060)', () => {
     // CURRICULUM CRITIC, URD-047: replacing a sighting with a position-free
     // kind used to eat a step of the position cycle, because `positionIndex`
     // came from the round number. Measured on the `final` form (last in
     // POSITIONS, so first to fall off the end): 14 of 46 letter-slots never
     // saw it before this item, 25 of 46 after — a real regression. Counting
-    // position-bearing sightings instead (`nextPos`, generator.ts) takes it
-    // to 4, better than before the item existed.
+    // position-bearing sightings instead (`nextPos`, generator.ts) took it
+    // to 4, better than before the item existed but still not zero.
     //
-    // Asserted as a ceiling rather than zero because zero is not reachable
-    // here: `letterPick` carries no position at all, so a letter's four
-    // position-bearing sightings do not yield four rendered forms. See
-    // URD-060. The ceiling is what stops this silently regressing again.
-    let noFinal = 0;
+    // URD-060: the remaining 4 were `letterPick`, which used to carry no
+    // position at all — showing every option at `isolated` regardless of
+    // what `nextPos` assigned, so that call's own step of the cycle was
+    // silently spent on nothing. Fixed by giving `letterPick` a position
+    // too (every option now renders at it, not always `isolated`), which
+    // closes the gap completely rather than merely narrowing it further:
+    // every call to `nextPos` now corresponds to a form actually shown, so
+    // any letter with 4 or more such calls — every real letter, worst case
+    // exactly 4 (6 sightings minus a `letterSpot` context sighting minus a
+    // `letterContrast` sighting, when both apply) — sees 4 consecutive
+    // integers mod `POSITIONS.length`, which always covers every residue
+    // exactly once regardless of which kind each individual call lands on.
+    // Checked for all four forms, not just `final` — `final` was this
+    // test's own history, but the same argument applies to every position.
     let slots = 0;
+    const missing: string[] = [];
     for (const lesson of letterLessons()) {
       const exercises = buildLessonExercises(lesson, [], 'both', new Set());
       const formsOf = new Map<string, Set<string>>();
       for (const e of exercises) {
-        if (e.kind !== 'letterForm' && e.kind !== 'letterTrace') continue;
+        if (e.kind !== 'letterForm' && e.kind !== 'letterTrace' && e.kind !== 'letterPick') continue;
         if (!formsOf.has(e.letter.id)) formsOf.set(e.letter.id, new Set());
         formsOf.get(e.letter.id)!.add(e.position);
       }
       for (const id of lesson.letterIds ?? []) {
         slots++;
-        if (!formsOf.get(id)?.has('final')) noFinal++;
+        const seen = formsOf.get(id) ?? new Set();
+        for (const p of POSITIONS) {
+          if (!seen.has(p.key)) missing.push(`${lesson.id}/${id}: missing ${p.key} (has ${[...seen].join(',')})`);
+        }
       }
     }
     expect(slots).toBeGreaterThan(0);
-    expect(noFinal, `${noFinal} of ${slots} letter-slots never show their final form`).toBeLessThanOrEqual(4);
+    expect(missing, missing.join('\n')).toEqual([]);
   });
 });
 
