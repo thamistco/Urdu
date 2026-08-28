@@ -415,16 +415,38 @@ export const soundsOverlap = (a: Letter, b: Letter): boolean => {
  * merely share a *third* letter's reading, not each other's, to co-occur:
  * alif overlaps both alif-madda ("aa") and ain ("a"), but alif-madda and
  * ain do not overlap each other, and can still appear together.
+ *
+ * URD-060: `position` closes a second, independent collision this same
+ * loop can hit once `letterPick` renders every option at one shared
+ * position instead of always `isolated` (see `types.ts`'s comment on
+ * `letterPick` for why it does). Two letters can share zero sounds and
+ * still share a *glyph* at one non-isolated joining position — baRi-ye
+ * and choti-ye render the identical stroke at `initial` and `medial`,
+ * despite being unrelated by sound and only linked at all by sitting in
+ * each other's `confusableWith` bucket. A same-sound exclusion never sees
+ * that collision, so a candidate whose glyph at `position` is already
+ * spoken for is tracked and skipped exactly the way a claimed sound token
+ * is, including distractor-vs-distractor: `usedGlyphs` starts with the
+ * target's own glyph at `position` and grows with each distractor picked,
+ * so two distractors that collide only with *each other* (not the target)
+ * are still caught. Confirmed live: without this, `baRi-ye` drawn against
+ * `choti-ye` at `initial` or `medial` put two literally identical option
+ * tiles on screen, one graded correct and one wrong, with nothing on
+ * screen to tell them apart — a real, measured ~0.35% of all `letterPick`
+ * draws (258,000-draw simulation), not a hypothetical.
  */
-export function distractLetters(letter: Letter, n: number): Letter[] {
+export function distractLetters(letter: Letter, n: number, position?: PositionKey): Letter[] {
   const usedTokens = new Set(soundTokens(letter));
+  const usedGlyphs = new Set(position ? [letter.forms[position]] : []);
   const picked: Letter[] = [];
   for (const candidate of shuffle(LETTERS)) {
     if (picked.length >= n) break;
     if (candidate.id === letter.id) continue;
     const tokens = soundTokens(candidate);
     if (tokens.some((t) => usedTokens.has(t))) continue;
+    if (position && usedGlyphs.has(candidate.forms[position])) continue;
     tokens.forEach((t) => usedTokens.add(t));
+    if (position) usedGlyphs.add(candidate.forms[position]);
     picked.push(candidate);
   }
   return picked;
@@ -444,8 +466,8 @@ function letterExercise(letter: Letter): Exercise {
   if (roll < 0.72) {
     return { kind: 'letterForm', letter, position, options: POSITIONS.map((p) => p.key) };
   }
-  const distractors = distractLetters(letter, DISTRACTORS);
-  return { kind: 'letterPick', letter, options: shuffle([letter, ...distractors]) };
+  const distractors = distractLetters(letter, DISTRACTORS, position);
+  return { kind: 'letterPick', letter, position, options: shuffle([letter, ...distractors]) };
 }
 
 /**
@@ -492,8 +514,8 @@ function letterExerciseAt(letter: Letter, turn: number, positionIndex: number): 
   if (t !== 2) {
     return { kind: 'letterForm', letter, position, options: POSITIONS.map((p) => p.key) };
   }
-  const distractors = distractLetters(letter, DISTRACTORS);
-  return { kind: 'letterPick', letter, options: shuffle([letter, ...distractors]) };
+  const distractors = distractLetters(letter, DISTRACTORS, position);
+  return { kind: 'letterPick', letter, position, options: shuffle([letter, ...distractors]) };
 }
 
 /**
@@ -1314,13 +1336,29 @@ export function buildLessonExercises(
      * rotate WHICH form a letter starts on, so two letters in a round are
      * still not shown the same form and two sibling lessons still differ.
      *
-     * This does not reach full coverage, and cannot: `letterPick` carries no
-     * position at all (it asks which glyph makes a sound, with no form to
-     * show), so of a letter's four position-bearing sightings roughly a third
-     * render no form. Six sightings minus two position-free kinds cannot
-     * cover four forms once a third of the remainder is also position-free.
-     * Closing that needs the kind/position interaction redesigned rather than
-     * the counter fixed — filed as URD-060.
+     * URD-060: this alone did not reach full coverage, because `letterPick`
+     * used to carry no position at all (it asks which glyph makes a sound;
+     * showing every option at `isolated` answered that with no form on
+     * screen) — so of a letter's four-or-so position-bearing sightings,
+     * roughly a third rendered no form, and `nextPos`'s own counter still
+     * advanced on that call, silently spending one of the 4-position cycle's
+     * steps on a sighting nothing displayed. Measured after the fix above:
+     * 4 of 46 letter-slots still never saw `final`.
+     *
+     * Fixed by giving `letterPick` a position too (see its own type comment,
+     * `types.ts`) — every option renders at the assigned position rather than
+     * always `isolated`, so every call to `nextPos` now corresponds to a
+     * position actually shown. This closes the gap completely, not just
+     * narrows it, and provably so rather than merely measured better: `seq`
+     * advances by exactly 1 on every position-bearing call for a given
+     * letter (never skipped, per the fix above), so any letter with 4 or
+     * more such calls sees 4 consecutive integers mod `POSITIONS.length` —
+     * which always covers every residue exactly once, regardless of which
+     * kind (`letterTrace`/`letterForm`/`letterPick`) each individual call
+     * happens to land on. A letter's worst case is exactly 4 calls (6
+     * sightings minus one `letterSpot` context sighting minus one
+     * `letterContrast` sighting, when both apply), so every letter clears
+     * the threshold, not just most of them.
      */
     const posSeq = new Map<string, number>();
     const nextPos = (id: string, idx: number) => {

@@ -302,6 +302,25 @@ function check(ex, track) {
             );
         }
       }
+      // URD-060: every option renders at `ex.position` (not always
+      // `isolated`), and two unrelated-by-sound letters can still share a
+      // glyph at one joining position — baRi-ye and choti-ye render the
+      // identical stroke at `initial` and `medial` despite sharing no
+      // reading. `soundsOverlap` above cannot see that; it only compares
+      // `sound` strings. Two options rendering the same string at the
+      // position actually shown is a strictly worse version of the same
+      // "two right answers" bug the sound check exists to catch, so it gets
+      // the same fail-fast treatment rather than shipping as a silent,
+      // low-probability event.
+      for (let i = 0; i < ex.options.length; i++) {
+        for (let j = i + 1; j < ex.options.length; j++) {
+          if (ex.options[i].forms[ex.position] === ex.options[j].forms[ex.position])
+            fail(
+              'letterPick offers two options with the identical glyph at the shown position',
+              `${ex.letter.id} @ ${ex.position}: ${ex.options[i].id} vs ${ex.options[j].id}`
+            );
+        }
+      }
       break;
     }
 

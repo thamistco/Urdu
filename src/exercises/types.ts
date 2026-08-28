@@ -20,7 +20,20 @@ export type Exercise =
   | {
       kind: 'letterPick';
       letter: Letter;
-      /** pick the correct isolated glyph from letters */
+      /**
+       * Every option (the answer and every distractor alike) renders at
+       * this position, not always `isolated` — see the generator's own
+       * comment on `nextPos`/URD-060 for why: this was the one
+       * position-eligible letter-teaching kind that never actually
+       * showed a position, wasting a step of the 4-form cycle every time
+       * it was drawn. All options share one position rather than each
+       * showing its own so the correct option is never visually distinct
+       * from the distractors on that axis alone — a joining stroke only
+       * one tile carries would answer the question before the learner
+       * reads a single glyph.
+       */
+      position: PositionKey;
+      /** pick the correct glyph from letters, all shown at `position` */
       options: Letter[];
     }
   | {

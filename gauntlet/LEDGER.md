@@ -6111,3 +6111,131 @@ $ npm run check:all
   all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-answerable-position-band
+
+## CLAIMED · URD-060 · 2026-08-28T02:45Z
+files: src/exercises/generator.ts, src/exercises/types.ts,
+src/exercises/LetterExercises.tsx, src/exercises/generator.test.ts,
+scripts/check-answerable.js, scripts/soak.js
+branch: claude/gauntlet-letter-form-coverage, cut from
+claude/gauntlet-answerable-position-band after URD-059 shipped.
+
+## CRITIQUE · URD-060
+Took the "give `letterPick` a position" branch. `letterPick` gained a
+`position: PositionKey` field; both construction sites pass the position
+already computed for that call instead of discarding it; the exercise
+component renders every option at that position instead of always
+`isolated`. `nextPos`'s doc comment now states the closed guarantee: every
+call corresponds to a position actually shown, so any letter with 4+
+calls sees 4 consecutive integers mod 4, covering all four positions.
+
+`generator.test.ts`'s ceiling test replaced with a zero-tolerance one:
+every letter in every real letter lesson must show all four positions,
+no missing count allowed. Revert-verified: forcing `letterPick` back to
+`isolated` reproduced 24-36 concrete missing-position failures across
+nearly every real lesson.
+
+Dispatched both THE CRITIC and CURRICULUM CRITIC via the WIP-commit review
+pattern.
+
+**Both independently found the same real BLOCKING bug, via two different
+empirical methods.** `distractLetters` excludes candidates only by
+sound-token overlap, never by `confusableWith` bucket or rendered-glyph
+identity. `baRi-ye`/`choti-ye` — each other's own `confusableWith`
+partner, sharing zero reading — render the byte-identical glyph at
+`initial` and `medial` (confirmed directly against the real data). Once
+`letterPick` renders every option at one shared position, this pair can
+land together at `initial`/`medial` and put two literally identical
+option tiles on screen, one graded correct and one wrong — genuinely
+unanswerable. THE CRITIC: 258,000-draw Monte Carlo simulation, 900
+collisions (~0.35% of all `letterPick` draws). CURRICULUM CRITIC: 5,000
+direct `distractLetters(baRi-ye, 3)` samples, ~7% pulled in `choti-ye`.
+Both independently re-verified by me directly before treating either as
+confirmed.
+
+**Fixed**: `distractLetters` gained an optional `position` parameter,
+tracking a `usedGlyphs` set alongside the existing `usedTokens` set
+(seeded with the target's own glyph, grown with each distractor picked)
+so it excludes any candidate whose glyph at `position` is already
+claimed — by the target or by an already-picked distractor. Generalizes
+past the one named pair: catches any future letter pair that happens to
+share a glyph at any position. Both `letterPick` construction sites now
+pass `position` through.
+
+Verified directly, beyond the new unit test: 20,000 draws at the known
+colliding position (0 collisions, reproduced with the un-fixed function
+moments earlier); an exhaustive sweep of every real letter × every
+position × 300 draws (48,000 draws, 0 collisions anywhere, not just the
+known pair); a starvation check across the same sweep at 200 draws each
+(32,000 draws, distractor floor of 3 always met); and a live regression
+check — reverting only `distractLetters` and re-running
+`check-answerable` immediately failed with a *distractor-vs-distractor*
+collision (`fe @ medial: baRi-ye vs choti-ye`) that neither critic's
+example named, confirming the general fix (not a special case) is what's
+needed.
+
+Two exhaustive unit tests added (every real letter × every position, not
+a sample): no glyph collision at the given position; distractor floor
+still holds once a position is given.
+
+**`check-answerable.js`'s `letterPick` case gained a glyph-uniqueness
+assertion**, per both critics' explicit recommendation. Revert-verified:
+fires by name on the exact pair against the un-fixed generator.
+
+**CURRICULUM CRITIC raised a further MAJOR**: round 0 (a letter's
+absolute first sighting) used to always render `isolated` even when
+`letterPick` was picked, so a letter's first-ever look was always the
+stable canonical shape; this diff removes that.
+
+**Investigated, not fixed — the premise doesn't hold.** Measured directly
+across all 9 real lessons: 12 of 46 letters' first sighting is
+`letterPick` (11 now non-`isolated`), but 19 land on `letterTrace` and 15
+on `letterForm` — both already honour `position` and always have, and 20
+of those 34 were *already* non-`isolated` before this diff touched
+anything. `nextPos` assigns a rotating position to every call regardless
+of which kind consumes it; `letterForm`/`letterTrace` were never
+special-cased to stay `isolated` at round 0. No "round 0 is always
+canonical" invariant exists elsewhere to have regressed — this diff
+brings the remaining 12 letters in line with the other 20's existing
+behaviour. Building such an invariant now would be new scope and would
+cut into the coverage guarantee this item exists to close.
+
+**CURRICULUM CRITIC's third finding was architectural, not a defect**: a
+preference for the queue item's third alternative (let position-free
+kinds displace `letterPick` instead) over the branch taken. No concrete
+failure demonstrated for the branch taken — acknowledged as a considered
+alternative, not acted on.
+
+## PASSED · URD-060 · 2026-08-28T03:10Z
+No unresolved BLOCKING; the one real BLOCKING finding (glyph collision)
+fixed and re-verified beyond the repro that found it. One MAJOR
+investigated and shown not to hold (round-0 canonical-shape premise was
+already false for 20 of 46 letters before this diff). One architectural
+preference acknowledged, not acted on.
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ npx vitest run
+  261/261, including two new exhaustive `distractLetters` tests and the
+  tightened zero-tolerance coverage test.
+
+$ node scripts/check-answerable.js
+  clean; live regression check against the un-fixed generator confirmed
+  the new glyph-uniqueness assertion fires by name.
+
+$ npm run check:shape
+  clean.
+
+$ npm run check:all
+  all 30 steps pass against a deploy-shaped build, on a second full run.
+  A first run failed at `check:home-scroll` — a step unrelated to this
+  diff (home-screen scroll/accordion). Verified rather than assumed
+  (non-negotiable 1): reverted to pre-URD-060 and ran it alone (passed),
+  restored this diff and ran it alone three more times (passed every
+  time), then re-ran the full pipeline end to end a second time, clean.
+  Did not reproduce under any condition — a timing flake (the step waits
+  a fixed 1500ms for the app to render under a simulated deep-progress
+  login), most likely this session's own concurrent load at the time, not
+  a regression.
+
+branch: claude/gauntlet-letter-form-coverage

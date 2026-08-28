@@ -359,11 +359,18 @@ async function candidateOptions(page) {
  * `letterTrace`. Returns false (never throws) whenever it cannot find what
  * it is looking for, so the caller can fall back to the old random pick
  * rather than answering nothing at all.
+ *
+ * `expected` may be one string or several — URD-060: `letterPick` renders
+ * every option at whichever position the exercise picked, not always
+ * `isolated`, so a caller that only knows the letter (not which position
+ * was chosen) can pass all four of its forms and match whichever one is
+ * actually on screen, the same way `answerLetterForm` already checks a
+ * glyph against every entry in `letter.forms` rather than assuming one.
  */
 async function clickMatching(page, btns, candidates, expected, wrongOnPurpose) {
   if (!expected) return false;
-  const target = normalize(expected);
-  const match = candidates.find((c) => c.lines.includes(target));
+  const targets = (Array.isArray(expected) ? expected : [expected]).map(normalize);
+  const match = candidates.find((c) => c.lines.some((l) => targets.includes(l)));
   if (!match) return false;
   const chosen = wrongOnPurpose ? candidates.find((c) => c !== match) : match;
   if (!chosen) return false; // wrongOnPurpose with nothing else on screen to pick
@@ -492,8 +499,11 @@ async function answerLetterForm(page, text, wrongOnPurpose) {
  *  — through a plain `Txt`, not `letterForm`'s `Eyebrow`, so the name
  *  reaches the screen in its real case and `letterByNameExact` resolves
  *  every letter, `te`/`Te` included, with no ambiguity to break (see that
- *  index's own comment). The correct option is the one whose own glyph is
- *  that letter's isolated form. */
+ *  index's own comment). The correct option is the one whose own glyph
+ *  matches the letter — at whichever position the exercise picked
+ *  (URD-060: no longer always `isolated`), so every one of the letter's
+ *  own forms is a candidate match, the same way `answerLetterForm` checks
+ *  a glyph against all four rather than assuming one. */
 async function answerLetterPick(page, text, wrongOnPurpose) {
   const letter = text
     .split('\n')
@@ -502,7 +512,7 @@ async function answerLetterPick(page, text, wrongOnPurpose) {
     .find(Boolean);
   if (!letter) return false;
   const { btns, candidates } = await candidateOptions(page);
-  return clickMatching(page, btns, candidates, letter.forms.isolated, wrongOnPurpose);
+  return clickMatching(page, btns, candidates, Object.values(letter.forms), wrongOnPurpose);
 }
 
 /**
