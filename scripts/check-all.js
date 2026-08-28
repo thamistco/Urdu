@@ -36,6 +36,29 @@ const WORKFLOW = path.join(ROOT, '.github', 'workflows', 'deploy-preview.yml');
 const REPO = 'Urdu'; // matches github.event.repository.name in the workflow
 
 /**
+ * URD-057: caught here, first, unconditionally — before the workflow is
+ * even read — rather than as a parsed step. A stray scratch file left
+ * under `src/`/`scripts/` by a dispatched critic has nothing to do with
+ * the workflow's own step list (CI's fresh checkout never has one at
+ * all; this is purely a shared-local-checkout hazard), and it is cheap
+ * to name directly rather than let it surface, unexplained, as a
+ * confusing `lint`/`format:check` failure many steps in. See
+ * `lib/clean-tree.js` for why an ignore pattern is the wrong fix.
+ */
+{
+  const { strayFiles } = require('./lib/clean-tree');
+  const stray = strayFiles();
+  if (stray.length) {
+    console.error(
+      `check:all — ${stray.length} untracked file${stray.length === 1 ? '' : 's'} under src/ or scripts/ — this is what would have failed lint/format:check confusingly, several steps in:\n`
+    );
+    for (const f of stray) console.error(`  ${f}`);
+    console.error('\nRemove it, or move it under the session scratchpad, then run check:all again.');
+    process.exit(1);
+  }
+}
+
+/**
  * Pull the runnable commands out of the workflow, in order.
  *
  * Only `npm …` and `node scripts/…` lines are taken. The rest of the job —

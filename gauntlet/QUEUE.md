@@ -36,31 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-057 — a subagent's scratch file in src/ or scripts/ silently breaks the next gating run
-attempts: 0
-files: scripts/check-all.js, scripts/check-*.js (a new one, likely)
-definition of done: `npm run lint` globs `src/**/*.{ts,tsx}` and
-  `scripts/**/*.js`, and `format:check` globs the same, with no scratch
-  exclusion in either `.gitignore` or `.prettierignore`. So any file a
-  dispatched critic leaves in those directories becomes a gating failure
-  for whoever runs next, attributed to their work rather than to the
-  stray file. This has now happened on at least two separate items
-  (URD-041's `verify041.js` broke `format:check`; URD-045 accumulated five
-  — `scripts/critic-letterspot.js`, `scripts/debug-nav.js`,
-  `scripts/debug-lesson0.js`, and two `src/exercises/__scratch_*.test.ts`).
-  Fail loudly and by name: list untracked files under `src/` and
-  `scripts/` and fail naming them, so the lead is told rather than having
-  to hunt through a confusing lint error.
-verify: create an untracked file under `src/`, run the check, and watch it
-  fail naming that exact path; remove it and watch the check pass.
-notes: Found by the OVERSEER reviewing URD-045, alongside a dispatch-prompt
-  rule (now in ROLES.md) telling critics not to write there in the first
-  place. Both are wanted: the rule reduces the incidence, this makes the
-  residue legible. Deliberately do NOT fix this by adding ignore patterns
-  to `.prettierignore`/`.gitignore` — a scratch file that silently passes
-  the checks is worse than one that breaks them, because it can then sit
-  in the tree indefinitely and get committed by an unrelated `git add -A`.
-
 ## URD-059 — the answer-position band's own stated justification does not survive arithmetic
 attempts: 0
 files: scripts/check-answerable.js
