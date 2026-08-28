@@ -36,29 +36,6 @@ where they came from, are in gauntlet/BENCHMARKS.md.
 
 ---
 
-## URD-064 — soak's --track flag accepts any string and writes it straight into storage
-attempts: 0
-files: scripts/soak.js
-definition of done: `const TRACK = arg('track', 'both')` (`soak.js`) does no
-  validation against the real `LearnTrack` enum (`'script' | 'roman' |
-  'both'`, `useSettingsStore.ts`) — a typo like `--track roams` now writes
-  `{track: 'roams'}` straight into `harf-settings` via URD-051's
-  `trackSettingsFor`, and `generator.ts`'s own `track !== 'roman'` checks
-  treat anything that isn't literally `'roman'` as script-teaching, with no
-  error anywhere in the chain. Fail loudly at startup instead: reject an
-  unrecognised `--track` value by name, before the browser ever opens.
-verify: `npm run soak -- --track roams` exits non-zero with a message
-  naming the bad value and the three it accepts, rather than silently
-  running with a track the app itself doesn't recognise.
-notes: Found by THE CRITIC reviewing URD-051 — the same "silently wrong,
-  not caught" shape that item fixed, just one layer up (the CLI arg itself,
-  rather than what `enterAsGuest` did with it once parsed). Pre-existing:
-  the unchecked `arg()` call was already there before URD-051, which only
-  gave the string somewhere real to land. Not blocking for URD-051 — every
-  value `soak.js` itself ever passes is one of the three valid strings, and
-  `check:soak-track` only exercises those three, so this is a hardening
-  item for a human mistyping the flag, not a defect in generated content.
-
 ## URD-065 — check:theme's withAlpha rule cannot see a faded text colour reached through a variable
 attempts: 0
 files: scripts/check-theme.js

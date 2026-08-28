@@ -144,16 +144,50 @@ const SHOTS = path.join(ROOT, '.soak');
 
 // ---------------------------------------------------------------- arguments
 
+/**
+ * URD-064 (THE CRITIC): `--name value` was the only form this recognised —
+ * `--track=roman`, an equally ordinary CLI convention, matched neither
+ * branch and silently fell through to `fallback` with no error, for every
+ * flag this file has, not only `--track`. Reproduced live: `soak.js
+ * --track=roman --lessons 0` printed "track both", the exact "no error
+ * anywhere in the chain" failure this item exists to close, just reached
+ * through `=` instead of a typo. `--name=value` is checked first (an
+ * empty value after `=`, `--track=`, deliberately falls through to
+ * `fallback` rather than becoming an empty string no caller expects).
+ */
 const arg = (name, fallback) => {
+  const eq = process.argv.find((a) => a.startsWith(`--${name}=`));
+  if (eq) {
+    const value = eq.slice(name.length + 3);
+    if (value) return value;
+  }
   const i = process.argv.indexOf(`--${name}`);
   return i > -1 && process.argv[i + 1] && !process.argv[i + 1].startsWith('--') ? process.argv[i + 1] : fallback;
 };
-const has = (name) => process.argv.includes(`--${name}`);
+const has = (name) => process.argv.includes(`--${name}`) || process.argv.some((a) => a.startsWith(`--${name}=`));
 
 const SEED = Number(arg('seed', Math.floor(Math.random() * 1e7)));
 const MINUTES = Number(arg('minutes', has('lessons') ? Infinity : 10));
 const MAX_LESSONS = Number(arg('lessons', Infinity));
+/**
+ * URD-064: unchecked before this — `arg('track', ...)` is a bare string
+ * off the command line, and nothing between here and `trackSettingsFor`
+ * (below) ever compared it against the app's own `LearnTrack` union
+ * (`'script' | 'roman' | 'both'`, `useSettingsStore.ts`). A typo like
+ * `--track roams` used to write `{track: 'roams'}` straight into
+ * `harf-settings` and run the whole session anyway: `generator.ts`'s own
+ * `track !== 'roman'` checks treat anything that isn't literally
+ * `'roman'` as script-teaching, so the run would silently behave like
+ * `'both'` under a label nobody chose, with no error anywhere in the
+ * chain. Failing loudly here, before the browser ever opens, is cheaper
+ * than a human noticing the mislabelled run only after it finishes.
+ */
+const VALID_TRACKS = ['script', 'roman', 'both'];
 const TRACK = arg('track', 'both');
+if (!VALID_TRACKS.includes(TRACK)) {
+  console.error(`soak — unrecognised --track "${TRACK}"; expected one of: ${VALID_TRACKS.join(', ')}`);
+  process.exit(1);
+}
 const HEADED = has('headed');
 const START = Number(arg('start', 0));
 const REQUIRE = (arg('require', '') || '')

@@ -30,6 +30,7 @@
     "check:home-scroll": "node scripts/check-home-scroll.js",
     "check:stage-advance-scroll": "node scripts/check-stage-advance-scroll.js",
     "check:soak-track": "node scripts/check-soak-track.js",
+    "check:soak-track-arg": "node scripts/check-soak-track-arg.js",
     "check:all-lock": "node scripts/check-all-lock.js",
     "check:clean-tree": "node scripts/check-clean-tree.js",
     "check:all": "node scripts/check-all.js",
