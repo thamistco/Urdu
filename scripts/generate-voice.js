@@ -257,8 +257,12 @@ function collectItems() {
   for (const p of PASSAGES) p.lines.forEach((l, i) => add(`${p.id}-${i}`, l.urdu, CAST.narrator, PACE.connected));
   for (const d of DIALOGUES)
     d.lines.forEach((l, i) => add(`${d.id}-${i}`, l.urdu, castFor(d, l.speaker), PACE.connected));
-  // Letters are announced by id too, when a traced letter is accepted.
-  for (const l of LETTERS) add(l.id, l.forms?.isolated || l.glyph || l.forms?.initial);
+  // Letters are announced by id too, when a traced letter is accepted. Two of
+  // them carry `pronounce` for the same reason a word does: `ھ` and `ں` are
+  // silent on their own, so the isolated glyph is not something a voice can
+  // read — see that field's own comment in `letters.ts`, and
+  // `check:voice-fidelity`, which is what found the clips it produced.
+  for (const l of LETTERS) add(l.id, l.pronounce || l.forms?.isolated || l.glyph || l.forms?.initial);
   return items;
 }
 

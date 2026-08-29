@@ -42,6 +42,26 @@ export type Letter = {
    */
   icon?: IconName;
   note: string;
+  /**
+   * What the voice clip should say, when the glyph itself will not do.
+   *
+   * `generate-voice.js` records a letter by synthesising its isolated form —
+   * handed `ب`, a TTS engine says "be", which is exactly right for 38 of the
+   * 40 letters. It cannot work for the two that have no standalone
+   * pronunciation at all: `ھ` and `ں` modify the letter or vowel *before*
+   * them and are silent alone (the same fact `functionNote` teaches, URD-071).
+   * Asked to voice a bare `ھ`, Google's TTS refused the narrator voice
+   * entirely, fell back to an older model, and produced 3.12 seconds against
+   * a 1.13s median for letter clips — the largest gap between the two voice
+   * sets anywhere in the corpus (`check:voice-fidelity`, which found this).
+   *
+   * So those two say their *name*, which is what a teacher says out loud when
+   * pointing at the letter. Named after `Word.pronounce` (`words.ts`), which
+   * exists for the same reason one level down: a spelling the engine would
+   * otherwise have to guess at gets an explicit reading instead. Like that
+   * field, it is never rendered — it only ever reaches the speech engine.
+   */
+  pronounce?: string;
   /** Rough teaching group for the learning path. */
   group: number;
   /**
@@ -585,6 +605,8 @@ export const LETTERS: Letter[] = [
     icon: 'check',
     group: 7,
     note: 'A dotless noon at the end of a word, it nasalises the vowel before it.',
+    // Silent alone, so the clip says its name. See `pronounce`'s own comment.
+    pronounce: 'نون غنہ',
     confusableWith: 'noon',
     functionNote: 'Silent on its own. It sends the vowel before it through the nose, like French bon.',
   },
@@ -671,6 +693,8 @@ export const LETTERS: Letter[] = [
     emoji: '🍲',
     group: 8,
     note: 'The h with two eyes. It never stands alone in meaning, it aspirates the letter before it (k→kh, b→bh).',
+    // Silent alone, so the clip says its name. See `pronounce`'s own comment.
+    pronounce: 'دو چشمی ہے',
     // URD-067: deliberately no `confusableWith: 'choti-he'` — see the group 8
     // header above. "The h with two eyes" names this letter's own eyes, not a
     // mark added to ہ's outline, which is what a link would assert.
