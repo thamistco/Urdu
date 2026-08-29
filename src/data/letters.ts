@@ -576,38 +576,48 @@ export const LETTERS: Letter[] = [
 
   // ---- Group 8: the h family & vowely ends ------------------------------
   //
-  // URD-067: `choti-he` (ہ) and `do-chashmi-he` (ھ) share this group and are
-  // taught back to back, and neither names the other via `confusableWith`.
-  // That is deliberate, not an omission. `confusableWith`'s own contract (see
-  // its doc comment above) is "same base shape, distinguished only by a dot or
-  // diacritic", and these two do not meet it — measured, not assumed, by
-  // rendering all four forms of each at the letter lab's own `urduGlyph(72)`
-  // in the app's own Nastaliq and measuring the ink:
+  // URD-067: `choti-he` (ہ) and `do-chashmi-he` (ھ) share this group — the
+  // header above calls it the h family — are taught back to back, and neither
+  // names the other via `confusableWith`. That is deliberate, not an omission.
   //
-  //   pair                       glyph width      ink area
-  //   baRi-he ~ khe (declared)   1.00x all forms  1.08-1.17x
-  //   kaaf ~ gaaf   (declared)   1.00x all forms  1.07-1.15x
-  //   choti-he ~ do-chashmi-he   1.17-2.47x       1.16-1.86x
+  // The criterion is the one `confusableWith`'s own doc comment states: a link
+  // is warranted where a letter's curated note describes the shared shape
+  // ("Same bowl as be", "One dot above the ح (baṛī he) curve"). That holds
+  // across the whole corpus — all 16 declared pairs are documented that way
+  // from one side or the other, checked in `letters.test.ts` — and neither
+  // note here claims it. `do-chashmi-he`'s "The h with two eyes" names its own
+  // eyes, not a mark added to ہ's outline, and `choti-he`'s note names ح, not
+  // ھ. Rendering all four forms of each at the letter lab's own
+  // `urduGlyph(72)` in the app's own Nastaliq agrees: ھ cannot be obtained by
+  // adding anything to ہ, the way khe is baṛī he plus a dot or gaaf is kaaf
+  // plus a stroke. Its two eyes are the body of a wider, flatter letter, near
+  // identical across its four forms, where ہ is compact and its four faces
+  // differ sharply (its own note says so). Re-render with
+  // `node scripts/measure-glyph-pair.js choti-he do-chashmi-he --png out.png`.
   //
-  // A genuine base-plus-mark pair has, by construction, the *same* glyph width
-  // — the mark adds a dot's worth of ink to an unchanged outline, which is
-  // exactly what both declared pairs measure. ھ is not ہ with two dots added:
-  // it is a wider, flatter double-loop whose "two eyes" are its whole body,
-  // near-identical across all four of its forms, while ہ is compact and its
-  // four faces differ dramatically from each other (its own note says so).
+  // Two tempting shortcuts were measured and both fail — recorded so the next
+  // reader does not re-derive them:
   //
-  // The shipped trace masks disagree — they score this pair 0.443, effectively
-  // tied with baRi-he ~ khe's 0.458 — and they are the wrong instrument here:
-  // `generate-glyph-masks.js` frames every glyph in its own square scaled to
-  // its own longest edge, which discards precisely the size and aspect
-  // difference that separates these two. Same teaching group is not the
-  // criterion either; all 16 existing links are same-group, so that is a
-  // property of every link rather than a reason for one.
+  //   The shipped trace masks score this pair 0.443, effectively tied with the
+  //   genuinely confusable baRi-he ~ khe at 0.458. They normalise every glyph
+  //   into its own square (`generate-glyph-masks.js`), discarding scale, and
+  //   they rank 114 *undeclared* pairs above this one.
+  //
+  //   Rendered glyph width does not discriminate either. It is 1.00x across
+  //   all four forms for baRi-he ~ khe and kaaf ~ gaaf, which invites the rule
+  //   "a mark leaves the outline's width alone" — but declared pairs run to
+  //   4.00x (alif ~ alif-madda, where the madda dwarfs a bare upright) and
+  //   2.29x (noon ~ noon-ghunna), both wider apart than this pair's 2.47x.
+  //
+  // Same teaching group is not the criterion either: all 16 links are
+  // same-group, so that is a property of every link rather than a reason for
+  // one.
   //
   // The two are of course easy to *confuse in use* — both romanise as "h".
   // That is a sound-and-function question, which URD-053 handled in these
   // notes; `confusableWith` is documented as visual shape, and linking them
-  // would put an unrelated pair into `letterContrast`'s head-to-head drill.
+  // would put the pair into `letterContrast`'s head-to-head drill, which
+  // exists for telling near-identical outlines apart.
   {
     id: 'choti-he',
     name: 'choṭī he',
@@ -634,8 +644,8 @@ export const LETTERS: Letter[] = [
     group: 8,
     note: 'The h with two eyes. It never stands alone in meaning, it aspirates the letter before it (k→kh, b→bh).',
     // URD-067: deliberately no `confusableWith: 'choti-he'` — see the group 8
-    // header above for the measurement. "The h with two eyes" names this
-    // letter's own eyes, not a mark added to ہ's outline.
+    // header above. "The h with two eyes" names this letter's own eyes, not a
+    // mark added to ہ's outline, which is what a link would assert.
   },
   {
     id: 'hamza',

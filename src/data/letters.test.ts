@@ -295,38 +295,47 @@ describe('URD-062: a base letter’s note names the mark that separates it from 
  * URD-067: `choti-he` (ہ) and `do-chashmi-he` (ھ) share teaching group 8 —
  * the file's own comment calls it "the h family" — are taught back to back,
  * and neither names the other via `confusableWith`. This pins that as a
- * decision rather than an omission, which is what the item asked for either
- * way the answer went.
+ * decision rather than an omission, which the item asked for whichever way
+ * the answer went.
  *
- * The answer is that they are not a visual confusable pair, measured rather
- * than argued from the glyphs' Unicode names: all four forms of each were
- * rendered at the letter lab's own `urduGlyph(72)` in the app's own Nastaliq
- * and their ink measured. Both pairs the corpus already declares confusable
- * come out at *identical glyph width* in every form (baRi-he ~ khe and
- * kaaf ~ gaaf, 1.00x, ink differing 7-17% — a mark's worth on an unchanged
- * outline, exactly what "same base shape plus a dot" predicts). ہ and ھ
- * differ 1.17-2.47x in width and up to 1.86x in ink: ھ is a wider, flatter
- * double-loop, not ہ with two dots added.
+ * The answer is no link, on the criterion `confusableWith`'s own doc comment
+ * states: a link is warranted where a letter's curated note describes the
+ * shared shape ("Same bowl as be", "One dot above the ح (baṛī he) curve").
+ * The third test below is that criterion as a corpus invariant — all 16
+ * declared pairs are documented that way from one side or the other, and the
+ * h pair from neither. `do-chashmi-he`'s "The h with two eyes" names its own
+ * eyes, not a mark added to ہ, and `choti-he`'s note names ح, not ھ. Rendering
+ * all four forms at the letter lab's own `urduGlyph(72)` in the app's own
+ * Nastaliq agrees: ھ cannot be got by adding anything to ہ, the way khe is
+ * baṛī he plus a dot.
  *
- * The shipped trace masks score the pair 0.443, near baRi-he ~ khe's 0.458,
- * and are the wrong instrument — `generate-glyph-masks.js` normalises every
- * glyph into its own square, discarding the size difference that separates
- * these two. The item's own framing that `khe` links to `baRi-he` "despite
- * being in a different group entirely" is mistaken too: both are group 2, and
- * the second test below is the general form of that — every link in the
- * corpus is same-group, so sharing a group is a property of all of them
- * rather than a reason for any one.
+ * Two shortcuts were measured and rejected, recorded here so they are not
+ * re-derived. The shipped trace masks score the pair 0.443 against
+ * baRi-he ~ khe's 0.458, but normalise each glyph into its own square and so
+ * rank 114 undeclared pairs above it. Rendered glyph width is 1.00x for
+ * baRi-he ~ khe and kaaf ~ gaaf, which invites "a mark leaves the width
+ * alone" — but declared pairs reach 4.00x (alif ~ alif-madda) and 2.29x
+ * (noon ~ noon-ghunna), both wider apart than this pair's 2.47x.
+ *
+ * The item's premise that `khe` links to `baRi-he` "despite being in a
+ * different group entirely" is mistaken: both are group 2. Every link is
+ * same-group, which the second test states — so sharing a group is a property
+ * of all of them rather than a reason for any one.
  */
 describe('URD-067: the h family’s two h’s are deliberately not one confusable bucket', () => {
   const bucketKeyOf = (id: string) => getLetter(id)?.confusableWith ?? id;
+  /** The ways a note can refer to another letter: its prose name, its data id,
+   *  or the glyph itself — `khe`'s note names `baRi-he` as "ح (baṛī he)". */
+  const refersTo = (note: string, other: (typeof LETTERS)[number]) =>
+    [other.name, other.id, other.forms.isolated].some((n) => note.toLowerCase().includes(n.toLowerCase()));
 
   it('choti-he and do-chashmi-he sit in different buckets, so neither drills against the other', () => {
     expect(bucketKeyOf('choti-he')).not.toBe(bucketKeyOf('do-chashmi-he'));
-  });
-
-  it('choti-he is a singleton bucket — nothing in the corpus is filed as a variant of it', () => {
-    const partners = LETTERS.filter((l) => l.id !== 'choti-he' && bucketKeyOf(l.id) === 'choti-he');
-    expect(partners.map((l) => l.id)).toEqual([]);
+    // The claim a link would make, and that neither note actually makes.
+    const choti = getLetter('choti-he')!;
+    const doChashmi = getLetter('do-chashmi-he')!;
+    expect(refersTo(doChashmi.note, choti), 'do-chashmi-he’s note does not describe ہ’s shape plus a mark').toBe(false);
+    expect(refersTo(choti.note, doChashmi), 'choti-he’s note does not describe ھ’s shape plus a mark').toBe(false);
   });
 
   it('every confusableWith link stays inside one teaching group, so a shared group is never itself the reason for one', () => {
@@ -335,6 +344,17 @@ describe('URD-067: the h family’s two h’s are deliberately not one confusabl
       const base = getLetter(l.confusableWith);
       expect(base, `${l.id} points at a letter that does not exist`).toBeDefined();
       expect(base!.group, `${l.id} -> ${l.confusableWith}`).toBe(l.group);
+    }
+  });
+
+  it('every declared pair has its shared shape written down in a note, from one side or the other', () => {
+    for (const variant of LETTERS) {
+      if (!variant.confusableWith) continue;
+      const base = getLetter(variant.confusableWith)!;
+      expect(
+        refersTo(variant.note, base) || refersTo(base.note, variant),
+        `${variant.id} ~ ${base.id}: neither note says they share a shape, so the link is undocumented`
+      ).toBe(true);
     }
   });
 });
