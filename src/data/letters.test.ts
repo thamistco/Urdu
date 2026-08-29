@@ -290,3 +290,51 @@ describe('URD-062: a base letter’s note names the mark that separates it from 
     expect(line).toMatch(/sheen/i);
   });
 });
+
+/**
+ * URD-067: `choti-he` (ہ) and `do-chashmi-he` (ھ) share teaching group 8 —
+ * the file's own comment calls it "the h family" — are taught back to back,
+ * and neither names the other via `confusableWith`. This pins that as a
+ * decision rather than an omission, which is what the item asked for either
+ * way the answer went.
+ *
+ * The answer is that they are not a visual confusable pair, measured rather
+ * than argued from the glyphs' Unicode names: all four forms of each were
+ * rendered at the letter lab's own `urduGlyph(72)` in the app's own Nastaliq
+ * and their ink measured. Both pairs the corpus already declares confusable
+ * come out at *identical glyph width* in every form (baRi-he ~ khe and
+ * kaaf ~ gaaf, 1.00x, ink differing 7-17% — a mark's worth on an unchanged
+ * outline, exactly what "same base shape plus a dot" predicts). ہ and ھ
+ * differ 1.17-2.47x in width and up to 1.86x in ink: ھ is a wider, flatter
+ * double-loop, not ہ with two dots added.
+ *
+ * The shipped trace masks score the pair 0.443, near baRi-he ~ khe's 0.458,
+ * and are the wrong instrument — `generate-glyph-masks.js` normalises every
+ * glyph into its own square, discarding the size difference that separates
+ * these two. The item's own framing that `khe` links to `baRi-he` "despite
+ * being in a different group entirely" is mistaken too: both are group 2, and
+ * the second test below is the general form of that — every link in the
+ * corpus is same-group, so sharing a group is a property of all of them
+ * rather than a reason for any one.
+ */
+describe('URD-067: the h family’s two h’s are deliberately not one confusable bucket', () => {
+  const bucketKeyOf = (id: string) => getLetter(id)?.confusableWith ?? id;
+
+  it('choti-he and do-chashmi-he sit in different buckets, so neither drills against the other', () => {
+    expect(bucketKeyOf('choti-he')).not.toBe(bucketKeyOf('do-chashmi-he'));
+  });
+
+  it('choti-he is a singleton bucket — nothing in the corpus is filed as a variant of it', () => {
+    const partners = LETTERS.filter((l) => l.id !== 'choti-he' && bucketKeyOf(l.id) === 'choti-he');
+    expect(partners.map((l) => l.id)).toEqual([]);
+  });
+
+  it('every confusableWith link stays inside one teaching group, so a shared group is never itself the reason for one', () => {
+    for (const l of LETTERS) {
+      if (!l.confusableWith) continue;
+      const base = getLetter(l.confusableWith);
+      expect(base, `${l.id} points at a letter that does not exist`).toBeDefined();
+      expect(base!.group, `${l.id} -> ${l.confusableWith}`).toBe(l.group);
+    }
+  });
+});
