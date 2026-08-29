@@ -58,6 +58,11 @@ export function LetterSpotExercise({ exercise, showRoman, locked, onGraded }: Ex
           {showRoman ? ` · ${word.roman}` : ''}
         </Txt>
       </PromptCard>
+      {/* URD-071: this is the one sighting that shows a real word alongside
+       *  the letter — `LetterFormExercise`'s reveal of the same fact never
+       *  puts a live example next to it. Shown here too, so the rule and a
+       *  real instance of it land on the same screen at least once. */}
+      {letter.functionNote && <Txt className="mt-2 text-center text-xs text-paper/55">{letter.functionNote}</Txt>}
       <View className="h-4" />
       <Question>Which tile is {letter.name}?</Question>
       <View className="flex-row-reverse flex-wrap items-center justify-center">

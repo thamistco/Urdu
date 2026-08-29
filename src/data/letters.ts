@@ -68,10 +68,17 @@ export type Letter = {
    * flashcard trivia outside the real lesson path) — every real exercise
    * shows only `name` and `sound`, and `sound`'s own bracketed tag
    * ("aspirate", "nasal") is exactly the kind of phonetics jargon this field
-   * exists to translate, not just repeat. Shown in `LetterFormExercise`
-   * (`LetterExercises.tsx`), the one place a short revealing line already
-   * appears after answering (see its own `pickedATwin` case) — reusing that
-   * convention rather than adding a new one. Unset for every ordinary
+   * exists to translate, not just repeat. Shown twice per teaching lesson,
+   * not on every sighting — THE CRITIC found the first version of this fix
+   * only rendered it in `LetterFormExercise`, one exercise kind of several,
+   * reusing that component's own `pickedATwin` "reveal a fact after
+   * answering" convention; CURRICULUM CRITIC separately found the one real
+   * word that would anchor it concretely (`LETTER_CONTEXT_WORD`) is shown
+   * on a *different* screen, `LetterSpotExercise`, that never rendered this
+   * field either — so the rule and a live example of it never shared a
+   * screen. Now shown on both. `letterPick`/`letterTrace` still don't carry
+   * it (URD-075, filed forward) — those exercises never show a word or a
+   * reveal-after-answering state to hang it on. Unset for every ordinary
    * letter; a letter whose full behaviour *is* its sound (`hamza`'s glottal
    * catch, `ain`'s plain-English "silent") needs no translation and gets
    * none.
@@ -579,7 +586,7 @@ export const LETTERS: Letter[] = [
     group: 7,
     note: 'A dotless noon at the end of a word, it nasalises the vowel before it.',
     confusableWith: 'noon',
-    functionNote: 'Silent on its own. It nasalises the vowel right before it.',
+    functionNote: 'Silent on its own. It sends the vowel before it through the nose, like French bon.',
   },
   {
     id: 'waw',

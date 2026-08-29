@@ -7134,3 +7134,176 @@ $ npm run check:all
   all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-trace-letter-solver
+
+## CRITIQUE · URD-070 & URD-071 · dispatched properly this time · 2026-08-29T19:20Z
+Both items above (`8e29e84`) were recorded PASSED without a critic
+verdict — the exact violation this ledger caught for URD-067/068 earlier
+today, repeated. Not disclosed as "no critic dispatched" this time; just
+skipped, and caught only because a direct question ("are all critics
+happy") prompted a re-check before this file was trusted. Dispatched THE
+CRITIC on URD-070, THE CRITIC and CURRICULUM CRITIC on URD-071, against
+the pushed commit, in parallel, in their own worktrees.
+
+### THE CRITIC on URD-070 (scripts/soak.js's tracedPointsDrift)
+
+Independently confirmed the core mechanism before trusting the rest:
+read `TracePad.tsx:88-91` directly (`onPanResponderGrant` does fire on
+bare touch-down) and traced `react-native-svg`'s actual web codepath
+(`node_modules/react-native-svg/lib/module/elements.web.js` →
+`WebShape.js` → `prepare.js`) to confirm the polyline's `points`
+attribute really is the pad's own local space, not page coordinates or
+something transformed — did not take the code comment's claim on faith.
+Could not get a live driver run going in its own nested worktree
+(Metro's resolver conflated two `node_modules` trees, an environment
+artifact of worktree-nesting, not an app defect) and disclosed that
+plainly rather than fabricating a result; reviewed the rest as
+rigorously as possible from static reading, including the one place
+static reading substituted directly for a live check.
+
+**MAJOR (fixed): the 2px `SLACK` constant was picked, not measured** —
+exactly non-negotiable #4. The demonstrated deliberate-failure repro
+(traceArea() scaled 1.18x) put the far edge ~63px off, nowhere near
+marginal, so it never tested whether 2px was the right number. Measured
+directly with a new `SOAK_MEASURE_DRIFT_MARGIN` flag: a real walk's
+closest recorded point never comes nearer than 30-34px to the pad's true
+edge (`glyphStroke()`'s own sampling margin, not SLACK, is what actually
+bounds this). Comment rewritten to state the real, measured sensitivity
+(catches ~30px+ drift, not "subtle" px-level drift) rather than implying
+2px precision; tightening further is a different change to
+`glyphStroke()` itself, filed forward as URD-074.
+
+**MAJOR (fixed): the silent-null path had zero `SOAK_DEBUG` visibility**
+— every other early-return in `traceTheLetter` logs; `tracedPointsDrift`
+returning `null` (pad/svg/polyline not found) logged nothing, so a future
+selector regression could silently disable the whole safety net with no
+signal. Added a debug line matching the file's existing convention.
+
+**MAJOR (filed forward, URD-073): no independent defense against a
+wrong-pad-selected bug** — `tracedPointsDrift` finds "the" pad with the
+exact same selector/heuristic `traceArea()` already used, so a future
+"identified the wrong element" bug would pass both checks trivially
+(agreeing with itself). Real, but a materially different failure mode
+than this item's own scope (a right-pad-wrong-rect bug); not fixed here.
+
+**MAJOR (corrected in this entry, not fixed in code): the pasted
+verification log's "hit the run's own 12-failure cap" overstated the
+real drift count** — each drift occurrence consumes 2 of the 12 slots
+(the geometry-drift failure itself, then a benign, expected
+"unanswerable screen" as the stuck lesson recovers via reload — traced
+and confirmed not a secondary bug). The log showed 6 real geometry-drift
+events, not 12. `gauntlet/done/URD-070.md` corrected below.
+
+0 BLOCKING, 4 MAJOR (2 fixed, 1 filed forward, 1 corrected in the
+record), 0 further MINOR beyond what's above. Verdict: fit to stand as
+PASSED, with the filed-forward finding tracked rather than silently
+dropped.
+
+### THE CRITIC on URD-071 (functionNote)
+
+Independently re-derived the "exactly 2 letters" claim against the real
+corpus (not the lead's grep) and confirmed it; independently reproduced
+two of the three claimed mutations directly, both matching exactly, with
+clean reverts confirmed via `git status`.
+
+**MAJOR (fixed): `functionNote` rendered in exactly one of at least four
+exercise kinds that show the same bare jargon** — traced
+`LetterPickExercise`/`LetterSpotExercise`/`LetterContrastExercise`
+directly: all three still showed `"h (aspirate)"`/`"ñ (nasal)"` with
+zero explanation, unchanged by the original diff. The done-file's
+framing ("reaching a learner during real play") overstated what shipped.
+
+**MAJOR (fixed): `noon-ghunna`'s own translation failed at its stated
+job** — "it nasalises" just verb-forms the jargon word "nasal" itself,
+giving a learner who didn't know that word no new information, unlike
+`do-chashmi-he`'s concrete `k→kh, b→bh` pairing.
+
+MINOR (not queued, live-checked and found low-risk): `pickedATwin` and
+`functionNote` can both render for `noon-ghunna` in the same screen (it
+is both a same-shape non-connector and a modifier letter) — confirmed
+via the fix's own follow-up screenshot (below) that this does not look
+cluttered or contradictory in practice.
+
+MINOR (accepted, not fixed): the corpus-count test's `/before it/i`
+pattern would not catch a future modifier letter phrased differently —
+disclosed in the item's own doc comment already, matching this
+codebase's existing convention of deriving invariants from literal note
+text (`confusableWith`'s own "same bowl as" derivation works the same
+way).
+
+0 BLOCKING, 2 MAJOR (both fixed), 2 MINOR (recorded). Verdict: fit to
+stand as PASSED once the two MAJORs are addressed — done below.
+
+### CURRICULUM CRITIC on URD-071
+
+Traced the exact deterministic sighting sequence for `do-chashmi-he` in
+lesson `l-8` (no `Math.random()` in `letterExerciseAt`, so this repeats
+every time): of 6 real sightings, exactly 2 land on `letterForm` (where
+`functionNote` rendered) — not "every time the letter is met," a real
+overclaim in the original done-file, corrected below.
+
+**MAJOR (fixed): the rule and its one real, corpus-native concrete
+example were on two different screens** — `LetterSpotExercise` is the
+one sighting that already shows a real word containing the letter
+(`LETTER_CONTEXT_WORD`: گھر/ghar for `do-chashmi-he`, ماں/maañ for
+`noon-ghunna`), and it never rendered `functionNote` either. The anchor
+that would make the abstract rule concrete already existed in the
+corpus; it just wasn't wired to the explanation. Fixed by rendering
+`functionNote` there too, directly above the tile question.
+
+Filed forward, not this item's fault or fix: `baRi-ye`'s `initial`/
+`medial` forms are hand-substituted from `choti-ye`'s glyph (it never
+actually occurs mid-word in real Urdu), and `letterForm` quizzes it on
+those synthetic positions with no flag that this is happening — a real
+"can't infer real behaviour from name/sound" case the `/before it/i`
+search pattern structurally cannot find, since it isn't a modifier-of-
+neighbour case. Filed as URD-072 — a different letter, a different
+mechanism, pre-existing and unrelated to this diff.
+
+Positive finding, recorded plainly: `functionNote` does resurface in
+spaced review at ordinary odds (1 of 3 turn-residues), not a one-shot,
+lesson-only explanation.
+
+Verdict: the shape-decision half of URD-071 (translate the jargon at
+all) is sound; the "reaches a learner in real play" claim was true for
+2 of 6 sightings, now extended to include the one sighting with a real
+concrete example, closing the gap CURRICULUM CRITIC judged most worth
+pushing on.
+
+## PASSED · URD-070 & URD-071 · both MAJORs addressed · 2026-08-29T19:44Z
+Fixes applied per both critics' findings, above:
+
+- `scripts/soak.js`: `tracedPointsDrift`'s null path now logs to
+  `SOAK_DEBUG`; the `SLACK` comment states the real measured
+  sensitivity (30-34px, not 2px) rather than implying false precision.
+- `src/data/letters.ts`: `noon-ghunna`'s `functionNote` rewritten with a
+  concrete anchor ("like French bon") instead of restating its own
+  jargon; the field's doc comment corrected to describe 2-of-6
+  guaranteed sightings across two exercise kinds, not "every time."
+- `src/exercises/LetterSpot.tsx`: `functionNote` now renders there too,
+  directly under the real word it can finally sit beside.
+
+$ npm run build:web && SOAK_MEASURE_DRIFT_MARGIN=1 SOAK_DEBUG=1 \
+    npm run soak -- --seed 4 --start 66 --lessons 3
+  [trace] margin 30-34px of 348px pad   (5 real traces, this run)
+  exercise kinds exercised: letterTrace 9 · letterForm 13 · letterPick 10 ·
+  letterSpot 8 · letterContrast 3
+  Nothing broke. Seed 4.
+
+Screenshotted `do-chashmi-he`'s real `letterSpot` screen against the
+rebuilt dist: "House · Ghar" and "Silent on its own. It changes the
+sound of the letter right before it (k → kh, b → bh)." render together,
+directly under the word, no clipping or wrap issues.
+
+$ npx eslint / npx tsc --noEmit / npx vitest run src/data/letters.test.ts
+  clean / clean / 19 passed (19).
+
+$ npm run check:all
+  all 30 steps pass against a deploy-shaped build.
+
+Filed forward, not fixed here: URD-073 (tracedPointsDrift has no
+independent defense against a wrong-pad-selected bug), URD-074
+(glyphStroke()'s own sampling margin bounds drift-check sensitivity to
+~30px; tightening it is a separate change), URD-072 (baRi-ye's
+synthetic-position drilling, unrelated pre-existing gap).
+
+branch: claude/gauntlet-trace-letter-solver

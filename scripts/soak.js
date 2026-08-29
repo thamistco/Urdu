@@ -1203,24 +1203,43 @@ async function traceTheLetter(page, wrongOnPurpose) {
   // rect drifted, some are not — independent of how well the stroke happens
   // to score, which the SLACK below deliberately has no opinion on.
   const drift = await tracedPointsDrift(page);
-  if (drift && drift.outside > 0) {
-    await fail(
-      page,
-      'trace geometry drift',
-      `${drift.outside} of ${drift.total} recorded stroke points landed outside the pad's own ` +
-        `${drift.side}px surface — traceArea()'s rect no longer matches the live pad`
-    );
-    return false;
-  }
+  logDriftDebug(drift);
+  if (await reportDrift(page, drift)) return false;
 
   return tap(page.locator('text=/^CHECK$/i'), 0, 900);
+}
+
+/** SOAK_DEBUG/SOAK_MEASURE_DRIFT_MARGIN visibility for `tracedPointsDrift`,
+ *  pulled out of `traceTheLetter` to keep it under this file's own complexity
+ *  limit — see that function's own comment for why the null case matters. */
+function logDriftDebug(drift) {
+  if (process.env.SOAK_DEBUG && !drift) console.log('[trace] drift check found no pad/svg/polyline to read — skipped');
+  if (process.env.SOAK_MEASURE_DRIFT_MARGIN && drift)
+    console.log(`[trace] margin ${drift.margin}px of ${drift.side}px pad`);
+}
+
+/** Registers the URD-070 failure if `drift` found any, returns whether it did. */
+async function reportDrift(page, drift) {
+  if (!drift || drift.outside === 0) return false;
+  await fail(
+    page,
+    'trace geometry drift',
+    `${drift.outside} of ${drift.total} recorded stroke points landed outside the pad's own ` +
+      `${drift.side}px surface — traceArea()'s rect no longer matches the live pad`
+  );
+  return true;
 }
 
 /**
  * Independent check of URD-070's own kind: reads back where the app itself
  * recorded the stroke, not the driver's assumption of where it should be.
- * Returns null (not a finding) if the pad or its drawn stroke cannot be
- * found — this only speaks to points that exist.
+ *
+ * Returns null when the pad, its SVG, or a drawn polyline cannot be found —
+ * "no finding" in `traceTheLetter`, logged separately by the caller (THE
+ * CRITIC, reviewing this fix: every other early-return in `traceTheLetter`
+ * logs to `SOAK_DEBUG`; this one silently let Check get tapped anyway,
+ * which would turn this whole safety net off with zero signal the moment a
+ * future `TracePad` change broke the selector).
  */
 async function tracedPointsDrift(page) {
   const pad = await onScreen(page.locator('[aria-label^="Drawing area"]'), 0, 900);
@@ -1237,10 +1256,34 @@ async function tracedPointsDrift(page) {
       }
     }
     if (!pts.length) return null;
-    // A couple of px of rounding slack at the very edge, not room for a real miss.
+    // A couple of px of rounding slack at the very edge, not room for a real
+    // miss. THE CRITIC (URD-070 follow-up): this constant was picked, not
+    // measured, and the deliberate-failure repro that first verified this
+    // check (traceArea() scaled 1.18x) put the far edge ~63px off — nowhere
+    // near marginal, so it never tested whether 2px was actually the right
+    // number. Measured with SOAK_MEASURE_DRIFT_MARGIN: a real walk's closest
+    // recorded point never comes nearer than 30-34px to the pad's true edge
+    // (glyphStroke() only samples 2px in from a screenshot already inset 4px
+    // from the pad, and a glyph's own rendered ink sits well clear of the
+    // card's border to begin with). That natural clearance, not SLACK, is
+    // what actually bounds this check's sensitivity: raising or lowering
+    // SLACK anywhere well under ~30px changes nothing about what it can
+    // catch, because no real point ever gets close enough to that boundary
+    // to depend on it. So this check reliably catches a traceArea() rect
+    // that drifts roughly 30px or more (URD-068's fix reversed was ~63px;
+    // comfortably inside that bound) — not the few-px drift "subtle" was
+    // meant to describe. Tightening that further means narrowing
+    // glyphStroke()'s own natural margin, which is a different, filed-
+    // forward change (URD-074), not a constant to retune here.
     const SLACK = 2;
     const outside = pts.filter((p) => p.x < -SLACK || p.x > side + SLACK || p.y < -SLACK || p.y > side + SLACK);
-    return { total: pts.length, outside: outside.length, side };
+    // How close the nearest point gets to an edge it did NOT cross — the real
+    // number behind SLACK, measured rather than picked. See soak.js's own
+    // ledger entry, URD-070 follow-up: a healthy run's own points never come
+    // closer than this to the boundary, which is the actual ceiling on how
+    // subtle a `traceArea()` regression could be and still go undetected.
+    const margin = Math.round(Math.min(...pts.map((p) => Math.min(p.x, side - p.x, p.y, side - p.y))));
+    return { total: pts.length, outside: outside.length, side, margin };
   });
 }
 
