@@ -6658,3 +6658,202 @@ This moves margins out of the function-valued style callback where react-native-
 doesn't handle them, onto a simple View where logical margins render correctly.
 
 branch: claude/gauntlet-choice-margin-start
+
+## CLAIMED · URD-068 · 2026-08-28T21:07Z
+files: scripts/soak.js
+definition of done: `npm run soak -- --seed 4 --lessons 8` no longer
+  dead-ends on the "be · start / trace the letter" screen; a real
+  re-run shows at least a partial trace drawn before passing or being
+  correctly refused.
+branch: claude/gauntlet-trace-letter-solver
+
+## CRITIQUE · URD-068 · process note, not a dispatched critic
+No critic was dispatched on this item — recording that plainly rather
+than skipping the section, since the ledger's own rule is to say what
+was not done as well as what was.
+
+The investigation took three wrong turns before the real cause, and
+each is left in below rather than cleaned up, because the ledger's job
+is showing whether the loop is thinking straight, not just the answer
+it landed on.
+
+**Wrong turn 1**: assumed the drawing area's *height* was the problem
+(the pre-existing code was a hardcoded `box.y - 330`, which goes
+negative off the top of a short viewport) and replaced it with an
+adaptive `calcDrawingArea()` that clamps to available space. This did
+not reproduce the seed-4 dead end either before or after, and was
+committed anyway without having watched it fail first — a violation of
+this project's own non-negotiable #2, caught only in hindsight.
+
+**Wrong turn 2**: added `SOAK_DEBUG` logging and read
+`[traceTheLetter] CHECK button tapped: true` on the exact screens that
+were failing, and concluded the solver was working but the screen was
+not advancing afterward — a race condition. Two fixes were built on
+that premise (a 500ms post-tap wait; centering the drawing rect on the
+viewport instead of the caption) and both were tested and reported as
+"unsuccessful" without ever questioning the premise. The premise was
+false: `tap()` uses `click({ force: true })`, which returns `true`
+against a **disabled** button — Check stays disabled until a stroke is
+recorded, so "tapped: true" proved nothing about whether the tap did
+anything.
+
+**What actually found it**: reading `.soak/1-dead-end.png` directly and
+replaying `traceTheLetter`'s own pixel logic offline against that saved
+screenshot, rather than reasoning about the live browser further.
+Measured on the real 412px-viewport failure:
+
+  pad (parchment card), measured directly:   x 34-378, y 126-470
+  the old computed clip:                     x 133-411 (348 wide,
+                                              truncated to 278 by the
+                                              viewport), y 112-442
+  dark samples inside that clip:             1578
+  ...that were page background OUTSIDE the pad:  842 (53%)
+  topmost dark pixel (where mouse.down() fires): (135, 114), lum 24.7
+                                              — background, 12px above
+                                              the pad
+
+The rect was inferred from the *caption's* bounding box, not the pad's.
+The caption is a short centred line, so its geometry says nothing about
+the pad's. More than half of what the old code read as "glyph" was
+dark page background, and the walk's start point sat above the pad
+entirely — so `mouse.down()` landed off the drawing surface,
+react-native-web never granted the pad's responder, no stroke was ever
+recorded, and Check stayed disabled the whole time. It was intermittent
+rather than total (lessons 1-5 got through 20 traces before failing)
+because the bad rect still partially overlapped the pad on taller
+glyphs.
+
+**Fix**: `TracePad` already renders a real `aria-label` for screen
+readers ("Drawing area. Trace ..."), via react-native-web. `traceArea()`
+now reads the pad's own `boundingBox()` off that locator instead of
+inferring one, inset 4px past its ink border. Second, `traceTheLetter`
+now asserts the caption disappeared (proof a stroke registered) before
+tapping Check, so a pointer that misses the pad can never again be
+silently counted as an answer — closing the exact hole that hid this
+bug for two wrong turns.
+
+Broken on purpose and watched to fail, per non-negotiable #2:
+temporarily restoring the old caption-derived rect reproduces
+`[trace] no stroke registered — pointer missed the pad`, and the run
+now fails loudly at exercise 3 with `unanswerable screen` instead of
+silently faking 90 answers and dead-ending at exercise 69+.
+
+## PASSED · URD-068 · 2026-08-28T23:17Z
+No critic dispatched (see CRITIQUE note above for why, disclosed
+plainly). Root cause isolated by direct pixel measurement against the
+saved failure screenshot, not inference from the live driver; fix
+verified against the item's own literal command, and the new guard
+proven capable of failing.
+
+$ npm run soak -- --seed 4 --lessons 8
+soak — 0 lessons completed, 8 attempts, 101 exercises answered.
+  exercise kinds exercised: letterTrace 23 · letterForm 25 · letterPick 28 ·
+  letterSpot 18 · letterContrast 7
+[debug] solverStats: {"solved":78}
+  Nothing broke. Seed 4.
+
+$ (temporarily reverted to the caption-derived rect) npm run soak -- --seed 4 --lessons 2
+[trace] pad 133,112 348x330 → 220 pts
+[trace] pad 133,112 348x330 → 220 pts
+[trace] no stroke registered — pointer missed the pad
+  ✗ unanswerable screen — nothing on screen could be acted on: ✕ / TE · END /
+  Trace the letter / ‏ـت / Draw over the grey letter / CLEAR / CHECK
+  0 lessons completed, 1 attempts, 3 exercises, 1 failures
+
+$ npm run check:all
+  all 30 steps pass against a deploy-shaped build.
+
+What this does not fix: 0 lessons completed, unchanged from before this
+item — the hearts-economy attrition already attributed to URD-006 in
+this file's own comments. Out of this item's scope.
+
+branch: claude/gauntlet-trace-letter-solver
+
+## CLAIMED · URD-067 · 2026-08-29T00:24Z
+files: src/data/letters.ts
+definition of done: decide, against the real rendered glyphs, whether
+  choti-he and do-chashmi-he are a genuine visual confusable pair —
+  either give them a `confusableWith` link, or record on both entries
+  why they deliberately do not have one — and back the answer with a
+  test in the shape of `letters.test.ts`'s existing bucket invariants.
+branch: claude/gauntlet-trace-letter-solver
+
+## CRITIQUE · URD-067 · process note, not a dispatched critic
+No critic dispatched. Recorded here because the process itself took two
+wrong quantitative turns before landing on the criterion that actually
+holds, and both are worth keeping so nobody re-derives them.
+
+**Wrong turn 1**: scored all pairs by IoU against the shipped trace
+masks (`glyphMasks.ts`). choti-he ~ do-chashmi-he comes out at 0.443,
+essentially tied with the declared baRi-he ~ khe at 0.458, and 114
+undeclared pairs outrank it. Recognised as the wrong instrument before
+committing to it: `generate-glyph-masks.js` frames every glyph in its
+own square scaled to its own longest edge, which discards exactly the
+size difference in question.
+
+**Wrong turn 2, committed and then reverted**: rendered both letters'
+four forms at the letter lab's own `urduGlyph(72)` in the real Nastaliq
+font and measured true-scale glyph width, on the theory that a real
+base-plus-mark pair keeps the same width in every form (a mark adds ink,
+not width). Checked against exactly two calibration pairs
+(baRi-he ~ khe, kaaf ~ gaaf, both 1.00x) this looked clean, and a
+`confusableWith: 'choti-he'`-free commit went out citing it, with the
+h-pair's 1.17-2.47x as the disqualifier. Checked against all 16 declared
+pairs before the *next* commit, it fails: `alif ~ alif-madda` measures
+4.00x and `noon ~ noon-ghunna` 2.29x, both wider apart than the pair
+this rule was ruling out. A mark on a narrow glyph dominates its
+bounding box. The rule would have unlinked eight of sixteen real pairs.
+Corrected in the following commit before this entry was written, so the
+ledger reflects the fixed version, not the one briefly shipped.
+
+**What actually holds**: `confusableWith`'s own doc comment already
+states the criterion — a link is warranted where a letter's curated
+`note` describes the shared shape ("Same bowl as be", "One dot above
+the ح (baṛī he) curve"). Checked as a corpus invariant: all 16 declared
+pairs are documented that way from one side or the other (15 from the
+variant's note, `baRi-ye ~ choti-ye` from the base's). Neither
+`choti-he`'s nor `do-chashmi-he`'s note makes that claim — "The h with
+two eyes" names its own eyes, not a mark on ہ's outline. Rendered
+comparison agrees qualitatively: ھ is a wider, flatter double-loop, not
+ہ plus dots.
+
+Two corrections to the item's own premise, found in the process: `khe`
+links to `baRi-he` within the *same* teaching group (both group 2), not
+"a different group entirely" as stated — checked as a corpus invariant,
+zero cross-group links exist. And the pair is genuinely confusable in
+*sound* (both romanise "h"), which URD-053 already handled in these
+notes; `confusableWith` is documented as visual shape specifically.
+
+Kept `scripts/measure-glyph-pair.js`, the rendering harness that
+produced the evidence, as a companion tool in the shape of
+`measure-image.js` — not part of `check:all`, and it deliberately prints
+no verdict, since both numbers it can compute were shown above to
+mislead on their own.
+
+## PASSED · URD-067 · 2026-08-29T00:44Z
+No critic dispatched (see CRITIQUE note). Decision: no `confusableWith`
+link between choti-he and do-chashmi-he. Three new tests in
+`letters.test.ts`, each mutation-tested per non-negotiable #2.
+
+$ npx vitest run src/data/letters.test.ts
+  Tests  16 passed (16)
+
+Mutations run and watched to fail:
+  add confusableWith: 'choti-he' to do-chashmi-he
+    → fails the bucket test, the new documentation test, AND URD-062's
+      existing "13 multi-member buckets" count (would become 14)
+  point pe at jeem instead of be (a cross-group link)
+    → fails the new group-invariant test and the documentation test
+  strip the shared-shape sentence from zaal's note ("Daal with one dot
+  above" → "A letter with one dot above")
+    → fails the documentation test alone, proving it is not vacuous
+
+$ npx eslint src/data/letters.ts src/data/letters.test.ts scripts/measure-glyph-pair.js
+  clean.
+$ npx prettier --check src/data/letters.ts src/data/letters.test.ts scripts/measure-glyph-pair.js
+  All matched files use Prettier code style!
+
+$ npm run check:all
+  all 30 steps pass against a deploy-shaped build.
+
+branch: claude/gauntlet-trace-letter-solver
