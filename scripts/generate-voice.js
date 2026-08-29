@@ -517,7 +517,18 @@ function writeManifest() {
     if (!fs.existsSync(path.join(OUT_DIR, `${i.id}.mp3`))) missing.push(i);
     else {
       const was = ledger[i.id];
-      if (was && (was.text !== i.text || was.voice !== i.voice || (was.pace ?? LEGACY_PACE) !== i.pace)) stale.push(i);
+      // `actual` is set when the API answered in a voice other than the one
+      // asked for — a retry landing on an older model, which leaves one word
+      // audibly in a different voice from the rest of the course. Recorded
+      // since this ledger was written and never acted on, so eight shipped
+      // clips (ہاں among them, in both voices) were narrated by a stranger
+      // until `check:voice-fidelity` went looking. Counting it as stale is
+      // what lets an ordinary incremental run repair them: they are not
+      // stale by text, so nothing else would ever re-record them, and
+      // --force would re-record all 5,496 to fix 8.
+      const wrongVoice = was && was.actual && was.actual !== i.voice;
+      if (was && (was.text !== i.text || was.voice !== i.voice || (was.pace ?? LEGACY_PACE) !== i.pace || wrongVoice))
+        stale.push(i);
     }
   }
   const todo = force ? all : [...missing, ...stale];
@@ -532,6 +543,7 @@ function writeManifest() {
     let what;
     if (was.text !== s.text) what = `“${was.text}” \u2192 “${s.text}”`;
     else if (was.voice !== s.voice) what = `${was.voice} \u2192 ${s.voice}`;
+    else if (was.actual && was.actual !== s.voice) what = `was recorded in ${was.actual}, not ${s.voice}`;
     else what = `pace ${was.pace ?? LEGACY_PACE} \u2192 ${s.pace}`;
     console.log(`    stale: ${s.id} — ${what}`);
   }

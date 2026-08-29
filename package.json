@@ -19,6 +19,7 @@
     "check:trace": "node scripts/check-trace.js",
     "check:voice": "node scripts/check-voice.js",
     "check:voice-fidelity": "node scripts/check-voice-fidelity.js",
+    "check:pronunciation": "node scripts/check-pronunciation.js",
     "check:srs": "node scripts/check-srs.js",
     "web:meta": "node scripts/inject-web-meta.js",
     "check:answerable": "node scripts/check-answerable.js",

@@ -1,0 +1,102 @@
+# Listen to the whole voice set, on demand.
+#
+# The deploy workflow already runs `gen:voice` and `check:voice` on every push:
+# it fills in anything missing and proves every clip is audible. Neither is
+# allowed to be slow or to cost money, so neither has ever *listened* to a clip.
+#
+# This is the expensive pass, kept out of the deploy path and off a schedule
+# because it costs real API credits and nobody should be surprised by that
+# bill. Run it from the Actions tab after changing a word, a `pronounce`, or a
+# voice — or when a clip sounds wrong and you want to know whether it is.
+#
+# The key never leaves GitHub. `GOOGLE_TTS_API_KEY` is already configured for
+# the deploy workflow; add `ELEVENLABS_API_KEY` (Scribe, for the listening
+# half) under Settings → Secrets and variables → Actions.
+#
+# Nothing here commits. Regenerated clips and the transcript cache come back as
+# a downloadable artifact for review, because audio that a learner will hear is
+# not something a bot should push unheard.
+name: Voice audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      regenerate:
+        description: 'Re-record clips the course has changed since (needs a TTS key)'
+        type: boolean
+        default: true
+      calibrate:
+        description: 'How many clips per voice to transcribe. 0 = all of them.'
+        type: string
+        default: '60'
+      fail_below:
+        description: 'Fail if any clip scores under this agreement. Blank = report only.'
+        type: string
+        default: ''
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+
+      # The ordinary incremental pass is enough: `generate-voice.js` now counts
+      # a clip whose ledger records a fallback `actual` voice as stale, so the
+      # eight narrated by the wrong model repair themselves here without
+      # --force re-recording all 5,496 to fix 8.
+      - name: Re-record clips the course has changed, and any in the wrong voice
+        if: ${{ inputs.regenerate }}
+        env:
+          GOOGLE_TTS_API_KEY: ${{ secrets.GOOGLE_TTS_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
+        run: |
+          node scripts/generate-voice.js
+          VOICE_SET=m node scripts/generate-voice.js
+
+      - name: Every clip is audible
+        run: npm run check:voice
+
+      # The offline half: right voice, right text, nothing drifted. Free, and
+      # it should be green before spending anything on transcription.
+      - name: Every clip is the recording the course asked for
+        run: npm run check:voice-fidelity
+
+      # The half that actually listens. Reports by default; only gates when
+      # `fail_below` is given, and that number should come from a calibration
+      # run's own distribution rather than from an opinion.
+      - name: Transcribe and compare against what was asked for
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          GOOGLE_STT_API_KEY: ${{ secrets.GOOGLE_STT_API_KEY }}
+        run: |
+          ARGS=""
+          if [ "${{ inputs.calibrate }}" != "0" ] && [ -n "${{ inputs.calibrate }}" ]; then
+            ARGS="$ARGS --calibrate ${{ inputs.calibrate }}"
+          fi
+          if [ -n "${{ inputs.fail_below }}" ]; then
+            ARGS="$ARGS --fail-below ${{ inputs.fail_below }}"
+          fi
+          node scripts/check-pronunciation.js $ARGS
+
+      # Always: a failing run is exactly the one whose transcripts are worth
+      # reading, and re-running to get them back would pay for them twice.
+      - name: Upload transcripts and any re-recorded clips
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: voice-audit
+          retention-days: 14
+          path: |
+            assets/voice/heard.json
+            assets/voice-m/heard.json
+            assets/voice/spoken.json
+            assets/voice-m/spoken.json
+            assets/voice/*.mp3
+            assets/voice-m/*.mp3
