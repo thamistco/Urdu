@@ -6857,3 +6857,138 @@ $ npm run check:all
   all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-trace-letter-solver
+
+## CRITIQUE · URD-067 & URD-068 · retroactive dispatch · 2026-08-29T10:30Z
+Both items above were recorded PASSED without a critic verdict — a
+process violation this ledger's own rules call out directly ("The lead
+may not pass its own work... A lead that records PASSED without a
+critic verdict has broken the loop, and the next run should say so in
+the ledger rather than quietly continuing"). The two "process note, not
+a dispatched critic" CRITIQUE entries above disclosed the gap honestly
+at the time; this entry closes it, dispatched after the fact against the
+real pushed commits rather than quietly left open. THE CRITIC and
+CURRICULUM CRITIC were run in parallel, each in its own worktree.
+
+### THE CRITIC on URD-068 (scripts/soak.js, the traceArea fix)
+
+Verified live and independently, not by re-reading the ledger's prose:
+built dist/ fresh in its own worktree and re-ran
+`npm run soak -- --seed 4 --lessons 8`, reproducing the exact claimed
+numbers (8 attempts, 101 exercises, letterTrace 23, "Nothing broke").
+Separately reverted `traceArea()` to the old caption-derived rect,
+re-ran the deliberate-failure case itself, and got the same
+`no stroke registered — pointer missed the pad` / `unanswerable screen`
+failure verbatim, then confirmed the tracked file was clean again after.
+
+**MAJOR, filed forward as URD-070**: the new "stroke registered" guard
+(the caption disappearing) is satisfied by `TracePad`'s
+`PanResponder.onPanResponderGrant`, which records a stroke on the bare
+touch-DOWN point alone — before any of the subsequent `mouse.move()`
+calls in the walk. So the guard proves only that the pointer's first
+point landed on the pad, not that the rest of the walk stayed on it. A
+`traceArea()` rect that is subtly (not totally) wrong could pass the
+guard on point one while later points drift off-pad, producing a
+partial/garbage trace that still "answers" the exercise rather than
+dead-ending — undetected by "Nothing broke", and not exercised by this
+item's own deliberate-failure test, which only covers the total-miss
+case. Same class of blind spot as the bug this item fixed, one level
+down, in the very thing whose doc comment claims it is "closing the
+exact hole that hid this bug."
+
+MINOR (not queued): the 4px inset is reasoned (matches TracePad's
+measured 2px ink border) but is a hand-typed constant, not read from
+the border's actual computed style — would silently drift if the
+border width ever changed. MINOR (not queued, latent, confirmed not
+currently misfiring): `traceArea`'s `onScreen(locator, 0, 900)` selects
+the first DOM match in an effectively unbounded y-range, not
+"topmost/active screen" — traced the real nav flow (`ExerciseView`
+unmounts the prior `TracePad` every advance) and confirmed no second
+`[aria-label^="Drawing area"]` element is ever mounted under today's
+driven path, but nothing would notice if that ever changed. Grepped
+every other coordinate computation in the file: no other location
+infers a rect from one element and acts on a different one — the
+antipattern was isolated to this fix and is fully gone elsewhere.
+
+0 BLOCKING, 1 MAJOR (filed forward, URD-070), 2 MINOR (recorded, not
+queued). Verdict: fit to stand as PASSED once this critique is appended.
+
+### THE CRITIC on URD-067 (src/data/letters.ts, the confusableWith decision)
+
+Rendered all four forms of both letters independently (own screenshot,
+own session) at the real `urduGlyph(72)` before reading the lead's
+argument in depth: `do-chashmi-he` is a wide, near-identical double-loop
+across all four forms; `choti-he` is compact and varies sharply across
+its own four forms. Confirmed the two are not visually confusable at
+this size on the critic's own independent look, not only on the lead's
+measurements. Separately confirmed the pair creates no gap in the
+exercise generator either way — `distractLetters` (`generator.ts`)
+already excludes them from `letterPick` co-occurrence via sound-token
+overlap (both "h"), unrelated to `confusableWith`. Independently
+reproduced two of the three claimed mutations directly against the real
+file (adding the link; a cross-group link), both failing exactly the
+tests the lead claimed, then reverted cleanly.
+
+MINOR (not queued): `scripts/measure-glyph-pair.js` uses a bare
+`require('pngjs')` rather than the codebase's own established
+`require(path.join(ROOT, 'node_modules', 'pngjs'))` workaround already
+used by `measure-image.js` and `soak.js` for this exact
+not-a-real-dependency package — works today only because of hoisting,
+and the tool is deliberately outside `check:all`, so a lockfile change
+could silently break the one re-verification path this decision's
+evidence trail depends on with zero CI signal.
+
+MINOR (not queued): the "documentation" invariant is looser than its own
+writeup claims. `choti-ye ~ baRi-ye` — one of the 16 declared pairs — is
+documented only as a *difference* ("not baṛī ye's long sweeping one"),
+not a same-shape-plus-a-mark claim, and `refersTo()` cannot tell those
+apart; it only checks whether a note mentions the other letter by name,
+not whether it makes the specific claim `confusableWith`'s contract
+requires. This is real circularity risk in the method, though it did
+not flip this particular pair's answer — confirmed separately by
+rendering the glyphs directly, independent of the note-text method
+entirely.
+
+0 BLOCKING, 0 MAJOR, 2 MINOR. Verdict: fit to stand as PASSED — "the
+object-level decision is correct on the strongest evidence available."
+
+### CURRICULUM CRITIC on URD-067
+
+Confirmed the shape-decision itself is sound against the field's own
+contract, independently re-derived (not re-read): all 16 declared pairs
+checked directly against the real corpus, matching the lead's count.
+On the narrow shape question, agrees with THE CRITIC: no BLOCKING.
+
+**Real finding, filed forward as URD-071, not itself a shape or
+BLOCKING question**: the item's own alternative — "the pair's real
+confusability is in sound, and URD-053 already handles that via
+notes" — is true only of the data, not of what a learner ever sees.
+Traced the actual render path: `letter.note` is rendered in exactly one
+place in the whole app, `LetterLabScreen.tsx` — already documented
+elsewhere in this corpus as "flashcard trivia, not part of the real
+lesson path." The only mechanism that surfaces note text *during* a
+real exercise is `letterContrastExercise`, gated strictly by
+`confusableWith` — which `do-chashmi-he` correctly has none of. Net
+effect: across `do-chashmi-he`'s 6 real sightings in lesson `l-8`, a
+learner sees "sounds like h (aspirate)" repeated verbatim and is never
+told what "aspirate" means or that ھ modifies the letter before it,
+unless they voluntarily open the letter lab. Separately confirmed this
+is not a repetition problem — ھ appears in 197 of 1,010 word entries
+(~19.5%), heavy real-word reinforcement (تھا/تھی/تھے/تھیں, اچھا) — the
+gap is the missing explicit "here's the rule" moment, not exposure
+count. Explicitly recommends against fixing this via `confusableWith`
+(would misrepresent an unlike pair as near-identical outlines to the
+contrast-drill UI) — the right-shaped fix is a real exposure path for a
+*function* note, independent of the shape mechanism.
+
+Also found: BENCHMARKS.md has no quantitative target this item touches
+(no lesson-shape number is affected) — said plainly rather than a
+number being forced where none applies.
+
+## PASSED · URD-067 & URD-068 · confirmed, retroactively critiqued · 2026-08-29T10:30Z
+Both items' PASSED status (recorded 2026-08-28T23:17Z and
+2026-08-29T00:44Z respectively) stands, now with the critic verdicts
+this ledger's own rules require attached above. One MAJOR (URD-070) and
+one real curriculum finding (URD-071) filed forward to the queue rather
+than fixed in place, per the same "not blocking, filed forward" pattern
+used throughout this ledger for findings that don't gate the item that
+surfaced them.
