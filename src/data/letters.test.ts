@@ -358,3 +358,54 @@ describe('URD-067: the h family’s two h’s are deliberately not one confusabl
     }
   });
 });
+
+/**
+ * URD-071: `do-chashmi-he` and `noon-ghunna` are letters that carry no sound
+ * of their own — they modify a neighbouring letter or vowel instead, and
+ * their curated `note` already says so correctly ("it aspirates/nasalises
+ * ... before it"). That correct explanation was never reaching a learner:
+ * `note` renders in exactly one place in the whole app (`LetterLabScreen`,
+ * already documented elsewhere in this corpus, `URD-038`'s own note above,
+ * as flashcard trivia outside the real lesson path), and every real exercise
+ * instead shows only `name` and the bare, untranslated jargon in `sound`
+ * ("h (aspirate)", "ñ (nasal)").
+ *
+ * `functionNote` is the fix: a short translation of that jargon, rendered in
+ * `LetterFormExercise` every time one of these letters is met, reusing the
+ * "reveal a short fact after answering" convention that exercise already has
+ * for a different case (`pickedATwin`). This pins the criterion for who
+ * gets one — "before it" in the note is the exact textual signature the
+ * finding turned on — as a corpus invariant, in both directions: every
+ * letter that needs a translation has one, and no ordinary letter (whose
+ * full behaviour already is its sound) gets one it doesn't need.
+ */
+describe('URD-071: a letter that modifies its neighbour rather than sounding on its own gets that fact translated for real play', () => {
+  // The exact signature the finding turned on — a note describing a letter
+  // that changes a *neighbouring* sound, not its own.
+  const MODIFIES_NEIGHBOUR = /before it/i;
+
+  it('exactly the letters whose note describes modifying a neighbour have a functionNote — 2, matching the finding', () => {
+    const shouldHave = LETTERS.filter((l) => MODIFIES_NEIGHBOUR.test(l.note)).map((l) => l.id);
+    const does = LETTERS.filter((l) => l.functionNote).map((l) => l.id);
+    expect(shouldHave.length).toBe(2);
+    expect(does.sort()).toEqual(shouldHave.sort());
+  });
+
+  it('every functionNote is a real translation of the note, not a copy of it', () => {
+    for (const l of LETTERS) {
+      if (!l.functionNote) continue;
+      expect(l.functionNote, l.id).not.toBe(l.note);
+      // Short enough to read in the half-second an exercise's reveal line
+      // gets glanced at — long enough not to be a bare restatement of `sound`.
+      expect(l.functionNote.length, l.id).toBeLessThan(90);
+      expect(l.functionNote.length, l.id).toBeGreaterThan(20);
+    }
+  });
+
+  it('do-chashmi-he and noon-ghunna each name the thing they actually change — the letter before, or the vowel before', () => {
+    const doChashmiHe = getLetter('do-chashmi-he')!;
+    const noonGhunna = getLetter('noon-ghunna')!;
+    expect(doChashmiHe.functionNote).toMatch(/letter.*before it/i);
+    expect(noonGhunna.functionNote).toMatch(/vowel.*before it/i);
+  });
+});

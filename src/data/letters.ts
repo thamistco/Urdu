@@ -57,6 +57,26 @@ export type Letter = {
    * with the retroflex mark") are marked, nothing inferred beyond that.
    */
   confusableWith?: string;
+  /**
+   * URD-071: a short, plain-language fact for the handful of letters whose
+   * real behaviour a beginner cannot get from `name`/`sound` alone — a
+   * modifier that changes a *neighbouring* letter or vowel rather than
+   * carrying a sound of its own. `note` already says this correctly for
+   * `do-chashmi-he` and `noon-ghunna` ("it aspirates/nasalises ... before
+   * it"), but `note` renders in exactly one place in the whole app
+   * (`LetterLabScreen`, already documented elsewhere in this corpus as
+   * flashcard trivia outside the real lesson path) — every real exercise
+   * shows only `name` and `sound`, and `sound`'s own bracketed tag
+   * ("aspirate", "nasal") is exactly the kind of phonetics jargon this field
+   * exists to translate, not just repeat. Shown in `LetterFormExercise`
+   * (`LetterExercises.tsx`), the one place a short revealing line already
+   * appears after answering (see its own `pickedATwin` case) — reusing that
+   * convention rather than adding a new one. Unset for every ordinary
+   * letter; a letter whose full behaviour *is* its sound (`hamza`'s glottal
+   * catch, `ain`'s plain-English "silent") needs no translation and gets
+   * none.
+   */
+  functionNote?: string;
 };
 
 function connector(base: string): LetterForms {
@@ -559,6 +579,7 @@ export const LETTERS: Letter[] = [
     group: 7,
     note: 'A dotless noon at the end of a word, it nasalises the vowel before it.',
     confusableWith: 'noon',
+    functionNote: 'Silent on its own. It nasalises the vowel right before it.',
   },
   {
     id: 'waw',
@@ -646,6 +667,7 @@ export const LETTERS: Letter[] = [
     // URD-067: deliberately no `confusableWith: 'choti-he'` — see the group 8
     // header above. "The h with two eyes" names this letter's own eyes, not a
     // mark added to ہ's outline, which is what a link would assert.
+    functionNote: 'Silent on its own. It changes the sound of the letter right before it (k→kh, b→bh).',
   },
   {
     id: 'hamza',

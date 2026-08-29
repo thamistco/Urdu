@@ -6992,3 +6992,145 @@ one real curriculum finding (URD-071) filed forward to the queue rather
 than fixed in place, per the same "not blocking, filed forward" pattern
 used throughout this ledger for findings that don't gate the item that
 surfaced them.
+
+## CLAIMED · URD-070 · 2026-08-29T18:44Z
+files: scripts/soak.js
+definition of done: `traceTheLetter`'s "stroke registered" guard tells a
+  subtly-wrong `traceArea()` rect (correct at the walk's first point,
+  wrong toward the glyph's edges) apart from a healthy one, rather than
+  only proving the first point landed on the pad.
+branch: claude/gauntlet-trace-letter-solver
+
+## CRITIQUE · URD-070 · process note
+No critic dispatched on the fix itself — this item's own finding came
+from a critic (see the retroactive-dispatch entry above), and its fix is
+recorded directly rather than re-dispatching a review of a review.
+
+The item's own suggested direction — read back `TracePad`'s "N% of the
+letter covered" text and fail a real attempt that scores suspiciously
+low — was measured, not assumed, before being built: instrumented the
+coverage read-back and ran it live first.
+
+  $ SOAK_MEASURE_COVERAGE=1 npm run soak -- --seed 4 --lessons 10
+  [trace-coverage] 64% 61% 64% 50% 39% 61% 64% ...
+  n=13  min=39  max=64  mean=60.08
+
+A real, correctly-geometried full trace scores 39-64% coverage on this
+corpus alone — natural noise from the driver's coarse walk not hugging
+`scoreTrace`'s thinned skeleton. No floor separates a healthy run from a
+subtly broken one on this signal; the route was abandoned once measured
+rather than shipped on the strength of "should work."
+
+Fixed instead by reading back what the app itself recorded rather than
+what it graded: `TracePad` renders `strokes` as an SVG `<polyline>` in
+the pad's own 0..side local space, independent of grading. `soak.js`
+now reads that polyline's real points after the gesture and fails
+loudly (`fail('trace geometry drift', ...)`) if any fall outside the
+pad's own surface, with the exact count.
+
+## PASSED · URD-070 · 2026-08-29T19:14Z
+$ npm run soak -- --seed 4 --lessons 8   (healthy geometry, unmodified)
+  soak — 0 lessons completed, 8 attempts, 101 exercises answered.
+  exercise kinds exercised: letterTrace 23 · letterForm 25 · letterPick 28 ·
+  letterSpot 18 · letterContrast 7
+  Nothing broke. Seed 4.
+
+Broken on purpose per non-negotiable #2, exactly as the item's own
+`verify` specified — `traceArea()` temporarily scaled 1.18x around its
+own top-left corner (correct at the near corner, wrong toward the far
+edge):
+
+  $ npm run soak -- --seed 4 --lessons 8   (traceArea scaled, temporarily)
+  trace geometry drift
+    54 of 73 recorded stroke points landed outside the pad's own 348px
+    surface — traceArea()'s rect no longer matches the live pad
+  trace geometry drift
+    165 of 220 recorded stroke points landed outside the pad's own 348px
+    surface — traceArea()'s rect no longer matches the live pad
+  ...(hit the run's own 12-failure cap and exited)
+
+Fires reliably with a concrete measured count each time. Reverted
+immediately after, diffed against a backup to confirm byte-for-byte
+restoration.
+
+$ npx eslint scripts/soak.js / npx vitest run
+  clean / 279 passed (279).
+
+$ npm run check:all
+  all 30 steps pass against a deploy-shaped build.
+
+branch: claude/gauntlet-trace-letter-solver
+
+## CLAIMED · URD-071 · 2026-08-29T18:50Z
+files: src/data/letters.ts, src/exercises/LetterExercises.tsx,
+  scripts/check-writing.js
+definition of done: `do-chashmi-he`'s real function (a silent modifier of
+  the preceding consonant) reaches a learner during real play, not only
+  in the letter lab; measure which other letters share the same gap
+  rather than assuming it is unique to this one; do not fix it via
+  `confusableWith`, which URD-067 correctly declined for this pair.
+branch: claude/gauntlet-trace-letter-solver
+
+## CRITIQUE · URD-071 · process note
+No critic dispatched — same reasoning as URD-070 above.
+
+Measured the item's own instruction to check scope before assuming it:
+scanned all 40 letters' notes for the pattern CURRICULUM CRITIC's
+finding turned on (a letter that changes a *neighbouring* sound rather
+than carrying one of its own). Exactly two match —
+`do-chashmi-he`/`noon-ghunna` — plus `waw`, which is a different,
+already-adequately-exposed case (its `sound` field, `'w / o / u'`,
+states the dual role directly, no jargon hiding it). `ain` ("silent",
+plain English already) and `hamza` (a standalone catch, not a modifier)
+were checked and excluded on their own merits, not assumed exempt.
+
+Added `Letter.functionNote`, set on the two real matches, rendered in
+`LetterFormExercise` reusing its own existing "reveal a fact after
+answering" convention (`pickedATwin`) rather than inventing a new UI
+pattern or a "first sighting" tracking mechanism this app has no
+infrastructure for.
+
+Found a real, live gap in `check:writing` while writing the first draft:
+an em dash in `functionNote`'s prose passed clean, because the field
+name wasn't in that check's own `COPY_KEYS` list — a brand-new
+user-facing field was invisible to the one check meant to catch exactly
+this. Confirmed by re-adding the dash after registering the field and
+watching the check catch it that time. Fixed both the prose and the
+gap, not just the prose.
+
+The first verification attempt against a real running lesson produced
+no visible reveal line at all — traced to `dist/` being stale (built
+before this item's own source changes; `soak.js` never rebuilds it).
+Rebuilt (`npm run build:web`) before trusting any further live result.
+
+## PASSED · URD-071 · 2026-08-29T19:14Z
+$ npx vitest run src/data/letters.test.ts
+  Tests  19 passed (19)
+
+Mutation-tested: removing `do-chashmi-he`'s `functionNote` fails the
+2-letter corpus-count test and the "names what it changes" test; adding
+one to `kaaf` (no "before it" in its note) fails the count test alone;
+making `noon-ghunna`'s a verbatim copy of its `note` fails the
+"real translation, not a copy" test alone.
+
+Confirmed against a freshly rebuilt dist, driven to `do-chashmi-he`'s
+real `letterForm` screen (`--start 66`, lesson `l-8`'s real index in
+`ALL_LESSONS`) and screenshotted:
+
+  "Silent on its own. It changes the sound of the letter right before
+  it (k → kh, b → bh)." — rendered centred, two lines, directly below
+  the answer choices, where `pickedATwin`'s reveal already appears for
+  other letters. Captured four times across repeated sightings,
+  consistent each time.
+
+$ npx tsc --noEmit / npm run lint / npm run format:check
+  clean.
+
+$ node scripts/check-writing.js
+  clean — functionNote now scanned, confirmed live by re-breaking it
+  first (see CRITIQUE above).
+
+$ npm run check:all
+  all 30 steps pass against a deploy-shaped build.
+
+branch: claude/gauntlet-trace-letter-solver

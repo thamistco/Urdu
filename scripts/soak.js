@@ -1186,7 +1186,62 @@ async function traceTheLetter(page, wrongOnPurpose) {
   const drew = !(await onScreen(page.locator('text=/Draw over the grey letter/i'), 0, 900));
   if (process.env.SOAK_DEBUG && !drew) console.log('[trace] no stroke registered — pointer missed the pad');
   if (!drew) return false;
+
+  // URD-070: `drew` only proves the walk's *first* point landed on the pad —
+  // `TracePad`'s responder records a stroke and clears the caption on the
+  // bare touch-down, before any of the moves above run. A `traceArea()` rect
+  // that is subtly (not totally) wrong could pass that guard while later
+  // points drift off the pad, and `scoreTrace`'s own coverage number cannot
+  // be read back to catch it either — measured directly (see soak.js's own
+  // ledger entry, URD-070): a real, correctly-geometried full trace scores
+  // anywhere from 39% to 64% coverage on this corpus, so a floor tight enough
+  // to catch a subtly wrong rect would already be failing the healthy app.
+  // The one place with zero natural noise is the app's own record of what it
+  // drew: `TracePad` renders `strokes` as an SVG `<polyline>` whose `points`
+  // are in the pad's own 0..side local space. If every walked point truly
+  // landed on the pad, every recorded point is inside that square; if the
+  // rect drifted, some are not — independent of how well the stroke happens
+  // to score, which the SLACK below deliberately has no opinion on.
+  const drift = await tracedPointsDrift(page);
+  if (drift && drift.outside > 0) {
+    await fail(
+      page,
+      'trace geometry drift',
+      `${drift.outside} of ${drift.total} recorded stroke points landed outside the pad's own ` +
+        `${drift.side}px surface — traceArea()'s rect no longer matches the live pad`
+    );
+    return false;
+  }
+
   return tap(page.locator('text=/^CHECK$/i'), 0, 900);
+}
+
+/**
+ * Independent check of URD-070's own kind: reads back where the app itself
+ * recorded the stroke, not the driver's assumption of where it should be.
+ * Returns null (not a finding) if the pad or its drawn stroke cannot be
+ * found — this only speaks to points that exist.
+ */
+async function tracedPointsDrift(page) {
+  const pad = await onScreen(page.locator('[aria-label^="Drawing area"]'), 0, 900);
+  if (!pad) return null;
+  return pad.evaluate((el) => {
+    const svg = el.querySelector('svg');
+    const side = svg && Number(svg.getAttribute('width'));
+    if (!svg || !side) return null;
+    const pts = [];
+    for (const poly of svg.querySelectorAll('polyline')) {
+      for (const pair of (poly.getAttribute('points') || '').trim().split(/\s+/)) {
+        const [x, y] = pair.split(',').map(Number);
+        if (Number.isFinite(x) && Number.isFinite(y)) pts.push({ x, y });
+      }
+    }
+    if (!pts.length) return null;
+    // A couple of px of rounding slack at the very edge, not room for a real miss.
+    const SLACK = 2;
+    const outside = pts.filter((p) => p.x < -SLACK || p.x > side + SLACK || p.y < -SLACK || p.y > side + SLACK);
+    return { total: pts.length, outside: outside.length, side };
+  });
 }
 
 /**

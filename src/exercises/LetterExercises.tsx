@@ -76,6 +76,14 @@ export function LetterFormExercise({ exercise, locked, onGraded }: ExerciseProps
           {POSITIONS.find((p) => p.key === picked)!.label}” look the same here — both are right.
         </Txt>
       )}
+      {/* URD-071: `letter.sound`'s bracketed tag ("aspirate", "nasal") is the
+       *  only place a `do-chashmi-he`/`noon-ghunna` sighting names its real
+       *  behaviour at all outside the letter lab — this is that translation,
+       *  shown every time rather than once, the same way this exercise
+       *  already repeats every other fact it reveals. */}
+      {picked != null && letter.functionNote && (
+        <Txt className="mt-1 text-center text-xs text-paper/55">{letter.functionNote}</Txt>
+      )}
     </View>
   );
 }
