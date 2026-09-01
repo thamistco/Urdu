@@ -23,6 +23,18 @@
  * (this project's non-negotiable #2), including the five that had nothing to
  * report.
  *
+ * Rule 1 itself needed a correction the day after it shipped: it flagged
+ * every `actual !== voice` mismatch as a defect, which caught five clips
+ * (ہاں in both voices, بھی, جی, ف) that were never broken — Chirp3-HD
+ * refuses one- to three-character Urdu input outright, and `generate-voice.js`
+ * already had a measured, deliberate fallback for exactly that
+ * (`lib/voice-fallback.js`). Regenerating changed nothing for those five,
+ * because there is no voice request that reaches them; the rule now checks a
+ * clip's `actual` against that same table rather than assuming any mismatch
+ * is wrong. In check:all as of the run that made this file's own report clean
+ * — regenerating the two real defects (silent letters recorded from a bare
+ * glyph) is what got it there, not a loosened rule.
+ *
  * ## What this cannot do
  *
  * It never hears the audio. It proves the course asked for the right thing, in
@@ -57,6 +69,7 @@ const fs = require('fs');
 const path = require('path');
 const { BYTES_PER_SECOND } = require('./lib/audio');
 const { load } = require('./lib/load-ts');
+const { FALLBACK_VOICE } = require('./lib/voice-fallback');
 
 const ROOT = path.join(__dirname, '..');
 const SETS = [
@@ -101,12 +114,19 @@ function corpusWants() {
 
 /** 1. The clip came back in a different voice than the course asked for. */
 function wrongVoice(ledger, setName) {
+  // A clip landing on its documented Wavenet fallback (`lib/voice-fallback.js`)
+  // is the system working as designed, not a defect — measured directly there:
+  // Chirp3-HD refuses one- to three-character Urdu input, every time, on
+  // every voice. The first version of this rule did not know that and flagged
+  // ہاں (both voices), بھی, جی and ف as broken; regenerating them changed
+  // nothing, because there is no voice request that reaches them. Only a clip
+  // landing somewhere *other* than its requested or fallback voice is real.
   return Object.entries(ledger)
-    .filter(([, v]) => v.actual && v.actual !== v.voice)
+    .filter(([, v]) => v.actual && v.actual !== v.voice && v.actual !== FALLBACK_VOICE[v.voice])
     .map(
       ([id, v]) =>
-        `${id} (${setName}): asked for ${v.voice}, recorded ${v.actual} — ` +
-        `"${v.text}" is spoken by a different voice than the rest of the course`
+        `${id} (${setName}): asked for ${v.voice}, recorded ${v.actual} — neither that nor its ` +
+        `documented fallback (${FALLBACK_VOICE[v.voice] ?? 'none'}) — "${v.text}" is spoken unexpectedly`
     );
 }
 

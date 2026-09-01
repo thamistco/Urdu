@@ -135,6 +135,13 @@ jobs:
       - name: Check that every voice clip is audible
         run: npm run check:voice
 
+      # check:voice proves a clip can be heard; this proves it is the voice
+      # and the text the course actually asked for today — the wrong-voice
+      # and silent-letter defects it was built to catch are fixed and this
+      # is green as of the run that added it. Offline, under a second.
+      - name: Check that every clip is the recording the course asked for
+        run: npm run check:voice-fidelity
+
       # `npm run build:web` is the only way this project builds, here and on a
       # laptop. The subpath and the commit stamp arrive as environment
       # variables that app.config.js reads — nothing rewrites a tracked file
