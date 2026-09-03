@@ -117,16 +117,30 @@ const V = (topic: string, title: string, subtitle: string, xp = 18, size = 9): L
   xp,
   size,
 });
-const L = (group: number, title: string, subtitle: string, xp = 20, size = 7): Lesson => ({
-  id: uid(`l-${group}`),
-  title,
-  subtitle,
-  icon: '🔤',
-  kind: 'letters',
-  letterIds: lettersOfGroup(group),
-  xp,
-  size,
-});
+/**
+ * Six sightings per letter, plus one context word — the same budget the
+ * generator fills; `check:shape` measures what it actually emits rather than
+ * trusting this number. Kept in this file rather than imported from the
+ * generator for the same reason `SIGHTINGS_PER_WORD` is: content shape belongs
+ * with content, and the two are cross-referenced by comment, not by a shared
+ * constant, so a change to one is a change someone has to notice and make to
+ * the other rather than one that silently drifts underneath both.
+ */
+const SIGHTINGS_PER_LETTER = 6;
+
+const L = (group: number, title: string, subtitle: string, xp = 20): Lesson => {
+  const letterIds = lettersOfGroup(group);
+  return {
+    id: uid(`l-${group}`),
+    title,
+    subtitle,
+    icon: '🔤',
+    kind: 'letters',
+    letterIds,
+    xp,
+    size: letterIds.length * SIGHTINGS_PER_LETTER + 1,
+  };
+};
 const G = (conceptId: string, title: string, subtitle: string, xp = 25, size = 6): Lesson => ({
   id: uid(conceptId),
   title,
@@ -137,7 +151,34 @@ const G = (conceptId: string, title: string, subtitle: string, xp = 25, size = 6
   xp,
   size,
 });
-const S = (level: Level, title: string, subtitle: string, xp = 20, size = 5): Lesson => ({
+/**
+ * `size` is the number of sentences, not the number of exercises — the
+ * generator meets each one three times (recognise its meaning, retrieve it,
+ * build it), so 8 sentences is 24 exercises, about 3.6 minutes. Was 5
+ * sentences and one exercise each: 5 exercises, 0.8 minutes, an
+ * interruption rather than a sitting; check:shape measures the real output
+ * rather than trusting this number, same as everywhere else `size` is a
+ * budget and not a count.
+ */
+/**
+ * URD-048: `size` was 8 — 45s of exercises per sentence
+ * (`sentenceReinforceClimb`, `generator.ts`, URD-025) is 6.0 minutes at 8,
+ * comfortably under `check:shape`'s 8-minute ceiling with room for 10.67
+ * sentences (450s) before crossing it. 10 is the largest value still
+ * inside the band (450s = 7.5 min), verified against real generated
+ * output rather than estimated: raises course-wide sentence-pool
+ * reachability (`sentencesForLesson`, URD-027) from 96/256 (37.5%) to
+ * 116/256 (45.3%), with zero new check:shape length/share/run violations.
+ * (115/256 was the pre-implementation estimate; the real number differs by
+ * one because raising `size` to 10 exposed a genuine position-scarcity
+ * case — `s-intermediate` and `s-intermediate-2` share a too-thin readable
+ * pool — that `sentencesForLesson` now handles by drawing one lesson short
+ * rather than reusing a sibling's sentence; see its own doc comment.) Not
+ * a complete fix for reachability — elementary alone would need size 35
+ * (~26 minutes) for full parity with its pool, more than 3x this ceiling
+ * — see URD-027/URD-048 in gauntlet/done for the rest of that story.
+ */
+const S = (level: Level, title: string, subtitle: string, xp = 20, size = 10): Lesson => ({
   id: uid(`s-${level}`),
   title,
   subtitle,
@@ -167,15 +208,67 @@ const D = (dialogueId: string, title: string, subtitle: string, xp = 25, size = 
   xp,
   size,
 });
-const P = (title: string, subtitle: string, xp = 20, size = 6): Lesson => ({
-  id: uid('phrases'),
-  title,
-  subtitle,
-  icon: '💬',
-  kind: 'phrases',
-  xp,
-  size,
-});
+const P = (title: string, subtitle: string, xp = 30, size = 12): Lesson => {
+  /**
+   * URD-A02: `size` used to be both "how many distinct phrases this lesson
+   * draws" and "how many exercises it emits" — the generator's phrases
+   * branch gave each drawn phrase exactly one exercise. That meant every
+   * phrase this lesson ever taught got exactly one lifetime sighting (no
+   * review pool or second phrases lesson ever revisits one), and the fix
+   * for this lesson's own too-short length (raising size from 6 to 24) made
+   * that worse, not better: 24 of the app's 28 phrases moved from "seen
+   * once" to "seen once," just more of them in one sitting — caught by the
+   * curriculum critic reviewing that fix, not by `check:shape` (whose
+   * `MIN_SIGHTINGS` floor only scans `kind: 'vocab'` lessons).
+   *
+   * The generator's phrases branch now runs the same 3-pass, meet/recall/
+   * produce climb the vocab branch already uses, so `size` here means what
+   * `wordIds.length` means for a vocab lesson — distinct items drawn — and
+   * the real exercise count is `3 * size`, not `size`. Ten times fewer
+   * phrases taught deeply beats four times more taught once.
+   *
+   * The share guard below is checked against that real formula rather than
+   * the old one-exercise-per-phrase count. The generator biases its draw
+   * toward typeable phrases — `typeableDraw = min(14, size - 2)` of them —
+   * so `produce` doesn't fold back into `meet`'s fallback too often (see the
+   * generator's own doc comment); the rest of the draw, `size - typeableDraw`
+   * phrases, is what the produce pass's fallback lands on. This is a worst
+   * case, not an exact count — those "rest" phrases are drawn from
+   * everything not already picked, which can itself include a few more
+   * typeable ones by luck, only ever *lowering* `meet`'s real share below
+   * what this guard computes. Solved by hand and confirmed against a real
+   * generated lesson at every size 6-20: safe from 10 through 17 inclusive;
+   * below 10 the worst-case `meet` share exceeds 40% (a 6-phrase lesson
+   * measured at 44.4%, the shape of the very bug URD-023 first fixed, now
+   * recurring at the new, three-times-larger exercise count); above 17 the
+   * guaranteed-typeable pool (14 of 28 phrases) can no longer supply
+   * `size - 2`, and the shortfall pushes `meet`'s share past 40% again from
+   * the other direction. No size outside that range is a bug to fix here —
+   * it is this lesson kind's whole reachable range at a 14-of-28-typeable
+   * corpus, the same "three kinds can't split some sizes under 40%
+   * regardless" fact the original guard existed to state, now for the new
+   * formula.
+   */
+  const typeableDraw = Math.min(14, Math.max(0, size - 2));
+  const worstCaseUntypeableInProducePass = size - typeableDraw;
+  const meetShare = (size + worstCaseUntypeableInProducePass) / (3 * size);
+  if (meetShare > 0.4) {
+    throw new Error(
+      `phrases lesson "${title}" has size ${size}; meet/meaningPick would take ` +
+        `${Math.ceil(meetShare * 1000) / 10}% of its ${3 * size} exercises, over check:shape's 40% share ` +
+        `floor — pick a size from 10 to 17 (see the comment above this guard for why that is the reachable range).`
+    );
+  }
+  return {
+    id: uid('phrases'),
+    title,
+    subtitle,
+    icon: '💬',
+    kind: 'phrases',
+    xp,
+    size,
+  };
+};
 /**
  * A review closes a unit and draws on everything up to it, so unlike every
  * other lesson it has no content of its own to be named after. It takes the
@@ -616,15 +709,28 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
+    // URD-A02: was the first half of a single 13-lesson 'u27' — 1 over
+    // MAX_LESSONS_PER_UNIT. Split by theme (things you build and run with
+    // here, the field and kitchen in the unit after).
     id: 'u27',
     level: 'intermediate',
     color: GOLD,
-    title: 'Unit 27 · House & Field',
-    subtitle: 'Tools, materials and the land',
+    title: 'Unit 27 · Materials & Machines',
+    subtitle: 'What things are made of, and what runs them',
     lessons: [
       V('tools', 'Tools', 'Building and mending'),
       V('materials', 'Materials', 'What things are made of'),
       V('appliances', 'Appliances', 'Machines around the house'),
+      REV('materials-and-machines'),
+    ],
+  },
+  {
+    id: 'u28',
+    level: 'intermediate',
+    color: ROSE,
+    title: 'Unit 28 · Field & Kitchen',
+    subtitle: 'Holding, growing and cooking',
+    lessons: [
       V('containers', 'Containers', 'Holding and carrying'),
       V('farm', 'Farm & field', 'Agriculture and livestock'),
       V('cooking', 'Cooking', 'In the kitchen, making food'),
@@ -633,10 +739,10 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u28',
+    id: 'u29',
     level: 'intermediate',
     color: JADE,
-    title: 'Unit 28 · Senses & Seasons',
+    title: 'Unit 29 · Senses & Seasons',
     subtitle: 'What you taste, hear and wear',
     lessons: [
       V('senses', 'Sounds & senses', 'What you perceive'),
@@ -649,10 +755,10 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u29',
+    id: 'u30',
     level: 'intermediate',
     color: BLUE,
-    title: 'Unit 29 · Together',
+    title: 'Unit 30 · Together',
     subtitle: 'Guests, weddings and showing respect',
     lessons: [
       V('social', 'Social life', 'People together'),
@@ -667,10 +773,10 @@ const PLANNED_UNITS: Unit[] = [
 
   // ══════════════ ADVANCED ══════════════
   {
-    id: 'u30',
+    id: 'u31',
     level: 'intermediate',
     color: ROSE,
-    title: 'Unit 30 · Describing People',
+    title: 'Unit 31 · Describing People',
     subtitle: 'Character, appearance and relationships',
     lessons: [
       V('appearance', 'Appearance', 'How someone looks'),
@@ -682,10 +788,10 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u31',
+    id: 'u32',
     level: 'advanced',
     color: GOLD,
-    title: 'Unit 31 · Fine Description',
+    title: 'Unit 32 · Fine Description',
     subtitle: 'Precision, judgement and degree',
     lessons: [
       V('describing-more', 'Fine description', 'Precise and expressive adjectives'),
@@ -696,10 +802,10 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u32',
+    id: 'u33',
     level: 'advanced',
     color: JADE,
-    title: 'Unit 32 · Mind & Feeling',
+    title: 'Unit 33 · Mind & Feeling',
     subtitle: 'Subtler emotions and ideas',
     lessons: [
       V('emotions', 'Emotions & mind', 'Hope, patience, longing'),
@@ -710,10 +816,10 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u33',
+    id: 'u34',
     level: 'advanced',
     color: BLUE,
-    title: 'Unit 33 · Thought & Belief',
+    title: 'Unit 34 · Thought & Belief',
     subtitle: 'Philosophy, faith and the sentences that pair up',
     lessons: [
       V('philosophy', 'Thought & philosophy', 'Reason, ethics and meaning'),
@@ -725,10 +831,10 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u34',
+    id: 'u35',
     level: 'advanced',
     color: ROSE,
-    title: 'Unit 34 · Culture & Faith',
+    title: 'Unit 35 · Culture & Faith',
     subtitle: 'Festivals, poetry and belief',
     lessons: [
       V('culture', 'Culture & faith', 'Festivals and tradition'),
@@ -740,10 +846,10 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u35',
+    id: 'u36',
     level: 'advanced',
     color: GOLD,
-    title: 'Unit 35 · Poetry & Story',
+    title: 'Unit 36 · Poetry & Story',
     subtitle: 'The literary heart of Urdu',
     lessons: [
       V('poetry', 'Poetry & music', 'The Urdu literary tradition'),
@@ -755,10 +861,10 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u36',
+    id: 'u37',
     level: 'advanced',
     color: JADE,
-    title: 'Unit 36 · The Modern World',
+    title: 'Unit 37 · The Modern World',
     subtitle: 'Technology, media and enterprise',
     lessons: [
       V('tech', 'Modern life', 'Technology and news'),
@@ -772,10 +878,10 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u37',
+    id: 'u38',
     level: 'advanced',
     color: BLUE,
-    title: 'Unit 37 · State & Society',
+    title: 'Unit 38 · State & Society',
     subtitle: 'Politics, law, economy and history',
     lessons: [
       V('politics', 'Politics', 'Power, parties and the state'),
@@ -788,10 +894,10 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u38',
+    id: 'u39',
     level: 'advanced',
     color: ROSE,
-    title: 'Unit 38 · Body & Medicine',
+    title: 'Unit 39 · Body & Medicine',
     subtitle: 'Clinical language and public help',
     lessons: [
       V('organs', 'Inside the body', 'Organs and inner workings'),
@@ -803,36 +909,161 @@ const PLANNED_UNITS: Unit[] = [
     ],
   },
   {
-    id: 'u39',
+    // URD-A02: was the second half of a single 15-lesson 'u39' — 2 over
+    // MAX_LESSONS_PER_UNIT. Split by theme (land/sky content here, travel and
+    // formal register in the unit after); see that unit's own comment for
+    // what this does to 'rev-the-wider-world', which moved there.
+    id: 'u40',
     level: 'advanced',
     color: GOLD,
-    title: 'Unit 39 · The Wider World',
-    subtitle: 'Land, sky, formal Urdu and mastery',
+    title: 'Unit 40 · Land & Sky',
+    subtitle: 'The natural world, and what threatens it',
     lessons: [
       V('nature2', 'The natural world', 'Rivers, deserts, seasons'),
       V('landscape', 'Landscape', 'The shape of the land'),
       V('sky', 'Sky & space', 'Above the horizon'),
       V('environment', 'Environment', 'Climate and conservation'),
+      REV('land-and-sky'),
+    ],
+  },
+  {
+    id: 'u41',
+    level: 'advanced',
+    color: JADE,
+    title: 'Unit 41 · Journeys & Mastery',
+    subtitle: 'Travel, life’s milestones, and formal Urdu',
+    lessons: [
       V('travel-more', 'Journeys', 'Planning and describing trips'),
       V('lifeevents', 'Life events', 'Birth, success, destiny'),
       V('formal', 'Formal & written', 'Letters, notices and officialese'),
       S('advanced', 'Complex sentences', 'Write the way Urdu writes'),
-      REV('the-wider-world', 'Grand review', 'Everything you know', 60, 15),
+      /**
+       * URD-A02: kept the pre-split id ('rev-the-wider-world') and its
+       * course-completion framing, because this unit is still genuinely the
+       * last one in the path — the split moved half its vocabulary to
+       * 'land-and-sky' above, not its position. `coverTopics` sizes every
+       * review from its OWN unit's words, so this review's real size drops
+       * from 39 (the old, single u39's 117 words / 3) to 22 (REVIEW_MIN,
+       * `travel-more`+`lifeevents`+`formal`'s 53 words / 3 rounds to 18,
+       * under the floor) — measured directly, not assumed, after the split.
+       * That is not a regression to route around: a review scoped to a
+       * smaller unit reviewing a smaller unit is the same design every other
+       * review in this course already uses (see review.ts), and 22 is still
+       * this course's normal review floor, not a shortfall. The `60` xp and
+       * "Grand review" / "Everything you know" framing stay, since finishing
+       * the actual last unit of the path is still the moment they describe.
+       *
+       * The curriculum critic flagged this as a MAJOR: a review this size
+       * carrying that much xp and framing reads as overclaiming once its
+       * real content is measured. Overruled, not ignored (gauntlet/ROLES.md:
+       * a lead may overrule a critic if the ledger records why) — because
+       * this is not a new pattern this split introduced. Every CEFR-boundary
+       * review already does the identical thing: rev-asking-and-opposites
+       * (40xp), rev-your-first-readings (40xp) and rev-describing-people
+       * (45xp) all land at this course's own 22-exercise review floor too
+       * (measured directly, not assumed), each carrying elevated xp a
+       * milestone earns regardless of the review's own mechanical size. This
+       * review joining them at the floor, with the largest bonus for being
+       * the last milestone rather than a mid-course one, is that same
+       * escalating pattern (30 -> 40 -> 45 -> 60 as the course progresses),
+       * not a departure from it.
+       */
+      REV('the-wider-world', 'Grand review', 'Everything you know', 60),
     ],
   },
 ];
 
 /**
- * How many new words one vocabulary lesson introduces.
+ * How many new words a vocabulary lesson aims at.
  *
- * Five, chosen against the shape of the corpus rather than picked round: topic
- * pools run from 11 to 32 words with a median of 19, so five gives most topics
- * four parts and none of them a part so short it is not worth opening. The
- * lesson around those five is unchanged — meet each word, come back to two from
- * the English side, type one, build one, close on a matching board — which is
- * about ten exercises, and that was already the length that felt right.
+ * Ten, and it is a target rather than a ceiling: a topic near ten words is one
+ * lesson, a topic of thirty two is three.
+ *
+ * The first version of this was five, which fixed coverage and broke the shape
+ * of the course. Five words at two sightings each is about nine exercises, which
+ * is 1.3 minutes. Drops caps a session at five minutes and Duolingo runs five to
+ * ten; a 1.3 minute lesson is not a sitting, it is an interruption, and 493 of
+ * them made "First words 6 of 7" read as the app padding its lesson count.
+ *
+ * Ten falls out of three constraints that have to hold at once rather than from
+ * taste. No topic may break into more than three parts, or it stops reading as
+ * one topic. Every new word must be met at least three times inside its own
+ * lesson, because that is where the length should come from. And a lesson must
+ * land between three and eight minutes.
+ *
+ * Measured on what the generator actually emits: 233 vocabulary lessons of seven
+ * to fourteen words, 3.07 sightings at the floor, 3.3 to 6.5 minutes each, none
+ * outside the band.
+ *
+ * `check:shape` measures what the generator actually emits rather than trusting
+ * the budget recorded on the lesson, so these numbers cannot quietly drift.
  */
-const NEW_WORDS_PER_LESSON = 5;
+const WORDS_PER_LESSON_IDEAL = 10;
+
+/** No topic may be broken into more pieces than this and still read as one. */
+const MAX_PARTS_PER_TOPIC = 3;
+
+/**
+ * How many times a new word is met inside the lesson that introduces it.
+ *
+ * This is the dial that actually matters and the one it is tempting to leave
+ * alone. Neither benchmark reaches five minutes by front loading vocabulary:
+ * Duolingo introduces a handful of new words in a ten minute lesson and repeats
+ * each of them four to six times. Raising the word count without raising this
+ * produces a longer lesson that teaches worse.
+ */
+const SIGHTINGS_PER_WORD = 3;
+
+/**
+ * The closing matching board — one `{ kind: 'matching' }` exercise holding
+ * four word pairs, but exactly one entry in the exercises array the way
+ * `check:shape` counts it.
+ *
+ * URD-011: this was `4`, silently confusing "the board holds four words"
+ * with "the board is four exercises." `check:shape` measures the real
+ * generator rather than trusting this budget, which is exactly how it
+ * caught the drift: every vocabulary lesson's real length was `3n + 1`
+ * against a recorded `size` of `3n + 4`, three too many, on every one of
+ * them. Nothing reads `lesson.size` for vocabulary lessons today, which is
+ * the only reason a three-exercise lie sat here unnoticed.
+ *
+ * The lesson can also gain up to two more exercises at runtime — a due SRS
+ * item woven in near the front (`generator.ts`, "Weave up to two due review
+ * items") — but that is a learner-state-dependent bonus on top of the
+ * baseline shape, not part of it, and does not belong in this constant.
+ *
+ * `+1` still assumes the board renders at all: `generator.ts` only pushes it
+ * when four distinct-cue, distinct-gloss words can be found (`board.length
+ * === 4`), topping up from the wider topic pool when the lesson's own words
+ * fall short. True for every topic today (the smallest has 11 words) and
+ * re-verified whenever `check:shape` runs (THE CRITIC, reviewing this: 233
+ * of 233 real vocabulary lessons match exactly) — but not structurally
+ * guaranteed, so a future topic too small or too homogeneous to fill the
+ * board would make this constant wrong by one again, the same shape of bug
+ * this item exists to fix. Worth a real guard the next time topic sizing is
+ * touched; not one now, since nothing reads vocab `lesson.size` at runtime
+ * and `check:shape`'s own real-generator measurement would simply start
+ * reporting the new mismatch.
+ */
+const CLOSING_EXERCISES = 1;
+
+/**
+ * How much of a unit its review revisits, and the floor and ceiling on that.
+ *
+ * A unit review was a flat nine questions wherever it sat, which is 1.4 minutes
+ * against a three minute floor — a lesson icon on the path that resolves in the
+ * time it takes to read its title. It was also the same nine whether the unit
+ * behind it taught 20 words or 90.
+ *
+ * So it is derived from the unit it closes. A third of the new words is the
+ * share, because a review is a sample of the unit rather than a re-run of it,
+ * and the clamp keeps a small unit's review a sitting and a large unit's review
+ * from becoming a second course. 22 to 40 exercises is 3.3 to 6.0 minutes at
+ * nine seconds each, inside the same band every other lesson is held to.
+ */
+const REVIEW_SHARE_OF_UNIT = 1 / 3;
+const REVIEW_MIN = 22;
+const REVIEW_MAX = 40;
 
 /**
  * Split a topic's words into parts of nearly equal size.
@@ -843,7 +1074,13 @@ const NEW_WORDS_PER_LESSON = 5;
  * course ran out rather than finished.
  */
 function balancedParts<T>(items: readonly T[], per: number): T[][] {
-  const n = Math.max(1, Math.ceil(items.length / per));
+  // Rounded, not ceiled. Ceiling divides a twelve word topic into two lessons of
+  // six, and six words at three sightings is 2.9 minutes — back under the floor
+  // this whole change exists to clear. Rounding keeps twelve as one lesson of
+  // twelve. There is deliberately no hard ceiling on words per lesson: the cap
+  // that matters is minutes, a fourteen word topic left whole is 6.5 of them,
+  // and a constant nothing enforces is a comment pretending to be a rule.
+  const n = Math.min(MAX_PARTS_PER_TOPIC, Math.max(1, Math.round(items.length / per)));
   const out: T[][] = [];
   let start = 0;
   for (let i = 0; i < n; i++) {
@@ -878,27 +1115,38 @@ function balancedParts<T>(items: readonly T[], per: number): T[][] {
  * the content, never the position.
  */
 function coverTopics(units: Unit[]): Unit[] {
-  return units.map((u) => ({
-    ...u,
-    lessons: u.lessons.flatMap((l) => {
-      if (l.kind !== 'vocab' || !l.topic) return [l];
-      const parts = balancedParts(wordsByTopic(l.topic), NEW_WORDS_PER_LESSON);
-      return parts.map((words, i) => ({
-        ...l,
-        id: i === 0 ? l.id : `${l.id}-p${i + 1}`,
-        // The counter goes on the subtitle rather than the title so the path
-        // still reads as one topic broken into sittings, rather than as a
-        // dozen lessons that happen to share a name.
-        subtitle: parts.length > 1 ? `${l.subtitle} · ${i + 1} of ${parts.length}` : l.subtitle,
-        romanSubtitle:
-          l.romanSubtitle && parts.length > 1 ? `${l.romanSubtitle} · ${i + 1} of ${parts.length}` : l.romanSubtitle,
-        wordIds: words.map((w) => w.id),
-        // The closing run — two recalls, a type, a build and the board — needs
-        // its own slots on top of the words, or the lesson is trimmed and it is
-        // the hardest exercises at the end that get cut.
-        size: words.length + 4,
-      }));
-    }),
+  return units.map((u) => {
+    const expanded = u.lessons.flatMap((l) => expandLesson(l));
+    // A review closes a unit, so it can only be sized once the lessons in front
+    // of it are known. Counted over the whole unit rather than only the lessons
+    // above it, because a unit's review sits at its end.
+    const newWords = expanded.reduce((n, l) => n + (l.wordIds?.length ?? 0), 0);
+    const reviewSize = Math.min(REVIEW_MAX, Math.max(REVIEW_MIN, Math.round(newWords * REVIEW_SHARE_OF_UNIT)));
+    return {
+      ...u,
+      lessons: expanded.map((l) => (l.kind === 'review' ? { ...l, size: reviewSize } : l)),
+    };
+  });
+}
+
+/** One planned vocabulary lesson becomes as many lessons as its topic needs. */
+function expandLesson(l: Lesson): Lesson[] {
+  if (l.kind !== 'vocab' || !l.topic) return [l];
+  const parts = balancedParts(wordsByTopic(l.topic), WORDS_PER_LESSON_IDEAL);
+  return parts.map((words, i) => ({
+    ...l,
+    id: i === 0 ? l.id : `${l.id}-p${i + 1}`,
+    // The counter goes on the subtitle rather than the title so the path
+    // still reads as one topic broken into sittings, rather than as a
+    // dozen lessons that happen to share a name.
+    subtitle: parts.length > 1 ? `${l.subtitle} · ${i + 1} of ${parts.length}` : l.subtitle,
+    romanSubtitle:
+      l.romanSubtitle && parts.length > 1 ? `${l.romanSubtitle} · ${i + 1} of ${parts.length}` : l.romanSubtitle,
+    wordIds: words.map((w) => w.id),
+    // Three sightings of every new word, plus the closing run. This is the
+    // budget the generator fills; `check:shape` measures what it actually
+    // emits rather than trusting this number.
+    size: SIGHTINGS_PER_WORD * words.length + CLOSING_EXERCISES,
   }));
 }
 

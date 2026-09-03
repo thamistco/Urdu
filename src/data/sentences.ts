@@ -544,12 +544,39 @@ export const SENTENCES: Sentence[] = [
     concept: 'g-possess',
   },
   {
+    // URD-029: re-tagged from g-possess to g-plurals. g-plurals' own concept
+    // table (src/data/grammar.ts) names four plural patterns; its four
+    // original tagged sentences already demonstrate three of them: masc.
+    // ‑ا→‑ے (لڑکا→لڑکے, s-38), fem. ‑ی→‑یاں (کرسی→کرسیاں, s-167), and fem.
+    // consonant→‑یں (کتاب→کتابیں s-39, بہن→بہنیں s-166) — but never the
+    // "other masculine, unchanged" row (گھر → گھر), which the concept's own
+    // explain text singles out as the one likeliest to trip a learner up: a
+    // plural that looks identical to its singular is easy to miss entirely.
+    // دوست ("friend") is exactly that: an unchanged masculine plural, with
+    // تین ("three") forcing the plural reading the same way s-38/s-166/
+    // s-167 each use a number to force theirs.
+    //
+    // Re-tagged rather than authoring a new sentence: a new sentence has
+    // no recorded voice clip, and this repo has no TTS credential to
+    // generate one (see VOICE_SETUP.md) — check:voice caught exactly this
+    // when a first attempt at this fix authored a brand-new sentence
+    // (also, separately, the wrong row: it duplicated s-167's ‑ی→‑یاں
+    // coverage instead of filling this gap — found by the curriculum
+    // critic). Re-tagging costs g-possess nothing real: it has 19 sentences
+    // tagged to it against a target of 6 drawn per lesson, and s-77 was
+    // not among the 6 g-possess's own lesson currently draws (confirmed
+    // directly), so g-possess's own exercise set is unaffected.
+    //
+    // Fully readable at g-plurals' lesson position: تین (taught at lesson
+    // 14) and دوست (taught at lesson 1) both precede g-plurals (lesson 46);
+    // میرے and ہیں own no vocabulary entry and are left alone the same way
+    // any word with no teaching position is.
     id: 's-77',
     words: ['میرے', 'تین', 'دوست', 'ہیں'],
     roman: 'mere teen dost hain',
     meaning: 'I have three friends',
     level: 'elementary',
-    concept: 'g-possess',
+    concept: 'g-plurals',
   },
   {
     id: 's-78',

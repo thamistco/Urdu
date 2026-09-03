@@ -179,26 +179,11 @@ const CAST = {
   m: ['ur-IN-Chirp3-HD-Achird', 'ur-IN-Chirp3-HD-Algieba'],
 };
 
-/**
- * Where to turn when Chirp3-HD will not say a word at all.
- *
- * The near-silent responses are not evenly spread: measured over repeated
- * attempts, ہاں and ں came back silent 8 times out of 8 and کیا 5 times out of 8,
- * while every Chirp3-HD voice — Zephyr, Kore, Leda — failed on all three. The
- * model simply does not handle one- to three-character Urdu input. The older
- * Wavenet voices produce all three cleanly, every time.
- *
- * So a clip that stays silent falls back to the Wavenet voice of the same
- * gender. It is a slightly different timbre on a handful of very short items —
- * eight letters and a few words — which is a far smaller cost than a course
- * whose alphabet cards play nothing.
- */
-const FALLBACK_VOICE = {
-  'ur-IN-Chirp3-HD-Zephyr': 'ur-IN-Wavenet-A',
-  'ur-IN-Chirp3-HD-Kore': 'ur-IN-Wavenet-A',
-  'ur-IN-Chirp3-HD-Achird': 'ur-IN-Wavenet-B',
-  'ur-IN-Chirp3-HD-Algieba': 'ur-IN-Wavenet-B',
-};
+// Where to turn when Chirp3-HD will not say a word at all — see that table's
+// own comment (`lib/voice-fallback.js`) for the measurement behind it. Shared
+// with `check-voice-fidelity.js` so a clip landing on its documented fallback
+// is never confused with one landing somewhere it should not be.
+const { FALLBACK_VOICE } = require('./lib/voice-fallback');
 
 /**
  * How fast a thing is said, and why there are two answers.
@@ -257,8 +242,12 @@ function collectItems() {
   for (const p of PASSAGES) p.lines.forEach((l, i) => add(`${p.id}-${i}`, l.urdu, CAST.narrator, PACE.connected));
   for (const d of DIALOGUES)
     d.lines.forEach((l, i) => add(`${d.id}-${i}`, l.urdu, castFor(d, l.speaker), PACE.connected));
-  // Letters are announced by id too, when a traced letter is accepted.
-  for (const l of LETTERS) add(l.id, l.forms?.isolated || l.glyph || l.forms?.initial);
+  // Letters are announced by id too, when a traced letter is accepted. Two of
+  // them carry `pronounce` for the same reason a word does: `ھ` and `ں` are
+  // silent on their own, so the isolated glyph is not something a voice can
+  // read — see that field's own comment in `letters.ts`, and
+  // `check:voice-fidelity`, which is what found the clips it produced.
+  for (const l of LETTERS) add(l.id, l.pronounce || l.forms?.isolated || l.glyph || l.forms?.initial);
   return items;
 }
 
@@ -513,7 +502,18 @@ function writeManifest() {
     if (!fs.existsSync(path.join(OUT_DIR, `${i.id}.mp3`))) missing.push(i);
     else {
       const was = ledger[i.id];
-      if (was && (was.text !== i.text || was.voice !== i.voice || (was.pace ?? LEGACY_PACE) !== i.pace)) stale.push(i);
+      // `actual` is set when the API answered in a voice other than the one
+      // asked for — a retry landing on an older model, which leaves one word
+      // audibly in a different voice from the rest of the course. Recorded
+      // since this ledger was written and never acted on, so eight shipped
+      // clips (ہاں among them, in both voices) were narrated by a stranger
+      // until `check:voice-fidelity` went looking. Counting it as stale is
+      // what lets an ordinary incremental run repair them: they are not
+      // stale by text, so nothing else would ever re-record them, and
+      // --force would re-record all 5,496 to fix 8.
+      const wrongVoice = was && was.actual && was.actual !== i.voice;
+      if (was && (was.text !== i.text || was.voice !== i.voice || (was.pace ?? LEGACY_PACE) !== i.pace || wrongVoice))
+        stale.push(i);
     }
   }
   const todo = force ? all : [...missing, ...stale];
@@ -528,6 +528,7 @@ function writeManifest() {
     let what;
     if (was.text !== s.text) what = `“${was.text}” \u2192 “${s.text}”`;
     else if (was.voice !== s.voice) what = `${was.voice} \u2192 ${s.voice}`;
+    else if (was.actual && was.actual !== s.voice) what = `was recorded in ${was.actual}, not ${s.voice}`;
     else what = `pace ${was.pace ?? LEGACY_PACE} \u2192 ${s.pace}`;
     console.log(`    stale: ${s.id} — ${what}`);
   }

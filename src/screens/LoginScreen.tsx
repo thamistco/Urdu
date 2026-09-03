@@ -160,8 +160,8 @@ export function LoginScreen() {
           {note && (
             <Reveal>
               <View
-                className="mt-3 rounded-xl border-l-2 p-2.5"
-                style={{ borderLeftColor: palette.gold, backgroundColor: withAlpha(palette.gold, 0.08) }}
+                className="mt-3 rounded-xl border-s-2 p-2.5"
+                style={{ borderStartColor: palette.gold, backgroundColor: withAlpha(palette.gold, 0.08) }}
               >
                 <Txt className="text-[11px] leading-4 text-paper/75">{note}</Txt>
               </View>

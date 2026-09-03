@@ -79,8 +79,8 @@ export function LeaderboardScreen() {
                   style={{
                     borderColor: r.me ? palette.gold : withAlpha(palette.white, 0.08),
                     backgroundColor: r.me ? withAlpha(palette.gold, 0.12) : palette.ink700,
-                    borderLeftWidth: 3,
-                    borderLeftColor: zoneColor,
+                    borderStartWidth: 3,
+                    borderStartColor: zoneColor,
                   }}
                 >
                   <Bold style={{ width: 26, color: rank <= 3 ? palette.gold : palette.cream }}>{rank}</Bold>

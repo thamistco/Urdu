@@ -103,8 +103,21 @@ function findChromium() {
  *
  * Shared for the same reason the server is: every browser check needs it, and a
  * per-script copy is a per-script way to drift.
+ *
+ * URD-051: `state` (the third argument) only ever merged into
+ * `harf-progress` — the SRS/hearts/completed-lessons store — never into
+ * `harf-settings`, which is where `track` (`useSettingsStore.ts`) actually
+ * lives. A caller wanting the Roman track had nothing to pass that would
+ * reach it: `soak.js` passed `goal: 'speak'` instead, which merges into
+ * `harf-progress`'s own unrelated onboarding field and never touches
+ * `track` at all — so every `--track roman` run this project has ever done
+ * was silently driving the guest default, `'both'`. `settings` is the new,
+ * separate fourth argument for exactly this: it merges into the
+ * `harf-settings` write the same way `state` merges into `harf-progress`'s,
+ * keeping the two stores' overrides from being confused for each other the
+ * way `goal`/`track` just were.
  */
-async function enterAsGuest(page, url, state = {}) {
+async function enterAsGuest(page, url, state = {}, settings = {}) {
   await page.goto(url);
   await page.waitForTimeout(2000);
   const guest = page.locator('text=/CONTINUE AS A GUEST/i').first();
@@ -112,24 +125,30 @@ async function enterAsGuest(page, url, state = {}) {
     await guest.click();
     await page.waitForTimeout(1200);
   }
-  await page.evaluate((extra) => {
-    const raw = JSON.parse(localStorage.getItem('harf-progress') || '{"state":{},"version":0}');
-    raw.state = {
-      ...raw.state,
-      onboarded: true,
-      goal: 'family',
-      hearts: 5,
-      srs: {},
-      srsType: {},
-      completedLessons: {},
-      ...extra,
-    };
-    localStorage.setItem('harf-progress', JSON.stringify(raw));
-    localStorage.setItem(
-      'harf-settings',
-      JSON.stringify({ state: { soundEnabled: false, hapticsEnabled: false, reducedMotion: true }, version: 0 })
-    );
-  }, state);
+  await page.evaluate(
+    ({ extra, settingsExtra }) => {
+      const raw = JSON.parse(localStorage.getItem('harf-progress') || '{"state":{},"version":0}');
+      raw.state = {
+        ...raw.state,
+        onboarded: true,
+        goal: 'family',
+        hearts: 5,
+        srs: {},
+        srsType: {},
+        completedLessons: {},
+        ...extra,
+      };
+      localStorage.setItem('harf-progress', JSON.stringify(raw));
+      localStorage.setItem(
+        'harf-settings',
+        JSON.stringify({
+          state: { soundEnabled: false, hapticsEnabled: false, reducedMotion: true, ...settingsExtra },
+          version: 0,
+        })
+      );
+    },
+    { extra: state, settingsExtra: settings }
+  );
   await page.goto(url);
   await page.waitForTimeout(2500);
 }

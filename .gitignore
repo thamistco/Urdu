@@ -61,3 +61,7 @@ yarn-error.*
 *.tsbuildinfo
 .soak/
 *.tmp.mts
+
+# check:all's own lock against two concurrent runs corrupting one dist/
+# rebuild (URD-056) — process-local, never meant to be committed.
+.check-all.lock

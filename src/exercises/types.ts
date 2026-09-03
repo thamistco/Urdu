@@ -20,7 +20,20 @@ export type Exercise =
   | {
       kind: 'letterPick';
       letter: Letter;
-      /** pick the correct isolated glyph from letters */
+      /**
+       * Every option (the answer and every distractor alike) renders at
+       * this position, not always `isolated` — see the generator's own
+       * comment on `nextPos`/URD-060 for why: this was the one
+       * position-eligible letter-teaching kind that never actually
+       * showed a position, wasting a step of the 4-form cycle every time
+       * it was drawn. All options share one position rather than each
+       * showing its own so the correct option is never visually distinct
+       * from the distractors on that axis alone — a joining stroke only
+       * one tile carries would answer the question before the learner
+       * reads a single glyph.
+       */
+      position: PositionKey;
+      /** pick the correct glyph from letters, all shown at `position` */
       options: Letter[];
     }
   | {
@@ -46,6 +59,53 @@ export type Exercise =
       kind: 'letterTrace';
       letter: Letter;
       position: PositionKey;
+    }
+  | {
+      /**
+       * URD-047: pose a letter directly against the ones it is actually
+       * confusable with — its whole `confusableWith` bucket, nothing else —
+       * and ask which is which.
+       *
+       * `options` is 2 to 4 letters, deliberately not padded to
+       * `OPTIONS_PER_QUESTION`. See `letterContrastExercise`'s doc comment
+       * (`generator.ts`) for why padding this particular question with
+       * non-confusable letters would measure stricter while testing less.
+       */
+      kind: 'letterContrast';
+      letter: Letter;
+      options: Letter[];
+    }
+  | {
+      /** show the letter inside a real word; tap which tile of the word it is */
+      kind: 'letterSpot';
+      letter: Letter;
+      word: Word;
+      /**
+       * One button per tappable tile, in display order. A tile whose
+       * `fromWord` flag is true shows one of the word's own characters,
+       * wrapped with its real neighbouring character(s) — so the OS's own
+       * Arabic/Nastaliq shaping renders it in the true joined form it takes
+       * in that word, not a synthesized isolated glyph standing in for it.
+       * `fromWord: false` entries are decoys, added only when the word is
+       * too short to give a genuine multiple-choice floor
+       * (`letterSpotTiles`'s own doc comment, `generator.ts`) — spliced in
+       * without disturbing the real tiles' own relative reading order.
+       */
+      tiles: string[];
+      /** Parallel to `tiles`. */
+      fromWord: boolean[];
+      /** Parallel to `tiles`: whether tapping this index is the right
+       *  answer — decided at generation time against the word's own
+       *  characters, before any decoy padding, so the component never has
+       *  to re-derive which of several multi-character display strings
+       *  represents the taught letter. */
+      correct: boolean[];
+      /** Parallel to `tiles`: whether a real space in the word follows this
+       *  tile — `LETTER_CONTEXT_WORD` includes two genuine multi-word
+       *  phrases, and the prompt above shows their real spaces, so the tile
+       *  row renders a wider gap at the same point rather than silently
+       *  flattening two or three words into one undifferentiated run. */
+      wordBreakAfter: boolean[];
     }
   | {
       /** show the meaning, pick the Urdu — the harder direction */

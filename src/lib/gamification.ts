@@ -7,6 +7,40 @@
 export const HEARTS_MAX = 5;
 /** Minutes to regenerate one heart. */
 export const HEART_REGEN_MINUTES = 30;
+/** Gems to refill to full immediately, instead of waiting. */
+export const REFILL_COST = 40;
+
+/**
+ * How many more gems a learner needs before a refill is affordable. Zero
+ * once they can afford it — the lockout screen uses that to decide whether
+ * to show a price or a wait, not both.
+ */
+export function gemsShortOfRefill(gems: number): number {
+  return Math.max(0, REFILL_COST - gems);
+}
+
+/**
+ * Minutes until the next heart regenerates, from the timestamp the hearts
+ * clock last reset (`heartsUpdatedAt` in the progress store).
+ *
+ * The wait for the *first* heart, not a full refill — only one heart is
+ * needed to *start* a lesson again (`HomeScreen.tsx` never gates on
+ * `hearts`), which is the number a learner staring at the lockout screen
+ * actually wants. THE CRITIC reviewing this found the lockout screen itself
+ * does not auto-dismiss the moment that heart lands — `outOfHearts` only
+ * ever clears on a successful refill or "Leave for now" — so this number
+ * describes when trying again would work, not when this exact screen will
+ * go away on its own. Recorded explicitly because an earlier version of
+ * this comment claimed the auto-dismiss and was wrong about it.
+ */
+export function minutesUntilNextHeart(heartsUpdatedAt: number, now: number = Date.now()): number {
+  const elapsedMin = (now - heartsUpdatedAt) / 60000;
+  // Clamped on both ends: `elapsedMin` should never be negative in real use
+  // (the clock only moves forward), but a lockout screen reading a bogus
+  // number from clock skew or a stale timestamp is worse than one reading a
+  // merely-approximate one, so this never reports more than a full cycle.
+  return Math.min(HEART_REGEN_MINUTES, Math.max(0, Math.ceil(HEART_REGEN_MINUTES - elapsedMin)));
+}
 
 /**
  * Level curve: gently super-linear so early levels come fast (momentum for new
@@ -34,12 +68,32 @@ export function levelProgress(totalXp: number) {
   return { level, into, span, ratio: span > 0 ? into / span : 1, next };
 }
 
-/** Named tiers give the level a sense of journey, not just a number. */
+/**
+ * Named tiers give the level a sense of journey, not just a number.
+ *
+ * "Master" used to sit at level 25 (18,000 XP) against a course that pays
+ * out roughly 7,220 XP finished start to finish — 2.49x the whole path, a
+ * title nobody would ever see. Re-spaced to fit inside what a complete
+ * playthrough actually reaches (level 16 at today's course size), with
+ * Master at 14 rather than the ceiling itself, so finishing the course
+ * comfortably reaches it rather than landing on it exactly — see
+ * gamification.test.ts, which derives the course total from real content
+ * and asserts this stays true rather than trusting the numbers below to
+ * keep up with the course by hand.
+ *
+ * The six lower tiers were eyeballed for even level-gaps (2 each) rather
+ * than by a stated formula — no single rule that survives the course
+ * changing size again, just re-check against the test above and re-space
+ * by hand when it next goes red. THE CRITIC reviewing this noted the
+ * result isn't actually bunched despite the constant level-gaps: against
+ * the quadratic XP curve, the tiers land at roughly 3%, 8%, 18%, 30%, 46%
+ * and 76% of the course — a reasonably even spread through a playthrough.
+ */
 export function levelTitle(level: number): string {
-  if (level >= 25) return 'Master';
-  if (level >= 18) return 'Calligrapher';
-  if (level >= 12) return 'Fluent Reader';
-  if (level >= 8) return 'Confident';
+  if (level >= 14) return 'Master';
+  if (level >= 11) return 'Calligrapher';
+  if (level >= 9) return 'Fluent Reader';
+  if (level >= 7) return 'Confident';
   if (level >= 5) return 'Rising';
   if (level >= 3) return 'Apprentice';
   return 'Beginner';
