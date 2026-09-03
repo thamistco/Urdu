@@ -1,0 +1,322 @@
+{
+  "w-qasai": {
+    "said": "قصائی",
+    "heard": "قصائی"
+  },
+  "waw": {
+    "said": "و",
+    "heard": "وہ"
+  },
+  "w-munh": {
+    "said": "منہ",
+    "heard": "من ہو"
+  },
+  "w-galat-number": {
+    "said": "غلط نمبر",
+    "heard": "غلط نمبر"
+  },
+  "w-khushi2": {
+    "said": "خوشی",
+    "heard": "خوشی"
+  },
+  "w-saans": {
+    "said": "سانس",
+    "heard": "گانا"
+  },
+  "w-kitne": {
+    "said": "کتنے",
+    "heard": "کتنے"
+  },
+  "w-batwa": {
+    "said": "بٹوہ",
+    "heard": "بھٹو"
+  },
+  "w-zauq": {
+    "said": "ذوق",
+    "heard": "ذوق"
+  },
+  "w-bhains2": {
+    "said": "بھینس",
+    "heard": "بھینس"
+  },
+  "s-67": {
+    "said": "دروازہ مت کھولو",
+    "heard": "دروازہ مت کھولو"
+  },
+  "w-waapsitikat2": {
+    "said": "واپسی ٹکٹ",
+    "heard": "قومی ترانہ"
+  },
+  "w-qareeb": {
+    "said": "قریب",
+    "heard": "قریب"
+  },
+  "s-131": {
+    "said": "بچہ سو گیا",
+    "heard": "بچہ سو گیا"
+  },
+  "w-kirdaar": {
+    "said": "کردار",
+    "heard": "کردار"
+  },
+  "w-haal": {
+    "said": "حال",
+    "heard": "حال"
+  },
+  "w-ittila2": {
+    "said": "اطلاع نامہ",
+    "heard": "اطلاع نامہ"
+  },
+  "w-larka": {
+    "said": "لڑکا",
+    "heard": "لڑکا"
+  },
+  "w-jhinga": {
+    "said": "جھینگا",
+    "heard": "جھنگ"
+  },
+  "d-5-1": {
+    "said": "سیدھے جائیے، پھر دائیں مڑیے۔",
+    "heard": "سیدھے جائے پھر دائم رکھے"
+  },
+  "w-tahaffuz": {
+    "said": "تحفظ",
+    "heard": "تحفظ"
+  },
+  "w-machhar2": {
+    "said": "مچھر",
+    "heard": "مچھر"
+  },
+  "w-daakiya": {
+    "said": "ڈاکیا",
+    "heard": "ڈاکیا"
+  },
+  "w-parda": {
+    "said": "پردہ",
+    "heard": "پردا"
+  },
+  "w-roza": {
+    "said": "روزہ",
+    "heard": "روزہ"
+  },
+  "w-tie": {
+    "said": "ٹائی",
+    "heard": "تائی"
+  },
+  "w-parivaar": {
+    "said": "خاندان",
+    "heard": "خاندان"
+  },
+  "w-qameez": {
+    "said": "قمیض",
+    "heard": "قمیض"
+  },
+  "w-dhoondna": {
+    "said": "ڈھونڈنا",
+    "heard": ""
+  },
+  "w-pal": {
+    "said": "پَل",
+    "heard": "پل"
+  },
+  "alif-madda": {
+    "said": "آ",
+    "heard": "ا"
+  },
+  "w-tanhai": {
+    "said": "تنہائی",
+    "heard": "تنہائی"
+  },
+  "w-darja": {
+    "said": "درجہ",
+    "heard": "درجہ"
+  },
+  "w-kaainaat2": {
+    "said": "کائنات",
+    "heard": "کائنات"
+  },
+  "w-haspataal": {
+    "said": "ہسپتال",
+    "heard": "ہسپتال"
+  },
+  "w-sabzi3": {
+    "said": "سبزی",
+    "heard": "سبزی"
+  },
+  "w-kitaab": {
+    "said": "کتاب",
+    "heard": "کتاب"
+  },
+  "w-cricket": {
+    "said": "کرکٹ",
+    "heard": "کرکٹ"
+  },
+  "w-tarbooz": {
+    "said": "تربوز",
+    "heard": "تربوز"
+  },
+  "w-jamni": {
+    "said": "جامنی",
+    "heard": "جامنی"
+  },
+  "w-dost": {
+    "said": "دوست",
+    "heard": "دوست"
+  },
+  "w-kaafi2": {
+    "said": "وافر",
+    "heard": "وافر"
+  },
+  "w-tawaazo": {
+    "said": "تواضع",
+    "heard": "توازن"
+  },
+  "w-tarkeeb": {
+    "said": "ترکیب",
+    "heard": "ترکیب"
+  },
+  "w-gardan2": {
+    "said": "گردن",
+    "heard": "گرد"
+  },
+  "r-2-2": {
+    "said": "میں نے پھل اور سبزی خریدی۔",
+    "heard": "میں نے پھل اور سبزی خریدنا"
+  },
+  "s-61": {
+    "said": "چابی دراز میں ہے",
+    "heard": "جاوید راز میں ہے"
+  },
+  "w-fridge": {
+    "said": "فرج",
+    "heard": "فرج"
+  },
+  "w-tohfa": {
+    "said": "تحفہ",
+    "heard": "صوفہ"
+  },
+  "w-haadsa2": {
+    "said": "حادثہ",
+    "heard": "حادثہ"
+  },
+  "w-izn": {
+    "said": "اجازت",
+    "heard": "اجازت"
+  },
+  "w-jhola": {
+    "said": "جھولا بیگ",
+    "heard": "جھولا بیبی"
+  },
+  "w-khushbu": {
+    "said": "خوشبو",
+    "heard": "خوشبو"
+  },
+  "w-sar": {
+    "said": "سَر",
+    "heard": "سر"
+  },
+  "w-khatra": {
+    "said": "خطرہ",
+    "heard": "خطرہ"
+  },
+  "w-aangan2": {
+    "said": "آنگن",
+    "heard": "آنگن"
+  },
+  "w-mez": {
+    "said": "میز",
+    "heard": "میر"
+  },
+  "w-stadium": {
+    "said": "اسٹیڈیم",
+    "heard": "اسٹیڈیم"
+  },
+  "w-lifafa": {
+    "said": "لفافہ",
+    "heard": "لفافہ"
+  },
+  "w-chaura": {
+    "said": "چوڑا",
+    "heard": "چوڑا"
+  },
+  "r-8-4": {
+    "said": "چھٹی کے بعد میں گھر آتا ہوں۔",
+    "heard": "چھٹی کے بعد میں گھر آتا ہوں"
+  },
+  "w-sarhad": {
+    "said": "سرحد",
+    "heard": ""
+  },
+  "w-sair": {
+    "said": "سیر",
+    "heard": "پھر"
+  },
+  "w-tameer": {
+    "said": "تعمیر",
+    "heard": "تعمیر"
+  },
+  "w-pehla": {
+    "said": "پہلا",
+    "heard": "پہلا"
+  },
+  "w-khushaamdeed": {
+    "said": "خوش آمدید",
+    "heard": "خوش آمدید"
+  },
+  "w-mandir": {
+    "said": "مندر",
+    "heard": "مندر"
+  },
+  "w-hans": {
+    "said": "ہنس",
+    "heard": "ہاں"
+  },
+  "w-mehnga": {
+    "said": "مہنگا",
+    "heard": "مہنگا"
+  },
+  "w-aasmani": {
+    "said": "آسمانی",
+    "heard": "عثمان"
+  },
+  "w-choori": {
+    "said": "چوڑی",
+    "heard": "چوڑی"
+  },
+  "w-tanqeed": {
+    "said": "تنقید",
+    "heard": "تنقید"
+  },
+  "w-behtar": {
+    "said": "بہتر",
+    "heard": "بہتر"
+  },
+  "w-narangi-clr": {
+    "said": "نارنجی",
+    "heard": "نارنجی"
+  },
+  "w-farz": {
+    "said": "فرض",
+    "heard": "فرض"
+  },
+  "w-giraana": {
+    "said": "گرانا",
+    "heard": "گرانہ"
+  },
+  "w-sale": {
+    "said": "سیل",
+    "heard": ""
+  },
+  "s-90": {
+    "said": "ہم اردو بولتے ہیں",
+    "heard": "ہم اردو بولتے ہیں"
+  },
+  "w-mazaqiya": {
+    "said": "مزاحیہ",
+    "heard": "مزاحیہ"
+  },
+  "w-hasad": {
+    "said": "حسد",
+    "heard": "حاسد"
+  }
+}
