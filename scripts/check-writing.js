@@ -92,6 +92,7 @@ const COPY_KEYS = new Set([
   'english',
   'teach',
   'tip',
+  'functionNote',
 ]);
 
 /** Files whose strings are machine-facing however they are keyed. */

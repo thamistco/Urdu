@@ -57,8 +57,8 @@ export function DialogueExercise({ exercise, track, showRoman, locked, onGraded 
                   borderWidth: 2,
                   borderColor: palette.ink,
                   // a speech bubble squares off the corner nearest its speaker
-                  borderTopLeftRadius: isA ? 4 : 16,
-                  borderTopRightRadius: isA ? 16 : 4,
+                  borderTopStartRadius: isA ? 4 : 16,
+                  borderTopEndRadius: isA ? 16 : 4,
                 }}
               >
                 {/* The Roman track hears the conversation in transliteration;

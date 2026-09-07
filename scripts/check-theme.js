@@ -239,20 +239,223 @@ for (const t of tokens) {
  * This is a class-name rule rather than a rendered measurement, which makes it
  * cheap and slightly conservative: it cannot see that a given line happens to
  * sit on a darker card. That is the right way round for a floor.
+ *
+ * URD-052: `text-paper/40` is not the only way to write this colour. A
+ * component's `style` prop can build the identical faded paper with
+ * `withAlpha(palette.paper, 0.4)` directly — same hex, same alpha, same
+ * pixel on screen — and until this fix that spelling was invisible here:
+ * this rule pattern-matched the Tailwind className in file *text*, so a
+ * `withAlpha` call read as ordinary code, not as a colour to hold to the
+ * floor. Found live: `Button.tsx`'s disabled-label fix first read
+ * `withAlpha(palette.paper, 0.4)` — 3.24:1 against `ink700`, the exact
+ * worst-case value the table above measured and named the reason 55% is
+ * the floor — and `check:theme` reported clean.
+ *
+ * Matched only for `palette.paper` specifically, not `withAlpha` in
+ * general — this floor is about the one colour body text is set in on
+ * this app's own grounds (the table above), not a claim about every token
+ * `withAlpha` ever fades. A different token's own legibility is a
+ * different measurement this rule does not make.
+ *
+ * Matched only when it is assigned to a *text* colour prop — `color:` (a
+ * style object's own text colour) or `placeholderTextColor=` (a
+ * `TextInput`'s placeholder, which is text too) — not `withAlpha
+ * (palette.paper, …)` wherever it appears. The same faded paper is also a
+ * legitimate, unrelated `borderColor`/`backgroundColor` in this app (a
+ * disabled button's border, a step-indicator dot, a drop-zone's dashed
+ * outline) — none of those put paper-coloured *text* on screen, so none of
+ * them are a WCAG text-contrast question at all, and a rule this specific
+ * would report three false positives for every real one it caught if it
+ * matched the token everywhere. `color`/`Color` is deliberately
+ * case-sensitive here — `borderColor`/`backgroundColor` are a different
+ * identifier, not a substring match away from `color`.
+ *
+ * THE CRITIC, reviewing this item: this only catches the value written
+ * *inline* — `color: withAlpha(palette.paper, 0.4)` — on one physical
+ * line. Two gaps were found and fixed in URD-065 and URD-066:
+ *   • URD-065: a variable holding `withAlpha(...)` and used in a text-colour
+ *     prop (`const text = disabled ? withAlpha(...) : ...; style={{ color: text }}`)
+ *   • URD-066: a ternary whose `withAlpha` call sits on a different line
+ *     after Prettier wraps it (multi-line expressions where the expression value
+ *     spans multiple lines in the source)
+ * These are now caught by `checkVariableWithAlpha()` and
+ * `checkInlineWithAlphaMultiline()` below.
  */
 const PAPER_FLOOR = 55;
+const WITH_ALPHA_PAPER =
+  /\b(?:color|placeholderTextColor)\s*[:=]\s*\{?\s*[^\n{}]*?withAlpha\(\s*palette\.paper\s*,\s*([\d.]+)\s*\)/g;
+
+/**
+ * URD-066: for inline `color:` or `placeholderTextColor=` with multi-line
+ * ternary expressions wrapped by Prettier.
+ *
+ * Finds patterns like:
+ *   color: active
+ *     ? palette.gold
+ *     : withAlpha(palette.paper, 0.4),
+ *
+ * By looking for `color:` or `placeholderTextColor=` followed by lines
+ * containing `withAlpha(palette.paper, N)`, stopping at the next property
+ * key (indicated by a line starting with spaces and a property name).
+ *
+ * This is a conservative check: it only matches when `withAlpha` appears
+ * on a different line than the property key, to complement the single-line
+ * regex and avoid false positives from sibling properties.
+ */
+function checkInlineWithAlphaMultiline(src, file, lineAt) {
+  const lines = src.split('\n');
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // Look for `color:` or `placeholderTextColor=`
+    const keyMatch = line.match(/\b(?:color|placeholderTextColor)\s*[:=]/);
+    if (!keyMatch) continue;
+
+    const keyIndex = line.indexOf(keyMatch[0]);
+
+    // Check if the value is on the same line
+    const afterKey = line.slice(keyIndex + keyMatch[0].length);
+    if (afterKey.match(/withAlpha\s*\(\s*palette\.paper\s*,\s*([\d.]+)\s*\)/)) {
+      // Single-line case — already handled by WITH_ALPHA_PAPER regex
+      continue;
+    }
+
+    // Multi-line case: look at the following lines until we hit another property
+    // or a closing brace/paren
+    let foundWithAlpha = null;
+    for (let j = i + 1; j < lines.length; j++) {
+      const nextLine = lines[j];
+
+      // Stop if we hit another property definition (typically starts with spaces, then identifier, then `:` or `=`)
+      if (nextLine.match(/^\s+[a-zA-Z_$]\w*\s*[:=]/)) {
+        break;
+      }
+
+      // Stop if we hit a closing brace or paren at the start
+      if (nextLine.match(/^\s*[}\)]/)) {
+        break;
+      }
+
+      // Look for withAlpha call
+      const alphaMatch = nextLine.match(/withAlpha\s*\(\s*palette\.paper\s*,\s*([\d.]+)\s*\)/);
+      if (alphaMatch) {
+        foundWithAlpha = alphaMatch[1];
+        // Report the violation at the line where withAlpha appears
+        const pct = Math.round(Number(foundWithAlpha) * 100);
+        if (pct < PAPER_FLOOR) {
+          bad(
+            file,
+            j + 1,
+            `\`withAlpha(palette.paper, ${foundWithAlpha})\` is under the ${PAPER_FLOOR}% legibility floor — it fails WCAG AA on every ground in this app`
+          );
+        }
+        break;
+      }
+    }
+  }
+}
+
+/**
+ * URD-065: forward data-flow trace for `withAlpha(palette.paper, N)` assigned
+ * to a local variable and then used in a text-colour prop.
+ *
+ * Finds `const X = ... withAlpha(palette.paper, N) ...` patterns and tracks
+ * uses of that variable name in `color:` or `placeholderTextColor=` assignments
+ * after the declaration.
+ *
+ * This cannot see through function calls or more complex indirection (would
+ * need an AST walk), but catches the pattern Button.tsx and similar files use:
+ * `const text = disabled ? withAlpha(...) : OTHER_COLOUR` followed by
+ * `style={{ color: text }}`.
+ */
+function checkVariableWithAlpha(src, file, lineAt) {
+  // Find all `const/let/var X = ... withAlpha(palette.paper, N) ...`
+  // declarations in the entire file.
+  const varDeclPattern =
+    /(?:const|let|var)\s+(\w+)\s*=\s*([^;]*?withAlpha\s*\(\s*palette\.paper\s*,\s*([\d.]+)\s*\)[^;]*);/g;
+
+  let varMatch;
+  while ((varMatch = varDeclPattern.exec(src)) !== null) {
+    const varName = varMatch[1];
+    const varDeclIndex = varMatch.index;
+    const alpha = varMatch[3];
+    const pct = Math.round(Number(alpha) * 100);
+
+    // If the variable's alpha is already at or above the floor, skip it.
+    if (pct >= PAPER_FLOOR) continue;
+
+    // Find the next closing brace or end of file to define the scope.
+    // Look for closing brace at the same indentation level as the var declaration.
+    let scopeEnd = src.length;
+    let braceCount = 0;
+    let parenCount = 0;
+
+    for (let pos = varDeclIndex; pos < src.length; pos++) {
+      const char = src[pos];
+      if (char === '{') braceCount++;
+      else if (char === '}') {
+        braceCount--;
+        if (braceCount < 0) {
+          scopeEnd = pos;
+          break;
+        }
+      } else if (char === '(') parenCount++;
+      else if (char === ')') parenCount--;
+    }
+
+    const scope = src.slice(varDeclIndex, scopeEnd);
+
+    // Now search for uses of this variable in text-colour props within
+    // this scope. Look for patterns like:
+    // - `color: varName`
+    // - `color={varName}`
+    // - `placeholderTextColor={varName}`
+    // - `placeholderTextColor=varName`
+    const usePattern = new RegExp(`\\b(?:color|placeholderTextColor)\\s*[:=]\\s*\\{?\\s*${varName}\\b`, 'g');
+
+    let useMatch;
+    while ((useMatch = usePattern.exec(scope)) !== null) {
+      const useIndex = varDeclIndex + useMatch.index;
+      bad(
+        file,
+        lineAt(useIndex),
+        `variable \`${varName}\` containing \`withAlpha(palette.paper, ${alpha})\` (${pct}%) is used in a text-colour prop — under the ${PAPER_FLOOR}% legibility floor`
+      );
+    }
+  }
+}
+
 for (const file of files) {
   const src = stripComments(fs.readFileSync(file, 'utf8'));
+  const lineAt = (index) => src.slice(0, index).split('\n').length;
   for (const m of src.matchAll(/text-paper\/(\d+)/g)) {
     const pct = Number(m[1]);
     if (pct >= PAPER_FLOOR) continue;
-    const line = src.slice(0, m.index).split('\n').length;
     bad(
       file,
-      line,
+      lineAt(m.index),
       `\`text-paper/${pct}\` is under the ${PAPER_FLOOR}% legibility floor — it fails WCAG AA on every ground in this app`
     );
   }
+  for (const m of src.matchAll(WITH_ALPHA_PAPER)) {
+    // `withAlpha` takes a 0-1 fraction (see its own definition in
+    // colors.ts) where `text-paper/N` names a 0-100 percentage — rounded
+    // rather than compared as a float, so 0.55 (which is not exactly
+    // representable in binary) reads as the floor itself, not one hair
+    // under it.
+    const pct = Math.round(Number(m[1]) * 100);
+    if (pct >= PAPER_FLOOR) continue;
+    bad(
+      file,
+      lineAt(m.index),
+      `\`withAlpha(palette.paper, ${m[1]})\` is under the ${PAPER_FLOOR}% legibility floor — it fails WCAG AA on every ground in this app`
+    );
+  }
+  // URD-065: Check for withAlpha calls assigned to variables and then used
+  // in text-colour props.
+  checkVariableWithAlpha(src, file, lineAt);
+  // URD-066: Check for inline withAlpha calls in multi-line ternaries.
+  checkInlineWithAlphaMultiline(src, file, lineAt);
 }
 
 // ------------------------------------------------------------------ report

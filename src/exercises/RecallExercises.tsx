@@ -128,6 +128,17 @@ export function WordFromMeaningExercise({ exercise, track, locked, onGraded }: E
     onGraded({ items: [{ id: word.id, type: 'word' }], correct });
   };
 
+  // Every option shares one font size — sized for the longest of the four so
+  // the grid doesn't lurch between a compact vocab word and a towering
+  // sentence. Was a flat 26 for every option, fine while `word` was always a
+  // single vocab word (max ~12 chars); `SENTENCE_WORDS` now puts full
+  // sentences (up to ~37 chars) through here, and a fixed 26 wrapped some
+  // tiles to 3-4 lines against 1-2 line siblings — the mismatch DESIGN CRITIC
+  // and THE CRITIC both measured (60-76px row-height spread) reviewing
+  // 0453fa7, and the footer overlap that followed from it.
+  const maxLen = Math.max(...options.map((o) => o.urdu.length));
+  const fs = maxLen > 28 ? 14 : maxLen > 20 ? 17 : maxLen > 12 ? 20 : maxLen > 6 ? 24 : 26;
+
   return (
     <View>
       <PromptCard height={130}>
@@ -150,7 +161,7 @@ export function WordFromMeaningExercise({ exercise, track, locked, onGraded }: E
               onPress={() => choose(o.id)}
               className="mb-3 w-[48%]"
             >
-              <Lexeme urdu={o.urdu} roman={o.roman} track={track} size={26} />
+              <Lexeme urdu={o.urdu} roman={o.roman} track={track} size={fs} />
             </Choice>
           );
         })}

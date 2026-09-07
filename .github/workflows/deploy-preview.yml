@@ -93,6 +93,19 @@ jobs:
       - name: Check that every word is actually taught by a lesson
         run: npm run check:coverage
 
+      - name: Check that every sentence reachable given lesson capacity is reached
+        run: npm run check:sentence-coverage
+
+      # URD-A02: a lesson can be perfectly correct — every word taught,
+      # nothing tested early, every question answerable — and still be the
+      # wrong size to sit through. Checked directly against the real
+      # generated output of every lesson and unit, not the path author's own
+      # size/lessons claims. Was deliberately excluded while it failed on
+      # purpose (see the script's own doc comment); wired in now that it
+      # passes, so a future regression here fails loudly instead of quietly.
+      - name: Check that every lesson is a sitting and every unit is a chapter
+        run: npm run check:shape
+
       - name: Check that spaced repetition does what it claims
         run: npm run check:srs
 
@@ -102,6 +115,12 @@ jobs:
       # inside a component.
       - name: Check the theme is the only place colour lives
         run: npm run check:theme
+
+      # A margin or padding written as -left/-right is pinned to a screen
+      # side; written as -start/-end it is pinned to a position in reading
+      # order instead, which is what a component that can render Urdu wants.
+      - name: Check for physical left/right in Urdu-bearing components
+        run: npm run check:direction
 
       - name: Generate voice clips (only if a TTS key is set)
         env:
@@ -115,6 +134,13 @@ jobs:
       # ubuntu runners ship.
       - name: Check that every voice clip is audible
         run: npm run check:voice
+
+      # check:voice proves a clip can be heard; this proves it is the voice
+      # and the text the course actually asked for today — the wrong-voice
+      # and silent-letter defects it was built to catch are fixed and this
+      # is green as of the run that added it. Offline, under a second.
+      - name: Check that every clip is the recording the course asked for
+        run: npm run check:voice-fidelity
 
       # `npm run build:web` is the only way this project builds, here and on a
       # laptop. The subpath and the commit stamp arrive as environment
@@ -179,6 +205,36 @@ jobs:
         run: |
           CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
             npm run check:sizes
+
+      # The path used to be one flat ScrollView mounting every lesson row —
+      # 174, then 608, then 348 as content grew. HomeScreen.tsx now collapses
+      # every course stage except the learner's own, which is real
+      # virtualization by a different name; this holds that in place.
+      - name: Check the learn path doesn't mount the whole course
+        run: |
+          CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
+            npm run check:path
+
+      # URD-032: opening a collapsed course stage used to reset scroll all the
+      # way to the top (a deliberate trade once precise in-accordion measuring
+      # was tried and measured wrong live — see HomeScreen.tsx's own comment).
+      # This holds the tighter landing in place: near the accordion, header
+      # visible, never a full reset.
+      - name: Check opening a course stage lands near the accordion, not a full reset
+        run: |
+          CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
+            npm run check:home-scroll
+
+      # URD-032: finishing a stage's last lesson mid-session, scrolled away
+      # from it, used to leave the newly-current stage reopened off-screen
+      # with nothing scrolling to reveal it. Drives a real lesson to
+      # completion (no reload — the bug only exists because HomeScreen
+      # doesn't remount between lessons) and confirms the new stage is both
+      # open and scrolled into view.
+      - name: Check finishing a stage mid-session still scrolls the new one into view
+        run: |
+          CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
+            npm run check:stage-advance-scroll
 
       - name: SPA fallback + disable Jekyll
         run: |

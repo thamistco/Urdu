@@ -156,7 +156,7 @@ export function PracticeScreen() {
               }}
             >
               <View className="flex-row items-center justify-between">
-                <View className="flex-1 pr-3">
+                <View className="flex-1 pe-3">
                   <Eyebrow style={{ color: withAlpha(palette.ink, 0.7) }}>Daily review</Eyebrow>
                   <Heading style={{ color: palette.ink }} className="mt-1 text-2xl">
                     {due > 0 ? `${due} item${due > 1 ? 's' : ''} due` : 'All caught up'}

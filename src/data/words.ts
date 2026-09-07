@@ -30,7 +30,46 @@ export type Word = {
   pronounce?: string;
   /** How formal the word is; see `Register` in data/vocab/types.ts. */
   register?: Register;
+  /** URD-030: the grammar concept this entry illustrates, carried over from
+   *  `Sentence.concept` on the synthetic `Word` objects `generator.ts` builds
+   *  for sentences (`SENTENCE_WORDS`). Never set on a real vocabulary entry —
+   *  only sentences are tagged to a grammar concept. Lets the grammar
+   *  reinforcement climb bias its distractor draw toward other sentences
+   *  illustrating the *same* construction, rather than drawing blind from
+   *  every sentence at the concept's level. */
+  concept?: string;
 };
+
+/**
+ * What kind of thing a topic is.
+ *
+ * The corpus mixes two axes and this admits it rather than pretending
+ * otherwise: most topics are subjects ("Food & Drink", "At the Airport"), but
+ * several group by part of speech instead ("Verbs of Motion", "Linking Words").
+ * A taxonomy that allowed only subjects would need a junk drawer for the second
+ * kind, and a junk drawer is how a category axis stops meaning anything. So
+ * `language` is a real category: topics whose members are related by word class
+ * rather than by what they are about.
+ *
+ * Nine, derived from the 122 topics that exist rather than chosen first and
+ * forced onto them. The test of one of these is whether a learner could guess
+ * which category a topic is in without being told.
+ */
+export const TOPIC_CATEGORIES = [
+  'foundations', // the scaffolding of any sentence: numbers, time, colours, greetings
+  'people', // family, the body, health, character, feeling, relationships
+  'home', // the house, its objects, clothes, the shape of a day
+  'food', // eating, cooking, ingredients, ordering
+  'nature', // animals, plants, weather, land and sky
+  'travel', // getting from one place to another
+  'everyday', // the dealings of ordinary life: money, the bazaar, the phone, going wrong
+  'work', // jobs, school, office, study
+  'leisure', // what you do for pleasure: sport, play, music, poetry, festivals
+  'language', // grouped by word class rather than subject
+  'culture', // faith, history, politics, the written register, ideas
+] as const;
+
+export type TopicCategory = (typeof TOPIC_CATEGORIES)[number];
 
 export type Topic = {
   id: string;
@@ -38,9 +77,11 @@ export type Topic = {
   icon: string;
   blurb: string;
   level: Level;
+  /** Set for every topic by `TOPIC_CATEGORY` below; `check:shape` proves it. */
+  category: TopicCategory;
 };
 
-const CORE_TOPICS: Topic[] = [
+const CORE_TOPICS: Omit<Topic, 'category'>[] = [
   {
     id: 'first-words',
     title: 'First Words',
@@ -1279,7 +1320,187 @@ const CORE_WORDS: Word[] = [
 ];
 
 /** Core topics plus every modular vocabulary pack. */
-export const TOPICS: Topic[] = [...CORE_TOPICS, ...ALL_PACKS.map((p) => p.topic)];
+
+/**
+ * Every topic's category, in one place.
+ *
+ * Deliberately a map rather than a field on each topic literal: the 122 topics
+ * are authored across `words.ts` and ten files under `data/vocab/`, and a field
+ * spread over eleven files is a field that gets forgotten on the next addition.
+ * `check:shape` is the ONLY thing enforcing this, and the enforcement is
+ * therefore only as good as somebody running it. An earlier version of this
+ * comment claimed a topic missing from the map was "a TypeScript error at this
+ * map and a check:shape failure, in that order". That was false and was caught
+ * by review: `noUncheckedIndexedAccess` is not set, so `TOPIC_CATEGORY[t.id]`
+ * is typed `TopicCategory` while being `undefined` at runtime, and tsc exits 0.
+ * There are also two `Topic` types — `data/vocab/types.ts` has no `category`
+ * field at all — so a pack author cannot reach a type error here even in
+ * principle. Do not restore the claim without making it true.
+ */
+const TOPIC_CATEGORY: Record<string, TopicCategory> = {
+  // the scaffolding of any sentence
+  'first-words': 'foundations',
+  greetings: 'foundations',
+  numbers: 'foundations',
+  'numbers-more': 'foundations',
+  quantity: 'foundations',
+  colours: 'foundations',
+  days: 'foundations',
+  time: 'foundations',
+  timewords: 'foundations',
+  shapes: 'foundations',
+  'measure-time': 'foundations',
+
+  // people, their bodies, and what happens to them. The clinical topics sit
+  // here rather than under work: a learner at a doctor's surgery needs organs,
+  // symptoms and treatment in one breath, and splitting them across two
+  // categories is the exact failure this axis was added to prevent.
+  family: 'people',
+  'family-more': 'people',
+  body: 'people',
+  'body-more': 'people',
+  organs: 'people',
+  senses: 'people',
+  appearance: 'people',
+  personality: 'people',
+  relationships: 'people',
+  feelings: 'people',
+  emotions: 'people',
+  lifeevents: 'people',
+  social: 'people',
+  celebrations: 'people',
+  health: 'people',
+  illness: 'people',
+  medicine: 'people',
+
+  // the house and the shape of a day
+  home: 'home',
+  rooms: 'home',
+  furniture: 'home',
+  household: 'home',
+  kitchen: 'home',
+  bathroom: 'home',
+  routine: 'home',
+  garden: 'home',
+  clothing: 'home',
+  'clothing-more': 'home',
+  appliances: 'home',
+  containers: 'home',
+  materials: 'home',
+  tools: 'home',
+
+  // food
+  food: 'food',
+  fruits: 'food',
+  vegetables: 'food',
+  drinks: 'food',
+  meals: 'food',
+  tastes: 'food',
+  restaurant: 'food',
+  grains: 'food',
+  cooking: 'food',
+
+  // the world outside
+  nature: 'nature',
+  nature2: 'nature',
+  animals: 'nature',
+  birds: 'nature',
+  wildlife: 'nature',
+  sealife: 'nature',
+  sky: 'nature',
+  landscape: 'nature',
+  weather: 'nature',
+  'weather-more': 'nature',
+  environment: 'nature',
+  farm: 'nature',
+
+  // getting from one place to another, and only that
+  places: 'travel',
+  city: 'travel',
+  transport: 'travel',
+  road: 'travel',
+  directions: 'travel',
+  'directions-more': 'travel',
+  travel: 'travel',
+  'travel-more': 'travel',
+  airport: 'travel',
+  hotel: 'travel',
+  countries: 'travel',
+
+  // the dealings of ordinary life. These were under travel, which is only true
+  // for a tourist; Harf's likelier learner lives there, and meets money at the
+  // shop rather than at an airport bureau de change. `emergency` is here for
+  // the same reason it deserved its own heading in the first draft: it is the
+  // most consequence-bearing vocabulary in the course and does not belong
+  // filed beside hotels.
+  money: 'everyday',
+  bank: 'everyday',
+  'shopping-talk': 'everyday',
+  phone: 'everyday',
+  services: 'everyday',
+  emergency: 'everyday',
+
+  // work and study
+  jobs: 'work',
+  'jobs-more': 'work',
+  school: 'work',
+  education: 'work',
+  office: 'work',
+  'work-life': 'work',
+  business: 'work',
+  economy: 'work',
+  subjects: 'work',
+  science: 'work',
+
+  // done for pleasure. `sports` was under work, whose own blurb reads "Games,
+  // hobbies and free time" — a category a learner could falsify by reading the
+  // topic card. `toys` was under home. Two leisure topics, two categories,
+  // neither of them leisure.
+  sports: 'leisure',
+  toys: 'leisure',
+  'music-art': 'leisure',
+  poetry: 'leisure',
+  literature: 'leisure',
+  festivals: 'leisure',
+
+  // grouped by word class rather than by subject, and nothing else. Register
+  // and set phrases moved out to culture: how Urdu encodes social distance is
+  // subject matter, not a part of speech, and `REGISTER_BY_TOPIC` below already
+  // treats those two topics that way.
+  verbs: 'language',
+  verbs2: 'language',
+  verbs3: 'language',
+  'mind-verbs': 'language',
+  'speech-verbs': 'language',
+  'motion-verbs': 'language',
+  adjectives: 'language',
+  'describing-more': 'language',
+  quality: 'language',
+  questions: 'language',
+  connectors: 'language',
+  opposites: 'language',
+
+  // what a language carries besides its words
+  culture: 'culture',
+  faith: 'culture',
+  history: 'culture',
+  philosophy: 'culture',
+  abstract: 'culture',
+  politics: 'culture',
+  law: 'culture',
+  media: 'culture',
+  digital: 'culture',
+  tech: 'culture',
+  formal: 'culture',
+  honorifics: 'culture',
+  expressions: 'culture',
+  idioms: 'culture',
+};
+
+export const TOPICS: Topic[] = [...CORE_TOPICS, ...ALL_PACKS.map((p) => p.topic)].map((t) => ({
+  ...t,
+  category: TOPIC_CATEGORY[t.id],
+}));
 /**
  * Topics whose vocabulary is register-bound as a whole.
  *

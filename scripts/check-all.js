@@ -36,6 +36,29 @@ const WORKFLOW = path.join(ROOT, '.github', 'workflows', 'deploy-preview.yml');
 const REPO = 'Urdu'; // matches github.event.repository.name in the workflow
 
 /**
+ * URD-057: caught here, first, unconditionally — before the workflow is
+ * even read — rather than as a parsed step. A stray scratch file left
+ * under `src/`/`scripts/` by a dispatched critic has nothing to do with
+ * the workflow's own step list (CI's fresh checkout never has one at
+ * all; this is purely a shared-local-checkout hazard), and it is cheap
+ * to name directly rather than let it surface, unexplained, as a
+ * confusing `lint`/`format:check` failure many steps in. See
+ * `lib/clean-tree.js` for why an ignore pattern is the wrong fix.
+ */
+{
+  const { strayFiles } = require('./lib/clean-tree');
+  const stray = strayFiles();
+  if (stray.length) {
+    console.error(
+      `check:all — ${stray.length} untracked file${stray.length === 1 ? '' : 's'} under src/ or scripts/ — this is what would have failed lint/format:check confusingly, several steps in:\n`
+    );
+    for (const f of stray) console.error(`  ${f}`);
+    console.error('\nRemove it, or move it under the session scratchpad, then run check:all again.');
+    process.exit(1);
+  }
+}
+
+/**
  * Pull the runnable commands out of the workflow, in order.
  *
  * Only `npm …` and `node scripts/…` lines are taken. The rest of the job —
@@ -103,7 +126,13 @@ function stepsFromWorkflow() {
     if (inline) inRun = false;
     if (!body) continue;
 
-    const cmd = body.match(/\b(npm (?:run [a-z:]+|test)|node scripts\/[\w-]+\.js)\b/);
+    // URD-027: `[a-z:]+` silently truncated a hyphenated script name at the
+    // hyphen — `npm run check:sentence-coverage` parsed as `npm run
+    // check:sentence`, a script that doesn't exist, and `check:all` failed
+    // with npm's "did you mean" rather than running the real check. Every
+    // script name until this one happened to be hyphen-free, so nothing had
+    // exercised this before. `[a-z:-]` admits the character actually used.
+    const cmd = body.match(/\b(npm (?:run [a-z:-]+|test)|node scripts\/[\w-]+\.js)\b/);
     if (cmd) {
       const found = cmd[1];
       if (found.includes(SELF)) continue;
@@ -145,6 +174,115 @@ if (process.env.HARF_CHECK_ALL_RUNNING) {
   process.exit(1);
 }
 process.env.HARF_CHECK_ALL_RUNNING = '1';
+
+/**
+ * URD-056: the guard above catches this process calling itself again —
+ * useful, but it only ever sees its own environment, so it is blind to a
+ * second, independent `npm run check:all` started from another terminal.
+ * That collision is real and has fired repeatedly: this file's own header
+ * comment already recorded, before any guard existed, that two concurrent
+ * runs corrupt each other's `dist/` rebuild — a run started while another
+ * holds it dies on `ENOENT: no such file or directory, open
+ * 'dist/index.html'`, which reads like a regression in whatever the lead
+ * was working on rather than a collision, and was misdiagnosed that way at
+ * least twice (URD-041, URD-042) before being traced by inspecting the
+ * process tree. A lockfile is visible across processes the way an
+ * environment variable is not.
+ *
+ * The lock is taken here, before the loop that includes the `dist/`
+ * rebuild, and named after the one thing that actually races: the build
+ * step, not the whole pipeline. Held for the whole run regardless, since a
+ * second run's *own* rebuild could still land mid-way through this run's
+ * read-the-bundle steps even after the first rebuild is done.
+ */
+const LOCKFILE = path.join(ROOT, '.check-all.lock');
+
+/**
+ * Is `pid` a real, currently-running process? `process.kill(pid, 0)` sends
+ * no signal, only asks the kernel whether it could — ESRCH means the
+ * process is gone (a stale lock, left behind by a run that was killed
+ * rather than exiting normally), EPERM means it exists but is owned by
+ * someone else (still alive; still holds the lock).
+ *
+ * THE CRITIC: this asks only "does *some* process own this PID", not
+ * "is it actually a `check:all` run" — a stale lock whose PID a later,
+ * unrelated process reuses would read as still held, and the refusal
+ * would name the wrong process to look at. Narrow in practice (needs PID
+ * reuse after a killed run, on a busy machine, before the next
+ * `check:all`), and a start-time/nonce check to close it is more
+ * machinery than a single-developer tool's lock is worth — noted rather
+ * than fixed.
+ */
+function isAlive(pid) {
+  if (!pid) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (e) {
+    return e.code === 'EPERM';
+  }
+}
+
+function acquireLock() {
+  if (fs.existsSync(LOCKFILE)) {
+    const heldPid = Number(fs.readFileSync(LOCKFILE, 'utf8').trim());
+    if (isAlive(heldPid)) {
+      console.error(
+        `check:all — already running as PID ${heldPid} (${path.relative(ROOT, LOCKFILE)}). Two concurrent runs corrupt the same dist/ rebuild — wait for it to finish, or \`kill -9 ${heldPid}\` if it is stuck (see the note above \`acquireLock\`/\`releaseLock\` for why plain \`kill\` often will not while it's inside a step).`
+      );
+      process.exit(1);
+    }
+    // The holding process is gone without releasing its own lock — killed
+    // rather than exited normally. Stale, safe to take over; say so rather
+    // than silently overwriting evidence of what happened.
+    console.log(`check:all — found a stale lock from PID ${heldPid} (no longer running); taking it over.`);
+  }
+  fs.writeFileSync(LOCKFILE, String(process.pid));
+}
+
+/** Only removes the lock if it is still this process's own — a run that
+ *  lost the race above never wrote it and must not delete the winner's. */
+function releaseLock() {
+  try {
+    if (fs.existsSync(LOCKFILE) && fs.readFileSync(LOCKFILE, 'utf8').trim() === String(process.pid)) {
+      fs.unlinkSync(LOCKFILE);
+    }
+  } catch {
+    // Best-effort on the way out — a failed cleanup here leaves a lock a
+    // future run's own stale-PID check already knows how to recover from.
+  }
+}
+
+acquireLock();
+process.on('exit', releaseLock);
+/**
+ * `exit` alone does not fire on a signal — a killed run needs its own
+ * handler, the exact gap that first let two runs corrupt each other's
+ * `dist/` (this file's own header comment).
+ *
+ * THE CRITIC, empirically: this handler releases the lock cleanly for a
+ * signal that arrives *between* steps — but every step runs via
+ * `execSync` (`run()`, below), which blocks Node's single thread for the
+ * step's whole duration, and a signal handler cannot run until that
+ * block ends. Registering a handler at all also overrides the *default*
+ * disposition for that signal — the thing that used to kill this process
+ * immediately, with no handler installed, even mid-step. So a plain
+ * `kill`/Ctrl-C sent while stuck inside a genuinely hung step now does
+ * nothing until the step returns (if it ever does), where before this
+ * lock existed the same signal would have ended the process outright.
+ * `kill -9` (SIGKILL, uncatchable) still always works — it just leaves
+ * the lock behind, correctly recovered as stale by the next run's own
+ * `acquireLock` (verified: THE CRITIC SIGKILLed a real run mid-step and
+ * confirmed the next run detected and took over the resulting stale
+ * lock rather than refusing forever). The refusal message above says
+ * `-9` for exactly this reason — do not soften it to plain `kill`.
+ */
+for (const sig of ['SIGINT', 'SIGTERM']) {
+  process.on(sig, () => {
+    releaseLock();
+    process.exit(1);
+  });
+}
 
 let failed = null;
 

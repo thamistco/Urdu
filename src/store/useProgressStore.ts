@@ -8,6 +8,7 @@ import { dayKey, daysBetween } from '../lib/date';
 import {
   HEARTS_MAX,
   HEART_REGEN_MINUTES,
+  REFILL_COST,
   levelFromXp,
   gemsForLesson,
   promote,
@@ -15,6 +16,7 @@ import {
   LeagueId,
 } from '../lib/gamification';
 import { ACHIEVEMENTS } from '../data/achievements';
+import { migrateProgress } from '../lib/progress';
 
 export type Goal = 'family' | 'read' | 'heritage' | 'curious';
 /**
@@ -111,6 +113,30 @@ type ProgressState = {
   // achievement tiers already reached (for "new unlock" detection)
   achieved: Record<string, number>;
 
+  /** Whether this learner has been told that the path was regrouped under them.
+   *  Set on dismissal rather than on render, so a notice that was drawn and
+   *  never read is still owed. See lib/progress.ts for who is owed one. */
+  pathNoticeSeen: boolean;
+  /** How many lessons the path held when this learner last opened the app.
+   *  `null` means a profile written before this was recorded, which is the
+   *  evidence that the path has moved since. Re-recorded on dismissal, so the
+   *  next regroup announces itself without anyone bumping the persist version:
+   *  detecting the move by which lesson ids died could not see the learner it
+   *  mattered to, because a topic's first part keeps the topic's own id. */
+  pathSize: number | null;
+
+  /**
+   * True for a profile whose v0/v1 → v2 lesson-id migration emptied
+   * `completedLessons`/`skippedLessons` because it genuinely had some — the
+   * second, worse silence `needsPathMoveNotice` alone cannot see, since that
+   * function's evidence is exactly what this migration deleted. See
+   * `lib/progress.ts`'s `migrateProgress`. Cleared on dismissal, not
+   * re-armed: unlike the path-move notice this describes a one-time
+   * historical fact about an upgrade that already happened, not a
+   * recurring condition to detect again.
+   */
+  ticksWipedByMigration: boolean;
+
   // ---- actions ----
   completeOnboarding: (goal: Goal, startLevel: number, background: Background, skipLessonIds: string[]) => void;
   regenHearts: () => void;
@@ -126,6 +152,14 @@ type ProgressState = {
   }) => FinishResult;
   setDailyGoal: (id: string) => void;
   useFreeze: () => void;
+  /** Dismiss the path-moved notice and record the path it was about. */
+  dismissPathNotice: (pathSize: number) => void;
+  /** Record the path this learner has seen without showing them anything.
+   *  For the launches where nothing is owed, so a learner is never told about
+   *  a move they lived through. */
+  notePathSize: (pathSize: number) => void;
+  /** Dismiss the ticks-wiped notice. See `ticksWipedByMigration`. */
+  dismissTicksWipedNotice: () => void;
   addGems: (n: number) => void;
   resetAll: () => void;
 
@@ -177,6 +211,15 @@ export const useProgressStore = create<ProgressState>()(
       srsType: {},
       xpHistory: {},
       achieved: {},
+      // A profile created now has nothing to be told: it starts on the path as
+      // it is. `needsPathMoveNotice` reaches the same answer from the empty
+      // lesson maps, so this default is belt and braces rather than the guard.
+      pathNoticeSeen: true,
+      pathSize: null,
+      // A profile created now was never migrated, so it has nothing to
+      // report — set for the same belt-and-braces reason as
+      // `pathNoticeSeen` above.
+      ticksWipedByMigration: false,
 
       completeOnboarding: (goal, startLevel, background, skipLessonIds) =>
         set({
@@ -220,9 +263,8 @@ export const useProgressStore = create<ProgressState>()(
       refillHearts: () => {
         const s = get();
         if (s.hearts >= HEARTS_MAX) return false;
-        const COST = 40;
-        if (s.gems < COST) return false;
-        set({ hearts: HEARTS_MAX, gems: s.gems - COST, heartsUpdatedAt: Date.now() });
+        if (s.gems < REFILL_COST) return false;
+        set({ hearts: HEARTS_MAX, gems: s.gems - REFILL_COST, heartsUpdatedAt: Date.now() });
         return true;
       },
 
@@ -373,6 +415,10 @@ export const useProgressStore = create<ProgressState>()(
       },
       addGems: (n) => set((s) => ({ gems: s.gems + n })),
 
+      dismissPathNotice: (pathSize: number) => set({ pathNoticeSeen: true, pathSize }),
+      notePathSize: (pathSize: number) => set({ pathSize }),
+      dismissTicksWipedNotice: () => set({ ticksWipedByMigration: false }),
+
       resetAll: () =>
         set({
           onboarded: false,
@@ -402,6 +448,11 @@ export const useProgressStore = create<ProgressState>()(
           srsType: {},
           xpHistory: {},
           achieved: {},
+          // Whatever this profile was owed, it no longer has the progress the
+          // notice would be about.
+          pathNoticeSeen: true,
+          pathSize: null,
+          ticksWipedByMigration: false,
         }),
 
       metrics: () => {
@@ -421,7 +472,7 @@ export const useProgressStore = create<ProgressState>()(
     {
       name: 'harf-progress',
       storage: createJSONStorage(() => safeStorage),
-      version: 2,
+      version: 3,
       /**
        * v1 → v2: lesson ids stopped being positional.
        *
@@ -437,12 +488,38 @@ export const useProgressStore = create<ProgressState>()(
        * which never moved, and XP, streak, gems and achievements are scalars.
        * So a learner loses their ticked-off lessons and keeps their review
        * schedule, their streak and their level.
+       *
+       * URD-014: that wipe used to say nothing. `needsPathMoveNotice`
+       * (`lib/progress.ts`) requires a surviving completed or skipped
+       * lesson to have anything to report, which is exactly the evidence
+       * this migration deletes — so the learner who lost the most was told
+       * the least. `ticksWipedByMigration` records that it happened, for a
+       * learner who genuinely had ticks to lose.
        */
-      migrate: (persisted, from) => {
-        if (from >= 2) return persisted as ProgressState;
-        const s = persisted as Partial<ProgressState>;
-        return { ...s, completedLessons: {}, skippedLessons: {} } as ProgressState;
-      },
+      /**
+       * v2 → v3: the path was regrouped twice and the learner was not told.
+       *
+       * Nothing is dropped here. Splitting each topic across enough lessons to
+       * cover its vocabulary kept the first part's id, and regrouping those into
+       * sittings kept it again, so a ticked lesson that survived stays ticked and
+       * one that did not is simply absent — which is what `pathMoveNotice` reads.
+       * The only change is that this learner is now owed a sentence about it.
+       *
+       * `pathNoticeSeen: false` and `pathSize: null` rather than a stored
+       * message, because whether there is anything to say depends on whether
+       * *this* profile has a place on the path at all, which is a question about
+       * the profile rather than about the upgrade. A profile that finished
+       * nothing is migrated the same way and told nothing.
+       *
+       * `pathSize: null` is also what makes this the last migration that has to
+       * think about the notice. From here the size of the path is recorded as
+       * the learner sees it, so the next regroup is detected by the path
+       * changing rather than by somebody remembering to bump this number.
+       */
+      // Extracted to lib/progress.ts as `migrateProgress` so the decision is
+      // a plain function a test can drive directly, not an inline arrow
+      // reachable only through zustand's persist middleware.
+      migrate: (persisted, from) => migrateProgress(persisted as Partial<ProgressState>, from) as ProgressState,
     }
   )
 );

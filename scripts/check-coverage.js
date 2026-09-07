@@ -52,6 +52,7 @@ const { load } = require('./lib/load-ts');
 
 const { ALL_LESSONS } = load('src/data/units.ts');
 const { WORDS, getTopic } = load('src/data/words.ts');
+const { SENTENCES } = load('src/data/sentences.ts');
 const { buildLessonExercises } = load('src/exercises/generator.ts');
 
 const problems = [];
@@ -159,6 +160,24 @@ if (collisions.length) {
  * Measured on what the generator actually emits rather than on the pools it
  * draws from, because the filter that fixes this lives in the generator, and a
  * check that reads the pools would pass whether or not that filter still works.
+ *
+ * URD-028: `ex.sentence.words` is only ever present on a `sentenceBuild`
+ * exercise — 1 of the 3 kinds a `sentences`/`grammar` lesson can emit.
+ * `meaningPick`/`wordFromMeaning`, drawn from `SENTENCE_WORDS`
+ * (`generator.ts`), carry `.word` instead, an id-compatible `Word` shape
+ * built from the same `SENTENCES` entry — so this used to see only 1 of 3
+ * exercises in every sentence-derived lesson, silently. Resolved the same
+ * way `check-order.js`'s own URD-026 section resolves it: a `.word` whose
+ * `topic` is `'sentences'` is looked back up in `SENTENCES` by id to
+ * recover its real `.words`. Verified this closed a real, not merely
+ * theoretical, gap: this file's own comment already noted the omission was
+ * masked by a coincidence (every sentence a lesson draws always also gets
+ * a `sentenceBuild` turn in the same lesson, so the word-level check
+ * already caught anything the missing 2/3 would have) — true and
+ * unchanged today (`sentenceReinforceClimb`, URD-025, still gives every
+ * sentence at least one `produce` turn) — so this section still reported 0
+ * problems both before and after; it is a coverage gap now closed, not a
+ * bug this fix found live.
  */
 {
   const pos = new Map();
@@ -172,12 +191,20 @@ if (collisions.length) {
     const c = formPos.get(w.urdu);
     if (c === undefined || p < c) formPos.set(w.urdu, p);
   }
+  const wordsOf = (ex) => {
+    if (ex.sentence && ex.sentence.words) return ex.sentence.words;
+    if (ex.word && ex.word.topic === 'sentences') {
+      const sen = SENTENCES.find((s) => s.id === ex.word.id);
+      if (sen) return sen.words;
+    }
+    return [];
+  };
   const early = [];
   ALL_LESSONS.forEach((l, i) => {
     if (l.kind !== 'sentences' && l.kind !== 'grammar') return;
     for (const track of ['both', 'roman']) {
       for (const ex of buildLessonExercises(l, [], track)) {
-        for (const form of (ex.sentence && ex.sentence.words) || []) {
+        for (const form of wordsOf(ex)) {
           const p = formPos.get(form);
           if (p !== undefined && p > i) early.push({ form, at: i, lesson: l.id, taught: p });
         }

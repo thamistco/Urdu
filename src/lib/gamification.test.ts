@@ -2,16 +2,21 @@ import { describe, expect, it } from 'vitest';
 
 import {
   HEARTS_MAX,
+  HEART_REGEN_MINUTES,
+  REFILL_COST,
   demote,
   gemsForLesson,
+  gemsShortOfRefill,
   getLeague,
   LEAGUES,
   levelFromXp,
   levelProgress,
   levelTitle,
+  minutesUntilNextHeart,
   promote,
   xpForLevel,
 } from './gamification';
+import { ALL_LESSONS } from '../data/units';
 
 /**
  * The XP curve, the league ladder and the gem payout.
@@ -91,6 +96,34 @@ describe('level titles', () => {
       lastSeen = rank;
     }
   });
+
+  // URD-004: the top title used to sit at level 25 (18,000 XP) against a
+  // course that pays out about 7,220 XP finished start to finish — nobody
+  // could ever see it. Both numbers are derived from the real thing they
+  // describe, not hardcoded, so this stays true the next time the course or
+  // the curve changes rather than needing to be re-measured by hand — which
+  // is exactly how it went stale the first time (measured at 11,552 XP course
+  // / level 20 reachable when this item was written, 7,220 / level 16 by the
+  // time it was worked, worse both times, never better).
+  it('the top title is reachable by finishing the course', () => {
+    const topTitle = 'Master';
+    // The lowest level carrying the top title — levelTitle's own thresholds,
+    // not a number copied out of gamification.ts by hand. Capped: THE CRITIC
+    // found that a future rename of the top tier's string (no level ever
+    // producing "Master" again) turns this from a failing assertion into an
+    // uncapped loop that hangs the whole run, past what vitest's own timeout
+    // can interrupt since it depends on the same event loop. Failing loudly
+    // inside this test is exactly what a test is for; hanging the suite is not.
+    let topTitleLevel = 1;
+    while (levelTitle(topTitleLevel) !== topTitle) {
+      topTitleLevel++;
+      if (topTitleLevel > 1000) throw new Error(`no level up to 1000 carries the title "${topTitle}"`);
+    }
+
+    const courseTotalXp = ALL_LESSONS.reduce((n, l) => n + l.xp, 0);
+
+    expect(xpForLevel(topTitleLevel)).toBeLessThanOrEqual(courseTotalXp);
+  });
 });
 
 describe('the league ladder', () => {
@@ -154,5 +187,56 @@ describe('the hearts economy', () => {
     // A max of 1 would mean the first wrong answer ends the session, which is
     // not what any screen's copy says.
     expect(HEARTS_MAX).toBeGreaterThan(1);
+  });
+
+  // URD-006: the refill button was correctly `disabled={gems < 40}`, but
+  // the lockout screen said nothing else — a learner who could not afford
+  // it saw a button that did not work and no explanation of why or what to
+  // do instead. A fresh profile starts at 20 gems (`useProgressStore.ts`)
+  // against a 40-gem refill, so this was not an edge case: it was close to
+  // every new learner's first lockout.
+  it('a fresh profile is either able to refill, or told something real instead', () => {
+    const freshGems = 20; // useProgressStore's starting balance
+    const canAfford = freshGems >= REFILL_COST;
+    // The two branches this item's own fix reads from. Whichever is true,
+    // there is a real thing on screen — a working button, or a wait that
+    // means something.
+    if (!canAfford) {
+      expect(gemsShortOfRefill(freshGems)).toBeGreaterThan(0);
+      // THE CRITIC: `toBeGreaterThanOrEqual(0)` here would pass against any
+      // implementation, including a broken one — `minutesUntilNextHeart` is
+      // clamped to `[0, HEART_REGEN_MINUTES]` regardless of what its inner
+      // arithmetic does, so that assertion could never fail. A heart just
+      // lost (`now` passed as `heartsUpdatedAt`, zero elapsed) has to wait
+      // the full cycle — that is the number the lockout screen actually
+      // shows a learner in this exact situation, so it is the number worth
+      // asserting.
+      const now = Date.now();
+      expect(minutesUntilNextHeart(now, now)).toBe(HEART_REGEN_MINUTES);
+    } else {
+      expect(gemsShortOfRefill(freshGems)).toBe(0);
+    }
+  });
+
+  it('gemsShortOfRefill is zero exactly when a refill is affordable', () => {
+    for (let gems = 0; gems <= REFILL_COST + 10; gems++) {
+      expect(gemsShortOfRefill(gems) === 0).toBe(gems >= REFILL_COST);
+    }
+  });
+
+  it('the wait for the next heart never goes negative or past one full cycle', () => {
+    const now = Date.now();
+    for (let minutesAgo = -10; minutesAgo <= HEART_REGEN_MINUTES + 10; minutesAgo++) {
+      const wait = minutesUntilNextHeart(now - minutesAgo * 60000, now);
+      expect(wait).toBeGreaterThanOrEqual(0);
+      expect(wait).toBeLessThanOrEqual(HEART_REGEN_MINUTES);
+    }
+  });
+
+  it('counts down as time passes since the hearts clock last reset', () => {
+    const now = Date.now();
+    const justLost = minutesUntilNextHeart(now, now);
+    const almostThere = minutesUntilNextHeart(now - (HEART_REGEN_MINUTES - 1) * 60000, now);
+    expect(almostThere).toBeLessThan(justLost);
   });
 });

@@ -31,22 +31,39 @@ export function Choice({
   onPress,
   disabled,
   className = '',
+  accessibilityLabel,
+  style,
 }: {
   children: ReactNode;
   state?: ChoiceState;
   onPress?: () => void;
   disabled?: boolean;
   className?: string;
+  /** For a choice whose content is not itself readable text — a bare glyph
+   *  or icon, say — since without one a screen reader falls back to reading
+   *  whatever text node is inside, which for a lone script character is a
+   *  materially weaker signal than a real label. Optional because most
+   *  callers' children already read fine on their own. */
+  accessibilityLabel?: string;
+  /** Extra layout (styling) a caller needs per-instance rather
+   *  than shared across every `Choice`. Merged alongside the press-state
+   *  style this component already computes, never replacing it. For margins,
+   *  wrap the `Choice` in a separate `View` instead, since react-native-web
+   *  does not properly render logical margins (`marginStart`/`marginEnd`)
+   *  through function-valued style callbacks. */
+  style?: { marginTop?: number; marginBottom?: number };
 }) {
   return (
     <Pressable
       disabled={disabled}
       onPress={onPress}
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
       hitSlop={4}
       style={({ pressed }) => ({
         transform: [{ scale: pressed && !disabled ? 0.97 : 1 }],
         opacity: state === 'muted' ? 0.55 : 1,
+        ...style,
       })}
       className={className}
     >
