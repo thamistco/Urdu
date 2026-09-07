@@ -1,0 +1,2107 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  buildLessonExercises,
+  distractLetters,
+  distractorsFor,
+  itemsOf,
+  LETTER_CONTEXT_WORD,
+  letterSpotTiles,
+  OPTIONS_PER_QUESTION,
+  soundsOverlap,
+  soundTokens,
+} from './generator';
+import { getLetter, LETTERS, POSITIONS, type Letter } from '../data/letters';
+import { resolveLesson, UNITS, ALL_LESSONS, type Lesson } from '../data/units';
+import { WORDS, getWord } from '../data/words';
+import { VERDICT_CUES, cueOf, NUMERALS, COLOURS, WORD_ICON } from '../data/art';
+import { GRAMMAR } from '../data/grammar';
+import { SENTENCES } from '../data/sentences';
+import { romanAll } from '../lib/translit';
+import { taughtUpTo } from '../lib/review';
+import type { Exercise } from './types';
+
+/** Letter-type exercise kinds, as opposed to everything else a review can ask. */
+const LETTER_KINDS = new Set(['letterForm', 'letterPick', 'letterTrace']);
+const letterCountOf = (lessonId: string, known: ReadonlySet<string> = new Set()) => {
+  const lesson = resolveLesson(lessonId)!;
+  const exercises = buildLessonExercises(lesson, [], 'both', known);
+  return exercises.filter((e) => LETTER_KINDS.has(e.kind)).length;
+};
+
+/** `soundTokens` only ever reads `.sound`, so a test double needs nothing else. */
+const withSound = (sound: string): Letter => ({ sound }) as Letter;
+
+/**
+ * URD-007: ذ ز ض ظ are four different letters Urdu speakers hear as one
+ * sound, so `letterPick` ("which letter makes this sound?") offering two of
+ * them has two right answers. `check:answerable` catches this whole-system,
+ * over 107,610 generated exercises across both tracks — real and thorough,
+ * but probabilistic (6 random passes) and slow to run for iterating on the
+ * fix itself. These tests assert the same property directly against the two
+ * pure functions it depends on, for every letter rather than a sample.
+ */
+
+describe('soundTokens / soundsOverlap', () => {
+  it('strips a parenthetical aside', () => {
+    expect(soundTokens(withSound('h (aspirate)'))).toEqual(['h']);
+    expect(soundTokens(withSound('ḍ (hard)'))).toEqual(['ḍ']);
+  });
+
+  it('is case-insensitive', () => {
+    expect(soundTokens(withSound('Z'))).toEqual(soundTokens(withSound('z')));
+  });
+
+  it('splits a multi-reading sound into separate tokens', () => {
+    expect(soundTokens(withSound('a / aa'))).toEqual(['a', 'aa']);
+  });
+
+  it('every letter in the course has a non-empty sound', () => {
+    for (const l of LETTERS) expect(soundTokens(l).length).toBeGreaterThan(0);
+  });
+
+  it('overlap is symmetric and requires a shared token, not just a shared string prefix', () => {
+    const a = withSound('a / aa');
+    const b = withSound('aa');
+    const c = withSound('k');
+    expect(soundsOverlap(a, b)).toBe(true);
+    expect(soundsOverlap(b, a)).toBe(true);
+    expect(soundsOverlap(a, c)).toBe(false);
+  });
+
+  // CURRICULUM CRITIC reviewing this item: a first version compared one
+  // normalized string per letter, so it caught "z" === "z" but missed that
+  // "a / aa" (alif) and "aa" (alif-madda) are different strings sharing one
+  // reading — sampled 2,902 of 3,000 real generations offering both
+  // together. Named explicitly, the same way the four ز-sound letters are
+  // named below, so this specific regression can't come back unnoticed.
+  it('alif overlaps both alif-madda and ain, which do not overlap each other', () => {
+    const alif = getLetter('alif')!;
+    const alifMadda = getLetter('alif-madda')!;
+    const ain = getLetter('ain')!;
+    expect(soundsOverlap(alif, alifMadda)).toBe(true);
+    expect(soundsOverlap(alif, ain)).toBe(true);
+    expect(soundsOverlap(alifMadda, ain)).toBe(false);
+  });
+
+  // The rest of the known homophone sets, named explicitly so a future change
+  // to letters.ts that quietly breaks one of them fails loudly here rather
+  // than only showing up as a rarer collision in check:answerable's random
+  // sampling. Grouped by single-token equality here (each of these letters
+  // has exactly one reading) — the alif/alif-madda/ain overlap above already
+  // covers the multi-reading case, which cannot be grouped this way since
+  // alif-madda and ain end up in different groups despite alif overlapping
+  // both.
+  it('groups the known single-reading homophone sets, and nothing else, together', () => {
+    const singleReading = LETTERS.filter((l) => soundTokens(l).length === 1);
+    const groups: Record<string, string[]> = {};
+    for (const l of singleReading) (groups[soundTokens(l)[0]] ??= []).push(l.id);
+    const multi = Object.values(groups)
+      .filter((ids) => ids.length > 1)
+      .map((ids) => [...ids].sort());
+    expect(multi).toEqual(
+      [
+        ['te', 'toe'],
+        ['se', 'seen', 'swaad'],
+        ['baRi-he', 'choti-he', 'do-chashmi-he'],
+        ['zaal', 'ze', 'zoe', 'zwaad'],
+      ].map((g) => [...g].sort())
+    );
+  });
+});
+
+describe('distractLetters', () => {
+  const n = OPTIONS_PER_QUESTION - 1;
+
+  it('never offers a distractor that sounds like the target, or like another distractor', () => {
+    // Every letter, not a sample — this is the property URD-007 exists for,
+    // and it is cheap enough to check exhaustively rather than randomly.
+    for (const letter of LETTERS) {
+      const options = [letter, ...distractLetters(letter, n)];
+      for (let i = 0; i < options.length; i++) {
+        for (let j = i + 1; j < options.length; j++) {
+          expect(soundsOverlap(options[i], options[j])).toBe(false);
+        }
+      }
+    }
+  });
+
+  it('never offers the target letter itself as a distractor', () => {
+    for (const letter of LETTERS) {
+      expect(distractLetters(letter, n).some((d) => d.id === letter.id)).toBe(false);
+    }
+  });
+
+  it('returns as many distractors as asked for, given the real letter set', () => {
+    // Not a guarantee in general (see the comment on distractLetters itself)
+    // — but true today, with 32 distinct readings among 40 letters and only
+    // 3 ever needed, and worth knowing the moment it stops being true.
+    for (const letter of LETTERS) {
+      expect(distractLetters(letter, n)).toHaveLength(n);
+    }
+  });
+
+  it('URD-060: given a position, never offers two options with the identical glyph there', () => {
+    // baRi-ye and choti-ye share no reading at all (they are not a
+    // soundsOverlap pair) yet render the identical stroke at `initial` and
+    // `medial` — confirmed directly against the real letter data. Once
+    // `letterPick` renders every option at one assigned position instead of
+    // always `isolated`, that pairing (and any other letters that happen to
+    // share a glyph at some position) becomes a genuinely unanswerable
+    // question: two option tiles with nothing on screen to tell them apart.
+    // Every letter, every position, not a sample — this is exactly the
+    // shape of bug a random sample could hide for years (THE CRITIC and
+    // CURRICULUM CRITIC each independently measured well under 10% of draws
+    // hitting it for the one pair that happens to exist today).
+    for (const letter of LETTERS) {
+      for (const p of POSITIONS) {
+        const options = [letter, ...distractLetters(letter, n, p.key)];
+        const glyphs = options.map((o) => o.forms[p.key]);
+        expect(new Set(glyphs).size).toBe(glyphs.length);
+      }
+    }
+  });
+
+  it('URD-060: still returns as many distractors as asked for once a position is given', () => {
+    // The new exclusion competes with the same 3-distractor floor the
+    // no-position test above already holds — worth its own assertion since
+    // a position argument shrinks the eligible pool further (sound overlap
+    // *and* glyph collision both rule candidates out now), and a silent
+    // drop to fewer than n options is exactly how a floor gets crossed
+    // without anyone noticing (see OPTIONS_PER_QUESTION's own history).
+    for (const letter of LETTERS) {
+      for (const p of POSITIONS) {
+        expect(distractLetters(letter, n, p.key)).toHaveLength(n);
+      }
+    }
+  });
+});
+
+describe('URD-049: distractorsFor never offers a homograph of the target or of another option', () => {
+  // `meaningPick`/`wordFromMeaning` show `.urdu` as the text of each option
+  // (`check:answerable`'s own "two options are the same word" rule checks
+  // exactly this), so two distinct WORDS entries sharing a spelling but not
+  // an id — a real homograph pair, 40 of them across the corpus — could
+  // both land in one option set: different words by `.id` and by
+  // `.meaning`, but visually identical on screen. Checked against every
+  // real homograph in the corpus, not a synthetic sample, since this
+  // check:answerable failure was flaky specifically because it depended on
+  // which unseeded shuffle draw happened to surface a colliding pair.
+  const byUrdu = new Map<string, typeof WORDS>();
+  for (const w of WORDS) {
+    if (!byUrdu.has(w.urdu)) byUrdu.set(w.urdu, []);
+    byUrdu.get(w.urdu)!.push(w);
+  }
+  const homographGroups = [...byUrdu.values()].filter((g) => g.length > 1);
+
+  it('has at least one real homograph group to test against — a false pass if the corpus ever loses them all', () => {
+    expect(homographGroups.length).toBeGreaterThan(0);
+  });
+
+  it("never returns a distractor sharing the target's own spelling, forced against a single-candidate pool", () => {
+    // A pool of exactly one candidate — the target's own homograph sibling
+    // — makes this deterministic rather than relying on that one candidate
+    // happening to survive an unseeded shuffle among 2,281 real words. The
+    // original bug was flaky for exactly that reason: it depended on which
+    // draw happened to surface a colliding pair. `distinctMeaning: true`
+    // is deliberately set — a homograph pair has different meanings, so
+    // that guard alone must NOT be what stops this; only the `.urdu` guard
+    // this item added should.
+    for (const group of homographGroups) {
+      for (const word of group) {
+        const siblings = group.filter((w) => w.id !== word.id);
+        for (const sibling of siblings) {
+          const distractors = distractorsFor(word, [sibling], { distinctMeaning: true });
+          expect(
+            distractors.some((d) => d.id === sibling.id),
+            `${word.id} vs ${sibling.id}`
+          ).toBe(false);
+        }
+      }
+    }
+  });
+
+  it('never lets two distractors drawn together share a spelling with each other', () => {
+    // Every real homograph group in the corpus happens to have exactly 2
+    // members, so testing "two DISTRACTORS colliding with each other"
+    // (as opposed to one colliding with the target) needs a constructed
+    // case: two synthetic decoy words, sharing a spelling with each other
+    // but not with the real target, planted at the front of the pool so
+    // an unseeded shuffle can't make this test itself flaky.
+    const target = WORDS[0];
+    const decoyA = { ...WORDS[1], id: 'test-decoy-a', urdu: 'ٹیسٹ', meaning: 'test meaning one' };
+    const decoyB = { ...WORDS[2], id: 'test-decoy-b', urdu: 'ٹیسٹ', meaning: 'test meaning two' };
+    // Just the two decoys, not the whole corpus: `consider` visits every
+    // candidate in a finite pool this small regardless of shuffle order,
+    // so both decoys are guaranteed to be checked against each other here
+    // — a larger pool would make whether they're even considered together
+    // a matter of luck, the same flakiness this whole item exists to fix.
+    const distractors = distractorsFor(target, [decoyA, decoyB], { distinctMeaning: true });
+    const fromDecoys = distractors.filter((d) => d.id === decoyA.id || d.id === decoyB.id);
+    expect(fromDecoys.length).toBeLessThanOrEqual(1);
+  });
+});
+
+describe("URD-017: Daily Review's letter share reflects this learner's position, not the whole course", () => {
+  // `practice-review` isn't placed on the path, so `taughtUpTo` can't stop
+  // walking it and returns the entire course — 2,281 words against 46
+  // letters, a ~2% letter share fixed regardless of who opens the screen.
+  // THE CRITIC: reproduced live, a learner who had just finished the very
+  // first letters and vocab lessons got 0 of 10 letter exercises, identical
+  // to one who had finished the whole course. The fix keys the split off
+  // `known` instead for this specific lesson.
+
+  it('with nothing graded yet (day one), splits close to the old even 50/50', () => {
+    const letters = letterCountOf('practice-review');
+    expect(letters).toBeGreaterThanOrEqual(4);
+    expect(letters).toBeLessThanOrEqual(6);
+  });
+
+  it('reflects a learner still deep in the alphabet, not the fixed whole-course ratio', () => {
+    // Graded on l-1's six letters and v-first-words' eleven words — a
+    // learner on day one or two, the population this regression hit.
+    const known = new Set([
+      'alif',
+      'alif-madda',
+      'be',
+      'pe',
+      'te',
+      'Te',
+      'w-paani',
+      'w-kitaab',
+      'w-ghar',
+      'w-dil',
+      'w-naam',
+    ]);
+    const letters = letterCountOf('practice-review', known);
+    // Before the fix this was 0, pinned by the whole course's ~2% ratio.
+    // 6 letters of 17 known items ≈ 35% ⇒ round(10 × 0.35) = 4 (± rounding
+    // and pool-fill from due letters not present here), comfortably above
+    // the old regression's 0 and nowhere near the whole-course ~2%.
+    expect(letters).toBeGreaterThanOrEqual(3);
+  });
+
+  it("an on-path review's letter share is unaffected — still keyed on course position, not known", () => {
+    // rev-the-wider-world (u41) is placed on the path, so this fix's
+    // known-based branch must not apply to it regardless of what `known`
+    // contains — course position stays the measure there.
+    const allWords = Array.from({ length: 200 }, (_, i) => `w-fake-${i}`);
+    const knownEverything = new Set(allWords);
+    const letters = letterCountOf('rev-the-wider-world', knownEverything);
+    expect(letters).toBeLessThanOrEqual(1);
+  });
+});
+
+describe('URD-017: a review with any letters in scope always asks at least one', () => {
+  it('every real review lesson in the course asks about at least one letter', () => {
+    // The floor exists because `Math.round` alone stays >= 1 only by
+    // coincidence of today's review sizes (coverTopics floors them at 22) —
+    // this asserts the guarantee directly rather than trusting the
+    // coincidence to hold as content changes.
+    for (const u of UNITS) {
+      for (const l of u.lessons) {
+        if (l.kind !== 'review') continue;
+        expect(letterCountOf(l.id)).toBeGreaterThanOrEqual(1);
+      }
+    }
+  });
+
+  it('holds even at a review size real content never happens to produce', () => {
+    // rev-the-wider-world's real size was 39 (set by coverTopics, generous
+    // enough that Math.round alone never rounded its ~1.98% letter share
+    // down to 0) until URD-A02 split its unit in two and this review's own
+    // half fell to 22 — coverTopics's own minimum, and exactly the size this
+    // test used to reach only synthetically: Math.round(22 * 0.0198) =
+    // Math.round(0.436) = 0 without the floor. The explicit `size: 22`
+    // override stays rather than trusting real content to keep landing here
+    // by coincidence, so this doesn't depend on staying lucky as units and
+    // reviews are added or resized again.
+    const lesson = { ...resolveLesson('rev-the-wider-world')!, size: 22 };
+    const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+    const letters = exercises.filter((e) => LETTER_KINDS.has(e.kind)).length;
+    expect(letters).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('URD-018: review gives the learner a real chance to read Urdu and say what it means', () => {
+  // Before this fix, `meaningPick` — the only exercise that shows Urdu and
+  // asks what it means — appeared in review only as `produceExercise`'s own
+  // fallback for the 82 words that are neither typeable nor buildable
+  // (measured: 16 of 1,856 exercises across all 39 reviews, 0.86%). Every
+  // other review question went the same direction: shown English (or heard
+  // audio), produce or pick the Urdu form. One turn in the review ladder's
+  // six-turn cycle now asks `wordExercise(..., 'meet', 1)` — the same call
+  // the sentence and grammar climbs already use for "show the word, ask its
+  // meaning" — directly, not just as a fallback for the hardest few words.
+
+  it('every real review lesson, on every track, asks at least one meaning-direction question', () => {
+    for (const u of UNITS) {
+      for (const l of u.lessons) {
+        if (l.kind !== 'review') continue;
+        for (const track of ['script', 'roman', 'both'] as const) {
+          const exercises = buildLessonExercises(l, [], track, new Set());
+          const meaningPicks = exercises.filter((e) => e.kind === 'meaningPick').length;
+          expect(meaningPicks, `${l.id} (${track})`).toBeGreaterThanOrEqual(1);
+        }
+      }
+    }
+  });
+
+  it('a review of typeable words still contains at least one meaning-direction question', () => {
+    // The item's own acceptance criterion, stated directly: a review
+    // entirely of typeable words used to route every third-sighting
+    // question to `typeWord` instead of ever reaching `meaningPick`'s old
+    // fallback path, so this case is exactly the one the old design missed.
+    const lesson = resolveLesson('rev-gender-and-number')!;
+    const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+    expect(exercises.filter((e) => e.kind === 'meaningPick').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('meaningPick is now a real share of review content, not a rounding error', () => {
+    // Measured directly across all 39 reviews on all three tracks: before
+    // this fix, 16 of 1,856 exercises, 0.86%. The six-turn design (recall,
+    // recall, listen, produce, read, produce) targets roughly one in six —
+    // measured at 15.5% on real content. The threshold here is set well
+    // below that real number rather than pinned close to it, so a small,
+    // legitimate future content change doesn't turn this flaky.
+    let total = 0;
+    let meaningPicks = 0;
+    for (const u of UNITS) {
+      for (const l of u.lessons) {
+        if (l.kind !== 'review') continue;
+        for (const track of ['script', 'roman', 'both'] as const) {
+          const exercises = buildLessonExercises(l, [], track, new Set());
+          total += exercises.length;
+          meaningPicks += exercises.filter((e) => e.kind === 'meaningPick').length;
+        }
+      }
+    }
+    expect(meaningPicks / total).toBeGreaterThan(0.1);
+  });
+
+  it("regression (THE CRITIC): a meaningPick option never carries a verdict icon it doesn't deserve", () => {
+    // BLOCKING: `meaningPick`'s distractor call used to omit `distinctCue`,
+    // the guard `pictureOptions` above it already requests — so a
+    // verdict-cue word (VERDICT_CUES: yes/no/correct/wrong/good/bad/
+    // approved/rejected) could be offered as a *wrong* option, and
+    // `MeaningPickExercise` renders every option's own tick/cross regardless
+    // of correctness. Sampled directly: every meaningPick generated across
+    // all 39 reviews on all three tracks, with the word itself allowed to
+    // carry a verdict cue (that's the correct answer's icon, not a lie) but
+    // no *other* option allowed to.
+    for (const u of UNITS) {
+      for (const l of u.lessons) {
+        if (l.kind !== 'review') continue;
+        for (const track of ['script', 'roman', 'both'] as const) {
+          const exercises = buildLessonExercises(l, [], track, new Set());
+          for (const e of exercises) {
+            if (e.kind !== 'meaningPick') continue;
+            const wrongOptions = e.options.filter((o) => o.id !== e.word.id);
+            const leaked = wrongOptions.filter((o) => VERDICT_CUES.has(cueOf(o)));
+            expect(leaked, `${l.id} (${track}): ${e.word.id}`).toEqual([]);
+          }
+        }
+      }
+    }
+  });
+
+  it('regression (THE CRITIC): a review with due letters and words interleaved 1:1 still reaches every turn', () => {
+    // BLOCKING: the turn used to be `i % 4` computed from the shared
+    // due/fallback index, and the interleave alternates letter/word 1:1
+    // whenever both are present — a step of 2 through a mod-4 space only
+    // ever visits 2 of the 4 residues. Reproduced with the exact shape THE
+    // CRITIC used: 10 due letters, 6 due words, interleaved — before the
+    // fix this locked every word into alternating between only listenTap
+    // and typeWord, never reaching wordFromMeaning or meaningPick at all.
+    const reviewLesson = UNITS.flatMap((u) => u.lessons).find((l) => l.kind === 'review')!;
+    const dueLetters = LETTERS.slice(0, 10).map((l) => ({ id: l.id, type: 'letter' as const }));
+    const dueWords = WORDS.slice(0, 6).map((w) => ({ id: w.id, type: 'word' as const }));
+    const due: { id: string; type: 'letter' | 'word' }[] = [];
+    for (let i = 0; i < 10; i++) {
+      due.push(dueLetters[i]);
+      if (dueWords[i]) due.push(dueWords[i]);
+    }
+    const exercises = buildLessonExercises({ ...reviewLesson, size: 16 }, due, 'both', new Set());
+    const wordKinds = new Set(exercises.filter((e) => !LETTER_KINDS.has(e.kind)).map((e) => e.kind));
+    // The specific thing the interleave-parity bug hides: with a step of 2
+    // through an even modulus, only the residues sharing the start index's
+    // parity are ever reached — 3 kinds can still appear (as they did in the
+    // exact bug this reproduces: listenTap, wordFromMeaning, typeWord) while
+    // meaningPick specifically stays unreachable. Asserting `size > 2` alone
+    // would not have caught that; asserting meaningPick's presence directly
+    // does.
+    expect(wordKinds.has('meaningPick')).toBe(true);
+    expect(wordKinds.size).toBeGreaterThan(2);
+  });
+
+  it('no real review generates a run of 3 or more identical exercise kinds in a row', () => {
+    // CURRICULUM CRITIC: before this fix, the longest run anywhere in review
+    // was 1 (never two identical kinds adjacent). The six-turn design keeps
+    // it well under check:shape's own MAX_RUN of 3, even though a few
+    // pre-existing independent fallbacks (the VERDICT_CUES override, the
+    // Roman track's produce-fallback) can still land two of the same kind
+    // side by side.
+    for (const u of UNITS) {
+      for (const l of u.lessons) {
+        if (l.kind !== 'review') continue;
+        for (const track of ['script', 'roman', 'both'] as const) {
+          const exercises = buildLessonExercises(l, [], track, new Set());
+          let run = 1;
+          for (let i = 1; i < exercises.length; i++) {
+            run = exercises[i].kind === exercises[i - 1].kind ? run + 1 : 1;
+            expect(run, `${l.id} (${track}) @${i}`).toBeLessThan(3);
+          }
+        }
+      }
+    }
+  });
+});
+
+describe('URD-020: a letter lesson shows letters inside real words, not only in isolation', () => {
+  const ISOLATED_LETTER_KINDS = new Set(['letterForm', 'letterPick', 'letterTrace', 'letterContrast']);
+  const letterLessons = () => UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'letters');
+
+  it('every letter in every real lesson gets exactly one context sighting — no letter zero, none doubled', () => {
+    // Before this fix: exactly one shared context-word exercise per lesson,
+    // regardless of how many letters it taught (measured: 276 of 285
+    // exercises across all 9 letter lessons were isolated-glyph, 96.8%).
+    // THE CRITIC: a raw count comparison (`inContext.length >=
+    // letterIds.length`) cannot tell "every letter got one" apart from "one
+    // letter got two and another got none" — assert the actual per-letter
+    // ids match, not just a total.
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      const inContext = exercises.filter((e) => !ISOLATED_LETTER_KINDS.has(e.kind) && 'word' in e);
+      expect(inContext.length, l.id).toBe(l.letterIds!.length);
+    }
+  });
+
+  it("does not raise a letter lesson's total exercise count", () => {
+    // The item's own constraint: raise the in-context share without raising
+    // total lesson length. Each letter's context sighting replaces one of
+    // its isolated ones rather than adding a new one, so the total is
+    // unchanged (or one shorter, since the old single shared context word
+    // is gone) — never longer.
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      expect(exercises.length, l.id).toBeLessThanOrEqual(l.letterIds!.length * 6 + 1);
+    }
+  });
+
+  it('never opens a lesson on a context word — the first exercise is always the isolated introduction', () => {
+    // CURRICULUM CRITIC: `(idx + turnOffset) % SIGHTINGS_PER_LETTER` put the
+    // first letter's context word at round 0 whenever `turnOffset` was 0 —
+    // true for 8 of the 9 real lessons — making a whole word in a script
+    // the learner had never seen the very first thing they saw, including
+    // in the first lesson of the entire course. A context sighting reinforces
+    // a letter already met; it must never be the learner's first look at it.
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      expect(ISOLATED_LETTER_KINDS.has(exercises[0].kind), l.id).toBe(true);
+    }
+  });
+
+  it("every letter's context word is a real, already-recorded vocabulary word", () => {
+    // THE CRITIC, BLOCKING: a first draft invented a new 40-word corpus
+    // (`LETTER_CONTEXT_WORDS`, ids like `l-context-alif`) that existed
+    // nowhere in the voice manifest — a `listenTap` review question built
+    // from one of these, reachable once such a word is SRS-graded and
+    // comes due, asked the learner to identify a word from audio that did
+    // not exist. Every context word must resolve through `getWord` — i.e.
+    // be a real member of `WORDS`, which `check:voice` already requires a
+    // clip for — not a synthetic id nothing has ever recorded.
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      const contextWords = exercises.filter((e) => !ISOLATED_LETTER_KINDS.has(e.kind) && 'word' in e);
+      for (const ex of contextWords) {
+        const w = (ex as { word: { id: string; urdu: string } }).word;
+        expect(getWord(w.id), `${l.id}: ${w.id} is not a real WORDS entry`).toBeDefined();
+      }
+    }
+  });
+
+  it("every letter's context word actually contains that letter's own glyph", () => {
+    // URD-021's own complaint about the old design: a match on transliteration
+    // substring, not on whether the word contains the letter at all.
+    for (const letter of LETTERS) {
+      const lesson = letterLessons().find((l) => l.letterIds!.includes(letter.id));
+      if (!lesson) continue;
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      const contextWords = exercises.filter((e) => !ISOLATED_LETTER_KINDS.has(e.kind) && 'word' in e) as {
+        word: { urdu: string };
+      }[];
+      const match = contextWords.find((e) => e.word.urdu.includes(letter.forms.isolated));
+      expect(match, `${letter.id}: no context word contains its glyph`).toBeDefined();
+    }
+  });
+
+  it('never gives two letters in the same lesson the identical context word', () => {
+    // THE CRITIC: nothing previously locked this in — it held only by luck
+    // of which words `LETTER_CONTEXT_WORD` happened to pick. A word like
+    // پانی contains both alif and pe; assigning it to both would spend two
+    // of a lesson's context slots on one piece of vocabulary instead of two.
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      const contextWordIds = exercises
+        .filter((e) => !ISOLATED_LETTER_KINDS.has(e.kind) && 'word' in e)
+        .map((e) => (e as { word: { id: string } }).word.id);
+      expect(new Set(contextWordIds).size, l.id).toBe(contextWordIds.length);
+    }
+  });
+});
+
+describe("URD-045: a letter's context sighting asks the learner to find it in the word, not just its meaning", () => {
+  const letterLessons = () => UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'letters');
+  type SpotEx = Extract<Exercise, { kind: 'letterSpot' }>;
+  const isSpot = (e: Exercise): e is SpotEx => e.kind === 'letterSpot';
+
+  it('every context sighting is a letterSpot exercise, not the ordinary meaning/picture question every other word gets', () => {
+    // URD-020 gave every letter a context word; URD-045's own complaint is
+    // that the exercise kind it went through (multipleChoice/meaningPick/
+    // listenTap) never actually asked about the letter's position inside
+    // that word — a learner could answer by picture or meaning alone.
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      const spots = exercises.filter(isSpot);
+      expect(spots.length, l.id).toBe(l.letterIds!.length);
+    }
+  });
+
+  it('every letterSpot has at least one tile marked as the right answer', () => {
+    // CURRICULUM CRITIC: tiles can be multi-character display clusters (real
+    // neighbouring context, not the bare glyph), so "the letter is among the
+    // tiles" has to be checked against the precomputed `correct` flags, not
+    // by string-matching the tile text itself — check-answerable.js's own
+    // gate for this, re-asserted here as a fast unit test.
+    for (const letter of LETTERS) {
+      const lesson = letterLessons().find((l) => l.letterIds!.includes(letter.id));
+      if (!lesson) continue;
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      const spotForLetter = exercises.filter(isSpot).find((e) => e.letter.id === letter.id);
+      expect(spotForLetter, `${letter.id}: no letterSpot exercise generated`).toBeDefined();
+      expect(spotForLetter!.correct.some(Boolean), `${letter.id}: no tile is marked correct`).toBe(true);
+    }
+  });
+
+  it("a letterSpot's real tiles preserve the word's own reading order and carry true neighbouring context — never shuffled, never an isolated glyph", () => {
+    // Unlike wordBuild's tray, this is "find it where the word actually put
+    // it": scrambling would erase the one thing being asked about. Decoy
+    // padding (below) is allowed to interleave extra tiles, but must never
+    // reorder the real ones relative to each other.
+    //
+    // CURRICULUM CRITIC's core finding: an isolated glyph is exactly the
+    // shape letterForm/letterPick already drill, so a tile that only ever
+    // showed that shape could be solved without reading the word at all.
+    // `letterSpotTiles` is pure and deterministic for the real tiles (only
+    // decoy selection/placement is randomized), so calling it fresh and
+    // filtering its own `fromWord` reproduces the exact real cluster
+    // strings — with their true neighbouring context already embedded — a
+    // real build should have used, regardless of where decoys happened to
+    // land in either call.
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      for (const e of exercises.filter(isSpot)) {
+        const actualReal = e.tiles.filter((_, i) => e.fromWord[i]);
+        const fresh = letterSpotTiles(e.letter, e.word);
+        const freshReal = fresh.tiles.filter((_, i) => fresh.fromWord[i]);
+        expect(actualReal, `${l.id}: ${e.word.id}`).toEqual(freshReal);
+      }
+    }
+  });
+
+  it('always offers at least 4 tiles — the same recognise-tier guess floor every other letter exercise has', () => {
+    // CURRICULUM CRITIC: khe/daal/toe/laam's assigned context words are only
+    // 2 characters long — a straight coin flip without a floor, unlike
+    // letterPick/letterForm's fixed 4-option convention.
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      for (const e of exercises.filter(isSpot)) {
+        expect(e.tiles.length, `${l.id}: ${e.word.id}`).toBeGreaterThanOrEqual(4);
+      }
+    }
+  });
+
+  it('a two-letter word never puts two real tiles on screen with the identical rendered text', () => {
+    // Caught by the lead's own screenshot review, not assumed clean: for a
+    // real word exactly 2 characters long (khe/daal/toe/laam's assigned
+    // words), both positions' full left+own+right context is the whole
+    // word, so both clusters render as the same string — a learner cannot
+    // visually tell "the daal tile" from "the laam tile" in دل, only one of
+    // which grades correct. `letterSpotTiles` merges that pair into one
+    // tile rather than shipping the ambiguity; this locks the merge in for
+    // every real two-letter case in the actual corpus, not just one example.
+    let checked = 0;
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      for (const e of exercises.filter(isSpot)) {
+        const realTiles = e.tiles.filter((_, i) => e.fromWord[i]);
+        const uniqueRealTiles = new Set(realTiles);
+        expect(uniqueRealTiles.size, `${l.id}: ${e.word.id} — ${JSON.stringify(realTiles)}`).toBe(realTiles.length);
+        if (Array.from(e.word.urdu).filter((c) => c.trim().length > 0).length === 2) checked++;
+      }
+    }
+    // Sanity-check this test actually exercised the 2-letter case at all,
+    // not just vacuously passing because no such word was ever drawn.
+    expect(checked, 'no 2-character letterSpot word was generated to check').toBeGreaterThan(0);
+  });
+
+  it('a decoy tile is never one of the word’s own characters, never marked correct, and always one of the 40 taught letters', () => {
+    // A screenshot at 320px width caught a real defect a string-only test
+    // never would: an early draft drew decoys from `ALPHABET`
+    // (`buildTilesFor`'s own pool — every character appearing anywhere in
+    // the vocabulary corpus, combining marks included), and one landed as a
+    // bare kasra/damma — a nearly invisible floating mark next to full
+    // letter-sized tiles, not a plausible wrong answer. Decoys must be one
+    // of the 40 taught letters' own isolated glyphs instead.
+    const taughtGlyphs = new Set(LETTERS.map((l) => l.forms.isolated));
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      for (const e of exercises.filter(isSpot)) {
+        const realChars = new Set(Array.from(e.word.urdu).filter((c) => c.trim().length > 0));
+        e.tiles.forEach((t, i) => {
+          if (e.fromWord[i]) return;
+          expect(e.correct[i], `${l.id}: ${e.word.id} decoy "${t}" marked correct`).toBe(false);
+          expect(realChars.has(t), `${l.id}: ${e.word.id} decoy "${t}" duplicates a real character`).toBe(false);
+          expect(taughtGlyphs.has(t), `${l.id}: ${e.word.id} decoy "${t}" is not a taught letter's glyph`).toBe(true);
+        });
+      }
+    }
+  });
+
+  it('tiles, fromWord, correct and wordBreakAfter always stay the same length', () => {
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      for (const e of exercises.filter(isSpot)) {
+        expect(e.fromWord.length, `${l.id}: ${e.word.id}`).toBe(e.tiles.length);
+        expect(e.correct.length, `${l.id}: ${e.word.id}`).toBe(e.tiles.length);
+        expect(e.wordBreakAfter.length, `${l.id}: ${e.word.id}`).toBe(e.tiles.length);
+      }
+    }
+  });
+
+  it("marks a word break exactly where LETTER_CONTEXT_WORD's own multi-word phrases actually have a space", () => {
+    // DESIGN CRITIC: baRi-he's خدا حافظ and hamza's ان شاء اللہ are genuine
+    // multi-word phrases — the prompt above shows their real spaces, so the
+    // tile row must mark the same seam rather than flattening two or three
+    // words into one undifferentiated run of tiles.
+    let checkedAPhrase = false;
+    for (const [letterId, word] of LETTER_CONTEXT_WORD) {
+      const rawWords = word.urdu.split(' ').filter(Boolean);
+      if (rawWords.length < 2) continue;
+      checkedAPhrase = true;
+      const letter = getLetter(letterId)!;
+      const { tiles, fromWord, wordBreakAfter } = letterSpotTiles(letter, word);
+      const realBreaks = tiles.filter((_, i) => fromWord[i] && wordBreakAfter[i]).length;
+      // One break per space the real phrase actually has, no more, no fewer.
+      const expectedBreaks = rawWords.length - 1;
+      expect(realBreaks, `${letterId}: ${word.id} (${word.urdu})`).toBe(expectedBreaks);
+    }
+    expect(checkedAPhrase, 'no multi-word LETTER_CONTEXT_WORD entry found to check').toBe(true);
+  });
+
+  it('never appears on the Roman track, same as every other script-only letter exercise', () => {
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'roman', new Set());
+      expect(exercises.some(isSpot), l.id).toBe(false);
+    }
+  });
+});
+
+describe("URD-043: a letter's final sighting in its own lesson is always the hardest kind", () => {
+  // Includes `letterContrast` (URD-047): this block asks what a letter's
+  // LAST sighting in its teaching lesson is, and a contrast exercise is one
+  // of the sightings that can occupy a round. The two review-lesson blocks
+  // below deliberately keep the three-kind set — `letterContrast` is emitted
+  // only by the `letters` branch, never by review.
+  const LETTER_KIND_SET = new Set(['letterForm', 'letterPick', 'letterTrace', 'letterContrast']);
+  const letterLessons = () => UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'letters');
+  // The reverse of LETTER_CONTEXT_WORD — which letter a given context word's
+  // exercise belongs to — since a context sighting's own exercise object
+  // carries `.word`, not `.letter`.
+  const letterOfContextWord = new Map<string, string>();
+  for (const [letterId, w] of LETTER_CONTEXT_WORD) letterOfContextWord.set(w.id, letterId);
+
+  it("the item's own verify text, applied directly: every real letter lesson, every letter, final sighting is letterTrace", () => {
+    // Before this fix: `turn = round + idx + turnOffset` ties which kind
+    // lands last to idx, which shifts per letter and per lesson largely
+    // arbitrarily. Measured directly across all 9 real letter lessons: a
+    // letter's final round landed on a recognise-tier kind
+    // (letterForm/letterPick) 67.4% of the time (31 of 46 letters sampled).
+    for (const lesson of letterLessons()) {
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      const lastKindFor = new Map<string, string>();
+      for (const e of exercises) {
+        if (LETTER_KIND_SET.has(e.kind)) {
+          lastKindFor.set((e as { letter: { id: string } }).letter.id, e.kind);
+        } else if ('word' in e) {
+          const letterId = letterOfContextWord.get((e as { word: { id: string } }).word.id);
+          if (letterId) lastKindFor.set(letterId, e.kind);
+        }
+      }
+      for (const letterId of lesson.letterIds!) {
+        expect(lastKindFor.get(letterId), `${lesson.id}/${letterId}`).toBe('letterTrace');
+      }
+    }
+  });
+
+  it('holds on the script track too, not only both', () => {
+    for (const lesson of letterLessons()) {
+      const exercises = buildLessonExercises(lesson, [], 'script', new Set());
+      const lastKindFor = new Map<string, string>();
+      for (const e of exercises) {
+        if (LETTER_KIND_SET.has(e.kind)) {
+          lastKindFor.set((e as { letter: { id: string } }).letter.id, e.kind);
+        } else if ('word' in e) {
+          const letterId = letterOfContextWord.get((e as { word: { id: string } }).word.id);
+          if (letterId) lastKindFor.set(letterId, e.kind);
+        }
+      }
+      for (const letterId of lesson.letterIds!) {
+        expect(lastKindFor.get(letterId), `${lesson.id}/${letterId}`).toBe('letterTrace');
+      }
+    }
+  });
+
+  it("a letter's context sighting never lands on the lesson's final round either", () => {
+    // A context sighting is a `meet`-tier word exercise, not produce — if
+    // one ever landed on the true final round, that would be the letter's
+    // actual last sighting regardless of what letterExerciseAt would have
+    // given, defeating the guarantee above. `contextRound`'s own range
+    // (1 through SIGHTINGS_PER_LETTER - 2) should make this structurally
+    // impossible, not just usually true.
+    for (const lesson of letterLessons()) {
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      const last = exercises[exercises.length - 1];
+      expect(LETTER_KIND_SET.has(last.kind), lesson.id).toBe(true);
+    }
+  });
+});
+
+describe('URD-022: visually confusable letters are not drilled back to back', () => {
+  const letterLessons = () => UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'letters');
+  const ISOLATED_LETTER_KINDS = new Set(['letterForm', 'letterPick', 'letterTrace', 'letterContrast']);
+  const bucketKeyOf = (letterId: string) => getLetter(letterId)?.confusableWith ?? letterId;
+
+  /**
+   * The exercise stream doesn't carry a letter id for a context-word
+   * exercise directly (it carries the word), so recover which letter of
+   * *this lesson* that word was standing in for via `LETTER_CONTEXT_WORD`
+   * — the same map `buildLessonExercises` used to pick it in the first
+   * place. Every letters-kind exercise resolves to exactly one letter id;
+   * this throws rather than silently skipping if one doesn't, since a
+   * silent skip would quietly shrink the sequence being checked for
+   * adjacency, which is exactly the kind of check that could pass by
+   * accident (see URD-020's own history of that mistake).
+   */
+  const letterIdOf = (e: { kind: string; letter?: { id: string }; word?: { id: string } }, lesson: Lesson) => {
+    if (ISOLATED_LETTER_KINDS.has(e.kind)) return e.letter!.id;
+    const id = lesson.letterIds!.find((lid) => LETTER_CONTEXT_WORD.get(lid)?.id === e.word!.id);
+    if (!id) throw new Error(`${lesson.id}: context exercise for word ${e.word!.id} matches no taught letter`);
+    return id;
+  };
+
+  /**
+   * THE CRITIC / CURRICULUM CRITIC, reviewing the first version of these
+   * tests: both looped `i < n - 1` where `n` was the lesson's letter count
+   * (7 for `l-3`), not its exercise count (42 for `l-3`) — so they only
+   * ever examined round 0 and one fixed pair (`ids[n-1]` vs `ids[0]`),
+   * never the other 4 round transitions. Both still passed, because round
+   * 0 genuinely has no adjacency and that one fixed pair happens to be one
+   * of the real violations — they passed for the right *pair* but by
+   * accident of which single position they happened to check, the same
+   * "check that cannot fail" shape as `check-shape.js`'s own first draft of
+   * this rule (see its doc comment). Replaced with one test that walks
+   * every adjacent pair in the real, full generated sequence and asserts
+   * an *exact* count, computed from the group's own bucket sizes and round
+   * count — not "small", not "at most N": exactly the number a bucket that
+   * size forces, once per round transition (see `separateConfusables`'s
+   * own doc comment in `generator.ts` for the proof this recurs every
+   * transition rather than once).
+   */
+  it("adjacent confusable-bucket letters occur exactly as often as the group's own bucket sizes force, never more", () => {
+    for (const l of letterLessons()) {
+      const letters = l.letterIds!.map((id) => getLetter(id)!);
+      const bucketSizes = new Map<string, number>();
+      for (const letter of letters) {
+        const key = bucketKeyOf(letter.id);
+        bucketSizes.set(key, (bucketSizes.get(key) ?? 0) + 1);
+      }
+      const largest = Math.max(...bucketSizes.values());
+      const n = letters.length;
+      const perTransitionForced = Math.max(0, 2 * largest - n);
+
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      const ids = exercises.map((e) => letterIdOf(e, l));
+      /**
+       * URD-043: `rounds` used to be `exercises.length / n`, assuming the
+       * whole sequence is round-major throughout — one full pass through
+       * every letter, repeated identically, so many times that `n` divides
+       * evenly. Forcing every letter's true final sighting to
+       * `letterTrace` (see `generator.ts`'s `tailRound`/`finalRound`) pairs
+       * each letter's last two sightings back-to-back instead, letter by
+       * letter, for exactly those two rounds — real, deliberate, and not
+       * uniform round-major anymore for that tail. Measured directly: the
+       * old formula still computed `rounds = 6` for `l-3` (exercise count
+       * is unchanged), expecting 5 forced wrap-adjacencies, but the real
+       * sequence only has 4 — the tail's letter-major pairing removes one
+       * wrap without adding a new one, and the fixed formula silently kept
+       * assuming the old shape.
+       *
+       * Counting fresh, non-consecutive occurrences of the sequence's own
+       * first letter — how many times a full pass through the group
+       * genuinely restarts — measures the real structure directly instead
+       * of assuming it: a letter-major tail pair puts the same letter twice
+       * in a row, which is one letter appearing twice, not two passes
+       * restarting, and this counts it as such. Reduces to the exact old
+       * `exercises.length / n` count whenever the sequence really is
+       * uniform round-major throughout (every occurrence of the first
+       * letter is a fresh restart, since letters within a round never
+       * repeat), so this is a generalization, not a special case.
+       */
+      const firstId = ids[0];
+      let passes = 0;
+      for (let i = 0; i < ids.length; i++) {
+        if (ids[i] === firstId && (i === 0 || ids[i - 1] !== firstId)) passes++;
+      }
+      const expected = perTransitionForced * Math.max(0, passes - 1);
+
+      let found = 0;
+      for (let i = 0; i < ids.length - 1; i++) {
+        if (bucketKeyOf(ids[i]) === bucketKeyOf(ids[i + 1]) && ids[i] !== ids[i + 1]) found++;
+      }
+      expect(found, `${l.id}: expected exactly ${expected} forced adjacencies, found ${found}`).toBe(expected);
+    }
+  });
+
+  it('no two round-boundary confusable-pair occurrences involve the identical two specific letters twice', () => {
+    // URD-046: the item's own verify text, applied directly. Before this
+    // fix, `l-3` (the only real lesson with a forced adjacency) showed
+    // `zhe` then `re` at every one of its 4 wrap transitions — reinforcing
+    // the identical two letters repeatedly, a worse version of the risk
+    // `separateConfusables` exists to reduce than hitting different pairs
+    // once each would be. Checked as an *unordered* pair — "re then zhe"
+    // reversed is still the identical two letters, not a different one.
+    let checkedARealForcedCase = false;
+    for (const l of letterLessons()) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      const ids = exercises.map((e) => letterIdOf(e, l));
+      const pairKeys: string[] = [];
+      for (let i = 0; i < ids.length - 1; i++) {
+        if (bucketKeyOf(ids[i]) === bucketKeyOf(ids[i + 1]) && ids[i] !== ids[i + 1]) {
+          pairKeys.push([ids[i], ids[i + 1]].sort().join(','));
+        }
+      }
+      if (pairKeys.length === 0) continue; // no forced adjacency in this lesson at all
+      if (pairKeys.length > 1) checkedARealForcedCase = true;
+      expect(new Set(pairKeys).size, `${l.id}: ${JSON.stringify(pairKeys)}`).toBe(pairKeys.length);
+    }
+    // Sanity-check this test actually exercised a real repeated-adjacency
+    // case (l-3, today) and didn't just pass vacuously against lessons with
+    // zero or one forced collision, where uniqueness is trivial.
+    expect(checkedARealForcedCase, 'no lesson with more than one forced adjacency was found to check').toBe(true);
+  });
+});
+
+describe('URD-047: a confusable letter is posed directly against its partner, not only kept apart from it', () => {
+  const letterLessons = () => UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'letters');
+  type ContrastEx = Extract<Exercise, { kind: 'letterContrast' }>;
+  const isContrast = (e: Exercise): e is ContrastEx => e.kind === 'letterContrast';
+  const bucketOf = (id: string) => getLetter(id)?.confusableWith ?? id;
+  /** The letters of `lesson` that share this letter's bucket, itself excluded. */
+  const matesIn = (id: string, lesson: Lesson) =>
+    (lesson.letterIds ?? []).filter((o) => o !== id && bucketOf(o) === bucketOf(id));
+
+  it("the item's own verify text: every letter with a partner in its lesson gets exactly one exercise posing it against that partner", () => {
+    // URD-022 spread confusable letters apart in time and URD-046 varied which
+    // pair collides where one adjacency is forced — both reduce interference,
+    // neither ever asks the learner to tell the two apart. Measured before
+    // this fix: zero exercises anywhere in the course put a letter against its
+    // own confusable bucket.
+    let checkedAny = false;
+    for (const lesson of letterLessons()) {
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      const contrastFor = new Map<string, number>();
+      for (const e of exercises.filter(isContrast)) {
+        contrastFor.set(e.letter.id, (contrastFor.get(e.letter.id) ?? 0) + 1);
+      }
+      for (const id of lesson.letterIds ?? []) {
+        const expected = matesIn(id, lesson).length > 0 ? 1 : 0;
+        if (expected) checkedAny = true;
+        expect(contrastFor.get(id) ?? 0, `${lesson.id}/${id}`).toBe(expected);
+      }
+    }
+    expect(checkedAny, 'no letter with an in-lesson confusable partner was found to check').toBe(true);
+  });
+
+  it("a contrast's options are exactly that letter's own bucket as this lesson teaches it — no outsiders, none missing", () => {
+    // An option the learner can rule out on sight is a distractor this kind is
+    // not supposed to have: with one, the question quietly degrades into a
+    // letterPick wearing a different prompt, which is the thing it replaced.
+    for (const lesson of letterLessons()) {
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      for (const e of exercises.filter(isContrast)) {
+        const want = [e.letter.id, ...matesIn(e.letter.id, lesson)].sort();
+        const got = e.options.map((o) => o.id).sort();
+        expect(got, `${lesson.id}/${e.letter.id}`).toEqual(want);
+      }
+    }
+  });
+
+  it('a letter with no confusable partner in its lesson never gets one', () => {
+    for (const lesson of letterLessons()) {
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      for (const e of exercises.filter(isContrast)) {
+        expect(matesIn(e.letter.id, lesson).length, `${lesson.id}/${e.letter.id}`).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('replaces a sighting rather than adding one — every letter still gets exactly SIGHTINGS_PER_LETTER', () => {
+    // The same "replace, don't add" rule URD-020's context sighting follows,
+    // so a lesson does not get longer each time a kind is introduced.
+    const LETTERISH = new Set(['letterForm', 'letterPick', 'letterTrace', 'letterContrast']);
+    for (const lesson of letterLessons()) {
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      const sightings = new Map<string, number>();
+      for (const e of exercises) {
+        const wordId = 'word' in e ? e.word.id : undefined;
+        const id = LETTERISH.has(e.kind)
+          ? (e as { letter: { id: string } }).letter.id
+          : (lesson.letterIds ?? []).find((lid) => wordId && LETTER_CONTEXT_WORD.get(lid)?.id === wordId);
+        if (id) sightings.set(id, (sightings.get(id) ?? 0) + 1);
+      }
+      for (const id of lesson.letterIds ?? []) {
+        expect(sightings.get(id), `${lesson.id}/${id}`).toBe(6);
+      }
+    }
+  });
+
+  it('never lands on the same round as that letter’s context sighting, so a letter never loses both', () => {
+    // contextRound and contrastRound are offset by 2 over the same modulus,
+    // which makes them provably never coincide rather than rarely coinciding.
+    // Checked through the real output: a letter that has both should show one
+    // letterSpot AND one letterContrast, never one replacing the other.
+    for (const lesson of letterLessons()) {
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      for (const id of lesson.letterIds ?? []) {
+        if (matesIn(id, lesson).length === 0) continue;
+        if (!LETTER_CONTEXT_WORD.get(id)) continue;
+        const spots = exercises.filter((e) => e.kind === 'letterSpot' && e.letter.id === id).length;
+        const contrasts = exercises.filter((e) => isContrast(e) && e.letter.id === id).length;
+        expect([spots, contrasts], `${lesson.id}/${id}`).toEqual([1, 1]);
+      }
+    }
+  });
+
+  it('never appears on the Roman track, same as every other script-only letter exercise', () => {
+    for (const lesson of letterLessons()) {
+      const exercises = buildLessonExercises(lesson, [], 'roman', new Set());
+      expect(exercises.some(isContrast), lesson.id).toBe(false);
+    }
+  });
+
+  it('reaches all four joining forms for every letter in every real letter lesson — tightened to zero (URD-060)', () => {
+    // CURRICULUM CRITIC, URD-047: replacing a sighting with a position-free
+    // kind used to eat a step of the position cycle, because `positionIndex`
+    // came from the round number. Measured on the `final` form (last in
+    // POSITIONS, so first to fall off the end): 14 of 46 letter-slots never
+    // saw it before this item, 25 of 46 after — a real regression. Counting
+    // position-bearing sightings instead (`nextPos`, generator.ts) took it
+    // to 4, better than before the item existed but still not zero.
+    //
+    // URD-060: the remaining 4 were `letterPick`, which used to carry no
+    // position at all — showing every option at `isolated` regardless of
+    // what `nextPos` assigned, so that call's own step of the cycle was
+    // silently spent on nothing. Fixed by giving `letterPick` a position
+    // too (every option now renders at it, not always `isolated`), which
+    // closes the gap completely rather than merely narrowing it further:
+    // every call to `nextPos` now corresponds to a form actually shown, so
+    // any letter with 4 or more such calls — every real letter, worst case
+    // exactly 4 (6 sightings minus a `letterSpot` context sighting minus a
+    // `letterContrast` sighting, when both apply) — sees 4 consecutive
+    // integers mod `POSITIONS.length`, which always covers every residue
+    // exactly once regardless of which kind each individual call lands on.
+    // Checked for all four forms, not just `final` — `final` was this
+    // test's own history, but the same argument applies to every position.
+    let slots = 0;
+    const missing: string[] = [];
+    for (const lesson of letterLessons()) {
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      const formsOf = new Map<string, Set<string>>();
+      for (const e of exercises) {
+        if (e.kind !== 'letterForm' && e.kind !== 'letterTrace' && e.kind !== 'letterPick') continue;
+        if (!formsOf.has(e.letter.id)) formsOf.set(e.letter.id, new Set());
+        formsOf.get(e.letter.id)!.add(e.position);
+      }
+      for (const id of lesson.letterIds ?? []) {
+        slots++;
+        const seen = formsOf.get(id) ?? new Set();
+        for (const p of POSITIONS) {
+          if (!seen.has(p.key)) missing.push(`${lesson.id}/${id}: missing ${p.key} (has ${[...seen].join(',')})`);
+        }
+      }
+    }
+    expect(slots).toBeGreaterThan(0);
+    expect(missing, missing.join('\n')).toEqual([]);
+  });
+});
+
+describe('URD-061: a confusable letter meets its partner again in review, not only on the day it was taught', () => {
+  type ContrastEx = Extract<Exercise, { kind: 'letterContrast' }>;
+  const isContrast = (e: Exercise): e is ContrastEx => e.kind === 'letterContrast';
+  const reviewLessons = () => UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'review');
+  const bucketOf = (id: string) => getLetter(id)?.confusableWith ?? id;
+  const matesOf = (id: string) =>
+    LETTERS.filter((l) => l.id !== id && bucketOf(l.id) === bucketOf(id)).map((l) => l.id);
+  /** Every letter with at least one bucket partner anywhere in the corpus. */
+  const withMates = () => LETTERS.filter((l) => matesOf(l.id).length > 0);
+
+  it('a review lesson with confusable letters due can emit letterContrast', () => {
+    // Before this fix, zero instances existed anywhere outside a `letters`
+    // lesson (measured across the whole course) — a review's due queue could
+    // carry a confusable letter and never once pose it against its partner.
+    const lesson = reviewLessons().find((l) => l.id !== 'practice-review');
+    expect(lesson, 'need at least one real review lesson to test against').toBeTruthy();
+    const letter = withMates()[0];
+    const dueRefs = [letter.id, ...matesOf(letter.id)].map((id) => ({ id, type: 'letter' as const }));
+    const exercises = buildLessonExercises(lesson!, dueRefs, 'both', new Set());
+    expect(
+      exercises.some((e) => isContrast(e) && e.letter.id === letter.id),
+      lesson!.id
+    ).toBe(true);
+  });
+
+  it("across the course's reviews, every letter with a confusable partner meets one at least once after its teaching lesson", () => {
+    // Not a sample: every one of the 29 letters the real corpus gives a
+    // bucket partner.
+    //
+    // CURRICULUM CRITIC (MAJOR): a first version of this test checked only
+    // the *first* real review lesson placed after the letter's teaching
+    // lesson, always with the letter itself listed first in the due queue
+    // — which passed regardless of whether the underlying selection rule
+    // was fair, because it always handed that one review's contrast slot
+    // to the letter under test by construction. Confirmed live: reversing
+    // the due queue's own order (mates first, letter last) changed the
+    // winner every time, on the exact same lesson/letters, under the
+    // "first due wins" rule that test was meant to guard.
+    //
+    // The one contrast slot per review now rotates among every letter due
+    // with a mate (`(reviewIndex + visit) % eligible.length`, see the
+    // generator's own comment on `contrastCandidates`), so a specific
+    // letter is not promised to win its very first post-teaching
+    // encounter — only that it wins *some* encounter, as the rotation's
+    // index cycles through every residue across consecutive reviews.
+    // Checked here across every real review lesson from the teaching
+    // lesson onward, not just the first, which is exactly what the
+    // rotation promises and the only way this test can actually exercise
+    // the fairness a "first due wins" rule would have broken silently.
+    let checkedAny = false;
+    for (const letter of withMates()) {
+      const mates = matesOf(letter.id);
+      const dueRefs = [letter.id, ...mates].map((id) => ({ id, type: 'letter' as const }));
+      const reviewsAfterTeaching = reviewLessons().filter((r) => taughtUpTo(r.id).letters.includes(letter.id));
+      expect(
+        reviewsAfterTeaching.length,
+        `no review lesson placed after ${letter.id}'s teaching lesson`
+      ).toBeGreaterThan(0);
+      checkedAny = true;
+      const everHit = reviewsAfterTeaching.some((r) => {
+        const exercises = buildLessonExercises(r, dueRefs, 'both', new Set());
+        return exercises.some((e) => isContrast(e) && e.letter.id === letter.id);
+      });
+      expect(everHit, `${letter.id} never won the contrast slot across ${reviewsAfterTeaching.length} reviews`).toBe(
+        true
+      );
+    }
+    expect(checkedAny).toBe(true);
+  });
+
+  it('the contrast slot rotates rather than always going to the same bucket member, for a bucket of 3 or more', () => {
+    // CURRICULUM CRITIC's own repro: with `daal`/`Daal`/`zaal` all due
+    // together across consecutive real reviews, "first due wins" gave the
+    // slot to whichever member's due-order happened to be first, every
+    // single time — `zaal` never won across an 8-year simulated horizon.
+    // The rotation instead varies with `reviewIndex`, which increases by
+    // exactly one across consecutive real review lessons, so within any
+    // run of reviews at least as long as the bucket, every member must win
+    // at least once. Checked directly against the two real buckets of size
+    // 3+ rather than simulated: every member of both wins the slot across
+    // the course's own real reviews, not just the largest one.
+    const buckets = [
+      ['daal', 'Daal', 'zaal'],
+      ['re', 'Re', 'ze', 'zhe'],
+    ];
+    for (const bucket of buckets) {
+      const dueRefs = bucket.map((id) => ({ id, type: 'letter' as const }));
+      const winners = new Set<string>();
+      for (const review of reviewLessons()) {
+        const exercises = buildLessonExercises(review, dueRefs, 'both', new Set());
+        const winner = exercises.find(isContrast)?.letter.id;
+        if (winner) winners.add(winner);
+      }
+      expect([...winners].sort(), bucket.join('/')).toEqual([...bucket].sort());
+    }
+  });
+
+  it("a review's letterContrast options are exactly that letter's own bucket — no outsiders, none missing, no duplicate", () => {
+    // The bucket pool a review draws from is the whole course-so-far
+    // (`taughtUpTo`), not one lesson's own small `letterIds` group the way
+    // the `letters` branch's own equivalent test checks it — and
+    // `taughtUpTo` itself can list a letter twice (a sibling lesson
+    // re-teaching an earlier group), which is exactly the duplicate-mate
+    // bug this exercises: reproduced live before the dedup fix, `alif`
+    // offered a contrast against two copies of `alif-madda`.
+    for (const review of reviewLessons()) {
+      for (const letter of withMates()) {
+        const mates = matesOf(letter.id);
+        const dueRefs = [letter.id, ...mates].map((id) => ({ id, type: 'letter' as const }));
+        const exercises = buildLessonExercises(review, dueRefs, 'both', new Set());
+        for (const e of exercises.filter(isContrast)) {
+          if (e.letter.id !== letter.id) continue;
+          const want = [letter.id, ...mates].sort();
+          const got = e.options.map((o) => o.id).sort();
+          expect(got, `${review.id}/${letter.id}`).toEqual(want);
+        }
+      }
+    }
+  });
+
+  it('never appears on the Roman track', () => {
+    const lesson = reviewLessons().find((l) => l.id !== 'practice-review');
+    const letter = withMates()[0];
+    const dueRefs = [letter.id, ...matesOf(letter.id)].map((id) => ({ id, type: 'letter' as const }));
+    const exercises = buildLessonExercises(lesson!, dueRefs, 'roman', new Set());
+    expect(exercises.some(isContrast)).toBe(false);
+  });
+
+  it("THE CRITIC (BLOCKING): an off-path review never offers a confusable mate the learner hasn't actually been graded on", () => {
+    // `practice-review` (the synthetic Daily Review screen) is placed on no
+    // unit, so `taughtUpTo` — used everywhere else in this file for an
+    // honest "what has the learner seen" — falls back to the *entire*
+    // course. `fallbackReviewRefs` already hit this exact trap once
+    // (THE CRITIC, URD-017) and fixed it by restricting to `known` off the
+    // path; this describe block's own `taughtLetterObjs` needs the same
+    // restriction or it reintroduces the identical bug one call site over.
+    //
+    // A learner graded on `re` alone (say, from backing out of `l-3` after
+    // its first few exercises — `useSessionGradeFlush` flushes on unmount,
+    // not only on completion, so a partial group can reach SRS) has never
+    // met `Re`/`ze`/`zhe`, `re`'s own confusable-bucket mates. Daily Review
+    // must never put them on screen as answer choices.
+    const lesson = resolveLesson('practice-review');
+    expect(lesson, 'practice-review must resolve to a real lesson').toBeTruthy();
+    const due = [{ id: 're', type: 'letter' as const }];
+    const known = new Set(['re']);
+    const exercises = buildLessonExercises(lesson!, due, 'both', known);
+    const contrast = exercises.find((e) => isContrast(e) && e.letter.id === 're');
+    expect(contrast, 'must not fire a contrast the learner cannot answer from what they know').toBeUndefined();
+
+    // And once the learner really has met the whole bucket, it should fire.
+    const metKnown = new Set(['re', 'Re', 'ze', 'zhe']);
+    const metExercises = buildLessonExercises(lesson!, due, 'both', metKnown);
+    expect(metExercises.some((e) => isContrast(e) && e.letter.id === 're')).toBe(true);
+  });
+});
+
+describe('URD-023/URD-A02: a phrases lesson always draws enough typeable phrases to clear the share floor', () => {
+  /**
+   * A phrases lesson has exactly three reachable kinds (`typeWord`,
+   * `meaningPick`, `wordFromMeaning` — see the generator's own doc comment
+   * on the `phrases` branch), so no single kind may exceed 40% of the
+   * lesson (`check:shape`'s share rule).
+   *
+   * URD-023 (original fix): the draw of 6 from 28 phrases used to be
+   * uniform with no floor on how many were typeable, and `produceCount` was
+   * computed *after* the draw — so a draw of fewer than 2 typeable phrases
+   * (8.24% of draws, hypergeometric: 14 of 28 typeable, 6 drawn) could not
+   * be rescued by any reassignment.
+   *
+   * URD-A02: `size` stopped meaning "phrases drawn, one exercise each" and
+   * started meaning "phrases drawn, three sightings each" (see the
+   * generator's own phrases-branch doc comment) — a synthetic 6-phrase
+   * lesson is no longer a real scenario this kind can be asked to produce;
+   * `units.ts`'s `P()` now throws building one outside 10-17, the range the
+   * new formula actually holds `meetShare <= 0.4` for (below 10, `meet`'s
+   * share of the now-3x exercise count exceeds it; above 17, the guaranteed-
+   * typeable pool — 14 of 28 phrases — runs out and the produce pass's
+   * fallback-to-`meet` share grows past it from the other direction). 12
+   * (this lesson's own real, shipped size) stands in for "many draws" the
+   * same way the real course only ever exercises one seed.
+   */
+  const KINDS: Array<'typeWord' | 'meaningPick' | 'wordFromMeaning'> = ['typeWord', 'meaningPick', 'wordFromMeaning'];
+  const phrasesLesson = (id: string): Lesson => ({
+    id,
+    title: 'synthetic phrases lesson',
+    subtitle: '',
+    icon: '💬', // audit:emoji-ok — matches the real P() lesson's own icon (units.ts)
+    kind: 'phrases',
+    xp: 20,
+    size: 12,
+  });
+
+  it('never lets one exercise kind exceed 40% of the lesson, across many synthetic draws', () => {
+    for (let i = 0; i < 500; i++) {
+      const lesson = phrasesLesson(`synthetic-phrases-${i}`);
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      const counts = { typeWord: 0, meaningPick: 0, wordFromMeaning: 0 };
+      for (const e of exercises) {
+        if (e.kind in counts) counts[e.kind as keyof typeof counts]++;
+      }
+      const maxShare = Math.max(...KINDS.map((k) => counts[k])) / exercises.length;
+      expect(maxShare, `${lesson.id}: ${JSON.stringify(counts)}`).toBeLessThanOrEqual(0.4);
+    }
+  });
+
+  it('draws at least size-2 typeable phrases into a 12-phrase lesson, every time', () => {
+    // The specific guarantee the fix makes at the draw, not just its
+    // downstream consequence (the share floor above) — asserted directly so
+    // a future change that keeps the share floor by some other accident
+    // still has to keep this property too.
+    for (let i = 0; i < 500; i++) {
+      const lesson = phrasesLesson(`synthetic-phrases-${i}`);
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      const produced = exercises.filter((e) => e.kind === 'typeWord').length;
+      expect(produced, lesson.id).toBeGreaterThanOrEqual(lesson.size - 2);
+    }
+  });
+
+  it('gives every drawn phrase exactly three sightings, not one', () => {
+    // URD-A02's own point: a phrases lesson is now a small climb, the same
+    // shape as vocab's, not a large one-shot draw. Every phrase this lesson
+    // teaches gets met, recalled and produced (or produced's own fallback),
+    // never just one of the three.
+    for (let i = 0; i < 200; i++) {
+      const lesson = phrasesLesson(`synthetic-phrases-sightings-${i}`);
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set());
+      const sightings = new Map<string, number>();
+      for (const e of exercises) {
+        if ('word' in e && e.word) sightings.set(e.word.id, (sightings.get(e.word.id) ?? 0) + 1);
+      }
+      expect(sightings.size, lesson.id).toBe(lesson.size);
+      for (const n of sightings.values()) expect(n, lesson.id).toBe(3);
+    }
+  });
+
+  it('the real, shipped phrases lesson clears the floor', () => {
+    const lesson = UNITS.flatMap((u) => u.lessons).find((l) => l.kind === 'phrases');
+    expect(lesson, 'no phrases lesson found in the real course').toBeDefined();
+    const exercises = buildLessonExercises(lesson!, [], 'both', new Set());
+    const counts = { typeWord: 0, meaningPick: 0, wordFromMeaning: 0 };
+    for (const e of exercises) {
+      if (e.kind in counts) counts[e.kind as keyof typeof counts]++;
+    }
+    const maxShare = Math.max(...KINDS.map((k) => counts[k])) / exercises.length;
+    expect(maxShare, JSON.stringify(counts)).toBeLessThanOrEqual(0.4);
+  });
+});
+
+describe('URD-025: a sentence-derived climb leans on sentenceBuild, not just recognition', () => {
+  // `sentenceBuild` (produce) used to be tied for least of the three
+  // reachable kinds — one turn of three, same as `meaningPick` (meet) and
+  // `wordFromMeaning` (recall) — so the two purely-recognition kinds
+  // combined got 2 of 3 reps against production's 1. `sentenceReinforceClimb`
+  // (generator.ts) now gives every sentence 1 meet, 2 recall, 2 produce:
+  // `produce` ties `recall` for the single most frequent kind rather than
+  // trailing both, and `meet` — the purely passive kind — is the one that
+  // gives up a turn. This is the maximum achievable without breaking
+  // check:shape's own 40% single-kind-share ceiling (see the climb's own
+  // doc comment for the worked-out arithmetic: making `produce` strictly
+  // outnumber both others needs at least 10 turns per sentence, more than
+  // triple today's length, which blows every real lesson past the 8 minute
+  // band).
+  const countsOf = (lesson: Lesson, track: 'both' | 'roman') => {
+    const exercises = buildLessonExercises(lesson, [], track, new Set());
+    const counts = { meaningPick: 0, wordFromMeaning: 0, sentenceBuild: 0 };
+    for (const e of exercises) {
+      if (e.kind in counts) counts[e.kind as keyof typeof counts]++;
+    }
+    return counts;
+  };
+
+  it('every sentences lesson gives sentenceBuild exactly as many turns as wordFromMeaning, and more than meaningPick', () => {
+    for (const l of UNITS.flatMap((u) => u.lessons).filter((x) => x.kind === 'sentences')) {
+      for (const track of ['both', 'roman'] as const) {
+        const c = countsOf(l, track);
+        if (c.sentenceBuild + c.meaningPick + c.wordFromMeaning === 0) continue; // Roman track may drop sentenceBuild entirely if untypeable
+        expect(c.sentenceBuild, `${l.id}:${track} ${JSON.stringify(c)}`).toBe(c.wordFromMeaning);
+        expect(c.sentenceBuild, `${l.id}:${track} ${JSON.stringify(c)}`).toBeGreaterThan(c.meaningPick);
+      }
+    }
+  });
+
+  it("every grammar lesson's sentence-reinforcement tail carries the identical ratio — the two call sites cannot drift apart", () => {
+    for (const l of UNITS.flatMap((u) => u.lessons).filter((x) => x.kind === 'grammar')) {
+      for (const track of ['both', 'roman'] as const) {
+        const c = countsOf(l, track);
+        if (c.sentenceBuild + c.meaningPick + c.wordFromMeaning === 0) continue;
+        expect(c.sentenceBuild, `${l.id}:${track} ${JSON.stringify(c)}`).toBe(c.wordFromMeaning);
+        expect(c.sentenceBuild, `${l.id}:${track} ${JSON.stringify(c)}`).toBeGreaterThan(c.meaningPick);
+      }
+    }
+  });
+
+  it('never lets one exercise kind exceed 40% of a sentences or grammar lesson, on either track', () => {
+    for (const l of UNITS.flatMap((u) => u.lessons).filter((x) => x.kind === 'sentences' || x.kind === 'grammar')) {
+      for (const track of ['both', 'roman'] as const) {
+        const exercises = buildLessonExercises(l, [], track, new Set());
+        if (!exercises.length) continue;
+        const counts: Record<string, number> = {};
+        for (const e of exercises) counts[e.kind] = (counts[e.kind] ?? 0) + 1;
+        const maxShare = Math.max(...Object.values(counts)) / exercises.length;
+        expect(maxShare, `${l.id}:${track} ${JSON.stringify(counts)}`).toBeLessThanOrEqual(0.4);
+      }
+    }
+  });
+
+  // THE CRITIC, reviewing this item: a green `vitest run` said nothing about
+  // the 3-8 minute band `check:shape` actually enforces, so this suite could
+  // pass while `npm run check:shape -- --kind=grammar` — the item's own
+  // verify command — still failed. It did, for one lesson: g-plurals had
+  // only 3 readable sentences tagged to it (a content gap, not a climb one)
+  // and landed at 2.7 minutes, under the 3.0 floor even at this climb's
+  // ratio. Tracked as URD-029 and asserted here as a named exception, so the
+  // gap couldn't regress further unnoticed and couldn't be "fixed" by
+  // quietly loosening this assertion instead of the content.
+  //
+  // URD-029: closed by re-tagging an existing sentence, s-77 ("میرے تین
+  // دوست ہیں"), from g-possess to g-plurals — see src/data/sentences.ts's
+  // own comment there for why (an earlier attempt authored a brand-new
+  // sentence instead; reverted, since this repo has no TTS credential to
+  // give a new sentence a voice clip, and separately because it duplicated
+  // a plural pattern g-plurals already covered rather than filling the one
+  // it didn't). g-plurals now has 4 readable sentences and reaches 3.45
+  // minutes, clear of the floor with no exception needed, so this asserts
+  // the universal rule directly rather than keeping a now-empty exception
+  // set around.
+  it('every sentences and grammar lesson reaches at least 3 minutes', () => {
+    const SECS_PER_EXERCISE = 9;
+    for (const l of UNITS.flatMap((u) => u.lessons).filter((x) => x.kind === 'sentences' || x.kind === 'grammar')) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      if (!exercises.length) continue;
+      const minutes = (exercises.length * SECS_PER_EXERCISE) / 60;
+      expect(minutes, `${l.id}: ${minutes.toFixed(2)} min`).toBeGreaterThanOrEqual(3.0);
+    }
+  });
+});
+
+describe('URD-027: sibling "sentences" lessons at the same level draw disjoint sentences', () => {
+  // Before this fix, each "sentences" lesson drew independently
+  // (`seededShuffle(pool, lesson.id).slice(0, size)`), with no notion of
+  // what a sibling lesson at the same level had already drawn — measured:
+  // only 81 of 256 sentences (31.6%) were ever reachable course-wide.
+  // `sentencesForLesson` (generator.ts) now excludes whatever an earlier
+  // sibling already drew. `check:sentence-coverage` (scripts/) holds the
+  // same invariant whole-course; this is the fast, pure-logic companion.
+  //
+  // The real invariant is zero overlap, not "every lesson reaches its
+  // designed size" — URD-048 found a real case (`s-intermediate`/
+  // `s-intermediate-2`) where two siblings share a readable-at-position
+  // pool too thin to fill both combined slots distinctly, and
+  // `sentencesForLesson` deliberately draws a lesson short there rather
+  // than reuse a sibling's sentence. Asserting the stricter "always hits
+  // capacity" version here would fail on that honest, correct behavior.
+  const LEVELS = ['beginner', 'elementary', 'intermediate', 'advanced'] as const;
+
+  it('never lets two sibling "sentences" lessons at the same level share a sentence', () => {
+    for (const level of LEVELS) {
+      const lessons = UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'sentences' && l.level === level);
+      const seenIds = new Set<string>();
+      let totalPicked = 0;
+      for (const l of lessons) {
+        const exercises = buildLessonExercises(l, [], 'both', new Set());
+        const ids = new Set(exercises.filter((e) => e.kind === 'sentenceBuild').map((e) => e.sentence.id));
+        for (const id of ids) seenIds.add(id);
+        totalPicked += ids.size;
+      }
+      // Zero overlap: every lesson's own distinct sentence count summed
+      // equals the union's size — if a sibling had repeated another's pick,
+      // the union would be smaller than the sum.
+      expect(seenIds.size, level).toBe(totalPicked);
+    }
+  });
+
+  it('never leaves a grammar concept with zero sentences shown by any "sentences" lesson', () => {
+    // CURRICULUM CRITIC, reviewing this item: a uniform random draw
+    // structurally favours a concept taught early in a level (more sibling
+    // lessons come after it, so more lottery tickets) over one taught late
+    // — measured before this fix, g-future and g-compound were shown to a
+    // learner nowhere except their own one-shot grammar lesson. Every
+    // concept with at least one readable, tagged sentence at some
+    // "sentences" lesson position must get at least one.
+    const reachable = new Set<string>();
+    for (const l of UNITS.flatMap((u) => u.lessons).filter((x) => x.kind === 'sentences')) {
+      const exercises = buildLessonExercises(l, [], 'both', new Set());
+      for (const e of exercises) if (e.kind === 'sentenceBuild') reachable.add(e.sentence.id);
+    }
+    for (const concept of GRAMMAR) {
+      const tagged = SENTENCES.filter((s) => s.concept === concept.id);
+      if (!tagged.length) continue;
+      const reached = tagged.filter((s) => reachable.has(s.id));
+      expect(reached.length, `${concept.id}: 0 of ${tagged.length} tagged sentences ever reached`).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('URD-030: distractorsFor prefers a caller-supplied pool before its main one', () => {
+  // Synthetic words, not real vocabulary: what matters is `preferred` being
+  // tried first, a property of `distractorsFor` itself, not of any real
+  // corpus content. Distinct `.meaning`s so `distinctMeaning: true` (the
+  // option every real caller of `preferred` also sets) doesn't reject any
+  // of them itself.
+  const target = { ...WORDS[0], id: 'test-target', urdu: 'ٹیسٹ-ٹ', meaning: 'test target' };
+  const preferredWords = ['a', 'b', 'c'].map((letter, i) => ({
+    ...WORDS[i + 1],
+    id: `test-preferred-${letter}`,
+    urdu: `ٹیسٹ-پ${i}`,
+    meaning: `preferred meaning ${letter}`,
+  }));
+  const poolWords = ['x', 'y', 'z'].map((letter, i) => ({
+    ...WORDS[i + 4],
+    id: `test-pool-${letter}`,
+    urdu: `ٹیسٹ-م${i}`,
+    meaning: `pool meaning ${letter}`,
+  }));
+
+  // CURRICULUM CRITIC, reviewing this item: an uncapped `preferred` filled
+  // every slot whenever a concept had enough near-misses (measured live: 580
+  // of 584 grammar-climb `wordFromMeaning` exercises had ALL three
+  // distractors same-concept) — a question with no option left that just
+  // *looks* different from the answer. Capped at `DISTRACTORS - 1`, tested
+  // here with 3 preferred candidates (one more than the cap allows) to prove
+  // the excess is never used.
+  it('reserves at least one distractor for the main pool, even when `preferred` alone could fill every slot', () => {
+    const distractors = distractorsFor(target, poolWords, { distinctMeaning: true, preferred: preferredWords });
+    expect(distractors).toHaveLength(OPTIONS_PER_QUESTION - 1);
+    const fromPreferred = distractors.filter((d) => d.id.startsWith('test-preferred-'));
+    const fromPool = distractors.filter((d) => d.id.startsWith('test-pool-'));
+    expect(fromPreferred).toHaveLength(OPTIONS_PER_QUESTION - 2);
+    expect(fromPool).toHaveLength(1);
+  });
+
+  it('widens to the main pool once `preferred` runs out below the cap', () => {
+    const distractors = distractorsFor(target, poolWords, {
+      distinctMeaning: true,
+      preferred: preferredWords.slice(0, 1),
+    });
+    expect(distractors).toHaveLength(OPTIONS_PER_QUESTION - 1);
+    const fromPreferred = distractors.filter((d) => d.id.startsWith('test-preferred-'));
+    const fromPool = distractors.filter((d) => d.id.startsWith('test-pool-'));
+    expect(fromPreferred).toHaveLength(1);
+    expect(fromPool.length).toBeGreaterThan(0);
+  });
+
+  it('never lets the main pool re-fill the reserved slot with a `preferred` candidate the cap turned away', () => {
+    // `pool` here deliberately CONTAINS every `preferred` word too (the real
+    // shape: `preferred` is filtered out of the concept's own level-wide
+    // pool, not a disjoint set) — proving the reserved slot is genuinely
+    // non-preferred rather than merely capped-then-refilled from the same
+    // candidates by the second `consider` pass.
+    const poolIncludingPreferred = [...preferredWords, ...poolWords];
+    const distractors = distractorsFor(target, poolIncludingPreferred, {
+      distinctMeaning: true,
+      preferred: preferredWords,
+    });
+    const fromPreferred = distractors.filter((d) => d.id.startsWith('test-preferred-'));
+    expect(fromPreferred).toHaveLength(OPTIONS_PER_QUESTION - 2);
+  });
+
+  it('omitting `preferred` draws exactly as before — every existing caller is unaffected', () => {
+    const withoutPreferred = distractorsFor(target, poolWords, { distinctMeaning: true });
+    expect(withoutPreferred.every((d) => d.id.startsWith('test-pool-'))).toBe(true);
+  });
+});
+
+describe("URD-030: the grammar climb's sentence-reinforcement distractors are concept-aware", () => {
+  // g-plurals (fixed by URD-029) has 4 readable sentences, all tagged
+  // g-plurals — so for any one of them, the other 3 are a `preferred` pool
+  // richer than the `DISTRACTORS - 1` cap allows to be used. At the time
+  // this test was written, `wordFromMeaning` was the only kind this reached
+  // in practice — `meaningPick` required `distinctCue`, and every sentence's
+  // shared 📝 cue collided with its own answer's cue regardless of this fix,
+  // a separate, structural limitation filed as URD-050 rather than touched
+  // here. URD-050 gave sentences a `cueOf` keyed off their own id instead
+  // (see that function's own comment in `data/art.ts`), so `meaningPick` now
+  // reaches the identical cap through the identical mechanism — see that
+  // item's own describe block below for its test, kept separate rather than
+  // folded in here since it is a different item's own claim. So exactly
+  // `DISTRACTORS - 1` of `wordFromMeaning`'s options should be g-plurals,
+  // and exactly one should not: a deterministic property of real content
+  // (this pool is always this rich), not a shuffle-dependent one.
+  const lesson = resolveLesson('g-plurals')!;
+
+  it('every wordFromMeaning exercise for a g-plurals sentence has a same-concept majority and one non-concept anchor', () => {
+    const exercises = buildLessonExercises(lesson, [], 'both');
+    const relevant = exercises.filter((e) => e.kind === 'wordFromMeaning' && 'word' in e) as {
+      word: { id: string; topic: string; concept?: string };
+      options: { id: string; concept?: string }[];
+    }[];
+    const sentenceDerived = relevant.filter((ex) => ex.word.topic === 'sentences' && ex.word.concept);
+    expect(sentenceDerived.length, 'g-plurals should emit at least one such exercise').toBeGreaterThan(0);
+    for (const ex of sentenceDerived) {
+      const distractors = ex.options.filter((o) => o.id !== ex.word.id);
+      const sameConcept = distractors.filter((d) => d.concept === ex.word.concept);
+      expect(sameConcept.length, JSON.stringify(ex.options)).toBe(OPTIONS_PER_QUESTION - 2);
+      expect(distractors.length - sameConcept.length, JSON.stringify(ex.options)).toBeGreaterThan(0);
+    }
+  });
+
+  // THE CRITIC, reviewing this item: `sentenceReinforceClimb` is shared with
+  // the plain `sentences` branch below, and a `sentences`-kind lesson's picks
+  // CAN carry a `.concept` (URD-027's concept-priority slotting sometimes
+  // puts one there) — so this fix's effect on `sentences`-kind lessons was
+  // real (measured: 380 of 576 concept-tagged exercises gained a same-concept
+  // distractor, up from a chance-level 21.5%) but had no test of its own.
+  // Not asserting an exact same-concept count here the way the g-plurals test
+  // above does — a `sentences`-kind lesson's picks span many different
+  // concepts with varying pool sizes, so the richness g-plurals happens to
+  // have (always ≥3 candidates) isn't guaranteed everywhere — only the
+  // invariant the cap actually promises: never fully saturated.
+  it('no sentences-kind lesson exercise saturates every distractor with the same concept', () => {
+    let sampledAtLeastOne = false;
+    for (const u of UNITS) {
+      for (const l of u.lessons) {
+        if (l.kind !== 'sentences') continue;
+        const exercises = buildLessonExercises(l, [], 'both');
+        const relevant = exercises.filter((e) => e.kind === 'wordFromMeaning' && 'word' in e) as {
+          word: { id: string; topic: string; concept?: string };
+          options: { id: string; concept?: string }[];
+        }[];
+        for (const ex of relevant.filter((e) => e.word.topic === 'sentences' && e.word.concept)) {
+          sampledAtLeastOne = true;
+          const distractors = ex.options.filter((o) => o.id !== ex.word.id);
+          const sameConcept = distractors.filter((d) => d.concept === ex.word.concept);
+          expect(sameConcept.length, `${l.id}: ${JSON.stringify(ex.options)}`).toBeLessThan(OPTIONS_PER_QUESTION - 1);
+        }
+      }
+    }
+    expect(sampledAtLeastOne, 'expected at least one sentences-kind lesson to emit a concept-tagged exercise').toBe(
+      true
+    );
+  });
+});
+
+describe('URD-050: meaningPick can offer another sentence as a distractor', () => {
+  // Every sentence in the course shares one literal emoji ('📝'), so
+  // `cueOf`'s old fallback made every sentence-derived `Word`'s cue
+  // identical — and `distractorsFor` seeds `usedCues` with the *correct
+  // answer's own* cue before considering any candidate, so a sentence
+  // question's `distinctCue: true` pass (meaningPick's own guard, matching
+  // wordFromMeaning's `distinctMeaning`-only guard) rejected every other
+  // sentence outright, regardless of pool or concept. Measured directly
+  // before this fix: 0 of 292 grammar-climb meaningPick exercises offered
+  // any same-concept distractor — not a rate problem, a structural one.
+
+  it('cueOf gives two different sentences two different cues, so neither collides with the other', () => {
+    // The real defect was two sentences sharing one literal emoji, but
+    // `cueOf` checks `topic === 'sentences'` before it ever reads `.emoji` —
+    // the fixture doesn't need to reproduce the shared emoji to exercise
+    // that branch, only the topic.
+    const a = { ...WORDS[0], id: 'test-sentence-a', topic: 'sentences' };
+    const b = { ...WORDS[1], id: 'test-sentence-b', topic: 'sentences' };
+    expect(cueOf(a)).not.toBe(cueOf(b));
+    // Still keyed to the word, not merely unique per call — the same word
+    // must always report the same cue, or `usedCues` couldn't recognise a
+    // repeat within a single `distractorsFor` pass.
+    expect(cueOf(a)).toBe(cueOf({ ...a }));
+  });
+
+  it('a real vocabulary word (non-sentence) is unaffected — still cued by its own emoji', () => {
+    // Excludes anything with a bespoke `NUMERALS`/`COLOURS`/`WORD_ICON` entry
+    // — those already take priority over the emoji fallback for reasons of
+    // their own, unrelated to this fix, so a word with one of those would
+    // pass this assertion for the wrong reason.
+    const w = WORDS.find((x) => x.topic !== 'sentences' && !NUMERALS[x.id] && !COLOURS[x.id] && !WORD_ICON[x.id]);
+    expect(w, 'expected at least one plain-emoji word in WORDS').toBeDefined();
+    expect(cueOf(w!)).toBe(`emo:${w!.emoji}`);
+  });
+
+  // The identical g-plurals property URD-030's own test above proves for
+  // `wordFromMeaning` — this item gives `meaningPick` the same mechanism, so
+  // it should now show the same deterministic saturation-minus-one shape.
+  const lesson = resolveLesson('g-plurals')!;
+
+  it('every meaningPick exercise for a g-plurals sentence has a same-concept majority and one non-concept anchor', () => {
+    const exercises = buildLessonExercises(lesson, [], 'both');
+    const relevant = exercises.filter((e) => e.kind === 'meaningPick' && 'word' in e) as {
+      word: { id: string; topic: string; concept?: string };
+      options: { id: string; concept?: string }[];
+    }[];
+    const sentenceDerived = relevant.filter((ex) => ex.word.topic === 'sentences' && ex.word.concept);
+    expect(sentenceDerived.length, 'g-plurals should emit at least one such exercise').toBeGreaterThan(0);
+    for (const ex of sentenceDerived) {
+      const distractors = ex.options.filter((o) => o.id !== ex.word.id);
+      const sameConcept = distractors.filter((d) => d.concept === ex.word.concept);
+      expect(sameConcept.length, JSON.stringify(ex.options)).toBe(OPTIONS_PER_QUESTION - 2);
+      expect(distractors.length - sameConcept.length, JSON.stringify(ex.options)).toBeGreaterThan(0);
+    }
+  });
+
+  it('no grammar-climb meaningPick exercise saturates every distractor with the same concept', () => {
+    let sampledAtLeastOne = false;
+    for (const u of UNITS) {
+      for (const l of u.lessons) {
+        if (l.kind !== 'grammar') continue;
+        const exercises = buildLessonExercises(l, [], 'both');
+        const relevant = exercises.filter((e) => e.kind === 'meaningPick' && 'word' in e) as {
+          word: { id: string; topic: string; concept?: string };
+          options: { id: string; concept?: string }[];
+        }[];
+        for (const ex of relevant.filter((e) => e.word.topic === 'sentences' && e.word.concept)) {
+          sampledAtLeastOne = true;
+          const distractors = ex.options.filter((o) => o.id !== ex.word.id);
+          const sameConcept = distractors.filter((d) => d.concept === ex.word.concept);
+          expect(sameConcept.length, `${l.id}: ${JSON.stringify(ex.options)}`).toBeLessThan(OPTIONS_PER_QUESTION - 1);
+        }
+      }
+    }
+    expect(sampledAtLeastOne, 'expected at least one grammar-climb lesson to emit a concept-tagged meaningPick').toBe(
+      true
+    );
+  });
+
+  // The regression this fix must never reopen: a real vocabulary meaningPick
+  // question (the one kind `check-answerable.js` does NOT check for shared
+  // cues — see `cueOf`'s own comment for why) still gets distinct-cued
+  // distractors when the pool can supply them, same as before this item.
+  it('a real vocabulary meaningPick question still gets distinct-cued distractors, unaffected by the sentence fix', () => {
+    let sampled = 0;
+    for (const u of UNITS) {
+      for (const l of u.lessons) {
+        if (l.kind !== 'vocab') continue;
+        const exercises = buildLessonExercises(l, [], 'both');
+        for (const ex of exercises) {
+          if (ex.kind !== 'meaningPick' || !('word' in ex)) continue;
+          const w = ex as { word: { id: string; topic: string }; options: { id: string }[] };
+          if (w.word.topic === 'sentences') continue;
+          sampled++;
+          const cues = w.options.map((o) => cueOf(o as unknown as Parameters<typeof cueOf>[0]));
+          expect(new Set(cues).size, JSON.stringify(w.options)).toBe(cues.length);
+        }
+      }
+    }
+    expect(sampled, 'expected at least one real-vocabulary meaningPick exercise').toBeGreaterThan(0);
+  });
+
+  // THE CRITIC, reviewing this item: BLOCKING — giving sentences a cue
+  // unique per id doesn't only unblock `meaningPick`'s own `distinctCue`
+  // pass, it unblocks *every* `distractorsFor` call that shares the same
+  // pool, including the review loop's `turn === 1` branch (generator.ts),
+  // which forces `wordExercise`'s variant to `2` (`listenTap`) for whatever
+  // due item lands there — a due item can be a previously-graded sentence,
+  // not only a real word (`itemsOf` tags a sentence answered via any word
+  // kind the same `{type: 'word'}` way `dueQueue` surfaces it back under).
+  // Before this fix, a sentence's `distinctCue` pass on `SENTENCE_WORDS`
+  // always failed (shared emoji) and fell through to real, visually-
+  // distinct vocabulary; after, sentences satisfy each other directly, so
+  // `listenTap` rendered four *other sentences* — every option showing the
+  // identical literal '📝' icon (`WordArt` renders `word.emoji` directly,
+  // never `cueOf`), silently defeating `check-answerable.js`'s own
+  // `distinct(options.map(cueOf))` guard against exactly that, because that
+  // check never simulates a due queue at all. Measured directly before the
+  // fix (a due queue seeded with real sentence ids against 60 real review
+  // lessons, both tracks, 3 visits each): 492 of 492 sentence-answered
+  // `listenTap` exercises had all 4 options be other sentences. Fixed by
+  // routing a sentence-topic due item to variant 1 (`meaningPick`) instead
+  // of 2 in that one branch, the same convention `sentenceReinforceClimb`
+  // already uses for its own `meet` turn.
+  it('a sentence due for review never becomes a listenTap exercise', () => {
+    const reviewLesson = ALL_LESSONS.find((l) => l.kind === 'review')!;
+    const due = SENTENCES.slice(0, 8).map((s) => ({ id: s.id, type: 'word' as const }));
+    let sampled = 0;
+    for (const track of ['both', 'roman'] as const) {
+      for (let visit = 0; visit < 3; visit++) {
+        const exercises = buildLessonExercises(reviewLesson, due, track, new Set(), visit);
+        for (const ex of exercises) {
+          if (ex.kind !== 'listenTap' || !('word' in ex)) continue;
+          const w = ex as { word: { topic: string }; options: { topic: string }[] };
+          if (w.word.topic !== 'sentences') continue;
+          sampled++;
+          expect(
+            w.options.some((o) => o.topic !== 'sentences'),
+            'a sentence listenTap must not have every option be another sentence — they all show the same icon'
+          ).toBe(true);
+        }
+      }
+    }
+    // Today's fix routes every sentence away from listenTap entirely, so
+    // `sampled` staying at 0 is the passing state — asserted this way
+    // rather than requiring `sampled > 0` so the test still means something
+    // if a future change lets a sentence reach listenTap again with a
+    // genuinely mixed option set.
+    expect(sampled).toBe(0);
+  });
+});
+
+describe('URD-035: a grammarDrill exercise carries romanOptions on every track, not only roman', () => {
+  /**
+   * `GrammarDrillExercise` (GrammarExercises.tsx) reads `romanOptions` the
+   * instant a learner picks an answer, on every track — it feeds the
+   * "show the pronunciation" caption `showRoman` defaults on for, not only
+   * the Roman track's own full-transliteration display. Before this fix,
+   * `grammarDrillExercise` (this file) only ever computed it for `track ===
+   * 'roman'`, so a script/`both` track pick read `undefined[i]` and crashed
+   * with an uncaught TypeError — reproduced live via soak on three
+   * independent seeds/concepts, initially misattributed to the *previous*
+   * screen (`GrammarTeachExercise`) because the truncated error message
+   * named neither a file nor a component.
+   *
+   * Every real drill in the corpus (checked directly, not assumed) has
+   * `romanAll`-transliatable options, so this holds for all 38 of them on
+   * every track today; the point of asserting it here is that a future
+   * concept whose options `romanAll` can't handle stays a component-level
+   * fallback (still fixed, see GrammarExercises.tsx) rather than silently
+   * regressing back to "only defined on the Roman track."
+   */
+  it('every real grammar drill exercise has romanOptions on the script, both and roman tracks alike', () => {
+    let sampled = 0;
+    for (const u of UNITS) {
+      for (const l of u.lessons) {
+        if (l.kind !== 'grammar') continue;
+        // THE CRITIC: the first version of this only sampled `both`/`roman`,
+        // missing `script` — a real, independently reachable crash path,
+        // since `showRoman` is a learner-toggleable setting that only turns
+        // *off automatically* when switching *to* `script` (useSettingsStore
+        // .ts's `setTrack`), not a permanent lock; a learner can flip it back
+        // on while staying on `script` and hit the identical crash site.
+        for (const track of ['script', 'both', 'roman'] as const) {
+          const exercises = buildLessonExercises(l, [], track);
+          for (const e of exercises) {
+            if (e.kind !== 'grammarDrill') continue;
+            sampled++;
+            expect(e.romanOptions, `${l.id} (${track}): ${JSON.stringify(e.drill.options)}`).toBeDefined();
+            expect(e.romanOptions?.length, l.id).toBe(e.drill.options.length);
+          }
+        }
+      }
+    }
+    expect(sampled, 'expected at least one real grammarDrill exercise to sample').toBeGreaterThan(0);
+  });
+
+  it('every real grammar concept has options romanAll can transliterate', () => {
+    // The generator-level guarantee the test above depends on: if this ever
+    // fails for a real concept, the test above would start failing too, but
+    // this names the actual cause (an untransliterable drill) rather than
+    // leaving it to be rediscovered from a missing-romanOptions message.
+    for (const c of GRAMMAR) {
+      for (const d of c.drills) {
+        expect(romanAll(d.options), `${c.id}/${d.id}: ${JSON.stringify(d.options)}`).toBeDefined();
+      }
+    }
+  });
+});
+
+describe('URD-040: a review touches the grammar concept(s) its own unit taught', () => {
+  it('rev-saying-who-you-are (u4) asks about both g-pronouns and g-to-be, the concepts the unit is named for and organized around', () => {
+    // The item's own measured example: this review used to draw entirely
+    // from V('rooms')/V('adjectives') and never once touch either concept.
+    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const exercises = buildLessonExercises(lesson, [], 'both');
+    const seen = new Set(exercises.filter((e) => e.kind === 'grammarDrill').map((e) => e.concept.id));
+    expect(seen).toEqual(new Set(['g-pronouns', 'g-to-be']));
+  });
+
+  it('every unit review touches every grammar concept its own unit taught, on every track', () => {
+    let unitsWithConcepts = 0;
+    for (const u of UNITS) {
+      const reviewLesson = u.lessons.find((l) => l.kind === 'review');
+      if (!reviewLesson) continue;
+      const unitConcepts = new Set(
+        u.lessons.filter((l) => l.kind === 'grammar' && l.conceptId).map((l) => l.conceptId as string)
+      );
+      if (unitConcepts.size === 0) continue; // most units teach no grammar concept of their own
+      unitsWithConcepts++;
+      for (const track of ['script', 'both', 'roman'] as const) {
+        const exercises = buildLessonExercises(reviewLesson, [], track);
+        const seen = new Set(exercises.filter((e) => e.kind === 'grammarDrill').map((e) => e.concept.id));
+        expect(seen, `${reviewLesson.id} (${track})`).toEqual(unitConcepts);
+      }
+    }
+    expect(unitsWithConcepts, 'expected at least one real unit with a grammar concept to sample').toBeGreaterThan(0);
+  });
+
+  it("does not grow a review's total exercise count -- the concept exercise(s) are budgeted out of the existing size, not appended past it", () => {
+    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const exercises = buildLessonExercises(lesson, [], 'both');
+    expect(exercises.length).toBe(lesson.size);
+  });
+
+  it('leaves a review with no grammar concept of its own unaffected', () => {
+    const reviewsWithNoConcept = UNITS.filter((u) => u.lessons.every((l) => l.kind !== 'grammar')).flatMap((u) =>
+      u.lessons.filter((l) => l.kind === 'review')
+    );
+    expect(reviewsWithNoConcept.length).toBeGreaterThan(0);
+    for (const lesson of reviewsWithNoConcept) {
+      const exercises = buildLessonExercises(lesson, [], 'both');
+      expect(
+        exercises.some((e) => e.kind === 'grammarDrill'),
+        lesson.id
+      ).toBe(false);
+      expect(exercises.length).toBe(lesson.size);
+    }
+  });
+
+  it('THE CRITIC (BLOCKING): a due queue that already fills the review never loses a due item to make room for the grammar concept', () => {
+    // A first version reserved the concept budget by shrinking the pool
+    // `due` itself was capped against, so a due queue at exactly
+    // `dueBudget`'s own promised size (the ordinary case, not an edge one)
+    // silently lost its last `conceptBudget` items — real, scheduler-
+    // flagged material — to make room for a grammarDrill that isn't even
+    // SRS-gradable. Reproduced live pre-fix: a full 22-item due queue for
+    // rev-saying-who-you-are dropped two due words.
+    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const taught = taughtUpTo(lesson.id).words;
+    const due = taught.slice(0, lesson.size).map((id) => ({ id, type: 'word' as const }));
+    const known = new Set(taught);
+    const exercises = buildLessonExercises(lesson, due, 'both', known);
+    const actuallyProduced = new Set(exercises.flatMap((e) => itemsOf(e)).map((r) => r.id));
+    expect(
+      due.every((d) => actuallyProduced.has(d.id)),
+      'every due item must survive'
+    ).toBe(true);
+    // A fully-saturated due queue leaves no guaranteed room, so the concept
+    // exercise is the one that gracefully doesn't fit this visit — not a
+    // silent violation of `lesson.size`, and not a dropped due item.
+    expect(exercises.length).toBe(lesson.size);
+    expect(exercises.some((e) => e.kind === 'grammarDrill')).toBe(false);
+  });
+
+  it('still surfaces the grammar concept(s) when the due queue leaves genuine room', () => {
+    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const taught = taughtUpTo(lesson.id).words;
+    const due = taught.slice(0, lesson.size - 5).map((id) => ({ id, type: 'word' as const }));
+    const known = new Set(taught);
+    const exercises = buildLessonExercises(lesson, due, 'both', known);
+    const actuallyProduced = new Set(exercises.flatMap((e) => itemsOf(e)).map((r) => r.id));
+    expect(
+      due.every((d) => actuallyProduced.has(d.id)),
+      'every due item must survive'
+    ).toBe(true);
+    const seen = new Set(exercises.filter((e) => e.kind === 'grammarDrill').map((e) => e.concept.id));
+    expect(seen).toEqual(new Set(['g-pronouns', 'g-to-be']));
+    expect(exercises.length).toBe(lesson.size);
+  });
+
+  it("THE CRITIC (re-review): a due queue bigger than the review's own size still keeps its first lesson.size items", () => {
+    // No production caller sends more due refs than `dueBudget` promised
+    // (`LessonScreen.tsx` requests exactly `lesson.size`) — this invariant
+    // held even before the explicit `.slice(0, lesson.size)` on `due` below
+    // was added, as an emergent consequence of `refCap` never falling below
+    // `due.length` plus the function's own shared trailing
+    // `exercises.slice(0, lesson.size)` (review isn't in the `composed`
+    // exemption). The explicit slice makes it a structural guarantee at the
+    // point `due` is defined, rather than one that depends on reasoning
+    // about a second truncation point elsewhere in this function — the
+    // fix THE CRITIC asked for so this doesn't quietly depend on
+    // `LessonScreen`'s own behavior forever. This test locks that in.
+    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const taught = taughtUpTo(lesson.id).words;
+    const due = taught.slice(0, lesson.size + 5).map((id) => ({ id, type: 'word' as const }));
+    const known = new Set(taught);
+    const exercises = buildLessonExercises(lesson, due, 'both', known);
+    const actuallyProduced = new Set(exercises.flatMap((e) => itemsOf(e)).map((r) => r.id));
+    // The first `lesson.size` due items — the ones a well-behaved caller
+    // would actually have sent — must all survive; only the excess this
+    // caller had no business sending in the first place is dropped.
+    const wellBehavedDue = due.slice(0, lesson.size);
+    expect(wellBehavedDue.every((d) => actuallyProduced.has(d.id))).toBe(true);
+    expect(exercises.length).toBe(lesson.size);
+  });
+
+  it('CURRICULUM CRITIC: which drill a concept surfaces rotates across replays, not the same one forever', () => {
+    // g-to-be has 3 real drills — a first version of this fix always asked
+    // for c.drills[0], so every replay of rev-saying-who-you-are showed the
+    // literal same prompt/blank/answer for g-to-be, forever: a learner
+    // stops reasoning about the concept and starts recalling "the answer to
+    // this exact screen". Threading `visit` (URD-039's replay counter, this
+    // branch's own base) through the drill pick fixes it the same way
+    // URD-039 fixed the identical staleness for words/letters.
+    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const drillIdsFor = (visit: number) => {
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set(), visit);
+      return exercises
+        .filter((e) => e.kind === 'grammarDrill')
+        .filter((e) => e.concept.id === 'g-to-be')
+        .map((e) => e.drill.id);
+    };
+    const seenAcrossVisits = new Set(Array.from({ length: 6 }, (_, visit) => drillIdsFor(visit).join(',')));
+    expect(seenAcrossVisits.size).toBeGreaterThan(1);
+  });
+
+  it('the same visit reproduces the identical drill pick — a rotation, not fresh randomness on every render', () => {
+    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const pickAt = (visit: number) =>
+      buildLessonExercises(lesson, [], 'both', new Set(), visit)
+        .filter((e) => e.kind === 'grammarDrill')
+        .map((e) => e.drill.id);
+    expect(pickAt(2)).toEqual(pickAt(2));
+  });
+
+  it('defaults to visit 0 when omitted, matching every pre-URD-040 caller', () => {
+    // A full exercise-array comparison isn't meaningful here: distractor
+    // selection elsewhere in this file draws on unseeded `Math.random`
+    // (`rand`, top of this file), so two calls with identical arguments
+    // already differ in ways unrelated to `visit`. The drill *pick* itself
+    // is what `visit` controls, so that's what omitting it should match.
+    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const drillIds = (exercises: ReturnType<typeof buildLessonExercises>) =>
+      exercises.filter((e) => e.kind === 'grammarDrill').map((e) => `${e.concept.id}:${e.drill.id}`);
+    const withDefault = drillIds(buildLessonExercises(lesson, [], 'both'));
+    const explicit0 = drillIds(buildLessonExercises(lesson, [], 'both', new Set(), 0));
+    expect(withDefault).toEqual(explicit0);
+  });
+});
+
+describe("URD-041: a review's letter exercise(s) don't always land on the same kind", () => {
+  const LETTER_KIND_SET = new Set(['letterForm', 'letterPick', 'letterTrace']);
+  /** The letter exercise kinds a review draws, with nothing due, on `both`. */
+  const letterKindsOf = (lessonId: string, visit = 0) => {
+    const lesson = resolveLesson(lessonId)!;
+    const exercises = buildLessonExercises(lesson, [], 'both', new Set(), visit);
+    return exercises.filter((e) => LETTER_KIND_SET.has(e.kind)).map((e) => e.kind);
+  };
+
+  it('several real late-course reviews (u14+) draw different letter exercise kinds, not the same one every time', () => {
+    // The item's own measured bug: `letterExerciseAt(l, i, i)` ties the kind
+    // to `i`, the item's raw index within `refs` — and `fallbackReviewRefs`'s
+    // own interleave always places its one letter at index 0 once URD-017
+    // shrank the typical review letter count to ~1 (true from about u14 on).
+    // `t === 0` is `letterTrace` whenever a glyph mask exists, true for
+    // every glyph sampled — so all 26 straight reviews from u14 through u39
+    // drew `letterTrace`, and only `letterTrace`, before this fix.
+    const lateReviews = UNITS.filter((u) => Number(u.id.slice(1)) >= 14)
+      .flatMap((u) => u.lessons)
+      .filter((l) => l.kind === 'review');
+    expect(lateReviews.length).toBeGreaterThan(1);
+    const kindSequences = lateReviews.map((l) => letterKindsOf(l.id).join(','));
+    // Every one of these reviews has exactly one letter exercise (measured
+    // in the item itself), so a kind sequence is a single kind here — but
+    // written against the general sequence, not assumed down to a single
+    // string, in case a future content change ever gives one of them more.
+    expect(new Set(kindSequences).size).toBeGreaterThan(1);
+  });
+
+  it('every real review with any letters at all has all three kinds reachable across its own real siblings, not just one', () => {
+    // The stronger form of the property above: not just "two reviews
+    // differ from each other" but "the full set of three kinds this app is
+    // built around actually gets used somewhere across the reviews that
+    // have a letter to ask about" — `letterForm`, the joining-position
+    // drill URD-041's own notes single out as the one that used to never
+    // appear at all in this stretch.
+    const reviewsWithLetters = UNITS.flatMap((u) => u.lessons)
+      .filter((l) => l.kind === 'review')
+      .filter((l) => letterKindsOf(l.id).length > 0);
+    const seen = new Set(reviewsWithLetters.flatMap((l) => letterKindsOf(l.id)));
+    expect(seen).toEqual(LETTER_KIND_SET);
+  });
+
+  it('the same review also rotates its letter kind across repeat visits, not just across different reviews', () => {
+    // `visit` (URD-039's per-completion counter) is folded into the same
+    // offset, so replaying the identical review doesn't lock onto whatever
+    // kind its fixed path position happens to draw, the same staleness
+    // concern URD-039/URD-040 already closed for words/letters and grammar
+    // drills respectively.
+    const kindsAcrossVisits = new Set(
+      Array.from({ length: 6 }, (_, visit) => letterKindsOf('rev-the-wider-world', visit).join(','))
+    );
+    expect(kindsAcrossVisits.size).toBeGreaterThan(1);
+  });
+});
+
+describe('URD-042: every letter gets review exposure somewhere across the whole course', () => {
+  const LETTER_KIND_SET = new Set(['letterForm', 'letterPick', 'letterTrace']);
+
+  it('simulating every real review lesson in course order, with nothing due, draws every letter in LETTERS at least once', () => {
+    // The item's own verify text, applied directly. Before this fix: only
+    // 21 of 40 letters (52.5%), measured at the time the item was written;
+    // re-measured before this fix shipped, on the tree as it stood then:
+    // 30 of 40 (75%, improved incidentally by URD-039/041's own visit/
+    // reviewIndex threading, but still a real gap) — 19, then 6, letters,
+    // including be/pe (the very first pair taught, in l-1) and three of
+    // the four Urdu "z"-sound letters, never drawn by a single review.
+    const reviews = ALL_LESSONS.filter((l) => l.kind === 'review');
+    expect(reviews.length).toBeGreaterThan(1);
+    const touched = new Set<string>();
+    for (const lesson of reviews) {
+      const exercises = buildLessonExercises(lesson, [], 'both', new Set(), 0);
+      for (const e of exercises) {
+        if (LETTER_KIND_SET.has(e.kind)) touched.add((e as { letter: { id: string } }).letter.id);
+      }
+    }
+    const missing = LETTERS.filter((l) => !touched.has(l.id)).map((l) => l.id);
+    expect(missing, `never drawn by any review: ${missing.join(', ')}`).toEqual([]);
+  });
+
+  it('holds on the script track too, not only both', () => {
+    // roman drops letter lessons (and so review's letter side) from the
+    // path entirely (`unitsForTrack`, `data/units.ts`) — not this
+    // coverage guarantee's job to hold on a track with no letters to
+    // cover at all.
+    const reviews = ALL_LESSONS.filter((l) => l.kind === 'review');
+    const touched = new Set<string>();
+    for (const lesson of reviews) {
+      const exercises = buildLessonExercises(lesson, [], 'script', new Set(), 0);
+      for (const e of exercises) {
+        if (LETTER_KIND_SET.has(e.kind)) touched.add((e as { letter: { id: string } }).letter.id);
+      }
+    }
+    const missing = LETTERS.filter((l) => !touched.has(l.id)).map((l) => l.id);
+    expect(missing).toEqual([]);
+  });
+
+  it("never surfaces a letter the learner hasn't actually been graded on, even while pursuing coverage", () => {
+    // The coverage guarantee must never override check:srs's own
+    // invariant: a learner graded on words but zero letters gets a
+    // correctly-empty letter pool (URD-016), not every letter ever
+    // taught forced in to satisfy this item's own assignment.
+    //
+    // THE CRITIC: a first version of this test targeted only
+    // rev-the-wider-world — which turns out to be the one review lesson
+    // (of 41) with no coverage assignment at all (everything already
+    // claimed by the review before it), so the `assigned` guard this test
+    // is meant to pin was never actually exercised: it passed purely on
+    // URD-016's own pre-existing guarantee, and kept passing when the
+    // guard was deliberately removed. Swept across every real review
+    // instead — 40 of 41 do carry an assignment, so this reaches the
+    // guard for real.
+    for (const u of UNITS) {
+      for (const lesson of u.lessons) {
+        if (lesson.kind !== 'review') continue;
+        const taught = taughtUpTo(lesson.id).words;
+        // THE CRITIC (re-review): needs at least one already-taught word to
+        // graduate — the very first review or two can predate any
+        // vocabulary lesson at all, and an empty `known` there falls into
+        // the different ("nothing known at all") branch this test isn't
+        // about, the same guard `review.test.ts`'s sibling test already
+        // takes for the identical scenario.
+        if (taught.length === 0) continue;
+        const known = new Set(taught.slice(0, 5)); // words only, no letters
+        const exercises = buildLessonExercises(lesson, [], 'both', known, 0);
+        const letterExercises = exercises.filter((e) => LETTER_KIND_SET.has(e.kind));
+        expect(letterExercises, lesson.id).toHaveLength(0);
+      }
+    }
+  });
+
+  it('CURRICULUM CRITIC (MAJOR): a review with a coverage assignment still varies its letter across repeat visits, not frozen forever', () => {
+    // A first version forced the assigned coverage letter to the front on
+    // EVERY visit unconditionally -- with letterCount === 1 (the norm from
+    // about u14 on, URD-017), fallbackReviewRefs takes exactly pool[0], so
+    // every one of the ~40 reviews with an assignment drew one single
+    // letter forever, for every replay, for every learner: reproduced
+    // live, rev-together drew daal and only daal across 6 sampled visits --
+    // silently reintroducing URD-039's own bug on the letter axis. The
+    // coverage guarantee only needs a review's *first* visit to surface
+    // its assignment; every visit after that must return to the normal
+    // rotation.
+    const lesson = resolveLesson('rev-together')!;
+    const lettersAcrossVisits = new Set(
+      Array.from({ length: 6 }, (_, visit) =>
+        buildLessonExercises(lesson, [], 'both', new Set(), visit)
+          .filter((e) => LETTER_KIND_SET.has(e.kind))
+          .map((e) => (e as { letter: { id: string } }).letter.id)
+          .join(',')
+      )
+    );
+    expect(lettersAcrossVisits.size).toBeGreaterThan(1);
+  });
+});

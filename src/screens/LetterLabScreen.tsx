@@ -156,7 +156,7 @@ export function LetterLabScreen() {
                       {letter.forms[p.key]}
                     </Urdu>
                     <Eyebrow
-                      style={{ color: active ? palette.gold : withAlpha(palette.paper, 0.4), fontSize: 9 }}
+                      style={{ color: active ? palette.gold : withAlpha(palette.paper, 0.55), fontSize: 9 }}
                       className="mt-1"
                     >
                       {p.label}
@@ -187,8 +187,8 @@ export function LetterLabScreen() {
 
           {/* the note */}
           <View
-            className="mb-6 rounded-xl border-l-2 p-4"
-            style={{ borderLeftColor: palette.jade, backgroundColor: withAlpha(palette.jade, 0.08) }}
+            className="mb-6 rounded-xl border-s-2 p-4"
+            style={{ borderStartColor: palette.jade, backgroundColor: withAlpha(palette.jade, 0.08) }}
           >
             <Txt className="text-sm leading-6 text-paper/80">{letter.note}</Txt>
           </View>

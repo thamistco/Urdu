@@ -173,8 +173,8 @@ export function GrammarTeachExercise({ exercise, track, onGraded, onExpand }: Ex
           {concept.examples.map((ex, i) => (
             <View
               key={i}
-              className="rounded-xl border-l-2 px-4 py-3"
-              style={{ borderLeftColor: palette.jade, backgroundColor: withAlpha(palette.jade, 0.08) }}
+              className="rounded-xl border-s-2 px-4 py-3"
+              style={{ borderStartColor: palette.jade, backgroundColor: withAlpha(palette.jade, 0.08) }}
             >
               {track === 'roman' ? (
                 <Bold style={{ fontSize: 17 }}>{ex.roman}</Bold>
@@ -215,11 +215,31 @@ export function GrammarDrillExercise({ exercise, track, showRoman, locked, onGra
   // The Roman track drills the same grammar in transliteration: the point of
   // "which ending agrees here" survives the change of alphabet intact.
   const roman = track === 'roman' && !!romanOptions;
-  const romanFor = (o: string) => romanOptions![drill.options.indexOf(o)];
+  /**
+   * URD-035: this used to read `romanOptions![...]`, asserting the field
+   * always exists — but `grammarDrillExercise` (generator.ts) only ever
+   * computes `romanOptions` on the Roman track; every script/`both` track
+   * exercise carries it `undefined` by design. `shownRoman` below calls this
+   * unconditionally the moment an answer is picked, regardless of `track`
+   * or the `roman` flag above, because a `const` initializer runs eagerly on
+   * every render — so any script/`both` track drill crashed the instant a
+   * learner picked an answer with `showRoman` on (this app's own default
+   * for every track but `script`), an uncaught `TypeError` with no recovery
+   * that soak found and initially mis-attributed to `GrammarTeachExercise`,
+   * the screen immediately before this one in the same lesson. Optional
+   * chaining here, and a real fallback below, so a missing translit set
+   * degrades the caption rather than the whole exercise.
+   */
+  const romanFor = (o: string) => romanOptions?.[drill.options.indexOf(o)];
 
   // show the sentence with the gap filled once answered
   const shown = picked ? drill.prompt.replace('___', picked) : drill.prompt;
-  const shownRoman = picked ? drill.promptRoman.replace('___', romanFor(picked)) : drill.promptRoman;
+  const pickedRoman = picked ? romanFor(picked) : undefined;
+  // Falls back to the un-filled prompt rather than a filled-in blank reading
+  // "___" when there's no romanization to substitute — the same shape the
+  // "not answered yet" case already renders, not a new, blank-in-the-middle
+  // state nobody has seen before.
+  const shownRoman = pickedRoman ? drill.promptRoman.replace('___', pickedRoman) : drill.promptRoman;
 
   return (
     <View>
@@ -267,8 +287,8 @@ export function GrammarDrillExercise({ exercise, track, showRoman, locked, onGra
 
       {picked && (
         <View
-          className="mt-1 rounded-xl border-l-2 px-4 py-3"
-          style={{ borderLeftColor: palette.gold, backgroundColor: withAlpha(palette.gold, 0.1) }}
+          className="mt-1 rounded-xl border-s-2 px-4 py-3"
+          style={{ borderStartColor: palette.gold, backgroundColor: withAlpha(palette.gold, 0.1) }}
         >
           <Bold style={{ color: palette.gold }} className="mb-0.5 text-xs uppercase tracking-wider">
             Why

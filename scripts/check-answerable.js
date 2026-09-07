@@ -44,7 +44,7 @@ function load(rel) {
   return mod.exports;
 }
 
-const { buildLessonExercises } = load('src/exercises/generator.ts');
+const { buildLessonExercises, soundsOverlap } = load('src/exercises/generator.ts');
 const { unitsForTrack } = load('src/data/units.ts');
 const { pictureIdentifies, cueOf, VERDICT_CUES } = load('src/data/art.ts');
 
@@ -92,9 +92,26 @@ const { romanRevealsMeaning } = load('src/lib/giveaway.ts');
  * built.
  */
 const OPTION_FLOOR = 4;
+
+/**
+ * How many standard deviations from fair a position's answer count may sit
+ * before this fails — shared by every uniformity check in this file (the
+ * main histogram below, and the floor-exempt kinds further down).
+ *
+ * URD-059: this replaced a fixed 40% relative band that did not scale with
+ * the sample and did not survive its own stated justification — see the
+ * main histogram's own comment, at its use below, for the arithmetic. A
+ * z-score against the binomial standard deviation tightens as the sample
+ * grows, the way a real uniformity check should: 4 sigma is about 6e-5 by
+ * chance per seat asked, regardless of how many draws that seat's count
+ * was built from.
+ */
+const SIGMA_LIMIT = 4;
 const optionCounts = new Map();
 const answerAt = new Map();
 let optionQuestions = 0;
+const exemptAnswerAt = new Map();
+const exemptSizes = new Map();
 
 /**
  * The kinds that are genuinely "pick one of these", and so have a guess rate.
@@ -109,16 +126,60 @@ let optionQuestions = 0;
  * `letterForm` is excluded too: its four options are the four joining
  * positions, which is the entire set that exists. There is no fifth.
  */
-const CHOICE_KINDS = new Set(['letterPick', 'multipleChoice', 'meaningPick', 'listenTap', 'wordFromMeaning']);
+const CHOICE_KINDS = new Set([
+  'letterPick',
+  'multipleChoice',
+  'meaningPick',
+  'listenTap',
+  'wordFromMeaning',
+  'letterContrast',
+]);
+
+/**
+ * Kinds whose option *count* is not held to `OPTION_FLOOR`, while their answer
+ * *position* still is.
+ *
+ * These are two separate properties that happen to be measured together, and
+ * URD-047 is the first kind where they come apart. `letterContrast` shows a
+ * letter against its own `confusableWith` bucket and nothing else — 2 to 4
+ * options, because that is how many letters are genuinely confusable with it
+ * — and padding it to four with letters the learner can rule out on sight
+ * would move the *reported* guess rate from 50% to 25% without moving the
+ * real one, since the distinction being tested is still the same pair (see
+ * `letterContrastExercise`, `generator.ts`).
+ *
+ * The position check still applies and is the reason this is an exemption
+ * rather than an exclusion: that check exists because a broken shuffle once
+ * put the answer first 43.7% of the time, and a two-option question with a
+ * favourite seat is not a 50% guess, it is a free answer. Dropping the kind
+ * out of `CHOICE_KINDS` entirely would have silently stopped measuring that.
+ */
+const FLOOR_EXEMPT_KINDS = new Set(['letterContrast']);
 
 function recordOptions(ex) {
   if (!CHOICE_KINDS.has(ex.kind)) return;
   if (!Array.isArray(ex.options) || !ex.options.length) return;
   const answerId = (ex.word || ex.letter || {}).id;
   if (!answerId) return;
-  optionCounts.set(ex.options.length, (optionCounts.get(ex.options.length) || 0) + 1);
   const at = ex.options.findIndex((o) => o.id === answerId);
   if (at < 0) return;
+  // An exempt kind has a different number of options, so folding it into the
+  // histogram below would quietly make "even would be 25% each" untrue —
+  // 2-option questions can only ever land in seats 0 and 1. Measured in its
+  // own tally instead, so both stay honest.
+  if (FLOOR_EXEMPT_KINDS.has(ex.kind)) {
+    // Keyed by option count as well as seat: an exempt kind's questions are
+    // not all the same size (a `letterContrast` bucket is 2, 3 or 4 letters),
+    // and seats 2 and 3 simply do not exist for a two-option question. A flat
+    // tally across all of them says the answer "favours" seat 0 at 50% when
+    // that is just what a mostly-two-option population looks like — the first
+    // draft of this check did exactly that and failed on its own arithmetic.
+    const key = `${ex.options.length}:${at}`;
+    exemptAnswerAt.set(key, (exemptAnswerAt.get(key) || 0) + 1);
+    exemptSizes.set(ex.options.length, (exemptSizes.get(ex.options.length) || 0) + 1);
+    return;
+  }
+  optionCounts.set(ex.options.length, (optionCounts.get(ex.options.length) || 0) + 1);
   answerAt.set(at, (answerAt.get(at) || 0) + 1);
   optionQuestions++;
 }
@@ -220,10 +281,92 @@ function check(ex, track) {
       if (roman && !ex.romanOptions) fail('drill options have no transliteration on the Roman track', ex.drill.id);
       break;
 
+    case 'letterPick': {
+      if (roman) fail('script exercise on the Roman track', `letterPick ${ex.letter.id}`);
+      // URD-007: ذ ز ض ظ (zaal/ze/zwaad/zoe) all say "z" — an audio prompt
+      // ("which letter makes this sound?") offering two of them has two
+      // right answers. Same bug, same fix, for every other homophone group
+      // Urdu's script has (te/toe "t"; se/seen/swaad "s"; the three ه
+      // letters "h"; alif/alif-madda/ain's overlapping "a"/"aa" readings) —
+      // computed pairwise from each option's own `sound` rather than naming
+      // only the four this item was filed against, so a question this loose
+      // cannot ship for a group nobody happened to list. Pairwise, not a
+      // single normalized string per option, because a letter can carry more
+      // than one reading ("a / aa") that only partly overlaps another's.
+      for (let i = 0; i < ex.options.length; i++) {
+        for (let j = i + 1; j < ex.options.length; j++) {
+          if (soundsOverlap(ex.options[i], ex.options[j]))
+            fail(
+              'letterPick offers two letters that sound the same',
+              `${ex.letter.id} ("${ex.letter.sound}"): ${ex.options[i].id} vs ${ex.options[j].id}`
+            );
+        }
+      }
+      // URD-060: every option renders at `ex.position` (not always
+      // `isolated`), and two unrelated-by-sound letters can still share a
+      // glyph at one joining position — baRi-ye and choti-ye render the
+      // identical stroke at `initial` and `medial` despite sharing no
+      // reading. `soundsOverlap` above cannot see that; it only compares
+      // `sound` strings. Two options rendering the same string at the
+      // position actually shown is a strictly worse version of the same
+      // "two right answers" bug the sound check exists to catch, so it gets
+      // the same fail-fast treatment rather than shipping as a silent,
+      // low-probability event.
+      for (let i = 0; i < ex.options.length; i++) {
+        for (let j = i + 1; j < ex.options.length; j++) {
+          if (ex.options[i].forms[ex.position] === ex.options[j].forms[ex.position])
+            fail(
+              'letterPick offers two options with the identical glyph at the shown position',
+              `${ex.letter.id} @ ${ex.position}: ${ex.options[i].id} vs ${ex.options[j].id}`
+            );
+        }
+      }
+      break;
+    }
+
     case 'letterForm':
-    case 'letterPick':
     case 'letterTrace':
       if (roman) fail('script exercise on the Roman track', `${ex.kind} ${ex.letter.id}`);
+      break;
+
+    case 'letterContrast': {
+      if (roman) fail('script exercise on the Roman track', `letterContrast ${ex.letter.id}`);
+      // The answer has to be on screen.
+      if (!ex.options.some((o) => o.id === ex.letter.id))
+        fail('letterContrast does not offer its own answer', ex.letter.id);
+      // Every option must be from the answer's own confusable bucket. This is
+      // the whole point of the kind: an option the learner can rule out on
+      // sight is a distractor this exercise is not supposed to have, and its
+      // presence would mean the question had quietly degraded into a
+      // `letterPick` wearing a different prompt.
+      const key = ex.letter.confusableWith || ex.letter.id;
+      for (const o of ex.options) {
+        if ((o.confusableWith || o.id) !== key)
+          fail('letterContrast offers a letter from outside the confusable bucket', `${ex.letter.id} — ${o.id}`);
+      }
+      // Two is the floor here rather than OPTION_FLOOR's four, deliberately —
+      // see `letterContrastExercise`'s doc comment in generator.ts. A bucket
+      // of one is not a contrast at all and means the generator emitted this
+      // for a letter with no partner.
+      if (ex.options.length < 2) fail('letterContrast has nothing to contrast against', ex.letter.id);
+      if (new Set(ex.options.map((o) => o.id)).size !== ex.options.length)
+        fail('letterContrast offers the same letter twice', ex.letter.id);
+      break;
+    }
+
+    case 'letterSpot':
+      if (roman) fail('script exercise on the Roman track', `letterSpot ${ex.letter.id}`);
+      // At least one tile must be the right answer, or the question has no
+      // right answer on screen at all. `tiles` entries can be multi-character
+      // display clusters (real neighbouring context) rather than the bare
+      // glyph, so this checks the precomputed `correct` flags, not the tile
+      // strings themselves.
+      if (!ex.correct.some(Boolean))
+        fail('letterSpot asks about a letter missing from its own tiles', `${ex.letter.id} — ${ex.word.id}`);
+      if (ex.tiles.length < 4)
+        fail('letterSpot offers fewer than 4 tiles', `${ex.letter.id} — ${ex.word.id} (${ex.tiles.length})`);
+      if (ex.tiles.length !== ex.correct.length || ex.tiles.length !== ex.fromWord.length)
+        fail('letterSpot tiles/correct/fromWord are out of sync', `${ex.letter.id} — ${ex.word.id}`);
       break;
 
     case 'reading':
@@ -273,6 +416,27 @@ for (const track of TRACKS) {
         kinds.set(key, (kinds.get(key) || 0) + 1);
         check(ex, track);
         recordOptions(ex);
+      }
+    }
+  }
+
+  /**
+   * The floor-exempt kinds need their own, larger sample.
+   *
+   * `letterContrast` is emitted only by the 9 letter lessons, so the main loop
+   * above yields ~26 two-option, ~3 three-option and ~4 four-option generations
+   * per pass — 18 and 24 in total against the main histogram's 73,000. THE
+   * CRITIC, URD-047: a first version simply documented that as "too few to
+   * band" and fell back to a weaker rule, which let a measured 65%-biased
+   * two-option shuffle pass three runs running. The sample was self-inflicted:
+   * letter lessons are few and cheap, so this just generates more of them.
+   */
+  const EXEMPT_PASSES = 40;
+  for (const lesson of unitsForTrack('both').flatMap((u) => u.lessons)) {
+    if (lesson.kind !== 'letters') continue;
+    for (let pass = 0; pass < EXEMPT_PASSES; pass++) {
+      for (const ex of buildLessonExercises(lesson, [], 'both')) {
+        if (FLOOR_EXEMPT_KINDS.has(ex.kind)) recordOptions(ex);
       }
     }
   }
@@ -390,7 +554,30 @@ if (optionQuestions) {
       );
   }
 
-  const positions = [...answerAt.entries()].sort((a, b) => a[0] - b[0]);
+  /**
+   * THE CRITIC: built from the full seat range, not just `answerAt`'s own
+   * observed keys — a seat the shuffle can genuinely never reach has no
+   * entry in that map at all (nothing ever called `.set` for it), so
+   * reading positions from its keys alone makes an entirely-dead seat
+   * *absent* rather than a real `count === 0` row, silently shrinking
+   * `positions.length` (and therefore the `expected`/`p` this section's
+   * own z-test depends on) instead of surfacing the dead seat directly.
+   * Live-mutated to reproduce exactly this (a seat the shuffle
+   * structurally could not reach): before this fix the histogram printed
+   * one fewer entry, `expected` silently recomputed for the wrong seat
+   * count, and the "never reaches a position" message below never fired
+   * — not preempted, unreachable, because the loop it lives in never saw
+   * that seat at all. The z-test still failed overall on the surviving
+   * seats' own skew, so this was never a silent-pass regression, but the
+   * diagnostic shown was for the wrong distribution. `sizes` (just above)
+   * is the real number of options every non-exempt question in this
+   * section actually offers — asserted uniform by the floor check
+   * directly above, the same premise this section's `p`/`expected` were
+   * already resting on before this fix touched anything.
+   */
+  const seatCount = Math.max(...sizes.map(([size]) => size));
+  const positions = [];
+  for (let i = 0; i < seatCount; i++) positions.push([i, answerAt.get(i) || 0]);
   const expected = optionQuestions / positions.length;
   console.log(
     `answer position: ${positions.map(([i, c]) => `${i}:${((c / optionQuestions) * 100).toFixed(1)}%`).join('  ')}` +
@@ -398,21 +585,107 @@ if (optionQuestions) {
   );
 
   /**
-   * Generous on purpose. This runs over a random sample, so it must not fail on
-   * ordinary variation — but the bias it replaced put the answer first 43.7% of
-   * the time against a fair 33.3%, half again as often as it should be, and
-   * nothing that loose gets through a 40% band.
+   * URD-059: this used to be a fixed 40% relative band, justified by "the
+   * bias it replaced put the answer first 43.7% of the time against a fair
+   * 33.3% ... nothing that loose gets through a 40% band" — but 43.7/33.3
+   * is a 31% deviation, inside a 40% band. The historical bug this comment
+   * names as the reason the band exists would have passed the band. Found
+   * by THE CRITIC reviewing URD-047, which copied both the band and this
+   * sentence into a new block before replacing its own copy with the
+   * z-test below — see `SIGMA_LIMIT`'s own comment, near `OPTION_FLOOR`,
+   * for why a z-score is the shape that scales and a fixed percentage is not.
+   *
+   * At this section's own real sample size (measured, not assumed:
+   * ~73,000 across both tracks and 6 passes), a z-test is not weaker for
+   * being larger — the opposite: the real distribution's worst seat here
+   * measures z well under 2 on a real run (varies run to run, as any
+   * measurement of true randomness does — checked across several runs,
+   * never close to `SIGMA_LIMIT`), so this is not trading a loose check
+   * for a flaky one at scale, the way a naive percentage band would if
+   * tightened instead of replaced.
    */
+  const p = 1 / positions.length;
+  const sd = Math.sqrt(optionQuestions * p * (1 - p));
   for (const [position, count] of positions) {
-    const off = Math.abs(count - expected) / expected;
-    if (off > 0.4)
+    if (count === 0) {
+      fail('the correct answer never reaches a position', `position ${position}: the shuffle cannot put it there`);
+      continue;
+    }
+    const z = Math.abs(count - expected) / sd;
+    if (z > SIGMA_LIMIT)
       fail(
         'the correct answer favours a position',
         `it lands at ${position} ${((count / optionQuestions) * 100).toFixed(1)}% of the time, ` +
-          `expected about ${((1 / positions.length) * 100).toFixed(1)}% — the shuffle is not uniform`
+          `expected about ${((1 / positions.length) * 100).toFixed(1)}% — ${z.toFixed(1)} sigma from fair, the shuffle is not uniform`
       );
   }
 }
+
+/**
+ * The floor-exempt kinds get the same uniformity question asked separately,
+ * per option count — a two-option question with a favourite seat is not a 50%
+ * guess, it is a free answer.
+ *
+ * Two rules, because they catch different things and neither catches both.
+ *
+ * **No empty seat.** A seat the answer never occupies is the signature of a
+ * shuffle that cannot reach part of the row. It is also close to impossible by
+ * chance even on a small sample — a fair 3-option shuffle leaves a given seat
+ * empty over n draws with probability (2/3)^n — so this is safe to assert
+ * flatly. THE CRITIC, URD-047: a first version had a `share >= 0.8` fallback
+ * instead, which could not see a mutation that killed seats 2 and 3 outright,
+ * because the answer split across the two live seats never reached 80%.
+ *
+ * **A deviation test that scales with the sample**, via the shared
+ * `SIGMA_LIMIT` (see its own comment, near `OPTION_FLOOR`, for why — this
+ * is the exact same reasoning URD-059 later applied to the main histogram
+ * above, which used to have its own weaker fixed-percentage version of
+ * this rule).
+ */
+if (exemptSizes.size) {
+  const label = [...FLOOR_EXEMPT_KINDS].join('/');
+  for (const [size, total] of [...exemptSizes.entries()].sort((a, b) => a[0] - b[0])) {
+    const seats = [];
+    for (let i = 0; i < size; i++) seats.push(exemptAnswerAt.get(`${size}:${i}`) || 0);
+    const p = 1 / size;
+    const expected = total * p;
+    const sd = Math.sqrt(total * p * (1 - p));
+    console.log(
+      `answer position, ${label} (${size} options, ${total}): ` +
+        seats.map((c, i) => `${i}:${((c / total) * 100).toFixed(1)}%`).join('  ')
+    );
+    seats.forEach((count, position) => {
+      const where = `${label} with ${size} options at seat ${position}`;
+      if (count === 0) {
+        fail('the correct answer never reaches a position', `${where}: the shuffle cannot put it there`);
+        return;
+      }
+      const z = Math.abs(count - expected) / sd;
+      if (z > SIGMA_LIMIT)
+        fail(
+          'the correct answer favours a position',
+          `${where}: ${((count / total) * 100).toFixed(1)}% of ${total}, ` +
+            `${z.toFixed(1)} sigma from fair — the shuffle is not uniform`
+        );
+    });
+  }
+}
+
+/**
+ * A floor-exempt kind that is not also a choice kind is not measured at all —
+ * `recordOptions` returns before it ever consults the exemption. THE CRITIC,
+ * URD-047: the obvious future edit is to add a new two-option kind to
+ * `FLOOR_EXEMPT_KINDS` alone, whose name reads exactly like the right list to
+ * add it to, and that would silently stop measuring both its count and its
+ * position. The first draft of this item had that same defect and fixed the
+ * instance; this closes the trap.
+ */
+for (const kind of FLOOR_EXEMPT_KINDS) {
+  if (!CHOICE_KINDS.has(kind))
+    fail('a floor-exempt kind is not measured at all', `${kind} is not in CHOICE_KINDS, so its position is unchecked`);
+}
+if (!exemptSizes.size && FLOOR_EXEMPT_KINDS.size)
+  fail('a floor-exempt kind generated nothing to measure', [...FLOOR_EXEMPT_KINDS].join('/'));
 
 if (problems.length) {
   console.log(`\n${seen.size} kinds of unanswerable question:`);
@@ -420,4 +693,5 @@ if (problems.length) {
   for (const [rule, n] of seen) if (n > 3) console.log(`  (${rule} — ${n} occurrences in total)`);
   process.exit(1);
 }
+
 console.log('\nevery generated exercise is answerable from what it puts on screen');

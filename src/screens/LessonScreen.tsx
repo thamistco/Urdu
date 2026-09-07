@@ -15,8 +15,10 @@ import { SpeakerButton } from '../exercises/common';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { announce, invalidateSpeech } from '../lib/speech';
-import { dueQueue, dueBudget } from '../lib/srs';
-import { useProgressStore } from '../store/useProgressStore';
+import { dueQueue, dueBudget, type SrsGrade } from '../lib/srs';
+import { useSessionGradeFlush } from './useSessionGradeFlush';
+import { REFILL_COST, gemsShortOfRefill, minutesUntilNextHeart } from '../lib/gamification';
+import { useProgressStore, type ItemType } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { resolveLesson } from '../data/units';
 import { POSITIONS } from '../data/letters';
@@ -62,6 +64,8 @@ function answerLabel(ex: Exercise): string {
       return POSITIONS.find((p) => p.key === ex.position)?.label ?? '';
     case 'letterPick':
     case 'letterTrace':
+    case 'letterSpot':
+    case 'letterContrast':
       return `${ex.letter.name}: ${ex.letter.forms.isolated}`;
     case 'multipleChoice':
     case 'meaningPick':
@@ -91,6 +95,7 @@ function audioOf(ex: Exercise): { id: string; urdu: string; roman?: string } | n
   switch (ex.kind) {
     case 'letterPick':
     case 'letterTrace':
+    case 'letterContrast':
       return { id: ex.letter.id, urdu: ex.letter.forms.isolated, roman: ex.letter.name };
     case 'multipleChoice':
     case 'meaningPick':
@@ -98,6 +103,7 @@ function audioOf(ex: Exercise): { id: string; urdu: string; roman?: string } | n
     case 'wordBuild':
     case 'wordFromMeaning':
     case 'typeWord':
+    case 'letterSpot':
       return { id: ex.word.id, urdu: ex.word.urdu, roman: ex.word.roman };
     default:
       return null;
@@ -124,11 +130,22 @@ export function LessonScreen() {
   const showRoman = useSettingsStore((s) => s.showRoman);
   const track = useSettingsStore((s) => s.track);
   const gradeItem = useProgressStore((s) => s.gradeItem);
+  // `flushSessionGrades` (`lib/sessionGrading.ts`) keeps its item type as a
+  // loose `string`, like the rest of `lib/`, rather than depending on
+  // `ItemType` (`useProgressStore.ts`). Every id it ever holds came from
+  // `recordSighting`, called only with `ItemRef`s (`exercises/types.ts`)
+  // whose `type` is already `'letter' | 'word'` — the same union `ItemType`
+  // is — so this cast reflects a real invariant, not a papered-over one.
+  const applyGrade = useCallback(
+    (id: string, type: string, grade: SrsGrade) => gradeItem(id, type as ItemType, grade),
+    [gradeItem]
+  );
   const loseHeart = useProgressStore((s) => s.loseHeart);
   const finishLesson = useProgressStore((s) => s.finishLesson);
   const refillHearts = useProgressStore((s) => s.refillHearts);
   const hearts = useProgressStore((s) => s.hearts);
   const gems = useProgressStore((s) => s.gems);
+  const heartsUpdatedAt = useProgressStore((s) => s.heartsUpdatedAt);
 
   /**
    * Build the exercise set once, weaving in whatever SRS items are due.
@@ -151,7 +168,12 @@ export function LessonScreen() {
     // `fallbackReviewRefs` for why a review with nothing due yet needs this
     // rather than trusting a topic's word list to mean "shown".
     const known = new Set(Object.keys(srs));
-    return buildLessonExercises(lesson, due, track, known);
+    // URD-039: how many times this exact lesson has already been completed —
+    // folded into the review fallback's shuffle seed so a unit whose every
+    // word the learner already knows doesn't offer the same fixed subset of
+    // it on every single replay. See `buildLessonExercises`'s `visit` param.
+    const visit = useProgressStore.getState().completedLessons[lesson.id]?.done ?? 0;
+    return buildLessonExercises(lesson, due, track, known, visit);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lesson.id, track]);
 
@@ -176,6 +198,17 @@ export function LessonScreen() {
   const [attempt, setAttempt] = useState(0);
   const bodyRef = useRef<ScrollView>(null);
 
+  /**
+   * Which items this lesson visit has sighted, and each one's most recent
+   * grade — not yet applied to SRS. See `useSessionGradeFlush`'s own doc
+   * comment for the ref/effect wiring this delegates to (URD-044 extracted
+   * it out of this component so it could be tested without a full render),
+   * and the doc comment on `recordSighting` (`lib/sessionGrading.ts`) for
+   * why grading defers to the *last* sighting rather than the first
+   * (URD-019).
+   */
+  const { record: recordItemGrade, flushNow: flushPendingGrades } = useSessionGradeFlush(exercises, applyGrade);
+
   const current = exercises[idx];
   /** The clip the feedback banner offers to replay, when there is one. */
   const replay = current ? audioOf(current) : null;
@@ -184,14 +217,22 @@ export function LessonScreen() {
   const onGraded = useCallback(
     (result: GradedResult) => {
       setGraded(result.correct);
-      // Answering both reveals the correct answer at the foot of the exercise
-      // and opens the feedback banner, which takes a third of the screen. A
-      // learner who got it wrong was left looking at the question with the
-      // explanation off-screen below, so bring it into view.
-      if (!result.correct) {
-        setTimeout(() => bodyRef.current?.scrollToEnd({ animated: true }), 120);
-      }
-      // update SRS memory for each item touched.
+      // Answering opens the feedback banner, which takes a third of the
+      // screen, so bring it into view. Used to fire only on a wrong answer —
+      // "the explanation is off-screen below" was the case that mattered when
+      // every exercise body was a handful of short words. `wordFromMeaning`
+      // drawing full sentences (see `SENTENCE_WORDS`, generator.ts) can now
+      // put a tall option grid on screen too, and THE CRITIC measured the
+      // footer landing directly on top of the bottom two cards' Urdu text on
+      // a *correct* answer at a stock 375x812 viewport — the same off-screen
+      // problem, just from a tall question instead of a tall explanation.
+      setTimeout(() => bodyRef.current?.scrollToEnd({ animated: true }), 120);
+      // Record this sighting's grade for each item touched — overwriting
+      // whatever an earlier sighting this lesson visit recorded, rather than
+      // applying it to SRS immediately. See the doc comment on
+      // `recordSighting` (`lib/sessionGrading.ts`) for why: only the last
+      // sighting of an item in the session is graded, once, when the
+      // session is done with it.
       //
       // Every answer used to be graded `good` or `again`, which left the
       // scheduler's `easy` branch dead: recalling a word from nothing but its
@@ -199,7 +240,7 @@ export function LessonScreen() {
       // out by exactly the same amount. They are not the same evidence, so a
       // correct answer on an exercise that supplied no options counts as easy.
       const grade = !result.correct ? 'again' : demandOf(exercises[idx]) === 'produce' ? 'easy' : 'good';
-      result.items.forEach((it) => gradeItem(it.id, it.type, grade));
+      result.items.forEach((it) => recordItemGrade(it, grade));
       if (result.correct) {
         setCorrectCount((c) => c + 1);
       } else if (!isTeaching(exercises[idx])) {
@@ -215,7 +256,7 @@ export function LessonScreen() {
     // against exercise 0 — which in a grammar lesson is the teaching card, and
     // `isTeaching` therefore suppressed the heart loss for every wrong answer in
     // the lesson. Grammar cost nothing to get wrong.
-    [gradeItem, loseHeart, exercises, idx]
+    [loseHeart, exercises, idx, recordItemGrade]
   );
 
   // Stop this lesson's audio the instant the screen is left, however that
@@ -229,6 +270,15 @@ export function LessonScreen() {
       setGraded(null);
       setIdx(idx + 1);
     } else {
+      // Flushed here too, not just on unmount: `finishLesson` below persists
+      // XP/streak/gems immediately, and `LessonComplete` renders in this
+      // same mounted screen rather than a new one — so if this visit's SRS
+      // grades waited for unmount alone, closing the app from that results
+      // screen (before ever pressing "home") would persist the lesson's
+      // rewards while silently losing its SRS grading. Safe to call before
+      // the effect's own unmount-time flush later finds an already-emptied
+      // map and does nothing.
+      flushPendingGrades();
       const r = finishLesson({
         lessonId: lesson.id,
         correct: correctCount,
@@ -247,6 +297,15 @@ export function LessonScreen() {
   }
 
   if (outOfHearts) {
+    // Either the button works, or the learner is told exactly what stands
+    // between them and playing again — never a disabled button and a
+    // sentence that only talks about the option they can't take yet.
+    // A fresh profile starts with 20 gems against a 40-gem refill and earns
+    // 5-8 a lesson, so the first lockout almost never affords the button;
+    // the wait needs to be a real answer, not just implied by its absence.
+    const canAfford = gems >= REFILL_COST;
+    const short = gemsShortOfRefill(gems);
+    const waitMin = minutesUntilNextHeart(heartsUpdatedAt);
     return (
       <Screen scroll={false}>
         <SafeAreaView className="flex-1">
@@ -254,12 +313,16 @@ export function LessonScreen() {
             <Illustration name="heart" tile={false} size={60} />
             <Heading className="mb-2 mt-4 text-2xl">Out of hearts</Heading>
             <Txt className="mb-8 max-w-[280px] text-center text-sm text-paper/60">
-              Hearts refill slowly over time, or you can spend gems to keep the calm going now.
+              {canAfford
+                ? 'Hearts refill slowly over time, or you can spend gems to keep the calm going now.'
+                : `You're ${short} gem${short === 1 ? '' : 's'} short for a refill — the next heart arrives ${
+                    waitMin <= 0 ? 'any moment now' : `in about ${waitMin} minute${waitMin === 1 ? '' : 's'}`
+                  }.`}
             </Txt>
             <View className="w-full gap-3">
               <Button
                 variant="primary"
-                disabled={gems < 40}
+                disabled={!canAfford}
                 onPress={() => {
                   if (refillHearts()) {
                     feedback.correct();
@@ -269,7 +332,7 @@ export function LessonScreen() {
                   }
                 }}
               >
-                Refill · 40 gems (you have {gems})
+                Refill · {REFILL_COST} gems (you have {gems})
               </Button>
               <Button variant="ghost" onPress={() => nav.navigate('Main')}>
                 Leave for now
