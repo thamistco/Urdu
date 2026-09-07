@@ -511,7 +511,14 @@ function writeManifest() {
       // what lets an ordinary incremental run repair them: they are not
       // stale by text, so nothing else would ever re-record them, and
       // --force would re-record all 5,496 to fix 8.
-      const wrongVoice = was && was.actual && was.actual !== i.voice;
+      //
+      // But landing on the *documented* fallback (lib/voice-fallback.js) is
+      // not one of those defects — it's Chirp3-HD's own known limit on very
+      // short input, working as designed. Without this check, w-haan and
+      // every other item that legitimately falls back would read as stale
+      // forever, and every `gen:voice` run would re-request and re-pay for
+      // clips that were never actually broken.
+      const wrongVoice = was && was.actual && was.actual !== i.voice && was.actual !== FALLBACK_VOICE[i.voice];
       if (was && (was.text !== i.text || was.voice !== i.voice || (was.pace ?? LEGACY_PACE) !== i.pace || wrongVoice))
         stale.push(i);
     }
