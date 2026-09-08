@@ -72,6 +72,15 @@ jobs:
       - name: Audit content
         run: npm run audit
 
+      # The store copy quotes numbers at people. app.json's description is not
+      # only store copy: inject-web-meta.js writes it into the deployed page,
+      # so a stale number there is in the search result for the site. It said
+      # 608 lessons and the listing said 237, against a real 350, while the
+      # in-app screen was right the whole time because it counts at runtime.
+      # Offline, instant.
+      - name: Check the store copy's numbers against the content
+        run: npm run check:claims
+
       - name: Check the typed-answer matcher
         run: npm run check:roman
 

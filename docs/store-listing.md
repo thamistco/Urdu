@@ -42,8 +42,8 @@ the exact phrase people search. So the shorter name costs nothing and stops
 turning away the larger half of the audience.
 
 The script stays the differentiator; it just stops being the whole promise. The
-subtitle carries it — _From alphabet to conversation_ is the arc of the course,
-and the alphabet half of it is the part nobody else teaches properly.
+subtitle carries it — _The script and the language_ names both halves, and the
+script half is the part nobody else teaches properly.
 
 ---
 
@@ -56,12 +56,12 @@ long description is for the human who has already arrived.
 
 ### App Store
 
-| Field            | Limit | Copy                                                                                                                                                                    |
-| ---------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Name             | 30    | `Harf: Learn Urdu`                                                                                                                                                      |
-| Subtitle         | 30    | `From alphabet to conversation`                                                                                                                                         |
-| Keywords         | 100   | `urdu,nastaliq,alphabet,script,read,write,pakistani,hindi,vocabulary,flashcards,tracing,phrases`                                                                        |
-| Promotional text | 170   | `A full Urdu course, not a phrasebook: the alphabet in all four of its joining forms, 2,281 words spoken aloud, 25 grammar ideas and 256 sentences you build yourself.` |
+| Field            | Limit | Copy                                                                                                                                                  |
+| ---------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Name             | 30    | `Harf: Learn Urdu`                                                                                                                                    |
+| Subtitle         | 30    | `The script and the language`                                                                                                                         |
+| Keywords         | 100   | `urdu,nastaliq,alphabet,script,read,write,pakistani,hindi,vocabulary,flashcards,tracing,phrases`                                                      |
+| Promotional text | 170   | `The alphabet in all four of its joining forms, 2,281 words spoken aloud, 25 grammar ideas and 256 sentences you build yourself. A full Urdu course.` |
 
 The subtitle deliberately repeats nothing from the name. "Urdu" is in the name,
 so the subtitle spends its thirty characters on the shape of the course — where
@@ -95,18 +95,18 @@ brand paying twice for one word.
 > actually drew the letter rather than just filled the space.
 >
 > **2,281 words across 122 topics**, from family and food to law and medicine,
-> each one recorded in a single consistent voice. 2,748 clips are bundled with
-> the app, so pronunciation works offline and sounds the same on every phone.
+> each one recorded in a single consistent voice, with a second full recording
+> in a man's voice if you prefer it. Every clip is bundled with the app, so
+> pronunciation works offline and sounds the same on every phone.
 >
 > **Sentences you build yourself.** 256 sentences, assembled word by word,
-> right to left, so Urdu's word order becomes something you feel rather than a
-> rule you memorise. Plus 17 reading passages and 12 conversations, each read by
+> right to left, until Urdu's word order starts to feel natural. Plus 17 reading passages and 12 conversations, each read by
 > two different voices so you can follow who is speaking.
 >
 > **25 grammar ideas, one at a time.** Pronouns, gender, the oblique case, the
 > mujhe construction, causatives — explained in plain English, then drilled.
 >
-> **It remembers what you are about to forget.** Every answer feeds a spaced
+> **It brings back the words you are closest to forgetting.** Every answer feeds a spaced
 > repetition schedule. Words you got wrong come back within minutes; words you
 > know are held back for weeks.
 >
@@ -114,7 +114,8 @@ brand paying twice for one word.
 > course — every word, sentence, and conversation — is taught in transliteration
 > instead. Change your mind whenever you like.
 >
-> 237 lessons across 39 units, from the first letter to holding an opinion.
+> 350 lessons across 41 units, ending in conversations where you say what you
+> actually think.
 >
 > Free. No advertisements. No account needed — your progress is saved on your
 > device, and signing in is only there if you want it on more than one.
@@ -127,18 +128,18 @@ Nothing above is rounded up. `npm run audit` prints these counts; if a number
 here stops matching, the listing is out of date rather than the audit being
 wrong.
 
-| Claim                                    | Source                                         |
-| ---------------------------------------- | ---------------------------------------------- |
-| 40 letters × 4 forms = 160 shapes        | `LETTERS`, `POSITIONS`                         |
-| 2,281 words, 122 topics                  | `WORDS`, `TOPICS`                              |
-| 256 sentences, 17 passages, 12 dialogues | `SENTENCES`, `PASSAGES`, `DIALOGUES`           |
-| 25 grammar concepts                      | `GRAMMAR`                                      |
-| 237 lessons, 39 units                    | `ALL_LESSONS`, `UNITS`                         |
-| 2,748 recorded clips, one voice, offline | `assets/voice/`, `npm run check:voice`         |
-| Two voices in dialogues                  | `Dialogue.voices`, `scripts/generate-voice.js` |
-| Spaced repetition                        | `src/lib/srs.ts`, `npm run check:srs`          |
-| Roman track                              | `unitsForTrack`, `npm run check:answerable`    |
-| Free, no ads, no account                 | no billing or ad dependency in the project     |
+| Claim                                      | Source                                                    |
+| ------------------------------------------ | --------------------------------------------------------- |
+| 40 letters × 4 forms = 160 shapes          | `LETTERS`, `POSITIONS`                                    |
+| 2,281 words, 122 topics                    | `WORDS`, `TOPICS`                                         |
+| 256 sentences, 17 passages, 12 dialogues   | `SENTENCES`, `PASSAGES`, `DIALOGUES`                      |
+| 25 grammar concepts                        | `GRAMMAR`                                                 |
+| 350 lessons, 41 units                      | `ALL_LESSONS`, `UNITS`                                    |
+| 2,748 clips per voice, two voices, offline | `assets/voice/`, `assets/voice-m/`, `npm run check:voice` |
+| Two voices in dialogues                    | `Dialogue.voices`, `scripts/generate-voice.js`            |
+| Spaced repetition                          | `src/lib/srs.ts`, `npm run check:srs`                     |
+| Roman track                                | `unitsForTrack`, `npm run check:answerable`               |
+| Free, no ads, no account                   | no billing or ad dependency in the project                |
 
 ## Not claimed
 
