@@ -110,7 +110,7 @@ export const ESSENTIAL_PACKS: TopicPack[] = [
       ['w-jab', 'جب', 'jab', 'when', '🕐'],
       ['w-tab', 'تب', 'tab', 'then', '🕑'],
       ['w-fauran2', 'اچانک', 'achaanak', 'suddenly', '⚡'],
-      ['w-shaz', 'شاذ', 'shaaz', 'rarely', '🌒'],
+      ['w-shaz', 'کبھی کبھار', 'kabhi kabhaar', 'rarely', '🌒'],
       ['w-hameshaa2', 'مسلسل', 'musalsal', 'continuously', '➰'],
       ['w-lamha', 'لمحہ', 'lamha', 'moment', '⏳'],
       ['w-second', 'سیکنڈ', 'saikanḍ', 'second', '⏱️'],

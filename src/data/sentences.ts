@@ -1383,8 +1383,8 @@ export const SENTENCES: Sentence[] = [
   },
   {
     id: 's-166',
-    words: ['میرے', 'پاس', 'دو', 'بہنیں', 'ہیں'],
-    roman: 'mere paas do behneñ hain',
+    words: ['میری', 'دو', 'بہنیں', 'ہیں'],
+    roman: 'meri do behneñ hain',
     meaning: 'I have two sisters',
     level: 'beginner',
     concept: 'g-plurals',
@@ -1557,8 +1557,8 @@ export const SENTENCES: Sentence[] = [
   },
   {
     id: 's-188',
-    words: ['مجھے', 'پیسے', 'نہیں', 'چاہیے'],
-    roman: 'mujhe paise nahiñ chaahiye',
+    words: ['مجھے', 'پیسے', 'نہیں', 'چاہئیں'],
+    roman: 'mujhe paise nahiñ chaahiyeñ',
     meaning: 'I don’t want money',
     level: 'elementary',
     concept: 'g-negation',
@@ -1781,7 +1781,7 @@ export const SENTENCES: Sentence[] = [
   },
   {
     id: 's-216',
-    words: ['اسے', 'اردو', 'سمجھ', 'آتی', 'ہے'],
+    words: ['اُسے', 'اردو', 'سمجھ', 'آتی', 'ہے'],
     roman: 'use urdu samajh aati hai',
     meaning: 'She understands Urdu',
     level: 'intermediate',
@@ -2040,7 +2040,7 @@ export const SENTENCES: Sentence[] = [
   },
   {
     id: 's-248',
-    words: ['جس', 'نے', 'سچ', 'بولا', 'اسے', 'سب', 'نے', 'مانا'],
+    words: ['جس', 'نے', 'سچ', 'بولا', 'اُسے', 'سب', 'نے', 'مانا'],
     roman: 'jis ne sach bola use sab ne maana',
     meaning: 'Everyone believed the one who spoke the truth',
     level: 'advanced',
@@ -2314,8 +2314,8 @@ export const PASSAGES: Passage[] = [
         meaning: 'There are many trees in the garden.',
       },
       {
-        urdu: 'صبح کو پرندے گاتے ہیں۔',
-        roman: 'subah ko parinde gaate hain.',
+        urdu: 'صبح کو پرندے چہچہاتے ہیں۔',
+        roman: 'subah ko parinde chehchahaate hain.',
         meaning: 'In the morning the birds sing.',
       },
       {
@@ -3056,8 +3056,8 @@ export const DIALOGUES: Dialogue[] = [
       {
         speaker: 'A',
         name: 'Guest',
-        urdu: 'معافی چاہتا ہوں، دیر ہو گئی۔',
-        roman: 'maafi chaahta hoon, der ho gayi.',
+        urdu: 'معافی چاہتی ہوں، دیر ہو گئی۔',
+        roman: 'maafi chaahti hoon, der ho gayi.',
         meaning: 'I am sorry, I am late.',
       },
       {
@@ -3173,8 +3173,8 @@ export const DIALOGUES: Dialogue[] = [
       {
         speaker: 'B',
         name: 'Manager',
-        urdu: 'افسوس ہوا۔ وجہ پوچھ سکتا ہوں؟',
-        roman: 'afsos hua. wajah poochh sakta hoon?',
+        urdu: 'افسوس ہوا۔ وجہ پوچھ سکتی ہوں؟',
+        roman: 'afsos hua. wajah poochh sakti hoon?',
         meaning: 'I am sorry to hear it. May I ask why?',
       },
       {
