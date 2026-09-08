@@ -14,7 +14,7 @@ export const NATURE_PACKS: TopicPack[] = [
       ['w-baaz', 'باز', 'baaz', 'falcon / hawk', '🦅'],
       ['w-koyal', 'کوئل', 'koyal', 'cuckoo', '🎶'],
       ['w-bulbul', 'بلبل', 'bulbul', 'nightingale', '🐤'],
-      ['w-tota', 'طوطا', 'toota', 'parrot', '🦜'],
+      ['w-tota', 'طوطا', 'tota', 'parrot', '🦜'],
       ['w-hans', 'ہنس', 'hans', 'swan / goose', '🦢'],
       ['w-shutarmurgh', 'شترمرغ', 'shutarmurgh', 'ostrich', '🪶'],
       ['w-par', 'پر', 'par', 'feather / wing', '🪶'],

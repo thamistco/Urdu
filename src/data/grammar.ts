@@ -97,7 +97,8 @@ export const GRAMMAR: GrammarConcept[] = [
         meaning: 'You (polite) are a teacher',
         answer: 'آپ',
         options: ['آپ', 'میں', 'وہ', 'ہم'],
-        because: 'ہیں (hain) is the verb form that goes with آپ (aap).',
+        because:
+          'ہیں (hain) fits آپ (aap), ہم (hum) and a plural وہ (wo) alike, so the English tells you which one is wanted here. Only میں (main) is ruled out: it takes ہوں (hoon).',
       },
       {
         id: 'g-pronouns-d2',
@@ -224,7 +225,7 @@ export const GRAMMAR: GrammarConcept[] = [
     summary: 'One book, two books: how nouns change',
     level: 'beginner',
     explain: [
-      'Masculine nouns ending in ‑ا (‑a) swap it for ‑ے (‑e): لڑکا → لڑکے (laṛka → laṛke), کمرا → کمرے (kamra → kamre).',
+      'Masculine nouns ending in ‑ا (‑a) swap it for ‑ے (‑e): لڑکا → لڑکے (laṛka → laṛke), کمرہ → کمرے (kamra → kamre).',
       'Every other masculine noun looks the same in the plural. گھر (ghar) is “house” and “houses”; the number or the verb tells you which.',
       'Feminine nouns ending in ‑ی (‑i) add ‑اں (‑aañ): لڑکی → لڑکیاں (laṛki → laṛkiyaañ). Feminine nouns ending in a consonant add ‑یں (‑eñ): کتاب → کتابیں (kitaab → kitaabeñ), رات → راتیں (raat → raateñ).',
     ],
@@ -364,12 +365,12 @@ export const GRAMMAR: GrammarConcept[] = [
       },
       {
         id: 'g-post-d2',
-        prompt: 'وہ اسکول ___ جاتا ہے',
-        promptRoman: 'wo iskool ___ jaata hai',
-        meaning: 'He goes to school',
+        prompt: 'میں نے لڑکے ___ کتاب دی',
+        promptRoman: 'main ne laṛke ___ kitaab di',
+        meaning: 'I gave the book to the boy',
         answer: 'کو',
         options: ['کو', 'پر', 'سے', 'میں'],
-        because: 'کو (ko) marks the destination “to”.',
+        because: 'کو (ko) marks the person something is given to.',
       },
     ],
   },
@@ -408,7 +409,7 @@ export const GRAMMAR: GrammarConcept[] = [
         meaning: 'There is a table in the room',
         answer: 'ے',
         options: ['ے', 'ا', 'ی', 'وں'],
-        because: 'کمرا (kamra) becomes کمرے (kamre) before the postposition میں (meñ).',
+        because: 'کمرہ (kamra) becomes کمرے (kamre) before the postposition میں (meñ).',
       },
     ],
   },
@@ -554,7 +555,7 @@ export const GRAMMAR: GrammarConcept[] = [
         roman: 'main thaka hoon kyoñke main ne kaam kiya',
         meaning: 'I am tired because I worked',
       },
-      { urdu: 'چائے یا کافی؟', roman: 'chai ya coffee?', meaning: 'Tea or coffee?' },
+      { urdu: 'چائے یا کافی؟', roman: 'chai ya kaafi?', meaning: 'Tea or coffee?' },
       {
         urdu: 'وہ محنتی ہے لیکن خاموش ہے',
         roman: 'wo mehnati hai lekin khaamosh hai',
@@ -869,7 +870,7 @@ export const GRAMMAR: GrammarConcept[] = [
       ],
     },
     examples: [
-      { urdu: 'چائے کافی سے سستی ہے', roman: 'chai coffee se sasti hai', meaning: 'Tea is cheaper than coffee' },
+      { urdu: 'چائے کافی سے سستی ہے', roman: 'chai kaafi se sasti hai', meaning: 'Tea is cheaper than coffee' },
       {
         urdu: 'یہ کتاب سب سے دلچسپ ہے',
         roman: 'ye kitaab sab se dilchasp hai',
@@ -1096,7 +1097,7 @@ export const GRAMMAR: GrammarConcept[] = [
         meaning: 'The child fell asleep',
         answer: 'گیا',
         options: ['گیا', 'لیا', 'دیا', 'ڈالا'],
-        because: 'جانا (jaana) marks the action as completed, he went from awake to asleep.',
+        because: 'جانا (jaana) marks the action as completed: he went from awake to asleep.',
       },
     ],
   },

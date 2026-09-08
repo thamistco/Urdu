@@ -198,7 +198,7 @@ export const SOCIETY_PACKS: TopicPack[] = [
   pack(
     { id: 'honorifics', title: 'Respect & Address', icon: '🙇', blurb: 'How Urdu shows deference.', level: 'intermediate' },
     [
-      ['w-aap-jee', 'جی', 'jee', 'yes / respectful particle', '🙏'],
+      ['w-aap-jee', 'جی', 'ji', 'yes / respectful particle', '🙏'],
       ['w-sahib', 'صاحب', 'saahib', 'sir / Mr', '🎩'],
       ['w-begum', 'بیگم', 'begum', 'lady / Mrs', '👩'],
       ['w-tashreef', 'تشریف', 'tashreef', 'honoured presence', '🪑'],

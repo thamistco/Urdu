@@ -48,7 +48,7 @@ export const ESSENTIAL_PACKS: TopicPack[] = [
       ['w-bhara', 'بھرا', 'bhara', 'full', '🟦'],
       ['w-jorra', 'جوڑا', 'joṛa', 'pair', '👥'],
       ['w-darjan', 'درجن', 'darjan', 'dozen', '📦'],
-      ['w-hissa2', 'ٹکڑا', 'tukṛa', 'piece', '🧩'],
+      ['w-hissa2', 'ٹکڑا', 'ṭukṛa', 'piece', '🧩'],
       ['w-tamaam', 'تمام', 'tamaam', 'entire', '🌐'],
     ]
   ),

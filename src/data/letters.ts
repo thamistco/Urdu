@@ -139,7 +139,7 @@ export const LETTERS: Letter[] = [
     emoji: '🍎',
     icon: 'pomegranate',
     group: 1,
-    note: 'A single upright stroke, no madda (wavy hat) on top. It never joins to the letter after it, a natural break in the word.',
+    note: 'A single upright stroke, no madda (wavy hat) on top. It never joins to the letter after it, so it makes a natural break in the word.',
   },
   {
     id: 'alif-madda',
@@ -152,7 +152,7 @@ export const LETTERS: Letter[] = [
     meaning: 'mango',
     emoji: '🥭',
     group: 1,
-    note: 'Alif wearing a wavy hat (madda). It starts a word with a long “aa”, alif alone cannot do that at the beginning.',
+    note: 'Alif wearing a wavy hat (madda). It starts a word with a long “aa”, which alif alone cannot do at the beginning.',
     confusableWith: 'alif',
   },
   {
@@ -166,7 +166,7 @@ export const LETTERS: Letter[] = [
     meaning: 'cat',
     emoji: '🐈',
     group: 1,
-    note: 'One dot below, not pe’s three. The bowl stays shallow in Nastaliq, it sits, it does not scoop.',
+    note: 'One dot below, not pe’s three. The bowl stays shallow in Nastaliq. It sits; it does not scoop.',
   },
   {
     id: 'pe',
@@ -179,7 +179,7 @@ export const LETTERS: Letter[] = [
     meaning: 'water',
     emoji: '💧',
     group: 1,
-    note: 'Same bowl as be, but three dots below. A Persian/Urdu letter, Arabic has no p.',
+    note: 'Same bowl as be, but three dots below. A Persian and Urdu letter; Arabic has no p.',
     confusableWith: 'be',
   },
   {
@@ -193,7 +193,7 @@ export const LETTERS: Letter[] = [
     meaning: 'star',
     emoji: '⭐',
     group: 1,
-    note: 'Two dots above. Soft dental t, tongue on the teeth, not the ridge. The everyday “t”, the one to reach for by default in native and Persian vocabulary alike (دوست/dost “friend”, بات/baat “talk / matter”), and in most Arabic loanwords too. ط never occurs outside Arabic/Persian loanwords, so seeing that one does mean “borrowed”, but seeing this one doesn’t rule borrowing out.',
+    note: 'Two dots above. Soft dental t, tongue on the teeth, not the ridge. This is the everyday “t”, as in دوست (dost, “friend”). ط only turns up in borrowed words.',
   },
   {
     id: 'Te',
@@ -221,7 +221,7 @@ export const LETTERS: Letter[] = [
     meaning: 'fruit',
     emoji: '🍇',
     group: 2,
-    note: 'Three dots above. One of three letters spelling the same “s”, inherited from Arabic, not Urdu’s everyday “s” (that’s س, seen): anchor it to the word this lesson actually shows it in, متاثر (mutasir, “impressed”), rather than guessing.',
+    note: 'Three dots above. One of three letters spelling the same “s”, borrowed from Arabic; you meet it in متاثر (mutaassir, “impressed”).',
   },
   {
     id: 'jeem',
@@ -261,7 +261,7 @@ export const LETTERS: Letter[] = [
     meaning: 'sweet dish',
     emoji: '🍮',
     group: 2,
-    note: 'A dotless deep curve; khe adds one dot above it. It sounds the same as choṭī he, inherited from Arabic, not Urdu’s everyday “h” (that’s ہ, choṭī he): anchor it to the word this lesson actually shows it in, خدا حافظ (khuda haafiz, “goodbye”), rather than guessing.',
+    note: 'A dotless deep curve; khe adds one dot above it. It sounds like choṭī he, borrowed from Arabic; you meet it in خدا حافظ (khuda haafiz, “goodbye”).',
   },
   {
     id: 'khe',
@@ -317,7 +317,7 @@ export const LETTERS: Letter[] = [
     meaning: 'a little',
     emoji: '🤏',
     group: 3,
-    note: 'Daal with one dot above. One of three “z” spellings inherited from Arabic/Persian, not Urdu’s everyday “z” (that’s ز, ze): anchor it to the word this lesson actually shows it in, کاغذ (kaaghaz, “paper”), rather than guessing.',
+    note: 'Daal with one dot above. One of three “z” spellings borrowed from Arabic and Persian; you meet it in کاغذ (kaaghaz, “paper”).',
     confusableWith: 'daal',
   },
   {
@@ -358,7 +358,7 @@ export const LETTERS: Letter[] = [
     meaning: 'earth / land',
     emoji: '🌍',
     group: 3,
-    note: 'Re with one dot above. The everyday “z”, the one to reach for by default in native and Persian vocabulary alike (زندگی/zindagi “life”, بازار/bazaar “market”), and in most Arabic loanwords too. ذ ض ظ never occur outside a handful of Arabic/Persian loanwords, so seeing one of those three does mean “borrowed”, but seeing this one doesn’t rule borrowing out.',
+    note: 'Re with one dot above. This is the everyday “z”, as in زندگی (zindagi, “life”). The other three spellings, ذ ض ظ, only turn up in borrowed words.',
     confusableWith: 're',
   },
   {
@@ -388,7 +388,7 @@ export const LETTERS: Letter[] = [
     meaning: 'apple',
     emoji: '🍎',
     group: 4,
-    note: 'Three teeth, no dots above them; sheen has three. When it joins forward the teeth flatten almost to a line. The everyday “s”, the one to reach for by default in native and Persian vocabulary alike (دوست/dost “friend”, سبزی/sabzi “vegetable”), and in most Arabic loanwords too. ث and ص never occur outside Arabic/Persian loanwords, so seeing one of those two does mean “borrowed”, but seeing this one doesn’t rule borrowing out.',
+    note: 'Three teeth, no dots above them; sheen has three. When it joins forward the teeth flatten almost to a line. This is the everyday “s”, as in سبزی (sabzi, “vegetable”). ث and ص only turn up in borrowed words.',
   },
   {
     id: 'sheen',
@@ -415,7 +415,7 @@ export const LETTERS: Letter[] = [
     meaning: 'soap',
     emoji: '🧼',
     group: 4,
-    note: 'A wide loop with a tail, no dot above; zwaad has one. It sounds the same as seen, inherited from Arabic, not Urdu’s everyday “s” (that’s س, seen): anchor it to the word this lesson actually shows it in, صفر (sifar, “zero”), rather than guessing.',
+    note: 'A wide loop with a tail, no dot above; zwaad has one. It sounds like seen, borrowed from Arabic; you meet it in صفر (sifar, “zero”).',
   },
   {
     id: 'zwaad',
@@ -428,7 +428,7 @@ export const LETTERS: Letter[] = [
     meaning: 'multiply / strike',
     emoji: '✖️',
     group: 4,
-    note: 'Swaad with one dot above. One of three “z” spellings inherited from Arabic/Persian, not Urdu’s everyday “z” (that’s ز, ze): anchor it to the word this lesson actually shows it in, ضرورت (zaroorat, “necessity”), rather than guessing.',
+    note: 'Swaad with one dot above. One of three “z” spellings borrowed from Arabic and Persian; you meet it in ضرورت (zaroorat, “necessity”).',
     confusableWith: 'swaad',
   },
 
@@ -440,11 +440,11 @@ export const LETTERS: Letter[] = [
     connects: true,
     forms: connector('ط'),
     word: 'طوطا',
-    roman: 'toota',
+    roman: 'tota',
     meaning: 'parrot',
     emoji: '🦜',
     group: 5,
-    note: 'A loop with an upright stroke, no dot above; zoe has one. It sounds like te, inherited from Arabic, not Urdu’s everyday “t” (that’s ت, te): anchor it to the word this lesson actually shows it in, خط (khat, “letter”), rather than guessing.',
+    note: 'A loop with an upright stroke, no dot above; zoe has one. It sounds like te, borrowed from Arabic; you meet it in خط (khat, “letter”).',
   },
   {
     id: 'zoe',
@@ -457,7 +457,7 @@ export const LETTERS: Letter[] = [
     meaning: 'vessel',
     emoji: '🏺',
     group: 5,
-    note: 'To’e with one dot above. One of three “z” spellings inherited from Arabic/Persian, not Urdu’s everyday “z” (that’s ز, ze): anchor it to the word this lesson actually shows it in, منظر (manzar, “scene/view”), rather than guessing.',
+    note: 'To’e with one dot above. One of three “z” spellings borrowed from Arabic and Persian; you meet it in منظر (manzar, “scene/view”).',
     confusableWith: 'toe',
   },
   {
@@ -471,7 +471,7 @@ export const LETTERS: Letter[] = [
     meaning: 'glasses',
     emoji: '👓',
     group: 5,
-    note: 'It shifts shape completely, so its four forms look very different, and carries no dot; ghain has one above. In Urdu it is not a throat sound: it usually just carries a vowel, or is silent.',
+    note: 'It carries no dot; ghain has one above. It shifts shape completely, so its four forms look very different. In Urdu it is not a throat sound: it usually just carries a vowel, or is silent.',
   },
   {
     id: 'ghain',
@@ -543,7 +543,7 @@ export const LETTERS: Letter[] = [
     // on `LetterLabScreen`), a learner hears "ghar," not gaaf's own plain
     // "g". گلاب (gulab, "rose") keeps gaaf isolated from any digraph.
     word: 'گلاب',
-    roman: 'gulab',
+    roman: 'gulaab',
     meaning: 'rose',
     emoji: '🌹',
     icon: 'flower',
@@ -573,7 +573,7 @@ export const LETTERS: Letter[] = [
     connects: true,
     forms: connector('م'),
     word: 'ماں',
-    roman: 'maan',
+    roman: 'maañ',
     meaning: 'mother',
     emoji: '🤱',
     group: 7,
@@ -590,7 +590,7 @@ export const LETTERS: Letter[] = [
     meaning: 'name',
     emoji: '✍️',
     group: 7,
-    note: 'Deep bowl, one dot above; noon ghunna has none. Joined forward it looks like be, the dot is the only tell.',
+    note: 'Deep bowl, one dot above; noon ghunna has none. Joined forward it looks like be; the dot is the only tell.',
   },
   {
     id: 'noon-ghunna',
@@ -604,7 +604,7 @@ export const LETTERS: Letter[] = [
     emoji: '✅',
     icon: 'check',
     group: 7,
-    note: 'A dotless noon at the end of a word, it nasalises the vowel before it.',
+    note: 'A dotless noon at the end of a word. It nasalises the vowel before it.',
     // Silent alone, so the clip says its name. See `pronounce`'s own comment.
     pronounce: 'نون غنہ',
     confusableWith: 'noon',
@@ -679,7 +679,7 @@ export const LETTERS: Letter[] = [
     meaning: 'elephant',
     emoji: '🐘',
     group: 8,
-    note: 'The “small” h. Its four faces look remarkably different, watch them shift. The everyday “h”, the one to reach for by default in native and Persian vocabulary alike (بہن/behen “sister”, ہاں/haañ “yes”), and in most Arabic loanwords too. ح never occurs outside Arabic/Persian loanwords, so seeing that one does mean “borrowed”, but seeing this one doesn’t rule borrowing out.',
+    note: 'The “small” h. Its four faces look remarkably different, so watch them shift. This is the everyday “h”, as in ہاں (haañ, “yes”). ح only turns up in borrowed words.',
   },
   {
     id: 'do-chashmi-he',
@@ -692,7 +692,7 @@ export const LETTERS: Letter[] = [
     meaning: 'food',
     emoji: '🍲',
     group: 8,
-    note: 'The h with two eyes. It never stands alone in meaning, it aspirates the letter before it (k→kh, b→bh).',
+    note: 'The h with two eyes. It never stands alone; it aspirates the letter before it (k→kh, b→bh).',
     // Silent alone, so the clip says its name. See `pronounce`'s own comment.
     pronounce: 'دو چشمی ہے',
     // URD-067: deliberately no `confusableWith: 'choti-he'` — see the group 8
@@ -716,7 +716,7 @@ export const LETTERS: Letter[] = [
     meaning: 'tea',
     emoji: '🍵',
     group: 8,
-    note: 'A tiny mark, not a full letter, a catch in the voice between two vowels.',
+    note: 'A tiny mark rather than a full letter. It marks a catch in the voice between two vowels.',
   },
   {
     id: 'choti-ye',
@@ -729,7 +729,7 @@ export const LETTERS: Letter[] = [
     meaning: 'memory',
     emoji: '💭',
     group: 8,
-    note: 'Serves as “y” and the long vowel “ee” with a small hooked tail, not baṛī ye’s long sweeping one. Two dots below appear in some styles.',
+    note: 'Its tail is small and hooked, not baṛī ye’s long sweep. Serves as “y” and the long vowel “ee”. Two dots below appear in some styles.',
   },
   {
     id: 'baRi-ye',
