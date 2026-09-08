@@ -114,8 +114,8 @@ const SCRIPT_LESSON_IDS = UNITS.filter((u) => u.level === 'beginner')
 // and the emoji that used to sit here were read by nothing at all.
 const GOALS: { key: Goal; label: string; desc: string }[] = [
   { key: 'family', label: 'Speak with family', desc: 'Parents, grandparents, relatives back home' },
-  { key: 'read', label: 'Read & write it', desc: 'The script itself: Nastaliq' },
-  { key: 'heritage', label: 'Reconnect with heritage', desc: 'Culture, faith, identity' },
+  { key: 'read', label: 'Read & write it', desc: 'Nastaliq, the Urdu script' },
+  { key: 'heritage', label: 'Reconnect with heritage', desc: 'Poetry, faith, where your family is from' },
   { key: 'curious', label: 'I’m just curious', desc: 'No particular reason' },
 ];
 
@@ -370,7 +370,7 @@ export function OnboardingScreen() {
               Learn Urdu properly.
             </Display>
             <Txt className="mb-8 mt-2 max-w-[300px] text-center text-[14px] leading-5 text-paper/85">
-              From the first letter to a real conversation.
+              Start with the alphabet. Keep going until you can talk to people.
             </Txt>
 
             <View className="mb-9 w-full max-w-[330px] flex-row justify-between gap-2">
@@ -479,8 +479,9 @@ export function OnboardingScreen() {
       <Screen>
         <Reveal>
           <Dots of="track" />
-          <Heading className="mb-1 text-2xl">How do you want to learn?</Heading>
-          <Txt className="mb-4 text-sm text-paper/55">The most important choice here.</Txt>
+          {/* No subtitle: TrackChooser's own opening line says the same thing
+              concretely, with a real lesson count, two lines further down. */}
+          <Heading className="mb-4 text-2xl">How do you want to learn?</Heading>
           <TrackChooser value={track} onChange={setTrack} />
           <Button className="mt-6" onPress={() => setStep(MALE_VOICE_AVAILABLE ? 'voice' : 'background')}>
             Continue
@@ -503,7 +504,7 @@ export function OnboardingScreen() {
   if (step === 'voice') {
     const OPTIONS: { key: VoiceGender; label: string; desc: string; icon: IconName }[] = [
       { key: 'f', label: 'A woman’s voice', desc: 'The voice the course was recorded in', icon: 'woman' },
-      { key: 'm', label: 'A man’s voice', desc: 'The same words, same pace', icon: 'man' },
+      { key: 'm', label: 'A man’s voice', desc: 'The whole course, in a second recording', icon: 'man' },
     ];
     return (
       <Screen>
@@ -681,7 +682,7 @@ export function OnboardingScreen() {
             })}
           </View>
           <Txt className="mt-6 text-center text-xs text-paper/55">
-            No wrong answers here: this just finds your starting point.
+            No wrong answers. This only works out where to start you.
           </Txt>
         </Reveal>
       </Screen>
@@ -696,7 +697,7 @@ export function OnboardingScreen() {
           <Dots of="daily" />
           <Heading className="mb-1 text-2xl">Set a daily goal</Heading>
           <Txt className="mb-6 text-sm text-paper/55">
-            A gentle contract with yourself. You can change it whenever you like.
+            Choose one you can keep. You can change it whenever you like.
           </Txt>
           <View className="gap-3">
             {DAILY_GOALS.map((g) => {
@@ -758,7 +759,7 @@ export function OnboardingScreen() {
             </Eyebrow>
             <Bold className="text-lg">{lvlName}</Bold>
             <Txt className="mt-1 text-sm text-paper/60">
-              We’ll begin exactly where you are, and the words you miss will come back first.
+              We start you where you are, and the words you miss come back first.
             </Txt>
           </View>
           {basicsSkips.length > 0 && (
@@ -770,8 +771,8 @@ export function OnboardingScreen() {
                 Moved ahead
               </Eyebrow>
               <Txt className="mt-1 text-sm text-paper/60">
-                The basic words you already showed you know are marked done, so your path leads straight to the script
-                and reading. Everything else is still yours to complete.
+                The basic words you showed you know are marked done, so you go straight to the script and reading. The
+                rest of the course is still there.
               </Txt>
             </View>
           )}
