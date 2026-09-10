@@ -9,7 +9,8 @@ import { Screen, CONTENT_MAX_WIDTH } from '../components/Screen';
 import { Button } from '../components/Button';
 import { ProgressBar } from '../components/ProgressBar';
 import { Hearts } from '../components/Stats';
-import { Txt, Bold, Heading } from '../components/Text';
+import { Txt, Bold, Heading, Eyebrow } from '../components/Text';
+import { Lexeme } from '../components/Lexeme';
 import { Illustration } from '../components/Illustration';
 import { SpeakerButton } from '../exercises/common';
 import { palette, withAlpha } from '../theme';
@@ -58,31 +59,51 @@ function demandOf(ex: Exercise | undefined): 'produce' | 'recognise' {
   }
 }
 
-function answerLabel(ex: Exercise): string {
+/**
+ * What to show a learner who just got it wrong.
+ *
+ * This used to be one string, `"لال: red"`, set in the smallest type on the
+ * screen next to the encouragement. It was missing the transliteration
+ * entirely, which is the one part a learner answering in Roman needs most: they
+ * typed `lal`, were told they were wrong, and were then shown a script they may
+ * not read and a translation they already knew. The word they actually got
+ * wrong was never on screen.
+ *
+ * Returned in parts rather than joined, so the reveal can set the script at a
+ * readable size with the Roman under it, the way `Lexeme` renders a word
+ * everywhere else, instead of running all three together after a colon.
+ *
+ * `label` is for the answers that are neither a word nor a letter. A letter's
+ * *position* is "initial", and there is nothing to transliterate.
+ */
+type AnswerReveal = { script?: string; roman?: string; meaning?: string; label?: string };
+
+function answerReveal(ex: Exercise): AnswerReveal | null {
   switch (ex.kind) {
     case 'letterForm':
-      return POSITIONS.find((p) => p.key === ex.position)?.label ?? '';
+      return { label: POSITIONS.find((p) => p.key === ex.position)?.label ?? '' };
     case 'letterPick':
     case 'letterTrace':
     case 'letterSpot':
     case 'letterContrast':
-      return `${ex.letter.name}: ${ex.letter.forms.isolated}`;
+      // A letter's name *is* its reading, so it sits where the Roman goes.
+      return { script: ex.letter.forms.isolated, roman: ex.letter.name };
     case 'multipleChoice':
     case 'meaningPick':
     case 'listenTap':
     case 'wordBuild':
     case 'wordFromMeaning':
     case 'typeWord':
-      return `${ex.word.urdu}: ${ex.word.meaning}`;
+      return { script: ex.word.urdu, roman: ex.word.roman, meaning: ex.word.meaning };
     default:
-      return '';
+      return null;
   }
 }
 
 /**
  * What this exercise can say out loud, if anything.
  *
- * Mirrors `answerLabel` above, which describes the same exercises in text. A
+ * Mirrors `answerReveal` above, which describes the same exercises in text. A
  * wrong answer is the moment the pronunciation is worth most — and on a
  * listening question it is the whole question, which until now vanished behind
  * the feedback banner the instant it was answered wrongly. The learner heard it
@@ -212,6 +233,12 @@ export function LessonScreen() {
   const current = exercises[idx];
   /** The clip the feedback banner offers to replay, when there is one. */
   const replay = current ? audioOf(current) : null;
+  /**
+   * The answer, spelled out, and only where spelling it out is the point: a
+   * wrong answer on a question that was actually being asked. A teaching card
+   * has no wrong answer to reveal, and a correct one does not need telling.
+   */
+  const reveal = graded === false && current && !isTeaching(current) ? answerReveal(current) : null;
   const total = exercises.length;
 
   const onGraded = useCallback(
@@ -417,9 +444,6 @@ export function LessonScreen() {
                           ? 'Beautifully done'
                           : 'Not quite, but that’s okay'}
                     </Bold>
-                    {!graded && current && !isTeaching(current) ? (
-                      <Txt className="text-xs text-paper/70">Answer: {answerLabel(current)}</Txt>
-                    ) : null}
                   </View>
                   {/* Hear it again. Only on a wrong answer, which is where it
                       was asked for and where it is worth most: the app says the
@@ -433,6 +457,42 @@ export function LessonScreen() {
                     />
                   ) : null}
                 </View>
+
+                {/* The answer, in full, and only when it was got wrong.
+                    Script at a size worth reading, the transliteration under
+                    it the way `Lexeme` sets a word everywhere else, and the
+                    English on its own line rather than after a colon.
+
+                    The Roman is shown on every track except `script`, where
+                    TrackChooser promises "No transliteration to fall back on"
+                    as that track's stated cost. Breaking that promise at the
+                    exact moment it is tempting is how a setting stops meaning
+                    anything. */}
+                {reveal ? (
+                  <View
+                    className="mb-3 rounded-xl px-3.5 py-3"
+                    style={{ backgroundColor: withAlpha(palette.rose, 0.12) }}
+                  >
+                    <Eyebrow style={{ color: palette.roseLight }} className="mb-1.5">
+                      The answer
+                    </Eyebrow>
+                    {reveal.label ? (
+                      <Bold className="text-[15px]">{reveal.label}</Bold>
+                    ) : (
+                      <>
+                        <Lexeme
+                          urdu={reveal.script ?? ''}
+                          roman={reveal.roman}
+                          track={track === 'script' ? 'script' : 'both'}
+                          size={26}
+                          align="left"
+                        />
+                        {reveal.meaning ? <Txt className="mt-1.5 text-sm text-paper/85">{reveal.meaning}</Txt> : null}
+                      </>
+                    )}
+                  </View>
+                ) : null}
+
                 <Button
                   variant={isTeaching(current) ? 'primary' : graded ? 'correct' : 'incorrect'}
                   sound={false}
