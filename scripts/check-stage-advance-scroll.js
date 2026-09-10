@@ -238,7 +238,17 @@ async function main() {
     const url = `http://localhost:${PORT}/Urdu/`;
 
     await enterAsGuest(page, url, { completedLessons, hearts: 999, gems: 9999 });
-    await page.waitForTimeout(2000); // let the mount-time auto-scroll fire and settle
+    // Wait for the path to actually be on screen rather than for a fixed
+    // 2s. Sequenced behind five other browser checks in `check:all`, this
+    // step failed once with "could not find the current lesson row" and has
+    // not reproduced in eight runs since, standalone or under CPU load. That
+    // is the shape of a race rather than of a broken behaviour: every wait
+    // in the tap loop below was a fixed sleep, so a slow mount could not be
+    // waited out, only missed.
+    await page
+      .waitForFunction(() => document.querySelectorAll('[role="button"]').length > 0, { timeout: 20000 })
+      .catch(() => {});
+    await page.waitForTimeout(1200); // then let the mount-time auto-scroll settle
 
     // Scroll away from wherever the mount-time auto-scroll landed, to
     // simulate "the learner isn't looking at the current lesson".
@@ -267,7 +277,24 @@ async function main() {
         return true;
       });
       if (positioned) {
-        await page.waitForTimeout(300);
+        // Wait for the row to actually be laid out and visible, rather than
+        // sleeping 300ms and hoping. A virtualized row that is still
+        // mounting has a null offsetParent and a zero-sized rect, which the
+        // click below silently declines; waiting on the condition turns a
+        // slow frame into a slow pass instead of a spurious failure.
+        await page
+          .waitForFunction(
+            () => {
+              const n = Array.from(document.querySelectorAll('[role="button"]')).find((n) =>
+                /start this lesson/i.test(n.getAttribute('aria-label') || '')
+              );
+              if (!n || n.offsetParent === null) return false;
+              const r = n.getBoundingClientRect();
+              return r.width > 0 && r.height > 0;
+            },
+            { timeout: 3000 }
+          )
+          .catch(() => {});
         tapped = await page.evaluate(() => {
           const n = Array.from(document.querySelectorAll('[role="button"]')).find(
             (n) => /start this lesson/i.test(n.getAttribute('aria-label') || '') && n.offsetParent !== null

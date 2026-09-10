@@ -138,6 +138,23 @@ jobs:
           ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
         run: node scripts/generate-voice.js
 
+      # The app offers two voices and asks which one during setup, so both sets
+      # have to be current. Only the first was ever generated here, which meant
+      # a changed word reached the deploy freshly recorded in the woman's voice
+      # and stale in the man's, and nothing in the pipeline said so. Found by
+      # having to regenerate the second set by hand after a content fix.
+      #
+      # Costs nothing when nothing is stale: the generator asks the API only
+      # for clips whose text or voice has changed, so the usual run is a
+      # no-op in both sets.
+      - name: Generate the second voice's clips (only if a TTS key is set)
+        env:
+          VOICE_SET: m
+          GOOGLE_TTS_API_KEY: ${{ secrets.GOOGLE_TTS_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
+        run: node scripts/generate-voice.js
+
       # After generation, so a clip the API returned as silence is caught here
       # rather than by a learner. ~40s for all 2,893 with ffmpeg, which the
       # ubuntu runners ship.
