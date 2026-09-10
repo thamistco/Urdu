@@ -4,11 +4,11 @@ The constitution for anyone — human or AI — writing code in this repository.
 
 **How to read this.** Every rule carries a tag saying who enforces it:
 
-| Tag | Meaning |
-| --- | --- |
-| 🤖 | A machine enforces it. Breaking it fails CI. |
-| 👁 | A reviewer enforces it. Judgement required. |
-| 📐 | A principle. Shapes decisions; cannot be mechanically checked. |
+| Tag | Meaning                                                        |
+| --- | -------------------------------------------------------------- |
+| 🤖  | A machine enforces it. Breaking it fails CI.                   |
+| 👁   | A reviewer enforces it. Judgement required.                    |
+| 📐  | A principle. Shapes decisions; cannot be mechanically checked. |
 
 That distinction is the point of the document. This project has repeatedly
 proved that **an unenforced rule is a wish**: a comment promising 6:1 contrast
@@ -28,8 +28,8 @@ Run everything: `npm run check:all`.
    time someone reads it.
 2. 📐 **YAGNI.** Don't build it until it is needed. Speculative generality is
    the most expensive kind of dead code, because it looks alive.
-3. 📐 **DRY**, with judgement: duplication of *knowledge* is the problem, not
-   duplication of *characters*. Two functions that look alike but change for
+3. 📐 **DRY**, with judgement: duplication of _knowledge_ is the problem, not
+   duplication of _characters_. Two functions that look alike but change for
    different reasons should stay apart.
 4. 📐 **Composition over inheritance.** There is no class hierarchy in this
    codebase and there should not be one.
@@ -82,7 +82,7 @@ Run everything: `npm run check:all`.
 24. 🤖 `src/theme/` is the only place a colour is defined. (`check:theme`)
 25. 👁 Cross-cutting helpers live in `src/lib/`; script helpers in
     `scripts/lib/`. A helper used twice belongs in one of them.
-26. 📐 A shared module is created the *second* time something is needed, not the
+26. 📐 A shared module is created the _second_ time something is needed, not the
     first. See rule 3.
 27. 👁 State lives in a Zustand store only if more than one screen needs it.
     Otherwise `useState`.
@@ -161,7 +161,7 @@ Run everything: `npm run check:all`.
 65. 👁 `SCREAMING_SNAKE_CASE` for module-level constants.
 66. 👁 `kebab-case.js` for scripts, `PascalCase.tsx` for components,
     `camelCase.ts` for modules.
-67. 👁 Names say what a thing *is*, never what type it has: `dueBudget`, not
+67. 👁 Names say what a thing _is_, never what type it has: `dueBudget`, not
     `numVal`.
 68. 👁 Booleans read as assertions: `isTeaching`, `hasClip`, `shouldSpeak`.
 69. 👁 Functions that do something are verbs; functions that answer something are
@@ -207,7 +207,7 @@ Run everything: `npm run check:all`.
     `check:*` scripts. The two do not overlap.
 89. 👁 **Test properties, not transcriptions.** `expect(xpForLevel(4)).toBe(360)`
     only proves the function still does what it does. `expect(curve to be
-    monotonic)` proves something the design promises.
+monotonic)` proves something the design promises.
 90. 👁 **Every new test must be seen to fail.** Break the thing it covers, watch
     it go red, put it back. A test that has never failed is a hypothesis.
 91. 👁 A test that cannot fail in the environment it runs in is worse than no
@@ -227,12 +227,12 @@ Run everything: `npm run check:all`.
     errored, exited 0, and reported "clean" while padlocks sat on every locked
     lesson.
 99. 👁 Prefer one check that measures over three that assert.
-100. 👁 **A check may not claim more than it observed.** Failing to read the
-     thing and reading a thing that disagrees are different findings, and a
-     check that reports them with one message will eventually accuse a
-     healthy system. `check:deployed` announced that a perfectly good publish
-     was broken because a sandboxed network could not reach the site at all.
-101. 👁 Fixtures are minimal and inline. No fixture files nobody can find.
+100.  👁 **A check may not claim more than it observed.** Failing to read the
+      thing and reading a thing that disagrees are different findings, and a
+      check that reports them with one message will eventually accuse a
+      healthy system. `check:deployed` announced that a perfectly good publish
+      was broken because a sandboxed network could not reach the site at all.
+101.  👁 Fixtures are minimal and inline. No fixture files nobody can find.
 
 ---
 
@@ -333,7 +333,7 @@ Run everything: `npm run check:all`.
 
 146. 🤖 Every claim the README makes has a script that fails when it stops being
      true.
-147. 🤖 CI runs the checks *before* it builds and deploys, so a broken push fails
+147. 🤖 CI runs the checks _before_ it builds and deploys, so a broken push fails
      loudly rather than publishing.
 148. 🤖 `check:all` reads its step list from the workflow file rather than
      copying it, so the local and CI pipelines cannot drift.
@@ -345,7 +345,7 @@ Run everything: `npm run check:all`.
      success" has been wrong twice.
 152. 👁 A check that fails must say what is wrong, where, and what to do — not
      just that something is wrong.
-153. 👁 Error messages name the *cause* where they can distinguish it. "Could not
+153. 👁 Error messages name the _cause_ where they can distinguish it. "Could not
      find the background SVG" was the symptom of a bundle that never loaded.
 154. 👁 CI steps are named for what they protect, not for the command they run.
 
@@ -354,7 +354,7 @@ Run everything: `npm run check:all`.
 ## 13. Working with AI agents
 
 155. 👁 The agent reads `CLAUDE.md`, which points here. Keep both current.
-156. 👁 Give the agent the rule *and its reason*; a reason survives paraphrase,
+156. 👁 Give the agent the rule _and its reason_; a reason survives paraphrase,
      a rule alone does not.
 157. 👁 An agent must run `npm run check:all` before claiming work is done.
 158. 👁 An agent must not claim a deploy succeeded without reading the run status.
@@ -375,7 +375,7 @@ Run everything: `npm run check:all`.
 ## 14. Code review
 
 165. 👁 Review the diff against this document, not against taste.
-166. 👁 Ask whether the change makes the *next* change easier.
+166. 👁 Ask whether the change makes the _next_ change easier.
 167. 👁 A comment claiming a property is not evidence of the property. Look for
      the check.
 168. 👁 New magic numbers, new raw hex, and new duplication are blocking.
@@ -401,20 +401,20 @@ Run everything: `npm run check:all`.
 `npm run check:all` runs all of it, in the deploy's own order, against a
 deploy-shaped build.
 
-| Command | Rules |
-| --- | --- |
-| `check:secrets` | 122, 125 |
-| `typecheck` | 32, 33 |
-| `lint` | 13, 34, 46, 47 (13 on `lib/` and `scripts/`, where logic lives) |
-| `format:check` | 62 |
-| `check:structure` | 20, 21, 71 |
-| `test` | 87 |
-| `audit` | 78, 83, 86 |
-| `check:roman`, `check:translit`, `check:trace`, `check:answerable`, `check:srs`, `check:order` | 146 |
-| `check:theme` | 24, 58 |
-| `check:voice` | 145, 146 |
-| `check:stability`, `check:scenery` | 96, 104 |
-| `check:deployed` | 150 |
+| Command                                                                                        | Rules                                                           |
+| ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `check:secrets`                                                                                | 122, 125                                                        |
+| `typecheck`                                                                                    | 32, 33                                                          |
+| `lint`                                                                                         | 13, 34, 46, 47 (13 on `lib/` and `scripts/`, where logic lives) |
+| `format:check`                                                                                 | 62                                                              |
+| `check:structure`                                                                              | 20, 21, 71                                                      |
+| `test`                                                                                         | 87                                                              |
+| `audit`                                                                                        | 78, 83, 86                                                      |
+| `check:roman`, `check:translit`, `check:trace`, `check:answerable`, `check:srs`, `check:order` | 146                                                             |
+| `check:theme`                                                                                  | 24, 58                                                          |
+| `check:voice`                                                                                  | 145, 146                                                        |
+| `check:stability`, `check:scenery`                                                             | 96, 104                                                         |
+| `check:deployed`                                                                               | 150                                                             |
 
 Everything else is a reviewer's job, and the honest count is that most of this
 document is 👁. That is not a failure of the document — it is what it means to

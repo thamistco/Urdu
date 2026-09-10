@@ -19,7 +19,7 @@ export const HOME_PACKS: TopicPack[] = [
       ['w-garage', 'گیراج', 'geraaj', 'garage', '🚗'],
       ['w-tehkhana', 'تہہ خانہ', 'teh-khaana', 'basement', '🕳️'],
       ['w-dalaan', 'دالان', 'daalaan', 'hallway', '➡️'],
-      ['w-store', 'اسٹور', 'sṭor', 'store room', '📦'],
+      ['w-store', 'اسٹور', 'isṭor', 'store room', '📦'],
       ['w-kona', 'کونا', 'kona', 'corner', '📐'],
       ['w-manzil-floor', 'منزل', 'manzil', 'storey / floor', '🏢'],
       ['w-taaq', 'طاق', 'taaq', 'alcove / niche', '🕳️'],
@@ -44,7 +44,7 @@ export const HOME_PACKS: TopicPack[] = [
       ['w-bulb', 'بلب', 'balb', 'light bulb', '💡'],
       ['w-tijori', 'تجوری', 'tijori', 'safe / chest', '🔐'],
       ['w-jhoola', 'جھولا', 'jhoola', 'swing / cradle', '🪀'],
-      ['w-stool', 'اسٹول', 'sṭool', 'stool', '🪑'],
+      ['w-stool', 'اسٹول', 'isṭool', 'stool', '🪑'],
       ['w-charpai', 'چارپائی', 'chaarpaai', 'traditional cot', '🛏️'],
       ['w-mezposh', 'میز پوش', 'mez-posh', 'tablecloth', '🧻'],
       ['w-ghadi-wall', 'دیوار گھڑی', 'deewaar ghaṛi', 'wall clock', '🕰️'],
@@ -105,7 +105,7 @@ export const HOME_PACKS: TopicPack[] = [
   pack(
     { id: 'garden', title: 'The Garden', icon: '🌿', blurb: 'Growing things around the house.', level: 'elementary' },
     [
-      ['w-paudha', 'پودا', 'paudha', 'plant', '🌱'],
+      ['w-paudha', 'پودا', 'pauda', 'plant', '🌱'],
       ['w-beej', 'بیج', 'beej', 'seed', '🫘'],
       ['w-jar', 'جڑ', 'jaṛ', 'root', '🥕'],
       ['w-patta', 'پتّا', 'patta', 'leaf', '🍃'],

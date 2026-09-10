@@ -22,6 +22,28 @@
  * perfectly good clips, and a check that cries wolf is a check that gets
  * switched off.
  *
+ * ## A measured false alarm, so the next reader does not repeat it
+ *
+ * The 64 clips changed in one session were transcribed and held against their
+ * own text: median agreement 1.00, 37 exact. Three scored badly, and all three
+ * were English loanwords written in Urdu script:
+ *
+ *     چیک اِن    heard as چکن      ("chicken")
+ *     چیک آؤٹ   heard as سکاؤٹ    ("scout")
+ *     روم سروس  heard as فرعون مصر
+ *
+ * Two of the three came back identically wrong in *both* voices, which is the
+ * strongest signal this method offers that the audio is at fault rather than
+ * the recogniser: independent recordings, same mistake. It was still wrong. A
+ * native speaker listened to all six clips and each one says its word
+ * correctly.
+ *
+ * So: agreement between the two voice sets is not evidence, because both sets
+ * are read by the same engine from the same string and fail the same way, and
+ * a recogniser hearing a loanword out of context reaches for the commoner
+ * native word every time. Never rerecord a clip on this signal alone. Listen
+ * to it first, or ask someone who can.
+ *
  * So the default run *reports*: it prints the distribution of agreement across
  * whatever it transcribed and lists the worst offenders, and exits 0. Once
  * that distribution has been seen on real data, `--fail-below N` turns it into

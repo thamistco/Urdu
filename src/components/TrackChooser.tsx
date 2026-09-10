@@ -73,7 +73,7 @@ export const TRACK_OPTIONS: Option[] = [
     summary: 'Every word in Nastaliq with the Roman underneath it.',
     gains: ['The alphabet, but never on its own', 'You pick up the letters while you learn to speak'],
     costs: ['Slower at the start than Roman alone'],
-    forWhom: 'Best if you are not sure: this is the whole course, with the most help.',
+    forWhom: 'Best if you are not sure. It is the whole course, with the most help.',
     recommended: true,
   },
   {

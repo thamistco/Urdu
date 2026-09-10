@@ -4,6 +4,7 @@ Sources to align Harf's letters, joining forms, and vocabulary against as the
 content expands.
 
 ## Licensing rule (read first)
+
 Build content from the **CC-BY source** (with attribution, see `CREDITS.md`) or
 write it **originally**. Copyrighted books listed here are for background only:
 use **uncopyrightable facts** (alphabet, word meanings, grammar rules) — never
@@ -12,6 +13,7 @@ selection/arrangement of a word list). This is not legal advice; for a
 commercial release, get a proper IP review.
 
 ## Primary, usable source (CC-BY — we can adapt with attribution)
+
 - **"Basic Urdu"** by **Rajiv Ranjan**, Michigan State University Libraries
   (Pressbooks), licensed **CC-BY**.
   https://openbooks.lib.msu.edu/basicurdu/
@@ -45,6 +47,7 @@ commercial release, get a proper IP review.
   to chapters 2–8.
 
 ## Reference: script-teaching method (govt. publication — facts only)
+
 - **"Let's Learn Urdu: Beginner's Manual for Urdu Script"** by **Gopi Chand
   Narang** — National Council for Promotion of Urdu Language (NCPUL), Ministry
   of HRD, Govt of India. (The URL was blocked earlier; reviewed directly from an
@@ -63,11 +66,12 @@ commercial release, get a proper IP review.
     fluency" exercise type — written with our own original sentences.
 
 ## Reference: functional syllabus (copyrighted — background only)
+
 - **"Complete Urdu"** by **David Matthews & Mohamed Kasim Dalvi** (Teach
   Yourself / Hodder).
   - ⚠️ **Copyrighted commercial book.** Do **not** copy its text, dialogues,
     exercises, or the selection/arrangement of its content. Only uncopyrightable
-    *facts* (grammar rules, word meanings) inform us — written originally.
+    _facts_ (grammar rules, word meanings) inform us — written originally.
   - Useful as a **functional ("can-do") progression** and a **grammar spine**:
     - Units: (1) greetings, directions, personal details/phone numbers;
       (2) introductions, polite/respectful forms, family, children;
@@ -90,27 +94,30 @@ commercial release, get a proper IP review.
   - Note: also not fetchable from the build sandbox (403).
 
 ## How our content is structured today
+
 - `src/data/letters.ts` — the 40 letters, each with all four position forms and
   a teaching note (grouped by `group` for the path).
 - `src/data/vocab/*.ts` — themed vocabulary in modules, each exporting
   `TopicPack[]` built by the `pack()` helper in `vocab/types.ts`.
   `src/data/words.ts` merges these with the core sets into `TOPICS` / `WORDS`:
-  **2,281 words across 122 topics.**
+  **2,279 words across 122 topics.**
 - `src/data/grammar.ts` — **25 concepts**, each with an explanation, an optional
   paradigm table, examples and fill-the-gap drills.
 - `src/data/sentences.ts` — **256 sentences** for word-order building (many
   tagged with the `concept` they illustrate, so grammar lessons can reinforce
   them) and **17 graded reading passages** with comprehension questions.
-- `src/data/units.ts` — the path: **39 units / 237 lessons**, interleaving
+- `src/data/units.ts` — the path: **41 units / 350 lessons**, interleaving
   script, vocabulary, grammar, sentence building and reading. Every topic,
   concept and passage is reachable from it.
 
 ### Adding content
+
 A new topic is one `pack(...)` call in a `vocab/` module plus one `V('id', …)`
 line in `units.ts`. A new grammar point is one entry in `GRAMMAR` plus a `G(…)`
 line. Nothing else needs touching — the exercise generator builds the questions.
 
 Two invariants worth preserving:
+
 - **Every topic, grammar concept and passage must appear in `units.ts`.**
   Content that isn't on the path is invisible outside the Practice tab.
 - **Picture-based questions need visually distinct options.** The generator

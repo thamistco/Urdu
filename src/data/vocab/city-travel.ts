@@ -32,7 +32,7 @@ export const CITY_PACKS: TopicPack[] = [
       ['w-mudna', 'مڑنا', 'muṛna', 'to turn', '↩️'],
       ['w-tez-chalna', 'تیز چلانا', 'tez chalaana', 'to speed', '💨'],
       ['w-adda', 'اڈہ', 'aḍḍa', 'terminal / stand', '🚏'],
-      ['w-station', 'اسٹیشن', 'sṭeshan', 'station', '🚉'],
+      ['w-station', 'اسٹیشن', 'isṭeshan', 'station', '🚉'],
       ['w-safar-karna', 'سفر کرنا', 'safar karna', 'to travel', '🧳'],
       ['w-raasta', 'راستہ', 'raasta', 'way / route', '🧭'],
       ['w-mor-bend', 'موڑ', 'moṛ', 'bend / turning', '🔄'],

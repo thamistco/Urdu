@@ -76,7 +76,7 @@ export const CULTURE_PACKS: TopicPack[] = [
     [
       ['w-eid-fitr', 'عید الفطر', 'eid-ul-fitr', 'Eid al-Fitr', '🌙'],
       ['w-eid-azha', 'عید الاضحیٰ', 'eid-ul-azha', 'Eid al-Adha', '🐐'],
-      ['w-mela', 'میلہ', 'mela', 'fair', '🎡'],
+      ['w-mela', 'میلہ', 'mela', 'fair (funfair)', '🎡'],
       ['w-julus', 'جلوس', 'juloos', 'procession', '🚩'],
       ['w-charaghan', 'چراغاں', 'charaaghaañ', 'illumination', '🪔'],
       ['w-aatishbazi', 'آتش بازی', 'aatish-baazi', 'fireworks', '🎆'],

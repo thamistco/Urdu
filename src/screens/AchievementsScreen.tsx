@@ -47,9 +47,9 @@ export function AchievementsScreen() {
         <TopBar onBack={() => nav.goBack()} title="Achievements" />
 
         <Reveal>
-          <Heading className="mb-1 text-2xl">Your journey</Heading>
+          <Heading className="mb-1 text-2xl">Your badges</Heading>
           <Txt className="mb-5 text-sm text-paper/55">
-            Every badge grows with you: easy wins early on, rarer ones worth chasing later.
+            Every badge has tiers. The early ones are easy; the later ones take a while.
           </Txt>
         </Reveal>
 

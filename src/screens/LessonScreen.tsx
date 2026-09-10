@@ -315,7 +315,7 @@ export function LessonScreen() {
             <Txt className="mb-8 max-w-[280px] text-center text-sm text-paper/60">
               {canAfford
                 ? 'Hearts refill slowly over time, or you can spend gems to keep the calm going now.'
-                : `You're ${short} gem${short === 1 ? '' : 's'} short for a refill — the next heart arrives ${
+                : `You’re ${short} gem${short === 1 ? '' : 's'} short for a refill. The next heart arrives ${
                     waitMin <= 0 ? 'any moment now' : `in about ${waitMin} minute${waitMin === 1 ? '' : 's'}`
                   }.`}
             </Txt>

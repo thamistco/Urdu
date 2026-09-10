@@ -9,7 +9,7 @@ end. Most courses teach the isolated forms, hand you a transliteration, and
 leave you unable to read a shop sign. Harf teaches the script and then keeps
 going: vocabulary, grammar, sentences, reading and conversation.
 
-Harf teaches all forty letters in all four of their joining forms, then 2,281
+Harf teaches all forty letters in all four of their joining forms, then 2,279
 words spoken aloud, 256 sentences you assemble right-to-left yourself, 25 grammar
 ideas one at a time, and 17 readings. A four-stage course (Beginner →
 Elementary → Intermediate → Advanced) with spaced repetition underneath, so what
@@ -29,24 +29,25 @@ the name live in [docs/store-listing.md](docs/store-listing.md).
 
 ## What's in it
 
-| | |
-| --- | --- |
-| **Vocabulary** | **2,281 words** across **122 themed topics**, each with script, Roman transliteration, meaning and a picture cue |
-| **Script** | All **40 letters** with every position form, connector vs. non-connector behaviour, and a teaching note apiece |
-| **Grammar** | **25 concepts** — pronouns, "to be", gender, plurals, possession, postpositions, oblique case, negation, questions, conjunctions, the four tenses, dative subjects, ability, obligation, comparatives, imperative, subjunctive, perfective, relative clauses, compound verbs, the passive and causatives — each with explanation, paradigm table, examples and drills |
-| **Sentences** | **256** word-order builders + 28 everyday phrases |
-| **Reading** | **17 graded passages** and **12 two-speaker conversations**, all with comprehension questions |
-| **Course** | **39 units · 237 lessons** across four CEFR-style stages (A1 → B2) |
-| **Exercises** | 15 types: letter-position ID, letter pick, **letter tracing**, picture→word, word→meaning, **meaning→word**, **typing from memory**, listen-&-tap, word build, matching board, grammar teach, grammar drill, sentence build, reading, conversation |
+|                |                                                                                                                                                                                                                                                                                                                                                                       |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Vocabulary** | **2,279 words** across **122 themed topics**, each with script, Roman transliteration, meaning and a picture cue                                                                                                                                                                                                                                                      |
+| **Script**     | All **40 letters** with every position form, connector vs. non-connector behaviour, and a teaching note apiece                                                                                                                                                                                                                                                        |
+| **Grammar**    | **25 concepts** — pronouns, "to be", gender, plurals, possession, postpositions, oblique case, negation, questions, conjunctions, the four tenses, dative subjects, ability, obligation, comparatives, imperative, subjunctive, perfective, relative clauses, compound verbs, the passive and causatives — each with explanation, paradigm table, examples and drills |
+| **Sentences**  | **256** word-order builders + 28 everyday phrases                                                                                                                                                                                                                                                                                                                     |
+| **Reading**    | **17 graded passages** and **12 two-speaker conversations**, all with comprehension questions                                                                                                                                                                                                                                                                         |
+| **Course**     | **41 units · 350 lessons** across four CEFR-style stages (A1 → B2)                                                                                                                                                                                                                                                                                                    |
+| **Exercises**  | 15 types: letter-position ID, letter pick, **letter tracing**, picture→word, word→meaning, **meaning→word**, **typing from memory**, listen-&-tap, word build, matching board, grammar teach, grammar drill, sentence build, reading, conversation                                                                                                                    |
 
 ### Learning design
+
 - **Difficulty climbs within a lesson** — meet a word with a picture, come back
   to it from the English, type it from memory, build it letter by letter. Every
   word is seen at least twice and the second sighting always asks for more.
   Review leans on the harder demands, since an item is only in review because
   it was met before.
 - **Nothing is solvable by elimination** — the build exercises include decoy
-  tiles, and picture options are checked for distinct art *and* distinct
+  tiles, and picture options are checked for distinct art _and_ distinct
   meanings.
 - **Tracing is really scored** — each glyph ships with a bitmask of where its
   ink is (`npm run gen:masks`), so coverage and precision are measured, not
@@ -66,6 +67,7 @@ the name live in [docs/store-listing.md](docs/store-listing.md).
 - **Jump ahead** — any lesson is tappable; locked ones stay marked.
 
 ## Design language
+
 Behind every screen is **one evening**, and the app moves through it. Sign-in
 gets the sunset at full strength, with the name and the controls laid out inside
 the two bands of the picture dark enough to carry text and nothing at all across
@@ -125,43 +127,47 @@ npx expo start     # then 'a' for Android, or scan the QR in Expo Go
 Live preview (auto-deploys on push): **https://thamistco.github.io/Urdu/**
 
 ### Android APK
+
 ```bash
 npm i -g eas-cli && eas login
 eas build -p android --profile preview
 ```
 
 ## Optional integrations
+
 - **Sign-in & cloud save** — see [`SUPABASE_SETUP.md`](SUPABASE_SETUP.md). Runs
   in guest mode (local progress) until configured.
 - **One consistent pronunciation voice** — see [`VOICE_SETUP.md`](VOICE_SETUP.md).
   Falls back to the device's text-to-speech until generated.
 
 ## Content provenance
-Course *structure* is informed by published Urdu curricula (see
+
+Course _structure_ is informed by published Urdu curricula (see
 [`docs/CONTENT_NOTES.md`](docs/CONTENT_NOTES.md)); all vocabulary, sentences,
 explanations and exercises are **written originally** for Harf. Adapted material
 from the CC-BY source is credited in [`CREDITS.md`](CREDITS.md).
 
 ## Verification
+
 `npx tsc --noEmit` passes (strict) · `npx expo export --platform web` builds
 clean · automated Playwright walkthrough of every screen reports no runtime
 errors. Beyond that, each claim this README makes has a script that fails when
 it stops being true, and all of them run in CI before anything deploys:
 
-| Check | What it would catch |
-| --- | --- |
-| `npm run audit` | content wiring: a lesson pointing at a topic that does not exist, a picture that cannot identify its word, two topics sharing a badge |
-| `npm run check:answerable` | a generated question that cannot be answered from what it puts on screen |
-| `npm run check:roman` | the typed-answer matcher accepting or refusing the wrong spellings |
-| `npm run check:trace` | letter tracing that an honest attempt cannot pass, or a scribble can |
-| `npm run check:srs` | spaced repetition not behaving the way the app says it does |
-| `npm run check:voice` | a clip the TTS API returned as silence |
-| `npm run check:theme` | `tailwind.config.js` drifting from `colors.ts`, colour written as raw hex outside the theme, a palette token nothing uses |
-| `npm run check:scenery` | the background getting bright enough to fight the text on it, and text on the sign-in picture straying out of the dark bands it is laid out against |
-| `npm run check:stability` | a question changing under the answer being given to it |
-| `npm run check:secrets` | a credential reaching a tracked file |
-| `npm run check:deployed` | the live site not actually serving the commit CI just built |
-| `npm run lint` / `format:check` | style drift, dead code, and stale React dependency arrays |
+| Check                           | What it would catch                                                                                                                                 |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run audit`                 | content wiring: a lesson pointing at a topic that does not exist, a picture that cannot identify its word, two topics sharing a badge               |
+| `npm run check:answerable`      | a generated question that cannot be answered from what it puts on screen                                                                            |
+| `npm run check:roman`           | the typed-answer matcher accepting or refusing the wrong spellings                                                                                  |
+| `npm run check:trace`           | letter tracing that an honest attempt cannot pass, or a scribble can                                                                                |
+| `npm run check:srs`             | spaced repetition not behaving the way the app says it does                                                                                         |
+| `npm run check:voice`           | a clip the TTS API returned as silence                                                                                                              |
+| `npm run check:theme`           | `tailwind.config.js` drifting from `colors.ts`, colour written as raw hex outside the theme, a palette token nothing uses                           |
+| `npm run check:scenery`         | the background getting bright enough to fight the text on it, and text on the sign-in picture straying out of the dark bands it is laid out against |
+| `npm run check:stability`       | a question changing under the answer being given to it                                                                                              |
+| `npm run check:secrets`         | a credential reaching a tracked file                                                                                                                |
+| `npm run check:deployed`        | the live site not actually serving the commit CI just built                                                                                         |
+| `npm run lint` / `format:check` | style drift, dead code, and stale React dependency arrays                                                                                           |
 
 All of them, in the deploy's own order and against a deploy-shaped build:
 

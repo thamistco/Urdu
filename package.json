@@ -49,7 +49,8 @@
     "check:coverage": "node scripts/check-coverage.js",
     "check:sentence-coverage": "node scripts/check-sentence-coverage.js",
     "check:shape": "node scripts/check-shape.js",
-    "check:grammar-distractors": "node scripts/check-grammar-distractors.js"
+    "check:grammar-distractors": "node scripts/check-grammar-distractors.js",
+    "check:claims": "node scripts/check-claims.js"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "^0.2.3",

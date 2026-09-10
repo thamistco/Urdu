@@ -5,17 +5,17 @@ export const PEOPLE_PACKS: TopicPack[] = [
   pack(
     { id: 'family-more', title: 'More Family', icon: '👪', blurb: 'Uncles, aunts, cousins and the family you marry into.', level: 'beginner' },
     [
-      ['w-chacha', 'چچا', 'chacha', "father's brother", '👨‍🦱'],
-      ['w-mamu', 'ماموں', 'maamooñ', "mother's brother", '🧔'],
-      ['w-phupi', 'پھوپھی', 'phoophi', "father's sister", '👩‍🦱'],
-      ['w-khala', 'خالہ', 'khaala', "mother's sister", '👩‍🦳'],
+      ['w-chacha', 'چچا', 'chacha', "father’s brother", '👨‍🦱'],
+      ['w-mamu', 'ماموں', 'maamooñ', "mother’s brother", '🧔'],
+      ['w-phupi', 'پھوپھی', 'phoophi', "father’s sister", '👩‍🦱'],
+      ['w-khala', 'خالہ', 'khaala', "mother’s sister", '👩‍🦳'],
       ['w-nana', 'نانا', 'naana', 'maternal grandfather', '👴🏽'],
       ['w-nani', 'نانی', 'naani', 'maternal grandmother', '👵🏽'],
       // Urdu splits what English collapses: a brother's son and a sister's son
       // are different words, so "nephew" alone leaves the learner unable to
       // choose between them — and unable to answer a question that offers both.
-      ['w-bhatija', 'بھتیجا', 'bhateeja', "nephew (brother's son)", '👦🏽'],
-      ['w-bhanji', 'بھانجی', 'bhaanji', "niece (sister's daughter)", '👧🏽'],
+      ['w-bhatija', 'بھتیجا', 'bhateeja', "nephew (brother’s son)", '👦🏽'],
+      ['w-bhanji', 'بھانجی', 'bhaanji', "niece (sister’s daughter)", '👧🏽'],
       ['w-damaad', 'داماد', 'daamaad', 'son-in-law', '🤵'],
       ['w-bahu', 'بہو', 'bahu', 'daughter-in-law', '👰'],
       ['w-shohar', 'شوہر', 'shauhar', 'husband', '💑'],

@@ -355,7 +355,7 @@ const PLANNED_UNITS: Unit[] = [
       V('rooms', 'Rooms', 'Where you sit, sleep and cook'),
       V('adjectives', 'Describing', 'Big, small, hot, cold'),
       G('g-pronouns', 'Pronouns', 'I, you, he, we, they'),
-      G('g-to-be', 'Am, is, are', 'The verb "to be"'),
+      G('g-to-be', 'Am, is, are', 'The verb “to be”'),
       S('beginner', 'Build a sentence', 'Put the words in order'),
       REV('saying-who-you-are'),
     ],
