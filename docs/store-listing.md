@@ -31,7 +31,7 @@ not "Duolingo".
 **Why "Learn Urdu" and not "Learn to Read Urdu".** The name was the longer
 form for one release, on the argument that _read_ is the one claim here that a
 phrasebook app cannot copy. That argument was about the differentiator and not
-about the product: this is a full course — 2,281 words with audio, 25 grammar
+about the product: this is a full course — 2,279 words with audio, 25 grammar
 concepts, sentence building, readings and conversations — and a name promising
 reading describes the first unit rather than the app. A learner who wants to
 speak Urdu reads "Learn to Read Urdu" and correctly concludes it is not for
@@ -61,7 +61,7 @@ long description is for the human who has already arrived.
 | Name             | 30    | `Harf: Learn Urdu`                                                                                                                                    |
 | Subtitle         | 30    | `The script and the language`                                                                                                                         |
 | Keywords         | 100   | `urdu,nastaliq,alphabet,script,read,write,pakistani,hindi,vocabulary,flashcards,tracing,phrases`                                                      |
-| Promotional text | 170   | `The alphabet in all four of its joining forms, 2,281 words spoken aloud, 25 grammar ideas and 256 sentences you build yourself. A full Urdu course.` |
+| Promotional text | 170   | `The alphabet in all four of its joining forms, 2,279 words spoken aloud, 25 grammar ideas and 256 sentences you build yourself. A full Urdu course.` |
 
 The subtitle deliberately repeats nothing from the name. "Urdu" is in the name,
 so the subtitle spends its thirty characters on the shape of the course — where
@@ -72,7 +72,7 @@ it starts and where it gets you — which is also where the differentiator lives
 | Field             | Limit | Copy                                                                              |
 | ----------------- | ----- | --------------------------------------------------------------------------------- |
 | Title             | 30    | `Harf: Learn Urdu`                                                                |
-| Short description | 80    | `The whole language: 40 letters, 2,281 spoken words, grammar and real sentences.` |
+| Short description | 80    | `The whole language: 40 letters, 2,279 spoken words, grammar and real sentences.` |
 
 Play has no subtitle, so the short description carries the breadth that Apple's
 subtitle carries. The title is identical on both stores on purpose: it is the
@@ -94,7 +94,7 @@ brand paying twice for one word.
 > forms — 160 shapes in total — with tracing practice that checks whether you
 > actually drew the letter rather than just filled the space.
 >
-> **2,281 words across 122 topics**, from family and food to law and medicine,
+> **2,279 words across 122 topics**, from family and food to law and medicine,
 > each one recorded in a single consistent voice, with a second full recording
 > in a man's voice if you prefer it. Every clip is bundled with the app, so
 > pronunciation works offline and sounds the same on every phone.
@@ -131,11 +131,11 @@ wrong.
 | Claim                                      | Source                                                    |
 | ------------------------------------------ | --------------------------------------------------------- |
 | 40 letters × 4 forms = 160 shapes          | `LETTERS`, `POSITIONS`                                    |
-| 2,281 words, 122 topics                    | `WORDS`, `TOPICS`                                         |
+| 2,279 words, 122 topics                    | `WORDS`, `TOPICS`                                         |
 | 256 sentences, 17 passages, 12 dialogues   | `SENTENCES`, `PASSAGES`, `DIALOGUES`                      |
 | 25 grammar concepts                        | `GRAMMAR`                                                 |
 | 350 lessons, 41 units                      | `ALL_LESSONS`, `UNITS`                                    |
-| 2,748 clips per voice, two voices, offline | `assets/voice/`, `assets/voice-m/`, `npm run check:voice` |
+| 2,746 clips per voice, two voices, offline | `assets/voice/`, `assets/voice-m/`, `npm run check:voice` |
 | Two voices in dialogues                    | `Dialogue.voices`, `scripts/generate-voice.js`            |
 | Spaced repetition                          | `src/lib/srs.ts`, `npm run check:srs`                     |
 | Roman track                                | `unitsForTrack`, `npm run check:answerable`               |

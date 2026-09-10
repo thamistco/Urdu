@@ -91,7 +91,7 @@ export const OBJECT_PACKS: TopicPack[] = [
       ['w-rabar', 'ربڑ', 'rabaṛ', 'rubber', '🎈'],
       ['w-cement', 'سیمنٹ', 'seemenṭ', 'cement', '🧱'],
       ['w-eent', 'اینٹ', 'eeñṭ', 'brick', '🧱'],
-      ['w-sangmarmar', 'سنگ مرمر', 'sang-e-marmar', 'marble', '🏛️'],
+      ['w-sangmarmar', 'سنگِ مرمر', 'sang-e-marmar', 'marble', '🏛️'],
       ['w-koyla', 'کوئلہ', 'koyla', 'coal', '⚫'],
       ['w-tel2', 'پٹرولیم', 'peṭroliyam', 'petroleum', '🛢️'],
       ['w-gas', 'گیس', 'gais', 'gas', '💨'],

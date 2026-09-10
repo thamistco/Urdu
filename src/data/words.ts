@@ -843,7 +843,7 @@ const CORE_WORDS: Word[] = [
   { id: 'w-naukri', urdu: 'نوکری', roman: 'naukri', meaning: 'job', emoji: '📋', topic: 'jobs' },
   { id: 'w-tankhwaah', urdu: 'تنخواہ', roman: 'tankhwaah', meaning: 'salary', emoji: '🧾', topic: 'jobs' },
   { id: 'w-aashpaz', urdu: 'آشپز', roman: 'aashpaz', meaning: 'cook / chef', emoji: '👨‍🍳', topic: 'jobs' },
-  { id: 'w-musiqaar', urdu: 'موسیقار', roman: 'moosiqaar', meaning: 'musician', emoji: '🎼', topic: 'jobs' },
+  { id: 'w-musiqaar', urdu: 'موسیقار', roman: 'mausiqaar', meaning: 'musician', emoji: '🎼', topic: 'jobs' },
   { id: 'w-qasai', urdu: 'قصائی', roman: 'qassaai', meaning: 'butcher', emoji: '🥩', topic: 'jobs' },
   { id: 'w-mochi', urdu: 'موچی', roman: 'mochi', meaning: 'cobbler', emoji: '👞', topic: 'jobs' },
   { id: 'w-hajjaam', urdu: 'حجام', roman: 'hajjaam', meaning: 'barber', emoji: '💈', topic: 'jobs' },

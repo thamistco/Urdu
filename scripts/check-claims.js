@@ -71,6 +71,11 @@ const CLAIMS = {
 const SOURCES = [
   ['app.json', JSON.parse(fs.readFileSync(path.join(ROOT, 'app.json'), 'utf8')).expo.description || ''],
   ['docs/store-listing.md', fs.readFileSync(path.join(ROOT, 'docs', 'store-listing.md'), 'utf8')],
+  ['docs/CONTENT_NOTES.md', fs.readFileSync(path.join(ROOT, 'docs', 'CONTENT_NOTES.md'), 'utf8')],
+  // The README is the first thing anyone reads about the course, and it
+  // quoted the word count in two more places that a fix to the listing and
+  // app.json both missed.
+  ['README.md', fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8')],
 ];
 
 // "2,281 words", "17 reading passages", "25 grammar ideas": a number, then up

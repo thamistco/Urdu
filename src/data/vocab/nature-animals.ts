@@ -83,8 +83,8 @@ export const NATURE_PACKS: TopicPack[] = [
       ['w-hawa2', 'فضا', 'fazaa', 'atmosphere', '🌫️'],
       ['w-satellite', 'سیٹلائٹ', 'saiṭlaaiṭ', 'satellite', '🛰️'],
       ['w-chandni', 'چاندنی', 'chaañdni', 'moonlight', '🌕'],
-      ['w-shahaab', 'شہاب ثاقب', 'shahaab-e-saaqib', 'meteor', '☄️'],
-      ['w-zameen2', 'کرہ ارض', 'kurra-e-arz', 'the Earth', '🌏'],
+      ['w-shahaab', 'شہابِ ثاقب', 'shahaab-e-saaqib', 'meteor', '☄️'],
+      ['w-zameen2', 'کرۂ ارض', 'kurra-e-arz', 'the Earth', '🌏'],
     ]
   ),
   pack(

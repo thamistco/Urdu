@@ -85,8 +85,8 @@ export const WORK_PACKS: TopicPack[] = [
       ['w-raftaar', 'رفتار', 'raftaar', 'speed', '💨'],
       ['w-wazan', 'وزن', 'wazan', 'weight', '⚖️'],
       ['w-hajam', 'حجم', 'hajm', 'volume', '📦'],
-      ['w-darja-hararat', 'درجہ حرارت', 'darja-e-haraarat', 'temperature', '🌡️'],
-      ['w-kashish', 'کشش ثقل', 'kashish-e-siql', 'gravity', '🍎'],
+      ['w-darja-hararat', 'درجۂ حرارت', 'darja-e-haraarat', 'temperature', '🌡️'],
+      ['w-kashish', 'کششِ ثقل', 'kashish-e-siql', 'gravity', '🍎'],
       ['w-khalia', 'خلیہ', 'khaliya', 'cell', '🦠'],
       ['w-mahaul', 'ماحول', 'maahaul', 'environment', '🌍'],
     ]
