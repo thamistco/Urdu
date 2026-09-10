@@ -379,6 +379,38 @@ for (const file of walk(SRC)) {
   }
 }
 
+// ---- the rendered content, read the way the app reads it -----------------
+//
+// The three scans above all read source text, and source text is not the only
+// shape copy comes in. A vocabulary row is a positional tuple,
+// `['w-chacha', 'چچا', 'chacha', "father's brother", '👨‍🦱']`, and a lesson is
+// a positional call, `G('g-to-be', 'Am, is, are', 'The verb "to be"')`. There
+// is no key to match on in either, so no amount of widening the key list
+// reaches them. Between them that is about 3,000 strings a learner reads, and
+// seven of them had straight quotes while this check said the app was clean:
+// six family glosses ("father's brother") and one lesson subtitle on the
+// learn path.
+//
+// So this last pass loads the modules and reads the values, which is what the
+// screen gets. `roman` is not among them, and must not be: a transliteration
+// is data, and `qanaa'at` is how the word is spelled.
+{
+  const { load } = require('./lib/load-ts');
+  const { WORDS } = load('src/data/words.ts');
+  const { ALL_LESSONS } = load('src/data/units.ts');
+
+  for (const w of WORDS) {
+    const bad = typeof w.meaning === 'string' && badOf(w.meaning);
+    if (bad) add(path.join(SRC, 'data', 'words.ts'), 0, `meaning ${bad} (${w.id})`, w.meaning);
+  }
+  for (const l of ALL_LESSONS) {
+    for (const key of ['title', 'subtitle']) {
+      const bad = typeof l[key] === 'string' && badOf(l[key]);
+      if (bad) add(path.join(SRC, 'data', 'units.ts'), 0, `lesson ${key} ${bad} (${l.id})`, l[key]);
+    }
+  }
+}
+
 if (!findings.length) {
   console.log(`check:writing — no dashes and no typewriter quotes in any user-facing string.`);
   process.exit(0);
