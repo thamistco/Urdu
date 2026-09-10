@@ -328,7 +328,7 @@ export function SettingsScreen() {
                           announce('w-salam', 'السلام علیکم', 'assalaam-o-alaikum');
                         }}
                         accessibilityRole="button"
-                        accessibilityLabel={`${o.label}'s voice. Tap to select and hear it.`}
+                        accessibilityLabel={`${o.label}’s voice. Tap to select and hear it.`}
                       >
                         <View
                           className="items-center rounded-xl border py-3"

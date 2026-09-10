@@ -58,7 +58,7 @@ const NOTICE_BODY =
  */
 const TICKS_WIPED_NOTICE_TITLE = 'Your lesson progress wasn’t carried over';
 const TICKS_WIPED_NOTICE_BODY =
-  'An old update couldn’t carry over your lesson history, so your lesson progress was reset. Your streak, your level and everything the app remembers about your words and letters are untouched — pick back up wherever feels right.';
+  'An old update couldn’t carry over your lesson history, so your lesson progress was reset. Your streak, your level and everything the app remembers about your words and letters are untouched. Pick back up wherever feels right.';
 
 const GREETING: Record<string, string> = {
   family: 'Speak with them',
@@ -744,7 +744,9 @@ export function HomeScreen() {
                     <Bold className="mt-0.5 text-[15px]">
                       {dueNow} {dueNow === 1 ? 'thing' : 'things'} to bring back
                     </Bold>
-                    <Txt className="text-xs text-paper/55">Reviewed now, they stick; left much longer, they go.</Txt>
+                    <Txt className="text-xs text-paper/55">
+                      Review them now and they stick. Leave them and they fade.
+                    </Txt>
                   </View>
                   <Txt style={{ color: palette.jade, fontSize: 20 }}>›</Txt>
                 </View>
@@ -798,7 +800,7 @@ export function HomeScreen() {
                     <Bold className="mt-0.5 text-[15px]">{finished ? 'Keep it warm' : currentLesson.title}</Bold>
                     <Txt className="text-xs text-paper/55">
                       {finished
-                        ? "You've made it through the whole course. Daily review keeps it fresh."
+                        ? 'You’ve made it through the whole course. Daily review keeps it fresh.'
                         : `${currentUnit ? currentUnit.title.replace(/ · .*/, '') : currentLesson.subtitle} · ${currentLesson.subtitle}`}
                     </Txt>
                   </View>
@@ -961,7 +963,7 @@ export function HomeScreen() {
         })}
 
         <Txt className="mb-4 mt-6 text-center text-xs leading-5 text-paper/55">
-          Every letter has four faces. Most apps teach one.
+          Every letter has four faces. You will learn all of them.
         </Txt>
       </Screen>
     </View>

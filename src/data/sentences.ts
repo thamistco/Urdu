@@ -514,7 +514,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-73',
     words: ['روٹی', 'اور', 'سالن', 'لاؤ'],
-    roman: 'roti aur saalan laao',
+    roman: 'roṭi aur saalan laao',
     meaning: 'Bring bread and curry',
     level: 'elementary',
     concept: 'g-conjunctions',
@@ -597,7 +597,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-80',
     words: ['پانی', 'گلاس', 'میں', 'ہے'],
-    roman: 'paani glaas meñ hai',
+    roman: 'paani gilaas meñ hai',
     meaning: 'The water is in the glass',
     level: 'elementary',
     concept: 'g-postpositions',
@@ -613,7 +613,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-82',
     words: ['یہ', 'راستہ', 'اسٹیشن', 'تک', 'جاتا', 'ہے'],
-    roman: 'ye raasta station tak jaata hai',
+    roman: 'ye raasta isṭeshan tak jaata hai',
     meaning: 'This road goes to the station',
     level: 'elementary',
     concept: 'g-postpositions',
@@ -643,7 +643,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-86',
     words: ['چائے', 'یا', 'کافی'],
-    roman: 'chai ya coffee',
+    roman: 'chai ya kaafi',
     meaning: 'Tea or coffee?',
     level: 'elementary',
     concept: 'g-conjunctions',
@@ -895,7 +895,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-110',
     words: ['چائے', 'کافی', 'سے', 'سستی', 'ہے'],
-    roman: 'chai coffee se sasti hai',
+    roman: 'chai kaafi se sasti hai',
     meaning: 'Tea is cheaper than coffee',
     level: 'intermediate',
     concept: 'g-comparative',
@@ -1095,7 +1095,7 @@ export const SENTENCES: Sentence[] = [
     id: 's-129',
     words: ['جس', 'نے', 'محنت', 'کی', 'اُس', 'نے', 'پایا'],
     roman: 'jis ne mehnat ki us ne paaya',
-    meaning: 'The one who worked hard, found',
+    meaning: 'The one who worked hard is the one who found it',
     level: 'advanced',
     concept: 'g-relative',
   },
@@ -1190,7 +1190,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-141',
     words: ['میری', 'بہن', 'استاد', 'ہے'],
-    roman: 'meri behan ustaad hai',
+    roman: 'meri behen ustaad hai',
     meaning: 'My sister is a teacher',
     level: 'beginner',
     concept: 'g-to-be',
@@ -1383,8 +1383,8 @@ export const SENTENCES: Sentence[] = [
   },
   {
     id: 's-166',
-    words: ['میرے', 'پاس', 'دو', 'بہنیں', 'ہیں'],
-    roman: 'mere paas do behneñ hain',
+    words: ['میری', 'دو', 'بہنیں', 'ہیں'],
+    roman: 'meri do behneñ hain',
     meaning: 'I have two sisters',
     level: 'beginner',
     concept: 'g-plurals',
@@ -1557,8 +1557,8 @@ export const SENTENCES: Sentence[] = [
   },
   {
     id: 's-188',
-    words: ['مجھے', 'پیسے', 'نہیں', 'چاہیے'],
-    roman: 'mujhe paise nahiñ chaahiye',
+    words: ['مجھے', 'پیسے', 'نہیں', 'چاہئیں'],
+    roman: 'mujhe paise nahiñ chaahiyeñ',
     meaning: 'I don’t want money',
     level: 'elementary',
     concept: 'g-negation',
@@ -1582,7 +1582,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-191',
     words: ['وہ', 'کیوں', 'رو', 'رہا', 'ہے'],
-    roman: 'wo kyuñ ro raha hai',
+    roman: 'wo kyoñ ro raha hai',
     meaning: 'Why is he crying?',
     level: 'elementary',
     concept: 'g-questions',
@@ -1606,7 +1606,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-194',
     words: ['میں', 'تھکا', 'ہوا', 'ہوں', 'اور', 'بھوکا', 'بھی', 'ہوں'],
-    roman: 'main thaka hua hoon aur bhookha bhi hoon',
+    roman: 'main thaka hua hoon aur bhooka bhi hoon',
     meaning: 'I am tired and hungry too',
     level: 'elementary',
     concept: 'g-conjunctions',
@@ -1623,7 +1623,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-196',
     words: ['میں', 'چائے', 'پیتا', 'ہوں', 'لیکن', 'کافی', 'نہیں', 'پیتا'],
-    roman: 'main chai peeta hoon lekin coffee nahiñ peeta',
+    roman: 'main chai peeta hoon lekin kaafi nahiñ peeta',
     meaning: 'I drink tea but I don’t drink coffee',
     level: 'elementary',
     concept: 'g-conjunctions',
@@ -1781,7 +1781,7 @@ export const SENTENCES: Sentence[] = [
   },
   {
     id: 's-216',
-    words: ['اسے', 'اردو', 'سمجھ', 'آتی', 'ہے'],
+    words: ['اُسے', 'اردو', 'سمجھ', 'آتی', 'ہے'],
     roman: 'use urdu samajh aati hai',
     meaning: 'She understands Urdu',
     level: 'intermediate',
@@ -2040,9 +2040,9 @@ export const SENTENCES: Sentence[] = [
   },
   {
     id: 's-248',
-    words: ['جس', 'نے', 'سچ', 'بولا', 'اسے', 'سب', 'نے', 'مانا'],
+    words: ['جس', 'نے', 'سچ', 'بولا', 'اُسے', 'سب', 'نے', 'مانا'],
     roman: 'jis ne sach bola use sab ne maana',
-    meaning: 'Whoever spoke the truth, everyone believed',
+    meaning: 'Everyone believed the one who spoke the truth',
     level: 'advanced',
     concept: 'g-relative',
   },
@@ -2237,11 +2237,11 @@ export const PASSAGES: Passage[] = [
       { urdu: 'مجھے چائے پسند ہے۔', roman: 'mujhe chai pasand hai.', meaning: 'I like tea.' },
       { urdu: 'میں روز چائے پیتا ہوں۔', roman: 'main roz chai peeta hoon.', meaning: 'I drink tea every day.' },
       { urdu: 'چائے گرم اور میٹھی ہے۔', roman: 'chai garam aur meeṭhi hai.', meaning: 'The tea is hot and sweet.' },
-      { urdu: 'ماں روٹی لاتی ہیں۔', roman: 'maañ roti laati hain.', meaning: 'Mother brings bread.' },
+      { urdu: 'ماں روٹی لاتی ہیں۔', roman: 'maañ roṭi laati hain.', meaning: 'Mother brings bread.' },
       {
         urdu: 'یہ دن کا اچھا وقت ہے۔',
         roman: 'ye din ka achha waqt hai.',
-        meaning: 'This is the best time of the day.',
+        meaning: 'This is a good time of the day.',
       },
     ],
     question: {
@@ -2314,8 +2314,8 @@ export const PASSAGES: Passage[] = [
         meaning: 'There are many trees in the garden.',
       },
       {
-        urdu: 'صبح کو پرندے گاتے ہیں۔',
-        roman: 'subah ko parinde gaate hain.',
+        urdu: 'صبح کو پرندے چہچہاتے ہیں۔',
+        roman: 'subah ko parinde chehchahaate hain.',
         meaning: 'In the morning the birds sing.',
       },
       {
@@ -2452,7 +2452,11 @@ export const PASSAGES: Passage[] = [
         roman: 'ḍākṭar ne kaha ke aaraam karo.',
         meaning: 'The doctor said to rest.',
       },
-      { urdu: 'اُنہوں نے دوا بھی دی۔', roman: 'unhoñ ne dawa bhi di.', meaning: 'They also gave medicine.' },
+      {
+        urdu: 'اُنہوں نے دوا بھی دی۔',
+        roman: 'unhoñ ne dawa bhi di.',
+        meaning: 'The doctor also gave me some medicine.',
+      },
       { urdu: 'اب مجھے بہتر لگ رہا ہے۔', roman: 'ab mujhe behtar lag raha hai.', meaning: 'Now I am feeling better.' },
     ],
     question: {
@@ -2703,7 +2707,7 @@ export const DIALOGUES: Dialogue[] = [
     setting: 'A guest has just sat down.',
     level: 'beginner',
     lines: [
-      { speaker: 'A', name: 'Host', urdu: 'چائے یا کافی؟', roman: 'chai ya coffee?', meaning: 'Tea or coffee?' },
+      { speaker: 'A', name: 'Host', urdu: 'چائے یا کافی؟', roman: 'chai ya kaafi?', meaning: 'Tea or coffee?' },
       { speaker: 'B', name: 'Guest', urdu: 'چائے، شکریہ۔', roman: 'chai, shukriya.', meaning: 'Tea, thank you.' },
       { speaker: 'A', name: 'Host', urdu: 'چینی کتنی؟', roman: 'cheeni kitni?', meaning: 'How much sugar?' },
       { speaker: 'B', name: 'Guest', urdu: 'تھوڑی سی۔', roman: 'thoṛi si.', meaning: 'A little.' },
@@ -2817,7 +2821,7 @@ export const DIALOGUES: Dialogue[] = [
         speaker: 'A',
         name: 'Visitor',
         urdu: 'معاف کیجیے، اسٹیشن کدھر ہے؟',
-        roman: 'maaf keejiye, station kidhar hai?',
+        roman: 'maaf keejiye, isṭeshan kidhar hai?',
         meaning: 'Excuse me, where is the station?',
       },
       {
@@ -3052,8 +3056,8 @@ export const DIALOGUES: Dialogue[] = [
       {
         speaker: 'A',
         name: 'Guest',
-        urdu: 'معافی چاہتا ہوں، دیر ہو گئی۔',
-        roman: 'maafi chaahta hoon, der ho gayi.',
+        urdu: 'معافی چاہتی ہوں، دیر ہو گئی۔',
+        roman: 'maafi chaahti hoon, der ho gayi.',
         meaning: 'I am sorry, I am late.',
       },
       {
@@ -3169,8 +3173,8 @@ export const DIALOGUES: Dialogue[] = [
       {
         speaker: 'B',
         name: 'Manager',
-        urdu: 'افسوس ہوا۔ وجہ پوچھ سکتا ہوں؟',
-        roman: 'afsos hua. wajah poochh sakta hoon?',
+        urdu: 'افسوس ہوا۔ وجہ پوچھ سکتی ہوں؟',
+        roman: 'afsos hua. wajah poochh sakti hoon?',
         meaning: 'I am sorry to hear it. May I ask why?',
       },
       {

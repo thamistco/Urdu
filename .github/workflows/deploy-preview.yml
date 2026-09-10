@@ -72,6 +72,15 @@ jobs:
       - name: Audit content
         run: npm run audit
 
+      # The store copy quotes numbers at people. app.json's description is not
+      # only store copy: inject-web-meta.js writes it into the deployed page,
+      # so a stale number there is in the search result for the site. It said
+      # 608 lessons and the listing said 237, against a real 350, while the
+      # in-app screen was right the whole time because it counts at runtime.
+      # Offline, instant.
+      - name: Check the store copy's numbers against the content
+        run: npm run check:claims
+
       - name: Check the typed-answer matcher
         run: npm run check:roman
 
@@ -124,6 +133,23 @@ jobs:
 
       - name: Generate voice clips (only if a TTS key is set)
         env:
+          GOOGLE_TTS_API_KEY: ${{ secrets.GOOGLE_TTS_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
+        run: node scripts/generate-voice.js
+
+      # The app offers two voices and asks which one during setup, so both sets
+      # have to be current. Only the first was ever generated here, which meant
+      # a changed word reached the deploy freshly recorded in the woman's voice
+      # and stale in the man's, and nothing in the pipeline said so. Found by
+      # having to regenerate the second set by hand after a content fix.
+      #
+      # Costs nothing when nothing is stale: the generator asks the API only
+      # for clips whose text or voice has changed, so the usual run is a
+      # no-op in both sets.
+      - name: Generate the second voice's clips (only if a TTS key is set)
+        env:
+          VOICE_SET: m
           GOOGLE_TTS_API_KEY: ${{ secrets.GOOGLE_TTS_API_KEY }}
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}

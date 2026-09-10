@@ -24,7 +24,7 @@ export const HEALTH_PACKS: TopicPack[] = [
     [
       ['w-dil2', 'قلب', 'qalb', 'heart (organ)', '🫀'],
       ['w-dimaagh', 'دماغ', 'dimaagh', 'brain', '🧠'],
-      ['w-phephre', 'پھیپھڑے', 'phepṛe', 'lungs', '🫁'],
+      ['w-phephre', 'پھیپھڑے', 'phephṛe', 'lungs', '🫁'],
       ['w-jigar', 'جگر', 'jigar', 'liver', '🫀'],
       ['w-gurda', 'گردہ', 'gurda', 'kidney', '🫘'],
       ['w-aant', 'آنت', 'aañt', 'intestine', '🌀'],
