@@ -606,15 +606,12 @@ async function matchPairs(page, memory) {
   let right = 0;
   let taught = 0;
   let cleared = false;
-  // A board of six pairs needs six *successful* matches, and every miss costs
-  // an attempt too, so a cap of six attempts could never clear one: the run
-  // before this scored 0 of 46 boards for that reason alone. The cap is now on
-  // attempts with room for misses, and on going nowhere.
-  // Clearing six pairs by guessing takes around twenty tries — each miss
-  // narrows nothing — so both of these have to be generous enough for a
-  // learner who knows none of the words to finish a board, and tight enough
-  // that one who cannot finish still stops. A board left unfinished is
-  // recorded as such rather than retried forever.
+  // A board needs one successful match per pair, and every miss costs an
+  // attempt too, so the cap has to leave room for misses: a cap of six
+  // attempts on a six pair board could never clear one, and scored 0 of 46
+  // boards for that reason alone. Generous enough for a learner who knows none
+  // of the words to finish, tight enough that one who cannot still stops. A
+  // board left unfinished is recorded as such rather than retried forever.
   let barren = 0;
   for (let round = 0; round < 30 && barren < 10; round++) {
     const { options } = await readOptions(page);
@@ -627,7 +624,15 @@ async function matchPairs(page, memory) {
     const live = options.filter((o) => !o.dead);
     const words = live.filter((o) => o.lines.some((l) => /[؀-ۿ]/.test(l)));
     const glosses = live.filter((o) => !o.lines.some((l) => /[؀-ۿ]/.test(l)));
-    if (!words.length || !glosses.length) break;
+    // Nothing left to pair means the board is finished. This is where a
+    // cleared board is actually noticed: the flag below only fired when the
+    // app had already moved off the screen, so boards that were completed and
+    // then waited for Continue were reported as failures — four pairs matched
+    // in five tries, and still scored zero.
+    if (!words.length || !glosses.length) {
+      if (pairs) cleared = true;
+      break;
+    }
 
     const word = words[Math.floor(rand() * words.length)];
     const cluster = word.lines.map((l) => memory.clusterFor(l)).find(Boolean);
