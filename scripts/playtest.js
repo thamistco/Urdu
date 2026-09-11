@@ -498,11 +498,19 @@ async function buildWord(page, memory, promptLine) {
   const taught = !!target;
   const knew = taught && rand() < memory.recall(promptLine);
 
-  // What order to try. Knowing the word means spelling it out; not knowing it
-  // means putting the tiles down in some order anyway, which is what a beginner
-  // does and, unlike a partial attempt, is something the app can mark.
+  // How many tiles to place, and in what order.
+  //
+  // The tray is the word's letters plus exactly two decoys (`buildTilesFor`),
+  // so placing every tile is always wrong — including when the learner knows
+  // the word perfectly well. An earlier version did exactly that and scored
+  // 0 of 66 across a whole run, recalled and guessed alike, which a playtester
+  // read as an exercise that could not be won.
+  //
+  // Knowing the word means spelling it: its letters, in order, decoys left
+  // alone. Not knowing it means placing some plausible number of tiles in some
+  // order, which is mostly wrong, as it should be, but can come out right.
   const wanted = knew ? [...target.replace(/\s/g, '')] : null;
-  const taps = tiles.length;
+  const taps = wanted ? wanted.length : 2 + Math.floor(rand() * (tiles.length - 1));
 
   let tapped = 0;
   for (let i = 0; i < taps; i++) {
@@ -593,6 +601,7 @@ async function matchPairs(page, memory) {
   let pairs = 0;
   let right = 0;
   let taught = 0;
+  let cleared = false;
   for (let round = 0; round < 6; round++) {
     const { options } = await readOptions(page);
     if (!options.length) break;
@@ -628,9 +637,16 @@ async function matchPairs(page, memory) {
     // is disabled in place, so what grows is the number of spent tiles.
     const now = await readScreen(page);
     if ((await matchedCount(page)) > before) right++;
-    if (!/match each word/i.test(now.body)) break;
+    // The board is finished when the app moves off it. That, not "every round
+    // I attempted happened to land", is what completing this exercise means —
+    // the previous test could not be satisfied inside the rounds available and
+    // so reported every matching screen in a run as a failure.
+    if (!/match each word/i.test(now.body)) {
+      cleared = true;
+      break;
+    }
   }
-  return { pairs, right, taught };
+  return { pairs, right, taught, cleared };
 }
 
 async function tapText(page, re) {
@@ -1034,7 +1050,7 @@ async function main() {
           promptShape: 'match each word to its picture',
           optionText: [],
           picked: `${m.right} of ${m.pairs} pairs`,
-          correct: m.pairs > 0 && m.right === m.pairs,
+          correct: m.cleared,
           ...classify(m.taught > 0, m.right > 0),
           strength: 0,
           reveal: null,
