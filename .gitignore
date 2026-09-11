@@ -60,6 +60,7 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 .soak/
+.playtest/
 *.tmp.mts
 
 # check:all's own lock against two concurrent runs corrupting one dist/
