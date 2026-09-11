@@ -18,13 +18,16 @@
  *
  *   node scripts/playtest-selftest.js
  *
- * Each assertion here has been checked by breaking the rule it covers and
- * watching it fail — dropping the graded gate, trusting the caller's verdict
- * over the screen's, collapsing "forgot" into "never taught", un-skipping
- * matching in the reveal finding, removing the harness finding, and rejecting
- * one-line reveals. A green run of this file means those six mistakes are not
- * present. It says nothing about whether the driver can still read the screen,
- * which only a real run can tell you.
+ * Every assertion here has been checked by breaking the rule it covers and
+ * watching it fail: dropping the graded gate, trusting the caller's verdict
+ * over the screen's, collapsing "forgot" into "never taught", tying
+ * `couldHaveKnown` back to the dice, un-skipping matching in the reveal
+ * finding, removing either harness finding, and rejecting one-line reveals.
+ *
+ * A green run means those mistakes are not present. It says nothing about
+ * whether the driver can still read a screen, which only a real run tells you —
+ * and the two harness findings exist because that is the failure this file
+ * cannot see.
  */
 
 const { record, classify, revealFrom, findings } = require('./playtest.js');
@@ -109,6 +112,15 @@ const ok = (name, cond) => {
     JSON.stringify(revealFrom(['x', 'The answer', 'Start', 'Continue'])) === '["Start"]'
   );
   ok('no reveal panel means no reveal', revealFrom(['x', 'Not quite', 'Continue']) === null);
+}
+
+// -- the run owns up to its own gaps -----------------------------------------
+
+{
+  const f = findings([{ type: 'lessonTimedOut', lesson: 'L', step: 9, seconds: 400 }]);
+  // A lesson cut short makes every count in the report an undercount, so the
+  // report has to say so rather than quietly reporting the smaller number.
+  ok('an abandoned lesson is reported, not hidden', !!f.find((x) => /abandoned on the clock/.test(x.kind)));
 }
 
 console.log(fails ? `\n${fails} failed` : '\nall good');
