@@ -167,5 +167,15 @@ const ok = (name, cond) => {
   ok('a question with nothing to judge is left out of the count', !!f && f.count === 1);
 }
 
+{
+  // A card between two questions is a change of scene, so it breaks the run.
+  const same = (n) =>
+    Array.from({ length: n }, () => ({ type: 'answer', promptShape: 'how do you say it', lesson: 'L' }));
+  const straight = findings(same(5)).find((x) => /several times running/.test(x.kind));
+  ok('four of the same question in a row is a finding', !!straight);
+  const broken = [...same(2), { type: 'taught', lesson: 'L' }, ...same(3)];
+  ok('a teaching card between them is not', !findings(broken).find((x) => /several times running/.test(x.kind)));
+}
+
 console.log(fails ? `\n${fails} failed` : '\nall good');
 process.exit(fails ? 1 : 0);
