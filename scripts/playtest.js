@@ -557,6 +557,18 @@ async function typeWord(page, memory, promptLine) {
   return { typed: guess, taught, knew };
 }
 
+/** Tiles the app has marked as used, which is how a matched pair shows. */
+async function matchedCount(page) {
+  return page
+    .evaluate(
+      () =>
+        Array.from(document.querySelectorAll('[role="button"]')).filter(
+          (n) => n.getAttribute('aria-disabled') === 'true' || n.disabled === true
+        ).length
+    )
+    .catch(() => 0);
+}
+
 /**
  * Pair each word with its picture, which grades each pair where it stands
  * rather than through the footer banner every other exercise uses.
@@ -567,11 +579,15 @@ async function typeWord(page, memory, promptLine) {
  * the same screen still there — 429 times in one run, 43% of every answer in
  * that journal, none of it anything a learner would ever do.
  *
- * So this is the one place that has to judge its own answers, and the first
- * version did it by counting the pairs it *believed* it had recalled: a lucky
- * guess counted as a miss, and the screen was never consulted at all. It now
- * counts a pair as right only when the tiles leave the tray, which is what the
- * app does when a pair matches.
+ * So this is the one place that has to judge its own answers, and it has been
+ * wrong twice. First it counted the pairs it *believed* it had recalled, so a
+ * lucky guess counted as a miss and the screen was never consulted at all.
+ * Then it counted tiles leaving the tray — which the app does not do: a
+ * matched tile stays exactly where it is and becomes disabled. That version
+ * scored 0 of 6 on all 35 matching screens of a run, which a playtester
+ * reading the journal reasonably took for a broken exercise.
+ *
+ * It now counts disabled tiles, which is what the app actually changes.
  */
 async function matchPairs(page, memory) {
   let pairs = 0;
@@ -580,7 +596,7 @@ async function matchPairs(page, memory) {
   for (let round = 0; round < 6; round++) {
     const { options } = await readOptions(page);
     if (!options.length) break;
-    const before = options.length;
+    const before = await matchedCount(page);
     const words = options.filter((o) => o.lines.some((l) => /[؀-ۿ]/.test(l)));
     const glosses = options.filter((o) => !o.lines.some((l) => /[؀-ۿ]/.test(l)));
     if (!words.length || !glosses.length) break;
@@ -608,11 +624,10 @@ async function matchPairs(page, memory) {
     await page.waitForTimeout(600);
     pairs++;
 
-    // Read the result rather than assume it: a matched pair is taken out of the
-    // tray, so the number of choosable tiles drops. Anything else is a miss.
+    // Read the result rather than assume it. A matched tile is not removed, it
+    // is disabled in place, so what grows is the number of spent tiles.
     const now = await readScreen(page);
-    const left = (await readOptions(page)).options.length;
-    if (left < before) right++;
+    if ((await matchedCount(page)) > before) right++;
     if (!/match each word/i.test(now.body)) break;
   }
   return { pairs, right, taught };
