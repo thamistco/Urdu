@@ -185,7 +185,15 @@ async function readOptions(page) {
       .map((l) => l.trim())
       .filter(Boolean);
     if (!lines.length) continue;
-    if (/^(continue|finish|check|clear|start)$/i.test(lines[0])) continue;
+    // "start" was in this list, and it is also the label of a letter-position
+    // answer: POSITIONS offers Alone, Start, Middle, End. So on every "which
+    // position is this letter showing" question the driver quietly deleted the
+    // correct answer from the options before choosing, then lost a heart for
+    // not picking it. A playtester reading the journal reported it as the
+    // app's most serious defect — an unanswerable question asked 38 times —
+    // and it was this line. Nothing inside a lesson is labelled exactly
+    // "Start"; the one on the path is reached by its aria-label instead.
+    if (/^(continue|finish|check|clear)$/i.test(lines[0])) continue;
     out.push({ i, lines, box });
   }
   return { btns, options: out };
