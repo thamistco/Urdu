@@ -938,6 +938,17 @@ async function main() {
         const sloppy = rand() < 0.2;
         const traced = await traceLetter(page, sloppy);
         const after = await waitForGraded(page);
+
+        // A tracing screen names the letter it is showing — "ALIF · ALONE"
+        // over the glyph — so it teaches, and the learner has to leave it
+        // knowing alif. Skipping this said the app had never introduced any
+        // letter it taught by tracing, which put every later letter question
+        // under "tested before taught": 201 of 536 in the run that found it,
+        // the report's largest finding, and wrong.
+        const named = screen.lines.find((l) => /^[A-Za-z’']+\s*·/.test(l));
+        const glyph = screen.lines.find((l) => /^[\u0600-\u06ff\u200e\u200f]+$/.test(l));
+        if (named && glyph) memory.learn([named.split('·')[0].trim(), glyph]);
+
         journal.push({
           type: 'trace',
           lesson: lessonName,
