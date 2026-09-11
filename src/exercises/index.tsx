@@ -6,6 +6,7 @@ import { MultipleChoiceExercise, MeaningPickExercise, ListenTapExercise } from '
 import { TypeWordExercise, WordFromMeaningExercise } from './RecallExercises';
 import { WordBuildExercise } from './WordBuild';
 import { MatchingExercise } from './Matching';
+import { WordTeachExercise } from './WordTeach';
 import { GrammarTeachExercise, GrammarDrillExercise } from './GrammarExercises';
 import { SentenceBuildExercise, ReadingExercise } from './SentenceReading';
 import { DialogueExercise } from './DialogueExercise';
@@ -41,6 +42,7 @@ const EXERCISE_COMPONENTS: { [K in ExerciseKind]: ComponentType<ExerciseProps<Ex
   typeWord: TypeWordExercise,
   wordBuild: WordBuildExercise,
   matching: MatchingExercise,
+  wordTeach: WordTeachExercise,
   grammarTeach: GrammarTeachExercise,
   grammarDrill: GrammarDrillExercise,
   sentenceBuild: SentenceBuildExercise,

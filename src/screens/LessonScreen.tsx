@@ -35,7 +35,7 @@ type Rt = RouteProp<RootStackParamList, 'Lesson'>;
 
 /** Teaching cards are informational — no hearts, no pass/fail styling. */
 function isTeaching(ex: Exercise | undefined): boolean {
-  return ex?.kind === 'grammarTeach';
+  return ex?.kind === 'grammarTeach' || ex?.kind === 'wordTeach';
 }
 
 /**
