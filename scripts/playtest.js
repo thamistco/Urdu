@@ -189,14 +189,40 @@ async function readScreen(page) {
     body,
     lines,
     prompt: lines.find((l) => /\?$/.test(l) || /^(which|what|type|tap|drag|trace|build|choose|put)\b/i.test(l)) || '',
+    // The three footer banners, matched on their exact wording. `right` used to
+    // include a loose /correct/i, which meant any screen mentioning the word
+    // read as a correct answer; worse, a screen with *no* footer at all read as
+    // `right: false`, which the callers recorded as a wrong answer. That is
+    // where "121 wrong answers with nothing revealed" came from: not one of
+    // them was an answer. Nothing may be recorded unless `graded` is true.
     wrong: /not quite/i.test(body),
-    right: /beautifully done|well done|correct/i.test(body),
+    right: /beautifully done/i.test(body),
     teaching: /keep that in mind/i.test(body),
     // The app says "SESSION COMPLETE", which none of the guessed wordings
     // matched, so a run that finished eight lessons reported finishing none.
     lessonDone: /session complete|lesson complete|you finished|xp earned/i.test(body),
     outOfHearts: /out of hearts/i.test(body),
+    graded: /not quite|beautifully done|keep that in mind/i.test(body),
   };
+}
+
+/**
+ * Record what just happened, but only if the app actually judged it.
+ *
+ * A driver that acts on a screen the app ignores — an empty answer box, a tile
+ * it could not find, a screen it misread as a question — has not answered
+ * anything, and must not say it did. Every such screen used to be filed as a
+ * wrong answer that the app had failed to explain, which manufactured a defect
+ * in the app out of a defect in this file: of 121 such "answers" in the first
+ * full run, none were answers at all.
+ */
+function record(journal, after, entry) {
+  if (!after.graded) {
+    journal.push({ type: 'ungraded', lesson: entry.lesson, step: entry.step, promptShape: entry.promptShape });
+    return false;
+  }
+  journal.push({ ...entry, type: 'answer', correct: after.right });
+  return true;
 }
 
 /**
@@ -377,9 +403,13 @@ async function typeWord(page, memory, promptLine) {
   const roman = cluster ? [...cluster.tokens].find((t) => /^[a-z' ]+$/i.test(t) && t !== norm(promptLine)) : null;
   const knew = !!roman && rand() < memory.recall(promptLine);
 
-  // Not knowing, a learner still usually types something rather than nothing.
-  const guess = knew ? roman : rand() < 0.6 ? (roman || promptLine).slice(0, 3) : '';
-  if (guess) await input.fill(guess).catch(() => {});
+  // Always type something. The empty box used to be an option here, on the
+  // theory that a stuck learner gives up — but the app disables Check on an
+  // empty box, so the app never judged it, and the run banked a wrong answer
+  // that the learner had never given. A beginner who is stuck types a bad guess.
+  const stem = (roman || promptLine).replace(/[^a-z']/gi, '');
+  const guess = knew ? roman : (stem || 'kya').slice(0, 3);
+  await input.fill(guess).catch(() => {});
   await clickByText(page, /^Check$/i);
   return { typed: guess, knew };
 }
@@ -394,12 +424,23 @@ async function typeWord(page, memory, promptLine) {
  * the journal, all of it an artefact of the driver rather than anything a
  * learner would ever do.
  */
+/**
+ * Match-the-pairs, which grades each pair where it stands rather than with the
+ * footer banner every other exercise uses.
+ *
+ * So this is the one place that has to judge its own answers, and the first
+ * version did it by counting the pairs it *believed* it had recalled: a lucky
+ * guess counted as a miss, and the screen was never consulted at all. It now
+ * counts a pair as right only when the tiles leave the tray, which is what the
+ * app does when a pair matches.
+ */
 async function matchPairs(page, memory) {
   let pairs = 0;
   let right = 0;
   for (let round = 0; round < 6; round++) {
     const { options } = await readOptions(page);
     if (!options.length) break;
+    const before = options.length;
     const words = options.filter((o) => o.lines.some((l) => /[؀-ۿ]/.test(l)));
     const glosses = options.filter((o) => !o.lines.some((l) => /[؀-ۿ]/.test(l)));
     if (!words.length || !glosses.length) break;
@@ -423,8 +464,12 @@ async function matchPairs(page, memory) {
       .catch(() => {});
     await page.waitForTimeout(600);
     pairs++;
-    if (recalled) right++;
+
+    // Read the result rather than assume it: a matched pair is taken out of the
+    // tray, so the number of choosable tiles drops. Anything else is a miss.
     const now = await readScreen(page);
+    const left = (await readOptions(page)).options.length;
+    if (left < before) right++;
     if (!/match each word/i.test(now.body)) break;
   }
   return { pairs, right };
@@ -541,13 +586,30 @@ function findings(journal) {
     });
   }
 
-  const noReveal = answered.filter((e) => !e.correct && (!e.reveal || !e.reveal.length));
+  // Only exercises that use the footer banner can be held to the reveal panel.
+  // Matching corrects each pair in the tray instead, so counting it here
+  // produced 31 phantom complaints on top of 90 more that were not answers at
+  // all — see `record`, which is why this can now only see graded answers.
+  const noReveal = answered.filter((e) => !e.correct && !e.gradesInPlace && (!e.reveal || !e.reveal.length));
   if (noReveal.length) {
     out.push({
       kind: 'got it wrong and was shown nothing',
       count: noReveal.length,
       note: 'A wrong answer with no answer revealed teaches nothing at all.',
-      examples: noReveal.slice(0, 6).map((e) => ({ lesson: e.lesson, prompt: e.prompt })),
+      examples: noReveal.slice(0, 6).map((e) => ({ lesson: e.lesson, prompt: e.prompt, shape: e.promptShape })),
+    });
+  }
+
+  // Screens this driver acted on and the app never judged. Not a finding about
+  // the app — a finding about this file, reported so that a quiet harness bug
+  // cannot masquerade as a clean run.
+  const ungraded = journal.filter((e) => e.type === 'ungraded');
+  if (ungraded.length) {
+    out.push({
+      kind: 'harness: acted on a screen the app never graded',
+      count: ungraded.length,
+      note: 'Dropped rather than recorded as answers. A large number here means this driver is misreading screens.',
+      examples: [...new Set(ungraded.map((e) => e.promptShape))].slice(0, 8),
     });
   }
 
@@ -597,7 +659,7 @@ function writeReport(journal, memory, stats) {
 
 // ------------------------------------------------------------------------ run
 
-(async () => {
+async function main() {
   if (!fs.existsSync(path.join(DIST, 'index.html'))) {
     console.error('playtest — no dist/. Run `npm run build:web` first.');
     process.exit(1);
@@ -756,12 +818,16 @@ function writeReport(journal, memory, stats) {
           prompt: 'Match each word to its picture',
           promptShape: 'match each word to its picture',
           optionText: [],
-          picked: `${m.pairs} pairs`,
-          correct: m.right === m.pairs && m.pairs > 0,
+          picked: `${m.right} of ${m.pairs} pairs`,
+          correct: m.pairs > 0 && m.right === m.pairs,
           how: m.right ? 'recalled' : 'guessed',
           couldHaveKnown: m.right > 0,
           strength: 0,
           reveal: null,
+          // Matching corrects a pair where it stands instead of showing the
+          // reveal panel, so a null here is the exercise working as designed,
+          // not the app withholding the answer. The reveal finding skips it.
+          gradesInPlace: true,
         });
         await pressContinue(page);
         await page.waitForTimeout(700);
@@ -770,21 +836,23 @@ function writeReport(journal, memory, stats) {
 
       // Typing: nothing on screen to pick from, so this is pure recall.
       if (/type this word|type the word/i.test(screen.body)) {
-        const prompt = screen.lines[1] || '';
+        // Line 1 is not reliably the word: on a listen-and-type screen it is
+        // the speaker button, and a run that took it literally typed "🔊" into
+        // the box and then blamed the app for not explaining the answer.
+        const prompt =
+          screen.lines.slice(1).find((l) => /\p{L}/u.test(l) && !/^(type|check|continue)\b/i.test(l)) || '';
         const t = await typeWord(page, memory, prompt);
         await page.waitForTimeout(700);
         const after = await readScreen(page);
         const reveal = revealFrom(after.lines);
         if (reveal && reveal.length >= 2) memory.learn(reveal);
-        journal.push({
-          type: 'answer',
+        record(journal, after, {
           lesson: lessonName,
           step,
           prompt,
           promptShape: 'type this word',
           optionText: [],
-          picked: t.typed === '' ? '(typed nothing)' : t.typed,
-          correct: after.right,
+          picked: t.typed,
           how: t.knew ? 'recalled' : 'guessed',
           couldHaveKnown: t.knew,
           strength: 0,
@@ -803,15 +871,13 @@ function writeReport(journal, memory, stats) {
         const after = await readScreen(page);
         const reveal = revealFrom(after.lines);
         if (reveal && reveal.length >= 2) memory.learn(reveal);
-        journal.push({
-          type: 'answer',
+        record(journal, after, {
           lesson: lessonName,
           step,
           prompt,
           promptShape: 'build the word',
           optionText: [],
           picked: `${built.tapped} tiles`,
-          correct: after.right,
           how: built.knew ? 'recalled' : 'guessed',
           couldHaveKnown: built.knew,
           strength: 0,
@@ -857,8 +923,7 @@ function writeReport(journal, memory, stats) {
       if (reveal && reveal.length >= 2) memory.learn(reveal);
       if (correct) memory.learn([...decision.pick.lines, ...context].slice(0, 4));
 
-      journal.push({
-        type: 'answer',
+      record(journal, after, {
         lesson: lessonName,
         step,
         prompt,
@@ -869,7 +934,6 @@ function writeReport(journal, memory, stats) {
           .toLowerCase(),
         optionText: options.map((o) => o.lines.join(' / ')),
         picked: decision.pick.lines.join(' / '),
-        correct,
         how: decision.how,
         couldHaveKnown: decision.couldHaveKnown,
         strength: Number(decision.strength.toFixed(2)),
@@ -898,7 +962,16 @@ function writeReport(journal, memory, stats) {
   console.log(`playtest — journal and report in .playtest/`);
   await browser.close();
   process.exit(0);
-})().catch((e) => {
-  console.error('playtest —', e.message);
-  process.exit(1);
-});
+}
+
+// Requiring this file used to launch a browser and play the course, which made
+// the pure parts — the memory model, the reveal parser, the rule that only a
+// graded screen may be recorded — impossible to exercise without a full run.
+if (require.main === module) {
+  main().catch((e) => {
+    console.error('playtest —', e.message);
+    process.exit(1);
+  });
+}
+
+module.exports = { Memory, revealFrom, record, chooseOption, findings };
