@@ -1712,20 +1712,19 @@ export function buildLessonExercises(
     for (let i = 0; i < picks.length; i += GROUP) groups.push(picks.slice(i, i + GROUP));
 
     const passes: ((w: Word, i: number) => Exercise)[] = [
-      // Fixed at variant 1 (`meaningPick`), not vocab's varying `i % 3`.
-      // Every phrase shares one emoji (`💬`), so `distractorsFor`'s
-      // `distinctCue` pass can never find three more of the same cue inside
-      // `PHRASE_WORDS` — its own widen-if-too-uniform fallback
-      // (`if (chosen.length < DISTRACTORS) consider(WORDS)`) then reaches
-      // into the full 2,281-word vocabulary for picture distractors, which
-      // *looks* like a working `multipleChoice`/`listenTap` (four distinct
-      // pictures) but is not one: the correct option's own picture is still
-      // the generic bubble, so it is the visibly odd one out among three
-      // real object pictures, answerable by elimination without knowing
-      // what the phrase means. Confirmed live: the varying-variant version
-      // of this pass produced exactly that (`multipleChoice`/`listenTap`
-      // both appearing) before this fix pinned it to 1.
-      (w) => wordExercise(w, PHRASE_WORDS, track, 'meet', 1),
+      // Introduced rather than asked about, for the same reason as vocabulary:
+      // a phrase nobody has met cannot be picked out of four by reasoning.
+      //
+      // This slot used to be pinned to `meaningPick` because every phrase
+      // shares one emoji (`💬`), so `distractorsFor`'s `distinctCue` pass could
+      // never find three more of the same cue inside `PHRASE_WORDS`, and its
+      // widen-if-too-uniform fallback reached into the full vocabulary for
+      // picture distractors — which looked like a working `multipleChoice` but
+      // left the correct option as the visibly odd one out among three real
+      // object pictures, answerable by elimination. A teaching card has no
+      // distractors at all, so that whole problem does not arise here. It still
+      // applies to the recall pass below, which stays as it was.
+      (w) => ({ kind: 'wordTeach', word: w }),
       (w) => wordExercise(w, PHRASE_WORDS, track, 'recall'),
       (w, i) => produceExercise(w, PHRASE_WORDS, track, false, i),
     ];
@@ -1852,7 +1851,27 @@ export function buildLessonExercises(
      */
 
     const passes: ((w: Word, i: number) => Exercise)[] = [
-      (w, i) => wordExercise(w, pool, track, 'meet', i % 3),
+      /**
+       * The first sighting introduces the word instead of testing it.
+       *
+       * This used to be `wordExercise(..., 'meet', i % 3)` — a four-option
+       * question about a word the learner had never seen. None of its three
+       * shapes could be reasoned out: a picture says what a thing is but not
+       * which of four Urdu strings names it, and the script says nothing about
+       * what it means. So the first sighting was a coin flip that cost a heart,
+       * and the word was explained afterwards, in the reveal, as a correction.
+       *
+       * A playtest beginner scored 20% on words the app had never shown and 73%
+       * on words it had. Both benchmarks this course is measured against
+       * (`gauntlet/BENCHMARKS.md`) show a word before drilling it, and grammar
+       * here has always had a teaching card for the same reason.
+       *
+       * The climb is now teach, recall, produce. The sighting count per word is
+       * unchanged, so `check:shape`'s floor of three still holds and the lesson
+       * is the same length — what changed is that the first of the three tells
+       * the learner something rather than asking.
+       */
+      (w) => ({ kind: 'wordTeach', word: w }),
       (w) => wordExercise(w, pool, track, 'recall'),
       (w, i) => produceExercise(w, pool, track, teachesScript, i),
     ];

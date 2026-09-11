@@ -129,6 +129,26 @@ export type Exercise =
       words: Word[];
     }
   | {
+      /**
+       * A word's introduction: script, reading, meaning and sound, with
+       * nothing to answer.
+       *
+       * Every other word exercise asks a question, and for a word's *first*
+       * appearance that was a guess with a penalty attached. A picture tells
+       * the learner what a thing is but not which of four Urdu strings names
+       * it; the script tells them nothing about what it means. So the first
+       * encounter could only be answered by luck, and the explanation arrived
+       * afterwards, as a correction, having cost a heart. A playtest run scored
+       * 20% on words the app had never shown against 73% on words it had.
+       *
+       * Grammar has had a teaching card since the beginning, for exactly this
+       * reason ("presenting the rule *before* drilling it is what makes grammar
+       * stick rather than feeling like guesswork"). Vocabulary never did.
+       */
+      kind: 'wordTeach';
+      word: Word;
+    }
+  | {
       /** teaching card — explanation, table and examples, then "got it" */
       kind: 'grammarTeach';
       concept: GrammarConcept;
