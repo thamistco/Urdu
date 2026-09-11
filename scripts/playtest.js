@@ -506,6 +506,16 @@ function findings(journal) {
   return out;
 }
 
+/**
+ * The journal on disk, after every lesson rather than only at the end.
+ *
+ * This tool is meant to be left running, and a run that is stopped — by a
+ * timeout, by a person, by anything — used to produce an empty directory and
+ * nothing to read. Everything it had learned up to that point was thrown away
+ * at exactly the moment it became interesting.
+ */
+let flush = () => {};
+
 function writeReport(journal, memory, stats) {
   const f = findings(journal);
   const answered = journal.filter((e) => e.type === 'answer');
@@ -555,6 +565,7 @@ function writeReport(journal, memory, stats) {
   const memory = new Memory();
   const journal = [];
   const stats = { lessonsEntered: 0, lessonsFinished: 0 };
+  flush = () => fs.writeFileSync(path.join(OUT, 'journal.json'), JSON.stringify(journal, null, 2));
   console.log(`playtest — seed ${SEED}, track ${TRACK}, ${LESSONS} lessons`);
 
   // Gems from the start, so the refill button actually works when the wall is
@@ -597,11 +608,16 @@ function writeReport(journal, memory, stats) {
     }
     const lessonName = opened.split('.')[0];
     stats.lessonsEntered++;
+    const startedAt = Date.now();
     await page.waitForTimeout(2200);
 
     for (let step = 0; step < 140; step++) {
       memory.step++;
       const screen = await readScreen(page);
+      if (process.env.PLAYTEST_DEBUG)
+        console.log(
+          `    [${step}] ${JSON.stringify(screen.lines.slice(0, 4))}${screen.wrong ? ' WRONG' : ''}${screen.right ? ' RIGHT' : ''}`
+        );
 
       if (screen.lessonDone) {
         stats.lessonsFinished++;
@@ -786,9 +802,15 @@ function writeReport(journal, memory, stats) {
       await pressContinue(page);
       await page.waitForTimeout(600);
     }
+    flush();
+    const answers = journal.filter((e) => e.type === 'answer').length;
+    console.log(
+      `  lesson ${stats.lessonsEntered}: ${lessonName} — ${answers} answered so far, ` +
+        `${stats.lessonsFinished} finished, ${Math.round((Date.now() - startedAt) / 1000)}s`
+    );
   }
 
-  fs.writeFileSync(path.join(OUT, 'journal.json'), JSON.stringify(journal, null, 2));
+  flush();
   writeReport(journal, memory, stats);
   const answered = journal.filter((e) => e.type === 'answer');
   console.log(
