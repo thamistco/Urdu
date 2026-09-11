@@ -69,15 +69,11 @@ describe('answerReveal', () => {
   it('stays silent for the exercises that correct themselves in place', () => {
     // Each of these lights up the right answer where it stands.
     expect(answerReveal({ kind: 'matching', words: [word] } as Exercise)).toBeNull();
-    expect(
-      answerReveal({ kind: 'reading', passage: { question: { answer: 'x' } } } as unknown as Exercise)
-    ).toBeNull();
+    expect(answerReveal({ kind: 'reading', passage: { question: { answer: 'x' } } } as unknown as Exercise)).toBeNull();
     expect(
       answerReveal({ kind: 'dialogue', dialogue: { question: { answer: 'x' } } } as unknown as Exercise)
     ).toBeNull();
-    expect(
-      answerReveal({ kind: 'grammarDrill', drill: { answer: 'x' } } as unknown as Exercise)
-    ).toBeNull();
+    expect(answerReveal({ kind: 'grammarDrill', drill: { answer: 'x' } } as unknown as Exercise)).toBeNull();
   });
 
   it('never returns an empty reveal, which would render a blank red panel', () => {
