@@ -599,7 +599,7 @@ function writeReport(journal, memory, stats) {
     stats.lessonsEntered++;
     await page.waitForTimeout(2200);
 
-    for (let step = 0; step < 60; step++) {
+    for (let step = 0; step < 140; step++) {
       memory.step++;
       const screen = await readScreen(page);
 
@@ -607,7 +607,7 @@ function writeReport(journal, memory, stats) {
         stats.lessonsFinished++;
         journal.push({ type: 'lessonDone', lesson: lessonName, step });
         await pressContinue(page);
-        await page.waitForTimeout(1500);
+        await page.waitForTimeout(800);
         break;
       }
       if (screen.outOfHearts) {
@@ -629,7 +629,7 @@ function writeReport(journal, memory, stats) {
         });
         await page.screenshot({ path: path.join(OUT, `hearts-${journal.length}.png`) }).catch(() => {});
         const resumed = await clickByText(page, /^REFILL/i);
-        await page.waitForTimeout(1500);
+        await page.waitForTimeout(800);
         if (!resumed) {
           await topUpHearts(page);
           break;
@@ -643,7 +643,7 @@ function writeReport(journal, memory, stats) {
         memory.learn(shown.slice(0, 4));
         journal.push({ type: 'taught', lesson: lessonName, step, shown: shown.slice(0, 6) });
         await pressContinue(page);
-        await page.waitForTimeout(1100);
+        await page.waitForTimeout(600);
         continue;
       }
 
@@ -653,7 +653,7 @@ function writeReport(journal, memory, stats) {
       if (/trace the letter|draw over the grey letter/i.test(screen.body)) {
         const sloppy = rand() < 0.2;
         const traced = await traceLetter(page, sloppy);
-        await page.waitForTimeout(1200);
+        await page.waitForTimeout(700);
         const after = await readScreen(page);
         journal.push({
           type: 'trace',
@@ -670,7 +670,7 @@ function writeReport(journal, memory, stats) {
           break;
         }
         await pressContinue(page);
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(600);
         continue;
       }
 
@@ -678,7 +678,7 @@ function writeReport(journal, memory, stats) {
       if (/type this word|type the word/i.test(screen.body)) {
         const prompt = screen.lines[1] || '';
         const t = await typeWord(page, memory, prompt);
-        await page.waitForTimeout(1300);
+        await page.waitForTimeout(700);
         const after = await readScreen(page);
         const reveal = revealFrom(after.lines);
         if (reveal && reveal.length >= 2) memory.learn(reveal);
@@ -697,7 +697,7 @@ function writeReport(journal, memory, stats) {
           reveal,
         });
         await pressContinue(page);
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(600);
         continue;
       }
 
@@ -705,7 +705,7 @@ function writeReport(journal, memory, stats) {
       if (/build the word|build the sentence|tap the letters|tap the words/i.test(screen.body)) {
         const prompt = screen.lines.find((l) => /·/.test(l)) || screen.lines[1] || '';
         const built = await buildWord(page, memory, prompt.split('·')[0].trim());
-        await page.waitForTimeout(1300);
+        await page.waitForTimeout(700);
         const after = await readScreen(page);
         const reveal = revealFrom(after.lines);
         if (reveal && reveal.length >= 2) memory.learn(reveal);
@@ -724,7 +724,7 @@ function writeReport(journal, memory, stats) {
           reveal,
         });
         await pressContinue(page);
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(600);
         continue;
       }
 
@@ -738,7 +738,7 @@ function writeReport(journal, memory, stats) {
           await page.screenshot({ path: path.join(OUT, `stuck-${journal.length}.png`) }).catch(() => {});
           break;
         }
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(600);
         continue;
       }
 
@@ -752,7 +752,7 @@ function writeReport(journal, memory, stats) {
         .nth(decision.pick.i)
         .click()
         .catch(() => {});
-      await page.waitForTimeout(1200);
+      await page.waitForTimeout(700);
 
       const after = await readScreen(page);
       const reveal = revealFrom(after.lines);
@@ -784,7 +784,7 @@ function writeReport(journal, memory, stats) {
       });
 
       await pressContinue(page);
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(600);
     }
   }
 
