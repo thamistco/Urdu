@@ -771,15 +771,30 @@ function findings(journal) {
 
   // Same question shape several times running is the commonest complaint a
   // real tester makes about a course, and it is countable.
+  //
+  // Counted over every screen, not just the answered ones. A teaching card or a
+  // tracing pad between two questions is a change of scene to the learner, so
+  // it breaks the run — and skipping them said a Greetings lesson asked the
+  // same question five times running when what it actually did was alternate
+  // question, card, question, card. That reported the new word card as a
+  // monotony regression it had in fact relieved.
+  const screens = journal.filter((e) => e.type === 'answer' || e.type === 'taught' || e.type === 'trace');
   let run = 1;
   const runs = [];
-  for (let i = 1; i < answered.length; i++) {
-    if (answered[i].promptShape && answered[i].promptShape === answered[i - 1].promptShape) run++;
+  const shapeOf = (e) => (e.type === 'answer' ? e.promptShape : null);
+  for (let i = 1; i < screens.length; i++) {
+    const here = shapeOf(screens[i]);
+    if (here && here === shapeOf(screens[i - 1])) run++;
     else {
-      if (run >= 4) runs.push({ shape: answered[i - 1].promptShape, length: run, lesson: answered[i - 1].lesson });
+      if (run >= 4) runs.push({ shape: shapeOf(screens[i - 1]), length: run, lesson: screens[i - 1].lesson });
       run = 1;
     }
   }
+  // The run in progress when the screens ran out. Only the `else` above records
+  // one, so a lesson that ends on its longest run — which is exactly where a
+  // drain of one exercise kind puts it — never reported it at all.
+  const last = screens[screens.length - 1];
+  if (run >= 4 && last && shapeOf(last)) runs.push({ shape: shapeOf(last), length: run, lesson: last.lesson });
   if (runs.length) {
     out.push({
       kind: 'the same question shape several times running',
