@@ -192,7 +192,9 @@ async function readScreen(page) {
     wrong: /not quite/i.test(body),
     right: /beautifully done|well done|correct/i.test(body),
     teaching: /keep that in mind/i.test(body),
-    lessonDone: /lesson complete|you finished|xp earned/i.test(body),
+    // The app says "SESSION COMPLETE", which none of the guessed wordings
+    // matched, so a run that finished eight lessons reported finishing none.
+    lessonDone: /session complete|lesson complete|you finished|xp earned/i.test(body),
     outOfHearts: /out of hearts/i.test(body),
   };
 }
@@ -380,6 +382,52 @@ async function typeWord(page, memory, promptLine) {
   if (guess) await input.fill(guess).catch(() => {});
   await clickByText(page, /^Check$/i);
   return { typed: guess, knew };
+}
+
+/**
+ * Pair each word with its picture.
+ *
+ * This screen offers eight things, not four: the words on one side and the
+ * glosses on the other, and an answer is a *pair*. The generic option reader
+ * treated it as a single choice, tapped one tile, recorded an answer and found
+ * the same screen still there — 429 times in one run, 43% of every answer in
+ * the journal, all of it an artefact of the driver rather than anything a
+ * learner would ever do.
+ */
+async function matchPairs(page, memory) {
+  let pairs = 0;
+  let right = 0;
+  for (let round = 0; round < 6; round++) {
+    const { options } = await readOptions(page);
+    if (!options.length) break;
+    const words = options.filter((o) => o.lines.some((l) => /[؀-ۿ]/.test(l)));
+    const glosses = options.filter((o) => !o.lines.some((l) => /[؀-ۿ]/.test(l)));
+    if (!words.length || !glosses.length) break;
+
+    const word = words[Math.floor(rand() * words.length)];
+    const cluster = word.lines.map((l) => memory.clusterFor(l)).find(Boolean);
+    const knownGloss = cluster && glosses.find((g) => g.lines.some((l) => cluster.tokens.has(norm(l))));
+    const recalled = knownGloss && rand() < memory.recall(word.lines[0]);
+    const gloss = recalled ? knownGloss : glosses[Math.floor(rand() * glosses.length)];
+
+    await page
+      .locator('[role="button"]')
+      .nth(word.i)
+      .click()
+      .catch(() => {});
+    await page.waitForTimeout(320);
+    await page
+      .locator('[role="button"]')
+      .nth(gloss.i)
+      .click()
+      .catch(() => {});
+    await page.waitForTimeout(600);
+    pairs++;
+    if (recalled) right++;
+    const now = await readScreen(page);
+    if (!/match each word/i.test(now.body)) break;
+  }
+  return { pairs, right };
 }
 
 async function tapText(page, re) {
@@ -687,6 +735,36 @@ function writeReport(journal, memory, stats) {
         }
         await pressContinue(page);
         await page.waitForTimeout(600);
+        continue;
+      }
+
+      // Back on the learn path: the lesson ended without a completion screen,
+      // usually by being left. Answering the path's own lesson rows as though
+      // they were options put 36 junk entries in one run's journal.
+      if (/tap any lesson to jump ahead/i.test(screen.body)) {
+        journal.push({ type: 'leftLesson', lesson: lessonName, step });
+        break;
+      }
+
+      // Matching pairs a word with a gloss, so it needs two taps, not one.
+      if (/match each word/i.test(screen.body)) {
+        const m = await matchPairs(page, memory);
+        journal.push({
+          type: 'answer',
+          lesson: lessonName,
+          step,
+          prompt: 'Match each word to its picture',
+          promptShape: 'match each word to its picture',
+          optionText: [],
+          picked: `${m.pairs} pairs`,
+          correct: m.right === m.pairs && m.pairs > 0,
+          how: m.right ? 'recalled' : 'guessed',
+          couldHaveKnown: m.right > 0,
+          strength: 0,
+          reveal: null,
+        });
+        await pressContinue(page);
+        await page.waitForTimeout(700);
         continue;
       }
 
