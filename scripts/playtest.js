@@ -216,6 +216,23 @@ async function readScreen(page) {
  * in the app out of a defect in this file: of 121 such "answers" in the first
  * full run, none were answers at all.
  */
+/**
+ * How to file an attempt, given the two facts that are easy to collapse.
+ *
+ * `taught` is whether the app has ever shown this learner the thing; `knew` is
+ * whether they could produce it just now. Both call sites used to pass only the
+ * second, so every word taught long ago and since forgotten was reported as a
+ * word the course had never introduced — a complaint about lesson *order*
+ * raised for what is really a complaint about *spacing*. They want opposite
+ * fixes, so the report has to keep them apart.
+ *
+ * Pure and shared precisely so the rule can be tested: the branch used to live
+ * inline in the browser loop, where nothing could reach it.
+ */
+function classify(taught, knew) {
+  return { how: knew ? 'recalled' : taught ? 'forgot' : 'guessed', couldHaveKnown: !!taught };
+}
+
 function record(journal, after, entry) {
   if (!after.graded) {
     journal.push({ type: 'ungraded', lesson: entry.lesson, step: entry.step, promptShape: entry.promptShape });
@@ -367,7 +384,9 @@ async function buildWord(page, memory, promptLine) {
   // it the script form already.
   const cluster = memory.clusterFor(promptLine) || null;
   const target = cluster ? [...cluster.tokens].find((t) => /[؀-ۿ]/.test(t)) : null;
-  const knew = !!target && rand() < memory.recall(promptLine);
+  // See `typeWord`: shown-at-all and remembered-now are separate questions.
+  const taught = !!target;
+  const knew = taught && rand() < memory.recall(promptLine);
 
   let order = tiles;
   if (knew) {
@@ -384,7 +403,7 @@ async function buildWord(page, memory, promptLine) {
     await page.waitForTimeout(160);
   }
   await clickByText(page, /^Check$/i);
-  return { tapped: order.length, knew };
+  return { tapped: order.length, taught, knew };
 }
 
 /**
@@ -397,11 +416,19 @@ async function buildWord(page, memory, promptLine) {
  */
 async function typeWord(page, memory, promptLine) {
   const input = page.locator('input, textarea').first();
-  if (!(await input.count().catch(() => 0))) return { typed: null, knew: false };
+  if (!(await input.count().catch(() => 0))) return { typed: null, taught: false, knew: false };
 
   const cluster = memory.clusterFor(promptLine);
   const roman = cluster ? [...cluster.tokens].find((t) => /^[a-z' ]+$/i.test(t) && t !== norm(promptLine)) : null;
-  const knew = !!roman && rand() < memory.recall(promptLine);
+
+  // Two different facts, and collapsing them into one was a reporting bug:
+  // `taught` is whether the app ever showed this, `knew` is whether the die
+  // came up. A word taught fifty exercises ago and forgotten is a complaint
+  // about pacing; a word never taught at all is a complaint about ordering.
+  // With only `knew` to go on, every forgotten word was filed under "tested
+  // before taught", which is the wrong finding and the wrong fix.
+  const taught = !!roman;
+  const knew = taught && rand() < memory.recall(promptLine);
 
   // Always type something. The empty box used to be an option here, on the
   // theory that a stuck learner gives up — but the app disables Check on an
@@ -411,7 +438,7 @@ async function typeWord(page, memory, promptLine) {
   const guess = knew ? roman : (stem || 'kya').slice(0, 3);
   await input.fill(guess).catch(() => {});
   await clickByText(page, /^Check$/i);
-  return { typed: guess, knew };
+  return { typed: guess, taught, knew };
 }
 
 /**
@@ -437,6 +464,7 @@ async function typeWord(page, memory, promptLine) {
 async function matchPairs(page, memory) {
   let pairs = 0;
   let right = 0;
+  let taught = 0;
   for (let round = 0; round < 6; round++) {
     const { options } = await readOptions(page);
     if (!options.length) break;
@@ -448,6 +476,9 @@ async function matchPairs(page, memory) {
     const word = words[Math.floor(rand() * words.length)];
     const cluster = word.lines.map((l) => memory.clusterFor(l)).find(Boolean);
     const knownGloss = cluster && glosses.find((g) => g.lines.some((l) => cluster.tokens.has(norm(l))));
+    // Whether the app had taught this word, separately from whether the die
+    // came up — same distinction `typeWord` draws, and for the same reason.
+    if (knownGloss) taught++;
     const recalled = knownGloss && rand() < memory.recall(word.lines[0]);
     const gloss = recalled ? knownGloss : glosses[Math.floor(rand() * glosses.length)];
 
@@ -472,7 +503,7 @@ async function matchPairs(page, memory) {
     if (left < before) right++;
     if (!/match each word/i.test(now.body)) break;
   }
-  return { pairs, right };
+  return { pairs, right, taught };
 }
 
 async function tapText(page, re) {
@@ -820,8 +851,7 @@ async function main() {
           optionText: [],
           picked: `${m.right} of ${m.pairs} pairs`,
           correct: m.pairs > 0 && m.right === m.pairs,
-          how: m.right ? 'recalled' : 'guessed',
-          couldHaveKnown: m.right > 0,
+          ...classify(m.taught > 0, m.right > 0),
           strength: 0,
           reveal: null,
           // Matching corrects a pair where it stands instead of showing the
@@ -853,8 +883,7 @@ async function main() {
           promptShape: 'type this word',
           optionText: [],
           picked: t.typed,
-          how: t.knew ? 'recalled' : 'guessed',
-          couldHaveKnown: t.knew,
+          ...classify(t.taught, t.knew),
           strength: 0,
           reveal,
         });
@@ -878,8 +907,7 @@ async function main() {
           promptShape: 'build the word',
           optionText: [],
           picked: `${built.tapped} tiles`,
-          how: built.knew ? 'recalled' : 'guessed',
-          couldHaveKnown: built.knew,
+          ...classify(built.taught, built.knew),
           strength: 0,
           reveal,
         });
@@ -974,4 +1002,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { Memory, revealFrom, record, chooseOption, findings };
+module.exports = { Memory, revealFrom, record, classify, chooseOption, findings };
