@@ -261,6 +261,11 @@ export function LessonScreen() {
   const advance = () => {
     invalidateSpeech();
     if (heartsSpent) {
+      // Cleared as it fires. Leaving it set meant the wall came back on the
+      // next Continue, and the one after that, for the rest of the lesson: a
+      // refill bought a single question. A playtest run hit the wall 375 times
+      // and spent 15,000 gems on it.
+      setHeartsSpent(false);
       setOutOfHearts(true);
       return;
     }
