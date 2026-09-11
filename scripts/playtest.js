@@ -326,6 +326,30 @@ async function waitForGraded(page) {
 }
 
 /**
+ * Did the learner already know the answer the app just revealed?
+ *
+ * The honest test for "tested before taught", and narrower than the one it
+ * replaces. That one asked whether the learner recognised anything in the
+ * *prompt*, which quietly counted every question that is not about vocabulary
+ * at all: "which position is this letter showing" is answered by looking at
+ * whether the glyph joins on the left, so there is no word to have been taught
+ * and it could never come out any other way. Six of one probe's thirty-eight
+ * were that single shape, and the finding was on course to headline a report
+ * with them.
+ *
+ * So the question is now asked of the answer rather than the prompt, and only
+ * when the answer is a piece of Urdu: the app has just shown what the right
+ * answer was, and either it had put that in front of this learner before or it
+ * had not. Returns null when there is nothing to judge, which is not the same
+ * as false and is not counted.
+ */
+function knewRevealedAnswer(memory, reveal) {
+  if (!reveal || !reveal.length) return null;
+  if (!reveal.some((l) => /[\u0600-\u06ff]/.test(l))) return null;
+  return reveal.some((l) => memory.knows(l));
+}
+
+/**
  * Choose an option the way a learner would.
  *
  * Looks for something on screen it has been taught to associate with the
@@ -657,12 +681,12 @@ function findings(journal) {
   const out = [];
   const answered = journal.filter((e) => e.type === 'answer');
 
-  const untaught = answered.filter((e) => !e.couldHaveKnown && !e.correct);
+  const untaught = answered.filter((e) => e.knewAnswer === false && !e.correct);
   if (untaught.length) {
     out.push({
       kind: 'tested before taught',
       count: untaught.length,
-      note: `${untaught.length} of ${answered.length} questions asked about something the app had never shown this learner. A beginner can only guess at these.`,
+      note: `${untaught.length} of ${answered.length} questions revealed an Urdu answer the app had never put in front of this learner. A beginner can only guess at these.`,
       examples: untaught.slice(0, 6).map((e) => ({ lesson: e.lesson, prompt: e.prompt, options: e.optionText })),
     });
   }
@@ -1011,6 +1035,7 @@ async function main() {
         const t = await typeWord(page, memory, prompt);
         const after = await waitForGraded(page);
         const reveal = revealFrom(after.lines);
+        const knewAnswer = knewRevealedAnswer(memory, reveal);
         if (reveal && reveal.length >= 2) memory.learn(reveal);
         record(journal, after, {
           lesson: lessonName,
@@ -1022,6 +1047,7 @@ async function main() {
           ...classify(t.taught, t.knew),
           strength: 0,
           reveal,
+          knewAnswer,
         });
         await pressContinue(page);
         await page.waitForTimeout(600);
@@ -1034,6 +1060,7 @@ async function main() {
         const built = await buildWord(page, memory, prompt.split('·')[0].trim());
         const after = await waitForGraded(page);
         const reveal = revealFrom(after.lines);
+        const knewAnswer = knewRevealedAnswer(memory, reveal);
         if (reveal && reveal.length >= 2) memory.learn(reveal);
         record(journal, after, {
           lesson: lessonName,
@@ -1045,6 +1072,7 @@ async function main() {
           ...classify(built.taught, built.knew),
           strength: 0,
           reveal,
+          knewAnswer,
         });
         await pressContinue(page);
         await page.waitForTimeout(600);
@@ -1077,6 +1105,7 @@ async function main() {
         .catch(() => {});
       const after = await waitForGraded(page);
       const reveal = revealFrom(after.lines);
+      const knewAnswer = knewRevealedAnswer(memory, reveal);
       const correct = after.right;
 
       // The learner learns from being told, right or wrong. This is the only
@@ -1100,6 +1129,7 @@ async function main() {
         strength: Number(decision.strength.toFixed(2)),
         gapSteps: decision.couldHaveKnown ? memory.step - (memory.clusterFor(prompt)?.lastSeen ?? memory.step) : null,
         reveal,
+        knewAnswer,
       });
 
       await pressContinue(page);
@@ -1135,4 +1165,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { Memory, revealFrom, record, classify, chooseOption, findings };
+module.exports = { Memory, revealFrom, record, classify, knewRevealedAnswer, chooseOption, findings };

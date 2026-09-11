@@ -30,7 +30,7 @@
  * cannot see.
  */
 
-const { record, classify, revealFrom, findings } = require('./playtest.js');
+const { record, classify, revealFrom, findings, knewRevealedAnswer } = require('./playtest.js');
 
 let fails = 0;
 const ok = (name, cond) => {
@@ -69,9 +69,12 @@ const ok = (name, cond) => {
   ok('never taught is a guess', n.how === 'guessed' && n.couldHaveKnown === false);
 }
 {
+  // `knewAnswer` is whether the app had ever shown the answer it has just
+  // revealed; `how` is whether the learner could produce it at the time. The
+  // first line is a word met before and lost, the second one never shown.
   const j = [
-    { type: 'answer', correct: false, couldHaveKnown: true, how: 'forgot', reveal: ['a', 'b'] },
-    { type: 'answer', correct: false, couldHaveKnown: false, how: 'guessed', reveal: ['a', 'b'] },
+    { type: 'answer', correct: false, knewAnswer: true, how: 'forgot', reveal: ['a', 'b'] },
+    { type: 'answer', correct: false, knewAnswer: false, how: 'guessed', reveal: ['a', 'b'] },
   ];
   const f = findings(j);
   const untaught = f.find((x) => x.kind === 'tested before taught');
@@ -137,6 +140,31 @@ const ok = (name, cond) => {
     kept === true && j[0].type === 'answer' && j[0].correct === false && j[0].endedOnHeartsWall === true
   );
   ok('and it is reported as its own finding', !!findings([j[0]]).find((x) => /hearts wall/.test(x.kind)));
+}
+
+// -- tested before taught is asked of the answer, not the prompt -------------
+
+{
+  const M = { knows: (t) => t === 'seen' };
+  // Nothing to judge: no reveal, or a reveal with no Urdu in it. A question
+  // like "which position is this letter showing" is answered by looking at the
+  // glyph, so it has no vocabulary to have been taught and must not be counted.
+  ok('no reveal is not evidence of anything', knewRevealedAnswer(M, null) === null);
+  ok('an answer with no Urdu in it is not counted', knewRevealedAnswer(M, ['Start']) === null);
+  ok('an Urdu answer never shown counts as untaught', knewRevealedAnswer(M, ['\u0644\u0627\u0644', 'laal']) === false);
+  ok(
+    'an Urdu answer already shown does not',
+    knewRevealedAnswer({ knows: () => true }, ['\u0644\u0627\u0644']) === true
+  );
+}
+{
+  // null must not be counted as "never taught" — that is the bug this rule
+  // exists to prevent, and `=== false` is the whole of the defence.
+  const f = findings([
+    { type: 'answer', correct: false, knewAnswer: null, reveal: ['Start'] },
+    { type: 'answer', correct: false, knewAnswer: false, reveal: ['\u0644\u0627\u0644'] },
+  ]).find((x) => x.kind === 'tested before taught');
+  ok('a question with nothing to judge is left out of the count', !!f && f.count === 1);
 }
 
 console.log(fails ? `\n${fails} failed` : '\nall good');
