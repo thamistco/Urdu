@@ -43,8 +43,42 @@ describe('answerReveal', () => {
 
   it('puts a letter’s name where the reading goes', () => {
     // A letter has no translation; its name is how it is read aloud.
-    const r = answerReveal({ kind: 'letterPick', letter, options: [] } as unknown as Exercise);
+    const r = answerReveal({ kind: 'letterPick', letter, position: 'isolated', options: [] } as unknown as Exercise);
     expect(r).toEqual({ script: letter.forms.isolated, roman: letter.name });
+  });
+
+  // No test for a letter lacking the asked-for form: `nonConnector` fills
+  // medial and final for every letter in the data, so that state cannot occur.
+  // The `?? isolated` fallback in the source stays as a guard against data that
+  // does not exist yet, deliberately untested rather than tested against a
+  // fixture invented to make it reachable.
+  it('shows the letter in the form the question asked about', () => {
+    // Every option on a letterPick renders at one position. Revealing the
+    // isolated glyph after a question posed in joined forms shows a shape that
+    // was never on screen.
+    const joined = LETTERS.find((l) => l.forms.initial && l.forms.initial !== l.forms.isolated)!;
+    const r = answerReveal({
+      kind: 'letterPick',
+      letter: joined,
+      position: 'initial',
+      options: [],
+    } as unknown as Exercise);
+    expect(r?.script).toBe(joined.forms.initial);
+    expect(r?.script).not.toBe(joined.forms.isolated);
+  });
+
+  it('answers "which tile holds this letter" with the tile', () => {
+    // The learner knew the letter — that was the prompt. What they got wrong
+    // was which tile of the word carries it.
+    const r = answerReveal({
+      kind: 'letterSpot',
+      letter,
+      word,
+      tiles: ['پا', 'پان', 'انی', 'نی'],
+      correct: [true, false, false, false],
+    } as unknown as Exercise);
+    expect(r?.script).toBe('پا');
+    expect(r?.roman).toBe(letter.name);
   });
 
   it('answers a letter-position question with the position', () => {
@@ -86,9 +120,9 @@ describe('answerReveal', () => {
       { kind: 'multipleChoice', word, options: [word] },
       { kind: 'meaningPick', word, options: [word] },
       { kind: 'listenTap', word, options: [word] },
-      { kind: 'letterPick', letter, options: [] },
-      { kind: 'letterTrace', letter },
-      { kind: 'letterSpot', word, letter },
+      { kind: 'letterPick', letter, position: 'isolated', options: [] },
+      { kind: 'letterTrace', letter, position: 'isolated' },
+      { kind: 'letterSpot', word, letter, tiles: ['پا', 'نی'], correct: [true, false] },
       { kind: 'letterContrast', letter },
       { kind: 'letterForm', letter, position: 'initial' },
       { kind: 'sentenceBuild', sentence, tiles: [] },

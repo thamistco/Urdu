@@ -24,11 +24,26 @@ export function answerReveal(ex: Exercise): AnswerReveal | null {
   switch (ex.kind) {
     case 'letterForm':
       return { label: POSITIONS.find((p) => p.key === ex.position)?.label ?? '' };
+    case 'letterSpot':
+      // The question is which *tile* of the word holds the letter, and the
+      // learner already knew the letter — that was the prompt. Showing them
+      // "ا / alif" answered a question they had not asked and left the one
+      // they got wrong unanswered. Show the tile instead, with the letter's
+      // name for the reading.
+      return {
+        script: ex.tiles.filter((_, i) => ex.correct[i]).join('   ') || ex.letter.forms.isolated,
+        roman: ex.letter.name,
+      };
     case 'letterPick':
     case 'letterTrace':
-    case 'letterSpot':
+      // Show the form that was actually asked about. Every option on a
+      // `letterPick` renders at one position — often a joined one — so
+      // revealing the isolated glyph answered with a different-looking shape
+      // than any on screen: a beginner who cannot yet map ـپـ to پ reads that
+      // as a new puzzle rather than a correction.
+      return { script: ex.letter.forms[ex.position] ?? ex.letter.forms.isolated, roman: ex.letter.name };
     case 'letterContrast':
-      // A letter's name *is* its reading, so it sits where the Roman goes.
+      // No position here: the options are whole letters, shown isolated.
       return { script: ex.letter.forms.isolated, roman: ex.letter.name };
     case 'multipleChoice':
     case 'meaningPick':
