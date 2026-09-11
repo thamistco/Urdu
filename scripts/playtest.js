@@ -376,47 +376,64 @@ async function traceLetter(page, sloppy) {
  * something and finds out. Both are real, and which one happened is recorded.
  */
 async function buildWord(page, memory, promptLine) {
-  const tiles = await page
-    .evaluate(() => {
-      const out = [];
-      for (const n of document.querySelectorAll('[role="button"], div')) {
-        if (n.children.length) continue;
-        const t = (n.textContent || '').trim();
-        if (!t || t.length > 3) continue;
-        if (!/[؀-ۿ]/.test(t)) continue;
-        const r = n.getBoundingClientRect();
-        if (r.width < 20 || r.width > 110 || r.height < 20) continue;
-        out.push({ t, x: r.left + r.width / 2, y: r.top + r.height / 2 });
-      }
-      return out;
-    })
-    .catch(() => []);
-  if (!tiles.length) return { tapped: 0, knew: false };
+  // Read the tray fresh every time, because tapping a tile takes it out of the
+  // tray and moves every tile after it. The first version read all the
+  // positions once and then clicked them in order: after the first tap every
+  // remaining coordinate pointed somewhere else, and clicks landed on the tiles
+  // already placed and took them back again. The exercise ended with nothing
+  // placed, Check stayed disabled, and the app never graded it — 138 of one
+  // run's 185 dropped screens, and the single largest hole in that journal.
+  const readTray = () =>
+    page
+      .evaluate(() => {
+        // The tray and the assembly line hold identical-looking tiles, so they
+        // are told apart by what the app says they do, not by where they sit:
+        // a tile waiting to be used says "Tap to add it to the word", and one
+        // already placed says "Tap to take it back".
+        const out = [];
+        for (const n of document.querySelectorAll('[role="button"]')) {
+          if (!/tap to add it to the word/i.test(n.getAttribute('aria-label') || '')) continue;
+          const r = n.getBoundingClientRect();
+          if (r.width < 10 || r.height < 10) continue;
+          out.push({ t: (n.textContent || '').trim(), x: r.left + r.width / 2, y: r.top + r.height / 2 });
+        }
+        return out;
+      })
+      .catch(() => []);
+
+  const tiles = await readTray();
+  if (!tiles.length) return { tapped: 0, taught: false, knew: false };
 
   // Does the learner know how this word is spelled? Only if the app has shown
   // it the script form already.
   const cluster = memory.clusterFor(promptLine) || null;
-  const target = cluster ? [...cluster.tokens].find((t) => /[؀-ۿ]/.test(t)) : null;
+  const target = cluster ? [...cluster.tokens].find((t) => /[\u0600-\u06ff]/.test(t)) : null;
   // See `typeWord`: shown-at-all and remembered-now are separate questions.
   const taught = !!target;
   const knew = taught && rand() < memory.recall(promptLine);
 
-  let order = tiles;
-  if (knew) {
-    // Urdu builds right to left, which is the order the tray already shows.
-    const wanted = [...target.replace(/\s/g, '')];
-    order = wanted.map((ch) => tiles.find((t) => t.t.includes(ch))).filter(Boolean);
-    if (!order.length) order = tiles;
-  } else {
-    order = [...tiles].sort(() => rand() - 0.5).slice(0, Math.max(2, Math.floor(tiles.length * 0.6)));
+  // What order to try. Knowing the word means spelling it out; not knowing it
+  // means putting the tiles down in some order anyway, which is what a beginner
+  // does and, unlike a partial attempt, is something the app can mark.
+  const wanted = knew ? [...target.replace(/\s/g, '')] : null;
+  const taps = tiles.length;
+
+  let tapped = 0;
+  for (let i = 0; i < taps; i++) {
+    const rest = await readTray();
+    if (!rest.length) break;
+
+    let pick = null;
+    if (wanted && i < wanted.length) pick = rest.find((t) => t.t.includes(wanted[i]));
+    if (!pick) pick = rest[Math.floor(rand() * rest.length)];
+
+    await page.mouse.click(pick.x, pick.y).catch(() => {});
+    tapped++;
+    await page.waitForTimeout(140);
   }
 
-  for (const t of order.slice(0, 10)) {
-    await page.mouse.click(t.x, t.y).catch(() => {});
-    await page.waitForTimeout(160);
-  }
   await clickByText(page, /^Check$/i);
-  return { tapped: order.length, taught, knew };
+  return { tapped, taught, knew };
 }
 
 /**
@@ -455,18 +472,14 @@ async function typeWord(page, memory, promptLine) {
 }
 
 /**
- * Pair each word with its picture.
+ * Pair each word with its picture, which grades each pair where it stands
+ * rather than through the footer banner every other exercise uses.
  *
- * This screen offers eight things, not four: the words on one side and the
+ * The screen offers eight things, not four: the words on one side and the
  * glosses on the other, and an answer is a *pair*. The generic option reader
  * treated it as a single choice, tapped one tile, recorded an answer and found
  * the same screen still there — 429 times in one run, 43% of every answer in
- * the journal, all of it an artefact of the driver rather than anything a
- * learner would ever do.
- */
-/**
- * Match-the-pairs, which grades each pair where it stands rather than with the
- * footer banner every other exercise uses.
+ * that journal, none of it anything a learner would ever do.
  *
  * So this is the one place that has to judge its own answers, and the first
  * version did it by counting the pairs it *believed* it had recalled: a lucky
