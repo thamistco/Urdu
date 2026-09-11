@@ -176,6 +176,10 @@ async function readOptions(page) {
       .boundingBox()
       .catch(() => null);
     if (!box || box.width < 90 || box.height < 30) continue;
+    const dead = await btns
+      .nth(i)
+      .getAttribute('aria-disabled')
+      .catch(() => null);
     const text = await btns
       .nth(i)
       .innerText()
@@ -194,7 +198,7 @@ async function readOptions(page) {
     // and it was this line. Nothing inside a lesson is labelled exactly
     // "Start"; the one on the path is reached by its aria-label instead.
     if (/^(continue|finish|check|clear)$/i.test(lines[0])) continue;
-    out.push({ i, lines, box });
+    out.push({ i, lines, box, dead: dead === 'true' });
   }
   return { btns, options: out };
 }
@@ -616,8 +620,13 @@ async function matchPairs(page, memory) {
     const { options } = await readOptions(page);
     if (!options.length) break;
     const before = await matchedCount(page);
-    const words = options.filter((o) => o.lines.some((l) => /[؀-ۿ]/.test(l)));
-    const glosses = options.filter((o) => !o.lines.some((l) => /[؀-ۿ]/.test(l)));
+    // A matched tile stays on screen, disabled. Leaving those in the pool meant
+    // the driver kept tapping dead tiles: both boards of one probe stalled at
+    // exactly four pairs, because with four matched the chance of picking the
+    // two live tiles out of twelve is small and every miss burned an attempt.
+    const live = options.filter((o) => !o.dead);
+    const words = live.filter((o) => o.lines.some((l) => /[؀-ۿ]/.test(l)));
+    const glosses = live.filter((o) => !o.lines.some((l) => /[؀-ۿ]/.test(l)));
     if (!words.length || !glosses.length) break;
 
     const word = words[Math.floor(rand() * words.length)];
