@@ -247,6 +247,15 @@ function classify(taught, knew) {
 }
 
 function record(journal, after, entry) {
+  // The hearts wall *is* a verdict. A heart is only ever lost by answering
+  // wrongly, and when the last one goes the app replaces the whole screen with
+  // the wall 500ms later, banner and all. Every one of this run's remaining
+  // dropped screens was one of these: real wrong answers, thrown away because
+  // the thing that judged them had already been painted over.
+  if (after.outOfHearts) {
+    journal.push({ ...entry, type: 'answer', correct: false, endedOnHeartsWall: true });
+    return true;
+  }
   if (!after.graded) {
     journal.push({ type: 'ungraded', lesson: entry.lesson, step: entry.step, promptShape: entry.promptShape });
     return false;
@@ -293,7 +302,11 @@ async function waitForGraded(page) {
   await page
     .waitForFunction(
       () => {
-        if (!/not quite|beautifully done|keep that in mind/i.test(document.body.innerText || '')) return false;
+        const body = document.body.innerText || '';
+        // Losing the last heart replaces the whole screen with the hearts wall,
+        // so that is the end of the wait too — see `record`, which counts it.
+        if (/out of hearts/i.test(body)) return true;
+        if (!/not quite|beautifully done|keep that in mind/i.test(body)) return false;
         // The banner and the way forward arrive together in one footer, so
         // waiting for the text alone returns before the button is there.
         return Array.from(document.querySelectorAll('[role="button"]')).some((n) =>
@@ -708,6 +721,19 @@ function findings(journal) {
       count: ungraded.length,
       note: 'Dropped rather than recorded as answers. A large number here means this driver is misreading screens.',
       examples: [...new Set(ungraded.map((e) => e.promptShape))].slice(0, 8),
+    });
+  }
+
+  // The app shows the reveal panel and then, 500ms later, replaces the entire
+  // screen with the hearts wall. On the one wrong answer where a learner most
+  // needs to see what the right answer was, they get half a second of it.
+  const wall = answered.filter((e) => e.endedOnHeartsWall);
+  if (wall.length) {
+    out.push({
+      kind: 'the answer was taken away by the hearts wall',
+      count: wall.length,
+      note: 'These wrong answers showed their reveal for about half a second before the out-of-hearts screen replaced it.',
+      examples: wall.slice(0, 6).map((e) => ({ lesson: e.lesson, prompt: e.prompt, shape: e.promptShape })),
     });
   }
 

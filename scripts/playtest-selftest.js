@@ -123,5 +123,17 @@ const ok = (name, cond) => {
   ok('an abandoned lesson is reported, not hidden', !!f.find((x) => /abandoned on the clock/.test(x.kind)));
 }
 
+
+{
+  const j = [];
+  const kept = record(j, { graded: false, right: false, outOfHearts: true }, { lesson: 'L', step: 1, promptShape: 'x' });
+  // A heart is only ever lost by being wrong, so the wall is a verdict even
+  // though it has painted over the banner that carried it.
+  ok('the hearts wall counts as a wrong answer, not a dropped screen',
+     kept === true && j[0].type === 'answer' && j[0].correct === false && j[0].endedOnHeartsWall === true);
+  ok('and it is reported as its own finding',
+     !!findings([j[0]]).find((x) => /hearts wall/.test(x.kind)));
+}
+
 console.log(fails ? `\n${fails} failed` : '\nall good');
 process.exit(fails ? 1 : 0);
