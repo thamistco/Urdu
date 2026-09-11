@@ -606,8 +606,13 @@ async function matchPairs(page, memory) {
   // an attempt too, so a cap of six attempts could never clear one: the run
   // before this scored 0 of 46 boards for that reason alone. The cap is now on
   // attempts with room for misses, and on going nowhere.
+  // Clearing six pairs by guessing takes around twenty tries — each miss
+  // narrows nothing — so both of these have to be generous enough for a
+  // learner who knows none of the words to finish a board, and tight enough
+  // that one who cannot finish still stops. A board left unfinished is
+  // recorded as such rather than retried forever.
   let barren = 0;
-  for (let round = 0; round < 24 && barren < 6; round++) {
+  for (let round = 0; round < 30 && barren < 10; round++) {
     const { options } = await readOptions(page);
     if (!options.length) break;
     const before = await matchedCount(page);
