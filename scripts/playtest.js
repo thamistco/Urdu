@@ -272,6 +272,47 @@ function revealFrom(lines) {
 // -------------------------------------------------------------------- playing
 
 /**
+ * Wait for the app to actually judge the answer, rather than guessing how long
+ * that takes.
+ *
+ * Every handler used to sleep 700ms and then read the screen. When the app took
+ * longer than that, the footer banner was not up yet, the screen read as
+ * ungraded, and the answer was dropped — evenly, about one screen in eight,
+ * across every exercise shape and every lesson. Before `record` existed the
+ * same lag produced something worse: the screen read as "not correct" and the
+ * answer was banked as wrong.
+ *
+ * This is the same mistake the lesson-open code already carries a note about:
+ * a fixed sleep is a guess about someone else's machine, and it is wrong in
+ * both directions — too short on a slow one, wasted time on a fast one.
+ *
+ * Resolves as soon as any of the three banners is up, and gives up quietly
+ * after a moment so a screen that genuinely never grades still ends the step.
+ */
+async function waitForGraded(page) {
+  await page
+    .waitForFunction(
+      () => {
+        if (!/not quite|beautifully done|keep that in mind/i.test(document.body.innerText || '')) return false;
+        // The banner and the way forward arrive together in one footer, so
+        // waiting for the text alone returns before the button is there.
+        return Array.from(document.querySelectorAll('[role="button"]')).some((n) =>
+          /^(continue|finish|got it)$/i.test((n.textContent || '').trim())
+        );
+      },
+      { timeout: 4000 }
+    )
+    .catch(() => {});
+  // The footer slides in. Returning the instant it mounts means clicking a
+  // button that is still moving, and the click lands where the button is not:
+  // a traced letter was graded, never continued past, and the next step broke
+  // the lesson with nothing recorded. This settle is what the old fixed 700ms
+  // was really buying, and it is the only part of it worth keeping.
+  await page.waitForTimeout(260);
+  return readScreen(page);
+}
+
+/**
  * Choose an option the way a learner would.
  *
  * Looks for something on screen it has been taught to associate with the
@@ -870,8 +911,7 @@ async function main() {
       if (/trace the letter|draw over the grey letter/i.test(screen.body)) {
         const sloppy = rand() < 0.2;
         const traced = await traceLetter(page, sloppy);
-        await page.waitForTimeout(700);
-        const after = await readScreen(page);
+        const after = await waitForGraded(page);
         journal.push({
           type: 'trace',
           lesson: lessonName,
@@ -932,8 +972,7 @@ async function main() {
         const prompt =
           screen.lines.slice(1).find((l) => /\p{L}/u.test(l) && !/^(type|check|continue)\b/i.test(l)) || '';
         const t = await typeWord(page, memory, prompt);
-        await page.waitForTimeout(700);
-        const after = await readScreen(page);
+        const after = await waitForGraded(page);
         const reveal = revealFrom(after.lines);
         if (reveal && reveal.length >= 2) memory.learn(reveal);
         record(journal, after, {
@@ -956,8 +995,7 @@ async function main() {
       if (/build the word|build the sentence|tap the letters|tap the words/i.test(screen.body)) {
         const prompt = screen.lines.find((l) => /·/.test(l)) || screen.lines[1] || '';
         const built = await buildWord(page, memory, prompt.split('·')[0].trim());
-        await page.waitForTimeout(700);
-        const after = await readScreen(page);
+        const after = await waitForGraded(page);
         const reveal = revealFrom(after.lines);
         if (reveal && reveal.length >= 2) memory.learn(reveal);
         record(journal, after, {
@@ -1000,9 +1038,7 @@ async function main() {
         .nth(decision.pick.i)
         .click()
         .catch(() => {});
-      await page.waitForTimeout(700);
-
-      const after = await readScreen(page);
+      const after = await waitForGraded(page);
       const reveal = revealFrom(after.lines);
       const correct = after.right;
 
