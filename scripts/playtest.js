@@ -82,6 +82,19 @@ const TRACK = argOf('track', 'both');
 const SEED = Number(argOf('seed', Math.floor(Math.random() * 1e7)));
 const HEADED = has('headed');
 
+/**
+ * How long one lesson may take before the run moves on without it.
+ *
+ * Lesson one of a healthy run answers twenty-five questions in about two
+ * minutes, so six is generous enough that a slow machine is not cut off and
+ * tight enough that a stall is caught in minutes rather than discovered hours
+ * later with nothing to show.
+ *
+ * Settable so the guard can be proved: `--budget 0` makes every lesson time
+ * out, which is the only way to see the code that handles it actually run.
+ */
+const LESSON_BUDGET_MS = Number(argOf('budget', 360)) * 1000;
+
 /** One seeded generator, so a run that finds something can be replayed. */
 let seedState = SEED;
 const rand = () => {
@@ -644,6 +657,16 @@ function findings(journal) {
     });
   }
 
+  const timedOut = journal.filter((e) => e.type === 'lessonTimedOut');
+  if (timedOut.length) {
+    out.push({
+      kind: 'harness: lesson abandoned on the clock',
+      count: timedOut.length,
+      note: 'These lessons are incomplete in the journal. Findings counted across them are understated.',
+      examples: timedOut.map((e) => ({ lesson: e.lesson, step: e.step, seconds: e.seconds })),
+    });
+  }
+
   return out;
 }
 
@@ -703,6 +726,16 @@ async function main() {
   const browser = await chromium.launch({ executablePath: findChromium(), headless: !HEADED });
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
 
+  // Playwright waits 30 seconds by default before deciding an element is not
+  // there. That is the right default for a test asserting a thing exists, and
+  // the wrong one for a driver that is *looking around*: almost every locator
+  // call here ends in `.catch(() => {})` and means "take this if it is on
+  // screen", so a long timeout does not make the run more robust, it just makes
+  // a miss cost thirty seconds instead of one. A run stalled on lesson two for
+  // twenty-five minutes with the browser idle, which is what that looks like
+  // from outside — no error, no progress, nothing in the log.
+  page.setDefaultTimeout(1500);
+
   const memory = new Memory();
   const journal = [];
   const stats = { lessonsEntered: 0, lessonsFinished: 0 };
@@ -753,6 +786,20 @@ async function main() {
     await page.waitForTimeout(2200);
 
     for (let step = 0; step < 140; step++) {
+      // A step cap alone does not bound a lesson: the cap counts screens, and a
+      // screen that the driver cannot read costs seconds rather than
+      // milliseconds. One lesson ran for twenty-five minutes inside a cap of
+      // 140. Wall clock is what a person waiting on the run actually cares
+      // about, so it is what ends the lesson, and it is recorded rather than
+      // hidden because a lesson hitting this is a bug in this file.
+      const spent = Date.now() - startedAt;
+      if (spent > LESSON_BUDGET_MS) {
+        journal.push({ type: 'lessonTimedOut', lesson: lessonName, step, seconds: Math.round(spent / 1000) });
+        console.log(`    lesson ${lessonName} gave up after ${Math.round(spent / 1000)}s at step ${step}`);
+        await page.screenshot({ path: path.join(OUT, `slow-${stats.lessonsEntered}.png`) }).catch(() => {});
+        break;
+      }
+
       memory.step++;
       const screen = await readScreen(page);
       if (process.env.PLAYTEST_DEBUG)
