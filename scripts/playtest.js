@@ -1023,6 +1023,42 @@ async function main() {
         continue;
       }
 
+      /**
+       * A word being introduced: picture, script, reading, meaning, and a
+       * button. Nothing to answer.
+       *
+       * This is the screen the whole course was missing, so the learner has to
+       * read it the way a person would — the three forms of the word go into
+       * memory together, which is what makes every later question about it
+       * answerable. Handled before the option reader gets here, because "Got
+       * it" looks like a choice to it: the driver would tap it, the teaching
+       * footer would come up, and a card that cannot be failed would be
+       * recorded as a wrong answer.
+       */
+      if (/^a new word$/im.test(screen.body)) {
+        // Screen chrome as well as the card's own labels. The close button is a
+        // single glyph that appears on every screen in the app, and letting it
+        // through put it in the cluster for every word taught — which, because
+        // a cluster is a set of strings that mean the same thing, quietly
+        // merged all of them into one. The learner then "recalled" words it had
+        // never met: 34 recalls at 18% correct, against 73% when the model is
+        // honest. Anything that is not the word, its reading or its meaning has
+        // to be kept out of here.
+        const shown = screen.lines.filter(
+          (l) =>
+            l.length < 60 &&
+            !/^(a new word|got it|continue|finish|check|hear\b.*)$/i.test(l) &&
+            !/^[^\p{L}\p{N}]+$/u.test(l)
+        );
+        memory.learn(shown.slice(0, 3));
+        journal.push({ type: 'taught', lesson: lessonName, step, shown: shown.slice(0, 3) });
+        await clickByText(page, /^Got it$/i);
+        await page.waitForTimeout(500);
+        await pressContinue(page);
+        await page.waitForTimeout(500);
+        continue;
+      }
+
       // A tracing exercise has no options, only a pad. Roughly one attempt in
       // five is deliberately sloppy, because being refused is part of what a
       // beginner meets and the wording of that refusal is under test too.
