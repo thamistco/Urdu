@@ -602,7 +602,12 @@ async function matchPairs(page, memory) {
   let right = 0;
   let taught = 0;
   let cleared = false;
-  for (let round = 0; round < 6; round++) {
+  // A board of six pairs needs six *successful* matches, and every miss costs
+  // an attempt too, so a cap of six attempts could never clear one: the run
+  // before this scored 0 of 46 boards for that reason alone. The cap is now on
+  // attempts with room for misses, and on going nowhere.
+  let barren = 0;
+  for (let round = 0; round < 24 && barren < 6; round++) {
     const { options } = await readOptions(page);
     if (!options.length) break;
     const before = await matchedCount(page);
@@ -636,7 +641,12 @@ async function matchPairs(page, memory) {
     // Read the result rather than assume it. A matched tile is not removed, it
     // is disabled in place, so what grows is the number of spent tiles.
     const now = await readScreen(page);
-    if ((await matchedCount(page)) > before) right++;
+    if ((await matchedCount(page)) > before) {
+      right++;
+      barren = 0;
+    } else {
+      barren++;
+    }
     // The board is finished when the app moves off it. That, not "every round
     // I attempted happened to land", is what completing this exercise means —
     // the previous test could not be satisfied inside the rounds available and
@@ -1049,7 +1059,7 @@ async function main() {
           prompt: 'Match each word to its picture',
           promptShape: 'match each word to its picture',
           optionText: [],
-          picked: `${m.right} of ${m.pairs} pairs`,
+          picked: `${m.right} of ${m.pairs} tries matched`,
           correct: m.cleared,
           ...classify(m.taught > 0, m.right > 0),
           strength: 0,
