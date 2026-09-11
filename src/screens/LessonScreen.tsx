@@ -59,7 +59,6 @@ function demandOf(ex: Exercise | undefined): 'produce' | 'recognise' {
   }
 }
 
-
 /**
  * What this exercise can say out loud, if anything.
  *
@@ -165,6 +164,8 @@ export function LessonScreen() {
   const [done, setDone] = useState(false);
   const [result, setResult] = useState<FinishResult | null>(null);
   const [outOfHearts, setOutOfHearts] = useState(false);
+  /** Last heart gone, but the learner is still reading why. */
+  const [heartsSpent, setHeartsSpent] = useState(false);
   /**
    * Forces `ExerciseView` to remount after a gem refill.
    *
@@ -234,7 +235,12 @@ export function LessonScreen() {
       } else if (!isTeaching(exercises[idx])) {
         loseHeart();
         if (useProgressStore.getState().hearts <= 0) {
-          setTimeout(() => setOutOfHearts(true), 500);
+          // Held until the learner moves on, rather than shown on a timer.
+          // The wall replaces the whole screen, so a 500ms timer took the
+          // reveal panel away half a second after it appeared — on the one
+          // wrong answer where knowing the right answer matters most, and
+          // where the learner is least inclined to be generous about it.
+          setHeartsSpent(true);
         }
       }
     },
@@ -254,6 +260,10 @@ export function LessonScreen() {
 
   const advance = () => {
     invalidateSpeech();
+    if (heartsSpent) {
+      setOutOfHearts(true);
+      return;
+    }
     if (idx < total - 1) {
       setGraded(null);
       setIdx(idx + 1);
