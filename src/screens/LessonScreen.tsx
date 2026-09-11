@@ -18,11 +18,11 @@ import { feedback } from '../lib/feedback';
 import { announce, invalidateSpeech } from '../lib/speech';
 import { dueQueue, dueBudget, type SrsGrade } from '../lib/srs';
 import { useSessionGradeFlush } from './useSessionGradeFlush';
+import { answerReveal } from './answerReveal';
 import { REFILL_COST, gemsShortOfRefill, minutesUntilNextHeart } from '../lib/gamification';
 import { useProgressStore, type ItemType } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { resolveLesson } from '../data/units';
-import { POSITIONS } from '../data/letters';
 import { ExerciseView } from '../exercises';
 import { buildLessonExercises } from '../exercises/generator';
 import type { Exercise, GradedResult } from '../exercises/types';
@@ -59,51 +59,12 @@ function demandOf(ex: Exercise | undefined): 'produce' | 'recognise' {
   }
 }
 
-/**
- * What to show a learner who just got it wrong.
- *
- * This used to be one string, `"لال: red"`, set in the smallest type on the
- * screen next to the encouragement. It was missing the transliteration
- * entirely, which is the one part a learner answering in Roman needs most: they
- * typed `lal`, were told they were wrong, and were then shown a script they may
- * not read and a translation they already knew. The word they actually got
- * wrong was never on screen.
- *
- * Returned in parts rather than joined, so the reveal can set the script at a
- * readable size with the Roman under it, the way `Lexeme` renders a word
- * everywhere else, instead of running all three together after a colon.
- *
- * `label` is for the answers that are neither a word nor a letter. A letter's
- * *position* is "initial", and there is nothing to transliterate.
- */
-type AnswerReveal = { script?: string; roman?: string; meaning?: string; label?: string };
-
-function answerReveal(ex: Exercise): AnswerReveal | null {
-  switch (ex.kind) {
-    case 'letterForm':
-      return { label: POSITIONS.find((p) => p.key === ex.position)?.label ?? '' };
-    case 'letterPick':
-    case 'letterTrace':
-    case 'letterSpot':
-    case 'letterContrast':
-      // A letter's name *is* its reading, so it sits where the Roman goes.
-      return { script: ex.letter.forms.isolated, roman: ex.letter.name };
-    case 'multipleChoice':
-    case 'meaningPick':
-    case 'listenTap':
-    case 'wordBuild':
-    case 'wordFromMeaning':
-    case 'typeWord':
-      return { script: ex.word.urdu, roman: ex.word.roman, meaning: ex.word.meaning };
-    default:
-      return null;
-  }
-}
 
 /**
  * What this exercise can say out loud, if anything.
  *
- * Mirrors `answerReveal` above, which describes the same exercises in text. A
+ * Mirrors `answerReveal` (`./answerReveal.ts`), which describes the same
+ * exercises in text. A
  * wrong answer is the moment the pronunciation is worth most — and on a
  * listening question it is the whole question, which until now vanished behind
  * the feedback banner the instant it was answered wrongly. The learner heard it
@@ -480,11 +441,14 @@ export function LessonScreen() {
                       <Bold className="text-[15px]">{reveal.label}</Bold>
                     ) : (
                       <>
+                        {/* A word can afford 26; a six-word sentence at that
+                            size wraps to three lines and pushes Continue off a
+                            small screen. */}
                         <Lexeme
                           urdu={reveal.script ?? ''}
                           roman={reveal.roman}
                           track={track === 'script' ? 'script' : 'both'}
-                          size={26}
+                          size={(reveal.script ?? '').length > 18 ? 20 : 26}
                           align="left"
                         />
                         {reveal.meaning ? <Txt className="mt-1.5 text-sm text-paper/85">{reveal.meaning}</Txt> : null}
