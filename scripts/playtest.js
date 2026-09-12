@@ -749,12 +749,29 @@ function findings(journal) {
   const out = [];
   const answered = journal.filter((e) => e.type === 'answer');
 
-  const untaught = answered.filter((e) => e.knewAnswer === false && !e.correct);
+  /**
+   * The first question about a word is *meant* to be unanswerable.
+   *
+   * The course asks before it tells on purpose — guessing and then being told
+   * beats being told outright — and the card that answers the question follows
+   * it immediately. So every one of those shows up as an Urdu answer the app
+   * had never shown, which is true and is not a complaint: counting them took
+   * this finding from 4 to 47 the moment the design changed, reporting the
+   * intent as a defect.
+   *
+   * Spotted by shape rather than by a flag, because the driver only sees what
+   * a learner sees: an answer whose very next screen is that word's card.
+   */
+  const pretest = new Set();
+  for (let i = 0; i < journal.length - 1; i++) {
+    if (journal[i].type === 'answer' && journal[i + 1].type === 'taught') pretest.add(journal[i]);
+  }
+  const untaught = answered.filter((e) => e.knewAnswer === false && !e.correct && !pretest.has(e));
   if (untaught.length) {
     out.push({
       kind: 'tested before taught',
       count: untaught.length,
-      note: `${untaught.length} of ${answered.length} questions revealed an Urdu answer the app had never put in front of this learner. A beginner can only guess at these.`,
+      note: `${untaught.length} of ${answered.length} questions revealed an Urdu answer the app had never put in front of this learner, outside the opening question about a word, which is unanswerable by design. A beginner can only guess at these.`,
       examples: untaught.slice(0, 6).map((e) => ({ lesson: e.lesson, prompt: e.prompt, options: e.optionText })),
     });
   }
