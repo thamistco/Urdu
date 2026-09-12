@@ -218,6 +218,31 @@ export function LessonScreen() {
    * wrong answer on a question that was actually being asked. A teaching card
    * has no wrong answer to reveal, and a correct one does not need telling.
    */
+  /**
+   * The same question, with the options in a different order, after a refill.
+   *
+   * Coming back from the hearts wall used to put the identical screen up:
+   * same prompt, same four options, in the same order. A playtester met that
+   * 62 times out of 67 and described what they were doing as elimination
+   * rather than recall, which is exactly right — the answer they had just been
+   * shown was still sitting in the same position they had already ruled out.
+   *
+   * Re-asking straight after feedback is worth doing; it is retrieval practice
+   * at the moment the answer is freshest. Re-asking in the same arrangement is
+   * not, because position can be remembered without the word being remembered.
+   * Shuffling costs nothing and removes the shortcut.
+   */
+  const retried = useMemo(() => {
+    if (!current || attempt === 0) return current;
+    if (!('options' in current) || !Array.isArray(current.options)) return current;
+    const options = [...current.options];
+    for (let i = options.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [options[i], options[j]] = [options[j], options[i]];
+    }
+    return { ...current, options } as Exercise;
+  }, [current, attempt]);
+
   const reveal = graded === false && current && !isTeaching(current) ? answerReveal(current) : null;
   const total = exercises.length;
 
@@ -334,8 +359,13 @@ export function LessonScreen() {
             <Illustration name="heart" tile={false} size={60} />
             <Heading className="mb-2 mt-4 text-2xl">Out of hearts</Heading>
             <Txt className="mb-8 max-w-[280px] text-center text-sm text-paper/60">
+              {/* "keep the calm going" was a growth team's sentence, not a
+                  teacher's, and it sat directly above a price at the moment a
+                  learner had just run out. A playtester read it 67 times and
+                  named it the least calm part of the hour. What they need here
+                  is what happens next, said plainly. */}
               {canAfford
-                ? 'Hearts refill slowly over time, or you can spend gems to keep the calm going now.'
+                ? 'Hearts come back on their own after a while. You can also spend gems to carry on now.'
                 : `You’re ${short} gem${short === 1 ? '' : 's'} short for a refill. The next heart arrives ${
                     waitMin <= 0 ? 'any moment now' : `in about ${waitMin} minute${waitMin === 1 ? '' : 's'}`
                   }.`}
@@ -394,7 +424,7 @@ export function LessonScreen() {
           <View className="px-5 pb-8 pt-4">
             <ExerciseView
               key={`${idx}-${attempt}`}
-              exercise={current}
+              exercise={retried}
               track={track}
               showRoman={showRoman}
               locked={graded != null}
