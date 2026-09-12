@@ -177,5 +177,14 @@ const ok = (name, cond) => {
   ok('a teaching card between them is not', !findings(broken).find((x) => /several times running/.test(x.kind)));
 }
 
+{
+  // The opening question about a word is followed by that word's card. It is
+  // unanswerable on purpose, so it is not a complaint about lesson order.
+  const wrong = { type: 'answer', correct: false, knewAnswer: false, reveal: ['\u0644\u0627\u0644'] };
+  const opener = { type: 'answer', correct: false, knewAnswer: false, reveal: ['\u06af\u06be\u0631'] };
+  const f = findings([opener, { type: 'taught', lesson: 'L' }, wrong]).find((x) => x.kind === 'tested before taught');
+  ok('a question answered by the card after it is not counted as untaught', !!f && f.count === 1);
+}
+
 console.log(fails ? `\n${fails} failed` : '\nall good');
 process.exit(fails ? 1 : 0);
