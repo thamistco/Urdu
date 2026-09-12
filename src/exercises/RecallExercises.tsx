@@ -7,7 +7,9 @@ import { WordArt } from '../components/Illustration';
 import { Button } from '../components/Button';
 import { feedback } from '../lib/feedback';
 import { matchesWord } from '../lib/roman';
+import { synonymsOf } from '../data/words';
 import type { ExerciseProps, Exercise } from './types';
+import type { Word } from '../data/words';
 import { glossOf } from '../data/words';
 
 type TypeEx = Extract<Exercise, { kind: 'typeWord' }>;
@@ -28,11 +30,21 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
   const { word } = exercise;
   const [text, setText] = useState('');
   const [graded, setGraded] = useState<boolean | null>(null);
+  /** The synonym they typed, when it was not the word being asked for. */
+  const [accepted, setAccepted] = useState<Word | null>(null);
   const [focused, setFocused] = useState(false);
 
   const check = () => {
     if (graded != null || locked || !text.trim()) return;
-    const correct = matchesWord(text, word.urdu, word.roman);
+    // The prompt is an English meaning, and ten of them are carried by more
+    // than one Urdu word. Typing the other one is not a mistake: it is the
+    // answer the course taught first. Accepted, and the footer then names the
+    // word that was actually asked for so the pair is learned rather than one
+    // of them quietly punished.
+    const alt = synonymsOf(word).find((w) => matchesWord(text, w.urdu, w.roman));
+    const exact = matchesWord(text, word.urdu, word.roman);
+    const correct = exact || !!alt;
+    setAccepted(!exact && alt ? alt : null);
     setGraded(correct);
     correct
       ? feedback.correctAnnounceMeaning(word.id, word.urdu, word.roman, word.meaning)
@@ -53,7 +65,7 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
     <View>
       <PromptCard height={150}>
         <WordArt word={word} size={76} />
-        <Txt style={{ color: palette.ink }} className="mt-2 text-base font-semibold capitalize">
+        <Txt style={{ color: palette.ink }} className="mt-2 text-base font-semibold">
           {glossOf(word)}
         </Txt>
       </PromptCard>
@@ -94,8 +106,15 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
       {graded != null && (
         <View className="items-center">
           <Bold style={{ color: graded ? palette.jade : palette.rose }} className="mb-1">
-            {graded ? 'From memory ✓' : 'The word is'}
+            {accepted ? 'That works too ✓' : graded ? 'From memory ✓' : 'The word is'}
           </Bold>
+          {/* Naming the word that was asked for turns an accepted synonym into
+              the moment the learner finds out there are two. */}
+          {accepted && (
+            <Txt className="mb-1 text-center text-xs text-paper/70">
+              {accepted.roman} means that as well. This one was {word.roman}.
+            </Txt>
+          )}
           {/* A wrong answer always gets the transliteration, whatever the
               track: being told only the shape you failed to recall teaches
               nothing about how to say it. */}
@@ -142,7 +161,7 @@ export function WordFromMeaningExercise({ exercise, track, locked, onGraded }: E
   return (
     <View>
       <PromptCard height={130}>
-        <Txt style={{ color: palette.ink }} className="text-center text-2xl font-semibold capitalize">
+        <Txt style={{ color: palette.ink }} className="text-center text-2xl font-semibold">
           {glossOf(word)}
         </Txt>
       </PromptCard>

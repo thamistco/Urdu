@@ -609,6 +609,28 @@ describe("URD-045: a letter's context sighting asks the learner to find it in th
     }
   });
 
+  it('tints the character each tile is actually about', () => {
+    // The tile is the letter wrapped in its real neighbours, so the letter
+    // being hunted appears inside several tiles at once and only the one it
+    // sits at the middle of counts. Nothing said so: 10 of 23 of these
+    // questions had more than one tile visibly holding the letter, and a
+    // beginner scored 11 of 34. The component tints `tiles[i][focusAt[i]]`,
+    // which only works if that index really is the character the tile was
+    // built around — and on a correct tile, that character is the letter.
+    for (const l of letterLessons()) {
+      for (const e of buildLessonExercises(l, [], 'both', new Set()).filter(isSpot)) {
+        expect(e.focusAt.length, `${l.id}: ${e.word.id}`).toBe(e.tiles.length);
+        e.tiles.forEach((tile, i) => {
+          const tinted = tile[e.focusAt[i]];
+          expect(tinted, `${l.id}: ${e.word.id} tile ${i}`).toBeTruthy();
+          if (e.correct[i]) {
+            expect(tinted, `${l.id}: ${e.word.id} correct tile ${i}`).toBe(e.letter.forms.isolated);
+          }
+        });
+      }
+    }
+  });
+
   it('always offers at least 4 tiles — the same recognise-tier guess floor every other letter exercise has', () => {
     // CURRICULUM CRITIC: khe/daal/toe/laam's assigned context words are only
     // 2 characters long — a straight coin flip without a floor, unlike

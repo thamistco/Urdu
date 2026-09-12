@@ -32,7 +32,7 @@ type SpotEx = Extract<Exercise, { kind: 'letterSpot' }>;
  * component itself cannot be rendered under this project's test setup.
  */
 export function LetterSpotExercise({ exercise, showRoman, locked, onGraded }: ExerciseProps<SpotEx>) {
-  const { letter, word, tiles } = exercise;
+  const { letter, word, tiles, focusAt } = exercise;
   const [picked, setPicked] = useState<number | null>(null);
 
   const choose = (i: number) => {
@@ -53,7 +53,7 @@ export function LetterSpotExercise({ exercise, showRoman, locked, onGraded }: Ex
       </Eyebrow>
       <PromptCard height={150}>
         <Urdu style={{ color: palette.ink, fontSize: 40, lineHeight: urduLine(40) }}>{word.urdu}</Urdu>
-        <Txt style={{ color: palette.ink }} className="mt-2 text-sm capitalize opacity-60">
+        <Txt style={{ color: palette.ink }} className="mt-2 text-sm opacity-60">
           {glossOf(word)}
           {showRoman ? ` · ${word.roman}` : ''}
         </Txt>
@@ -108,7 +108,18 @@ export function LetterSpotExercise({ exercise, showRoman, locked, onGraded }: Ex
                 className="my-1 min-w-[116px]"
                 accessibilityLabel={`Tile ${i + 1} of ${tiles.length}`}
               >
-                <Urdu style={{ ...urduGlyph(26) }}>{t}</Urdu>
+                {/* The letter this tile is about, tinted inside its own
+                    neighbours. The neighbours are there so the glyph joins the
+                    way it really does in the word, which also puts the hunted
+                    letter inside several tiles at once — tinting says which one
+                    the tile is *for* without a sentence explaining it, and
+                    without breaking the joining, since shaping carries across
+                    nested spans (measured: identical widths split and whole). */}
+                <Urdu style={{ ...urduGlyph(26) }}>
+                  {t.slice(0, focusAt[i])}
+                  <Urdu style={{ ...urduGlyph(26), color: palette.gold }}>{t.slice(focusAt[i], focusAt[i] + 1)}</Urdu>
+                  {t.slice(focusAt[i] + 1)}
+                </Urdu>
               </Choice>
             </View>
           );

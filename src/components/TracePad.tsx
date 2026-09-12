@@ -7,9 +7,9 @@ import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { POSITIONS, type Letter, type PositionKey } from '../data/letters';
 import { GLYPH_MASKS, MASK_GRID, FONT_ASCENT, FONT_DESCENT } from '../data/glyphMasks';
-import { decodeMask, traceTargets, scoreTrace, type Pt } from '../lib/trace';
+import { decodeMask, traceTargets, scoreTrace, NEED_PRECISION, type Pt } from '../lib/trace';
 
-export type TraceResult = { pass: boolean; coverage: number };
+export type TraceResult = { pass: boolean; coverage: number; precision: number };
 
 /**
  * Keep the drawing surface out of the phone's own gesture strip.
@@ -104,9 +104,8 @@ export function TracePad({
     if (result != null || locked || !targets || !side) return;
 
     const { coverage, precision, pass } = scoreTrace(strokes, side, MASK_GRID, targets.skeleton, targets.tolerant);
-    void precision;
 
-    const r = { pass, coverage };
+    const r = { pass, coverage, precision };
     setResult(r);
     pass ? feedback.correctAnnounce(letter.id, letter.forms[position], letter.name) : feedback.incorrect();
     onScored?.(r);
@@ -217,10 +216,28 @@ export function TracePad({
         </View>
       ) : (
         <View className="items-center">
+          {/* Which of the two things went wrong, rather than the same eight
+              words every time. A trace is graded on covering the shape *and*
+              staying on it, and only coverage was ever shown — so the same
+              70% was accepted on one letter and refused on another, with
+              nothing on screen to say why, and 30 of 37 refusals in a
+              playtest gave the identical sentence. A percentage is also not
+              instruction: it is this component's own arithmetic, and it told
+              the learner nothing they could act on. */}
           <Bold style={{ color: result.pass ? palette.jade : palette.rose }}>
-            {result.pass ? 'That is the shape ✓' : 'Follow the grey letter more closely'}
+            {result.pass
+              ? 'That is the shape ✓'
+              : result.precision < NEED_PRECISION
+                ? 'Keep the line on the grey shape'
+                : 'There is still some letter to trace'}
           </Bold>
-          <Txt className="mt-1 text-xs text-paper/55">{Math.round(result.coverage * 100)}% of the letter covered</Txt>
+          <Txt className="mt-1 text-xs text-paper/55">
+            {result.pass
+              ? 'Nicely done.'
+              : result.precision < NEED_PRECISION
+                ? 'Some of your line landed away from the letter.'
+                : 'Part of the grey shape has not been drawn over yet.'}
+          </Txt>
         </View>
       )}
     </View>

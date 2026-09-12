@@ -71,7 +71,7 @@ export function WordTeachExercise({ exercise, track, onGraded }: ExerciseProps<T
         <View className="mt-2">
           <Lexeme urdu={word.urdu} roman={word.roman} track={track} size={fs} color={palette.ink} />
         </View>
-        <Txt style={{ color: palette.ink }} className="mt-2 text-center text-base capitalize opacity-70">
+        <Txt style={{ color: palette.ink }} className="mt-2 text-center text-base opacity-70">
           {glossOf(word)}
         </Txt>
         <View className="mt-3">

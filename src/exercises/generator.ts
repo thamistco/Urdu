@@ -208,7 +208,13 @@ export const LETTER_CONTEXT_WORD: Map<string, Word> = (() => {
 export function letterSpotTiles(
   letter: Letter,
   word: Word
-): { tiles: string[]; fromWord: boolean[]; correct: boolean[]; wordBreakAfter: boolean[] } {
+): {
+  tiles: string[];
+  fromWord: boolean[];
+  correct: boolean[];
+  wordBreakAfter: boolean[];
+  focusAt: number[];
+} {
   const raw = Array.from(word.urdu);
   const isReal = (i: number) => i >= 0 && i < raw.length && raw[i].trim().length > 0;
 
@@ -216,6 +222,22 @@ export function letterSpotTiles(
   const fromWord: boolean[] = [];
   const correct: boolean[] = [];
   const wordBreakAfter: boolean[] = [];
+  /**
+   * Where inside each tile the character it is *about* sits.
+   *
+   * A tile is its character wrapped in its real neighbours, so the letter being
+   * hunted is visible in several tiles at once and only one of them counts —
+   * the one it sits at the middle of. Nothing said so, and a playtester lost
+   * two thirds of these questions without ever working out the rule: for
+   * پانی / "which tile is alif?", three of the four tiles show an alif.
+   *
+   * The component tints this character, which teaches the convention by
+   * showing it instead of explaining it. Recorded here because only this
+   * function knows which character the cluster was built around; deriving it
+   * from the string would guess wrong the moment a cluster holds the same
+   * letter twice.
+   */
+  const focusAt: number[] = [];
   const realChars = new Set<string>();
   for (let i = 0; i < raw.length; i++) {
     if (!isReal(i)) continue;
@@ -251,12 +273,18 @@ export function letterSpotTiles(
     if (tiles.length > 0 && tiles[tiles.length - 1] === cluster) {
       correct[correct.length - 1] = correct[correct.length - 1] || isCorrect;
       wordBreakAfter[wordBreakAfter.length - 1] = wordBreakAfter[wordBreakAfter.length - 1] || breaksAfter;
+      // A merged tile stands for both positions, so the one worth tinting is
+      // whichever of them the question is about. Without this, خط merged as
+      // "the خ tile" and was then marked correct for ط — tinting one letter
+      // while grading another, which is worse than tinting nothing.
+      if (isCorrect) focusAt[focusAt.length - 1] = left.length;
       continue;
     }
     tiles.push(cluster);
     fromWord.push(true);
     correct.push(isCorrect);
     wordBreakAfter.push(breaksAfter);
+    focusAt.push(left.length);
   }
 
   // A minimum multiple-choice floor, matching every other recognise-tier
@@ -284,9 +312,12 @@ export function letterSpotTiles(
       fromWord.splice(at, 0, false);
       correct.splice(at, 0, false);
       wordBreakAfter.splice(at, 0, false);
+      // A decoy is a bare glyph with no neighbours, so the whole tile is the
+      // character it is about.
+      focusAt.splice(at, 0, 0);
     }
   }
-  return { tiles, fromWord, correct, wordBreakAfter };
+  return { tiles, fromWord, correct, wordBreakAfter, focusAt };
 }
 
 /**
@@ -343,8 +374,8 @@ function letterContrastExercise(letter: Letter, mates: Letter[]): Exercise {
 }
 
 function letterSpotExercise(letter: Letter, word: Word): Exercise {
-  const { tiles, fromWord, correct, wordBreakAfter } = letterSpotTiles(letter, word);
-  return { kind: 'letterSpot', letter, word, tiles, fromWord, correct, wordBreakAfter };
+  const { tiles, fromWord, correct, wordBreakAfter, focusAt } = letterSpotTiles(letter, word);
+  return { kind: 'letterSpot', letter, word, tiles, fromWord, correct, wordBreakAfter, focusAt };
 }
 
 // ---- per-item exercise builders -----------------------------------------
@@ -753,6 +784,23 @@ export function distractorsFor(
   const preferredIds = new Set(preferred.map((p) => p.id));
   consider(preferred, DISTRACTORS - 1);
   consider(pool.filter((p) => !preferredIds.has(p.id))); // prefer same-topic distractors
+  if (chosen.length < DISTRACTORS) {
+    /**
+     * Widen to words wearing the same badge before widening to anything.
+     *
+     * Every phrase in the course carries `💬`, so a phrase's own topic can
+     * never supply four distinct cues and this fallback reached straight into
+     * the full vocabulary — putting one speech bubble against 🐫 Caravan,
+     * 🦕 Extinction and 🐺 Wolf. The answer was then the only option that
+     * looked like a phrase at all: a playtester scored 5 of 5 by tapping the
+     * badge and 0 of 10 whenever they read instead, which is a question that
+     * teaches the learner about emoji.
+     *
+     * `distinctCue` callers skip this — for them a shared cue is the thing
+     * being avoided, and `consider` would reject these anyway.
+     */
+    if (!distinctCue) consider(WORDS.filter((w) => cueOf(w) === cueOf(word)));
+  }
   if (chosen.length < DISTRACTORS) consider(WORDS); // widen if the topic is too uniform
   return chosen;
 }

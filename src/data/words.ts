@@ -1538,10 +1538,52 @@ export function registerOf(word: Word): Register | undefined {
  */
 export function glossOf(word: Word): string {
   const r = registerOf(word);
-  return r ? `${word.meaning} (${r})` : word.meaning;
+  return sentenceCase(r ? `${word.meaning} (${r})` : word.meaning);
+}
+
+/**
+ * First letter up, the rest left alone.
+ *
+ * Every screen that showed a gloss styled it with CSS `capitalize`, which
+ * uppercases the first letter of *every* word: the corpus's own plain
+ * "the family home you marry into" reached the learner as "The Family Home You
+ * Marry Into", and "how wonderful (said in admiration)" as "How Wonderful (Said
+ * In Admiration)". A playtester read those as database fields with the
+ * capitalisation turned up, which is exactly what they were.
+ *
+ * Done here rather than in each screen's class list so a gloss cannot be shown
+ * title-cased by a screen that forgets, and so the corpus stays the single
+ * place the words are written.
+ */
+function sentenceCase(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 export const WORDS: Word[] = [...CORE_WORDS, ...ALL_PACKS.flatMap((p) => p.words)];
+
+/**
+ * Other words this course teaches for the same English.
+ *
+ * Ten meanings in the corpus are carried by more than one word, and four of
+ * them are close family: father is both باپ and والد, mother both ماں and
+ * والدہ, wife both بیوی and بیگم, husband both شوہر and میاں. A lesson teaches
+ * one, a later lesson asks for the English and wants the other, and the
+ * learner who answers with the word they were taught is marked wrong. A
+ * playtester hit that four times and described it as being corrected for
+ * remembering.
+ *
+ * Multiple-choice never had this problem: `distinctMeaning` keeps two words
+ * with one meaning out of the same option set. Typing has no option set, so
+ * the prompt "Father" really does admit two answers and only this can say so.
+ *
+ * Matched on the bare meaning, so a register note in brackets still separates
+ * "yes" from "yes (polite)" — that distinction is the thing being taught and
+ * collapsing it would be worse than the bug.
+ */
+export function synonymsOf(word: Word): Word[] {
+  const key = word.meaning.trim().toLowerCase();
+  return WORDS.filter((w) => w.id !== word.id && w.meaning.trim().toLowerCase() === key);
+}
 
 /** Short, high-value phrases for the "speak with family" goal. */
 /**
