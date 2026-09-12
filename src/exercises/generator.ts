@@ -1711,7 +1711,7 @@ export function buildLessonExercises(
     const groups: Word[][] = [];
     for (let i = 0; i < picks.length; i += GROUP) groups.push(picks.slice(i, i + GROUP));
 
-    const passes: ((w: Word, i: number) => Exercise)[] = [
+    const passes: ((w: Word, i: number) => Exercise | Exercise[])[] = [
       // Introduced rather than asked about, for the same reason as vocabulary:
       // a phrase nobody has met cannot be picked out of four by reasoning.
       //
@@ -1724,7 +1724,10 @@ export function buildLessonExercises(
       // object pictures, answerable by elimination. A teaching card has no
       // distractors at all, so that whole problem does not arise here. It still
       // applies to the recall pass below, which stays as it was.
-      (w) => ({ kind: 'wordTeach', word: w }),
+      (w) => [
+        { ...wordExercise(w, PHRASE_WORDS, track, 'meet', 1), pretest: true },
+        { kind: 'wordTeach', word: w },
+      ],
       (w) => wordExercise(w, PHRASE_WORDS, track, 'recall'),
       (w, i) => produceExercise(w, PHRASE_WORDS, track, false, i),
     ];
@@ -1741,7 +1744,11 @@ export function buildLessonExercises(
         for (const { make, g } of active) {
           const w = groups[g][slot];
           if (!w) continue;
-          exercises.push(make(w, g * GROUP + slot));
+          // A pass may emit a pair — the first question about a word and the
+          // card that answers it, which have to stay adjacent for the card to
+          // read as feedback rather than as an unrelated screen.
+          const made = make(w, g * GROUP + slot);
+          exercises.push(...(Array.isArray(made) ? made : [made]));
         }
       }
     }
@@ -1850,7 +1857,7 @@ export function buildLessonExercises(
      * somebody made instead of a bug nobody could see.
      */
 
-    const passes: ((w: Word, i: number) => Exercise)[] = [
+    const passes: ((w: Word, i: number) => Exercise | Exercise[])[] = [
       /**
        * The first sighting introduces the word instead of testing it.
        *
@@ -1871,7 +1878,10 @@ export function buildLessonExercises(
        * is the same length — what changed is that the first of the three tells
        * the learner something rather than asking.
        */
-      (w) => ({ kind: 'wordTeach', word: w }),
+      (w, i) => [
+        { ...wordExercise(w, pool, track, 'meet', i % 3), pretest: true },
+        { kind: 'wordTeach', word: w },
+      ],
       (w) => wordExercise(w, pool, track, 'recall'),
       (w, i) => produceExercise(w, pool, track, teachesScript, i),
     ];
@@ -1904,7 +1914,11 @@ export function buildLessonExercises(
         for (const { make, g } of active) {
           const w = groups[g][slot];
           if (!w) continue;
-          exercises.push(make(w, g * GROUP + slot));
+          // A pass may emit a pair — the first question about a word and the
+          // card that answers it, which have to stay adjacent for the card to
+          // read as feedback rather than as an unrelated screen.
+          const made = make(w, g * GROUP + slot);
+          exercises.push(...(Array.isArray(made) ? made : [made]));
         }
       }
     }

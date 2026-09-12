@@ -1265,11 +1265,15 @@ describe('URD-023/URD-A02: a phrases lesson always draws enough typeable phrases
     }
   });
 
-  it('gives every drawn phrase exactly three sightings, not one', () => {
+  it('gives every drawn phrase exactly four sightings, not one', () => {
     // URD-A02's own point: a phrases lesson is now a small climb, the same
     // shape as vocab's, not a large one-shot draw. Every phrase this lesson
-    // teaches gets met, recalled and produced (or produced's own fallback),
-    // never just one of the three.
+    // teaches gets its first question, the card that answers it, a recall and
+    // a production (or production's own fallback), never just one of them.
+    //
+    // Four rather than three since the card was added: guessing first and then
+    // being told beats being told outright, so the opening question stayed and
+    // the card became its feedback rather than its replacement.
     for (let i = 0; i < 200; i++) {
       const lesson = phrasesLesson(`synthetic-phrases-sightings-${i}`);
       const exercises = buildLessonExercises(lesson, [], 'both', new Set());
@@ -1278,7 +1282,7 @@ describe('URD-023/URD-A02: a phrases lesson always draws enough typeable phrases
         if ('word' in e && e.word) sightings.set(e.word.id, (sightings.get(e.word.id) ?? 0) + 1);
       }
       expect(sightings.size, lesson.id).toBe(lesson.size);
-      for (const n of sightings.values()) expect(n, lesson.id).toBe(3);
+      for (const n of sightings.values()) expect(n, lesson.id).toBe(4);
     }
   });
 

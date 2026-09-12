@@ -38,18 +38,24 @@ export type Exercise =
     }
   | {
       kind: 'multipleChoice';
+      /** first meeting with this word: a guess is expected, so it costs no heart */
+      pretest?: boolean;
       word: Word;
       /** show emoji, pick the matching Urdu word */
       options: Word[];
     }
   | {
       kind: 'meaningPick';
+      /** first meeting with this word: a guess is expected, so it costs no heart */
+      pretest?: boolean;
       word: Word;
       /** show Urdu word, pick the meaning */
       options: Word[];
     }
   | {
       kind: 'listenTap';
+      /** first meeting with this word: a guess is expected, so it costs no heart */
+      pretest?: boolean;
       word: Word;
       /** hear it, pick the matching emoji/meaning */
       options: Word[];
@@ -133,17 +139,25 @@ export type Exercise =
        * A word's introduction: script, reading, meaning and sound, with
        * nothing to answer.
        *
-       * Every other word exercise asks a question, and for a word's *first*
-       * appearance that was a guess with a penalty attached. A picture tells
-       * the learner what a thing is but not which of four Urdu strings names
-       * it; the script tells them nothing about what it means. So the first
-       * encounter could only be answered by luck, and the explanation arrived
-       * afterwards, as a correction, having cost a heart. A playtest run scored
-       * 20% on words the app had never shown against 73% on words it had.
+       * Sits immediately *after* the first question about the word, as the
+       * answer to it, rather than before it. That ordering is deliberate and
+       * was arrived at the wrong way round first.
        *
-       * Grammar has had a teaching card since the beginning, for exactly this
-       * reason ("presenting the rule *before* drilling it is what makes grammar
-       * stick rather than feeling like guesswork"). Vocabulary never did.
+       * The first version of this replaced the opening question, on the
+       * reasoning that a four-option question about a word never seen can only
+       * be luck. That much is true. But guessing first and then being told
+       * beats being told outright: four experiments on exactly this material
+       * and format — multiple-choice word-image and image-word pretests for
+       * foreign vocabulary — measured better cued recall (d = 0.18 to 0.40)
+       * and better recognition (d = 0.25 to 0.67) against a read-only
+       * condition, and learners preferred it (Cognitive Research, 2026). For
+       * arbitrary pairs like script to English the recall benefit is the weaker
+       * half, but guessing is not worse than reading, and the effect depends
+       * entirely on corrective feedback arriving after the guess.
+       *
+       * So the guess stays and this card is the feedback. What was actually
+       * wrong was the price: the app charged a heart for failing a question
+       * nobody could answer. `pretest` marks those, and they cost nothing.
        */
       kind: 'wordTeach';
       word: Word;
