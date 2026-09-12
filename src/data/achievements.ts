@@ -98,10 +98,14 @@ export const ACHIEVEMENTS: AchievementDef[] = [
  * something the app computes on every load.
  */
 export const DAILY_GOALS = [
-  { id: 'calm', label: 'Calm', minutes: 4, xp: 20, desc: '4 min a day' },
-  { id: 'steady', label: 'Steady', minutes: 8, xp: 40, desc: '8 min a day' },
-  { id: 'serious', label: 'Serious', minutes: 15, xp: 70, desc: '15 min a day' },
-  { id: 'intense', label: 'Intense', minutes: 26, xp: 120, desc: '26 min a day' },
+  // Re-tuned when a new word went from three sightings to four: the lesson got
+  // longer, so the same XP took longer to earn and every figure below became a
+  // quiet understatement — "4 min a day" was really 5.5. The minutes are the
+  // promise somebody picks a goal on, so the minutes held and the XP moved.
+  { id: 'calm', label: 'Calm', minutes: 4, xp: 15, desc: '4 min a day' },
+  { id: 'steady', label: 'Steady', minutes: 8, xp: 30, desc: '8 min a day' },
+  { id: 'serious', label: 'Serious', minutes: 15, xp: 55, desc: '15 min a day' },
+  { id: 'intense', label: 'Intense', minutes: 26, xp: 95, desc: '26 min a day' },
 ] as const;
 
 export type DailyGoalId = (typeof DAILY_GOALS)[number]['id'];

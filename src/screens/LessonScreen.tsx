@@ -39,6 +39,24 @@ function isTeaching(ex: Exercise | undefined): boolean {
 }
 
 /**
+ * The first question ever asked about a word, where guessing is the point.
+ *
+ * Guessing before being told is worth more than being told outright — four
+ * experiments on this exact format measured it — but only when feedback
+ * follows, and the research never charges for a wrong guess. This app did:
+ * a learner lost a heart for failing a question about a word it had not yet
+ * shown them, which is the single thing a beginner complained about most.
+ *
+ * So these still grade, still count as a sighting, and still show the answer.
+ * They just cost nothing, and the card that follows says what the word was.
+ */
+function isPretest(ex: Exercise | undefined): boolean {
+  return (
+    (ex?.kind === 'multipleChoice' || ex?.kind === 'meaningPick' || ex?.kind === 'listenTap') && ex.pretest === true
+  );
+}
+
+/**
  * How much the learner had to supply, which is how much a correct answer is
  * worth to the schedule.
  *
@@ -232,7 +250,7 @@ export function LessonScreen() {
       result.items.forEach((it) => recordItemGrade(it, grade));
       if (result.correct) {
         setCorrectCount((c) => c + 1);
-      } else if (!isTeaching(exercises[idx])) {
+      } else if (!isTeaching(exercises[idx]) && !isPretest(exercises[idx])) {
         loseHeart();
         if (useProgressStore.getState().hearts <= 0) {
           // Held until the learner moves on, rather than shown on a timer.
