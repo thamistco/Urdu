@@ -31,6 +31,10 @@ export function LetterTeachExercise({ exercise, onGraded }: ExerciseProps<TeachE
   const { letter } = exercise;
   const [done, setDone] = useState(false);
 
+  // A non-connector: it joins only from the right, so its start form is its
+  // alone form and its middle form is its end form.
+  const oneSided = letter.forms.initial === letter.forms.isolated && letter.forms.medial === letter.forms.final;
+
   useEffect(() => {
     announce(letter.id, letter.forms.isolated, letter.name);
   }, [letter.id, letter.forms.isolated, letter.name]);
@@ -51,8 +55,11 @@ export function LetterTeachExercise({ exercise, onGraded }: ExerciseProps<TeachE
         A new letter
       </Eyebrow>
 
-      <PromptCard height={170}>
-        <Urdu style={{ ...urduGlyph(64), color: palette.ink }}>{letter.forms.isolated}</Urdu>
+      {/* 52 rather than 64: Nastaliq's line box grows faster than the glyph
+          does, and at 64 the card opened a band of dead air between the letter
+          and its name wider than the letter itself. */}
+      <PromptCard height={150}>
+        <Urdu style={{ ...urduGlyph(52), color: palette.ink }}>{letter.forms.isolated}</Urdu>
         <Txt style={{ color: palette.ink }} className="mt-2 text-center text-base opacity-70">
           {letter.name} · sounds like “{letter.sound}”
         </Txt>
@@ -64,10 +71,13 @@ export function LetterTeachExercise({ exercise, onGraded }: ExerciseProps<TeachE
         </View>
       </PromptCard>
 
-      {/* The rule, shown rather than described. Right to left, so the row
-          reads in the direction the forms are talking about. */}
+      {/* Left to right, in the order a reader of these English labels scans
+          them. The row was reversed first, to honour the direction Urdu runs
+          in, and a screenshot showed the cost: four separate glyphs are a list
+          rather than a word, so there is no word-order to respect, and the
+          progression came out reading End, Middle, Start, Alone. */}
       <Txt className="mb-2 mt-5 text-center text-xs text-paper/60">It changes shape depending on where it sits</Txt>
-      <View className="flex-row-reverse justify-center gap-2">
+      <View className="flex-row justify-center gap-2">
         {POSITIONS.map((p) => (
           <View
             key={p.key}
@@ -76,7 +86,7 @@ export function LetterTeachExercise({ exercise, onGraded }: ExerciseProps<TeachE
           >
             <Urdu style={{ ...urduGlyph(30) }}>{letter.forms[p.key]}</Urdu>
             <Bold className="mt-2 text-[11px] text-paper/75">{p.label}</Bold>
-            <Txt className="text-center text-[10px] leading-3 text-paper/45">{p.hint}</Txt>
+            <Txt className="text-center text-[10px] leading-3 text-paper/60">{p.hint}</Txt>
           </View>
         ))}
       </View>
@@ -90,6 +100,17 @@ export function LetterTeachExercise({ exercise, onGraded }: ExerciseProps<TeachE
           {letter.roman} · {letter.meaning}
         </Txt>
       </View>
+
+      {/* Some letters never join to the letter after them, so two of the four
+          shapes above are identical. On screen that reads as a mistake unless
+          it is named: alif shows one shape for alone and start, another for
+          middle and end, and a beginner has no way to know that is the point
+          rather than an error. */}
+      {oneSided ? (
+        <Txt className="mt-4 text-center text-xs text-paper/60">
+          {letter.name} never joins to the letter after it, so two of those shapes are the same.
+        </Txt>
+      ) : null}
 
       {letter.functionNote ? <Txt className="mt-4 text-center text-xs text-paper/55">{letter.functionNote}</Txt> : null}
 
