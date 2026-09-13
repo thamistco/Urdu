@@ -18,6 +18,29 @@ export type Exercise =
       options: PositionKey[];
     }
   | {
+      /**
+       * A letter, introduced: its name, its sound, all four joining forms
+       * side by side, and a real word that uses it. Nothing to answer.
+       *
+       * The four forms are this course's central idea and were never taught,
+       * only tested. A beginner met 34 "which position is this letter
+       * showing?" questions across one run, scored 8, and said afterwards they
+       * never worked out the rule — because nothing had ever stated it. The
+       * first sighting of a letter could also be "which letter is this?"
+       * among four glyphs none of which they had seen.
+       *
+       * Placed *before* the first question rather than after it, which is the
+       * opposite of `wordTeach` and deliberate. The pretesting evidence behind
+       * that ordering is about arbitrary paired associates — this glyph is
+       * called be — and a joining system is a rule instead. Grammar has had a
+       * card in front of its drills from the beginning for that reason, and
+       * its own comment says why: presenting the rule before drilling it is
+       * what makes it stick rather than feel like guesswork.
+       */
+      kind: 'letterTeach';
+      letter: Letter;
+    }
+  | {
       kind: 'letterPick';
       letter: Letter;
       /**

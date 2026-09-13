@@ -458,7 +458,10 @@ describe('URD-018: review gives the learner a real chance to read Urdu and say w
 });
 
 describe('URD-020: a letter lesson shows letters inside real words, not only in isolation', () => {
-  const ISOLATED_LETTER_KINDS = new Set(['letterForm', 'letterPick', 'letterTrace', 'letterContrast']);
+  // `letterTeach` belongs here: this set means "a screen about the letter on
+  // its own", which is what these rules contrast against a context word, and an
+  // introduction card is exactly that.
+  const ISOLATED_LETTER_KINDS = new Set(['letterTeach', 'letterForm', 'letterPick', 'letterTrace', 'letterContrast']);
   const letterLessons = () => UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'letters');
 
   it('every letter in every real lesson gets exactly one context sighting — no letter zero, none doubled', () => {
@@ -476,15 +479,22 @@ describe('URD-020: a letter lesson shows letters inside real words, not only in 
     }
   });
 
-  it("does not raise a letter lesson's total exercise count", () => {
-    // The item's own constraint: raise the in-context share without raising
-    // total lesson length. Each letter's context sighting replaces one of
-    // its isolated ones rather than adding a new one, so the total is
-    // unchanged (or one shorter, since the old single shared context word
-    // is gone) — never longer.
+  it("does not raise a letter lesson's exercise count beyond its one introduction each", () => {
+    // URD-020's own constraint was to raise the in-context share without
+    // raising total lesson length: each letter's context sighting replaces one
+    // of its isolated ones rather than adding one, so the total never grew.
+    // That still holds of the sightings.
+    //
+    // The budget is seven per letter rather than six because each now opens
+    // with an introduction card — a deliberate addition, and the one thing the
+    // earlier item deliberately avoided. It is bounded here so that it stays
+    // one card per letter: the failure this guards against is a second card
+    // creeping in per round, which would be five extra screens a lesson.
     for (const l of letterLessons()) {
       const exercises = buildLessonExercises(l, [], 'both', new Set());
-      expect(exercises.length, l.id).toBeLessThanOrEqual(l.letterIds!.length * 6 + 1);
+      expect(exercises.length, l.id).toBeLessThanOrEqual(l.letterIds!.length * 7 + 1);
+      const cards = exercises.filter((e) => e.kind === 'letterTeach');
+      expect(cards.length, `${l.id}: one card per letter`).toBe(l.letterIds!.length);
     }
   });
 
@@ -801,7 +811,10 @@ describe("URD-043: a letter's final sighting in its own lesson is always the har
 
 describe('URD-022: visually confusable letters are not drilled back to back', () => {
   const letterLessons = () => UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'letters');
-  const ISOLATED_LETTER_KINDS = new Set(['letterForm', 'letterPick', 'letterTrace', 'letterContrast']);
+  // `letterTeach` belongs here: this set means "a screen about the letter on
+  // its own", which is what these rules contrast against a context word, and an
+  // introduction card is exactly that.
+  const ISOLATED_LETTER_KINDS = new Set(['letterTeach', 'letterForm', 'letterPick', 'letterTrace', 'letterContrast']);
   const bucketKeyOf = (letterId: string) => getLetter(letterId)?.confusableWith ?? letterId;
 
   /**
