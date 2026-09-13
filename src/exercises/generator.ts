@@ -1689,6 +1689,33 @@ export function buildLessonExercises(
       }
       exercises.push(letterExerciseAt(l, 0, nextPos(l.id, idx))); // always letterTrace
     });
+
+    /**
+     * A card in front of each letter's first appearance.
+     *
+     * Done as a pass over the finished sequence rather than inside the round
+     * loop above, and that is not tidiness. The loop balances several things
+     * against each other — which round carries a letter's context word, which
+     * carries its contrast, that its last sighting is always a trace, that two
+     * confusable letters are never adjacent — and its own comments record
+     * earlier attempts that broke one while fixing another. Pushing into it
+     * cost `se` its context sighting outright, for reasons that took several
+     * readings not to explain. Building the sequence first and threading the
+     * cards through it afterwards leaves every one of those properties exactly
+     * as it was.
+     */
+    const introduced = new Set<string>();
+    const withCards: Exercise[] = [];
+    for (const ex of exercises) {
+      const of = 'letter' in ex ? ex.letter : null;
+      if (of && !introduced.has(of.id)) {
+        introduced.add(of.id);
+        withCards.push({ kind: 'letterTeach', letter: of });
+      }
+      withCards.push(ex);
+    }
+    exercises.length = 0;
+    exercises.push(...withCards);
   }
 
   if (lesson.kind === 'phrases') {
@@ -2537,8 +2564,26 @@ export function buildLessonExercises(
   // live, not in review: a 12-phrase, 36-exercise lesson measured at
   // exactly 12 exercises and 6 distinct phrases the first time this was
   // run, the exact shape of the two bugs this comment already names above.
+  //
+  // `letters` joins the exemption for the same reason `vocab` has it, and the
+  // reason was always true — adding the introduction cards is only what made it
+  // visible. A letter lesson is composed to an exact shape: every letter met
+  // `SIGHTINGS_PER_LETTER` times in rounds, its context word on a reserved
+  // round, its contrast on another, and a `letterTrace` last because that is
+  // the hardest kind and URD-043 put it there deliberately. Trimming to `size`
+  // cuts from the end, so it cuts exactly that tail.
+  //
+  // Measured when the cards went in: `l-2` went from 29 exercises to 25, losing
+  // `se`'s context sighting and two letters' closing traces, and the eight
+  // tests that assert those properties all failed at once. The cards did not
+  // break the round maths; this line quietly dropped the end of the lesson,
+  // which is the same thing its own comment above records happening before.
   const composed =
-    lesson.kind === 'vocab' || lesson.kind === 'sentences' || lesson.kind === 'grammar' || lesson.kind === 'phrases';
+    lesson.kind === 'vocab' ||
+    lesson.kind === 'sentences' ||
+    lesson.kind === 'grammar' ||
+    lesson.kind === 'phrases' ||
+    lesson.kind === 'letters';
   return composed ? exercises : exercises.slice(0, lesson.size);
 }
 

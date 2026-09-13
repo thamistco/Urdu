@@ -660,7 +660,13 @@ function letterIdOfExercise(exercise, lesson) {
 const confusableAdjacent = [];
 for (const l of ALL_LESSONS.filter((x) => x.kind === 'letters').filter(judged)) {
   const ex = buildLessonExercises(l, [], 'both');
-  const ids = ex.map((e) => letterIdOfExercise(e, l));
+  // Introduction cards are dropped before scanning. This rule is about the
+  // order letters are *drilled* in — its expectation is a pigeonhole count over
+  // the round ordering, and it asserts equality, so it is a statement about the
+  // generator's sequence rather than about what sits between two screens. A
+  // card is not a drill; leaving them in moved both the round count and the
+  // adjacency count and made the rule report itself as under-scanning.
+  const ids = ex.filter((e) => e.kind !== 'letterTeach').map((e) => letterIdOfExercise(e, l));
   const n = (l.letterIds || []).length;
   /**
    * URD-043: `rounds` used to be `ex.length / n`, assuming the whole
