@@ -184,6 +184,7 @@ const CAST = {
 // with `check-voice-fidelity.js` so a clip landing on its documented fallback
 // is never confused with one landing somewhere it should not be.
 const { FALLBACK_VOICE } = require('./lib/voice-fallback');
+const { overrideFor } = require('./lib/voice-overrides');
 
 /**
  * How fast a thing is said, and why there are two answers.
@@ -225,7 +226,11 @@ function collectItems() {
   const add = (id, text, voice = CAST.narrator, pace = PACE.citation) => {
     if (!id || !text || seen.has(id)) return;
     seen.add(id);
-    items.push({ id, text, voice, pace });
+    // A clip this voice is known to mispronounce is recorded in another one.
+    // Applied here rather than at each call site so it covers words, phrases,
+    // sentences, dialogue lines and letters alike, and cannot be forgotten by
+    // whichever of them gains the next entry. See lib/voice-overrides.js.
+    items.push({ id, text, voice: overrideFor(VOICE_SET, id) ?? voice, pace });
   };
   // `pronounce`, when a word carries one, is a diacritic-marked reading for
   // a script that collides with another word in the course (سر head vs سر

@@ -13,6 +13,9 @@ function spotEx(overrides: Partial<SpotEx> = {}): SpotEx {
     word: getWord('w-paani')!,
     tiles: ['پا', 'پان', 'انی', 'نی'],
     fromWord: [true, true, true, true],
+    // پا is built around پ, پان around ا, انی around ن, نی around ی — the
+    // index of that character inside each tile.
+    focusAt: [0, 1, 1, 1],
     correct: [true, false, false, false],
     wordBreakAfter: [false, false, false, false],
     ...overrides,

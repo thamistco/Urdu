@@ -9,7 +9,8 @@ import { Screen, CONTENT_MAX_WIDTH } from '../components/Screen';
 import { Button } from '../components/Button';
 import { ProgressBar } from '../components/ProgressBar';
 import { Hearts } from '../components/Stats';
-import { Txt, Bold, Heading } from '../components/Text';
+import { Txt, Bold, Heading, Eyebrow } from '../components/Text';
+import { Lexeme } from '../components/Lexeme';
 import { Illustration } from '../components/Illustration';
 import { SpeakerButton } from '../exercises/common';
 import { palette, withAlpha } from '../theme';
@@ -17,11 +18,11 @@ import { feedback } from '../lib/feedback';
 import { announce, invalidateSpeech } from '../lib/speech';
 import { dueQueue, dueBudget, type SrsGrade } from '../lib/srs';
 import { useSessionGradeFlush } from './useSessionGradeFlush';
+import { answerReveal } from './answerReveal';
 import { REFILL_COST, gemsShortOfRefill, minutesUntilNextHeart } from '../lib/gamification';
 import { useProgressStore, type ItemType } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { resolveLesson } from '../data/units';
-import { POSITIONS } from '../data/letters';
 import { ExerciseView } from '../exercises';
 import { buildLessonExercises } from '../exercises/generator';
 import type { Exercise, GradedResult } from '../exercises/types';
@@ -34,7 +35,25 @@ type Rt = RouteProp<RootStackParamList, 'Lesson'>;
 
 /** Teaching cards are informational — no hearts, no pass/fail styling. */
 function isTeaching(ex: Exercise | undefined): boolean {
-  return ex?.kind === 'grammarTeach';
+  return ex?.kind === 'grammarTeach' || ex?.kind === 'wordTeach' || ex?.kind === 'letterTeach';
+}
+
+/**
+ * The first question ever asked about a word, where guessing is the point.
+ *
+ * Guessing before being told is worth more than being told outright — four
+ * experiments on this exact format measured it — but only when feedback
+ * follows, and the research never charges for a wrong guess. This app did:
+ * a learner lost a heart for failing a question about a word it had not yet
+ * shown them, which is the single thing a beginner complained about most.
+ *
+ * So these still grade, still count as a sighting, and still show the answer.
+ * They just cost nothing, and the card that follows says what the word was.
+ */
+function isPretest(ex: Exercise | undefined): boolean {
+  return (
+    (ex?.kind === 'multipleChoice' || ex?.kind === 'meaningPick' || ex?.kind === 'listenTap') && ex.pretest === true
+  );
 }
 
 /**
@@ -58,31 +77,11 @@ function demandOf(ex: Exercise | undefined): 'produce' | 'recognise' {
   }
 }
 
-function answerLabel(ex: Exercise): string {
-  switch (ex.kind) {
-    case 'letterForm':
-      return POSITIONS.find((p) => p.key === ex.position)?.label ?? '';
-    case 'letterPick':
-    case 'letterTrace':
-    case 'letterSpot':
-    case 'letterContrast':
-      return `${ex.letter.name}: ${ex.letter.forms.isolated}`;
-    case 'multipleChoice':
-    case 'meaningPick':
-    case 'listenTap':
-    case 'wordBuild':
-    case 'wordFromMeaning':
-    case 'typeWord':
-      return `${ex.word.urdu}: ${ex.word.meaning}`;
-    default:
-      return '';
-  }
-}
-
 /**
  * What this exercise can say out loud, if anything.
  *
- * Mirrors `answerLabel` above, which describes the same exercises in text. A
+ * Mirrors `answerReveal` (`./answerReveal.ts`), which describes the same
+ * exercises in text. A
  * wrong answer is the moment the pronunciation is worth most — and on a
  * listening question it is the whole question, which until now vanished behind
  * the feedback banner the instant it was answered wrongly. The learner heard it
@@ -183,6 +182,8 @@ export function LessonScreen() {
   const [done, setDone] = useState(false);
   const [result, setResult] = useState<FinishResult | null>(null);
   const [outOfHearts, setOutOfHearts] = useState(false);
+  /** Last heart gone, but the learner is still reading why. */
+  const [heartsSpent, setHeartsSpent] = useState(false);
   /**
    * Forces `ExerciseView` to remount after a gem refill.
    *
@@ -212,6 +213,37 @@ export function LessonScreen() {
   const current = exercises[idx];
   /** The clip the feedback banner offers to replay, when there is one. */
   const replay = current ? audioOf(current) : null;
+  /**
+   * The answer, spelled out, and only where spelling it out is the point: a
+   * wrong answer on a question that was actually being asked. A teaching card
+   * has no wrong answer to reveal, and a correct one does not need telling.
+   */
+  /**
+   * The same question, with the options in a different order, after a refill.
+   *
+   * Coming back from the hearts wall used to put the identical screen up:
+   * same prompt, same four options, in the same order. A playtester met that
+   * 62 times out of 67 and described what they were doing as elimination
+   * rather than recall, which is exactly right — the answer they had just been
+   * shown was still sitting in the same position they had already ruled out.
+   *
+   * Re-asking straight after feedback is worth doing; it is retrieval practice
+   * at the moment the answer is freshest. Re-asking in the same arrangement is
+   * not, because position can be remembered without the word being remembered.
+   * Shuffling costs nothing and removes the shortcut.
+   */
+  const retried = useMemo(() => {
+    if (!current || attempt === 0) return current;
+    if (!('options' in current) || !Array.isArray(current.options)) return current;
+    const options = [...current.options];
+    for (let i = options.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [options[i], options[j]] = [options[j], options[i]];
+    }
+    return { ...current, options } as Exercise;
+  }, [current, attempt]);
+
+  const reveal = graded === false && current && !isTeaching(current) ? answerReveal(current) : null;
   const total = exercises.length;
 
   const onGraded = useCallback(
@@ -243,10 +275,15 @@ export function LessonScreen() {
       result.items.forEach((it) => recordItemGrade(it, grade));
       if (result.correct) {
         setCorrectCount((c) => c + 1);
-      } else if (!isTeaching(exercises[idx])) {
+      } else if (!isTeaching(exercises[idx]) && !isPretest(exercises[idx])) {
         loseHeart();
         if (useProgressStore.getState().hearts <= 0) {
-          setTimeout(() => setOutOfHearts(true), 500);
+          // Held until the learner moves on, rather than shown on a timer.
+          // The wall replaces the whole screen, so a 500ms timer took the
+          // reveal panel away half a second after it appeared — on the one
+          // wrong answer where knowing the right answer matters most, and
+          // where the learner is least inclined to be generous about it.
+          setHeartsSpent(true);
         }
       }
     },
@@ -266,6 +303,15 @@ export function LessonScreen() {
 
   const advance = () => {
     invalidateSpeech();
+    if (heartsSpent) {
+      // Cleared as it fires. Leaving it set meant the wall came back on the
+      // next Continue, and the one after that, for the rest of the lesson: a
+      // refill bought a single question. A playtest run hit the wall 375 times
+      // and spent 15,000 gems on it.
+      setHeartsSpent(false);
+      setOutOfHearts(true);
+      return;
+    }
     if (idx < total - 1) {
       setGraded(null);
       setIdx(idx + 1);
@@ -313,8 +359,13 @@ export function LessonScreen() {
             <Illustration name="heart" tile={false} size={60} />
             <Heading className="mb-2 mt-4 text-2xl">Out of hearts</Heading>
             <Txt className="mb-8 max-w-[280px] text-center text-sm text-paper/60">
+              {/* "keep the calm going" was a growth team's sentence, not a
+                  teacher's, and it sat directly above a price at the moment a
+                  learner had just run out. A playtester read it 67 times and
+                  named it the least calm part of the hour. What they need here
+                  is what happens next, said plainly. */}
               {canAfford
-                ? 'Hearts refill slowly over time, or you can spend gems to keep the calm going now.'
+                ? 'Hearts come back on their own after a while. You can also spend gems to carry on now.'
                 : `You’re ${short} gem${short === 1 ? '' : 's'} short for a refill. The next heart arrives ${
                     waitMin <= 0 ? 'any moment now' : `in about ${waitMin} minute${waitMin === 1 ? '' : 's'}`
                   }.`}
@@ -373,7 +424,7 @@ export function LessonScreen() {
           <View className="px-5 pb-8 pt-4">
             <ExerciseView
               key={`${idx}-${attempt}`}
-              exercise={current}
+              exercise={retried}
               track={track}
               showRoman={showRoman}
               locked={graded != null}
@@ -417,9 +468,6 @@ export function LessonScreen() {
                           ? 'Beautifully done'
                           : 'Not quite, but that’s okay'}
                     </Bold>
-                    {!graded && current && !isTeaching(current) ? (
-                      <Txt className="text-xs text-paper/70">Answer: {answerLabel(current)}</Txt>
-                    ) : null}
                   </View>
                   {/* Hear it again. Only on a wrong answer, which is where it
                       was asked for and where it is worth most: the app says the
@@ -433,6 +481,45 @@ export function LessonScreen() {
                     />
                   ) : null}
                 </View>
+
+                {/* The answer, in full, and only when it was got wrong.
+                    Script at a size worth reading, the transliteration under
+                    it the way `Lexeme` sets a word everywhere else, and the
+                    English on its own line rather than after a colon.
+
+                    The Roman is shown on every track except `script`, where
+                    TrackChooser promises "No transliteration to fall back on"
+                    as that track's stated cost. Breaking that promise at the
+                    exact moment it is tempting is how a setting stops meaning
+                    anything. */}
+                {reveal ? (
+                  <View
+                    className="mb-3 rounded-xl px-3.5 py-3"
+                    style={{ backgroundColor: withAlpha(palette.rose, 0.12) }}
+                  >
+                    <Eyebrow style={{ color: palette.roseLight }} className="mb-1.5">
+                      The answer
+                    </Eyebrow>
+                    {reveal.label ? (
+                      <Bold className="text-[15px]">{reveal.label}</Bold>
+                    ) : (
+                      <>
+                        {/* A word can afford 26; a six-word sentence at that
+                            size wraps to three lines and pushes Continue off a
+                            small screen. */}
+                        <Lexeme
+                          urdu={reveal.script ?? ''}
+                          roman={reveal.roman}
+                          track={track === 'script' ? 'script' : 'both'}
+                          size={(reveal.script ?? '').length > 18 ? 20 : 26}
+                          align="left"
+                        />
+                        {reveal.meaning ? <Txt className="mt-1.5 text-sm text-paper/85">{reveal.meaning}</Txt> : null}
+                      </>
+                    )}
+                  </View>
+                ) : null}
+
                 <Button
                   variant={isTeaching(current) ? 'primary' : graded ? 'correct' : 'incorrect'}
                   sound={false}
