@@ -81,6 +81,8 @@ const LESSONS = Number(argOf('lessons', 20));
 const TRACK = argOf('track', 'both');
 const SEED = Number(argOf('seed', Math.floor(Math.random() * 1e7)));
 const HEADED = has('headed');
+/** Photograph the first screen matching this and stop. See the main loop. */
+const SHOT = argOf('shot', null) ? new RegExp(argOf('shot', ''), 'i') : null;
 
 /**
  * How long one lesson may take before the run moves on without it.
@@ -1006,6 +1008,25 @@ async function main() {
 
       memory.step++;
       const screen = await readScreen(page);
+
+      /**
+       * Stop and photograph the first screen matching `--shot <pattern>`.
+       *
+       * For looking at a screen that is hard to reach by hand. A tile question
+       * sits several exercises into a letter lesson behind a tracing pad that
+       * has to actually be drawn on, and three throwaway scripts failed to get
+       * there before this existed — `role="button"` finds nothing on some of
+       * these screens, so a driver that can already play the course is the
+       * cheapest way to reach one and look at it.
+       */
+      if (SHOT && SHOT.test(screen.body)) {
+        const file = path.join(OUT, `shot-${lessonName.replace(/\W+/g, '-')}-${step}.png`);
+        await page.screenshot({ path: file, fullPage: true }).catch(() => {});
+        console.log(`  shot: ${file}`);
+        await browser.close();
+        process.exit(0);
+      }
+
       if (process.env.PLAYTEST_DEBUG)
         console.log(
           `    [${step}] ${JSON.stringify(screen.lines.slice(0, 4))}${screen.wrong ? ' WRONG' : ''}${screen.right ? ' RIGHT' : ''}`
