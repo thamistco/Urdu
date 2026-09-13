@@ -73,6 +73,29 @@ export function LessonComplete({
               </View>
             </Reveal>
 
+            {/* A low score used to pass without comment: a playtester finished
+                all fourteen lessons getting two thirds wrong and was never
+                once pointed back at anything. Not a gate and not a scold —
+                the words that went wrong are already in the schedule, so this
+                only says so, at the one moment the learner is deciding
+                whether to carry on or stop. */}
+            {accuracy < 60 && (
+              <Reveal delay={180} style={{ width: '100%' }}>
+                <View
+                  className="mb-3 items-center rounded-2xl border p-4"
+                  style={{
+                    borderColor: withAlpha(palette.gold, 0.3),
+                    backgroundColor: withAlpha(palette.gold, 0.08),
+                  }}
+                >
+                  <Bold style={{ color: palette.goldLight }}>Plenty of new words in that one</Bold>
+                  <Txt className="mt-1 text-center text-xs text-paper/70">
+                    The ones that slipped are already queued for your next practice.
+                  </Txt>
+                </View>
+              </Reveal>
+            )}
+
             {result.streakIncreased && (
               <Reveal delay={220} style={{ width: '100%' }}>
                 <View

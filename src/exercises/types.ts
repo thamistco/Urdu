@@ -18,6 +18,29 @@ export type Exercise =
       options: PositionKey[];
     }
   | {
+      /**
+       * A letter, introduced: its name, its sound, all four joining forms
+       * side by side, and a real word that uses it. Nothing to answer.
+       *
+       * The four forms are this course's central idea and were never taught,
+       * only tested. A beginner met 34 "which position is this letter
+       * showing?" questions across one run, scored 8, and said afterwards they
+       * never worked out the rule — because nothing had ever stated it. The
+       * first sighting of a letter could also be "which letter is this?"
+       * among four glyphs none of which they had seen.
+       *
+       * Placed *before* the first question rather than after it, which is the
+       * opposite of `wordTeach` and deliberate. The pretesting evidence behind
+       * that ordering is about arbitrary paired associates — this glyph is
+       * called be — and a joining system is a rule instead. Grammar has had a
+       * card in front of its drills from the beginning for that reason, and
+       * its own comment says why: presenting the rule before drilling it is
+       * what makes it stick rather than feel like guesswork.
+       */
+      kind: 'letterTeach';
+      letter: Letter;
+    }
+  | {
       kind: 'letterPick';
       letter: Letter;
       /**
@@ -38,18 +61,24 @@ export type Exercise =
     }
   | {
       kind: 'multipleChoice';
+      /** first meeting with this word: a guess is expected, so it costs no heart */
+      pretest?: boolean;
       word: Word;
       /** show emoji, pick the matching Urdu word */
       options: Word[];
     }
   | {
       kind: 'meaningPick';
+      /** first meeting with this word: a guess is expected, so it costs no heart */
+      pretest?: boolean;
       word: Word;
       /** show Urdu word, pick the meaning */
       options: Word[];
     }
   | {
       kind: 'listenTap';
+      /** first meeting with this word: a guess is expected, so it costs no heart */
+      pretest?: boolean;
       word: Word;
       /** hear it, pick the matching emoji/meaning */
       options: Word[];
@@ -94,6 +123,20 @@ export type Exercise =
       tiles: string[];
       /** Parallel to `tiles`. */
       fromWord: boolean[];
+      /**
+       * Parallel to `tiles`: the index, inside that tile's string, of the
+       * character the tile is about.
+       *
+       * A tile carries its neighbours so the glyph joins the way it really
+       * does in the word, which also means the hunted letter shows up in
+       * several tiles at once. The component tints the character at this index
+       * so the rule — the tile is the one its letter sits at the middle of —
+       * is visible rather than something the learner has to infer from being
+       * wrong. Measured before the fix: 10 of 23 of these questions had more
+       * than one tile visibly containing the letter, and a beginner scored 11
+       * of 34 on them.
+       */
+      focusAt: number[];
       /** Parallel to `tiles`: whether tapping this index is the right
        *  answer — decided at generation time against the word's own
        *  characters, before any decoy padding, so the component never has
@@ -127,6 +170,34 @@ export type Exercise =
   | {
       kind: 'matching';
       words: Word[];
+    }
+  | {
+      /**
+       * A word's introduction: script, reading, meaning and sound, with
+       * nothing to answer.
+       *
+       * Sits immediately *after* the first question about the word, as the
+       * answer to it, rather than before it. That ordering is deliberate and
+       * was arrived at the wrong way round first.
+       *
+       * The first version of this replaced the opening question, on the
+       * reasoning that a four-option question about a word never seen can only
+       * be luck. That much is true. But guessing first and then being told
+       * beats being told outright: four experiments on exactly this material
+       * and format — multiple-choice word-image and image-word pretests for
+       * foreign vocabulary — measured better cued recall (d = 0.18 to 0.40)
+       * and better recognition (d = 0.25 to 0.67) against a read-only
+       * condition, and learners preferred it (Cognitive Research, 2026). For
+       * arbitrary pairs like script to English the recall benefit is the weaker
+       * half, but guessing is not worse than reading, and the effect depends
+       * entirely on corrective feedback arriving after the guess.
+       *
+       * So the guess stays and this card is the feedback. What was actually
+       * wrong was the price: the app charged a heart for failing a question
+       * nobody could answer. `pretest` marks those, and they cost nothing.
+       */
+      kind: 'wordTeach';
+      word: Word;
     }
   | {
       /** teaching card — explanation, table and examples, then "got it" */

@@ -208,7 +208,13 @@ export const LETTER_CONTEXT_WORD: Map<string, Word> = (() => {
 export function letterSpotTiles(
   letter: Letter,
   word: Word
-): { tiles: string[]; fromWord: boolean[]; correct: boolean[]; wordBreakAfter: boolean[] } {
+): {
+  tiles: string[];
+  fromWord: boolean[];
+  correct: boolean[];
+  wordBreakAfter: boolean[];
+  focusAt: number[];
+} {
   const raw = Array.from(word.urdu);
   const isReal = (i: number) => i >= 0 && i < raw.length && raw[i].trim().length > 0;
 
@@ -216,6 +222,22 @@ export function letterSpotTiles(
   const fromWord: boolean[] = [];
   const correct: boolean[] = [];
   const wordBreakAfter: boolean[] = [];
+  /**
+   * Where inside each tile the character it is *about* sits.
+   *
+   * A tile is its character wrapped in its real neighbours, so the letter being
+   * hunted is visible in several tiles at once and only one of them counts —
+   * the one it sits at the middle of. Nothing said so, and a playtester lost
+   * two thirds of these questions without ever working out the rule: for
+   * پانی / "which tile is alif?", three of the four tiles show an alif.
+   *
+   * The component tints this character, which teaches the convention by
+   * showing it instead of explaining it. Recorded here because only this
+   * function knows which character the cluster was built around; deriving it
+   * from the string would guess wrong the moment a cluster holds the same
+   * letter twice.
+   */
+  const focusAt: number[] = [];
   const realChars = new Set<string>();
   for (let i = 0; i < raw.length; i++) {
     if (!isReal(i)) continue;
@@ -251,12 +273,18 @@ export function letterSpotTiles(
     if (tiles.length > 0 && tiles[tiles.length - 1] === cluster) {
       correct[correct.length - 1] = correct[correct.length - 1] || isCorrect;
       wordBreakAfter[wordBreakAfter.length - 1] = wordBreakAfter[wordBreakAfter.length - 1] || breaksAfter;
+      // A merged tile stands for both positions, so the one worth tinting is
+      // whichever of them the question is about. Without this, خط merged as
+      // "the خ tile" and was then marked correct for ط — tinting one letter
+      // while grading another, which is worse than tinting nothing.
+      if (isCorrect) focusAt[focusAt.length - 1] = left.length;
       continue;
     }
     tiles.push(cluster);
     fromWord.push(true);
     correct.push(isCorrect);
     wordBreakAfter.push(breaksAfter);
+    focusAt.push(left.length);
   }
 
   // A minimum multiple-choice floor, matching every other recognise-tier
@@ -284,9 +312,12 @@ export function letterSpotTiles(
       fromWord.splice(at, 0, false);
       correct.splice(at, 0, false);
       wordBreakAfter.splice(at, 0, false);
+      // A decoy is a bare glyph with no neighbours, so the whole tile is the
+      // character it is about.
+      focusAt.splice(at, 0, 0);
     }
   }
-  return { tiles, fromWord, correct, wordBreakAfter };
+  return { tiles, fromWord, correct, wordBreakAfter, focusAt };
 }
 
 /**
@@ -343,8 +374,8 @@ function letterContrastExercise(letter: Letter, mates: Letter[]): Exercise {
 }
 
 function letterSpotExercise(letter: Letter, word: Word): Exercise {
-  const { tiles, fromWord, correct, wordBreakAfter } = letterSpotTiles(letter, word);
-  return { kind: 'letterSpot', letter, word, tiles, fromWord, correct, wordBreakAfter };
+  const { tiles, fromWord, correct, wordBreakAfter, focusAt } = letterSpotTiles(letter, word);
+  return { kind: 'letterSpot', letter, word, tiles, fromWord, correct, wordBreakAfter, focusAt };
 }
 
 // ---- per-item exercise builders -----------------------------------------
@@ -753,6 +784,23 @@ export function distractorsFor(
   const preferredIds = new Set(preferred.map((p) => p.id));
   consider(preferred, DISTRACTORS - 1);
   consider(pool.filter((p) => !preferredIds.has(p.id))); // prefer same-topic distractors
+  if (chosen.length < DISTRACTORS) {
+    /**
+     * Widen to words wearing the same badge before widening to anything.
+     *
+     * Every phrase in the course carries `💬`, so a phrase's own topic can
+     * never supply four distinct cues and this fallback reached straight into
+     * the full vocabulary — putting one speech bubble against 🐫 Caravan,
+     * 🦕 Extinction and 🐺 Wolf. The answer was then the only option that
+     * looked like a phrase at all: a playtester scored 5 of 5 by tapping the
+     * badge and 0 of 10 whenever they read instead, which is a question that
+     * teaches the learner about emoji.
+     *
+     * `distinctCue` callers skip this — for them a shared cue is the thing
+     * being avoided, and `consider` would reject these anyway.
+     */
+    if (!distinctCue) consider(WORDS.filter((w) => cueOf(w) === cueOf(word)));
+  }
   if (chosen.length < DISTRACTORS) consider(WORDS); // widen if the topic is too uniform
   return chosen;
 }
@@ -1641,6 +1689,33 @@ export function buildLessonExercises(
       }
       exercises.push(letterExerciseAt(l, 0, nextPos(l.id, idx))); // always letterTrace
     });
+
+    /**
+     * A card in front of each letter's first appearance.
+     *
+     * Done as a pass over the finished sequence rather than inside the round
+     * loop above, and that is not tidiness. The loop balances several things
+     * against each other — which round carries a letter's context word, which
+     * carries its contrast, that its last sighting is always a trace, that two
+     * confusable letters are never adjacent — and its own comments record
+     * earlier attempts that broke one while fixing another. Pushing into it
+     * cost `se` its context sighting outright, for reasons that took several
+     * readings not to explain. Building the sequence first and threading the
+     * cards through it afterwards leaves every one of those properties exactly
+     * as it was.
+     */
+    const introduced = new Set<string>();
+    const withCards: Exercise[] = [];
+    for (const ex of exercises) {
+      const of = 'letter' in ex ? ex.letter : null;
+      if (of && !introduced.has(of.id)) {
+        introduced.add(of.id);
+        withCards.push({ kind: 'letterTeach', letter: of });
+      }
+      withCards.push(ex);
+    }
+    exercises.length = 0;
+    exercises.push(...withCards);
   }
 
   if (lesson.kind === 'phrases') {
@@ -1711,21 +1786,23 @@ export function buildLessonExercises(
     const groups: Word[][] = [];
     for (let i = 0; i < picks.length; i += GROUP) groups.push(picks.slice(i, i + GROUP));
 
-    const passes: ((w: Word, i: number) => Exercise)[] = [
-      // Fixed at variant 1 (`meaningPick`), not vocab's varying `i % 3`.
-      // Every phrase shares one emoji (`💬`), so `distractorsFor`'s
-      // `distinctCue` pass can never find three more of the same cue inside
-      // `PHRASE_WORDS` — its own widen-if-too-uniform fallback
-      // (`if (chosen.length < DISTRACTORS) consider(WORDS)`) then reaches
-      // into the full 2,281-word vocabulary for picture distractors, which
-      // *looks* like a working `multipleChoice`/`listenTap` (four distinct
-      // pictures) but is not one: the correct option's own picture is still
-      // the generic bubble, so it is the visibly odd one out among three
-      // real object pictures, answerable by elimination without knowing
-      // what the phrase means. Confirmed live: the varying-variant version
-      // of this pass produced exactly that (`multipleChoice`/`listenTap`
-      // both appearing) before this fix pinned it to 1.
-      (w) => wordExercise(w, PHRASE_WORDS, track, 'meet', 1),
+    const passes: ((w: Word, i: number) => Exercise | Exercise[])[] = [
+      // Introduced rather than asked about, for the same reason as vocabulary:
+      // a phrase nobody has met cannot be picked out of four by reasoning.
+      //
+      // This slot used to be pinned to `meaningPick` because every phrase
+      // shares one emoji (`💬`), so `distractorsFor`'s `distinctCue` pass could
+      // never find three more of the same cue inside `PHRASE_WORDS`, and its
+      // widen-if-too-uniform fallback reached into the full vocabulary for
+      // picture distractors — which looked like a working `multipleChoice` but
+      // left the correct option as the visibly odd one out among three real
+      // object pictures, answerable by elimination. A teaching card has no
+      // distractors at all, so that whole problem does not arise here. It still
+      // applies to the recall pass below, which stays as it was.
+      (w) => [
+        { ...wordExercise(w, PHRASE_WORDS, track, 'meet', 1), pretest: true },
+        { kind: 'wordTeach', word: w },
+      ],
       (w) => wordExercise(w, PHRASE_WORDS, track, 'recall'),
       (w, i) => produceExercise(w, PHRASE_WORDS, track, false, i),
     ];
@@ -1742,7 +1819,11 @@ export function buildLessonExercises(
         for (const { make, g } of active) {
           const w = groups[g][slot];
           if (!w) continue;
-          exercises.push(make(w, g * GROUP + slot));
+          // A pass may emit a pair — the first question about a word and the
+          // card that answers it, which have to stay adjacent for the card to
+          // read as feedback rather than as an unrelated screen.
+          const made = make(w, g * GROUP + slot);
+          exercises.push(...(Array.isArray(made) ? made : [made]));
         }
       }
     }
@@ -1851,8 +1932,31 @@ export function buildLessonExercises(
      * somebody made instead of a bug nobody could see.
      */
 
-    const passes: ((w: Word, i: number) => Exercise)[] = [
-      (w, i) => wordExercise(w, pool, track, 'meet', i % 3),
+    const passes: ((w: Word, i: number) => Exercise | Exercise[])[] = [
+      /**
+       * The first sighting introduces the word instead of testing it.
+       *
+       * This used to be `wordExercise(..., 'meet', i % 3)` — a four-option
+       * question about a word the learner had never seen. None of its three
+       * shapes could be reasoned out: a picture says what a thing is but not
+       * which of four Urdu strings names it, and the script says nothing about
+       * what it means. So the first sighting was a coin flip that cost a heart,
+       * and the word was explained afterwards, in the reveal, as a correction.
+       *
+       * A playtest beginner scored 20% on words the app had never shown and 73%
+       * on words it had. Both benchmarks this course is measured against
+       * (`gauntlet/BENCHMARKS.md`) show a word before drilling it, and grammar
+       * here has always had a teaching card for the same reason.
+       *
+       * The climb is now teach, recall, produce. The sighting count per word is
+       * unchanged, so `check:shape`'s floor of three still holds and the lesson
+       * is the same length — what changed is that the first of the three tells
+       * the learner something rather than asking.
+       */
+      (w, i) => [
+        { ...wordExercise(w, pool, track, 'meet', i % 3), pretest: true },
+        { kind: 'wordTeach', word: w },
+      ],
       (w) => wordExercise(w, pool, track, 'recall'),
       (w, i) => produceExercise(w, pool, track, teachesScript, i),
     ];
@@ -1885,7 +1989,11 @@ export function buildLessonExercises(
         for (const { make, g } of active) {
           const w = groups[g][slot];
           if (!w) continue;
-          exercises.push(make(w, g * GROUP + slot));
+          // A pass may emit a pair — the first question about a word and the
+          // card that answers it, which have to stay adjacent for the card to
+          // read as feedback rather than as an unrelated screen.
+          const made = make(w, g * GROUP + slot);
+          exercises.push(...(Array.isArray(made) ? made : [made]));
         }
       }
     }
@@ -2456,8 +2564,26 @@ export function buildLessonExercises(
   // live, not in review: a 12-phrase, 36-exercise lesson measured at
   // exactly 12 exercises and 6 distinct phrases the first time this was
   // run, the exact shape of the two bugs this comment already names above.
+  //
+  // `letters` joins the exemption for the same reason `vocab` has it, and the
+  // reason was always true — adding the introduction cards is only what made it
+  // visible. A letter lesson is composed to an exact shape: every letter met
+  // `SIGHTINGS_PER_LETTER` times in rounds, its context word on a reserved
+  // round, its contrast on another, and a `letterTrace` last because that is
+  // the hardest kind and URD-043 put it there deliberately. Trimming to `size`
+  // cuts from the end, so it cuts exactly that tail.
+  //
+  // Measured when the cards went in: `l-2` went from 29 exercises to 25, losing
+  // `se`'s context sighting and two letters' closing traces, and the eight
+  // tests that assert those properties all failed at once. The cards did not
+  // break the round maths; this line quietly dropped the end of the lesson,
+  // which is the same thing its own comment above records happening before.
   const composed =
-    lesson.kind === 'vocab' || lesson.kind === 'sentences' || lesson.kind === 'grammar' || lesson.kind === 'phrases';
+    lesson.kind === 'vocab' ||
+    lesson.kind === 'sentences' ||
+    lesson.kind === 'grammar' ||
+    lesson.kind === 'phrases' ||
+    lesson.kind === 'letters';
   return composed ? exercises : exercises.slice(0, lesson.size);
 }
 

@@ -101,7 +101,7 @@ export function MatchingExercise({ exercise, track, locked, onGraded }: Exercise
               onPress={() => pickRight(w.id)}
             >
               <WordArt word={w} size={40} />
-              <Txt className="mt-1 text-[11px] capitalize text-paper/55">{glossOf(w)}</Txt>
+              <Txt className="mt-1 text-[11px] text-paper/55">{glossOf(w)}</Txt>
             </Choice>
           ))}
         </View>

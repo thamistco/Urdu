@@ -93,7 +93,7 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
     <View>
       <PromptCard height={140}>
         <WordArt word={word} size={80} />
-        <Txt style={{ color: palette.ink }} className="mt-2 text-sm opacity-60 capitalize">
+        <Txt style={{ color: palette.ink }} className="mt-2 text-sm opacity-60">
           {glossOf(word)}
           {showRoman ? ` · ${word.roman}` : ''}
         </Txt>

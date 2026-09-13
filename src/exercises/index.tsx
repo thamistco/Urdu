@@ -6,6 +6,8 @@ import { MultipleChoiceExercise, MeaningPickExercise, ListenTapExercise } from '
 import { TypeWordExercise, WordFromMeaningExercise } from './RecallExercises';
 import { WordBuildExercise } from './WordBuild';
 import { MatchingExercise } from './Matching';
+import { WordTeachExercise } from './WordTeach';
+import { LetterTeachExercise } from './LetterTeach';
 import { GrammarTeachExercise, GrammarDrillExercise } from './GrammarExercises';
 import { SentenceBuildExercise, ReadingExercise } from './SentenceReading';
 import { DialogueExercise } from './DialogueExercise';
@@ -29,6 +31,7 @@ import type { Exercise, ExerciseKind, ExerciseProps } from './types';
  * for — needs the unchecked step.
  */
 const EXERCISE_COMPONENTS: { [K in ExerciseKind]: ComponentType<ExerciseProps<Extract<Exercise, { kind: K }>>> } = {
+  letterTeach: LetterTeachExercise,
   letterForm: LetterFormExercise,
   letterPick: LetterPickExercise,
   letterTrace: TraceExercise,
@@ -41,6 +44,7 @@ const EXERCISE_COMPONENTS: { [K in ExerciseKind]: ComponentType<ExerciseProps<Ex
   typeWord: TypeWordExercise,
   wordBuild: WordBuildExercise,
   matching: MatchingExercise,
+  wordTeach: WordTeachExercise,
   grammarTeach: GrammarTeachExercise,
   grammarDrill: GrammarDrillExercise,
   sentenceBuild: SentenceBuildExercise,

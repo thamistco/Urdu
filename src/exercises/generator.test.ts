@@ -458,7 +458,10 @@ describe('URD-018: review gives the learner a real chance to read Urdu and say w
 });
 
 describe('URD-020: a letter lesson shows letters inside real words, not only in isolation', () => {
-  const ISOLATED_LETTER_KINDS = new Set(['letterForm', 'letterPick', 'letterTrace', 'letterContrast']);
+  // `letterTeach` belongs here: this set means "a screen about the letter on
+  // its own", which is what these rules contrast against a context word, and an
+  // introduction card is exactly that.
+  const ISOLATED_LETTER_KINDS = new Set(['letterTeach', 'letterForm', 'letterPick', 'letterTrace', 'letterContrast']);
   const letterLessons = () => UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'letters');
 
   it('every letter in every real lesson gets exactly one context sighting — no letter zero, none doubled', () => {
@@ -476,15 +479,22 @@ describe('URD-020: a letter lesson shows letters inside real words, not only in 
     }
   });
 
-  it("does not raise a letter lesson's total exercise count", () => {
-    // The item's own constraint: raise the in-context share without raising
-    // total lesson length. Each letter's context sighting replaces one of
-    // its isolated ones rather than adding a new one, so the total is
-    // unchanged (or one shorter, since the old single shared context word
-    // is gone) — never longer.
+  it("does not raise a letter lesson's exercise count beyond its one introduction each", () => {
+    // URD-020's own constraint was to raise the in-context share without
+    // raising total lesson length: each letter's context sighting replaces one
+    // of its isolated ones rather than adding one, so the total never grew.
+    // That still holds of the sightings.
+    //
+    // The budget is seven per letter rather than six because each now opens
+    // with an introduction card — a deliberate addition, and the one thing the
+    // earlier item deliberately avoided. It is bounded here so that it stays
+    // one card per letter: the failure this guards against is a second card
+    // creeping in per round, which would be five extra screens a lesson.
     for (const l of letterLessons()) {
       const exercises = buildLessonExercises(l, [], 'both', new Set());
-      expect(exercises.length, l.id).toBeLessThanOrEqual(l.letterIds!.length * 6 + 1);
+      expect(exercises.length, l.id).toBeLessThanOrEqual(l.letterIds!.length * 7 + 1);
+      const cards = exercises.filter((e) => e.kind === 'letterTeach');
+      expect(cards.length, `${l.id}: one card per letter`).toBe(l.letterIds!.length);
     }
   });
 
@@ -605,6 +615,28 @@ describe("URD-045: a letter's context sighting asks the learner to find it in th
         const fresh = letterSpotTiles(e.letter, e.word);
         const freshReal = fresh.tiles.filter((_, i) => fresh.fromWord[i]);
         expect(actualReal, `${l.id}: ${e.word.id}`).toEqual(freshReal);
+      }
+    }
+  });
+
+  it('tints the character each tile is actually about', () => {
+    // The tile is the letter wrapped in its real neighbours, so the letter
+    // being hunted appears inside several tiles at once and only the one it
+    // sits at the middle of counts. Nothing said so: 10 of 23 of these
+    // questions had more than one tile visibly holding the letter, and a
+    // beginner scored 11 of 34. The component tints `tiles[i][focusAt[i]]`,
+    // which only works if that index really is the character the tile was
+    // built around — and on a correct tile, that character is the letter.
+    for (const l of letterLessons()) {
+      for (const e of buildLessonExercises(l, [], 'both', new Set()).filter(isSpot)) {
+        expect(e.focusAt.length, `${l.id}: ${e.word.id}`).toBe(e.tiles.length);
+        e.tiles.forEach((tile, i) => {
+          const tinted = tile[e.focusAt[i]];
+          expect(tinted, `${l.id}: ${e.word.id} tile ${i}`).toBeTruthy();
+          if (e.correct[i]) {
+            expect(tinted, `${l.id}: ${e.word.id} correct tile ${i}`).toBe(e.letter.forms.isolated);
+          }
+        });
       }
     }
   });
@@ -779,7 +811,10 @@ describe("URD-043: a letter's final sighting in its own lesson is always the har
 
 describe('URD-022: visually confusable letters are not drilled back to back', () => {
   const letterLessons = () => UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'letters');
-  const ISOLATED_LETTER_KINDS = new Set(['letterForm', 'letterPick', 'letterTrace', 'letterContrast']);
+  // `letterTeach` belongs here: this set means "a screen about the letter on
+  // its own", which is what these rules contrast against a context word, and an
+  // introduction card is exactly that.
+  const ISOLATED_LETTER_KINDS = new Set(['letterTeach', 'letterForm', 'letterPick', 'letterTrace', 'letterContrast']);
   const bucketKeyOf = (letterId: string) => getLetter(letterId)?.confusableWith ?? letterId;
 
   /**
@@ -1265,11 +1300,15 @@ describe('URD-023/URD-A02: a phrases lesson always draws enough typeable phrases
     }
   });
 
-  it('gives every drawn phrase exactly three sightings, not one', () => {
+  it('gives every drawn phrase exactly four sightings, not one', () => {
     // URD-A02's own point: a phrases lesson is now a small climb, the same
     // shape as vocab's, not a large one-shot draw. Every phrase this lesson
-    // teaches gets met, recalled and produced (or produced's own fallback),
-    // never just one of the three.
+    // teaches gets its first question, the card that answers it, a recall and
+    // a production (or production's own fallback), never just one of them.
+    //
+    // Four rather than three since the card was added: guessing first and then
+    // being told beats being told outright, so the opening question stayed and
+    // the card became its feedback rather than its replacement.
     for (let i = 0; i < 200; i++) {
       const lesson = phrasesLesson(`synthetic-phrases-sightings-${i}`);
       const exercises = buildLessonExercises(lesson, [], 'both', new Set());
@@ -1278,7 +1317,7 @@ describe('URD-023/URD-A02: a phrases lesson always draws enough typeable phrases
         if ('word' in e && e.word) sightings.set(e.word.id, (sightings.get(e.word.id) ?? 0) + 1);
       }
       expect(sightings.size, lesson.id).toBe(lesson.size);
-      for (const n of sightings.values()) expect(n, lesson.id).toBe(3);
+      for (const n of sightings.values()) expect(n, lesson.id).toBe(4);
     }
   });
 

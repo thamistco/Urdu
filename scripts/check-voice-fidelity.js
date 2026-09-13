@@ -15,12 +15,13 @@
  * the request was honoured, or whether the request made sense in the first
  * place.
  *
- * Seven rules, below, each exact and each with no threshold to tune. Two found
- * real defects in the shipped set on the day they were written; the other five
- * were green on arrival and are here so they stay that way — the corpus grows
- * by hand, and every one of them is a mistake a future edit can make silently.
- * Every rule was broken on purpose and watched to fail before being trusted
- * (this project's non-negotiable #2), including the five that had nothing to
+ * Eight rules, below, each exact and each with no threshold to tune. Two found
+ * real defects in the shipped set on the day they were written; rule 2 was
+ * added later, for a defect only a listener could find. The rest were green on
+ * arrival and are here so they stay that way — the corpus grows by hand, and
+ * every one of them is a mistake a future edit can make silently. Every rule
+ * was broken on purpose and watched to fail before being trusted (this
+ * project's non-negotiable #2), including the ones that had nothing to
  * report.
  *
  * Rule 1 itself needed a correction the day after it shipped: it flagged
@@ -70,11 +71,14 @@ const path = require('path');
 const { BYTES_PER_SECOND } = require('./lib/audio');
 const { load } = require('./lib/load-ts');
 const { FALLBACK_VOICE } = require('./lib/voice-fallback');
+const { VOICE_OVERRIDE } = require('./lib/voice-overrides');
 
 const ROOT = path.join(__dirname, '..');
 const SETS = [
-  { name: 'female', dir: path.join(ROOT, 'assets', 'voice') },
-  { name: 'male', dir: path.join(ROOT, 'assets', 'voice-m') },
+  // `key` is the VOICE_SET the generator knows this set by, which is how
+  // lib/voice-overrides.js is indexed.
+  { name: 'female', key: 'f', dir: path.join(ROOT, 'assets', 'voice') },
+  { name: 'male', key: 'm', dir: path.join(ROOT, 'assets', 'voice-m') },
 ];
 /** How many ranked duration outliers to print. Not a threshold — a page size. */
 const SHORTLIST = 12;
@@ -92,7 +96,7 @@ const SPEAKABLE_SCRIPT = /^[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF
  *
  * Deliberately mirrors `collectItems()` in `generate-voice.js` rather than
  * importing it — that function is not exported, and a copy that drifts is
- * exactly what rule 3 exists to catch, so a drift here shows up as a false
+ * exactly what rule 4 exists to catch, so a drift here shows up as a false
  * `stale` rather than as silence.
  */
 function corpusWants() {
@@ -131,7 +135,33 @@ function wrongVoice(ledger, setName) {
 }
 
 /**
- * 2. A letter the course itself calls silent, recorded from its bare glyph.
+ * 2. A clip a person heard was wrong, quietly recorded in that voice again.
+ *
+ * `lib/voice-overrides.js` holds the clips one voice mispronounces and the
+ * voice that says them correctly. Every entry there cost a native speaker a
+ * listen, because nothing automatic can find them: the audio is the right
+ * length, in the right voice, saying the wrong word, so `check:voice` hears
+ * sound and rule 1 above sees the voice it asked for.
+ *
+ * That makes the override the only record that the defect exists, and a
+ * regeneration that dropped it would restore the mispronunciation in silence,
+ * with every other check still green. So the ledger has to show the override
+ * was honoured.
+ */
+function overrideDropped(ledger, setName, setKey) {
+  return Object.entries(VOICE_OVERRIDE[setKey] ?? {})
+    .filter(([id]) => ledger[id])
+    .filter(([id, voice]) => ledger[id].voice !== voice)
+    .map(
+      ([id, voice]) =>
+        `${id} (${setName}): must be recorded in ${voice}, which is the voice a listener confirmed ` +
+        `says it correctly, but the ledger says ${ledger[id].voice} — regenerate, and do not drop ` +
+        `the entry in lib/voice-overrides.js`
+    );
+}
+
+/**
+ * 3. A letter the course itself calls silent, recorded from its bare glyph.
  * `functionNote` (URD-071) is set exactly on the letters whose note describes
  * them modifying a neighbour rather than carrying a sound of their own, so a
  * future silent letter is caught without this rule being edited.
@@ -149,7 +179,7 @@ function unspeakableLetter(ledger, setName, letters) {
   return out;
 }
 
-/** 3. The corpus changed after the clip was made, so the audio is out of date. */
+/** 4. The corpus changed after the clip was made, so the audio is out of date. */
 function stale(ledger, setName, want) {
   const out = [];
   for (const [id, text] of want) {
@@ -160,14 +190,14 @@ function stale(ledger, setName, want) {
   return out;
 }
 
-/** 4. A speakable item the generator has never been asked to record. */
+/** 5. A speakable item the generator has never been asked to record. */
 function missing(ledger, setName, want) {
   return [...want.keys()]
     .filter((id) => !ledger[id])
     .map((id) => `${id} (${setName}): the course speaks this but the ledger has no record of recording it`);
 }
 
-/** 5. TTS input that is not Urdu — a stray Latin word or digit an Urdu voice cannot read. */
+/** 6. TTS input that is not Urdu — a stray Latin word or digit an Urdu voice cannot read. */
 function notUrdu(ledger, setName) {
   return Object.entries(ledger)
     .filter(([, v]) => !SPEAKABLE_SCRIPT.test(v.text))
@@ -175,7 +205,7 @@ function notUrdu(ledger, setName) {
 }
 
 /**
- * 6. The two voices were given different words for the same id.
+ * 7. The two voices were given different words for the same id.
  *
  * They are generated in separate runs against the corpus at whatever state it
  * was in, so an edit between the two runs leaves one voice saying the old word
@@ -195,7 +225,7 @@ function divergent(ledgers) {
 }
 
 /**
- * 7. Two entries whose spoken form is identical but whose Roman differs.
+ * 8. Two entries whose spoken form is identical but whose Roman differs.
  *
  * Unvowelled Urdu is ambiguous — سر is both "sar" (head) and "sur" (a musical
  * note) — so a single recording cannot be right for both readings. `pronounce`
@@ -261,9 +291,10 @@ if (!present.length) {
 }
 
 const problems = [];
-for (const { name, ledger } of present) {
+for (const { name, key, ledger } of present) {
   problems.push(
     ...wrongVoice(ledger, name),
+    ...overrideDropped(ledger, name, key),
     ...unspeakableLetter(ledger, name, LETTERS),
     ...stale(ledger, name, want),
     ...missing(ledger, name, want),
