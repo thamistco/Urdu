@@ -6,6 +6,7 @@ import { TopBar } from '../components/TopBar';
 import { Reveal } from '../components/Reveal';
 import { ProgressBar } from '../components/ProgressBar';
 import { Txt, Bold, Eyebrow, Heading } from '../components/Text';
+import { Illustration } from '../components/Illustration';
 import { palette, withAlpha } from '../theme';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { useProgressStore } from '../store/useProgressStore';
@@ -80,7 +81,9 @@ export function AchievementsScreen() {
                         backgroundColor: unlocked ? withAlpha(palette.gold, 0.2) : withAlpha(palette.white, 0.06),
                       }}
                     >
-                      <Txt style={{ fontSize: 26, opacity: unlocked ? 1 : 0.4 }}>{a.icon}</Txt>
+                      <View style={{ opacity: unlocked ? 1 : 0.4 }}>
+                        <Illustration name={a.icon} tile={false} size={28} />
+                      </View>
                     </View>
                     <View className="flex-1">
                       <View className="flex-row items-center gap-2">

@@ -106,16 +106,21 @@ export function levelTitle(level: number): string {
  * copper is copper-coloured, sapphire is sapphire. Like the colour words in
  * `data/art.ts` this is depicted colour, not interface colour: silver that
  * re-themed to sunset orange would just be a wrong silver.
+ *
+ * There used to be an `icon` beside each colour as well, a coloured-circle
+ * emoji, and the two disagreed on every row: clay is a warm terracotta and
+ * 🟤 is whatever brown the device has. `LeagueBadge` draws the badge from the
+ * colour, so the colour is the only thing a league needs.
  */
 /* check:theme-off — depicted colour: the material each league is named for */
 export const LEAGUES = [
-  { id: 'clay', name: 'Clay', icon: '🟤', color: '#C08457' },
-  { id: 'copper', name: 'Copper', icon: '🟠', color: '#E0913A' },
-  { id: 'silver', name: 'Silver', icon: '⚪', color: '#CFD4DE' },
-  { id: 'gold', name: 'Gold', icon: '🟡', color: '#FFC72C' },
-  { id: 'sapphire', name: 'Sapphire', icon: '🔵', color: '#5AA9FF' },
-  { id: 'ruby', name: 'Ruby', icon: '🔴', color: '#FF7A72' },
-  { id: 'emerald', name: 'Emerald', icon: '🟢', color: '#5FDC96' },
+  { id: 'clay', name: 'Clay', color: '#C08457' },
+  { id: 'copper', name: 'Copper', color: '#E0913A' },
+  { id: 'silver', name: 'Silver', color: '#CFD4DE' },
+  { id: 'gold', name: 'Gold', color: '#FFC72C' },
+  { id: 'sapphire', name: 'Sapphire', color: '#5AA9FF' },
+  { id: 'ruby', name: 'Ruby', color: '#FF7A72' },
+  { id: 'emerald', name: 'Emerald', color: '#5FDC96' },
 ] as const;
 /* check:theme-on */
 

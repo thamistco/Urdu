@@ -460,15 +460,137 @@ export const Mosque = ({ size }: IconProps) => (
   </Frame>
 );
 
+/**
+ * A raised hand, waving.
+ *
+ * This was a dove, for the "peace" in سلام. It was drawn as one nine-segment
+ * silhouette and it did not read as a bird at any size: rendered at 240px it is
+ * a shark, and at the 34px the learning path actually draws it, a grey smear.
+ * It sat on every greetings, phrases and dialogue node in the course, so the
+ * single least legible drawing in the set was also one of the most repeated.
+ *
+ * A hand is the other half of what the word means, and it survives being small:
+ * four fingers and a thumb make a silhouette that is still a hand at 34px,
+ * which a bird never is. The gold strokes are the wave. Checked by rendering
+ * against the path's own node colour at 34, 48 and 120.
+ */
 export const Salaam = ({ size }: IconProps) => (
   <Frame size={size}>
-    <Circle cx="32" cy="32" r="20" fill={JADE} opacity={0.16} />
-    {/* dove */}
     <Path
-      d="M18 38 q6 -12 20 -12 q-4 -4 2 -8 q1 6 6 6 q8 0 10 8 q-8 2 -14 8 q-2 6 -8 6 q2 -6 -2 -8 q-8 2 -14 2 Z"
+      d="M21 36 q0 -3.5 3 -3.5 q3 0 3 3.5 l0 -13 q0 -3.5 3 -3.5 q3 0 3 3.5 l0 -3 q0 -3.5 3 -3.5 q3 0 3 3.5 l0 3 q0 -3 3 -3 q3 0 3 3 l0 16 q0 11 -11 11 q-8 0 -11 -7 l-5 -11 q-1.5 -3 1.5 -4.2 q3 -1.2 4.3 1.8 Z"
       fill={CR}
     />
-    <Circle cx="44" cy="26" r="1.4" fill={IN} />
+    <Path d="M14 20 l3 3 M22 12 l1.5 4 M32 9 l0 4" stroke={G_} strokeWidth={3} strokeLinecap="round" fill="none" />
+  </Frame>
+);
+
+/**
+ * Two speech bubbles, for a conversation.
+ *
+ * `phrases` and `dialogue` lessons used the greeting mark, which is right for
+ * "hello" and wrong for "Talk: Tea or coffee?" — a whole kind of lesson with no
+ * picture of its own. Two bubbles, one gold and one cream, say exchange rather
+ * than utterance, which is what separates these from the single `speechBubble`
+ * that expressions and idioms use.
+ */
+export const Dialogue = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path
+      d="M8 16 h30 a5 5 0 0 1 5 5 v14 a5 5 0 0 1 -5 5 h-18 l-8 7 v-7 h-4 a5 5 0 0 1 -5 -5 v-14 a5 5 0 0 1 5 -5 Z"
+      fill={CR}
+    />
+    <Path
+      d="M30 26 h26 a5 5 0 0 1 5 5 v14 a5 5 0 0 1 -5 5 h-4 v7 l-8 -7 h-14 a5 5 0 0 1 -5 -5 v-14 a5 5 0 0 1 5 -5 Z"
+      fill={G_}
+      stroke={IN}
+      strokeWidth={2.5}
+    />
+  </Frame>
+);
+
+/**
+ * Five marks for the five beginner topics that had none.
+ *
+ * `LessonIcon` falls back to a topic's own emoji where there is no drawing, and
+ * that fallback is honest — a topic-specific picture beats one shared
+ * placeholder. What it is not is *this app*: on the first stage of the course,
+ * five of the fifty nodes a learner scrolls past came out as system emoji,
+ * flat colour among gold line art, and the one stage everyone sees is the worst
+ * place to look half-finished.
+ *
+ * These five are the beginner path's whole remainder. Each is a silhouette
+ * rather than a scene, because the path draws them at 34px, and each was
+ * checked at that size against the node colour it actually sits on before it
+ * went in. Later stages still fall back to emoji.
+ */
+export const Question = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path
+      d="M22 24 a10 10 0 1 1 13 9.5 q-3 1 -3 4.5 v2"
+      fill="none"
+      stroke={CR}
+      strokeWidth={7}
+      strokeLinecap="round"
+    />
+    <Circle cx="32" cy="48" r="4.5" fill={G_} />
+  </Frame>
+);
+
+/** Two halves of one circle: the shape of a word and its opposite. */
+export const Opposites = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Circle cx="32" cy="32" r="19" fill={CR} />
+    <Path d="M32 13 a19 19 0 0 1 0 38 Z" fill={G_} />
+  </Frame>
+);
+
+/** A little, some, all. */
+export const Amount = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Rect x="11" y="38" width="11" height="15" rx="3" fill={CR} opacity={0.5} />
+    <Rect x="26" y="28" width="11" height="25" rx="3" fill={CR} />
+    <Rect x="41" y="15" width="11" height="38" rx="3" fill={G_} />
+  </Frame>
+);
+
+/** Big and small, which is half of what the describing words do. */
+export const Sizes = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Circle cx="42" cy="34" r="17" fill={CR} />
+    <Circle cx="17" cy="44" r="7" fill={G_} />
+  </Frame>
+);
+
+/**
+ * Three swatches, for the colour lessons.
+ *
+ * Colours drew a single disc in `palette.gold` — the interface accent standing
+ * in for the subject, so the one topic that is *about* colour was the one node
+ * on the path with none of it. These three are depicted colour and stay put
+ * through a re-theme, like every other pigment in this file.
+ */
+export const Swatches = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Circle cx="24" cy="24" r="14" fill={ROSE} />
+    <Circle cx="41" cy="26" r="14" fill={SKY} />
+    <Circle cx="32" cy="41" r="14" fill={LEAF} />
+  </Frame>
+);
+
+/**
+ * A paw, for animals.
+ *
+ * An animal is the one topic here with no single silhouette — a goat is not a
+ * bird is not a fish — so this takes the mark they leave instead, which is one
+ * shape and unmistakable at any size.
+ */
+export const Paw = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Ellipse cx="32" cy="43" rx="13" ry="10" fill={CR} />
+    <Ellipse cx="17" cy="28" rx="5.5" ry="7" fill={G_} />
+    <Ellipse cx="27" cy="21" rx="5.5" ry="7.5" fill={CR} />
+    <Ellipse cx="38" cy="21" rx="5.5" ry="7.5" fill={CR} />
+    <Ellipse cx="48" cy="28" rx="5.5" ry="7" fill={G_} />
   </Frame>
 );
 
@@ -943,6 +1065,13 @@ export const ICONS: Record<string, (p: IconProps) => JSX.Element> = {
   pen: Pen,
   mosque: Mosque,
   salaam: Salaam,
+  dialogue: Dialogue,
+  question: Question,
+  opposites: Opposites,
+  amount: Amount,
+  sizes: Sizes,
+  paw: Paw,
+  swatches: Swatches,
   thanks: ThanksHands,
   check: Check,
   cross: Cross,
