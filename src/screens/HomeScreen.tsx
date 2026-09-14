@@ -182,7 +182,19 @@ function LessonNode({
         >
           {lesson.title}
         </Bold>
-        <Txt className="text-xs text-paper/55" style={{ writingDirection: 'ltr', textAlign: 'left' }}>
+        {/* One line, whatever is in it.
+
+            The path zig-zags, so each node sits at a different horizontal
+            offset and every row's text column is a different width. Measured at
+            320pt with the new word previews: "1 of 2 · to know, to accept, to
+            want" fits on one line while "1 of 2 · broom, bucket, soap", eight
+            characters shorter, wraps onto two — the row it happens to land on
+            is what decides. No character budget in the content can fix that,
+            and a subtitle that sometimes doubles a row's height makes the path
+            look ragged. Truncating keeps the rows even and still shows enough
+            to tell one sitting from the next; the full text stays in the
+            accessibility label above. */}
+        <Txt numberOfLines={1} className="text-xs text-paper/55" style={{ writingDirection: 'ltr', textAlign: 'left' }}>
           {lesson.subtitle}
         </Txt>
       </View>

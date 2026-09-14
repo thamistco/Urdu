@@ -85,6 +85,22 @@ export function PracticeScreen() {
   const due = dueCount(srs);
   const totalTracked = Object.keys(srs).length;
   const mastered = Object.values(srs).filter((c) => strength(c) >= 0.8).length;
+  /**
+   * Has this learner ever been graded on anything?
+   *
+   * Practice is a tab, so it is one tap from the first screen of a brand new
+   * account, and it had exactly two states: something is due, or "All caught
+   * up · Come back later". A person who had not yet finished a single lesson
+   * got the second one — told they were on top of a course they had not
+   * started, in the gold the palette reserves for the primary action.
+   *
+   * Tapping it was worse than the wording. Daily Review has a fallback pool
+   * for when nothing is scheduled, so with an empty schedule it built ten
+   * questions out of letters and words the learner had never been shown, and
+   * charged hearts for getting them wrong. The fallback is right for a learner
+   * between reviews and wrong for one who has never had a first.
+   */
+  const started = totalTracked > 0;
 
   const go = (lessonId: string) => {
     feedback.tap();
@@ -128,6 +144,7 @@ export function PracticeScreen() {
         {/* daily review hero */}
         <Reveal delay={80}>
           <Pressable
+            disabled={!started}
             onPress={() => go('practice-review')}
             style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
           >
@@ -147,23 +164,44 @@ export function PracticeScreen() {
               // everywhere else in the app, and this card was green whether
               // there was nothing due or forty things due. Against the
               // evening it was the one cold surface in a warm picture.
-              style={{
-                backgroundColor: palette.gold,
-                borderWidth: 1,
-                borderColor: palette.goldDark,
-              }}
+              // Gold is the primary action, so it is worn only while there is
+              // one. With nothing learned yet the card is a statement, and it
+              // stands in the same ink as the shelves below it.
+              style={
+                started
+                  ? { backgroundColor: palette.gold, borderWidth: 1, borderColor: palette.goldDark }
+                  : { backgroundColor: palette.ink700, borderWidth: 1, borderColor: withAlpha(palette.white, 0.1) }
+              }
             >
               <View className="flex-row items-center justify-between">
                 <View className="flex-1 pe-3">
-                  <Eyebrow style={{ color: withAlpha(palette.ink, 0.7) }}>Daily review</Eyebrow>
-                  <Heading style={{ color: palette.ink }} className="mt-1 text-2xl">
-                    {due > 0 ? `${due} item${due > 1 ? 's' : ''} due` : 'All caught up'}
+                  <Eyebrow style={{ color: started ? withAlpha(palette.ink, 0.7) : palette.gold }}>
+                    Daily review
+                  </Eyebrow>
+                  <Heading style={{ color: started ? palette.ink : palette.cream }} className="mt-1 text-2xl">
+                    {due > 0
+                      ? `${due} item${due > 1 ? 's' : ''} due`
+                      : started
+                        ? 'All caught up'
+                        : 'Nothing to review yet'}
                   </Heading>
-                  <Txt style={{ color: withAlpha(palette.ink, 0.8) }} className="mt-1 text-sm">
-                    {due > 0 ? 'A calm few minutes to lock them in.' : 'Come back later, or drill a topic below.'}
+                  <Txt
+                    style={{ color: started ? withAlpha(palette.ink, 0.8) : withAlpha(palette.paper, 0.7) }}
+                    className="mt-1 text-sm"
+                  >
+                    {due > 0
+                      ? 'A calm few minutes to lock them in.'
+                      : started
+                        ? 'Come back later, or drill a topic below.'
+                        : 'Finish a lesson and the words you meet start coming back here. Or pick a topic below and try one now.'}
                   </Txt>
                 </View>
-                <CycleMark size={52} color={withAlpha(palette.ink, 0.85)} />
+                {/* 0.55 rather than the 0.35 this first wanted: `check:theme`
+                    enforces the same floor on an inline `withAlpha` as on a
+                    `text-paper/N` class, and it is right to — the mark is the
+                    only picture on the card, and a dim one on an ink ground is
+                    a smudge rather than a quiet mark. */}
+                <CycleMark size={52} color={started ? withAlpha(palette.ink, 0.85) : withAlpha(palette.paper, 0.55)} />
               </View>
             </View>
           </Pressable>

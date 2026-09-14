@@ -8,7 +8,7 @@ import { Card } from '../components/Card';
 import { Reveal } from '../components/Reveal';
 import { ProgressBar } from '../components/ProgressBar';
 import { Display, Txt, Bold, Eyebrow, Urdu, urduGlyph } from '../components/Text';
-import { Illustration } from '../components/Illustration';
+import { Illustration, LeagueBadge } from '../components/Illustration';
 import type { IconName } from '../art/icons';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
@@ -144,7 +144,7 @@ export function ProfileScreen() {
             style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
           >
             <View className="mb-3 flex-row items-center gap-3 rounded-2xl border border-white/10 bg-ink-700 p-4">
-              <Txt style={{ fontSize: 30 }}>{league.icon}</Txt>
+              <LeagueBadge color={league.color} size={30} />
               <View className="flex-1">
                 <Bold className="text-[15px]">{league.name} League</Bold>
                 <Txt className="text-xs text-paper/55">{s.weeklyXp} XP this week · tap to see standings</Txt>

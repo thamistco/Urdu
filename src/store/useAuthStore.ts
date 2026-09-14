@@ -79,11 +79,15 @@ export const useAuthStore = create<AuthState>()(
 
       signIn: async (provider) => {
         if (!supabase) {
-          return {
-            ok: false,
-            message:
-              'Sign-in isn’t connected yet. Add your Supabase keys (see SUPABASE_SETUP.md) to enable Google & Apple. You can continue as a guest for now.',
-          };
+          // Written for a learner, not for whoever is wiring the backend up.
+          // This string was once a setup instruction naming a vendor and a file
+          // in the repository, and it reached the screen: with no keys in the
+          // build, the two biggest buttons on the app's first screen answered a
+          // tap with "Add your Supabase keys (see SUPABASE_SETUP.md)". Those
+          // buttons no longer render when there is nothing behind them, so this
+          // is now unreachable from the sign-in screen, and it stays honest in
+          // case some other caller ever finds it.
+          return { ok: false, message: 'Sign-in isn’t available right now. You can carry on without an account.' };
         }
         set({ busy: provider });
         try {

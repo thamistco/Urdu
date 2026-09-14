@@ -181,7 +181,7 @@ const PLACEMENT = [
     ],
   },
   {
-    q: 'What does “ghar” mean?',
+    q: 'What does this word mean?',
     sub: 'ghar',
     kind: 'roman',
     options: [
@@ -192,7 +192,7 @@ const PLACEMENT = [
     ],
   },
   {
-    q: 'What does “paani” mean?',
+    q: 'What does this word mean?',
     sub: 'paani',
     kind: 'roman',
     options: [
@@ -203,7 +203,7 @@ const PLACEMENT = [
     ],
   },
   {
-    q: 'What does “shukriya” mean?',
+    q: 'What does this word mean?',
     sub: 'shukriya',
     kind: 'roman',
     options: [
@@ -214,7 +214,7 @@ const PLACEMENT = [
     ],
   },
   {
-    q: 'What does “maañ” mean?',
+    q: 'What does this word mean?',
     sub: 'maañ',
     kind: 'roman',
     options: [
@@ -741,8 +741,26 @@ export function OnboardingScreen() {
   // words, sound out a third — is evidence of having *some* Urdu already, and
   // nothing like B1. Telling someone they tested at B1 and then handing them
   // beginner lessons is a promise the next screen immediately breaks.
-  const lvlName =
-    lvl === 2 ? 'You already have some Urdu' : lvl === 1 ? 'You know a few words' : 'Starting from the beginning';
+  //
+  // And the same evidence that is too weak to *skip* anything (see
+  // `canSkipScript` above, where two right out of four is called roughly what
+  // guessing scores) is too weak to contradict the learner either. Someone who
+  // had just answered "I'm starting from scratch" and then guessed two of four
+  // was shown "You know a few words" over a path that skipped nothing, so the
+  // card described a learner who was not there and a head start that did not
+  // exist.
+  //
+  // So the label says what the learner said, and the quiz only refines it. Two
+  // different things are being measured and each is read for what it is worth:
+  // the background answer is about speaking, and it is the one that skips the
+  // basic vocabulary, so it decides the card below too. The script questions
+  // are about reading, and all they can do is sharpen a speaker's label from
+  // "speaks some" to "reads some".
+  const lvlName = !isSpeaker
+    ? 'Starting from the beginning'
+    : lvl === 2
+      ? 'You already read some Urdu'
+      : 'You already speak some Urdu';
   return (
     <Screen scroll={false}>
       <Reveal style={{ flex: 1 }}>

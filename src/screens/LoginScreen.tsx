@@ -56,6 +56,22 @@ function ProviderButton({ label, onPress, loading }: { label: string; onPress: (
  * a paragraph. `check:scenery` measures what is actually behind each line of
  * text on this screen, so a stack that grows back up into the sun fails there
  * rather than shipping.
+ *
+ * ## Two doors, or one
+ *
+ * The provider buttons only exist when there is a backend to sign in to. Built
+ * without Supabase keys — which is how the site deploys — this screen used to
+ * show "Continue with Google" and "Continue with Apple" in full parchment fill,
+ * the two most prominent things on the first screen anyone ever sees, above a
+ * ghost button that was the only one that worked. Tapping either answered with
+ * a note telling the learner to add Supabase keys and read a markdown file in
+ * the repository.
+ *
+ * So the app's front door offered three ways in, ranked worst first, and the
+ * first tap of a first session was likely to hit a dead one. The same reasoning
+ * is already written down a screen away, on the voice step of onboarding: a
+ * choice the app cannot honour is worse than not offering it. Unconfigured,
+ * this is one button that starts the course.
  */
 export function LoginScreen() {
   const signIn = useAuthStore((s) => s.signIn);
@@ -144,17 +160,27 @@ export function LoginScreen() {
             <Txt className="mb-3 text-center text-[13px] leading-5 text-paper/70">
               The alphabet, the words, the grammar and the sound of it. The whole language.
             </Txt>
-            <View className="gap-2.5">
-              <ProviderButton
-                label="Continue with Google"
-                onPress={() => handle('google')}
-                loading={busy === 'google'}
-              />
-              <ProviderButton label="Continue with Apple" onPress={() => handle('apple')} loading={busy === 'apple'} />
-              <Button variant="ghost" onPress={continueAsGuest}>
-                Continue as a guest
-              </Button>
-            </View>
+            {/* Two doors or one, depending on whether there is anything behind
+                them. See the note on `authConfigured` above. */}
+            {authConfigured ? (
+              <View className="gap-2.5">
+                <ProviderButton
+                  label="Continue with Google"
+                  onPress={() => handle('google')}
+                  loading={busy === 'google'}
+                />
+                <ProviderButton
+                  label="Continue with Apple"
+                  onPress={() => handle('apple')}
+                  loading={busy === 'apple'}
+                />
+                <Button variant="ghost" onPress={continueAsGuest}>
+                  Continue as a guest
+                </Button>
+              </View>
+            ) : (
+              <Button onPress={continueAsGuest}>Start learning</Button>
+            )}
           </Reveal>
 
           {note && (
@@ -170,8 +196,13 @@ export function LoginScreen() {
 
           {!authConfigured && !note && (
             <Reveal delay={160}>
+              {/* A statement, not an apology. The old line — "Signing in isn't
+                  ready yet" — was there to explain the two buttons that did
+                  nothing; with those gone there is nothing to excuse, and what
+                  is left is the one fact a learner actually needs, which is
+                  where their progress lives. */}
               <Txt className="mt-3 text-center text-[11px] leading-4 text-paper/70">
-                Signing in isn’t ready yet. Your progress stays on this device.
+                Your progress is saved on this device.
               </Txt>
             </Reveal>
           )}

@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Screen } from '../components/Screen';
 import { TopBar } from '../components/TopBar';
+import { LeagueBadge } from '../components/Illustration';
 import { Reveal } from '../components/Reveal';
 import { Txt, Bold, Eyebrow, Heading } from '../components/Text';
 import { palette, withAlpha } from '../theme';
@@ -55,7 +56,7 @@ export function LeaderboardScreen() {
 
         <Reveal>
           <View className="items-center pb-4">
-            <Txt style={{ fontSize: 52 }}>{league.icon}</Txt>
+            <LeagueBadge color={league.color} size={52} />
             <Heading className="mt-2 text-2xl" style={{ color: league.color }}>
               {league.name} League
             </Heading>
