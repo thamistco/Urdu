@@ -1020,6 +1020,199 @@ export const CycleMark = ({ size = 52, color }: { size?: number; color: string }
   </Svg>
 );
 
+/**
+ * The rest of the topics that were still borrowing pictures from the system
+ * font.
+ *
+ * The beginner path was cleared first because it is the stage everyone sees.
+ * These eighteen close the other three: 22 topics across 40 lessons that drew
+ * ✈️, 🧱, 🗳️ and the like, flat platform colour dropped into a set of warm
+ * drawings. A learner who reaches Intermediate has earned a path that looks
+ * like the one they started on.
+ *
+ * Four topics share a mark with a neighbour rather than getting a thin
+ * variation of it — `directions` with `directions-more`, `clothing` with
+ * `clothing-more` — the way `family`/`family-more` and the three food topics
+ * already do. Two needed nothing new: "Ideas & Values" takes the `lamp` that
+ * was already drawn and unused, and "Fine Description" takes the same big-and-
+ * small circles that "Describing" does, because it is the same job done more
+ * precisely.
+ *
+ * Every one was drawn against the node's own colour and read back at 34, 48 and
+ * 110px before it went in, and four were thrown away at that step: a road
+ * surface that read as a cup, a hand mirror that read as a magnifying glass,
+ * scales too thin to survive 34px, and a bird that turned into the same
+ * unreadable blob the old `salaam` dove was — birds get a feather instead,
+ * which is one shape and cannot collapse.
+ */
+
+export const Car = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path
+      d="M8 40 l4 -12 a5 5 0 0 1 5 -4 h30 a5 5 0 0 1 5 4 l4 12 v7 a3 3 0 0 1 -3 3 h-42 a3 3 0 0 1 -3 -3 Z"
+      fill={G_}
+    />
+    <Path d="M17 29 h30 l3 9 h-36 Z" fill={SKY} />
+    <Circle cx={19} cy={50} r={5.5} fill={IN} />
+    <Circle cx={45} cy={50} r={5.5} fill={IN} />
+    <Circle cx={19} cy={50} r={2} fill={CR} />
+    <Circle cx={45} cy={50} r={2} fill={CR} />
+  </Frame>
+);
+
+export const Signpost = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Rect x={29} y={16} width={6} height={42} rx={2} fill={BROWN} />
+    <Path d="M6 18 h34 l8 7 -8 7 h-34 Z" fill={G_} />
+    <Path d="M58 34 h-34 l-8 7 8 7 h34 Z" fill={CR} />
+  </Frame>
+);
+
+export const Compass = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Circle cx={32} cy={32} r={21} fill={CR} />
+    <Circle cx={32} cy={32} r={21} fill="none" stroke={GD} strokeWidth={3} />
+    <Path d="M42 22 L28 28 L22 42 L36 36 Z" fill={G_} />
+    <Path d="M42 22 L36 36 L28 28 Z" fill={POMEGRANATE} />
+  </Frame>
+);
+
+export const Suitcase = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Rect x={10} y={24} width={44} height={28} rx={4} fill={BROWN} />
+    <Path d="M24 24 v-4 a4 4 0 0 1 4 -4 h8 a4 4 0 0 1 4 4 v4" stroke={CR} strokeWidth={3.5} fill="none" />
+    <Rect x={10} y={33} width={44} height={6} fill={G_} />
+  </Frame>
+);
+
+export const Plane = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M6 36 l52 -16 -8 14 -14 3 -6 13 -5 1 -1 -12 -12 2 Z" fill={CR} />
+    <Path d="M50 20 l-14 17 -2 -5 Z" fill={G_} />
+  </Frame>
+);
+
+export const Globe = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Circle cx={32} cy={32} r={21} fill={SKY} />
+    <Path d="M22 16 q-8 16 0 32 M42 16 q8 16 0 32" stroke={CR} strokeWidth={2.5} fill="none" opacity={0.8} />
+    <Path d="M12 26 h40 M12 40 h40" stroke={CR} strokeWidth={2.5} opacity={0.8} />
+    <Circle cx={32} cy={32} r={21} fill="none" stroke={CR} strokeWidth={3} />
+  </Frame>
+);
+
+export const FoldedMap = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M6 16 l16 -6 20 6 16 -6 v38 l-16 6 -20 -6 -16 6 Z" fill={CR} />
+    <Path d="M22 10 v38 M42 16 v38" stroke={GD} strokeWidth={2.5} fill="none" />
+    <Circle cx={33} cy={28} r={5} fill={POMEGRANATE} />
+  </Frame>
+);
+
+export const Shirt = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M24 12 h16 l14 8 -6 10 -4 -2 v24 a2 2 0 0 1 -2 2 h-20 a2 2 0 0 1 -2 -2 v-24 l-4 2 -6 -10 Z" fill={G_} />
+    <Path d="M24 12 l8 8 8 -8" fill={CR} />
+  </Frame>
+);
+
+export const Mirror = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Rect x={27} y={38} width={10} height={20} rx={5} fill={GD} />
+    <Ellipse cx={32} cy={25} rx={17} ry={20} fill={GD} />
+    <Ellipse cx={32} cy={25} rx={12.5} ry={15.5} fill={CR} />
+    <Path d="M27 14 l-6 12" stroke={G_} strokeWidth={3.5} strokeLinecap="round" />
+    <Path d="M36 15 l-4 8" stroke={G_} strokeWidth={2.5} strokeLinecap="round" />
+  </Frame>
+);
+
+export const Candle = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Rect x={24} y={26} width={16} height={28} rx={3} fill={CR} />
+    <Rect x={30} y={18} width={4} height={8} fill={BROWN} />
+    <Path d="M32 4 q9 9 0 16 q-9 -7 0 -16 Z" fill={G_} />
+    <Path d="M32 9 q4 5 0 9 q-4 -4 0 -9 Z" fill={MARIGOLD} />
+  </Frame>
+);
+
+export const Scales = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Rect x={28} y={16} width={7} height={34} rx={2} fill={GD} />
+    <Rect x={16} y={48} width={31} height={7} rx={3} fill={GD} />
+    <Rect x={6} y={17} width={52} height={6} rx={3} fill={G_} />
+    <Path d="M2 27 h22 l-11 13 Z" fill={CR} />
+    <Path d="M40 27 h22 l-11 13 Z" fill={CR} />
+    <Circle cx={31.5} cy={12} r={5} fill={G_} />
+  </Frame>
+);
+
+export const Ballot = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Rect x={10} y={30} width={44} height={24} rx={3} fill={G_} />
+    <Rect x={22} y={32} width={20} height={4} rx={2} fill={IN} />
+    <Rect x={22} y={8} width={20} height={24} rx={2} fill={CR} />
+    <Path
+      d="M26 20 l4 5 8 -10"
+      stroke={JADE}
+      strokeWidth={3.5}
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Frame>
+);
+
+export const MusicNote = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M26 44 V14 l24 -6 v30" stroke={CR} strokeWidth={5} fill="none" strokeLinejoin="round" />
+    <Ellipse cx={19} cy={45} rx={9} ry={7} fill={G_} />
+    <Ellipse cx={43} cy={38} rx={9} ry={7} fill={G_} />
+  </Frame>
+);
+
+export const Bricks = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Rect x={8} y={16} width={22} height={12} rx={2} fill={ROSE} />
+    <Rect x={34} y={16} width={22} height={12} rx={2} fill={ROSE} />
+    <Rect x={8} y={32} width={14} height={12} rx={2} fill={G_} />
+    <Rect x={26} y={32} width={22} height={12} rx={2} fill={ROSE} />
+    <Rect x={8} y={48} width={22} height={10} rx={2} fill={ROSE} />
+    <Rect x={34} y={48} width={22} height={10} rx={2} fill={G_} />
+  </Frame>
+);
+
+export const Jar = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Rect x={18} y={14} width={28} height={7} rx={2} fill={GD} />
+    <Path d="M20 21 h24 v27 a8 8 0 0 1 -8 8 h-8 a8 8 0 0 1 -8 -8 Z" fill={CR} />
+    <Path d="M20 36 h24 v12 a8 8 0 0 1 -8 8 h-8 a8 8 0 0 1 -8 -8 Z" fill={G_} />
+  </Frame>
+);
+
+export const Feather = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M44 8 q16 18 -2 34 q-10 9 -22 8 l-6 6 -4 -4 6 -6 q-2 -12 8 -23 q9 -10 20 -15 Z" fill={CR} />
+    <Path d="M44 8 q-11 5 -20 15 q-10 11 -8 23 Z" fill={G_} />
+    <Path d="M42 12 L16 46" stroke={IN} strokeWidth={2} opacity={0.4} />
+  </Frame>
+);
+
+export const Kite = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M32 6 L52 28 L32 50 L12 28 Z" fill={G_} />
+    <Path d="M32 6 L32 50 M12 28 L52 28" stroke={IN} strokeWidth={2} opacity={0.45} />
+    <Path d="M32 50 q6 6 0 10 q-6 4 0 -10" stroke={CR} strokeWidth={2.5} fill="none" />
+  </Frame>
+);
+
+export const Link = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M26 22 h-8 a10 10 0 0 0 0 20 h8" stroke={CR} strokeWidth={7} fill="none" strokeLinecap="round" />
+    <Path d="M38 22 h8 a10 10 0 0 1 0 20 h-8" stroke={G_} strokeWidth={7} fill="none" strokeLinecap="round" />
+    <Path d="M24 32 h16" stroke={CR} strokeWidth={6} strokeLinecap="round" />
+  </Frame>
+);
+
 // ---- registry ------------------------------------------------------------
 
 export const ICONS: Record<string, (p: IconProps) => JSX.Element> = {
@@ -1105,6 +1298,24 @@ export const ICONS: Record<string, (p: IconProps) => JSX.Element> = {
   intestine: Intestine,
   lock: Lock,
   speechBubble: SpeechBubble,
+  car: Car,
+  signpost: Signpost,
+  compass: Compass,
+  suitcase: Suitcase,
+  plane: Plane,
+  globe: Globe,
+  map: FoldedMap,
+  shirt: Shirt,
+  mirror: Mirror,
+  candle: Candle,
+  scales: Scales,
+  ballot: Ballot,
+  note: MusicNote,
+  bricks: Bricks,
+  jar: Jar,
+  feather: Feather,
+  kite: Kite,
+  link: Link,
 };
 
 export type IconName = keyof typeof ICONS;

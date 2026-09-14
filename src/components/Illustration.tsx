@@ -169,10 +169,14 @@ const GOAL_ICON: Record<string, IconName> = {
  *
  * Reused icons between closely related topics (`briefcase` for both
  * `work-life` and `jobs`, `bowl` for `food`, `kitchen` and `meals`) are
- * deliberate — those topics really do share a picture. Topics with no honest
- * match are left out on purpose rather than stretched to fit; `LessonIcon`
- * below falls back to the topic's own emoji for those, which is still
- * topic-specific even without bespoke art.
+ * deliberate — those topics really do share a picture.
+ *
+ * All 122 are covered now, so the emoji fallback in `LessonIcon` and
+ * `TopicArt` below reaches nothing: it is the safety net for a topic added
+ * without art, not a state the app ships in. A topic-specific emoji is still
+ * the right thing to fall back *to* — better one wrong-looking picture than one
+ * shared placeholder on every uncovered topic at once — but a new topic should
+ * get a drawing here rather than rely on it.
  */
 const TOPIC_ICON: Record<string, IconName> = {
   'first-words': 'sparkle',
@@ -276,6 +280,34 @@ const TOPIC_ICON: Record<string, IconName> = {
   hotel: 'bed',
   culture: 'mosque',
   services: 'gear',
+  // The other three stages, closed in a second pass. `directions-more` and
+  // `clothing-more` share their neighbour's mark deliberately, the way
+  // `family-more` and the food topics already do — they are the same picture,
+  // not a thinner version of one. `abstract` takes the `lamp` that was drawn
+  // and never used, and `describing-more` takes `sizes`, since "Fine
+  // Description" is "Describing" done more precisely.
+  transport: 'car',
+  road: 'signpost',
+  directions: 'compass',
+  'directions-more': 'compass',
+  travel: 'suitcase',
+  'travel-more': 'map',
+  airport: 'plane',
+  countries: 'globe',
+  clothing: 'shirt',
+  'clothing-more': 'shirt',
+  appearance: 'mirror',
+  abstract: 'lamp',
+  philosophy: 'candle',
+  law: 'scales',
+  politics: 'ballot',
+  'music-art': 'note',
+  materials: 'bricks',
+  containers: 'jar',
+  birds: 'feather',
+  toys: 'kite',
+  connectors: 'link',
+  'describing-more': 'sizes',
 };
 
 export function GoalArt({ goalKey, size = 44 }: { goalKey: string; size?: number }) {
