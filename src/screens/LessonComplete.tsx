@@ -131,7 +131,7 @@ export function LessonComplete({
                   className="mb-3 flex-row items-center gap-3 rounded-2xl border p-4"
                   style={{ borderColor: withAlpha(palette.jade, 0.35), backgroundColor: withAlpha(palette.jade, 0.1) }}
                 >
-                  <Txt style={{ fontSize: 30 }}>{a.icon}</Txt>
+                  <Illustration name={a.icon} tile={false} size={30} />
                   <View className="flex-1">
                     <Eyebrow style={{ color: palette.jadeLight }}>Achievement · Tier {a.tier}</Eyebrow>
                     <Bold className="text-[15px]">{a.title}</Bold>
