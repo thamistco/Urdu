@@ -2683,25 +2683,6 @@ function fallbackReviewRefs(
   // all (day one, before any grading) leaves both arrays empty, which
   // `reviewLetterShare` already treats as its 0.5 case — matching the old
   // fixed split for exactly the population it protected.
-  // THE CRITIC, URD-017: a lesson id `taughtUpTo` cannot place on the path —
-  // `practice-review`, the synthetic Daily Review screen, is the one that
-  // matters — never satisfies its `break`, so `courseWords`/`courseLetters`
-  // above are silently the *entire* course rather than "what this learner
-  // has reached". Feeding those straight to `reviewLetterShare` pinned the
-  // letter share at its end-of-course value (≈2%) from the very first time
-  // a learner ever opened the screen, deep in the alphabet or not.
-  // Reproduced live: a learner who had just finished the first letters
-  // lesson and first vocab lesson still got 0 of 10 letter exercises on
-  // Daily Review — identical to one who had finished the whole course.
-  //
-  // For a lesson actually placed on the path, course position is the right
-  // measure. For one that is not, the learner's own graded progress is —
-  // restricting both arrays to `known` asks "of everything reachable, how
-  // much has this learner actually seen so far", the same question
-  // `anythingKnown` already asks for pool selection. Nothing graded yet at
-  // all (day one, before any grading) leaves both arrays empty, which
-  // `reviewLetterShare` already treats as its 0.5 case — matching the old
-  // fixed split for exactly the population it protected.
   const onPath = !!lessonId && taughtInUnit(lessonId) !== null;
   const letterShare = onPath
     ? reviewLetterShare(courseWords, courseLetters)
