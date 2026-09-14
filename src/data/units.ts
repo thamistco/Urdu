@@ -350,12 +350,31 @@ const PLANNED_UNITS: Unit[] = [
     level: 'beginner',
     color: GOLD,
     title: 'Unit 4 · Saying Who You Are',
-    subtitle: 'Pronouns, the verb "to be", and your first sentences',
+    // Not "your first sentences", which this said and which is not true: the
+    // phrases lesson in Unit 1 teaches "aap kaise hain?" and "mera naam ... hai"
+    // whole, at lesson 8. These are the first a learner assembles rather than
+    // repeats, which is a different milestone and worth naming as itself.
+    subtitle: 'Pronouns, the verb "to be", and sentences you build yourself',
     lessons: [
       V('rooms', 'Rooms', 'Where you sit, sleep and cook'),
       V('adjectives', 'Describing', 'Big, small, hot, cold'),
       G('g-pronouns', 'Pronouns', 'I, you, he, we, they'),
       G('g-to-be', 'Am, is, are', 'The verb “to be”'),
+      /**
+       * Lesson 32 of 350, and it belongs here rather than earlier.
+       *
+       * Measured while asking whether the course waits too long to let someone
+       * say something: the first `kind: 'sentences'` lesson is this one, and
+       * reading that as "the first sentence" is the mistake. The first complete
+       * utterance is lesson 8, in Unit 1's phrases lesson — hello, how are you,
+       * I am well, what is your name — learned whole, the way a phrasebook
+       * teaches them.
+       *
+       * Assembling one is a different skill and it has prerequisites: word
+       * order needs pronouns and the copula, and both are taught in the two
+       * lessons directly above. Moving this up would test what nothing had yet
+       * taught, which is the one thing `check:order` exists to prevent.
+       */
       S('beginner', 'Build a sentence', 'Put the words in order'),
       REV('saying-who-you-are'),
     ],
