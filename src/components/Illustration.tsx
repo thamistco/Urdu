@@ -79,6 +79,46 @@ function NumeralTile({ numeral, size }: { numeral: string; size: number }) {
   );
 }
 
+/**
+ * A league's badge, drawn in the league's own colour.
+ *
+ * The seven leagues each carry a `color` and, until now, a coloured-circle
+ * emoji beside it — and the two never matched. Clay is `#C08457`, a warm
+ * terracotta; 🟤 is whatever brown the device's emoji font ships, and on this
+ * dark ground it read as a flat dot with no edge. Every screen that showed a
+ * league showed one colour in the heading and a different one in the picture.
+ *
+ * Plain views rather than SVG, for the reason `Medallion` gives above: the
+ * leaderboard can hold a stack of these.
+ */
+export function LeagueBadge({ color, size = 44 }: { color: string; size?: number }) {
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: color,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: Math.max(1, size * 0.045),
+        borderColor: withAlpha(palette.ink, 0.35),
+      }}
+    >
+      {/* the struck rim, so it reads as a coin rather than a dot */}
+      <View
+        style={{
+          width: size * 0.66,
+          height: size * 0.66,
+          borderRadius: size * 0.33,
+          borderWidth: Math.max(1, size * 0.045),
+          borderColor: withAlpha(palette.cream, 0.45),
+        }}
+      />
+    </View>
+  );
+}
+
 function SwatchTile({ color, size, ring }: { color: string; size: number; ring?: boolean }) {
   return (
     <Medallion size={size}>
@@ -129,10 +169,14 @@ const GOAL_ICON: Record<string, IconName> = {
  *
  * Reused icons between closely related topics (`briefcase` for both
  * `work-life` and `jobs`, `bowl` for `food`, `kitchen` and `meals`) are
- * deliberate — those topics really do share a picture. Topics with no honest
- * match are left out on purpose rather than stretched to fit; `LessonIcon`
- * below falls back to the topic's own emoji for those, which is still
- * topic-specific even without bespoke art.
+ * deliberate — those topics really do share a picture.
+ *
+ * All 122 are covered now, so the emoji fallback in `LessonIcon` and
+ * `TopicArt` below reaches nothing: it is the safety net for a topic added
+ * without art, not a state the app ships in. A topic-specific emoji is still
+ * the right thing to fall back *to* — better one wrong-looking picture than one
+ * shared placeholder on every uncovered topic at once — but a new topic should
+ * get a drawing here rather than rely on it.
  */
 const TOPIC_ICON: Record<string, IconName> = {
   'first-words': 'sparkle',
@@ -219,6 +263,51 @@ const TOPIC_ICON: Record<string, IconName> = {
   landscape: 'mountain',
   sealife: 'waves',
   emergency: 'flame',
+  // The five beginner-stage topics that were still falling back to emoji, plus
+  // the later ones an icon already in the set covers honestly. See the note on
+  // the new marks in `art/icons.tsx` for why the first stage was worth clearing
+  // out and the rest were not.
+  questions: 'question',
+  opposites: 'opposites',
+  quantity: 'amount',
+  adjectives: 'sizes',
+  animals: 'paw',
+  wildlife: 'paw',
+  quality: 'star',
+  routine: 'clock',
+  shapes: 'lattice',
+  restaurant: 'bowl',
+  hotel: 'bed',
+  culture: 'mosque',
+  services: 'gear',
+  // The other three stages, closed in a second pass. `directions-more` and
+  // `clothing-more` share their neighbour's mark deliberately, the way
+  // `family-more` and the food topics already do — they are the same picture,
+  // not a thinner version of one. `abstract` takes the `lamp` that was drawn
+  // and never used, and `describing-more` takes `sizes`, since "Fine
+  // Description" is "Describing" done more precisely.
+  transport: 'car',
+  road: 'signpost',
+  directions: 'compass',
+  'directions-more': 'compass',
+  travel: 'suitcase',
+  'travel-more': 'map',
+  airport: 'plane',
+  countries: 'globe',
+  clothing: 'shirt',
+  'clothing-more': 'shirt',
+  appearance: 'mirror',
+  abstract: 'lamp',
+  philosophy: 'candle',
+  law: 'scales',
+  politics: 'ballot',
+  'music-art': 'note',
+  materials: 'bricks',
+  containers: 'jar',
+  birds: 'feather',
+  toys: 'kite',
+  connectors: 'link',
+  'describing-more': 'sizes',
 };
 
 export function GoalArt({ goalKey, size = 44 }: { goalKey: string; size?: number }) {
@@ -226,8 +315,10 @@ export function GoalArt({ goalKey, size = 44 }: { goalKey: string; size?: number
 }
 
 export function TopicArt({ topicId, size = 44 }: { topicId: string; size?: number }) {
-  if (topicId === 'numbers') return <NumeralTile numeral="۳" size={size} />;
-  if (topicId === 'colours') return <SwatchTile color={palette.gold} size={size} />;
+  // `numbers-more` is the same topic further along, so it gets the same tile
+  // rather than falling through to its own emoji.
+  if (topicId === 'numbers' || topicId === 'numbers-more') return <NumeralTile numeral="۳" size={size} />;
+  if (topicId === 'colours') return <Illustration name="swatches" size={size} />;
   if (TOPIC_ICON[topicId]) return <Illustration name={TOPIC_ICON[topicId]} size={size} />;
   // topics without a bespoke illustration yet → their emoji in the medallion
   const emoji = TOPICS.find((t) => t.id === topicId)?.icon ?? '✨'; // audit:emoji-ok — topic art falls back to its data emoji
@@ -251,8 +342,11 @@ function lessonIconName(kind: string): IconName {
   switch (kind) {
     case 'letters':
       return 'pen';
+    // Both of these were `salaam`, the greeting mark, which fits a lesson on
+    // saying hello and nothing else these two kinds contain: "Talk: Tea or
+    // coffee?" and "Everyday phrases" are exchanges, not greetings.
     case 'phrases':
-      return 'salaam';
+      return 'dialogue';
     case 'grammar':
       return 'lattice';
     case 'sentences':
@@ -260,7 +354,7 @@ function lessonIconName(kind: string): IconName {
     case 'reading':
       return 'scroll';
     case 'dialogue':
-      return 'salaam';
+      return 'dialogue';
     case 'review':
       return 'crescent';
     default:
@@ -283,16 +377,10 @@ function lessonIconName(kind: string): IconName {
  */
 export function LessonIcon({ kind, topic, size = 34 }: { kind: string; topic?: string; size?: number }) {
   if (kind === 'vocab' && topic) {
-    if (topic === 'numbers') {
+    if (topic === 'numbers' || topic === 'numbers-more') {
       return <RNText style={{ fontFamily: 'NotoNastaliq-Bold', color: palette.gold, fontSize: size * 0.86 }}>۳</RNText>;
     }
-    if (topic === 'colours') {
-      return (
-        <View
-          style={{ width: size * 0.62, height: size * 0.62, borderRadius: size * 0.31, backgroundColor: palette.gold }}
-        />
-      );
-    }
+    if (topic === 'colours') return <Illustration name="swatches" tile={false} size={size} />;
     if (TOPIC_ICON[topic]) return <Illustration name={TOPIC_ICON[topic]} tile={false} size={size} />;
     const emoji = TOPICS.find((t) => t.id === topic)?.icon ?? '✨'; // audit:emoji-ok — falls back to the topic's own emoji
     return <RNText style={{ fontSize: size * 0.72 }}>{emoji}</RNText>;

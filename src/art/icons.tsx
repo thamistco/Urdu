@@ -460,15 +460,137 @@ export const Mosque = ({ size }: IconProps) => (
   </Frame>
 );
 
+/**
+ * A raised hand, waving.
+ *
+ * This was a dove, for the "peace" in سلام. It was drawn as one nine-segment
+ * silhouette and it did not read as a bird at any size: rendered at 240px it is
+ * a shark, and at the 34px the learning path actually draws it, a grey smear.
+ * It sat on every greetings, phrases and dialogue node in the course, so the
+ * single least legible drawing in the set was also one of the most repeated.
+ *
+ * A hand is the other half of what the word means, and it survives being small:
+ * four fingers and a thumb make a silhouette that is still a hand at 34px,
+ * which a bird never is. The gold strokes are the wave. Checked by rendering
+ * against the path's own node colour at 34, 48 and 120.
+ */
 export const Salaam = ({ size }: IconProps) => (
   <Frame size={size}>
-    <Circle cx="32" cy="32" r="20" fill={JADE} opacity={0.16} />
-    {/* dove */}
     <Path
-      d="M18 38 q6 -12 20 -12 q-4 -4 2 -8 q1 6 6 6 q8 0 10 8 q-8 2 -14 8 q-2 6 -8 6 q2 -6 -2 -8 q-8 2 -14 2 Z"
+      d="M21 36 q0 -3.5 3 -3.5 q3 0 3 3.5 l0 -13 q0 -3.5 3 -3.5 q3 0 3 3.5 l0 -3 q0 -3.5 3 -3.5 q3 0 3 3.5 l0 3 q0 -3 3 -3 q3 0 3 3 l0 16 q0 11 -11 11 q-8 0 -11 -7 l-5 -11 q-1.5 -3 1.5 -4.2 q3 -1.2 4.3 1.8 Z"
       fill={CR}
     />
-    <Circle cx="44" cy="26" r="1.4" fill={IN} />
+    <Path d="M14 20 l3 3 M22 12 l1.5 4 M32 9 l0 4" stroke={G_} strokeWidth={3} strokeLinecap="round" fill="none" />
+  </Frame>
+);
+
+/**
+ * Two speech bubbles, for a conversation.
+ *
+ * `phrases` and `dialogue` lessons used the greeting mark, which is right for
+ * "hello" and wrong for "Talk: Tea or coffee?" — a whole kind of lesson with no
+ * picture of its own. Two bubbles, one gold and one cream, say exchange rather
+ * than utterance, which is what separates these from the single `speechBubble`
+ * that expressions and idioms use.
+ */
+export const Dialogue = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path
+      d="M8 16 h30 a5 5 0 0 1 5 5 v14 a5 5 0 0 1 -5 5 h-18 l-8 7 v-7 h-4 a5 5 0 0 1 -5 -5 v-14 a5 5 0 0 1 5 -5 Z"
+      fill={CR}
+    />
+    <Path
+      d="M30 26 h26 a5 5 0 0 1 5 5 v14 a5 5 0 0 1 -5 5 h-4 v7 l-8 -7 h-14 a5 5 0 0 1 -5 -5 v-14 a5 5 0 0 1 5 -5 Z"
+      fill={G_}
+      stroke={IN}
+      strokeWidth={2.5}
+    />
+  </Frame>
+);
+
+/**
+ * Five marks for the five beginner topics that had none.
+ *
+ * `LessonIcon` falls back to a topic's own emoji where there is no drawing, and
+ * that fallback is honest — a topic-specific picture beats one shared
+ * placeholder. What it is not is *this app*: on the first stage of the course,
+ * five of the fifty nodes a learner scrolls past came out as system emoji,
+ * flat colour among gold line art, and the one stage everyone sees is the worst
+ * place to look half-finished.
+ *
+ * These five are the beginner path's whole remainder. Each is a silhouette
+ * rather than a scene, because the path draws them at 34px, and each was
+ * checked at that size against the node colour it actually sits on before it
+ * went in. Later stages still fall back to emoji.
+ */
+export const Question = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path
+      d="M22 24 a10 10 0 1 1 13 9.5 q-3 1 -3 4.5 v2"
+      fill="none"
+      stroke={CR}
+      strokeWidth={7}
+      strokeLinecap="round"
+    />
+    <Circle cx="32" cy="48" r="4.5" fill={G_} />
+  </Frame>
+);
+
+/** Two halves of one circle: the shape of a word and its opposite. */
+export const Opposites = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Circle cx="32" cy="32" r="19" fill={CR} />
+    <Path d="M32 13 a19 19 0 0 1 0 38 Z" fill={G_} />
+  </Frame>
+);
+
+/** A little, some, all. */
+export const Amount = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Rect x="11" y="38" width="11" height="15" rx="3" fill={CR} opacity={0.5} />
+    <Rect x="26" y="28" width="11" height="25" rx="3" fill={CR} />
+    <Rect x="41" y="15" width="11" height="38" rx="3" fill={G_} />
+  </Frame>
+);
+
+/** Big and small, which is half of what the describing words do. */
+export const Sizes = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Circle cx="42" cy="34" r="17" fill={CR} />
+    <Circle cx="17" cy="44" r="7" fill={G_} />
+  </Frame>
+);
+
+/**
+ * Three swatches, for the colour lessons.
+ *
+ * Colours drew a single disc in `palette.gold` — the interface accent standing
+ * in for the subject, so the one topic that is *about* colour was the one node
+ * on the path with none of it. These three are depicted colour and stay put
+ * through a re-theme, like every other pigment in this file.
+ */
+export const Swatches = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Circle cx="24" cy="24" r="14" fill={ROSE} />
+    <Circle cx="41" cy="26" r="14" fill={SKY} />
+    <Circle cx="32" cy="41" r="14" fill={LEAF} />
+  </Frame>
+);
+
+/**
+ * A paw, for animals.
+ *
+ * An animal is the one topic here with no single silhouette — a goat is not a
+ * bird is not a fish — so this takes the mark they leave instead, which is one
+ * shape and unmistakable at any size.
+ */
+export const Paw = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Ellipse cx="32" cy="43" rx="13" ry="10" fill={CR} />
+    <Ellipse cx="17" cy="28" rx="5.5" ry="7" fill={G_} />
+    <Ellipse cx="27" cy="21" rx="5.5" ry="7.5" fill={CR} />
+    <Ellipse cx="38" cy="21" rx="5.5" ry="7.5" fill={CR} />
+    <Ellipse cx="48" cy="28" rx="5.5" ry="7" fill={G_} />
   </Frame>
 );
 
@@ -898,6 +1020,199 @@ export const CycleMark = ({ size = 52, color }: { size?: number; color: string }
   </Svg>
 );
 
+/**
+ * The rest of the topics that were still borrowing pictures from the system
+ * font.
+ *
+ * The beginner path was cleared first because it is the stage everyone sees.
+ * These eighteen close the other three: 22 topics across 40 lessons that drew
+ * ✈️, 🧱, 🗳️ and the like, flat platform colour dropped into a set of warm
+ * drawings. A learner who reaches Intermediate has earned a path that looks
+ * like the one they started on.
+ *
+ * Four topics share a mark with a neighbour rather than getting a thin
+ * variation of it — `directions` with `directions-more`, `clothing` with
+ * `clothing-more` — the way `family`/`family-more` and the three food topics
+ * already do. Two needed nothing new: "Ideas & Values" takes the `lamp` that
+ * was already drawn and unused, and "Fine Description" takes the same big-and-
+ * small circles that "Describing" does, because it is the same job done more
+ * precisely.
+ *
+ * Every one was drawn against the node's own colour and read back at 34, 48 and
+ * 110px before it went in, and four were thrown away at that step: a road
+ * surface that read as a cup, a hand mirror that read as a magnifying glass,
+ * scales too thin to survive 34px, and a bird that turned into the same
+ * unreadable blob the old `salaam` dove was — birds get a feather instead,
+ * which is one shape and cannot collapse.
+ */
+
+export const Car = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path
+      d="M8 40 l4 -12 a5 5 0 0 1 5 -4 h30 a5 5 0 0 1 5 4 l4 12 v7 a3 3 0 0 1 -3 3 h-42 a3 3 0 0 1 -3 -3 Z"
+      fill={G_}
+    />
+    <Path d="M17 29 h30 l3 9 h-36 Z" fill={SKY} />
+    <Circle cx={19} cy={50} r={5.5} fill={IN} />
+    <Circle cx={45} cy={50} r={5.5} fill={IN} />
+    <Circle cx={19} cy={50} r={2} fill={CR} />
+    <Circle cx={45} cy={50} r={2} fill={CR} />
+  </Frame>
+);
+
+export const Signpost = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Rect x={29} y={16} width={6} height={42} rx={2} fill={BROWN} />
+    <Path d="M6 18 h34 l8 7 -8 7 h-34 Z" fill={G_} />
+    <Path d="M58 34 h-34 l-8 7 8 7 h34 Z" fill={CR} />
+  </Frame>
+);
+
+export const Compass = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Circle cx={32} cy={32} r={21} fill={CR} />
+    <Circle cx={32} cy={32} r={21} fill="none" stroke={GD} strokeWidth={3} />
+    <Path d="M42 22 L28 28 L22 42 L36 36 Z" fill={G_} />
+    <Path d="M42 22 L36 36 L28 28 Z" fill={POMEGRANATE} />
+  </Frame>
+);
+
+export const Suitcase = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Rect x={10} y={24} width={44} height={28} rx={4} fill={BROWN} />
+    <Path d="M24 24 v-4 a4 4 0 0 1 4 -4 h8 a4 4 0 0 1 4 4 v4" stroke={CR} strokeWidth={3.5} fill="none" />
+    <Rect x={10} y={33} width={44} height={6} fill={G_} />
+  </Frame>
+);
+
+export const Plane = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M6 36 l52 -16 -8 14 -14 3 -6 13 -5 1 -1 -12 -12 2 Z" fill={CR} />
+    <Path d="M50 20 l-14 17 -2 -5 Z" fill={G_} />
+  </Frame>
+);
+
+export const Globe = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Circle cx={32} cy={32} r={21} fill={SKY} />
+    <Path d="M22 16 q-8 16 0 32 M42 16 q8 16 0 32" stroke={CR} strokeWidth={2.5} fill="none" opacity={0.8} />
+    <Path d="M12 26 h40 M12 40 h40" stroke={CR} strokeWidth={2.5} opacity={0.8} />
+    <Circle cx={32} cy={32} r={21} fill="none" stroke={CR} strokeWidth={3} />
+  </Frame>
+);
+
+export const FoldedMap = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M6 16 l16 -6 20 6 16 -6 v38 l-16 6 -20 -6 -16 6 Z" fill={CR} />
+    <Path d="M22 10 v38 M42 16 v38" stroke={GD} strokeWidth={2.5} fill="none" />
+    <Circle cx={33} cy={28} r={5} fill={POMEGRANATE} />
+  </Frame>
+);
+
+export const Shirt = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M24 12 h16 l14 8 -6 10 -4 -2 v24 a2 2 0 0 1 -2 2 h-20 a2 2 0 0 1 -2 -2 v-24 l-4 2 -6 -10 Z" fill={G_} />
+    <Path d="M24 12 l8 8 8 -8" fill={CR} />
+  </Frame>
+);
+
+export const Mirror = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Rect x={27} y={38} width={10} height={20} rx={5} fill={GD} />
+    <Ellipse cx={32} cy={25} rx={17} ry={20} fill={GD} />
+    <Ellipse cx={32} cy={25} rx={12.5} ry={15.5} fill={CR} />
+    <Path d="M27 14 l-6 12" stroke={G_} strokeWidth={3.5} strokeLinecap="round" />
+    <Path d="M36 15 l-4 8" stroke={G_} strokeWidth={2.5} strokeLinecap="round" />
+  </Frame>
+);
+
+export const Candle = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Rect x={24} y={26} width={16} height={28} rx={3} fill={CR} />
+    <Rect x={30} y={18} width={4} height={8} fill={BROWN} />
+    <Path d="M32 4 q9 9 0 16 q-9 -7 0 -16 Z" fill={G_} />
+    <Path d="M32 9 q4 5 0 9 q-4 -4 0 -9 Z" fill={MARIGOLD} />
+  </Frame>
+);
+
+export const Scales = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Rect x={28} y={16} width={7} height={34} rx={2} fill={GD} />
+    <Rect x={16} y={48} width={31} height={7} rx={3} fill={GD} />
+    <Rect x={6} y={17} width={52} height={6} rx={3} fill={G_} />
+    <Path d="M2 27 h22 l-11 13 Z" fill={CR} />
+    <Path d="M40 27 h22 l-11 13 Z" fill={CR} />
+    <Circle cx={31.5} cy={12} r={5} fill={G_} />
+  </Frame>
+);
+
+export const Ballot = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Rect x={10} y={30} width={44} height={24} rx={3} fill={G_} />
+    <Rect x={22} y={32} width={20} height={4} rx={2} fill={IN} />
+    <Rect x={22} y={8} width={20} height={24} rx={2} fill={CR} />
+    <Path
+      d="M26 20 l4 5 8 -10"
+      stroke={JADE}
+      strokeWidth={3.5}
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Frame>
+);
+
+export const MusicNote = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M26 44 V14 l24 -6 v30" stroke={CR} strokeWidth={5} fill="none" strokeLinejoin="round" />
+    <Ellipse cx={19} cy={45} rx={9} ry={7} fill={G_} />
+    <Ellipse cx={43} cy={38} rx={9} ry={7} fill={G_} />
+  </Frame>
+);
+
+export const Bricks = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Rect x={8} y={16} width={22} height={12} rx={2} fill={ROSE} />
+    <Rect x={34} y={16} width={22} height={12} rx={2} fill={ROSE} />
+    <Rect x={8} y={32} width={14} height={12} rx={2} fill={G_} />
+    <Rect x={26} y={32} width={22} height={12} rx={2} fill={ROSE} />
+    <Rect x={8} y={48} width={22} height={10} rx={2} fill={ROSE} />
+    <Rect x={34} y={48} width={22} height={10} rx={2} fill={G_} />
+  </Frame>
+);
+
+export const Jar = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Rect x={18} y={14} width={28} height={7} rx={2} fill={GD} />
+    <Path d="M20 21 h24 v27 a8 8 0 0 1 -8 8 h-8 a8 8 0 0 1 -8 -8 Z" fill={CR} />
+    <Path d="M20 36 h24 v12 a8 8 0 0 1 -8 8 h-8 a8 8 0 0 1 -8 -8 Z" fill={G_} />
+  </Frame>
+);
+
+export const Feather = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M44 8 q16 18 -2 34 q-10 9 -22 8 l-6 6 -4 -4 6 -6 q-2 -12 8 -23 q9 -10 20 -15 Z" fill={CR} />
+    <Path d="M44 8 q-11 5 -20 15 q-10 11 -8 23 Z" fill={G_} />
+    <Path d="M42 12 L16 46" stroke={IN} strokeWidth={2} opacity={0.4} />
+  </Frame>
+);
+
+export const Kite = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M32 6 L52 28 L32 50 L12 28 Z" fill={G_} />
+    <Path d="M32 6 L32 50 M12 28 L52 28" stroke={IN} strokeWidth={2} opacity={0.45} />
+    <Path d="M32 50 q6 6 0 10 q-6 4 0 -10" stroke={CR} strokeWidth={2.5} fill="none" />
+  </Frame>
+);
+
+export const Link = ({ size }: IconProps) => (
+  <Frame size={size}>
+    <Path d="M26 22 h-8 a10 10 0 0 0 0 20 h8" stroke={CR} strokeWidth={7} fill="none" strokeLinecap="round" />
+    <Path d="M38 22 h8 a10 10 0 0 1 0 20 h-8" stroke={G_} strokeWidth={7} fill="none" strokeLinecap="round" />
+    <Path d="M24 32 h16" stroke={CR} strokeWidth={6} strokeLinecap="round" />
+  </Frame>
+);
+
 // ---- registry ------------------------------------------------------------
 
 export const ICONS: Record<string, (p: IconProps) => JSX.Element> = {
@@ -943,6 +1258,13 @@ export const ICONS: Record<string, (p: IconProps) => JSX.Element> = {
   pen: Pen,
   mosque: Mosque,
   salaam: Salaam,
+  dialogue: Dialogue,
+  question: Question,
+  opposites: Opposites,
+  amount: Amount,
+  sizes: Sizes,
+  paw: Paw,
+  swatches: Swatches,
   thanks: ThanksHands,
   check: Check,
   cross: Cross,
@@ -976,6 +1298,24 @@ export const ICONS: Record<string, (p: IconProps) => JSX.Element> = {
   intestine: Intestine,
   lock: Lock,
   speechBubble: SpeechBubble,
+  car: Car,
+  signpost: Signpost,
+  compass: Compass,
+  suitcase: Suitcase,
+  plane: Plane,
+  globe: Globe,
+  map: FoldedMap,
+  shirt: Shirt,
+  mirror: Mirror,
+  candle: Candle,
+  scales: Scales,
+  ballot: Ballot,
+  note: MusicNote,
+  bricks: Bricks,
+  jar: Jar,
+  feather: Feather,
+  kite: Kite,
+  link: Link,
 };
 
 export type IconName = keyof typeof ICONS;

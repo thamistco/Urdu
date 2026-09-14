@@ -4,11 +4,23 @@
  * tiered threshold so a badge visibly levels up rather than being one-and-done.
  */
 
+import type { IconName } from '../art/icons';
+
 export type AchievementDef = {
   id: string;
   title: string;
   description: string;
-  icon: string;
+  /**
+   * Drawn, not typed.
+   *
+   * These six were the last emoji on a screen of their own: a green sprout, a
+   * red flame, a stack of blue and red books, a blue flower, a yellow pen and
+   * a blue diamond, rendered by whatever font the device happened to have, on
+   * a page where everything else is warm gold and cream. The badge wall was
+   * the coldest surface in the app and the only one that looked borrowed.
+   * Every one of the six already had a drawing in the set.
+   */
+  icon: IconName;
   /** which tracked stat drives it */
   metric: 'lessonsCompleted' | 'streak' | 'totalXp' | 'wordsLearned' | 'lettersLearned' | 'perfectLessons';
   tiers: number[];
@@ -19,7 +31,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     id: 'first-steps',
     title: 'First Steps',
     description: 'Complete your first lessons.',
-    icon: '🌱',
+    icon: 'sprout',
     metric: 'lessonsCompleted',
     tiers: [1, 5, 15, 40],
   },
@@ -27,7 +39,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     id: 'flame-keeper',
     title: 'Flame Keeper',
     description: 'Keep your daily streak alive.',
-    icon: '🔥',
+    icon: 'flame',
     metric: 'streak',
     tiers: [3, 7, 30, 100],
   },
@@ -35,7 +47,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     id: 'scholar',
     title: 'Scholar',
     description: 'Earn experience points.',
-    icon: '📚',
+    icon: 'star',
     metric: 'totalXp',
     /**
      * URD-033: the top tier used to sit at 10,000 XP against a course that
@@ -59,7 +71,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     id: 'wordsmith',
     title: 'Wordsmith',
     description: 'Learn new words.',
-    icon: '💠',
+    icon: 'book',
     metric: 'wordsLearned',
     tiers: [10, 30, 60, 100],
   },
@@ -67,7 +79,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     id: 'calligrapher',
     title: 'Calligrapher',
     description: 'Master letters in all four forms.',
-    icon: '🖋️',
+    icon: 'pen',
     metric: 'lettersLearned',
     tiers: [5, 15, 30, 40],
   },
@@ -75,7 +87,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     id: 'flawless',
     title: 'Flawless',
     description: 'Finish lessons with no mistakes.',
-    icon: '💎',
+    icon: 'gem',
     metric: 'perfectLessons',
     tiers: [1, 10, 25, 50],
   },

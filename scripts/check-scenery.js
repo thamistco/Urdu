@@ -46,7 +46,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { serveDist, findChromium, enterAsGuest } = require('./lib/serve-dist');
+const { serveDist, findChromium, enterAsGuest, openTheDoor } = require('./lib/serve-dist');
 
 const ROOT = path.join(__dirname, '..');
 const DIST = path.join(ROOT, 'dist');
@@ -246,13 +246,10 @@ async function textBoxes(page, sceneSelector) {
   for (const scene of SCENES) {
     await page.goto(url);
     await page.waitForTimeout(2500);
-    // The welcome screen is one guest tap past sign-in.
+    // The welcome screen is one tap past sign-in.
     if (scene.name === 'welcome') {
-      const guest = page.locator('text=/CONTINUE AS A GUEST/i').first();
-      if (await guest.count()) {
-        await guest.click();
-        await page.waitForTimeout(1500);
-      }
+      await openTheDoor(page);
+      await page.waitForTimeout(300);
     }
     const boxes = await textBoxes(page, scene.selector);
     if (!boxes) {

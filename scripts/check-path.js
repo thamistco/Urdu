@@ -99,6 +99,44 @@ async function countLessonRows(page) {
   }, LESSON_ROW_SUFFIXES);
 }
 
+/**
+ * Wait for the path to have drawn something before counting it.
+ *
+ * The three scenarios below each slept a flat 1,200ms after loading and then
+ * measured. That is plenty on an idle machine and not always enough inside
+ * `check:all`, where this runs after a full web export with everything else
+ * competing for the box: a run reported "only 0 lesson rows mounted", which the
+ * floor assertion correctly refused to pass, and the same check run again on
+ * the same bundle a minute later measured 95.
+ *
+ * A flaky red costs what a flaky green costs — it teaches whoever sees it to
+ * re-run rather than to read — so the wait is for the condition rather than for
+ * a duration.
+ *
+ * The first version of this swallowed the timeout and returned, which fixed
+ * nothing and hid the reason: the next failure still said "rows are missing",
+ * which is a statement about the app, when what had actually happened was that
+ * the harness gave up. Those two want opposite responses, so this reports which
+ * one it was and the caller says so. Twenty seconds because the budget only has
+ * to be generous enough that expiring means something is genuinely wrong; zero
+ * rows after it is still a real zero and still fails.
+ */
+async function waitForPath(page, ms = 20000) {
+  try {
+    await page.waitForFunction(
+      (suffixes) =>
+        Array.from(document.querySelectorAll('[role="button"]')).some((n) =>
+          suffixes.some((s) => (n.getAttribute('aria-label') || '').endsWith(s))
+        ),
+      LESSON_ROW_SUFFIXES,
+      { timeout: ms }
+    );
+    return null;
+  } catch {
+    return `no lesson row appeared within ${ms / 1000}s of loading Home`;
+  }
+}
+
 async function main() {
   const server = await serveDist(DIST, PORT);
   const chromium = require('playwright-core').chromium;
@@ -148,9 +186,19 @@ async function main() {
     const counts = [];
     for (const scenario of scenarios) {
       const page = await browser.newPage({ viewport: { width: 412, height: 900 } });
+      const pageErrors = [];
+      page.on('pageerror', (e) => pageErrors.push(String(e).slice(0, 120)));
       const url = `http://localhost:${PORT}/Urdu/`;
       await enterAsGuest(page, url, { completedLessons: scenario.completedLessons });
-      await page.waitForTimeout(1200);
+      const stalled = await waitForPath(page);
+      if (stalled) {
+        // A harness problem, not a regression in what the path mounts. Said as
+        // one, so nobody goes looking for missing rows that were never drawn.
+        problems.push(
+          `${scenario.name}: ${stalled} — this check never got to measure anything.` +
+            (pageErrors.length ? ` Page errors: ${pageErrors.slice(0, 2).join(' | ')}` : '')
+        );
+      }
       const n = await countLessonRows(page);
       counts.push({ name: scenario.name, n });
       await page.close();
@@ -179,7 +227,7 @@ async function main() {
       // loudly instead of reading as an excellent bound.
       const expectedLevel = expectedOpenLevel(scenario.completedLessons, scenario.skippedLessons);
       const floor = lessonCountForLevel(expectedLevel);
-      if (n < floor) {
+      if (n < floor && !stalled) {
         problems.push(
           `${scenario.name}: only ${n} lesson rows mounted, under the floor of ${floor} — the ` +
             `${expectedLevel} level (the one this progress should open) holds ${floor} lessons, ` +
@@ -205,7 +253,9 @@ async function main() {
       const page = await browser.newPage({ viewport: { width: 412, height: 900 } });
       const url = `http://localhost:${PORT}/Urdu/`;
       await enterAsGuest(page, url);
-      await page.waitForTimeout(1200);
+      const stalled = await waitForPath(page);
+      if (stalled)
+        problems.push(`tapping every level open in turn: ${stalled} — this check never got to measure anything.`);
 
       let worst = await countLessonRows(page);
       for (const lvl of LEVEL_ORDER) {

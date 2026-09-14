@@ -20,63 +20,46 @@
  * Run with:  npm run check:stability
  */
 
-const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright-core');
+const { serveDist, findChromium, openTheDoor } = require('./lib/serve-dist');
 
 const ROOT = path.join(__dirname, '..');
 const DIST = path.join(ROOT, 'dist');
 const PORT = 8145;
-const CHROME = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium';
 
 if (!fs.existsSync(path.join(DIST, 'index.html'))) {
   console.error('No web build found in dist/. Run: npx expo export --platform web --output-dir dist');
   process.exit(1);
 }
 
-const MIME = {
-  '.html': 'text/html',
-  '.js': 'text/javascript',
-  '.css': 'text/css',
-  '.json': 'application/json',
-  '.ico': 'image/x-icon',
-  '.ttf': 'font/ttf',
-  '.woff2': 'font/woff2',
-  '.mp3': 'audio/mpeg',
-  '.png': 'image/png',
-};
-
 /**
- * CI bakes the deploy's base path (`/<repo-name>`) into the export before this
- * check runs, so index.html asks for `/Urdu/_expo/static/js/...`, not
- * `/_expo/static/js/...`. This server has no subpath — it serves `dist/`
- * straight from `/` — so the first, subpath-prefixed lookup always 404s and
- * fell back to index.html. The browser then tried to *execute* that HTML as
- * the script it had asked for: `SyntaxError: Unexpected token '<'`, on every
- * single request, which is why the very first navigation failed and nothing
- * downstream ever ran. Not hardcoding the repo name here — trying the request
- * both as given and with its first path segment stripped covers any base path
- * generically, without this script needing to know what that segment is.
+ * The server, the asset resolution and the Chromium lookup all used to live in
+ * this file. That copy predates `lib/serve-dist.js`, which was written
+ * precisely because a per-script server is a per-script way to drift — and this
+ * one had drifted twice.
+ *
+ * Its MIME table stopped at `.png`: no `.jpg`, `.svg`, `.woff` or
+ * `.webmanifest`, so the evening backdrop went out as
+ * `application/octet-stream`. That one turned out to be harmless and the
+ * measurement is worth keeping, since the obvious guess was wrong — served
+ * under the old table the picture still paints (`naturalWidth` 1080, complete),
+ * because Chrome sniffs an `<img>` source rather than trusting the header. A
+ * trap rather than a bug, and only for whatever this check is asked to look at
+ * next.
+ *
+ * The second is a live difference. `CHROMIUM_PATH || '/opt/pw-browsers/chromium'`
+ * has none of the directory scan `findChromium` does, so on a machine whose
+ * Playwright build sits under a versioned folder — which is the layout
+ * `findChromium` exists to handle — this check alone would fail to launch while
+ * every other browser check ran.
+ *
+ * This file's own header still explains why `resolveAsset` has to try each
+ * request twice: CI bakes the deploy's base path into the export, and the first
+ * lookup always 404s. That reasoning lives in `lib/serve-dist.js` now, written
+ * once, where every caller gets it.
  */
-function resolveAsset(url) {
-  const clean = decodeURIComponent(url.split('?')[0]);
-  const direct = path.join(DIST, clean);
-  if (fs.existsSync(direct) && fs.statSync(direct).isFile()) return direct;
-
-  const parts = clean.split('/').filter(Boolean);
-  if (parts.length > 1) {
-    const stripped = path.join(DIST, ...parts.slice(1));
-    if (fs.existsSync(stripped) && fs.statSync(stripped).isFile()) return stripped;
-  }
-  return path.join(DIST, 'index.html');
-}
-
-const server = http.createServer((req, res) => {
-  const p = resolveAsset(req.url);
-  res.writeHead(200, { 'Content-Type': MIME[path.extname(p)] || 'application/octet-stream' });
-  fs.createReadStream(p).pipe(res);
-});
 
 /** The part of the screen that is the question: everything above the feedback banner. */
 async function questionText(page) {
@@ -132,8 +115,8 @@ const problems = [];
 const checked = [];
 
 (async () => {
-  await new Promise((r) => server.listen(PORT, r));
-  const browser = await chromium.launch({ executablePath: CHROME });
+  const server = await serveDist(DIST, PORT);
+  const browser = await chromium.launch({ executablePath: findChromium() || undefined });
   const page = await browser.newPage({ viewport: { width: 412, height: 900 }, deviceScaleFactor: 1 });
   const pageErrors = [];
   page.on('pageerror', (e) => pageErrors.push(String(e)));
@@ -143,11 +126,7 @@ const checked = [];
   async function seed(track) {
     await page.goto(url);
     await page.waitForTimeout(2200);
-    const guest = page.locator('text=/CONTINUE AS A GUEST/i').first();
-    if (await guest.count()) {
-      await guest.click();
-      await page.waitForTimeout(1600);
-    }
+    await openTheDoor(page);
     await page.evaluate(
       ([t]) => {
         const raw = JSON.parse(localStorage.getItem('harf-progress') || '{"state":{},"version":0}');
@@ -446,11 +425,7 @@ const checked = [];
   async function seedNoticeProfile(page, extra) {
     await page.goto(url);
     await page.waitForTimeout(2200);
-    const guest = page.locator('text=/CONTINUE AS A GUEST/i').first();
-    if (await guest.count()) {
-      await guest.click();
-      await page.waitForTimeout(1600);
-    }
+    await openTheDoor(page);
     await page.evaluate(writeNoticeProfile, extra);
     await page.goto(url);
     await page.waitForTimeout(2400);
