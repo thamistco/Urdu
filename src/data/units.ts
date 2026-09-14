@@ -1129,25 +1129,98 @@ function coverTopics(units: Unit[]): Unit[] {
   });
 }
 
+/**
+ * The first few meanings a part covers, for its subtitle.
+ *
+ * English, not Roman, because the Script track asked not to be shown Roman and
+ * a subtitle is not the place to go back on that. The meaning is also the more
+ * useful half here: "house, water, book" says what you will be able to name,
+ * where "ghar, paani, kitaab" only says what you will be able to pronounce.
+ *
+ * `meaning` sometimes offers two English words for one Urdu one ("long / tall",
+ * "very / much") or qualifies itself ("tall (height)", "Saturday (also: week)").
+ * A row on the path wants the short promise, so it takes the first and drops
+ * the gloss.
+ *
+ * Case is left exactly as the data has it. Lowercasing the list to make it read
+ * evenly was the first attempt and it is wrong: 38 of the 2,279 meanings start
+ * with a capital and every one of them is a proper noun, so it turned the days
+ * and months topic into "monday, tuesday, wednesday" and the first-words lesson
+ * into "truth, urdu, music".
+ */
+const PREVIEW_WORDS = 3;
+const PREVIEW_MAX_CHARS = 30;
+
+/**
+ * Meanings that would read as a promise about the alphabet.
+ *
+ * The Roman track drops the letter lessons because the learner said they do not
+ * want the script, and `check:answerable` holds every unit and lesson on that
+ * path to it. The first preview written here handed it "First words · 2 of 3 ·
+ * letter, voice, light" and it failed, correctly: حرف means both a letter of the
+ * alphabet and a letter you post, and a row on the Roman path saying "letter" is
+ * the broken promise that rule exists to catch.
+ *
+ * A preview is a sample rather than a contents list, so a word that reads wrong
+ * is simply skipped and the next one shown. Deliberately a second copy of the
+ * check's own pattern rather than a shared import: a check that asks the code it
+ * is checking what the rule is has stopped being a check. If this list ever
+ * drifts below that one, `check:answerable` fails and says which lesson.
+ */
+const READS_AS_SCRIPT = /\b(letters?|script|alphabet|nastaliq|glyphs?|handwriting|trace)\b/i;
+
+function previewOf(words: { meaning: string }[]): string {
+  const shown: string[] = [];
+  for (const w of words) {
+    if (shown.length >= PREVIEW_WORDS) break;
+    const m = w.meaning.split('/')[0].split('(')[0].trim();
+    if (!m || READS_AS_SCRIPT.test(m)) continue;
+    // Always at least one, however long it is — "mother's sister's husband" is
+    // a whole row on its own and there is nothing shorter to say. After that,
+    // only what fits: a second word is not worth a wrapped line.
+    if (shown.length && [...shown, m].join(', ').length > PREVIEW_MAX_CHARS) break;
+    shown.push(m);
+  }
+  return shown.join(', ');
+}
+
 /** One planned vocabulary lesson becomes as many lessons as its topic needs. */
 function expandLesson(l: Lesson): Lesson[] {
   if (l.kind !== 'vocab' || !l.topic) return [l];
   const parts = balancedParts(wordsByTopic(l.topic), WORDS_PER_LESSON_IDEAL);
-  return parts.map((words, i) => ({
-    ...l,
-    id: i === 0 ? l.id : `${l.id}-p${i + 1}`,
-    // The counter goes on the subtitle rather than the title so the path
-    // still reads as one topic broken into sittings, rather than as a
-    // dozen lessons that happen to share a name.
-    subtitle: parts.length > 1 ? `${l.subtitle} · ${i + 1} of ${parts.length}` : l.subtitle,
-    romanSubtitle:
-      l.romanSubtitle && parts.length > 1 ? `${l.romanSubtitle} · ${i + 1} of ${parts.length}` : l.romanSubtitle,
-    wordIds: words.map((w) => w.id),
-    // Three sightings of every new word, plus the closing run. This is the
-    // budget the generator fills; `check:shape` measures what it actually
-    // emits rather than trusting this number.
-    size: SIGHTINGS_PER_WORD * words.length + CLOSING_EXERCISES,
-  }));
+  return parts.map((words, i) => {
+    /**
+     * A split topic's parts say what is in them.
+     *
+     * The counter goes on the subtitle rather than the title so the path still
+     * reads as one topic broken into sittings, rather than as a dozen lessons
+     * that happen to share a name. But the rest of the subtitle used to be the
+     * topic's own blurb, repeated verbatim on every part, so three consecutive
+     * rows read "First words · Everyday vocabulary · 1 of 3", then 2 of 3, then
+     * 3 of 3 — same title, same picture, same words, differing in one digit. In
+     * the first forty lessons alone that shape covers "First words" ×3,
+     * "Describing" ×3, "Time & day" ×3 and eight more pairs.
+     *
+     * Each part already owns its `wordIds`, so it can say what it holds instead
+     * of describing the topic it came from. The blurb is not lost: it only ever
+     * restated the title ("First words · Everyday vocabulary"), or previewed the
+     * topic's first words, which is what this now does per part and correctly.
+     */
+    const preview = parts.length > 1 ? previewOf(words) : '';
+    const counted = (base: string) =>
+      preview ? `${i + 1} of ${parts.length} · ${preview}` : `${base} · ${i + 1} of ${parts.length}`;
+    return {
+      ...l,
+      id: i === 0 ? l.id : `${l.id}-p${i + 1}`,
+      subtitle: parts.length > 1 ? counted(l.subtitle) : l.subtitle,
+      romanSubtitle: l.romanSubtitle && parts.length > 1 ? counted(l.romanSubtitle) : l.romanSubtitle,
+      wordIds: words.map((w) => w.id),
+      // Three sightings of every new word, plus the closing run. This is the
+      // budget the generator fills; `check:shape` measures what it actually
+      // emits rather than trusting this number.
+      size: SIGHTINGS_PER_WORD * words.length + CLOSING_EXERCISES,
+    };
+  });
 }
 
 export const UNITS: Unit[] = coverTopics(PLANNED_UNITS);
