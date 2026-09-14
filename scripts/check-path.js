@@ -99,6 +99,33 @@ async function countLessonRows(page) {
   }, LESSON_ROW_SUFFIXES);
 }
 
+/**
+ * Wait for the path to have drawn something before counting it.
+ *
+ * The three scenarios below each slept a flat 1,200ms after loading and then
+ * measured. That is plenty on an idle machine and not always enough inside
+ * `check:all`, where this runs after a full web export with everything else
+ * competing for the box: one run reported "only 0 lesson rows mounted", which
+ * the floor assertion correctly refused to pass, and the same check run again
+ * on the same bundle a minute later measured 95.
+ *
+ * A flaky red is as expensive as a flaky green — it teaches whoever sees it to
+ * re-run rather than to read — so the wait is for the condition rather than for
+ * a duration. Zero rows after this has waited is a real zero, and still fails.
+ */
+async function waitForPath(page, ms = 8000) {
+  await page
+    .waitForFunction(
+      (suffixes) =>
+        Array.from(document.querySelectorAll('[role="button"]')).some((n) =>
+          suffixes.some((s) => (n.getAttribute('aria-label') || '').endsWith(s))
+        ),
+      LESSON_ROW_SUFFIXES,
+      { timeout: ms }
+    )
+    .catch(() => {});
+}
+
 async function main() {
   const server = await serveDist(DIST, PORT);
   const chromium = require('playwright-core').chromium;
@@ -150,7 +177,7 @@ async function main() {
       const page = await browser.newPage({ viewport: { width: 412, height: 900 } });
       const url = `http://localhost:${PORT}/Urdu/`;
       await enterAsGuest(page, url, { completedLessons: scenario.completedLessons });
-      await page.waitForTimeout(1200);
+      await waitForPath(page);
       const n = await countLessonRows(page);
       counts.push({ name: scenario.name, n });
       await page.close();
@@ -205,7 +232,7 @@ async function main() {
       const page = await browser.newPage({ viewport: { width: 412, height: 900 } });
       const url = `http://localhost:${PORT}/Urdu/`;
       await enterAsGuest(page, url);
-      await page.waitForTimeout(1200);
+      await waitForPath(page);
 
       let worst = await countLessonRows(page);
       for (const lvl of LEVEL_ORDER) {
