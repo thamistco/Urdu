@@ -24,6 +24,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright-core');
+const { openTheDoor } = require('./lib/serve-dist');
 
 const ROOT = path.join(__dirname, '..');
 const DIST = path.join(ROOT, 'dist');
@@ -143,11 +144,7 @@ const checked = [];
   async function seed(track) {
     await page.goto(url);
     await page.waitForTimeout(2200);
-    const guest = page.locator('text=/CONTINUE AS A GUEST/i').first();
-    if (await guest.count()) {
-      await guest.click();
-      await page.waitForTimeout(1600);
-    }
+    await openTheDoor(page);
     await page.evaluate(
       ([t]) => {
         const raw = JSON.parse(localStorage.getItem('harf-progress') || '{"state":{},"version":0}');
@@ -446,11 +443,7 @@ const checked = [];
   async function seedNoticeProfile(page, extra) {
     await page.goto(url);
     await page.waitForTimeout(2200);
-    const guest = page.locator('text=/CONTINUE AS A GUEST/i').first();
-    if (await guest.count()) {
-      await guest.click();
-      await page.waitForTimeout(1600);
-    }
+    await openTheDoor(page);
     await page.evaluate(writeNoticeProfile, extra);
     await page.goto(url);
     await page.waitForTimeout(2400);

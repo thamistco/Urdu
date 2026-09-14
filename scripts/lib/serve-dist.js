@@ -117,14 +117,58 @@ function findChromium() {
  * keeping the two stores' overrides from being confused for each other the
  * way `goal`/`track` just were.
  */
+/**
+ * The one line only the sign-in screen says. Used to tell "we are still at the
+ * front door" from "we are already through it", which is the difference a
+ * missing button has to be judged against.
+ */
+const AT_THE_DOOR = /the whole language\./i;
+
+/**
+ * Tap whatever opens the door, and fail loudly if nothing does.
+ *
+ * The label depends on the build: with a backend to sign into, the way in is a
+ * ghost "Continue as a guest" under two provider buttons; without one — which
+ * is how the site deploys — `LoginScreen.tsx` shows a single "Start learning".
+ *
+ * The `if (await count())` this replaces is what made the rename dangerous.
+ * Three scripts each held their own copy of `text=/CONTINUE AS A GUEST/i`, and
+ * every one of them treated "no such button" as "already inside". Measured on
+ * a build where the button had been renamed, with the old helper still in
+ * place, that cost one check its meaning and two others their diagnosis:
+ *
+ *  - `check:sizes` passed. "16 screen renders across 8 sizes. Nothing clipped,
+ *    nothing scrolling sideways" — while every one of the eight `home` renders
+ *    was the sign-in screen it had already measured a line earlier.
+ *  - `check:scenery` failed with "the welcome picture is not on the screen",
+ *    and `check:stability` with "the Got it button never appeared". Both were
+ *    right to fail and neither said why: the app was still at the front door.
+ *
+ * So it throws rather than shrugs, and names the door.
+ */
+async function openTheDoor(page) {
+  if (!(await page.evaluate((re) => new RegExp(re, 'i').test(document.body.innerText), AT_THE_DOOR.source))) {
+    return false; // already through — a seeded session, or a later navigation
+  }
+  const door = page.locator('text=/^(continue as a guest|start learning)$/i').first();
+  if (!(await door.count())) {
+    throw new Error(
+      'stuck on the sign-in screen: no "Continue as a guest" or "Start learning" button. ' +
+        'If LoginScreen.tsx renamed the way in, rename it here too.'
+    );
+  }
+  await door.click();
+  await page.waitForTimeout(1200);
+  if (await page.evaluate((re) => new RegExp(re, 'i').test(document.body.innerText), AT_THE_DOOR.source)) {
+    throw new Error('tapped the way in and the sign-in screen is still showing');
+  }
+  return true;
+}
+
 async function enterAsGuest(page, url, state = {}, settings = {}) {
   await page.goto(url);
   await page.waitForTimeout(2000);
-  const guest = page.locator('text=/CONTINUE AS A GUEST/i').first();
-  if (await guest.count()) {
-    await guest.click();
-    await page.waitForTimeout(1200);
-  }
+  await openTheDoor(page);
   await page.evaluate(
     ({ extra, settingsExtra }) => {
       const raw = JSON.parse(localStorage.getItem('harf-progress') || '{"state":{},"version":0}');
@@ -153,4 +197,4 @@ async function enterAsGuest(page, url, state = {}, settings = {}) {
   await page.waitForTimeout(2500);
 }
 
-module.exports = { serveDist, resolveAsset, findChromium, enterAsGuest, MIME };
+module.exports = { serveDist, resolveAsset, findChromium, enterAsGuest, openTheDoor, MIME };
