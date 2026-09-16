@@ -7,7 +7,7 @@ export const CULTURE_PACKS: TopicPack[] = [
     [
       ['w-saaz', 'ساز', 'saaz', 'instrument', '🎻'],
       ['w-tabla', 'طبلہ', 'tabla', 'tabla drums', '🥁'],
-      ['w-gaayak', 'گلوکار', 'gulookaar', 'singer', '🎤'],
+      ['w-gulookaar', 'گلوکار', 'gulookaar', 'singer', '🎤'],
       ['w-sur', 'سر', 'sur', 'musical note', '🎼', 'سُر'],
       ['w-taal', 'تال', 'taal', 'rhythm', '🥁'],
       ['w-raqs', 'رقص', 'raqs', 'dance', '💃'],
