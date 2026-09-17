@@ -232,6 +232,38 @@ async function main() {
       }
     }
 
+    /**
+     * A teaching card cannot be got wrong, so it ends the moment it is
+     * acknowledged. It used to take "Got it", then a banner reading "Keep that
+     * in mind", then "Continue" — a second tap on 2,362 of the course's 12,061
+     * exercises to confirm the button the learner had just pressed.
+     */
+    if (!(await tapByText(page, /Start this lesson$/))) {
+      problems.push('Could not open the first lesson from Home — the teaching-card assertion proves nothing.');
+    } else {
+      await page.waitForTimeout(2200);
+      const before = await page.evaluate(() => document.body.innerText);
+      if (!/got it/i.test(before)) {
+        problems.push(
+          `The first lesson does not open on a teaching card: ${before.replace(/\n/g, ' / ').slice(0, 90)}`
+        );
+      } else {
+        await tapByText(page, /^Got it$/);
+        await page.waitForTimeout(1400);
+        const after = await page.evaluate(() => document.body.innerText);
+        if (/keep that in mind/i.test(after)) {
+          problems.push('Acknowledging a teaching card still opens a banner asking to be acknowledged again.');
+        }
+        if (after === before) {
+          problems.push('Acknowledging a teaching card did not move the lesson on.');
+        }
+      }
+      // Leave the lesson the way a learner would, so the checks below start
+      // from Home rather than from wherever this ended up.
+      await tapByText(page, /^✕$/);
+      await page.waitForTimeout(1200);
+    }
+
     if (!(await tapByText(page, /^Profile$/))) {
       problems.push('Could not find the Profile tab — the route to Settings is gone, so this check proves nothing.');
     } else {
@@ -302,6 +334,7 @@ async function main() {
   console.log('check:controls — the wordmark announces its name once in each script, not once per glow layer.');
   console.log("check:controls — Home's two progress bars each carry a label saying what they measure.");
   console.log('check:controls — the league table says on screen that its cohort is not real people.');
+  console.log('check:controls — a teaching card ends on one tap, with no banner asking to be acknowledged twice.');
   console.log(
     'check:controls — Settings offers a guest no sign-in it cannot honour, and still says where progress lives.'
   );

@@ -98,7 +98,14 @@ describe('LessonScreen wiring (URD-055)', () => {
 
   it('onGraded records every graded item via recordItemGrade', () => {
     const onGradedBody = extractBody('onGraded', 'const onGraded = useCallback(');
-    expect(onGradedBody.length).toBeLessThan(2500);
+    // A sanity bound on the extraction, not a budget for the function: it
+    // exists so that an `extractBody` matching from 0 to the end of the file
+    // cannot make every assertion here pass trivially. LessonScreen.tsx is
+    // well over 30,000 characters, so anything in this range is unambiguously
+    // one function body. Raised from 2,500 when `onGraded` gained its
+    // teaching-card branch — real code, not a longer comment, which is why
+    // this moved rather than the code being squeezed to fit it.
+    expect(onGradedBody.length).toBeLessThan(3200);
     expect(onGradedBody).toContain('recordItemGrade(');
   });
 

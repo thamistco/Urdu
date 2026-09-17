@@ -246,8 +246,33 @@ export function LessonScreen() {
   const reveal = graded === false && current && !isTeaching(current) ? answerReveal(current) : null;
   const total = exercises.length;
 
+  /**
+   * A teaching card has nothing to grade, so it goes straight on.
+   *
+   * It used to end in three steps: "Got it", then a banner reading "Keep that
+   * in mind", then "Continue" — two taps and a slide-in animation to
+   * acknowledge a card that cannot be got wrong. Teaching cards are 2,362 of
+   * the course's 12,061 exercises, so that was a second tap on nearly one
+   * screen in five, and what it confirmed was that the learner had pressed the
+   * button they had just pressed.
+   *
+   * The footer's rhythm is the argument for keeping it, and it is a real one —
+   * but the rhythm it kept was "every screen ends in a banner", not "every
+   * screen ends in a tap", and the tap is the part a thumb notices.
+   *
+   * The early return below still does everything the old path did apart from
+   * opening the banner, so a card counts toward the session's tally exactly as
+   * it did before and the "N of M" on the results screen is unchanged.
+   */
   const onGraded = useCallback(
     (result: GradedResult) => {
+      if (isTeaching(exercises[idx])) {
+        const seen = !result.correct ? 'again' : demandOf(exercises[idx]) === 'produce' ? 'easy' : 'good';
+        result.items.forEach((it) => recordItemGrade(it, seen));
+        if (result.correct) setCorrectCount((c) => c + 1);
+        advanceRef.current();
+        return;
+      }
       setGraded(result.correct);
       // Answering opens the feedback banner, which takes a third of the
       // screen, so bring it into view. Used to fire only on a wrong answer —
@@ -301,6 +326,15 @@ export function LessonScreen() {
   // playing into whatever the learner opens next.
   useEffect(() => invalidateSpeech, []);
 
+  /**
+   * `advance` closes over state that changes every question, and `onGraded` is
+   * memoised, so the teaching-card path above reaches it through a ref rather
+   * than capturing a stale copy. Refreshed in an effect rather than during
+   * render: the value only has to be current by the time a thumb lands on the
+   * card's button, which is always after the commit.
+   */
+  const advanceRef = useRef<() => void>(() => {});
+
   const advance = () => {
     invalidateSpeech();
     if (heartsSpent) {
@@ -337,6 +371,10 @@ export function LessonScreen() {
       setDone(true);
     }
   };
+
+  useEffect(() => {
+    advanceRef.current = advance;
+  });
 
   if (done && result) {
     return <LessonComplete result={result} correct={correctCount} total={total} onHome={() => nav.navigate('Main')} />;
