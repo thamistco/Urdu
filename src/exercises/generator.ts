@@ -1038,9 +1038,43 @@ function sentenceExercise(sentence: Sentence, track: LearnTrack): Exercise | und
  */
 function sentenceReinforceClimb(picks: Sentence[], pool: Word[], track: LearnTrack, exercises: Exercise[]): void {
   const ROUNDS = 5;
-  for (let round = 0; round < ROUNDS; round++) {
-    picks.forEach((sen, idx) => {
-      const turn = (round + idx) % ROUNDS;
+  /**
+   * Every sentence starts at turn 0 — the turn that introduces it.
+   *
+   * `turn = (round + idx) % ROUNDS` staggered the kinds so a round would not
+   * play the same one five times over, and it did that. What it also did was
+   * decide where each sentence *entered* the cycle: only `idx` 0 began on the
+   * meet turn. In a real pronouns lesson four of five sentences were asked to
+   * be produced or recalled before they had ever been shown, and two of them
+   * met the meet turn last — exercise 24 of 28. A playtest caught it as five
+   * sentences its learner could only guess at; the generator's own output
+   * confirms it without a browser.
+   *
+   * The stagger moves to *when* a sentence enters instead of *where*: sentence
+   * `idx` starts one slot later than the one before it, and then walks its own
+   * turns 0..4 in order. Within a slot the sentences are therefore at
+   * consecutive turns, whose kinds differ (meet, produce, recall, produce,
+   * recall), so the no-two-alike-in-a-row property the cycle was built for
+   * holds exactly as it did — and the counts per kind are untouched, which is
+   * what `check:shape`'s 40% cap is measured against.
+   */
+  for (let slot = 0; slot < ROUNDS + picks.length - 1; slot++) {
+    /**
+     * The sentences in flight this slot, oldest first — and, when the slot
+     * would open on the kind the previous one closed with, rotated so it does
+     * not. Only the two-sentence case actually needs it (its every slot held a
+     * matching pair, giving two adjacent repeats where the old cycle had none);
+     * larger lessons are left as the diagonal produces them.
+     */
+    const inFlight = picks.map((sen, idx) => ({ sen, turn: slot - idx })).filter((x) => x.turn >= 0 && x.turn < ROUNDS);
+    const lastKind = exercises.length ? exercises[exercises.length - 1].kind : '';
+    const kindOf = (turn: number) =>
+      turn === 1 || turn === 3 ? 'sentenceBuild' : turn === 0 ? 'meaningPick' : 'wordFromMeaning';
+    if (inFlight.length > 1 && kindOf(inFlight[0].turn) === lastKind) {
+      const j = inFlight.findIndex((x) => kindOf(x.turn) !== lastKind);
+      if (j > 0) inFlight.unshift(...inFlight.splice(j, 1));
+    }
+    inFlight.forEach(({ sen, turn }) => {
       const w = SENTENCE_WORDS.find((x) => x.id === sen.id);
       if (!w) return;
       if (turn === 1 || turn === 3) {

@@ -563,6 +563,49 @@ const earlyWords = [];
   }
 }
 
+/**
+ * A sentence is met before it is produced.
+ *
+ * `sentenceReinforceClimb` walks each sentence through meet → produce →
+ * recall → produce → recall, and the turn a sentence *entered* that cycle used
+ * to depend on its position in the list: `turn = (round + idx) % ROUNDS`, so
+ * only the first sentence began on the meet turn. Across the course 382 of
+ * 524 sentences were asked to be assembled from tiles, or recalled from their
+ * English, before the app had ever shown them — in one pronouns lesson, two of
+ * five met their meet turn at exercise 24 of 28.
+ *
+ * A playtester found it as five sentences it could only guess at. This is the
+ * same fact without a browser: for every lesson on both tracks, the first
+ * exercise that uses a sentence must be the one that introduces it.
+ */
+const lateSentences = [];
+for (const lesson of ALL_LESSONS) {
+  for (const track of ['both', 'script']) {
+    const exercises = buildLessonExercises(lesson, [], track);
+    const firstUse = new Map();
+    exercises.forEach((e, i) => {
+      // A sentence rides in `word` for the two recognition kinds and in
+      // `sentence` for the build — it is one item either way.
+      const id = e.sentence ? e.sentence.id : e.word ? e.word.id : null;
+      if (!id || !id.startsWith('s-') || firstUse.has(id)) return;
+      firstUse.set(id, { kind: e.kind, at: i });
+    });
+    for (const [id, use] of firstUse) {
+      if (use.kind === 'meaningPick') continue;
+      lateSentences.push(`${lesson.id} (${track}) meets ${id} with ${use.kind} at exercise ${use.at}`);
+    }
+  }
+}
+
+console.log(`\n-- every sentence introduced before it is produced --`);
+if (lateSentences.length) {
+  console.log(`${lateSentences.length} finding(s):`);
+  for (const f of lateSentences.slice(0, 20)) console.log(`  ${f}`);
+  if (lateSentences.length > 20) console.log(`  … and ${lateSentences.length - 20} more`);
+} else {
+  console.log('none — every sentence is shown before the learner is asked to produce it.');
+}
+
 console.log(`\n-- within a lesson: every word tested after the card that teaches it --`);
 if (earlyWords.length) {
   console.log(`${earlyWords.length} finding(s):`);
@@ -577,6 +620,13 @@ if (earlyWords.length) {
   console.error(
     `${earlyWords.length} exercise(s) test a word before the lesson teaches it. The fix is usually the picture: ` +
       `words that share one cue collide, and a matching board that cannot seat them tops up from the rest of the topic.`
+  );
+  process.exit(1);
+}
+if (lateSentences.length) {
+  console.error(
+    `${lateSentences.length} sentence(s) are produced or recalled before the exercise that introduces them. ` +
+      `See sentenceReinforceClimb: the turn a sentence enters the cycle on must not depend on its position.`
   );
   process.exit(1);
 }
