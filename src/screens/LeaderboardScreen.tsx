@@ -10,7 +10,13 @@ import { palette, withAlpha } from '../theme';
 import { getLeague, leagueAbove, leagueBelow, leagueMovementLine } from '../lib/gamification';
 import { useProgressStore } from '../store/useProgressStore';
 
-/** Believable weekly cohort. Deterministic per-week so it feels stable. */
+/**
+ * A practice cohort. Deterministic per-week so it feels stable.
+ *
+ * Named on screen for what it is — see the line under the league header. It
+ * exists so the league can teach pacing before there is anyone to pace
+ * against; it is not a claim that these people are playing.
+ */
 const NAMES = [
   'Ayesha',
   'Bilal',
@@ -66,6 +72,16 @@ export function LeaderboardScreen() {
               {league.name} League
             </Heading>
             <Txt className="mt-1 text-center text-xs text-paper/55">{leagueMovementLine(leagueId)} Resets weekly.</Txt>
+            {/* The fourteen names below are generated from the week number.
+                The code has always been honest about it — "Believable weekly
+                cohort" — and the screen was not: it presented them exactly
+                like real competitors, with nothing anywhere saying otherwise.
+                Kept, because a league with nobody in it teaches nothing about
+                pacing, and said out loud, because this was the one place the
+                app told a learner something untrue. */}
+            <Txt className="mt-2 text-center text-[11px] text-paper/55">
+              The other names are a practice cohort, not real people. Your XP is the only real number here.
+            </Txt>
           </View>
         </Reveal>
 
