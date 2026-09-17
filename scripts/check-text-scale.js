@@ -63,7 +63,25 @@ async function main() {
     const read = async (root, seed) => {
       const page = await browser.newPage({ viewport: { width: 412, height: 900 } });
       await enterAsGuest(page, `http://localhost:${PORT}/Urdu/`, seed);
-      await page.waitForTimeout(1800);
+      /**
+       * Wait for the path to be on screen, not for a number of milliseconds.
+       *
+       * This check passed on its own and failed inside `check:all` at "0
+       * label-sized lines were comparable" — it had sampled a half-mounted
+       * Home, because 1800ms is a guess about how loaded the machine is and
+       * the full pipeline is the most loaded it ever gets. The refusal was
+       * right and the cause was the clock.
+       */
+      await page
+        .waitForFunction(
+          () =>
+            Array.from(document.querySelectorAll('[role="button"]')).some((n) =>
+              /start this lesson/i.test(n.getAttribute('aria-label') || '')
+            ),
+          { timeout: 30000 }
+        )
+        .catch(() => {});
+      await page.waitForTimeout(600);
       await page.evaluate((r) => {
         document.documentElement.style.fontSize = `${r}px`;
       }, root);
