@@ -71,7 +71,7 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
         {/* The transliteration is the answer spelled out, so it is held back
             until the sentence has been attempted. */}
         {showRoman && graded != null ? (
-          <Txt style={{ color: palette.ink }} className="mt-1 text-center text-xs opacity-55">
+          <Txt style={{ color: palette.ink }} className="mt-1 text-center text-xs opacity-65">
             {sentence.roman}
           </Txt>
         ) : null}
@@ -195,7 +195,7 @@ export function ReadingExercise({ exercise, track, showRoman, locked, onGraded }
                     {l.urdu}
                   </Urdu>
                   {showRoman ? (
-                    <Txt style={{ color: palette.ink }} className="mt-2 text-[0.6875rem] leading-4 opacity-50">
+                    <Txt style={{ color: palette.ink }} className="mt-2 text-[0.6875rem] leading-4 opacity-65">
                       {l.roman}
                     </Txt>
                   ) : null}

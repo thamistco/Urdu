@@ -877,7 +877,7 @@ export function HomeScreen() {
                       color={palette.ink}
                       align="left"
                     />
-                    <Txt style={{ color: palette.ink }} className="text-xs opacity-60">
+                    <Txt style={{ color: palette.ink }} className="text-xs opacity-65">
                       {glossOf(word)}
                     </Txt>
                   </View>

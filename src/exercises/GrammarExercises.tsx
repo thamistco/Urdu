@@ -255,7 +255,7 @@ export function GrammarDrillExercise({ exercise, track, showRoman, locked, onGra
               {shown}
             </Urdu>
             {showRoman ? (
-              <Txt style={{ color: palette.ink }} className="mt-2.5 text-xs opacity-55">
+              <Txt style={{ color: palette.ink }} className="mt-2.5 text-xs opacity-65">
                 {picked ? shownRoman : drill.promptRoman}
               </Txt>
             ) : null}

@@ -164,7 +164,7 @@ export function ListenTapExercise({ exercise, showRoman, locked, onGraded }: Exe
             <Illustration name="speaker" tile={false} size={36} />
           </View>
         </Pressable>
-        <Txt style={{ color: palette.ink }} className="mt-3 text-xs opacity-50">
+        <Txt style={{ color: palette.ink }} className="mt-3 text-xs opacity-65">
           {/* The transliteration is the answer written out, so it waits until
               the question has been answered; otherwise there is nothing to
               listen for. */}

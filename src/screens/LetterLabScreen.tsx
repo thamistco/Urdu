@@ -100,7 +100,7 @@ export function LetterLabScreen() {
                     </Urdu>
                   </View>
                   <View className="items-center border-t pt-3" style={{ borderTopColor: withAlpha(palette.ink, 0.1) }}>
-                    <Txt style={{ color: palette.ink }} className="text-xs opacity-60">
+                    <Txt style={{ color: palette.ink }} className="text-xs opacity-65">
                       {POSITIONS.find((p) => p.key === pos)?.hint} · tap to hear
                     </Txt>
                   </View>
