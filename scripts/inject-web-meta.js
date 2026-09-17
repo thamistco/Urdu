@@ -145,6 +145,15 @@ const tags = [
   // fetches the live page and asserts this matches, which is the only way to
   // know a deploy actually published rather than merely reporting success.
   buildSha && `<meta name="harf:build" content="${esc(buildSha)}" />`,
+  // The subpath the site is served from, for the router.
+  //
+  // Expo writes absolute asset URLs under this prefix but emits no <base> tag
+  // and no runtime constant for it, and react-navigation's web linking matches
+  // against the whole `location.pathname` — so without this the deployed app
+  // at /Urdu/ would try to resolve "/Urdu/settings" against routes named
+  // "settings" and find nothing. Absent means served from the root, which is
+  // what a local `npm run build:web` produces.
+  baseUrl && `<meta name="harf:base" content="${esc(baseUrl)}" />`,
 ].filter(Boolean);
 
 let html = fs.readFileSync(INDEX, 'utf8');

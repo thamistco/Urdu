@@ -12,6 +12,7 @@ import { PublicSans_400Regular, PublicSans_500Medium, PublicSans_700Bold } from 
 import { NotoNastaliqUrdu_400Regular, NotoNastaliqUrdu_700Bold } from '@expo-google-fonts/noto-nastaliq-urdu';
 
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { linking } from './src/navigation/linking';
 import { initSound } from './src/lib/sound';
 import { useSettingsStore } from './src/store/useSettingsStore';
 import { useProgressStore } from './src/store/useProgressStore';
@@ -91,7 +92,7 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.ink }}>
       <SafeAreaProvider>
-        <NavigationContainer theme={navTheme} onReady={onReady} documentTitle={DOCUMENT_TITLE}>
+        <NavigationContainer linking={linking} theme={navTheme} onReady={onReady} documentTitle={DOCUMENT_TITLE}>
           <StatusBar style="light" />
           <RootNavigator />
         </NavigationContainer>
