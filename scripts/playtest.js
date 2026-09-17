@@ -1239,6 +1239,23 @@ function writeReport(journal, memory, stats) {
         `falling due, lessons that are too easy, streaks and leagues held long enough to matter.`,
       ``
     );
+  /**
+   * When this file was last written, and how far the run had got.
+   *
+   * A run died mid-lesson and was noticed two hours later. Nothing said so:
+   * the process was gone, the log ended without a summary, and `tail` on it
+   * showed lesson 7 of 34 exactly as it had while the run was healthy, because
+   * stdout to a file is buffered and the last thing written was stale. The
+   * journal was current and nobody was looking at the journal.
+   *
+   * With this line, one look at the report answers "is it alive, and where is
+   * it" — which is the whole point of writing the report every lesson.
+   */
+  lines.push(
+    `Written ${new Date().toISOString().replace('T', ' ').slice(0, 19)}Z, ` +
+      `after lesson ${stats.lessonsEntered} of ${LESSONS}.`,
+    ``
+  );
   lines.push(
     `Played ${stats.lessonsEntered} lessons, ${stats.lessonsFinished} finished. ` +
       `Answered ${answered.length} questions, ${right} right (${answered.length ? Math.round((right / answered.length) * 100) : 0}%). ` +
