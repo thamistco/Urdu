@@ -137,6 +137,65 @@ async function main() {
     }
 
     await page.close();
+
+    /**
+     * The other end of the same behaviour: a brand new learner opening Home
+     * for the first time.
+     *
+     * The auto-scroll that reveals a current lesson deep in the course used to
+     * be guarded by `pageY > 420` — a constant that knows nothing about how
+     * tall the screen is. On a phone a learner in Unit 1 has their first
+     * lesson fully visible with the tab bar below it, and this scrolled 505px
+     * anyway: past the greeting, the counters, the level card, the "Start
+     * here" card, Today's Word and the Letter Lab. Their first ever view of
+     * Home was a hint banner and a list.
+     *
+     * Two sizes, because the property is "scroll exactly when the node would
+     * otherwise be cut off" and a check on one size alone cannot tell that
+     * from "never scroll". The small screen is the case the old constant was
+     * accidentally right about.
+     */
+    for (const device of [
+      { name: 'iPhone 14', width: 390, height: 844, expect: 'no scroll' },
+      { name: 'iPhone SE', width: 320, height: 568, expect: 'scroll' },
+    ]) {
+      const p = await browser.newPage({ viewport: { width: device.width, height: device.height } });
+      await enterAsGuest(p, url, {});
+      await p.waitForTimeout(2200);
+      const at = await p.evaluate(findScrollTop);
+      const nodeVisible = await p.evaluate(() => {
+        const n = Array.from(document.querySelectorAll('[role="button"]')).find((x) =>
+          /Start this lesson$/.test(x.getAttribute('aria-label') || '')
+        );
+        if (!n) return null;
+        const r = n.getBoundingClientRect();
+        return { top: Math.round(r.top), bottom: Math.round(r.bottom), within: r.top >= 0 && r.bottom <= innerHeight };
+      });
+      await p.close();
+
+      if (!nodeVisible) {
+        problems.push(`${device.name}: no current lesson node on Home for a brand new learner.`);
+        continue;
+      }
+      if (!nodeVisible.within) {
+        problems.push(
+          `${device.name}: the current lesson ends at ${nodeVisible.bottom}px of ${device.height} — not brought into view.`
+        );
+      }
+      if (device.expect === 'no scroll' && at !== 0) {
+        problems.push(
+          `${device.name}: Home opened scrolled to ${at}px for a brand new learner, whose first lesson was already ` +
+            `on screen. Everything above it — the greeting, the counters, Today's Word, the Letter Lab — is scrolled away.`
+        );
+      }
+      if (device.expect === 'scroll' && at === 0) {
+        problems.push(
+          `${device.name}: Home did not scroll at all, and this screen is too short to show the current lesson without it.`
+        );
+      }
+      console.log(`check:home-scroll — ${device.name}: opens at ${at}px, current lesson at ${nodeVisible.top}px.`);
+    }
+
     await browser.close();
   } finally {
     server.close();
