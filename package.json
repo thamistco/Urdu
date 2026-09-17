@@ -32,6 +32,7 @@
     "check:home-scroll": "node scripts/check-home-scroll.js",
     "check:controls": "node scripts/check-controls.js",
     "check:text-scale": "node scripts/check-text-scale.js",
+    "check:links": "node scripts/check-links.js",
     "check:stage-advance-scroll": "node scripts/check-stage-advance-scroll.js",
     "check:soak-track": "node scripts/check-soak-track.js",
     "check:soak-track-arg": "node scripts/check-soak-track-arg.js",

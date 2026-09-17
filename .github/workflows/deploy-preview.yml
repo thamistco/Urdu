@@ -279,6 +279,14 @@ jobs:
           CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
             npm run check:text-scale
 
+      # The web build lived at one URL, so the browser back button — the
+      # hardware back button on Android — left the app instead of backing out
+      # of a lesson, and nothing could be linked to.
+      - name: Check every screen has a URL and back stays inside the app
+        run: |
+          CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
+            npm run check:links
+
       - name: SPA fallback + disable Jekyll
         run: |
           cp dist/index.html dist/404.html
