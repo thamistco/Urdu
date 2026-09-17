@@ -64,7 +64,7 @@
 const fs = require('fs');
 const path = require('path');
 const { serveDist, findChromium, enterAsGuest } = require('./lib/serve-dist');
-const { glyphStroke } = require('./lib/glyph-trace');
+const { glyphStrokes } = require('./lib/glyph-trace');
 
 const ROOT = path.join(__dirname, '..');
 const DIST = path.join(ROOT, 'dist');
@@ -810,8 +810,8 @@ async function traceLetter(page, sloppy) {
   } catch {
     return false;
   }
-  const stroke = glyphStroke(png);
-  if (!stroke) return false;
+  const strokes = glyphStrokes(png);
+  if (!strokes || !strokes.length) return false;
 
   // The screenshot comes back in device pixels and the mouse moves in CSS
   // pixels. At deviceScaleFactor 2 that is a stroke drawn at half size over the
@@ -822,15 +822,24 @@ async function traceLetter(page, sloppy) {
   const scale = png.width / area.width;
   const at = (p) => ({ x: area.x + p.x / scale, y: area.y + p.y / scale });
 
-  const walk = sloppy ? stroke.slice(0, Math.max(4, Math.floor(stroke.length / 3))) : stroke;
-  const first = at(walk[0]);
-  await page.mouse.move(first.x, first.y);
-  await page.mouse.down();
-  for (const p of walk) {
-    const q = at(p);
-    await page.mouse.move(q.x, q.y);
+  // A sloppy learner draws a third of the letter's body and none of its dots,
+  // which is what the app is supposed to refuse; a careful one draws every
+  // piece, lifting the pen between them the way the letter is actually written.
+  const walks = sloppy
+    ? [strokes[0].slice(0, Math.max(4, Math.floor(strokes[0].length / 3)))]
+    : strokes.filter((s) => s.length);
+
+  for (const walk of walks) {
+    const first = at(walk[0]);
+    await page.mouse.move(first.x, first.y);
+    await page.mouse.down();
+    for (const p of walk) {
+      const q = at(p);
+      await page.mouse.move(q.x, q.y);
+    }
+    await page.mouse.up();
+    await page.waitForTimeout(40);
   }
-  await page.mouse.up();
   await page.waitForTimeout(250);
   return clickByText(page, /^Check$/i);
 }
@@ -1605,7 +1614,18 @@ async function main() {
 
   for (let lesson = 0; lesson < LESSONS; lesson++) {
     await topUpHearts(page);
-    await page.reload();
+    /**
+     * Back to the path, not just back to where we were.
+     *
+     * A lesson can end without being finished — a trace this driver cannot
+     * draw, a screen it cannot read — and a reload then reopens the lesson,
+     * because the lesson is what the URL says. The next iteration looks for
+     * "start this lesson", finds a letter card instead, and the run stops with
+     * "no lesson on the path could be opened". That cost one slice fourteen of
+     * its twenty-four lessons, and reported it as though the app had run out of
+     * course.
+     */
+    await page.goto(`http://127.0.0.1:${PORT}/`);
     // Wait for the path to actually be on screen. A fixed sleep here reported
     // "no lesson could be opened" on a perfectly healthy app, because three
     // reloads in a row take longer to mount than any number guessed in advance.
