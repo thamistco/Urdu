@@ -321,7 +321,37 @@ async function main() {
     }
 
     if (!tapped) {
-      problems.push(`Could not find/tap the current lesson row ('${LEAVE_INCOMPLETE}') — cannot exercise this at all.`);
+      /**
+       * This failed once inside a `check:all` run and has not reproduced —
+       * not standalone, and not in the three full runs since. A check that
+       * fails at random blocks a deploy at random, so rather than guess at a
+       * cause from a single occurrence, the next one carries its evidence:
+       * whether the row was in the DOM at all, whether it was laid out, and
+       * where the list had been scrolled to. Guessing here would have meant
+       * "fixing" a race that may not exist.
+       */
+      const seen = await page.evaluate(() => {
+        const all = Array.from(document.querySelectorAll('[role="button"]'));
+        const n = all.find((x) => /start this lesson/i.test(x.getAttribute('aria-label') || ''));
+        const scroller = Array.from(document.querySelectorAll('*')).find((el) => {
+          const s = getComputedStyle(el);
+          return /(auto|scroll)/.test(s.overflowY) && el.scrollHeight > el.clientHeight + 50;
+        });
+        const r = n ? n.getBoundingClientRect() : null;
+        return {
+          buttons: all.length,
+          found: !!n,
+          label: n ? n.getAttribute('aria-label') : null,
+          laidOut: n ? n.offsetParent !== null : null,
+          rect: r ? { top: Math.round(r.top), height: Math.round(r.height), width: Math.round(r.width) } : null,
+          scrollTop: scroller ? Math.round(scroller.scrollTop) : null,
+          scrollHeight: scroller ? Math.round(scroller.scrollHeight) : null,
+        };
+      });
+      problems.push(
+        `Could not find/tap the current lesson row ('${LEAVE_INCOMPLETE}') — cannot exercise this at all.\n` +
+          `      state on the last attempt: ${JSON.stringify(seen)}`
+      );
     } else {
       await page.waitForTimeout(1800);
       const reached = await walk(page, 20);
