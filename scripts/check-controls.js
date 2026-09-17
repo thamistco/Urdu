@@ -199,6 +199,39 @@ async function main() {
       problems.push('Home still prints "XP today" above the level bar, which is not what that bar measures.');
     }
 
+    /**
+     * The Letter Lab is the best reference screen in the app and was reached
+     * through a tile with no accessible name, labelled in 9px type broken
+     * across two lines. Asserted as: it names itself to assistive tech, and
+     * the words on it are laid out as words rather than wrapped to fit.
+     */
+    const lab = await page.evaluate(() => {
+      const el = [...document.querySelectorAll('[role="button"]')].find((n) =>
+        /^Letter Lab\b/.test(n.getAttribute('aria-label') || '')
+      );
+      if (!el) return null;
+      const box = el.getBoundingClientRect();
+      const lines = [...el.querySelectorAll('div,span,p')]
+        .filter((n) => !n.children.length && (n.textContent || '').trim())
+        .map((n) => {
+          const r = n.getBoundingClientRect();
+          return { text: n.textContent.trim(), width: Math.round(r.width), height: Math.round(r.height) };
+        });
+      return { width: Math.round(box.width), lines };
+    });
+    if (!lab) {
+      problems.push('Home has no control that names itself as the Letter Lab.');
+    } else {
+      const name = lab.lines.find((l) => /^Letter Lab$/.test(l.text));
+      if (!name) {
+        problems.push(
+          `The Letter Lab tile does not spell its name on one line: ${lab.lines.map((l) => l.text).join(' / ')}`
+        );
+      } else if (name.height > 24) {
+        problems.push(`"Letter Lab" wraps inside a ${lab.width}px tile — it is rendering ${name.height}px tall.`);
+      }
+    }
+
     if (!(await tapByText(page, /^Profile$/))) {
       problems.push('Could not find the Profile tab — the route to Settings is gone, so this check proves nothing.');
     } else {

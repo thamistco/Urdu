@@ -23,6 +23,7 @@ import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { Lesson, unitsForTrack, findLesson, ALL_LESSONS } from '../data/units';
 import { needsPathMoveNotice } from '../lib/progress';
+import { LETTERS } from '../data/letters';
 import { LEVEL_META, LEVEL_ORDER, type Level, glossOf } from '../data/words';
 import { WORDS } from '../data/words';
 import { DAILY_GOALS } from '../data/achievements';
@@ -881,8 +882,21 @@ export function HomeScreen() {
                   <WordArt word={word} size={46} />
                 </View>
               </Card>
+              {/* The best reference screen in the app was reached through a
+                  96px tile labelled in 9px type broken across two lines, with
+                  no accessible name at all — a pen, and a word too small to
+                  read at a glance. It is wider now and says what it is on one
+                  line at a legible size, with the alphabet counted underneath
+                  so the tile explains itself rather than only naming itself.
+
+                  Width, not height. Anything added above the path pushes the
+                  current lesson below the fold, and the auto-scroll would
+                  then correctly scroll past this whole header to reveal it —
+                  undoing the fix that put the header on screen in the first
+                  place. */}
               <Pressable
                 accessibilityRole="button"
+                accessibilityLabel="Letter Lab. Every letter of the alphabet, its four joining shapes, and tracing practice."
                 onPress={() => {
                   feedback.tap();
                   nav.navigate('LetterLab');
@@ -890,13 +904,16 @@ export function HomeScreen() {
                 style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.97 : 1 }] })}
               >
                 <View
-                  className="h-full w-24 items-center justify-center rounded-2xl border px-2 py-4"
+                  className="h-full w-28 items-center justify-center rounded-2xl border px-2 py-4"
                   style={{ borderColor: withAlpha(palette.gold, 0.3), backgroundColor: withAlpha(palette.gold, 0.1) }}
                 >
-                  <Illustration name="pen" tile={false} size={40} />
-                  <Eyebrow style={{ color: palette.gold, fontSize: 9 }} className="mt-3 text-center">
-                    Letter{'\n'}Lab
-                  </Eyebrow>
+                  <Illustration name="pen" tile={false} size={36} />
+                  <Bold style={{ color: palette.gold }} className="mt-2 text-center text-[13px]">
+                    Letter Lab
+                  </Bold>
+                  <Txt style={{ color: withAlpha(palette.gold, 0.75) }} className="text-center text-[10px]">
+                    all {LETTERS.length} letters
+                  </Txt>
                 </View>
               </Pressable>
             </View>
