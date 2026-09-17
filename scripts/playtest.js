@@ -97,6 +97,21 @@ const SHOT = argOf('shot', null) ? new RegExp(argOf('shot', ''), 'i') : null;
  */
 const LESSON_BUDGET_MS = Number(argOf('budget', 360)) * 1000;
 
+/**
+ * How many screens in a row the app may leave ungraded before the driver gives
+ * up on the lesson.
+ *
+ * The wall-clock budget above bounds a *slow* lesson; it does not bound a
+ * *misread* one, because a screen this driver cannot answer costs about two
+ * seconds and changes nothing, so it repeats for as long as the step cap
+ * allows. One run spent 133 of a lesson's 140 steps on a single sentence-build
+ * screen and reported the lesson as taking five and a half minutes — the number
+ * that was actually wrong was the count of screens, and nothing in the run said
+ * so. Six in a row is past any plausible run of genuinely ungraded screens: the
+ * app grades every exercise it shows, so even one is worth looking at.
+ */
+const UNGRADED_RUN_LIMIT = Number(argOf('ungraded-limit', 6));
+
 /** One seeded generator, so a run that finds something can be replayed. */
 let seedState = SEED;
 const rand = () => {
@@ -457,14 +472,22 @@ async function traceLetter(page, sloppy) {
 }
 
 /**
- * Assemble a word out of letter tiles.
+ * Assemble a word out of letter tiles, or a sentence out of word tiles.
  *
  * The tiles are much smaller than an answer card, so the option reader skips
  * them and the screen looks like a dead end; four of five lessons in an early
  * run ended here, on "Build the word", with the driver reporting no way
  * forward when a learner would simply have been tapping letters.
  *
- * A learner who remembers the word taps its letters; one who does not taps
+ * Both trays are played here because they are the same interaction: the app
+ * labels a waiting tile "Tap to add it to the word" or "…to the sentence"
+ * depending on which, and this read only matched the first. `sentenceBuild`
+ * screens say "Build the sentence", so they reached this function, found no
+ * tiles, and returned without ever pressing Check — 133 consecutive dropped
+ * screens on one lesson of the 30-lesson run, and, worse, not a single
+ * sentence-building exercise exercised by this driver in any run before it.
+ *
+ * A learner who remembers taps the right pieces in order; one who does not taps
  * something and finds out. Both are real, and which one happened is recorded.
  */
 async function buildWord(page, memory, promptLine) {
@@ -480,26 +503,37 @@ async function buildWord(page, memory, promptLine) {
       .evaluate(() => {
         // The tray and the assembly line hold identical-looking tiles, so they
         // are told apart by what the app says they do, not by where they sit:
-        // a tile waiting to be used says "Tap to add it to the word", and one
-        // already placed says "Tap to take it back".
+        // a tile waiting to be used says "Tap to add it to the word" (or "\u2026to
+        // the sentence"), and one already placed says "Tap to take it back".
         const out = [];
         for (const n of document.querySelectorAll('[role="button"]')) {
-          if (!/tap to add it to the word/i.test(n.getAttribute('aria-label') || '')) continue;
+          const of = /tap to add it to the (word|sentence)/i.exec(n.getAttribute('aria-label') || '');
+          if (!of) continue;
           const r = n.getBoundingClientRect();
           if (r.width < 10 || r.height < 10) continue;
-          out.push({ t: (n.textContent || '').trim(), x: r.left + r.width / 2, y: r.top + r.height / 2 });
+          out.push({
+            t: (n.textContent || '').trim(),
+            of: of[1].toLowerCase(),
+            x: r.left + r.width / 2,
+            y: r.top + r.height / 2,
+          });
         }
         return out;
       })
       .catch(() => []);
 
   const tiles = await readTray();
-  if (!tiles.length) return { tapped: 0, taught: false, knew: false };
+  // Reported, never swallowed. A tray this driver cannot read is a fault in
+  // this file, and the run that hid one behind a silent `return` spent a
+  // quarter of its steps on it looking like an app that would not grade.
+  if (!tiles.length) return { tapped: 0, taught: false, knew: false, unreadable: true };
+  const mode = tiles[0].of === 'sentence' ? 'sentence' : 'word';
 
-  // Does the learner know how this word is spelled? Only if the app has shown
-  // it the script form already.
+  // Does the learner know this? Only if the app has shown the script form
+  // already \u2014 spelled out in letters for a word, in words for a sentence.
   const cluster = memory.clusterFor(promptLine) || null;
-  const target = cluster ? [...cluster.tokens].find((t) => /[\u0600-\u06ff]/.test(t)) : null;
+  const script = cluster ? [...cluster.tokens].filter((t) => /[\u0600-\u06ff]/.test(t)) : [];
+  const target = script.find((t) => (mode === 'sentence' ? /\s/.test(t) : !/\s/.test(t))) ?? null;
   // See `typeWord`: shown-at-all and remembered-now are separate questions.
   const taught = !!target;
   const knew = taught && rand() < memory.recall(promptLine);
@@ -515,7 +549,10 @@ async function buildWord(page, memory, promptLine) {
   // Knowing the word means spelling it: its letters, in order, decoys left
   // alone. Not knowing it means placing some plausible number of tiles in some
   // order, which is mostly wrong, as it should be, but can come out right.
-  const wanted = knew ? [...target.replace(/\s/g, '')] : null;
+  // A sentence is the same shape one level up — its words, in order, and
+  // `sentenceTilesFor` mixes in a decoy or two exactly as `buildTilesFor` does.
+  const wanted = knew ? (mode === 'sentence' ? target.split(/\s+/) : [...target.replace(/\s/g, '')]) : null;
+  const holds = (tile, piece) => (mode === 'sentence' ? norm(tile) === norm(piece) : tile.includes(piece));
   const taps = wanted ? wanted.length : 2 + Math.floor(rand() * (tiles.length - 1));
 
   let tapped = 0;
@@ -524,7 +561,7 @@ async function buildWord(page, memory, promptLine) {
     if (!rest.length) break;
 
     let pick = null;
-    if (wanted && i < wanted.length) pick = rest.find((t) => t.t.includes(wanted[i]));
+    if (wanted && i < wanted.length) pick = rest.find((t) => holds(t.t, wanted[i]));
     if (!pick) pick = rest[Math.floor(rand() * rest.length)];
 
     await page.mouse.click(pick.x, pick.y).catch(() => {});
@@ -533,7 +570,7 @@ async function buildWord(page, memory, promptLine) {
   }
 
   await clickByText(page, /^Check$/i);
-  return { tapped, taught, knew };
+  return { tapped, taught, knew, mode };
 }
 
 /**
@@ -866,6 +903,20 @@ function findings(journal) {
     });
   }
 
+  // Lessons abandoned because the same unreadable screen came back six times.
+  // Listed separately from the count above because it says something the count
+  // does not: the lesson's remaining exercises were never played at all, so a
+  // run carrying one of these has a hole in its coverage, not just noise.
+  const driverStuck = journal.filter((e) => e.type === 'driverStuck');
+  if (driverStuck.length) {
+    out.push({
+      kind: 'harness: gave up on a lesson it could not read',
+      count: driverStuck.length,
+      note: 'The rest of each of these lessons went unplayed. Fix this file before trusting the run as coverage.',
+      examples: driverStuck.map((e) => ({ lesson: e.lesson, shape: e.shape })),
+    });
+  }
+
   // The app shows the reveal panel and then, 500ms later, replaces the entire
   // screen with the hearts wall. On the one wrong answer where a learner most
   // needs to see what the right answer was, they get half a second of it.
@@ -1022,6 +1073,23 @@ async function main() {
         break;
       }
 
+      // See `UNGRADED_RUN_LIMIT`: a screen the driver cannot answer repeats
+      // silently and cheaply, so the run has to notice the repetition itself.
+      const tail = journal.slice(-UNGRADED_RUN_LIMIT);
+      if (
+        UNGRADED_RUN_LIMIT > 0 &&
+        tail.length === UNGRADED_RUN_LIMIT &&
+        tail.every((e) => e.type === 'ungraded' && e.lesson === lessonName)
+      ) {
+        const shape = tail[tail.length - 1].promptShape;
+        journal.push({ type: 'driverStuck', lesson: lessonName, step, shape, screens: UNGRADED_RUN_LIMIT });
+        console.log(
+          `    ⚠ ${lessonName}: ${UNGRADED_RUN_LIMIT} unanswerable "${shape}" screens in a row — a playtest.js fault, not a finding`
+        );
+        await page.screenshot({ path: path.join(OUT, `driver-stuck-${stats.lessonsEntered}.png`) }).catch(() => {});
+        break;
+      }
+
       memory.step++;
       const screen = await readScreen(page);
 
@@ -1121,6 +1189,32 @@ async function main() {
         );
         memory.learn(shown.slice(0, 3));
         journal.push({ type: 'taught', lesson: lessonName, step, shown: shown.slice(0, 3) });
+        await clickByText(page, /^Got it$/i);
+        await page.waitForTimeout(500);
+        await pressContinue(page);
+        await page.waitForTimeout(500);
+        continue;
+      }
+
+      /**
+       * A letter being introduced: the glyph, its name and sound, its four
+       * positional shapes, an example word, and a button.
+       *
+       * The same card as "a new word" above, and missing here for as long as
+       * this file has existed. The option reader tapped "Got it", `LetterTeach`
+       * advanced without grading anything — deliberately, since looking at a
+       * letter is not evidence of recalling it — and every one of these was
+       * filed as a screen the app never judged: 24 of the 159 in one 30-lesson
+       * run, all of them this branch's absence rather than anything about the
+       * app.
+       */
+      if (/^a new letter$/im.test(screen.body)) {
+        // "alif · sounds like “a / aa”" — the trace branch's narrower
+        // `/^[A-Za-z’']+\s*·/` misses the two-word names (alif madda, bari ye).
+        const named = screen.lines.find((l) => /·\s*sounds like/i.test(l));
+        const glyph = screen.lines.find((l) => /^[؀-ۿ‎‏]+$/.test(l));
+        if (named && glyph) memory.learn([named.split('·')[0].trim(), glyph]);
+        journal.push({ type: 'taught', lesson: lessonName, step, shown: [named, glyph].filter(Boolean) });
         await clickByText(page, /^Got it$/i);
         await page.waitForTimeout(500);
         await pressContinue(page);
@@ -1238,16 +1332,26 @@ async function main() {
       // Tile trays: building a word or a sentence out of pieces.
       if (/build the word|build the sentence|tap the letters|tap the words/i.test(screen.body)) {
         const prompt = screen.lines.find((l) => /·/.test(l)) || screen.lines[1] || '';
-        const built = await buildWord(page, memory, prompt.split('·')[0].trim());
+        const promptLine = prompt.split('·')[0].trim();
+        const built = await buildWord(page, memory, promptLine);
+        if (built.unreadable)
+          console.log(`  ⚠ tile tray unreadable in ${lessonName} — a playtest.js fault, not a finding`);
         const after = await waitForGraded(page);
         const reveal = revealFrom(after.lines);
         const knewAnswer = knewRevealedAnswer(memory, reveal);
-        if (reveal && reveal.length >= 2) memory.learn(reveal);
+        // A sentence reveal is script and transliteration only — its English is
+        // the prompt, deliberately not repeated (see `answerReveal`). Learning
+        // the reveal alone therefore never ties the sentence to the meaning the
+        // next exercise asks it by, so the pairing the learner actually makes
+        // is the one recorded here.
+        if (reveal && reveal.length >= 2) memory.learn(built.mode === 'sentence' ? [promptLine, ...reveal] : reveal);
         record(journal, after, {
           lesson: lessonName,
           step,
           prompt,
-          promptShape: 'build the word',
+          // From the screen rather than from `built`, so a tray this driver
+          // failed to read is still filed under the exercise it belongs to.
+          promptShape: /build the sentence|tap the words/i.test(screen.body) ? 'build the sentence' : 'build the word',
           optionText: [],
           picked: `${built.tapped} tiles`,
           ...classify(built.taught, built.knew),
