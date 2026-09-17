@@ -30,7 +30,7 @@
  * cannot see.
  */
 
-const { record, classify, revealFrom, findings, knewRevealedAnswer } = require('./playtest.js');
+const { record, classify, revealFrom, findings, knewRevealedAnswer, Memory } = require('./playtest.js');
 
 let fails = 0;
 const ok = (name, cond) => {
@@ -184,6 +184,42 @@ const ok = (name, cond) => {
   const opener = { type: 'answer', correct: false, knewAnswer: false, reveal: ['\u06af\u06be\u0631'] };
   const f = findings([opener, { type: 'taught', lesson: 'L' }, wrong]).find((x) => x.kind === 'tested before taught');
   ok('a question answered by the card after it is not counted as untaught', !!f && f.count === 1);
+}
+
+// -- a cluster is one meaning, and stays one ---------------------------------
+
+{
+  // The bug this file was extended for: every screen in the app carries the
+  // same close button, so one shared string chained every cluster that had
+  // ever been learned beside one into a single blob. Two lessons in, the
+  // largest held 21 strings; over 34 the learner answered "Book" with "alif".
+  const m = new Memory();
+  m.learn(['کتاب', 'kitaab', 'book', '✕']);
+  m.learn(['پانی', 'paani', 'water', '✕']);
+  ok('screen chrome never joins a cluster', !m.knows('✕'));
+  ok('and cannot merge two words through itself', m.clusterFor('book') !== m.clusterFor('water'));
+  ok('the words themselves are still learned', m.knows('book') && m.knows('paani'));
+}
+
+{
+  // One shared string is a coincidence — a header above an unrelated question,
+  // a gloss that happens to repeat. Two is the same word said twice.
+  const m = new Memory();
+  m.learn(['الف', 'alif']);
+  m.learn(['alif', 'these look alike']);
+  ok('one shared string does not merge two meanings', m.clusterFor('these look alike') !== m.clusterFor('الف'));
+  m.learn(['الف', 'alif', 'a / aa']);
+  ok('two shared strings do', m.clusterFor('a / aa') === m.clusterFor('الف'));
+}
+
+{
+  // A string can sit in more than one meaning. Recall reads the best of them,
+  // because a learner who knows either one knows this string.
+  const m = new Memory();
+  m.learn(['ایک', 'ek', 'one']);
+  for (let i = 0; i < 6; i++) m.learn(['ایک', 'ek', 'one']);
+  m.learn(['one another', 'one']);
+  ok('a token in two meanings recalls the better one', m.recall('one') > 0.8);
 }
 
 console.log(fails ? `\n${fails} failed` : '\nall good');

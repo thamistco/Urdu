@@ -130,23 +130,60 @@ const norm = (s) => (s || '').replace(/[‎‏؜]/g, '').replace(/\s+/g, ' ').tr
  * "water", "پانی" and "paani" are one entry rather than three. `strength` is
  * raised every time the app shows the cluster again and read back with decay,
  * because a learner who met a word once forty exercises ago does not know it.
+ *
+ * Two rules keep a cluster from becoming a blob, and both exist because it
+ * did. The first version merged two clusters whenever they shared a single
+ * string, and every screen in the app carries the same close button: one
+ * correct answer learned alongside "✕" chained its cluster to every other
+ * cluster that had ever seen one. Two lessons in, the largest cluster held 21
+ * strings — `be`, `te`, four glyphs, "these look alike" and "✕" — all of it
+ * one meaning as far as the model was concerned. That is not a small
+ * inaccuracy: `typeWord` types a script form out of the prompt's cluster, so
+ * over 34 lessons the learner answered "Book" with "alif", "Farewell" with
+ * "happy", and got 0 of 149 typed words right. Every "recalled" in that
+ * journal, and every count in the report built on one, was measuring this.
+ *
+ *   - Nothing that is not a word joins a cluster. One branch already kept the
+ *     close glyph out of its own call, with a note about what letting it
+ *     through had cost; a rule that has to be remembered at each of eight call
+ *     sites is not a rule, so it lives here.
+ *   - Two clusters merge only on an overlap of two strings or more. One shared
+ *     string is what a coincidence looks like — a gloss that happens to repeat,
+ *     a header above an unrelated question. Two is what the same word looks
+ *     like. A token may therefore belong to several clusters, and the readers
+ *     below pick between them rather than assuming there is only one.
  */
 class Memory {
   constructor() {
     this.clusters = [];
+    /** token → every cluster holding it, strongest first at read time. */
     this.index = new Map();
     this.step = 0;
   }
 
   /** Teach these strings as being the same thing. */
   learn(tokens) {
-    const keys = tokens.map(norm).filter((t) => t && t.length > 0);
+    const keys = [
+      ...new Set(
+        tokens
+          .map(norm)
+          // Screen chrome, not language: the close button, a bare arrow, a
+          // lone bullet. A string with no letter or digit in it cannot be a
+          // form of a word, and it is exactly the kind that turns up on every
+          // screen and joins everything to everything.
+          .filter((t) => t && !/^[^\p{L}\p{N}]+$/u.test(t))
+      ),
+    ];
     if (keys.length < 2) return;
-    const existing = keys.map((k) => this.index.get(k)).find(Boolean);
+
+    const overlap = (c) => keys.reduce((n, k) => n + (c.tokens.has(k) ? 1 : 0), 0);
+    const existing = this.clusters.find((c) => overlap(c) >= 2);
     const cluster = existing || { tokens: new Set(), strength: 0, lastSeen: this.step, firstSeen: this.step };
     for (const k of keys) {
       cluster.tokens.add(k);
-      this.index.set(k, cluster);
+      const at = this.index.get(k);
+      if (!at) this.index.set(k, [cluster]);
+      else if (!at.includes(cluster)) at.push(cluster);
     }
     if (!existing) this.clusters.push(cluster);
     cluster.strength += 1;
@@ -165,18 +202,29 @@ class Memory {
    * constants are not tuned against anything — they are a plausible forgetting
    * curve, and the journal records the raw sightings and gaps alongside every
    * decision so a reader can disagree with them without rerunning anything.
+   *
+   * Read from the best cluster holding the token, because a string can sit in
+   * more than one: "one" is a number and part of "one another", and a learner
+   * who knows either of them knows this string.
    */
   recall(token) {
-    const c = this.index.get(norm(token));
-    if (!c) return 0;
-    const gap = this.step - c.lastSeen;
-    const learned = 1 - Math.exp(-0.6 * c.strength);
-    const retained = Math.exp(-gap / 45);
-    return learned * retained;
+    const cs = this.index.get(norm(token));
+    if (!cs || !cs.length) return 0;
+    return Math.max(
+      ...cs.map((c) => {
+        const gap = this.step - c.lastSeen;
+        const learned = 1 - Math.exp(-0.6 * c.strength);
+        const retained = Math.exp(-gap / 45);
+        return learned * retained;
+      })
+    );
   }
 
+  /** The best-remembered meaning this string belongs to. */
   clusterFor(token) {
-    return this.index.get(norm(token));
+    const cs = this.index.get(norm(token));
+    if (!cs || !cs.length) return undefined;
+    return cs.reduce((a, c) => (c.strength > a.strength ? c : a));
   }
 }
 
@@ -966,6 +1014,37 @@ function writeReport(journal, memory, stats) {
       `Learned ${memory.clusters.length} words well enough to have a memory of them.`,
     ``
   );
+
+  /**
+   * How big the largest thing this learner thinks is one word got.
+   *
+   * A cluster is one meaning in all the forms the app has shown it in, and two
+   * clusters merge the moment they share a single string. That makes one wrong
+   * pairing contagious: it chains its two clusters, the next wrong pairing
+   * chains those, and what comes out is a single blob the model will happily
+   * "recall" any member of. The `a new word` branch already carries a note
+   * about one way in — the close glyph, which was on every screen — and the
+   * fix there was to keep that one string out, which cannot be the fix for a
+   * mechanism that has this many doors.
+   *
+   * So the size is printed on every run, whether or not anything looks wrong.
+   * A number consulted only once someone suspects a problem is a number that
+   * finds nothing: this one sat at four figures for four rounds while the
+   * report described the learner's memory as "196 words".
+   */
+  const biggest = memory.clusters.reduce((a, c) => (!a || c.tokens.size > a.tokens.size ? c : a), null);
+  if (biggest) {
+    lines.push(
+      `Largest single cluster: ${biggest.tokens.size} strings the learner believes are one meaning ` +
+        `— ${[...biggest.tokens]
+          .slice(0, 8)
+          .map((t) => `\`${t}\``)
+          .join(', ')}. ` +
+        `Anything past a word, its reading and its meaning is this file merging things it should not.`,
+      ``
+    );
+  }
+
   lines.push(`## What the run can prove`, ``);
   if (!f.length)
     lines.push(`Nothing mechanical to report: every question was answerable from what the app had taught.`, ``);
