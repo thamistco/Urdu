@@ -16,6 +16,7 @@ import {
   LeagueId,
 } from '../lib/gamification';
 import { ACHIEVEMENTS } from '../data/achievements';
+import { heartsAreFree } from '../lib/hearts';
 import { migrateProgress } from '../lib/progress';
 
 export type Goal = 'family' | 'read' | 'heritage' | 'curious';
@@ -252,6 +253,10 @@ export const useProgressStore = create<ProgressState>()(
         // Tester mode watches the app rather than plays it; see useTesterStore.
         if (testerFlags().infiniteHearts) return;
         const s = get();
+        // Unit 1 costs no hearts. See lib/hearts.ts for why: before it is
+        // finished a refill is unaffordable by construction, so the wall there
+        // is not a choice between waiting and paying, it is just waiting.
+        if (heartsAreFree(s.completedLessons, s.skippedLessons)) return;
         const hearts = Math.max(0, s.hearts - 1);
         set({
           hearts,
