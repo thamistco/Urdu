@@ -257,6 +257,35 @@ async function main() {
         if (after === before) {
           problems.push('Acknowledging a teaching card did not move the lesson on.');
         }
+
+        /**
+         * Thumb reach. Measured across four consecutive exercises, the lesson
+         * body ended at 490px of 844 and every tappable option sat in the top
+         * 58% of the screen, with the bottom 42% empty until the footer filled
+         * it — which happens only after the answer, when the learner has
+         * stopped reaching for anything.
+         *
+         * 0.7 is taken from the two measurements rather than picked to feel
+         * safe: the same screen reaches 60-61% of the viewport top-aligned and
+         * 78-79% centred, at 390x844 and at 412x900 alike. A threshold between
+         * them discriminates. The first version of this used 55%, which passed
+         * either way — a check that could not fail.
+         */
+        const reach = await page.evaluate(() => {
+          const rects = [...document.querySelectorAll('[role="button"]')]
+            .map((n) => n.getBoundingClientRect())
+            .filter((r) => r.height > 20 && r.width > 40);
+          if (!rects.length) return null;
+          return { lowest: Math.round(Math.max(...rects.map((r) => r.bottom))), viewport: window.innerHeight };
+        });
+        if (!reach) {
+          problems.push('No tappable option on the lesson screen after the teaching card.');
+        } else if (reach.lowest < reach.viewport * 0.7) {
+          problems.push(
+            `Everything tappable in a lesson stops at ${reach.lowest}px of ${reach.viewport} — the bottom ` +
+              `${Math.round((1 - reach.lowest / reach.viewport) * 100)}% of the screen, nearest the thumb, is empty.`
+          );
+        }
       }
       // Leave the lesson the way a learner would, so the checks below start
       // from Home rather than from wherever this ended up.
@@ -335,6 +364,7 @@ async function main() {
   console.log("check:controls — Home's two progress bars each carry a label saying what they measure.");
   console.log('check:controls — the league table says on screen that its cohort is not real people.');
   console.log('check:controls — a teaching card ends on one tap, with no banner asking to be acknowledged twice.');
+  console.log('check:controls — a lesson puts what a thumb has to reach in the lower half of the screen.');
   console.log(
     'check:controls — Settings offers a guest no sign-in it cannot honour, and still says where progress lives.'
   );
