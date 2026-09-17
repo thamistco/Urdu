@@ -76,13 +76,32 @@ const bloom = (radius: number, alpha: number) => ({
 /** Glow copies sit under the core; only the core is in flow, so it sets the size. */
 const STACKED = { position: 'absolute' as const, left: 0, right: 0, textAlign: 'center' as const };
 
-/** One tube: the bloom stack, then the filament. */
+/**
+ * One tube: the bloom stack, then the filament.
+ *
+ * Every layer is a real copy of the word — react-native allows one shadow per
+ * Text, so the glow is built by stacking the name under itself. That is fine
+ * to look at and wrong to listen to: nothing marked the copies as decoration,
+ * so opening the app read "Harf" four times and "حرف" four times before
+ * reaching the tagline. The filament carries the name; the bloom is light.
+ *
+ * Three ways of saying "decoration" because three platforms ask differently:
+ * `aria-hidden` for the web build that ships, and the two react-native
+ * properties for iOS and Android, which have no effect on web and cost
+ * nothing to carry.
+ */
 function Tube({ children, style, urdu }: { children: string; style: object; urdu?: boolean }) {
   const Face = urdu ? Urdu : Display;
   return (
     <View className="items-center justify-center">
       {LAYERS.map((l) => (
-        <Face key={l.radius} style={[style, STACKED, { color: palette.gold }, bloom(l.radius, l.alpha)]}>
+        <Face
+          key={l.radius}
+          aria-hidden
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={[style, STACKED, { color: palette.gold }, bloom(l.radius, l.alpha)]}
+        >
           {children}
         </Face>
       ))}
