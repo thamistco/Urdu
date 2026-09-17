@@ -84,7 +84,7 @@ function TabBar({ state, navigation }: BottomTabBarProps) {
               >
                 <TabIcon name={route.name} color={focused ? palette.gold : withAlpha(palette.cream, 0.45)} />
                 <Txt
-                  className="mt-1 text-[11px]"
+                  className="mt-1 text-[0.6875rem]"
                   style={{ color: focused ? palette.gold : withAlpha(palette.cream, 0.5), fontWeight: '700' }}
                 >
                   {route.name}

@@ -61,7 +61,7 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
     <View>
       <Question>Build the sentence</Question>
       <View className="mb-4 items-center rounded-2xl bg-parchment px-5 py-4">
-        <Txt style={{ color: palette.ink }} className="text-center text-[15px] font-semibold">
+        <Txt style={{ color: palette.ink }} className="text-center text-[0.9375rem] font-semibold">
           {/* تم (casual) and آپ (polite) both mean "you", and a learner has no
               way to tell them apart from the English alone — the distinction
               was explained once, in the pronouns grammar concept, and never
@@ -200,7 +200,7 @@ export function ReadingExercise({ exercise, track, showRoman, locked, onGraded }
                     {l.urdu}
                   </Urdu>
                   {showRoman ? (
-                    <Txt style={{ color: palette.ink }} className="mt-2 text-[11px] leading-4 opacity-50">
+                    <Txt style={{ color: palette.ink }} className="mt-2 text-[0.6875rem] leading-4 opacity-50">
                       {l.roman}
                     </Txt>
                   ) : null}
@@ -241,7 +241,7 @@ export function ReadingExercise({ exercise, track, showRoman, locked, onGraded }
                 picked == null ? 'idle' : o === passage.question.answer ? 'correct' : o === picked ? 'wrong' : 'muted';
               return (
                 <Choice key={o} state={state} disabled={picked != null || locked} onPress={() => choose(o)}>
-                  <Bold className="text-[15px]">{o}</Bold>
+                  <Bold className="text-[0.9375rem]">{o}</Bold>
                 </Choice>
               );
             })}

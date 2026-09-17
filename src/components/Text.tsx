@@ -41,7 +41,7 @@ export function Eyebrow({ className = '', style, ...p }: Props) {
     <RNText
       {...p}
       style={[LTR, style]}
-      className={`font-body-bold uppercase tracking-[2px] text-[11px] ${className}`}
+      className={`font-body-bold uppercase tracking-[2px] text-[0.6875rem] ${className}`}
     />
   );
 }

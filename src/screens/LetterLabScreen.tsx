@@ -59,7 +59,9 @@ export function LetterLabScreen() {
                       className="absolute -right-1 -top-1 h-4 w-4 items-center justify-center rounded-full"
                       style={{ backgroundColor: palette.jade }}
                     >
-                      <Txt style={{ fontSize: 9, color: palette.white }}>✓</Txt>
+                      <Txt className="text-[0.5625rem]" style={{ color: palette.white }}>
+                        ✓
+                      </Txt>
                     </View>
                   )}
                 </View>
@@ -75,7 +77,9 @@ export function LetterLabScreen() {
             </Eyebrow>
             {!letter.connects && (
               <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: withAlpha(palette.rose, 0.2) }}>
-                <Eyebrow style={{ color: palette.roseLight, fontSize: 8 }}>Never joins forward</Eyebrow>
+                <Eyebrow className="text-[0.5rem]" style={{ color: palette.roseLight }}>
+                  Never joins forward
+                </Eyebrow>
               </View>
             )}
           </View>
@@ -157,8 +161,8 @@ export function LetterLabScreen() {
                       {letter.forms[p.key]}
                     </Urdu>
                     <Eyebrow
-                      style={{ color: active ? palette.gold : withAlpha(palette.paper, 0.55), fontSize: 9 }}
-                      className="mt-1"
+                      style={{ color: active ? palette.gold : withAlpha(palette.paper, 0.55) }}
+                      className="mt-1 text-[0.5625rem]"
                     >
                       {p.label}
                     </Eyebrow>

@@ -32,7 +32,7 @@ function Row({
   return (
     <View className="flex-row items-center justify-between py-3">
       <View className="flex-1 pe-4">
-        <Bold className="text-[15px]">{label}</Bold>
+        <Bold className="text-[0.9375rem]">{label}</Bold>
         {hint ? <Txt className="text-xs text-paper/55">{hint}</Txt> : null}
       </View>
       <Switch
@@ -258,7 +258,7 @@ export function SettingsScreen() {
           <Card className="mb-5">
             <View className="flex-row items-center justify-between">
               <View className="flex-1 pe-3">
-                <Bold className="text-[15px]">{email ?? 'Guest'}</Bold>
+                <Bold className="text-[0.9375rem]">{email ?? 'Guest'}</Bold>
                 <Txt className="text-xs text-paper/55">
                   {email ? 'Progress is saved to your account' : 'Progress is saved on this device'}
                 </Txt>
@@ -362,7 +362,7 @@ export function SettingsScreen() {
                     );
                   })}
                 </View>
-                <Txt className="mt-2 text-[11px] text-paper/55">Tap to hear the change.</Txt>
+                <Txt className="mt-2 text-[0.6875rem] text-paper/55">Tap to hear the change.</Txt>
               </>
             )}
           </Card>
@@ -415,7 +415,7 @@ export function SettingsScreen() {
                       }}
                     >
                       <Bold className="text-sm">{g.label}</Bold>
-                      <Txt className="text-[11px] text-paper/55">
+                      <Txt className="text-[0.6875rem] text-paper/55">
                         {g.desc} · +{g.xp} XP
                       </Txt>
                     </View>

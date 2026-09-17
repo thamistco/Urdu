@@ -93,7 +93,7 @@ export function GrammarTeachExercise({ exercise, track, onGraded, onExpand }: Ex
         style={{ backgroundColor: palette.ink700, borderWidth: 1, borderColor: withAlpha(palette.gold, 0.2) }}
       >
         {concept.explain.map((para, i) => (
-          <Txt key={i} className={`text-[15px] leading-7 text-paper/85 ${i > 0 ? 'mt-3' : ''}`}>
+          <Txt key={i} className={`text-[0.9375rem] leading-7 text-paper/85 ${i > 0 ? 'mt-3' : ''}`}>
             {para}
           </Txt>
         ))}
@@ -104,7 +104,9 @@ export function GrammarTeachExercise({ exercise, track, onGraded, onExpand }: Ex
           <View className="flex-row" style={{ backgroundColor: withAlpha(palette.ink, 0.08) }}>
             {concept.table.heading.map((h, i) => (
               <View key={i} className="flex-1 px-3 py-2">
-                <Eyebrow style={{ color: withAlpha(palette.ink, 0.6), fontSize: 10 }}>{h}</Eyebrow>
+                <Eyebrow className="text-[0.625rem]" style={{ color: withAlpha(palette.ink, 0.6) }}>
+                  {h}
+                </Eyebrow>
               </View>
             ))}
           </View>
@@ -123,7 +125,7 @@ export function GrammarTeachExercise({ exercise, track, onGraded, onExpand }: Ex
                 if (!isUrdu) {
                   return (
                     <View key={c} className="flex-1 px-3 py-2.5">
-                      <Txt style={{ color: palette.ink }} className="text-[13px]">
+                      <Txt style={{ color: palette.ink }} className="text-[0.8125rem]">
                         {cell}
                       </Txt>
                     </View>
@@ -137,7 +139,7 @@ export function GrammarTeachExercise({ exercise, track, onGraded, onExpand }: Ex
                 return (
                   <View key={c} className="flex-1 px-3 py-2.5">
                     {track === 'roman' ? (
-                      <Txt style={{ color: palette.ink }} className="font-body-bold text-[15px]">
+                      <Txt style={{ color: palette.ink }} className="font-body-bold text-[0.9375rem]">
                         {roman ?? cell}
                       </Txt>
                     ) : (
@@ -150,7 +152,7 @@ export function GrammarTeachExercise({ exercise, track, onGraded, onExpand }: Ex
                         {roman && (
                           <Txt
                             style={{ color: withAlpha(palette.ink, 0.55) }}
-                            className="mt-0.5 text-right text-[11px]"
+                            className="mt-0.5 text-right text-[0.6875rem]"
                           >
                             {roman}
                           </Txt>
@@ -184,7 +186,7 @@ export function GrammarTeachExercise({ exercise, track, onGraded, onExpand }: Ex
                   <Txt className="mt-1.5 text-xs text-paper/55">{ex.roman}</Txt>
                 </>
               )}
-              <Txt className="mt-0.5 text-[13px] text-paper/80">{ex.meaning}</Txt>
+              <Txt className="mt-0.5 text-[0.8125rem] text-paper/80">{ex.meaning}</Txt>
             </View>
           ))}
         </View>
@@ -259,7 +261,7 @@ export function GrammarDrillExercise({ exercise, track, showRoman, locked, onGra
             ) : null}
           </>
         )}
-        <Txt style={{ color: palette.ink }} className="mt-2 text-[13px] opacity-70">
+        <Txt style={{ color: palette.ink }} className="mt-2 text-[0.8125rem] opacity-70">
           {drill.meaning}
         </Txt>
       </View>
@@ -293,7 +295,7 @@ export function GrammarDrillExercise({ exercise, track, showRoman, locked, onGra
           <Bold style={{ color: palette.gold }} className="mb-0.5 text-xs uppercase tracking-wider">
             Why
           </Bold>
-          <Txt className="text-[13px] leading-5 text-paper/80">{drill.because}</Txt>
+          <Txt className="text-[0.8125rem] leading-5 text-paper/80">{drill.because}</Txt>
         </View>
       )}
     </View>

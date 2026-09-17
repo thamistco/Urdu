@@ -551,7 +551,7 @@ export function LessonScreen() {
                       The answer
                     </Eyebrow>
                     {reveal.label ? (
-                      <Bold className="text-[15px]">{reveal.label}</Bold>
+                      <Bold className="text-[0.9375rem]">{reveal.label}</Bold>
                     ) : (
                       <>
                         {/* A word can afford 26; a six-word sentence at that

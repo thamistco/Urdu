@@ -270,6 +270,15 @@ jobs:
           CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
             npm run check:controls
 
+      # 108 fixed-pixel text sites ignored the browser's text setting, so at
+      # twice the default size the body copy doubled and every small label
+      # stayed put — the hierarchy inverted exactly for the reader who asked
+      # for help reading.
+      - name: Check small text grows with the reader's text setting
+        run: |
+          CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
+            npm run check:text-scale
+
       - name: SPA fallback + disable Jekyll
         run: |
           cp dist/index.html dist/404.html
