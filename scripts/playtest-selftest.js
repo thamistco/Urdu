@@ -30,7 +30,16 @@
  * cannot see.
  */
 
-const { record, classify, revealFrom, findings, knewRevealedAnswer, Memory, tripwires } = require('./playtest.js');
+const {
+  record,
+  classify,
+  revealFrom,
+  findings,
+  knewRevealedAnswer,
+  Memory,
+  tripwires,
+  chooseOption,
+} = require('./playtest.js');
 
 let fails = 0;
 const ok = (name, cond) => {
@@ -229,6 +238,29 @@ const ok = (name, cond) => {
   for (let i = 0; i < 6; i++) m.learn(['ایک', 'ek', 'one']);
   m.learn(['one another', 'one']);
   ok('a token in two meanings recalls the better one', m.recall('one') > 0.8);
+}
+
+// -- a question about a sentence is answerable -------------------------------
+
+{
+  // A sentence is remembered under its whole text, so a reader that only ever
+  // looks up the individual words never finds it. A learner resumed at lesson
+  // 31, where the course has turned to sentences, guessed 100 times out of 100
+  // with the answer sitting in its memory.
+  const m = new Memory();
+  m.learn(['میں خوش ہوں', 'main khush hoon', 'I am happy']);
+  const options = [{ lines: ['📝', 'We are friends'] }, { lines: ['📝', 'I am happy'] }];
+  const d = chooseOption(m, ['What does it mean?', '✕', 'میں خوش ہوں'], options);
+  ok('a whole sentence on screen is looked up as itself', d.couldHaveKnown === true);
+  // And the words inside a line still are, which is how every single-word
+  // question has always worked.
+  const w = new Memory();
+  w.learn(['پانی', 'paani', 'water']);
+  ok(
+    'and the words within it still are',
+    chooseOption(w, ['What does it mean?', '✕', 'پانی'], [{ lines: ['Water'] }, { lines: ['Book'] }]).couldHaveKnown ===
+      true
+  );
 }
 
 // -- the run is allowed to fail ----------------------------------------------

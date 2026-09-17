@@ -100,6 +100,26 @@ const HEADED = has('headed');
 const SHOT = argOf('shot', null) ? new RegExp(argOf('shot', ''), 'i') : null;
 
 /**
+ * Start this many lessons into the course, as a learner who already did them.
+ *
+ * The course is 350 lessons — about seven hours of playing. A run always starts
+ * a fresh guest at the first lesson, so without this every session of testing
+ * replays the same opening lessons and the back half of the app is never seen
+ * by anybody. Three rounds of this project's playtesting reached lesson 34.
+ *
+ * `--resume-after 24` marks the first 24 lessons of the track's own order done
+ * and seeds the learner with what those lessons taught, so the next stretch can
+ * be played on its own. Two honest limits come with it, and they are why this
+ * is a flag rather than the default:
+ *
+ *   - Those lessons were not played, so nothing in the report describes them.
+ *   - The seeded memory is what the course *taught*, at one sighting each, not
+ *     what a real learner would have retained across three hours. It is a
+ *     better model than amnesia and a worse one than having been there.
+ */
+const RESUME_AFTER = Number(argOf('resume-after', 0));
+
+/**
  * Who is playing.
  *
  * `beginner` (the default) starts knowing nothing and can only learn from what
@@ -234,6 +254,49 @@ function seedFluent(memory) {
   }
   for (const s of SENTENCES) memory.knewAlready([s.words.join(' '), s.roman, s.meaning]);
   return memory.clusters.length;
+}
+
+/**
+ * The state a learner who had finished the first `n` lessons would have, and
+ * the memory they would have built doing it.
+ *
+ * Both halves matter. Marking the lessons done without seeding the memory
+ * produces a learner with amnesia who is then tested on everything the course
+ * assumed it had taught — which would fill the report with "tested before
+ * taught" for words that were, in fact, taught, in the part that was skipped.
+ *
+ * What is seeded is drawn from the same generator the app uses to build those
+ * lessons, so it is exactly what those lessons put on screen: no more (nothing
+ * from lessons not yet reached) and no less.
+ */
+function resumeState(n, track) {
+  const { load } = require('./lib/load-ts');
+  const { UNITS, lessonOrderForTrack } = load('src/data/units.ts');
+  const { buildLessonExercises } = load('src/exercises/generator.ts');
+
+  const byId = new Map(UNITS.flatMap((u) => u.lessons).map((l) => [l.id, l]));
+  const done = lessonOrderForTrack(track).slice(0, n);
+  // Grouped by lesson, and replayed in order, so what the skipped stretch
+  // taught last is freshest — the forgetting curve is keyed on when a thing was
+  // last seen, and seeding it all at one instant would make a word from lesson
+  // one exactly as vivid as one from lesson thirty.
+  const taught = [];
+  for (const id of done) {
+    const lesson = byId.get(id);
+    if (!lesson) continue;
+    const ofLesson = [];
+    for (const ex of buildLessonExercises(lesson, [], track)) {
+      if (ex.word) ofLesson.push([ex.word.urdu, ex.word.roman, ex.word.meaning]);
+      if (ex.letter) ofLesson.push([ex.letter.name, ex.letter.forms.isolated]);
+      if (ex.sentence) ofLesson.push([ex.sentence.words.join(' '), ex.sentence.roman, ex.sentence.meaning]);
+    }
+    taught.push(ofLesson);
+  }
+  return {
+    completedLessons: Object.fromEntries(done.map((id) => [id, { best: 1, done: 1 }])),
+    taught,
+    lessons: done.length,
+  };
 }
 
 /**
@@ -637,12 +700,28 @@ function knewRevealedAnswer(memory, reveal, prompt = '') {
  * it guesses among everything on offer. Returns what it did and, crucially,
  * whether it *could* have known, which is the column the report is built on.
  */
-function chooseOption(memory, prompt, options) {
-  const promptTokens = prompt
-    .replace(/[?？]/g, '')
-    .split(/\s+/)
-    .map(norm)
-    .filter((t) => t.length > 2);
+function chooseOption(memory, promptLines, options) {
+  const lines = Array.isArray(promptLines) ? promptLines : [promptLines];
+
+  /**
+   * What on this screen might name the thing being asked about.
+   *
+   * Whole lines first, then the words inside them. The words alone were the
+   * whole list, and that made every question about a *sentence* unanswerable:
+   * a sentence is remembered under its whole text — "میں خوش ہوں" — and
+   * splitting the prompt on spaces means that string is never looked up. A
+   * learner resumed at lesson 31, where the course has turned to sentences,
+   * guessed 100 times out of 100 with the right answer sitting in its memory.
+   */
+  const promptTokens = [
+    ...lines.map((l) => norm(l.replace(/[?？]/g, ''))).filter((t) => t.length > 2),
+    ...lines
+      .join(' ')
+      .replace(/[?？]/g, '')
+      .split(/\s+/)
+      .map(norm)
+      .filter((t) => t.length > 2),
+  ];
 
   /**
    * Which cluster is the question about?
@@ -1253,7 +1332,9 @@ function writeReport(journal, memory, stats) {
    */
   lines.push(
     `Written ${new Date().toISOString().replace('T', ' ').slice(0, 19)}Z, ` +
-      `after lesson ${stats.lessonsEntered} of ${LESSONS}.`,
+      `after lesson ${stats.lessonsEntered} of ${LESSONS}` +
+      (RESUME_AFTER ? `, which began at lesson ${RESUME_AFTER + 1} of the course` : '') +
+      `.`,
     ``
   );
   lines.push(
@@ -1404,16 +1485,33 @@ async function main() {
   };
   let stopped = false;
   const seeded = PERSONA === 'knows-urdu' ? seedFluent(memory) : 0;
+  const resume = RESUME_AFTER > 0 ? resumeState(RESUME_AFTER, TRACK) : null;
+  if (resume)
+    for (const lessonsWorth of resume.taught) {
+      // One step per skipped lesson, so the decay curve places them the way
+      // playing them would have: what the last skipped lesson taught is fresh,
+      // what the first one taught is thirty steps stale. The counter is left
+      // where it lands rather than wound back — it is a clock, and everything
+      // learned during the run that follows is stamped with the time it happens.
+      memory.step++;
+      for (const t of lessonsWorth) memory.learn(t);
+    }
   console.log(
     `playtest — seed ${SEED}, track ${TRACK}, ${LESSONS} lessons, persona ${PERSONA}` +
-      (seeded ? ` (${seeded} meanings known before the app opened)` : '')
+      (seeded ? ` (${seeded} meanings known before the app opened)` : '') +
+      (resume ? `, resuming after lesson ${resume.lessons}` : '')
   );
 
   // Gems from the start, so the refill button actually works when the wall is
   // hit. Writing them mid-run does not help: the modal is already mounted and
   // reads the state it was rendered with, which cost one run looping on the
   // same screen 53 times.
-  await enterAsGuest(page, `http://127.0.0.1:${PORT}/`, { hearts: 5, gems: 9999 }, { track: TRACK });
+  await enterAsGuest(
+    page,
+    `http://127.0.0.1:${PORT}/`,
+    { hearts: 5, gems: 9999, ...(resume ? { completedLessons: resume.completedLessons } : {}) },
+    { track: TRACK }
+  );
   await page.reload();
   await page.waitForTimeout(2500);
 
@@ -1752,7 +1850,23 @@ async function main() {
 
       // Tile trays: building a word or a sentence out of pieces.
       if (/build the word|build the sentence|tap the letters|tap the words/i.test(screen.body)) {
-        const prompt = screen.lines.find((l) => /·/.test(l)) || screen.lines[1] || '';
+        /**
+         * Which line says what is being built.
+         *
+         * A word carries its own: "Water · paani". A sentence does not — its
+         * card shows the English on a line of its own — so the fallback was
+         * `lines[1]`, which is the question itself, and every sentence build
+         * was played as "Build the sentence": no cluster, nothing known,
+         * nothing placed on purpose. 0 of 43 in the run that showed it up,
+         * while the same learner was answering questions about those very
+         * sentences correctly two screens earlier.
+         */
+        const chrome =
+          /^(✕|check|continue|finish|the answer|tap the words below|tap the letters below|build the (word|sentence)|hear the sentence|tap a word to take it back)$/i;
+        const meaningLine = screen.lines.find(
+          (l) => l.trim() && !chrome.test(l.trim()) && /[a-z]/i.test(l) && !/[؀-ۿ]/.test(l)
+        );
+        const prompt = screen.lines.find((l) => /·/.test(l)) || meaningLine || screen.lines[1] || '';
         const promptLine = prompt.split('·')[0].trim();
         const built = await buildWord(page, memory, promptLine);
         if (built.unreadable)
@@ -1801,7 +1915,7 @@ async function main() {
 
       const prompt = screen.prompt || screen.lines[1] || '';
       const context = screen.lines.filter((l) => !options.some((o) => o.lines.includes(l))).slice(0, 4);
-      const decision = chooseOption(memory, [prompt, ...context].join(' '), options);
+      const decision = chooseOption(memory, [prompt, ...context], options);
       const cluster = decision.strength > 0 ? null : null;
 
       await page
