@@ -2091,6 +2091,17 @@ async function main() {
           .replace(/[^a-z ]/gi, '')
           .slice(0, 40)
           .toLowerCase(),
+        /**
+         * Exercises that mark the right option where it stands.
+         *
+         * `screens/answerReveal.ts` names the kinds that use the reveal panel;
+         * everything else corrects in place, and the grammar drill does it
+         * twice over — the right option turns green and a "Why" note explains
+         * the rule underneath. Counting those as answers shown nothing put
+         * seven complaints in one slice's report about the most thoroughly
+         * explained screen in the app.
+         */
+        gradesInPlace: /complete the sentence|reading ·|conversation ·/i.test(screen.body),
         optionText: options.map((o) => o.lines.join(' / ')),
         picked: decision.pick.lines.join(' / '),
         how: decision.how,
