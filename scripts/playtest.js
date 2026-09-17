@@ -1426,6 +1426,59 @@ function writeReport(journal, memory, stats) {
     for (const e of item.examples) lines.push(`  - ${JSON.stringify(e)}`);
     lines.push(``);
   }
+  /**
+   * How densely the course actually revisits what it teaches.
+   *
+   * "Met once, gone by the time it was tested" is the report's largest number
+   * and the most model-dependent thing in it: whether a learner still knows a
+   * word is decided by a forgetting curve whose constants, as the model itself
+   * says, are not tuned against anything. So the same question is answered here
+   * without the model — count, for every word the app taught, how many entries
+   * passed before it came back.
+   *
+   * On the first 24 lessons the answer was a median of 2 entries, with 3 of 205
+   * words never revisited. That is dense revisiting, which means the finding
+   * above is about how much repetition it takes to hold a word, not about a
+   * course that teaches and walks away. Those two want different fixes, and the
+   * number that tells them apart belongs in the report rather than in a note
+   * somebody has to remember to run.
+   */
+  const scriptOf = (l) => /[\u0600-\u06ff]/.test(l);
+  const taughtWords = [];
+  journal.forEach((e, i) => {
+    if (e.type !== 'taught' || !e.shown || e.shown.length < 2) return;
+    const u = e.shown.find(scriptOf);
+    if (u) taughtWords.push({ u: norm(u), at: i });
+  });
+  if (taughtWords.length) {
+    const gaps = [];
+    let never = 0;
+    for (const t of taughtWords) {
+      let last = t.at;
+      let seen = 0;
+      journal.forEach((e, i) => {
+        if (i <= t.at || e.type !== 'answer') return;
+        const hay = [e.prompt, ...(e.context || []), ...(e.optionText || []), ...(e.reveal || [])]
+          .map(norm)
+          .join(' | ');
+        if (!hay.includes(t.u)) return;
+        gaps.push(i - last);
+        last = i;
+        seen++;
+      });
+      if (!seen) never++;
+    }
+    gaps.sort((a, b) => a - b);
+    const at = (p) => gaps[Math.floor(gaps.length * p)] ?? 0;
+    lines.push(
+      `Measured without the forgetting curve: of ${taughtWords.length} words the app taught, ${never} were ` +
+        `never put in front of the learner again, and the gap between one sighting and the next ran ` +
+        `${at(0.5)} entries at the median, ${at(0.9)} at the ninetieth. Sparse revisiting and too few ` +
+        `repetitions to hold a word want different fixes; this is the number that tells them apart.`,
+      ``
+    );
+  }
+
   lines.push(`## What it cannot`, ``);
 
   /**
