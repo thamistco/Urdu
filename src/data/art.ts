@@ -230,6 +230,31 @@ export const NUMERALS: Record<string, string> = {
   'w-aath': '۸',
   'w-nau': '۹',
   'w-das': '۱۰',
+  // Eleven upward, for the same reason and then some. These ten shared a
+  // single picture — 🔢, all of them — so a teaching card for "eleven" and one
+  // for "twelve" showed the learner the same thing, and `cueOf` saw one cue
+  // where there were ten words.
+  //
+  // That collision reached content: `v-numbers-more` teaches eleven to twenty,
+  // and its closing matching board could seat only one of them before every
+  // other candidate collided. It topped up from the rest of the topic, as its
+  // comment says it may, and drew sau, hazaar and laakh — all three taught in
+  // the *next* lesson. A four-pair board, three pairs never seen.
+  'w-gyarah': '۱۱',
+  'w-barah': '۱۲',
+  'w-terah': '۱۳',
+  'w-chaudah': '۱۴',
+  'w-pandrah': '۱۵',
+  'w-solah': '۱۶',
+  'w-satrah': '۱۷',
+  'w-atharah': '۱۸',
+  'w-unnees': '۱۹',
+  'w-bees': '۲۰',
+  // And the three that were merely arbitrary rather than identical: hazaar,
+  // a thousand, was drawn as 🔟.
+  'w-sau': '۱۰۰',
+  'w-hazaar': '۱۰۰۰',
+  'w-laakh': '۱۰۰۰۰۰',
 };
 
 /**

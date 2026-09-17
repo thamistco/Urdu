@@ -504,7 +504,82 @@ if (unknownWords.size) {
   console.log(`  ${ranked.map(([w, c]) => `${w}${c > 1 ? ` ×${c}` : ''}`).join(', ')}`);
 }
 
+/**
+ * Within a vocab lesson: is every word it tests one it has already taught?
+ *
+ * The check above exempts vocab lessons, on a premise its own doc comment
+ * states — "a topic maps to exactly one lesson, so a vocab lesson only ever
+ * tests the topic it introduces". That stopped being true when topics were
+ * split into parts. A topic's words are now spread across several lessons, and
+ * a lesson's exercises are drawn from the topic, so part one can test a word
+ * part two teaches. The exemption held; the reason for it had gone.
+ *
+ * Found by measuring rather than by reading: `v-numbers-more` teaches eleven
+ * to twenty, and its closing matching board seated sau, hazaar and laakh —
+ * all three taught in the next lesson. The cause was that eleven to twenty
+ * shared one picture, so the board could seat only one of them and topped up
+ * from the rest of the topic, which is behaviour its own comment allows.
+ *
+ * Pretests are excluded: guessing before being told is the point of those, and
+ * they cost no heart. Sentences are excluded because a grammar card teaches
+ * them, not a word card — the block above is what covers those.
+ */
+const TESTS_THE_WORD = new Set([
+  'multipleChoice',
+  'meaningPick',
+  'wordFromMeaning',
+  'listenTap',
+  'wordBuild',
+  'typeWord',
+  'matching',
+]);
+
+const earlyWords = [];
+{
+  const taughtAlready = new Set();
+  for (const lesson of ALL_LESSONS) {
+    const exercises = buildLessonExercises(lesson, [], 'both');
+    const teachAt = new Map();
+    exercises.forEach((e, i) => {
+      if (e.kind === 'wordTeach' && e.word && !teachAt.has(e.word.id)) teachAt.set(e.word.id, i);
+    });
+    exercises.forEach((e, i) => {
+      if (!TESTS_THE_WORD.has(e.kind) || e.pretest) return;
+      const ids = e.kind === 'matching' ? (e.words || []).map((w) => w.id) : e.word ? [e.word.id] : [];
+      for (const id of ids) {
+        if (!id.startsWith('w-') || taughtAlready.has(id)) continue;
+        const at = teachAt.get(id);
+        if (at === undefined || at > i) {
+          earlyWords.push(
+            `${lesson.id} exercise ${i} (${e.kind}) tests ${id}, taught ` +
+              (at === undefined ? 'in a later lesson' : `at exercise ${at} of this one`)
+          );
+        }
+      }
+    });
+    exercises.forEach((e) => {
+      if (e.kind === 'wordTeach' && e.word) taughtAlready.add(e.word.id);
+    });
+  }
+}
+
+console.log(`\n-- within a lesson: every word tested after the card that teaches it --`);
+if (earlyWords.length) {
+  console.log(`${earlyWords.length} finding(s):`);
+  for (const f of earlyWords.slice(0, 20)) console.log(`  ${f}`);
+  if (earlyWords.length > 20) console.log(`  … and ${earlyWords.length - 20} more`);
+} else {
+  console.log('none — no lesson asks about a word before it has shown it.');
+}
+
 console.log('');
+if (earlyWords.length) {
+  console.error(
+    `${earlyWords.length} exercise(s) test a word before the lesson teaches it. The fix is usually the picture: ` +
+      `words that share one cue collide, and a matching board that cannot seat them tops up from the rest of the topic.`
+  );
+  process.exit(1);
+}
 if (positionUniq.length) {
   console.error(
     `${positionUniq.length} place(s) test a word before its topic's lesson is reached. ` +
