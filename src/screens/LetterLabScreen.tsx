@@ -42,7 +42,7 @@ export function LetterLabScreen() {
             const active = i === idx;
             const known = learned.includes(l.id);
             return (
-              <Pressable key={l.id} onPress={() => selectLetter(i)} className="mx-1">
+              <Pressable accessibilityRole="button" key={l.id} onPress={() => selectLetter(i)} className="mx-1">
                 <View
                   className="h-14 w-14 items-center justify-center rounded-2xl border"
                   style={{
@@ -85,7 +85,7 @@ export function LetterLabScreen() {
             {tracing ? (
               <TracePad key={tracePadKey(letter.id, pos)} letter={letter} position={pos} />
             ) : (
-              <Pressable onPress={() => speak(letter.word, letter.roman)}>
+              <Pressable accessibilityRole="button" onPress={() => speak(letter.word, letter.roman)}>
                 <View
                   className="rounded-2xl bg-parchment px-6 pb-5 pt-3"
                   style={{ borderWidth: 2, borderColor: palette.ink }}
@@ -137,6 +137,7 @@ export function LetterLabScreen() {
               const active = pos === p.key;
               return (
                 <Pressable
+                  accessibilityRole="button"
                   key={p.key}
                   className="flex-1"
                   onPress={() => {
@@ -194,7 +195,11 @@ export function LetterLabScreen() {
           </View>
 
           <View className="mb-8 flex-row items-center justify-between">
-            <Pressable disabled={idx === 0} onPress={() => selectLetter(Math.max(0, idx - 1))}>
+            <Pressable
+              accessibilityRole="button"
+              disabled={idx === 0}
+              onPress={() => selectLetter(Math.max(0, idx - 1))}
+            >
               <Bold className="text-sm text-paper/60" style={{ opacity: idx === 0 ? 0.3 : 1 }}>
                 ← Previous
               </Bold>
@@ -203,6 +208,7 @@ export function LetterLabScreen() {
               {idx + 1} / {LETTERS.length}
             </Txt>
             <Pressable
+              accessibilityRole="button"
               disabled={idx === LETTERS.length - 1}
               onPress={() => selectLetter(Math.min(LETTERS.length - 1, idx + 1))}
             >

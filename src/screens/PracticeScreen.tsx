@@ -144,6 +144,7 @@ export function PracticeScreen() {
         {/* daily review hero */}
         <Reveal delay={80}>
           <Pressable
+            accessibilityRole="button"
             disabled={!started}
             onPress={() => go('practice-review')}
             style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}

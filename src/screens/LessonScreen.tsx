@@ -405,6 +405,7 @@ export function LessonScreen() {
           style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }}
         >
           <Pressable
+            accessibilityRole="button"
             hitSlop={12}
             onPress={() => {
               feedback.tap();

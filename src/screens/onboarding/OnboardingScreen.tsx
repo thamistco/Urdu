@@ -441,6 +441,7 @@ export function OnboardingScreen() {
               const sel = goal === g.key;
               return (
                 <Pressable
+                  accessibilityRole="button"
                   key={g.key}
                   onPress={() => {
                     feedback.tap();
@@ -583,6 +584,7 @@ export function OnboardingScreen() {
               const sel = background === o.key;
               return (
                 <Pressable
+                  accessibilityRole="button"
                   key={o.key}
                   onPress={() => {
                     feedback.tap();
@@ -666,7 +668,7 @@ export function OnboardingScreen() {
             {question.options.map((opt) => {
               const picked = pPicked === opt.label;
               return (
-                <Pressable key={opt.label} onPress={() => pick(opt.label, opt.c)}>
+                <Pressable accessibilityRole="button" key={opt.label} onPress={() => pick(opt.label, opt.c)}>
                   <View
                     className="rounded-xl border px-4 py-4"
                     style={{
@@ -704,6 +706,7 @@ export function OnboardingScreen() {
               const sel = daily === g.id;
               return (
                 <Pressable
+                  accessibilityRole="button"
                   key={g.id}
                   onPress={() => {
                     feedback.tap();
@@ -815,6 +818,7 @@ export function OnboardingScreen() {
                 const on = skipScript === o.v;
                 return (
                   <Pressable
+                    accessibilityRole="button"
                     key={String(o.v)}
                     onPress={() => {
                       feedback.tap();
