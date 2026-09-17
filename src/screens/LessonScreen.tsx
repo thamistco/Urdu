@@ -459,7 +459,18 @@ export function LessonScreen() {
         </View>
 
         {/* exercise body */}
-        <Screen scroll padded={false} lattice={false} scrollRef={bodyRef}>
+        {/* Sit the question in the middle of the space it has, not at the top
+            of it. Measured across four consecutive exercises on a 390x844
+            screen, the body ended at 490px and the bottom 42% of the screen
+            was empty — while every option a thumb had to reach sat in the top
+            58%, furthest from the thumb. The footer fills that space, but only
+            after the answer, which is the one moment the learner has stopped
+            reaching for anything.
+
+            `grow justify-center` is the same pair the onboarding screen
+            already uses for the same reason; a body taller than the screen
+            fills the container and scrolls as before. */}
+        <Screen scroll padded={false} lattice={false} scrollRef={bodyRef} contentClassName="grow justify-center">
           <View className="px-5 pb-8 pt-4">
             <ExerciseView
               key={`${idx}-${attempt}`}
