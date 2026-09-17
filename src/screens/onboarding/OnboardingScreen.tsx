@@ -366,10 +366,10 @@ export function OnboardingScreen() {
                 paragraph explaining Nastaliq, then six bullets, then a
                 footnote. A person on a welcome screen is deciding whether to
                 bother, and prose asks them to have decided already. */}
-            <Display accessibilityRole="header" className="mt-7 text-center text-[27px] leading-9">
+            <Display accessibilityRole="header" className="mt-7 text-center text-[1.6875rem] leading-9">
               Learn Urdu properly.
             </Display>
-            <Txt className="mb-8 mt-2 max-w-[300px] text-center text-[14px] leading-5 text-paper/85">
+            <Txt className="mb-8 mt-2 max-w-[300px] text-center text-[0.875rem] leading-5 text-paper/85">
               Start with the alphabet. Keep going until you can talk to people.
             </Txt>
 
@@ -384,7 +384,7 @@ export function OnboardingScreen() {
                   accessibilityLabel={`${s.value} ${s.label}`}
                   className="flex-1 items-center"
                 >
-                  <Display className="text-[26px] leading-8" style={{ color: palette.gold }}>
+                  <Display className="text-[1.625rem] leading-8" style={{ color: palette.gold }}>
                     {s.value}
                   </Display>
                   {/* Not `Eyebrow`: its 2px tracking is right for a section
@@ -392,7 +392,7 @@ export function OnboardingScreen() {
                       this narrow, leaving one stat sitting a line lower than
                       the other two. */}
                   <Txt
-                    className="mt-1.5 text-center text-[11px] uppercase text-paper/80"
+                    className="mt-1.5 text-center text-[0.6875rem] uppercase text-paper/80"
                     style={{ letterSpacing: 0.6 }}
                   >
                     {s.label}
@@ -418,7 +418,7 @@ export function OnboardingScreen() {
                 Nothing here goes below 80% paper: on the dusk scene's horizon
                 glow, 75% is the WCAG AA floor, and the old value was 40%,
                 under AA even on flat ink at 3.51:1. */}
-            <Txt className="mt-6 max-w-[320px] text-center text-[12.5px] leading-5 text-paper/80">
+            <Txt className="mt-6 max-w-[320px] text-center text-[0.78125rem] leading-5 text-paper/80">
               New to the Urdu script? Learn the whole course in English letters instead, and switch over whenever you’re
               ready.
             </Txt>
@@ -458,7 +458,7 @@ export function OnboardingScreen() {
                   >
                     <GoalArt goalKey={g.key} size={46} />
                     <View className="flex-1">
-                      <Bold className="text-[15px]">{g.label}</Bold>
+                      <Bold className="text-[0.9375rem]">{g.label}</Bold>
                       <Txt className="text-xs text-paper/60">{g.desc}</Txt>
                     </View>
                   </View>
@@ -541,7 +541,7 @@ export function OnboardingScreen() {
                 >
                   <Illustration name={o.icon} size={44} />
                   <View className="flex-1">
-                    <Bold className="text-[15px]">{o.label}</Bold>
+                    <Bold className="text-[0.9375rem]">{o.label}</Bold>
                     <Txt className="text-xs text-paper/55">{o.desc}</Txt>
                   </View>
                   <Illustration name="speaker" tile={false} size={20} />
@@ -549,7 +549,7 @@ export function OnboardingScreen() {
               </Pressable>
             );
           })}
-          <Txt className="mb-2 text-center text-[11px] text-paper/55">Tap either one to hear it.</Txt>
+          <Txt className="mb-2 text-center text-[0.6875rem] text-paper/55">Tap either one to hear it.</Txt>
           <Button className="mt-2" onPress={() => setStep('background')}>
             Continue
           </Button>
@@ -601,7 +601,7 @@ export function OnboardingScreen() {
                   >
                     <Illustration name={o.icon} tile={false} size={34} />
                     <View className="flex-1">
-                      <Bold className="text-[15px]">{o.label}</Bold>
+                      <Bold className="text-[0.9375rem]">{o.label}</Bold>
                       <Txt className="text-xs text-paper/60">{o.desc}</Txt>
                     </View>
                   </View>
@@ -677,7 +677,7 @@ export function OnboardingScreen() {
                       backgroundColor: picked ? withAlpha(palette.gold, 0.12) : palette.ink700,
                     }}
                   >
-                    <Txt className="text-[15px]">{opt.label}</Txt>
+                    <Txt className="text-[0.9375rem]">{opt.label}</Txt>
                   </View>
                 </Pressable>
               );
@@ -722,7 +722,7 @@ export function OnboardingScreen() {
                     }}
                   >
                     <View>
-                      <Bold className="text-[15px]">{g.label}</Bold>
+                      <Bold className="text-[0.9375rem]">{g.label}</Bold>
                       <Txt className="text-xs text-paper/60">{g.desc}</Txt>
                     </View>
                     <Bold style={{ color: palette.gold }}>+{g.xp} XP</Bold>
@@ -840,7 +840,7 @@ export function OnboardingScreen() {
                   </Pressable>
                 );
               })}
-              <Txt className="text-[11px] text-paper/55">Either way you can tap ahead to any lesson later.</Txt>
+              <Txt className="text-[0.6875rem] text-paper/55">Either way you can tap ahead to any lesson later.</Txt>
             </View>
           )}
           <Button className="mt-4 w-full" onPress={finish}>

@@ -85,8 +85,8 @@ export function LetterTeachExercise({ exercise, onGraded }: ExerciseProps<TeachE
             style={{ backgroundColor: withAlpha(palette.paper, 0.07) }}
           >
             <Urdu style={{ ...urduGlyph(30) }}>{letter.forms[p.key]}</Urdu>
-            <Bold className="mt-2 text-[11px] text-paper/75">{p.label}</Bold>
-            <Txt className="text-center text-[10px] leading-3 text-paper/60">{p.hint}</Txt>
+            <Bold className="mt-2 text-[0.6875rem] text-paper/75">{p.label}</Bold>
+            <Txt className="text-center text-[0.625rem] leading-3 text-paper/60">{p.hint}</Txt>
           </View>
         ))}
       </View>

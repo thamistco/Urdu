@@ -157,7 +157,9 @@ function LessonNode({
             className="absolute -right-1 -top-1 rounded-full px-1.5 py-0.5"
             style={{ backgroundColor: palette.gold }}
           >
-            <Eyebrow style={{ color: palette.ink, fontSize: 8 }}>Start</Eyebrow>
+            <Eyebrow className="text-[0.5rem]" style={{ color: palette.ink }}>
+              Start
+            </Eyebrow>
           </View>
         )}
         {state === 'locked' && (
@@ -173,13 +175,13 @@ function LessonNode({
             className="absolute -right-1 -top-1 h-5 w-5 items-center justify-center rounded-full"
             style={{ backgroundColor: palette.jadeDark, borderWidth: 1, borderColor: withAlpha(palette.white, 0.15) }}
           >
-            <Txt style={{ fontSize: 10 }}>⏭</Txt>
+            <Txt className="text-[0.625rem]">⏭</Txt>
           </View>
         )}
       </Pressable>
       <View className="ms-4 flex-1">
         <Bold
-          className="text-[15px]"
+          className="text-[0.9375rem]"
           style={{ opacity: state === 'locked' ? 0.5 : 1, writingDirection: 'ltr', textAlign: 'left' }}
         >
           {lesson.title}
@@ -745,11 +747,11 @@ export function HomeScreen() {
               </View>
               <ProgressBar progress={ratio} height={10} />
               <View className="mt-3 flex-row items-center gap-2">
-                <Txt className="text-[11px] text-paper/55">Today</Txt>
+                <Txt className="text-[0.6875rem] text-paper/55">Today</Txt>
                 <View className="flex-1">
                   <ProgressBar progress={dailyRatio} color={palette.jade} height={8} />
                 </View>
-                <Txt className="text-[11px] text-paper/55">
+                <Txt className="text-[0.6875rem] text-paper/55">
                   {dailyRatio >= 1 ? 'Goal met ✓' : `${store.todayXp}/${goal.xp} XP`}
                 </Txt>
               </View>
@@ -789,7 +791,7 @@ export function HomeScreen() {
                   </View>
                   <View className="flex-1">
                     <Eyebrow style={{ color: palette.jade }}>Due for review</Eyebrow>
-                    <Bold className="mt-0.5 text-[15px]">
+                    <Bold className="mt-0.5 text-[0.9375rem]">
                       {dueNow} {dueNow === 1 ? 'thing' : 'things'} to bring back
                     </Bold>
                     <Txt className="text-xs text-paper/55">
@@ -845,7 +847,7 @@ export function HomeScreen() {
                           ? 'Continue'
                           : 'Start here'}
                     </Eyebrow>
-                    <Bold className="mt-0.5 text-[15px]">{finished ? 'Keep it warm' : currentLesson.title}</Bold>
+                    <Bold className="mt-0.5 text-[0.9375rem]">{finished ? 'Keep it warm' : currentLesson.title}</Bold>
                     <Txt className="text-xs text-paper/55">
                       {finished
                         ? 'You’ve made it through the whole course. Daily review keeps it fresh.'
@@ -908,10 +910,10 @@ export function HomeScreen() {
                   style={{ borderColor: withAlpha(palette.gold, 0.3), backgroundColor: withAlpha(palette.gold, 0.1) }}
                 >
                   <Illustration name="pen" tile={false} size={36} />
-                  <Bold style={{ color: palette.gold }} className="mt-2 text-center text-[13px]">
+                  <Bold style={{ color: palette.gold }} className="mt-2 text-center text-[0.8125rem]">
                     Letter Lab
                   </Bold>
-                  <Txt style={{ color: withAlpha(palette.gold, 0.75) }} className="text-center text-[10px]">
+                  <Txt style={{ color: withAlpha(palette.gold, 0.75) }} className="text-center text-[0.625rem]">
                     all {LETTERS.length} letters
                   </Txt>
                 </View>
@@ -927,7 +929,7 @@ export function HomeScreen() {
                 style={{ backgroundColor: withAlpha(palette.gold, 0.08) }}
               >
                 <Illustration name="sparkle" tile={false} size={15} />
-                <Txt className="flex-1 text-[11px] text-paper/55">
+                <Txt className="flex-1 text-[0.6875rem] text-paper/55">
                   Tap any lesson to jump ahead. Locked ones unlock as you pass them.
                 </Txt>
               </View>
@@ -976,16 +978,21 @@ export function HomeScreen() {
                         {(track === 'roman' && meta.romanBlurb) || meta.blurb}
                       </Txt>
                     </View>
-                    <Txt className="text-[11px] text-paper/55">
+                    <Txt className="text-[0.6875rem] text-paper/55">
                       {done}/{total}
                     </Txt>
-                    <Txt style={{ color: withAlpha(palette.cream, 0.5), fontSize: 15 }}>{isOpen(lvl) ? '⌃' : '⌄'}</Txt>
+                    {/* Scales with the stage title it sits beside: a chevron
+                        frozen at 15px next to a doubled heading reads as a
+                        stray mark rather than as that row's control. */}
+                    <Txt className="text-[0.9375rem]" style={{ color: withAlpha(palette.cream, 0.5) }}>
+                      {isOpen(lvl) ? '⌃' : '⌄'}
+                    </Txt>
                   </View>
                   <View className="mb-1 mt-2">
                     <ProgressBar progress={total ? done / total : 0} color={meta.color} height={6} spring={false} />
                   </View>
                   {!isOpen(lvl) && (
-                    <Txt className="mt-2 text-[11px] text-paper/55">{levelUnits.length} units · tap to open</Txt>
+                    <Txt className="mt-2 text-[0.6875rem] text-paper/55">{levelUnits.length} units · tap to open</Txt>
                   )}
                 </Pressable>
               </Reveal>

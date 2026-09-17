@@ -137,7 +137,7 @@ export function TrackChooser({ value, onChange }: { value: LearnTrack; onChange:
                 }}
               >
                 <View className="mb-1 flex-row items-center justify-between">
-                  <Bold style={{ color: sel ? palette.gold : palette.cream }} className="text-[15px]">
+                  <Bold style={{ color: sel ? palette.gold : palette.cream }} className="text-[0.9375rem]">
                     {t.label}
                   </Bold>
                   {t.recommended ? (
@@ -145,7 +145,9 @@ export function TrackChooser({ value, onChange }: { value: LearnTrack; onChange:
                       className="rounded-full px-2 py-0.5"
                       style={{ backgroundColor: withAlpha(palette.jade, 0.2) }}
                     >
-                      <Eyebrow style={{ color: palette.jadeLight, fontSize: 9 }}>Recommended</Eyebrow>
+                      <Eyebrow className="text-[0.5625rem]" style={{ color: palette.jadeLight }}>
+                        Recommended
+                      </Eyebrow>
                     </View>
                   ) : null}
                 </View>
@@ -161,7 +163,7 @@ export function TrackChooser({ value, onChange }: { value: LearnTrack; onChange:
                     {t.costs.map((c) => (
                       <Bullet key={c} text={c} kind="cost" />
                     ))}
-                    <Txt className="mt-2 text-[11px] italic leading-4 text-paper/55">{t.forWhom}</Txt>
+                    <Txt className="mt-2 text-[0.6875rem] italic leading-4 text-paper/55">{t.forWhom}</Txt>
                   </View>
                 )}
               </View>

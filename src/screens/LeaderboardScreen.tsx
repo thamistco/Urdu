@@ -79,7 +79,7 @@ export function LeaderboardScreen() {
                 Kept, because a league with nobody in it teaches nothing about
                 pacing, and said out loud, because this was the one place the
                 app told a learner something untrue. */}
-            <Txt className="mt-2 text-center text-[11px] text-paper/55">
+            <Txt className="mt-2 text-center text-[0.6875rem] text-paper/55">
               The other names are a practice cohort, not real people. Your XP is the only real number here.
             </Txt>
           </View>
@@ -109,7 +109,7 @@ export function LeaderboardScreen() {
                   >
                     <Bold style={{ color: r.me ? palette.ink : palette.cream }}>{r.name[0]}</Bold>
                   </View>
-                  <Bold className="flex-1 text-[15px]" style={{ color: r.me ? palette.gold : palette.cream }}>
+                  <Bold className="flex-1 text-[0.9375rem]" style={{ color: r.me ? palette.gold : palette.cream }}>
                     {r.name}
                   </Bold>
                   <Bold className="text-sm text-paper/70">{r.xp} XP</Bold>
@@ -123,17 +123,13 @@ export function LeaderboardScreen() {
           {canRise && (
             <View className="flex-row items-center gap-1.5">
               <View className="h-3 w-3 rounded-full" style={{ backgroundColor: palette.jade }} />
-              <Eyebrow className="text-paper/55" style={{ fontSize: 9 }}>
-                Promotion
-              </Eyebrow>
+              <Eyebrow className="text-paper/55 text-[0.5625rem]">Promotion</Eyebrow>
             </View>
           )}
           {canFall && (
             <View className="flex-row items-center gap-1.5">
               <View className="h-3 w-3 rounded-full" style={{ backgroundColor: palette.rose }} />
-              <Eyebrow className="text-paper/55" style={{ fontSize: 9 }}>
-                Demotion
-              </Eyebrow>
+              <Eyebrow className="text-paper/55 text-[0.5625rem]">Demotion</Eyebrow>
             </View>
           )}
         </View>
