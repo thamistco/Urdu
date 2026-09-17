@@ -141,18 +141,13 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
           Check
         </Button>
       )}
-      {graded === false && (
-        <View className="items-center">
-          <Txt className="mb-1 text-xs text-paper/55">Correct order:</Txt>
-          {roman ? (
-            <Bold style={{ fontSize: 19, textAlign: 'center' }}>{sentence.roman}</Bold>
-          ) : (
-            <Urdu style={{ fontSize: 24, lineHeight: urduLine(24), textAlign: 'center' }}>
-              {sentence.words.join(' ')}
-            </Urdu>
-          )}
-        </View>
-      )}
+      {/* No reveal here. `answerReveal` (screens/answerReveal.ts) names
+          `sentenceBuild` and the lesson footer draws it, so a second copy up
+          here printed the same sentence twice on one screen, about 200px
+          apart: "Correct order:" in the body and "THE ANSWER" below it. The
+          footer's is the one to keep — it is the app's single mechanism, it is
+          track-aware, and it carries the transliteration beside the script
+          where this one showed only one of the two. */}
       {graded === true && (
         <View className="items-center">
           <Bold style={{ color: palette.jade }}>Exactly right ✓</Bold>
