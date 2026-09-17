@@ -847,6 +847,7 @@ export function HomeScreen() {
                 </View>
               </Card>
               <Pressable
+                accessibilityRole="button"
                 onPress={() => {
                   feedback.tap();
                   nav.navigate('LetterLab');

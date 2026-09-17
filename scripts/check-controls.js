@@ -63,6 +63,28 @@ function controlsOnScreen() {
   });
 }
 
+/**
+ * Anything the app made focusable that never says what it is.
+ *
+ * react-native-web gives a `Pressable` `tabindex="0"`, and adds
+ * `role="button"` only when the component asks for it with
+ * `accessibilityRole`. The shared `Button` never did, so twenty-six call
+ * sites — including the single control on the sign-in screen — rendered as
+ * focusable text with nothing to say they could be pressed. A focusable
+ * element with no role is exactly that defect, and it is visible in the DOM,
+ * so this reads it rather than counting `accessibilityRole` in the source
+ * (which cannot see a component that forwards props it never sets).
+ */
+function rolelessControls() {
+  return Array.from(document.querySelectorAll('[tabindex]:not([role])')).flatMap((n) => {
+    // Inputs carry their own semantics from the tag itself.
+    if (/^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(n.tagName)) return [];
+    const r = n.getBoundingClientRect();
+    if (r.width < 4 || r.height < 4) return [];
+    return [(n.textContent || '').trim().slice(0, 48) || `<${n.tagName.toLowerCase()} with no text>`];
+  });
+}
+
 /** Tap the first thing whose visible text or label matches. */
 async function tapByText(page, re) {
   const box = await page.evaluate((src) => {
@@ -95,17 +117,42 @@ async function main() {
   try {
     browser = await chromium.launch({ executablePath: findChromium() || undefined });
     const page = await browser.newPage({ viewport: { width: 412, height: 900 } });
+
+    /** Nothing focusable anywhere may be silent about what it is. */
+    const auditRoles = async (where) => {
+      const silent = await page.evaluate(rolelessControls);
+      if (silent.length) {
+        problems.push(
+          `${where}: ${silent.length} focusable thing${silent.length === 1 ? '' : 's'} with no role — ` +
+            `a screen reader announces ${silent.length === 1 ? 'it' : 'them'} as text: ${silent.slice(0, 4).join(' · ')}`
+        );
+      }
+    };
+
+    // The sign-in screen first, before guest mode skips it. It is one control
+    // and a paragraph, which is what made it the clearest case of the defect.
+    await page.goto(`http://localhost:${PORT}/Urdu/`);
+    await page.waitForTimeout(2200);
+    await auditRoles('sign-in');
+    const signInButtons = await page.evaluate(() => document.querySelectorAll('[role="button"]').length);
+    if (signInButtons === 0) {
+      problems.push('The sign-in screen exposes no button at all — its only control is unreachable by role.');
+    }
+
     await enterAsGuest(page, `http://localhost:${PORT}/Urdu/`, { xp: 640, streak: 3 });
     await page.waitForTimeout(1200);
+    await auditRoles('home');
 
     if (!(await tapByText(page, /^Profile$/))) {
       problems.push('Could not find the Profile tab — the route to Settings is gone, so this check proves nothing.');
     } else {
       await page.waitForTimeout(900);
+      await auditRoles('profile');
       if (!(await tapByText(page, /^Settings$/))) {
         problems.push('Could not open Settings from Profile — this check proves nothing.');
       } else {
         await page.waitForTimeout(1000);
+        await auditRoles('settings');
         const controls = await page.evaluate(controlsOnScreen);
         const body = await page.evaluate(() => document.body.innerText);
         // The Account card is the part under test, so prove we are looking at
@@ -138,6 +185,7 @@ async function main() {
     for (const p of problems) console.error(`  ✗ ${p}`);
     process.exit(1);
   }
+  console.log('check:controls — every focusable thing on sign-in, home, profile and settings says it is a button.');
   console.log(
     'check:controls — Settings offers a guest no sign-in it cannot honour, and still says where progress lives.'
   );

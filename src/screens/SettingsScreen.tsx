@@ -397,6 +397,7 @@ export function SettingsScreen() {
                 const active = dailyGoalId === g.id;
                 return (
                   <Pressable
+                    accessibilityRole="button"
                     key={g.id}
                     onPress={() => {
                       feedback.tap();
@@ -427,7 +428,7 @@ export function SettingsScreen() {
 
         <Reveal delay={180}>
           <Eyebrow className="mb-2 text-paper/55">Data</Eyebrow>
-          <Pressable onPress={confirmReset}>
+          <Pressable accessibilityRole="button" onPress={confirmReset}>
             <View
               className="rounded-2xl border p-4"
               style={{ borderColor: withAlpha(palette.rose, 0.3), backgroundColor: withAlpha(palette.rose, 0.08) }}

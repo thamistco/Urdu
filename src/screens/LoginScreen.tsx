@@ -14,6 +14,7 @@ import { useAuthStore } from '../store/useAuthStore';
 function ProviderButton({ label, onPress, loading }: { label: string; onPress: () => void; loading?: boolean }) {
   return (
     <Pressable
+      accessibilityRole="button"
       onPress={() => {
         feedback.tap();
         onPress();

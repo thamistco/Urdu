@@ -17,6 +17,7 @@ export function TopBar({
     <View className="mb-4 flex-row items-center justify-between">
       {onBack ? (
         <Pressable
+          accessibilityRole="button"
           onPress={() => {
             feedback.tap();
             onBack();

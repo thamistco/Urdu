@@ -140,6 +140,7 @@ export function ProfileScreen() {
         {/* league */}
         <Reveal delay={180}>
           <Pressable
+            accessibilityRole="button"
             onPress={link('Leaderboard')}
             style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
           >
@@ -157,6 +158,7 @@ export function ProfileScreen() {
         {/* achievements */}
         <Reveal delay={220}>
           <Pressable
+            accessibilityRole="button"
             onPress={link('Achievements')}
             style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
           >
@@ -176,6 +178,7 @@ export function ProfileScreen() {
         {/* settings */}
         <Reveal delay={260}>
           <Pressable
+            accessibilityRole="button"
             onPress={link('Settings')}
             style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
           >
