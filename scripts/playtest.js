@@ -68,14 +68,29 @@ const { glyphStroke } = require('./lib/glyph-trace');
 
 const ROOT = path.join(__dirname, '..');
 const DIST = path.join(ROOT, 'dist');
-const OUT = path.join(ROOT, '.playtest');
-const PORT = 8455;
-
+let OUT = path.join(ROOT, '.playtest');
 const argOf = (name, fallback) => {
   const i = process.argv.indexOf(`--${name}`);
   return i > -1 && process.argv[i + 1] && !process.argv[i + 1].startsWith('--') ? process.argv[i + 1] : fallback;
 };
 const has = (name) => process.argv.includes(`--${name}`);
+
+/**
+ * Settable so two runs can play at once.
+ *
+ * They serve the same `dist` read-only, so a second persona, or a quick proof
+ * that a tripwire really fires, no longer has to wait forty minutes for the
+ * first run to finish — which is how one verification got deferred until after
+ * the thing it was verifying had already been committed.
+ */
+const PORT = Number(argOf('port', 8455));
+/**
+ * Where the journal, report and screenshots land. Settable for the same reason
+ * as the port: two runs writing one `journal.json` is worse than a collision,
+ * because neither of them errors and the file ends up belonging to whichever
+ * flushed last.
+ */
+OUT = path.join(ROOT, argOf('out', '.playtest'));
 
 const LESSONS = Number(argOf('lessons', 20));
 const TRACK = argOf('track', 'both');
@@ -83,6 +98,36 @@ const SEED = Number(argOf('seed', Math.floor(Math.random() * 1e7)));
 const HEADED = has('headed');
 /** Photograph the first screen matching this and stop. See the main loop. */
 const SHOT = argOf('shot', null) ? new RegExp(argOf('shot', ''), 'i') : null;
+
+/**
+ * Who is playing.
+ *
+ * `beginner` (the default) starts knowing nothing and can only learn from what
+ * the app shows it. That is the harder test of teaching, and it is the one this
+ * driver was built for — but it is blind to half the app. Thirty-four lessons
+ * in, it is still answering about a third of questions right and has hit the
+ * hearts wall 88 times, so it never reaches a review that is due, never sees a
+ * lesson it finds too easy, and never holds a streak or a league place long
+ * enough for either to mean anything. Everything the course does about
+ * *retention* is untested by it.
+ *
+ * `knows-urdu` starts with the language already in memory, and nothing else
+ * changes. It is not a cheat mode: it does not read the answers off the
+ * exercises, it plays the same screens with the same reader and the same dice.
+ * It simply begins where a heritage speaker begins — knowing the words, needing
+ * the script and the course's own conventions — so it gets far enough in for
+ * the scheduler, the review lessons and the streak machinery to be exercised at
+ * all.
+ *
+ * What neither of them can do is judge whether the Urdu is *right*. A wrong
+ * transliteration or a register a speaker would wince at is invisible to both:
+ * that needs the content checks, or a person reading it.
+ */
+const PERSONA = argOf('persona', 'beginner');
+if (!['beginner', 'knows-urdu'].includes(PERSONA)) {
+  console.error(`playtest — unknown persona "${PERSONA}". Use "beginner" or "knows-urdu".`);
+  process.exit(1);
+}
 
 /**
  * How long one lesson may take before the run moves on without it.
@@ -111,6 +156,129 @@ const LESSON_BUDGET_MS = Number(argOf('budget', 360)) * 1000;
  * app grades every exercise it shows, so even one is worth looking at.
  */
 const UNGRADED_RUN_LIMIT = Number(argOf('ungraded-limit', 6));
+
+/**
+ * When to stop the whole run rather than finish it and read the wreckage.
+ *
+ * Two runs were lost to this. A stalled lesson was visible in the journal four
+ * minutes after it started and was found an hour later. A typing exercise that
+ * scored 0 of 149 was decidable after twenty questions in lesson three, and was
+ * read as a finding about how the course teaches spelling — it was the driver's
+ * memory model collapsing, and every other number in that report was measured
+ * against the same wreck.
+ *
+ * Neither needed a cleverer reader. They needed the run to be allowed to fail.
+ * A checkpoint every half hour still spends half an hour; these are decidable
+ * from the journal as it is written, so they are checked as it is written.
+ *
+ * Both settable, because a tripwire nobody has watched fire is a hypothesis:
+ * `--zero-after 1` fires on the first wrong answer of a shape, `--cluster-max 1`
+ * on the first thing learned.
+ */
+const TRIPWIRES = {
+  /**
+   * Attempts at one exercise shape, all wrong, where the learner was supposed
+   * to know the answer.
+   *
+   * Counted only over questions the model believed were answerable
+   * (`couldHaveKnown`), because a real beginner genuinely does get its first
+   * twenty typed words wrong and that is data, not a fault. Twenty in a row
+   * that it *should* have got is either a broken exercise or a broken driver,
+   * and both are worth an hour of someone's attention immediately.
+   */
+  zeroShapeAfter: Number(argOf('zero-after', 20)),
+  /**
+   * How many strings may sit in one cluster before the memory model is judged
+   * to have collapsed. A word, its reading, its meaning and a stray header is
+   * four; the run that typed "alif" for "book" had twenty-one after two
+   * lessons and four figures by the end.
+   */
+  clusterMax: Number(argOf('cluster-max', 8)),
+  /**
+   * How far a meaning the `knows-urdu` persona walked in with may grow while
+   * playing before the same suspicion applies. A word picking up the odd extra
+   * form from a screen is normal; five is a merge.
+   */
+  clusterGrowth: Number(argOf('cluster-growth', 4)),
+};
+
+/**
+ * Fill a memory with the language, for the `knows-urdu` persona.
+ *
+ * Read out of the course's own data files rather than scraped from the app,
+ * because what this persona knows is *Urdu*, not this app's screens — the two
+ * happen to coincide here, and if the course ever teaches a word this misses,
+ * the persona simply meets it the way the beginner does.
+ *
+ * Deliberately not the exercises: nothing here says which option is correct on
+ * any screen. It seeds the same word/reading/meaning triples the beginner
+ * builds by playing, and then the same reader picks between the same options.
+ *
+ * Returns how many meanings were seeded, which the report prints — a persona
+ * that silently seeded nothing would otherwise look like a beginner having a
+ * very bad run.
+ */
+function seedFluent(memory) {
+  const { load } = require('./lib/load-ts');
+  const { WORDS } = load('src/data/words.ts');
+  const { LETTERS } = load('src/data/letters.ts');
+  const { SENTENCES } = load('src/data/sentences.ts');
+
+  for (const w of WORDS) memory.knewAlready([w.urdu, w.roman, w.meaning]);
+  // A letter is one thing in four faces, plus its name and the sound the app
+  // names it by. The faces matter: every "which letter is this" shows a
+  // positional form, never the isolated one.
+  for (const l of LETTERS) {
+    memory.knewAlready([l.name, l.forms.isolated, l.forms.initial, l.forms.medial, l.forms.final]);
+    memory.knewAlready([l.name, `“${l.sound}”`, l.sound]);
+  }
+  for (const s of SENTENCES) memory.knewAlready([s.words.join(' '), s.roman, s.meaning]);
+  return memory.clusters.length;
+}
+
+/**
+ * Which tripwires have fired, as plain data. Pure, so the rules can be held to
+ * their contracts without a browser — the rest of this file's bookkeeping is
+ * tested that way for the same reason.
+ */
+function tripwires(journal, memory, limits = TRIPWIRES) {
+  const fired = [];
+
+  const byShape = new Map();
+  for (const e of journal) {
+    if (e.type !== 'answer' || !e.couldHaveKnown) continue;
+    const shape = e.promptShape || '(unnamed)';
+    const t = byShape.get(shape) || { attempts: 0, right: 0 };
+    t.attempts++;
+    if (e.correct) t.right++;
+    byShape.set(shape, t);
+  }
+  for (const [shape, t] of byShape) {
+    if (t.attempts >= limits.zeroShapeAfter && t.right === 0) {
+      fired.push({
+        name: 'an exercise shape at zero',
+        detail: `"${shape}" — 0 right out of ${t.attempts} the learner should have known`,
+        note: 'Either the exercise cannot be won or the driver cannot play it. Both need looking at before the run goes on.',
+      });
+    }
+  }
+
+  // What is being watched for is accretion during play, not size as such: a
+  // meaning seeded at eight strings was eight strings before a single screen
+  // was read, and it is the growth past that which means the model is merging
+  // things it should not.
+  const roomFor = (c) => (c.fluent ? c.seeded + limits.clusterGrowth : limits.clusterMax);
+  const swollen = memory.clusters.find((c) => c.tokens.size > roomFor(c));
+  if (swollen) {
+    fired.push({
+      name: 'the learner’s memory has collapsed',
+      detail: `${swollen.tokens.size} strings in one meaning — ${[...swollen.tokens].slice(0, 6).join(', ')}`,
+      note: 'Every "recalled" after this point is fiction, and so is every count in the report built on one.',
+    });
+  }
+
+  return fired;
+}
 
 /** One seeded generator, so a run that finds something can be replayed. */
 let seedState = SEED;
@@ -212,12 +380,39 @@ class Memory {
     if (!cs || !cs.length) return 0;
     return Math.max(
       ...cs.map((c) => {
+        // Something known before the app ever opened does not decay across a
+        // run: a speaker who knew "water" this morning knows it four hundred
+        // questions later. Without this the `knows-urdu` persona forgets its
+        // own language by lesson six, since the curve is keyed on when the
+        // *app* last showed a thing. Not 1: even a fluent reader mis-taps.
+        if (c.fluent) return 0.97;
         const gap = this.step - c.lastSeen;
         const learned = 1 - Math.exp(-0.6 * c.strength);
         const retained = Math.exp(-gap / 45);
         return learned * retained;
       })
     );
+  }
+
+  /**
+   * Teach these as something the learner walked in already knowing.
+   *
+   * The only difference between the two personas. Everything downstream —
+   * which option gets picked, what gets typed, what the journal records —
+   * reads the same memory through the same functions.
+   */
+  knewAlready(tokens) {
+    this.learn(tokens);
+    const c = this.clusterFor(tokens.find((t) => norm(t)) ?? '');
+    if (!c) return;
+    c.fluent = true;
+    // How big this meaning was before any playing happened, so the collapse
+    // tripwire can tell a large seeded cluster from a cluster that grew.
+    // Choṭī ye and baṛī ye share two of their four faces and merge into one
+    // eight-string entry, which is correct and is also exactly the beginner's
+    // limit: without this the `knows-urdu` run would trip on its own first
+    // screen.
+    c.seeded = c.tokens.size;
   }
 
   /** The best-remembered meaning this string belongs to. */
@@ -449,14 +644,31 @@ function chooseOption(memory, prompt, options) {
     .map(norm)
     .filter((t) => t.length > 2);
 
-  // Which cluster is the question about? The prompt's own words, plus any
-  // non-option line the screen showed (a picture's caption, a word to translate).
+  /**
+   * Which cluster is the question about?
+   *
+   * The prompt's own words, plus any non-option line the screen showed (a
+   * picture's caption, a word to translate) — but the *first* one recognised
+   * is the wrong answer to that question. "What does it mean?" over کتاب,
+   * with "Book" among the options, resolved to the cluster for **what**,
+   * because کیا means "what" and this learner knows it. The real target was
+   * never looked at, the question was filed as a guess, and the `knows-urdu`
+   * persona scored 46% — one point above the beginner it was meant to
+   * outclass, on a screen it could read perfectly.
+   *
+   * So a cluster that explains one of the options wins over one that does
+   * not, and among those, the best remembered. Every screen here is a
+   * question about something on offer; a cluster that touches nothing on
+   * offer is scenery, however well it is known.
+   */
   let target = null;
   for (const t of promptTokens) {
-    const c = memory.clusterFor(t);
-    if (c) {
-      target = { cluster: c, via: t };
-      break;
+    const cluster = memory.clusterFor(t);
+    if (!cluster) continue;
+    const covers = options.some((o) => o.lines.some((l) => cluster.tokens.has(norm(l))));
+    const strength = memory.recall(t);
+    if (!target || (covers && !target.covers) || (covers === target.covers && strength > target.strength)) {
+      target = { cluster, via: t, covers, strength };
     }
   }
 
@@ -1015,7 +1227,18 @@ function writeReport(journal, memory, stats) {
   const right = answered.filter((e) => e.correct).length;
   const lines = [];
   lines.push(`# Playtest: a beginner's run`, ``);
-  lines.push(`Seed \`${SEED}\`, track \`${TRACK}\`. Replay with \`npm run playtest -- --seed ${SEED}\`.`, ``);
+  lines.push(
+    `Seed \`${SEED}\`, track \`${TRACK}\`, persona \`${PERSONA}\`. ` +
+      `Replay with \`npm run playtest -- --seed ${SEED} --track ${TRACK} --persona ${PERSONA}\`.`,
+    ``
+  );
+  if (PERSONA === 'knows-urdu')
+    lines.push(
+      `This learner already knew the language when the app opened, so "tested before taught" and ` +
+        `"met once, gone" cannot fire — read this run for what a beginner never reaches: reviews ` +
+        `falling due, lessons that are too easy, streaks and leagues held long enough to matter.`,
+      ``
+    );
   lines.push(
     `Played ${stats.lessonsEntered} lessons, ${stats.lessonsFinished} finished. ` +
       `Answered ${answered.length} questions, ${right} right (${answered.length ? Math.round((right / answered.length) * 100) : 0}%). ` +
@@ -1053,6 +1276,15 @@ function writeReport(journal, memory, stats) {
     );
   }
 
+  // First, above everything, because a run that hit one of these is not a run
+  // whose findings can be read at face value.
+  const tripped = journal.filter((e) => e.type === 'tripwire');
+  if (tripped.length) {
+    lines.push(`## This run stopped early`, ``);
+    for (const t of tripped) lines.push(`- **${t.name}** — ${t.detail} (${t.lesson}, step ${t.step})`);
+    lines.push(``, `Everything below covers only what was played before that.`, ``);
+  }
+
   lines.push(`## What the run can prove`, ``);
   if (!f.length)
     lines.push(`Nothing mechanical to report: every question was answerable from what the app had taught.`, ``);
@@ -1062,9 +1294,51 @@ function writeReport(journal, memory, stats) {
     lines.push(``);
   }
   lines.push(`## What it cannot`, ``);
+
+  /**
+   * Question shapes this run never once had anything to bring to.
+   *
+   * Every answer a guess, not because the learner had not been taught, but
+   * because what the screen tests is not something a driver can perceive:
+   * "tap to hear" needs ears, "which position is this letter showing" needs to
+   * see how a glyph joins, "which tile is X" needs to see which character the
+   * app has tinted. Scoring 0 of 9 on those is this file's limit, not the
+   * app's, and saying so here is what stops the next reader filing them as
+   * findings.
+   *
+   * Only asked of `knows-urdu`, because only there does "the learner had
+   * nothing to bring" mean what it says. The beginner's four-lesson run listed
+   * "what does it mean" among these, which is false: that question is perfectly
+   * perceivable and the learner simply had not been taught those words yet —
+   * which the findings above already report, as a complaint about the course
+   * rather than about this file.
+   */
+  if (PERSONA === 'knows-urdu') {
+    const blind = new Map();
+    for (const e of answered) {
+      const shape = e.promptShape || '(unnamed)';
+      const t = blind.get(shape) || { n: 0, knew: 0, right: 0 };
+      t.n++;
+      if (e.couldHaveKnown) t.knew++;
+      if (e.correct) t.right++;
+      blind.set(shape, t);
+    }
+    const unseeable = [...blind].filter(([, t]) => t.n >= 5 && t.knew === 0);
+    if (unseeable.length) {
+      lines.push(
+        `Answered blind. A learner who knows the language still had nothing to bring to these, because`,
+        `what they test is something this driver cannot perceive — a sound, how a glyph joins, which`,
+        `character is tinted:`,
+        ``
+      );
+      for (const [shape, t] of unseeable) lines.push(`  - "${shape}" — ${t.right} of ${t.n}, all guessed`);
+      lines.push(``, `Those scores are this file's limit, not the app's.`, ``);
+    }
+  }
+
   lines.push(
     `Whether any of this felt confusing, whether the writing reads as machine written, and what would have`,
-    `helped instead. Those need the journal read by someone willing to have an opinion. \`.playtest/journal.json\``,
+    `helped instead. Those need the journal read by someone willing to have an opinion. \`journal.json\``,
     `holds every screen in order, with what was on offer and what this learner knew at the time.`,
     ``
   );
@@ -1099,8 +1373,24 @@ async function main() {
   const memory = new Memory();
   const journal = [];
   const stats = { lessonsEntered: 0, lessonsFinished: 0 };
-  flush = () => fs.writeFileSync(path.join(OUT, 'journal.json'), JSON.stringify(journal, null, 2));
-  console.log(`playtest — seed ${SEED}, track ${TRACK}, ${LESSONS} lessons`);
+  /**
+   * Both files, every lesson.
+   *
+   * The report used to be written once, at the end, which is why two runs were
+   * read for the first time an hour after they had gone wrong. It costs
+   * milliseconds against lessons that take a minute, and it means the answer to
+   * "how is it going" is a file rather than a guess.
+   */
+  flush = () => {
+    fs.writeFileSync(path.join(OUT, 'journal.json'), JSON.stringify(journal, null, 2));
+    writeReport(journal, memory, stats);
+  };
+  let stopped = false;
+  const seeded = PERSONA === 'knows-urdu' ? seedFluent(memory) : 0;
+  console.log(
+    `playtest — seed ${SEED}, track ${TRACK}, ${LESSONS} lessons, persona ${PERSONA}` +
+      (seeded ? ` (${seeded} meanings known before the app opened)` : '')
+  );
 
   // Gems from the start, so the refill button actually works when the wall is
   // hit. Writing them mid-run does not help: the modal is already mounted and
@@ -1137,7 +1427,19 @@ async function main() {
       return label;
     });
     if (!opened) {
-      journal.push({ type: 'stuck', note: 'no lesson on the path could be opened' });
+      // With a screenshot and what was on screen, because the bare note has
+      // now twice been the entire content of a failed run: a reader cannot
+      // tell "the app did not boot" from "the path rendered and this file
+      // could not read it", and those want opposite repairs.
+      const seen = await page
+        .evaluate(() => ({
+          body: document.body.innerText.slice(0, 400),
+          buttons: document.querySelectorAll('[role="button"]').length,
+        }))
+        .catch(() => ({ body: '(could not read the page)', buttons: 0 }));
+      journal.push({ type: 'stuck', note: 'no lesson on the path could be opened', ...seen });
+      await page.screenshot({ path: path.join(OUT, 'stuck-no-lesson.png') }).catch(() => {});
+      console.log(`  ⚠ no lesson could be opened — ${seen.buttons} buttons on screen, see ${OUT}/stuck-no-lesson.png`);
       break;
     }
     const lessonName = opened.split('.')[0];
@@ -1174,6 +1476,21 @@ async function main() {
           `    ⚠ ${lessonName}: ${UNGRADED_RUN_LIMIT} unanswerable "${shape}" screens in a row — a playtest.js fault, not a finding`
         );
         await page.screenshot({ path: path.join(OUT, `driver-stuck-${stats.lessonsEntered}.png`) }).catch(() => {});
+        break;
+      }
+
+      // See `TRIPWIRES`. Checked here, on every screen, rather than at the end
+      // of the run or at some checkpoint: both of the things these catch were
+      // decidable within minutes and were found hours later.
+      const fired = tripwires(journal, memory);
+      if (fired.length) {
+        for (const t of fired) {
+          journal.push({ type: 'tripwire', lesson: lessonName, step, name: t.name, detail: t.detail });
+          console.log(`\n  ⛔ ${t.name}: ${t.detail}\n     ${t.note}`);
+        }
+        await page.screenshot({ path: path.join(OUT, `tripwire-${stats.lessonsEntered}.png`) }).catch(() => {});
+        console.log(`  stopped after ${stats.lessonsEntered} lessons. Journal and report in ${OUT}/.`);
+        stopped = true;
         break;
       }
 
@@ -1513,16 +1830,17 @@ async function main() {
       `  lesson ${stats.lessonsEntered}: ${lessonName} — ${answers} answered so far, ` +
         `${stats.lessonsFinished} finished, ${Math.round((Date.now() - startedAt) / 1000)}s`
     );
+    if (stopped) break;
   }
 
   flush();
-  writeReport(journal, memory, stats);
   const answered = journal.filter((e) => e.type === 'answer');
   console.log(
     `playtest — ${stats.lessonsEntered} lessons entered, ${stats.lessonsFinished} finished, ` +
-      `${answered.length} questions answered, ${answered.filter((e) => e.correct).length} right.`
+      `${answered.length} questions answered, ${answered.filter((e) => e.correct).length} right` +
+      `${stopped ? ', run stopped early by a tripwire' : ''}.`
   );
-  console.log(`playtest — journal and report in .playtest/`);
+  console.log(`playtest — journal and report in ${path.relative(ROOT, OUT)}/`);
   await browser.close();
   process.exit(0);
 }
@@ -1537,4 +1855,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { Memory, revealFrom, record, classify, knewRevealedAnswer, chooseOption, findings };
+module.exports = { Memory, revealFrom, record, classify, knewRevealedAnswer, chooseOption, findings, tripwires };

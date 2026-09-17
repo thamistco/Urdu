@@ -30,7 +30,7 @@
  * cannot see.
  */
 
-const { record, classify, revealFrom, findings, knewRevealedAnswer, Memory } = require('./playtest.js');
+const { record, classify, revealFrom, findings, knewRevealedAnswer, Memory, tripwires } = require('./playtest.js');
 
 let fails = 0;
 const ok = (name, cond) => {
@@ -229,6 +229,54 @@ const ok = (name, cond) => {
   for (let i = 0; i < 6; i++) m.learn(['ایک', 'ek', 'one']);
   m.learn(['one another', 'one']);
   ok('a token in two meanings recalls the better one', m.recall('one') > 0.8);
+}
+
+// -- the run is allowed to fail ----------------------------------------------
+
+{
+  const limits = { zeroShapeAfter: 20, clusterMax: 8 };
+  const quiet = new Memory();
+  const typed = (n, right, couldHaveKnown = true) =>
+    Array.from({ length: n }, (_, i) => ({
+      type: 'answer',
+      promptShape: 'type this word',
+      couldHaveKnown,
+      correct: i < right,
+    }));
+
+  ok('a shape being lost is not by itself a tripwire', tripwires(typed(19, 0), quiet, limits).length === 0);
+  ok('twenty in a row the learner should have known is', tripwires(typed(20, 0), quiet, limits).length === 1);
+  ok('one of them going right is not', tripwires(typed(40, 1), quiet, limits).length === 0);
+  // A real beginner does get its first twenty typed words wrong, and that is
+  // the finding, not a fault. Only questions the model believed were
+  // answerable count.
+  ok('a beginner guessing badly is not a fault', tripwires(typed(40, 0, false), quiet, limits).length === 0);
+}
+
+{
+  const limits = { zeroShapeAfter: 20, clusterMax: 8, clusterGrowth: 4 };
+  const m = new Memory();
+  m.learn(['کتاب', 'kitaab', 'book']);
+  ok('a word, its reading and its meaning is not a collapse', tripwires([], m, limits).length === 0);
+  // Force one cluster past the limit the only way the model allows: the same
+  // meaning, said in more and more forms.
+  m.learn(['کتاب', 'kitaab', 'a', 'b', 'c', 'd', 'e', 'f', 'g']);
+  const fired = tripwires([], m, limits);
+  ok('nine strings in one meaning is', fired.length === 1 && /memory/.test(fired[0].name));
+}
+
+{
+  // The `knows-urdu` persona walks in with choṭī ye and baṛī ye already one
+  // meaning of eight strings — correct, and exactly the beginner's limit. What
+  // is watched for is growth past what was seeded, not size.
+  const limits = { zeroShapeAfter: 20, clusterMax: 8, clusterGrowth: 4 };
+  const m = new Memory();
+  m.knewAlready(['ye', 'ی', 'یـ', 'ـیـ', 'ـی', 'ے', 'ـے', 'baṛī ye']);
+  ok('a large meaning known before the app opened is not a collapse', tripwires([], m, limits).length === 0);
+  m.learn(['ye', 'ی', 'p', 'q', 'r', 'traced it']);
+  ok('four more strings picked up while playing is still not', tripwires([], m, limits).length === 0);
+  m.learn(['ye', 'ی', 's']);
+  ok('five is', tripwires([], m, limits).length === 1);
 }
 
 console.log(fails ? `\n${fails} failed` : '\nall good');
