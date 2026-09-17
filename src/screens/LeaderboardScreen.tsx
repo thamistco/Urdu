@@ -7,7 +7,7 @@ import { LeagueBadge } from '../components/Illustration';
 import { Reveal } from '../components/Reveal';
 import { Txt, Bold, Eyebrow, Heading } from '../components/Text';
 import { palette, withAlpha } from '../theme';
-import { getLeague, promote, demote } from '../lib/gamification';
+import { getLeague, leagueAbove, leagueBelow, leagueMovementLine } from '../lib/gamification';
 import { useProgressStore } from '../store/useProgressStore';
 
 /** Believable weekly cohort. Deterministic per-week so it feels stable. */
@@ -46,8 +46,13 @@ export function LeaderboardScreen() {
     return all.sort((a, b) => b.xp - a.xp);
   }, [weekKey, weeklyXp]);
 
-  const PROMOTE_ZONE = 5;
-  const DEMOTE_ZONE = rows.length - 3;
+  // A zone that leads nowhere is not a zone. In Emerald there is nothing to
+  // rise to and in Clay nothing to fall to, so those stripes and their legend
+  // entries come off rather than colouring rows for a move that cannot happen.
+  const canRise = leagueAbove(leagueId) !== null;
+  const canFall = leagueBelow(leagueId) !== null;
+  const PROMOTE_ZONE = canRise ? 5 : 0;
+  const DEMOTE_ZONE = canFall ? rows.length - 3 : rows.length;
 
   return (
     <View className="flex-1 bg-ink">
@@ -60,10 +65,7 @@ export function LeaderboardScreen() {
             <Heading className="mt-2 text-2xl" style={{ color: league.color }}>
               {league.name} League
             </Heading>
-            <Txt className="mt-1 text-center text-xs text-paper/55">
-              Top 5 rise to {getLeague(promote(leagueId)).name} · bottom 3 fall to {getLeague(demote(leagueId)).name}.
-              Resets weekly.
-            </Txt>
+            <Txt className="mt-1 text-center text-xs text-paper/55">{leagueMovementLine(leagueId)} Resets weekly.</Txt>
           </View>
         </Reveal>
 
@@ -102,18 +104,22 @@ export function LeaderboardScreen() {
         </View>
 
         <View className="mt-5 flex-row items-center justify-center gap-4">
-          <View className="flex-row items-center gap-1.5">
-            <View className="h-3 w-3 rounded-full" style={{ backgroundColor: palette.jade }} />
-            <Eyebrow className="text-paper/55" style={{ fontSize: 9 }}>
-              Promotion
-            </Eyebrow>
-          </View>
-          <View className="flex-row items-center gap-1.5">
-            <View className="h-3 w-3 rounded-full" style={{ backgroundColor: palette.rose }} />
-            <Eyebrow className="text-paper/55" style={{ fontSize: 9 }}>
-              Demotion
-            </Eyebrow>
-          </View>
+          {canRise && (
+            <View className="flex-row items-center gap-1.5">
+              <View className="h-3 w-3 rounded-full" style={{ backgroundColor: palette.jade }} />
+              <Eyebrow className="text-paper/55" style={{ fontSize: 9 }}>
+                Promotion
+              </Eyebrow>
+            </View>
+          )}
+          {canFall && (
+            <View className="flex-row items-center gap-1.5">
+              <View className="h-3 w-3 rounded-full" style={{ backgroundColor: palette.rose }} />
+              <Eyebrow className="text-paper/55" style={{ fontSize: 9 }}>
+                Demotion
+              </Eyebrow>
+            </View>
+          )}
         </View>
         <View className="h-6" />
       </Screen>

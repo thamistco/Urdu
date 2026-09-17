@@ -128,6 +128,16 @@ export type LeagueId = (typeof LEAGUES)[number]['id'];
 
 export const getLeague = (id: string) => LEAGUES.find((l) => l.id === id) ?? LEAGUES[0];
 
+/**
+ * Where a learner ends up after a good or a bad week.
+ *
+ * Both clamp, and clamping is right: you do not fall out of the bottom league
+ * or rise past the top one, you stay. What is *not* right is reading them as
+ * "the league next door" — at the ends they answer with the league you are
+ * already in, and the leaderboard did exactly that, telling every new learner
+ * standing in Clay that the bottom three fall to Clay. Use `leagueAbove` and
+ * `leagueBelow` for the neighbour; these two are for the move.
+ */
 export function promote(current: LeagueId): LeagueId {
   const i = LEAGUES.findIndex((l) => l.id === current);
   return LEAGUES[Math.min(i + 1, LEAGUES.length - 1)].id;
@@ -136,6 +146,34 @@ export function promote(current: LeagueId): LeagueId {
 export function demote(current: LeagueId): LeagueId {
   const i = LEAGUES.findIndex((l) => l.id === current);
   return LEAGUES[Math.max(i - 1, 0)].id;
+}
+
+/** The league one rung up, or null because there isn't one. */
+export function leagueAbove(current: LeagueId): LeagueId | null {
+  const i = LEAGUES.findIndex((l) => l.id === current);
+  return i >= 0 && i < LEAGUES.length - 1 ? LEAGUES[i + 1].id : null;
+}
+
+/** The league one rung down, or null because there isn't one. */
+export function leagueBelow(current: LeagueId): LeagueId | null {
+  const i = LEAGUES.findIndex((l) => l.id === current);
+  return i > 0 ? LEAGUES[i - 1].id : null;
+}
+
+/**
+ * What this week can actually do to you, in the league you are actually in.
+ *
+ * Built here rather than in the screen so that all seven leagues can be read
+ * at once in a test — the two that were wrong are the two nobody looks at,
+ * one of them being the league every learner starts in.
+ */
+export function leagueMovementLine(current: LeagueId): string {
+  const up = leagueAbove(current);
+  const down = leagueBelow(current);
+  const here = getLeague(current).name;
+  const rise = up ? `Top 5 rise to ${getLeague(up).name}` : `${here} is the top league`;
+  const fall = down ? `bottom 3 fall to ${getLeague(down).name}` : `nobody falls out of ${here}`;
+  return `${rise} · ${fall}.`;
 }
 
 /** Gems awarded for a completed lesson, scaled by accuracy. */
