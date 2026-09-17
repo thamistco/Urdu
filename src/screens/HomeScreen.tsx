@@ -216,7 +216,7 @@ export function HomeScreen() {
   // appears and clears as answers land instead of only on a remount.
   const dueNow = useMemo(() => dueCount(store.srs), [store.srs]);
 
-  const { level, ratio } = levelProgress(store.totalXp);
+  const { level, ratio, into, span } = levelProgress(store.totalXp);
   const goal = DAILY_GOALS.find((g) => g.id === store.dailyGoalId) ?? DAILY_GOALS[1];
   const dailyRatio = Math.min(1, store.todayXp / goal.xp);
   const word = WORDS[new Date().getDate() % WORDS.length];
@@ -703,18 +703,26 @@ export function HomeScreen() {
                   </View>
                   <Bold className="text-sm">{levelTitle(level)}</Bold>
                 </View>
+                {/* This card stacks two bars that measure different things, and
+                    the only number on it used to be "0/30 XP today" — sitting
+                    directly above the *level* bar, which counts XP for the
+                    whole course. The daily bar below it got a bare "0%" and an
+                    unexplained sparkle. Neither bar could be identified from
+                    the screen, and the one label there was named the wrong one.
+                    Profile already says "40 / 300 XP to level 6"; this now says
+                    the same kind of thing, with each number over its own bar. */}
                 <Txt className="text-xs text-paper/55">
-                  {store.todayXp}/{goal.xp} XP today
+                  {into} / {span} XP to level {level + 1}
                 </Txt>
               </View>
               <ProgressBar progress={ratio} height={10} />
               <View className="mt-3 flex-row items-center gap-2">
-                <Illustration name="sparkle" tile={false} size={16} />
+                <Txt className="text-[11px] text-paper/55">Today</Txt>
                 <View className="flex-1">
                   <ProgressBar progress={dailyRatio} color={palette.jade} height={8} />
                 </View>
                 <Txt className="text-[11px] text-paper/55">
-                  {dailyRatio >= 1 ? 'Goal met ✓' : `${Math.round(dailyRatio * 100)}%`}
+                  {dailyRatio >= 1 ? 'Goal met ✓' : `${store.todayXp}/${goal.xp} XP`}
                 </Txt>
               </View>
             </Card>
