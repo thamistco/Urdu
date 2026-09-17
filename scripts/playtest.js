@@ -933,7 +933,25 @@ async function typeWord(page, memory, promptLine) {
   if (!(await input.count().catch(() => 0))) return { typed: null, taught: false, knew: false };
 
   const cluster = memory.clusterFor(promptLine);
-  const roman = cluster ? [...cluster.tokens].find((t) => /^[a-z' ]+$/i.test(t) && t !== norm(promptLine)) : null;
+  const tokens = cluster ? [...cluster.tokens] : [];
+  /**
+   * What this learner would write.
+   *
+   * The transliteration if the app has shown one — and on the `script` track it
+   * never does, by design: `Lexeme` renders Nastaliq alone because someone
+   * learning to read wants nothing to lean on. So the script form is the second
+   * choice, and the app accepts it: `matchesWord` checks the Urdu first, and
+   * the exercise's own hint says "kitab, kitaab and کتاب all count".
+   *
+   * Without it a script-track run typed the first three letters of the English
+   * prompt at every one of 115 typing questions — "Boo" for Book — and scored
+   * zero, which reads as an exercise nobody can pass and is nothing of the
+   * kind. What a human has here and this driver does not is ears: the word is
+   * spoken aloud, so a learner can spell what they heard.
+   */
+  const roman = tokens.find((t) => /^[a-z' ]+$/i.test(t) && t !== norm(promptLine)) || null;
+  const script = tokens.find((t) => /[\u0600-\u06ff]/.test(t)) || null;
+  const answer = roman || script;
 
   // Two different facts, and collapsing them into one was a reporting bug:
   // `taught` is whether the app ever showed this, `knew` is whether the die
@@ -941,7 +959,7 @@ async function typeWord(page, memory, promptLine) {
   // about pacing; a word never taught at all is a complaint about ordering.
   // With only `knew` to go on, every forgotten word was filed under "tested
   // before taught", which is the wrong finding and the wrong fix.
-  const taught = !!roman;
+  const taught = !!answer;
   const knew = taught && rand() < memory.recall(promptLine);
 
   // Always type something. The empty box used to be an option here, on the
@@ -949,7 +967,7 @@ async function typeWord(page, memory, promptLine) {
   // empty box, so the app never judged it, and the run banked a wrong answer
   // that the learner had never given. A beginner who is stuck types a bad guess.
   const stem = (roman || promptLine).replace(/[^a-z']/gi, '');
-  const guess = knew ? roman : (stem || 'kya').slice(0, 3);
+  const guess = knew ? answer : (stem || 'kya').slice(0, 3);
   await input.fill(guess).catch(() => {});
   await clickByText(page, /^Check$/i);
   return { typed: guess, taught, knew };
@@ -1931,7 +1949,19 @@ async function main() {
       // The learner learns from being told, right or wrong. This is the only
       // way anything ever enters memory.
       if (reveal && reveal.length >= 2) memory.learn(reveal);
-      if (correct) memory.learn([...decision.pick.lines, ...context].slice(0, 4));
+      /**
+       * A right answer teaches the pairing that produced it — except when the
+       * answer is not a form of anything.
+       *
+       * "Which position is this letter showing?" is answered by "Middle /
+       * joined on both sides", and every letter in the course shares those
+       * four labels. Learning them merged alif madda, jeem, baṛī he, daal and
+       * ṛe into a single seven-string meaning in one 24-lesson run — the
+       * largest cluster in it, and one screen away from tripping the collapse
+       * wire. The question is about the shape on screen, not about a word.
+       */
+      if (correct && !/which position is this letter showing/i.test(prompt))
+        memory.learn([...decision.pick.lines, ...context].slice(0, 4));
 
       record(journal, after, {
         lesson: lessonName,
