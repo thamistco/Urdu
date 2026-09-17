@@ -282,6 +282,8 @@ for (const t of tokens) {
  * `checkInlineWithAlphaMultiline()` below.
  */
 const PAPER_FLOOR = 55;
+/** The mirror floor, for ink dimmed over a card. See `checkInkOpacity`. */
+const INK_FLOOR = 65;
 const WITH_ALPHA_PAPER =
   /\b(?:color|placeholderTextColor)\s*[:=]\s*\{?\s*[^\n{}]*?withAlpha\(\s*palette\.paper\s*,\s*([\d.]+)\s*\)/g;
 
@@ -456,6 +458,52 @@ for (const file of files) {
   checkVariableWithAlpha(src, file, lineAt);
   // URD-066: Check for inline withAlpha calls in multi-line ternaries.
   checkInlineWithAlphaMultiline(src, file, lineAt);
+  // The same floor, the other way up: ink text dimmed over a light card.
+  checkInkOpacity(src, file, lineAt);
+}
+
+/**
+ * The mirror of `PAPER_FLOOR`: ink text dimmed by `opacity-N` over a card.
+ *
+ * `PAPER_FLOOR` guards the light-on-dark direction, and its own doc comment
+ * records that the rule "pattern-matches the Tailwind spelling" — so it sees
+ * `text-paper/40`, and it does not see an `opacity` class, which dims the
+ * element rather than the colour and reaches the same place.
+ *
+ * Measured against the real composite rather than assumed. `palette.ink` on
+ * `palette.parchment`, which is the card every exercise draws on:
+ *
+ *     opacity  effective        contrast   AA body (4.5:1)
+ *     0.50     rgb(136,123,109)   3.15:1    fail
+ *     0.55     rgb(126,113,99)    3.63:1    fail
+ *     0.60     rgb(115,103,90)    4.20:1    fail
+ *     0.65     rgb(105,93,81)     4.88:1    pass
+ *     0.70     rgb(95,83,72)      5.70:1    pass
+ *
+ * 65 is the lowest step that clears AA, so it is the floor. Found by measuring
+ * a reading passage's transliteration — 11px at opacity-50, 3.15:1 — which is
+ * the line a learner leans on most on the one screen that is nothing but
+ * reading. Ten other sites were under the floor with it.
+ */
+function checkInkOpacity(src, file, lineAt) {
+  // One JSX opening tag at a time, so a `color: palette.ink` and an
+  // `opacity-N` only pair up when they are on the same element.
+  const TAG = /<[A-Z][\w.]*\b[^>]*>/g;
+  let m;
+  while ((m = TAG.exec(src))) {
+    const tag = m[0];
+    if (!/palette\.ink\b/.test(tag)) continue;
+    const op = /\bopacity-(\d{1,3})\b/.exec(tag);
+    if (!op) continue;
+    const pct = Number(op[1]);
+    if (pct >= INK_FLOOR) continue;
+    bad(
+      file,
+      lineAt(m.index + op.index),
+      `\`opacity-${pct}\` on \`palette.ink\` text is under the ${INK_FLOOR}% legibility floor — ` +
+        `it fails WCAG AA on the parchment card every exercise draws on`
+    );
+  }
 }
 
 // ------------------------------------------------------------------ report

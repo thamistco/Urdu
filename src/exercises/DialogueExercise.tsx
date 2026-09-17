@@ -80,7 +80,7 @@ export function DialogueExercise({ exercise, track, showRoman, locked, onGraded 
                       {l.urdu}
                     </Urdu>
                     {showRoman ? (
-                      <Txt style={{ color: palette.ink }} className="mt-2 text-[0.6875rem] leading-4 opacity-50">
+                      <Txt style={{ color: palette.ink }} className="mt-2 text-[0.6875rem] leading-4 opacity-65">
                         {l.roman}
                       </Txt>
                     ) : null}

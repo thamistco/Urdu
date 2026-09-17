@@ -53,7 +53,7 @@ export function LetterSpotExercise({ exercise, showRoman, locked, onGraded }: Ex
       </Eyebrow>
       <PromptCard height={150}>
         <Urdu style={{ color: palette.ink, fontSize: 40, lineHeight: urduLine(40) }}>{word.urdu}</Urdu>
-        <Txt style={{ color: palette.ink }} className="mt-2 text-sm opacity-60">
+        <Txt style={{ color: palette.ink }} className="mt-2 text-sm opacity-65">
           {glossOf(word)}
           {showRoman ? ` · ${word.roman}` : ''}
         </Txt>
