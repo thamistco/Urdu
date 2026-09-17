@@ -1,6 +1,11 @@
 /* eslint-disable */
 /**
- * Every control the app offers has to lead somewhere.
+ * What the app says about itself, checked against what it can actually do.
+ *
+ * Three things live here because they fail the same way — the screen looks
+ * finished, every render test passes, and the only person who finds out is a
+ * learner: a control that leads nowhere, a control that never says it is one,
+ * and a number printed over the wrong bar.
  *
  * Settings used to show a **Sign in** button to a guest. It called
  * `signOut()`, which clears guest mode and returns the learner to the front
@@ -166,6 +171,24 @@ async function main() {
     await page.waitForTimeout(1200);
     await auditRoles('home');
 
+    /**
+     * The level card stacks two bars measuring different things. Its only
+     * number used to be "0/30 XP today", sitting above the *level* bar, which
+     * counts XP for the whole course; the daily bar below got a bare "0%" and
+     * a sparkle. Both bars were unidentifiable and the one label was on the
+     * wrong one.
+     */
+    const home = await page.evaluate(() => document.body.innerText);
+    if (!/XP to level \d+/.test(home)) {
+      problems.push('The level bar on Home carries no label saying it measures progress to the next level.');
+    }
+    if (!/Today/.test(home)) {
+      problems.push('The daily-goal bar on Home carries no label saying it measures today.');
+    }
+    if (/XP today/.test(home)) {
+      problems.push('Home still prints "XP today" above the level bar, which is not what that bar measures.');
+    }
+
     if (!(await tapByText(page, /^Profile$/))) {
       problems.push('Could not find the Profile tab — the route to Settings is gone, so this check proves nothing.');
     } else {
@@ -210,6 +233,7 @@ async function main() {
   }
   console.log('check:controls — every focusable thing on sign-in, home, profile and settings says it is a button.');
   console.log('check:controls — the wordmark announces its name once in each script, not once per glow layer.');
+  console.log("check:controls — Home's two progress bars each carry a label saying what they measure.");
   console.log(
     'check:controls — Settings offers a guest no sign-in it cannot honour, and still says where progress lives.'
   );
