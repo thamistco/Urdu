@@ -10,6 +10,7 @@ import { Illustration } from '../components/Illustration';
 import type { IconName } from '../art/icons';
 import { palette, withAlpha } from '../theme';
 import { levelTitle } from '../lib/gamification';
+import { count } from '../lib/plural';
 import type { FinishResult } from '../store/useProgressStore';
 
 function RewardTile({ icon, value, label, color }: { icon: IconName; value: string; label: string; color: string }) {
@@ -106,7 +107,9 @@ export function LessonComplete({
                   }}
                 >
                   <Illustration name="flame" tile={false} size={26} />
-                  <Bold style={{ color: palette.flameLight }}>{result.streak} days in a row. Keep it alight!</Bold>
+                  <Bold style={{ color: palette.flameLight }}>
+                    {count(result.streak, 'day')} in a row. Keep it alight!
+                  </Bold>
                 </View>
               </Reveal>
             )}
