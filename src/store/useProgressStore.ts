@@ -17,6 +17,7 @@ import {
 } from '../lib/gamification';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { heartsAreFree } from '../lib/hearts';
+import { repeatReward } from '../lib/repeatReward';
 import { migrateProgress } from '../lib/progress';
 
 export type Goal = 'family' | 'read' | 'heritage' | 'curious';
@@ -299,8 +300,14 @@ export const useProgressStore = create<ProgressState>()(
         const accuracy = total > 0 ? correct / total : 1;
         const perfect = correct === total && total > 0;
         const bonusXp = perfect ? 5 : 0;
-        const xpGained = xp + bonusXp;
-        const gemsGained = gemsForLesson(accuracy, isReview);
+        // A lesson already finished pays for the work done in it, not for
+        // being that lesson again. See `repeatReward` for the measurements.
+        const repeat = !!s2.completedLessons[lessonId];
+        const { xp: xpGained, gems: gemsGained } = repeatReward(repeat, {
+          xp: xp + bonusXp,
+          gems: gemsForLesson(accuracy, isReview),
+          exercises: total,
+        });
 
         // --- streak ---
         const today = dayKey();
