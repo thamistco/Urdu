@@ -210,15 +210,31 @@ export function SettingsScreen() {
   const setDailyGoal = useProgressStore((st) => st.setDailyGoal);
   const email = useAuthStore((st) => st.session?.user?.email ?? null);
   const signOut = useAuthStore((st) => st.signOut);
+  const authConfigured = useAuthStore((st) => st.authConfigured);
   const [, force] = useState(0);
 
   const onAuthAction = () => {
     if (email) {
       confirmAction('Sign out?', 'Your progress stays saved to your account.', 'Sign out', () => signOut());
     } else {
-      signOut(); // clears guest mode → returns to the sign-in screen
+      // Leaving guest mode is only a way *in* when the front door has a way in.
+      // The button is not rendered otherwise — see `canSignIn` below.
+      signOut();
     }
   };
+
+  /**
+   * Whether "Sign in" leads anywhere.
+   *
+   * It calls `signOut()`, which clears guest mode and returns the learner to
+   * the front door. That is the right move when the door offers Google and
+   * Apple. When no backend is configured the login screen shows a single
+   * "Start learning" button, so the round trip ejects someone from the app and
+   * hands them back exactly where they were — a control promising something
+   * the build cannot do. The login screen already hides its providers on this
+   * same test; this is the other half of it.
+   */
+  const canSignIn = !!email || authConfigured;
 
   const confirmReset = () => {
     confirmAction(
@@ -247,20 +263,22 @@ export function SettingsScreen() {
                   {email ? 'Progress is saved to your account' : 'Progress is saved on this device'}
                 </Txt>
               </View>
-              <Pressable onPress={onAuthAction}>
-                <View
-                  className="rounded-xl px-4 py-2"
-                  style={{
-                    backgroundColor: withAlpha(email ? palette.rose : palette.gold, 0.15),
-                    borderWidth: 1,
-                    borderColor: withAlpha(email ? palette.rose : palette.gold, 0.35),
-                  }}
-                >
-                  <Bold style={{ color: email ? palette.roseLight : palette.gold }} className="text-sm">
-                    {email ? 'Sign out' : 'Sign in'}
-                  </Bold>
-                </View>
-              </Pressable>
+              {canSignIn ? (
+                <Pressable accessibilityRole="button" onPress={onAuthAction}>
+                  <View
+                    className="rounded-xl px-4 py-2"
+                    style={{
+                      backgroundColor: withAlpha(email ? palette.rose : palette.gold, 0.15),
+                      borderWidth: 1,
+                      borderColor: withAlpha(email ? palette.rose : palette.gold, 0.35),
+                    }}
+                  >
+                    <Bold style={{ color: email ? palette.roseLight : palette.gold }} className="text-sm">
+                      {email ? 'Sign out' : 'Sign in'}
+                    </Bold>
+                  </View>
+                </Pressable>
+              ) : null}
             </View>
           </Card>
         </Reveal>

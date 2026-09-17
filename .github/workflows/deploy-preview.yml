@@ -262,6 +262,14 @@ jobs:
           CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
             npm run check:stage-advance-scroll
 
+      # Settings offered a guest a "Sign in" button that called signOut() and
+      # dropped them on a door with nothing behind it. Every test that only
+      # asks whether screens render was happy with it.
+      - name: Check no control promises something the build cannot do
+        run: |
+          CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
+            npm run check:controls
+
       - name: SPA fallback + disable Jekyll
         run: |
           cp dist/index.html dist/404.html
