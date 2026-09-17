@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Pressable, ScrollView } from 'react-native';
+import { View, Pressable, ScrollView, Dimensions } from 'react-native';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -345,6 +346,7 @@ export function HomeScreen() {
    * mid-fade, is exactly the same "not while the notice is up" case the
    * comment above already argues for.
    */
+  const tabBarHeight = useBottomTabBarHeight();
   const pathRef = useRef<ScrollView>(null);
   const currentNode = useRef<View>(null);
   const didAutoScroll = useRef(false);
@@ -436,15 +438,40 @@ export function HomeScreen() {
       // want. Accumulating nested onLayout values instead would mean summing
       // three levels of parent-relative coordinates, which silently goes wrong
       // the first time the tree gains a wrapper.
-      currentNode.current?.measure((_x, _y, _w, _h, _px, pageY) => {
-        if (typeof pageY === 'number' && pageY > 420) {
-          didAutoScroll.current = true;
-          pathRef.current?.scrollTo({ y: pageY - 200, animated: true });
-        }
+      currentNode.current?.measure((_x, _y, _w, height, _px, pageY) => {
+        if (typeof pageY !== 'number' || typeof height !== 'number') return;
+        /**
+         * Scroll only when the node is actually out of sight.
+         *
+         * The guard used to be `pageY > 420`, a constant that knows nothing
+         * about how tall the screen is. On the two commonest phone sizes a
+         * learner in Unit 1 has their current lesson sitting at 705-773 with
+         * the tab bar starting at 774 — fully visible, nothing to fix — and
+         * this scrolled 505px anyway, past the greeting, the streak and gem
+         * counters, the level card, the "Start here" card, Today's Word and
+         * the Letter Lab. A new learner's first ever view of Home was a hint
+         * banner and a list. On a 320x568 screen the same node really is cut
+         * off, and there the scroll is right, which is what made the constant
+         * look like it worked.
+         *
+         * The bottom of the visible list is the window less the tab bar, so
+         * that is what it is measured against now, with no margin on top of
+         * it: the question is whether the node is cut off, and a node resting
+         * against the tab bar is not. It rests there by one pixel today, so
+         * a header that grows by two will tip this back into scrolling — and
+         * should, because at that point the node really is below the fold.
+         *
+         * Deeper into the course nothing changes: a node hundreds of pixels
+         * down still scrolls, and still lands 200px from the top.
+         */
+        const visibleBottom = Dimensions.get('window').height - tabBarHeight;
+        if (pageY + height <= visibleBottom) return;
+        didAutoScroll.current = true;
+        pathRef.current?.scrollTo({ y: pageY - 200, animated: true });
       });
     }, 500);
     return () => clearTimeout(t);
-  }, [currentId, showPathNotice, showTicksWiped]);
+  }, [currentId, showPathNotice, showTicksWiped, tabBarHeight]);
 
   /**
    * Opening a stage below the fold used to leave the scroll position exactly
