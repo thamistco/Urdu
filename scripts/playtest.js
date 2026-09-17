@@ -624,8 +624,24 @@ async function matchPairs(page, memory) {
     // exactly four pairs, because with four matched the chance of picking the
     // two live tiles out of twelve is small and every miss burned an attempt.
     const live = options.filter((o) => !o.dead);
-    const words = live.filter((o) => o.lines.some((l) => /[؀-ۿ]/.test(l)));
-    const glosses = live.filter((o) => !o.lines.some((l) => /[؀-ۿ]/.test(l)));
+    // Which column a tile is in, not what script is written on it.
+    //
+    // The sides used to be told apart by "does this tile contain an Arabic
+    // range character": words on the left, pictures on the right. That is true
+    // of every board whose picture is drawn — and false of the numbers board,
+    // whose picture *is* Urdu script, the numeral ۱ ۲ ۳ ۴. Both columns then
+    // counted as words, the gloss column came back empty, and the board was
+    // abandoned at "0 of 0 tries matched" on the first round. The lesson never
+    // finished, the run re-entered it, and every playtest of more than
+    // fourteen lessons quietly stopped making progress there — six lessons of
+    // one run were the same Numbers lesson, 636 taps that matched nothing.
+    // It was also wrong on the Roman track, where the left column is Latin.
+    // A matched tile stays on the board, so both columns are always present in
+    // `options` even when one of them has no live tile left.
+    const xs = options.map((o) => o.box.x);
+    const midline = (Math.min(...xs) + Math.max(...xs)) / 2;
+    const words = live.filter((o) => o.box.x <= midline);
+    const glosses = live.filter((o) => o.box.x > midline);
     // Nothing left to pair means the board is finished. This is where a
     // cleared board is actually noticed: the flag below only fired when the
     // app had already moved off the screen, so boards that were completed and
@@ -1160,6 +1176,14 @@ async function main() {
       // Matching pairs a word with a gloss, so it needs two taps, not one.
       if (/match each word/i.test(screen.body)) {
         const m = await matchPairs(page, memory);
+        // A board that rendered always offers at least one pair to try, so
+        // zero attempts is this script failing to read the screen rather than
+        // a learner failing to pair it. It stayed invisible for exactly that
+        // reason: the journal wrote "0 of 0 tries matched" alongside genuine
+        // scores, the lesson never finished, the run re-entered it, and the
+        // console said only that Numbers was being played again.
+        if (m.pairs === 0)
+          console.log(`  ⚠ matching board unreadable in ${lessonName} — a playtest.js fault, not a finding`);
         journal.push({
           type: 'answer',
           lesson: lessonName,
