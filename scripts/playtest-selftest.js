@@ -156,6 +156,15 @@ const ok = (name, cond) => {
     'an Urdu answer already shown does not',
     knewRevealedAnswer({ knows: () => true }, ['\u0644\u0627\u0644']) === true
   );
+  // "Which tile is alif?" reveals \u067e\u0627\u0646 \u2014 one letter wrapped in its neighbours,
+  // a slice of the word on screen rather than a word. The learner was never
+  // taught it and never will be; 25 of one run's 64 "tested before taught"
+  // were this shape.
+  ok(
+    'a tile is a slice of a word, not vocabulary',
+    knewRevealedAnswer(M, ['\u067e\u0627\u0646'], 'Which tile is alif?') === null &&
+      knewRevealedAnswer(M, ['\u067e\u0627\u0646'], 'Which word means this?') === false
+  );
 }
 {
   // null must not be counted as "never taught" — that is the bug this rule

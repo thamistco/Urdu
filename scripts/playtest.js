@@ -420,9 +420,17 @@ async function waitForGraded(page) {
  * had not. Returns null when there is nothing to judge, which is not the same
  * as false and is not counted.
  */
-function knewRevealedAnswer(memory, reveal) {
+function knewRevealedAnswer(memory, reveal, prompt = '') {
   if (!reveal || !reveal.length) return null;
   if (!reveal.some((l) => /[\u0600-\u06ff]/.test(l))) return null;
+  // "Which tile is alif?" reveals the winning tile \u2014 a letter wrapped in its
+  // two real neighbours, \u067e\u0627\u0646 out of \u067e\u0627\u0646\u06cc. That string is not vocabulary and
+  // never will be: the word is scenery, the question is about one character
+  // in it, and the app has taught that character. Counting these put 25 of
+  // one run's 64 "tested before taught" on questions whose answer the learner
+  // knew perfectly well. `check:order` excludes `letterSpot` from its own
+  // ordering rule for exactly this reason; this is the same exclusion.
+  if (/which tile is/i.test(prompt)) return null;
   return reveal.some((l) => memory.knows(l));
 }
 
@@ -1469,7 +1477,7 @@ async function main() {
         .catch(() => {});
       const after = await waitForGraded(page);
       const reveal = revealFrom(after.lines);
-      const knewAnswer = knewRevealedAnswer(memory, reveal);
+      const knewAnswer = knewRevealedAnswer(memory, reveal, prompt);
       const correct = after.right;
 
       // The learner learns from being told, right or wrong. This is the only
