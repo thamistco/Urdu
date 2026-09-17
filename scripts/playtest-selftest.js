@@ -39,6 +39,7 @@ const {
   Memory,
   tripwires,
   chooseOption,
+  asContent,
 } = require('./playtest.js');
 
 let fails = 0;
@@ -261,6 +262,25 @@ const ok = (name, cond) => {
     chooseOption(w, ['What does it mean?', '✕', 'پانی'], [{ lines: ['Water'] }, { lines: ['Book'] }]).couldHaveKnown ===
       true
   );
+}
+
+// -- what a screen asks is not what it is about ------------------------------
+
+{
+  // "Tap to hear" and "Which one did you hear?" head every listening question
+  // in the course, so learning them beside the answer joined `happy`, `family`
+  // and `name` into one meaning inside sixteen lessons.
+  const chrome = ['Tap to hear', 'Which one did you hear?', '✕'];
+  const m = new Memory();
+  m.learn(['happy', 'خوش', ...asContent(chrome)]);
+  m.learn(['family', 'خاندان', ...asContent(chrome)]);
+  ok(
+    'an instruction cannot join two words',
+    !!m.clusterFor('happy') && !!m.clusterFor('family') && m.clusterFor('happy') !== m.clusterFor('family')
+  );
+  ok('and is not learned at all', !m.knows('tap to hear') && !m.knows('which one did you hear?'));
+  // A real gloss beside the answer still is.
+  ok('a word beside its meaning still is', asContent(['Water', 'پانی']).length === 2);
 }
 
 // -- the run is allowed to fail ----------------------------------------------

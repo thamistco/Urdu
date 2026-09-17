@@ -693,6 +693,23 @@ function knewRevealedAnswer(memory, reveal, prompt = '') {
 }
 
 /**
+ * The lines of a screen that could be a form of a word, out of everything that
+ * is not an option.
+ *
+ * What a screen asks is not what it is about. "Tap to hear" and "Which one did
+ * you hear?" sit above every listening question in the course, so learning them
+ * beside the answer merged `happy`, `family` and `name` into one meaning inside
+ * sixteen lessons. An instruction and a question are the same on every screen
+ * that carries them, which is exactly what makes them able to join everything
+ * to everything — the close glyph's trick, in words.
+ */
+function asContent(lines) {
+  return lines.filter(
+    (l) => !/\?\s*$/.test(l.trim()) && !/^(tap|type|build|match|choose|check|continue|finish|hear)\b/i.test(l.trim())
+  );
+}
+
+/**
  * Choose an option the way a learner would.
  *
  * Looks for something on screen it has been taught to associate with the
@@ -1961,7 +1978,7 @@ async function main() {
        * wire. The question is about the shape on screen, not about a word.
        */
       if (correct && !/which position is this letter showing/i.test(prompt))
-        memory.learn([...decision.pick.lines, ...context].slice(0, 4));
+        memory.learn([...decision.pick.lines, ...asContent(context)].slice(0, 4));
 
       record(journal, after, {
         lesson: lessonName,
@@ -2016,4 +2033,14 @@ if (require.main === module) {
   });
 }
 
-module.exports = { Memory, revealFrom, record, classify, knewRevealedAnswer, chooseOption, findings, tripwires };
+module.exports = {
+  Memory,
+  revealFrom,
+  record,
+  classify,
+  knewRevealedAnswer,
+  chooseOption,
+  findings,
+  tripwires,
+  asContent,
+};
