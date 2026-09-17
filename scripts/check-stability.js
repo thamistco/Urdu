@@ -268,7 +268,19 @@ const checked = [];
         await advance();
         continue;
       }
-      if (/draw over the grey letter|Got it/.test(t)) {
+      // Case-insensitive because this reads `innerText`, which applies the
+      // button's `uppercase` transform and hands back "GOT IT". The selector
+      // below matches the untransformed text, so it worked while this test did
+      // not, and teaching cards quietly fell through to the answer path
+      // instead. That was invisible for as long as acknowledging a card left
+      // the card on screen; the moment "Got it" started advancing the lesson
+      // — which is what a card that cannot be got wrong should do — this
+      // reported the question as having been replaced under the learner.
+      //
+      // A teaching card is not a question and has never been graded, so it is
+      // outside what this check is about. The check is not being relaxed: the
+      // branch that was always meant to catch these now actually catches them.
+      if (/draw over the grey letter|got it/i.test(t)) {
         if (await tapOnScreen('text=/^Got it$/')) {
           await page.waitForTimeout(700);
           await advance();
