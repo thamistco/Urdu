@@ -90,12 +90,22 @@ function rolelessControls() {
   });
 }
 
-/** Tap the first thing whose visible text or label matches. */
+/**
+ * Tap the first thing whose visible text or label matches.
+ *
+ * Leaves only, unless the element names itself with an aria-label. Matching
+ * any element meant the outermost wrapper won — a screen whose whole
+ * `textContent` happens to begin "← Back" matches `/^Back/`, and clicking the
+ * middle of a full-screen div does nothing at all. That failed as a silent
+ * no-op, which then looked like the next screen simply not being reachable.
+ */
 async function tapByText(page, re) {
   const box = await page.evaluate((src) => {
     const r = new RegExp(src, 'i');
     for (const n of document.querySelectorAll('div,span,p,[role="button"]')) {
-      const t = (n.getAttribute('aria-label') || n.textContent || '').trim();
+      const label = n.getAttribute('aria-label');
+      if (!label && n.children.length) continue;
+      const t = (label || n.textContent || '').trim();
       if (!r.test(t)) continue;
       const b = n.getBoundingClientRect();
       if (b.width < 8 || b.height < 8) continue;
@@ -194,6 +204,30 @@ async function main() {
     } else {
       await page.waitForTimeout(900);
       await auditRoles('profile');
+
+      /**
+       * The league table is fourteen generated names and generated XP,
+       * presented exactly like real competitors. The code was always honest
+       * about it and the screen was not, which made it the one place the app
+       * told a learner something untrue.
+       */
+      // The row is named for the learner's current league, e.g. "Clay League".
+      if (!(await tapByText(page, /^\w+ League$/))) {
+        problems.push('Could not open the League from Profile — the cohort assertion below proves nothing.');
+      } else {
+        await page.waitForTimeout(1000);
+        const board = await page.evaluate(() => document.body.innerText);
+        // Reaching the screen is asserted separately from what it says, so a
+        // navigation that silently failed cannot pass as a clean board.
+        if (!/League/.test(board) || !/\bXP\b/.test(board)) {
+          problems.push(`The League screen did not open: ${board.replace(/\n/g, ' / ').slice(0, 90)}`);
+        } else if (!/not real people/i.test(board)) {
+          problems.push('The league table shows a generated cohort with nothing on screen saying it is not real.');
+        }
+        await tapByText(page, /^(←|Back)/);
+        await page.waitForTimeout(800);
+      }
+
       if (!(await tapByText(page, /^Settings$/))) {
         problems.push('Could not open Settings from Profile — this check proves nothing.');
       } else {
@@ -234,6 +268,7 @@ async function main() {
   console.log('check:controls — every focusable thing on sign-in, home, profile and settings says it is a button.');
   console.log('check:controls — the wordmark announces its name once in each script, not once per glow layer.');
   console.log("check:controls — Home's two progress bars each carry a label saying what they measure.");
+  console.log('check:controls — the league table says on screen that its cohort is not real people.');
   console.log(
     'check:controls — Settings offers a guest no sign-in it cannot honour, and still says where progress lives.'
   );
