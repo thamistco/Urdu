@@ -1766,9 +1766,38 @@ async function main() {
         // "alif · sounds like “a / aa”" — the trace branch's narrower
         // `/^[A-Za-z’']+\s*·/` misses the two-word names (alif madda, bari ye).
         const named = screen.lines.find((l) => /·\s*sounds like/i.test(l));
-        const glyph = screen.lines.find((l) => /^[؀-ۿ‎‏]+$/.test(l));
-        if (named && glyph) memory.learn([named.split('·')[0].trim(), glyph]);
-        journal.push({ type: 'taught', lesson: lessonName, step, shown: [named, glyph].filter(Boolean) });
+        const isScript = (l) => /^[\u0600-\u06FF\u200E\u200F]+$/.test(l);
+
+        /**
+         * All four faces, not just the isolated one.
+         *
+         * The card's whole point is that a letter changes shape by position,
+         * and it shows every shape under a heading that says so. Learning only
+         * the glyph at the top left the learner meeting the medial pe in the
+         * next question as something it had never seen: ten of one 24-lesson
+         * run's nineteen "tested before taught" were a face of a letter the app
+         * had just displayed four faces of.
+         *
+         * The card's own labels bound them — the faces sit between "It changes
+         * shape…" and "As in", and what follows "As in" is a whole word, which
+         * must not join the letter's cluster.
+         */
+        const from = screen.lines.findIndex((l) => /it changes shape/i.test(l));
+        const to = screen.lines.findIndex((l) => /^as in$/i.test(l));
+        const faces =
+          from > -1 && to > from ? screen.lines.slice(from + 1, to).filter(isScript) : screen.lines.filter(isScript);
+        const glyph = screen.lines.find(isScript);
+        if (named) memory.learn([named.split('·')[0].trim(), ...new Set([glyph, ...faces].filter(Boolean))]);
+
+        // And the word the letter is met inside, which this card teaches as
+        // plainly as any "a new word" screen: the script over "anaar · pomegranate".
+        if (to > -1) {
+          const exampleScript = screen.lines.slice(to + 1).find(isScript);
+          const gloss = screen.lines.slice(to + 1).find((l) => /·/.test(l) && !isScript(l));
+          if (exampleScript && gloss) memory.learn([exampleScript, ...gloss.split('·').map((x) => x.trim())]);
+        }
+
+        journal.push({ type: 'taught', lesson: lessonName, step, shown: [named, ...faces].filter(Boolean) });
         await clickByText(page, /^Got it$/i);
         await page.waitForTimeout(500);
         await pressContinue(page);
