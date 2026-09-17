@@ -139,6 +139,29 @@ async function main() {
       problems.push('The sign-in screen exposes no button at all — its only control is unreachable by role.');
     }
 
+    /**
+     * The wordmark builds its glow by stacking the name under itself, once per
+     * bloom layer plus the core. Nothing marked the copies as decoration, so
+     * the first thing anyone heard on opening the app was its name, eight
+     * times. Counted here in the tree a screen reader actually walks: text
+     * outside any aria-hidden subtree.
+     */
+    const spoken = await page.evaluate(() => {
+      // The Urdu face emits a right-to-left mark before the word so it sits
+      // correctly beside Latin; that is invisible on screen and would make an
+      // exact match silently count zero, which reads as "fixed".
+      const bare = (s) => (s || '').replace(/[‎‏؜]/g, '').trim();
+      const say = (word) =>
+        Array.from(document.querySelectorAll('div,span,p')).filter(
+          (n) => !n.children.length && bare(n.textContent) === word && !n.closest('[aria-hidden="true"]')
+        ).length;
+      return { latin: say('Harf'), urdu: say('حرف') };
+    });
+    for (const [which, n] of Object.entries(spoken)) {
+      if (n > 1) problems.push(`The wordmark announces its ${which} name ${n} times — the glow copies are not hidden.`);
+      if (n === 0) problems.push(`The wordmark's ${which} name is not announced at all — every copy is hidden.`);
+    }
+
     await enterAsGuest(page, `http://localhost:${PORT}/Urdu/`, { xp: 640, streak: 3 });
     await page.waitForTimeout(1200);
     await auditRoles('home');
@@ -186,6 +209,7 @@ async function main() {
     process.exit(1);
   }
   console.log('check:controls — every focusable thing on sign-in, home, profile and settings says it is a button.');
+  console.log('check:controls — the wordmark announces its name once in each script, not once per glow layer.');
   console.log(
     'check:controls — Settings offers a guest no sign-in it cannot honour, and still says where progress lives.'
   );
