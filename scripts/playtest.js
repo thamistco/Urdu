@@ -163,19 +163,22 @@ if (!['beginner', 'knows-urdu'].includes(PERSONA)) {
 const LESSON_BUDGET_MS = Number(argOf('budget', 360)) * 1000;
 
 /**
- * How many screens in a row the app may leave ungraded before the driver gives
- * up on the lesson.
+ * How many screens in a row may pass with nothing answered before the driver
+ * gives up on the lesson.
  *
  * The wall-clock budget above bounds a *slow* lesson; it does not bound a
- * *misread* one, because a screen this driver cannot answer costs about two
+ * *stuck* one, because a screen this driver cannot get past costs about two
  * seconds and changes nothing, so it repeats for as long as the step cap
  * allows. One run spent 133 of a lesson's 140 steps on a single sentence-build
- * screen and reported the lesson as taking five and a half minutes — the number
- * that was actually wrong was the count of screens, and nothing in the run said
- * so. Six in a row is past any plausible run of genuinely ungraded screens: the
- * app grades every exercise it shows, so even one is worth looking at.
+ * screen; another read the same conversation 560 times because the button
+ * under it was below the fold. The first of those was journalled as dropped
+ * screens and the second as teaching cards, which is why the count is of
+ * screens that produced no answer rather than of any one kind.
+ *
+ * Eight is past any legitimate run: a letter lesson opens with two or three
+ * cards before its first question.
  */
-const UNGRADED_RUN_LIMIT = Number(argOf('ungraded-limit', 6));
+const STUCK_RUN_LIMIT = Number(argOf('stuck-limit', 8));
 
 /**
  * When to stop the whole run rather than finish it and read the wreckage.
@@ -1186,7 +1189,38 @@ async function clickByText(page, re) {
     }, re.source)
     .catch(() => null);
   if (!hit) return false;
-  await page.mouse.click(hit.x, hit.y).catch(() => {});
+  /**
+   * Scroll it into view, then read its position again.
+   *
+   * A conversation's transcript is longer than the phone, so "I've read it"
+   * sits below the fold and the mouse click landed on whatever was at those
+   * coordinates instead. The screen never advanced, the driver read the same
+   * transcript again, and one dialogue lesson repeated itself 560 times before
+   * the step cap ended it — the single largest stall in any run of this file.
+   *
+   * The coordinates have to be re-read after scrolling, because scrolling is
+   * what makes the first ones wrong.
+   */
+  const at = await page
+    .evaluate((src) => {
+      const rx = new RegExp(src, 'i');
+      let best = null;
+      for (const n of document.querySelectorAll('div, span, p')) {
+        if (n.children.length) continue;
+        const t = (n.textContent || '').trim();
+        if (!rx.test(t)) continue;
+        const r = n.getBoundingClientRect();
+        if (r.width < 8 || r.height < 8) continue;
+        if (!best || r.top > best.top) best = n;
+      }
+      if (!best) return null;
+      best.scrollIntoView({ block: 'center' });
+      const r = best.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    }, re.source)
+    .catch(() => null);
+  const target = at || hit;
+  await page.mouse.click(target.x, target.y).catch(() => {});
   return true;
 }
 
@@ -1709,18 +1743,30 @@ async function main() {
         break;
       }
 
-      // See `UNGRADED_RUN_LIMIT`: a screen the driver cannot answer repeats
+      // See `STUCK_RUN_LIMIT`: a screen the driver cannot answer repeats
       // silently and cheaply, so the run has to notice the repetition itself.
-      const tail = journal.slice(-UNGRADED_RUN_LIMIT);
+      /**
+       * Nothing answered for a while, in this lesson.
+       *
+       * The first version of this counted `ungraded` screens, which is one way
+       * a lesson stalls and not the only one: a dialogue whose "I've read it"
+       * button sat below the fold was pressed, missed, and re-read 560 times,
+       * and every one of those was journalled as a teaching card rather than a
+       * dropped screen. The honest signal is that the lesson has stopped
+       * producing answers at all. Eight is past any legitimate run of teaching
+       * cards — a letter lesson opens with two or three before its first
+       * question.
+       */
+      const tail = journal.slice(-STUCK_RUN_LIMIT);
       if (
-        UNGRADED_RUN_LIMIT > 0 &&
-        tail.length === UNGRADED_RUN_LIMIT &&
-        tail.every((e) => e.type === 'ungraded' && e.lesson === lessonName)
+        STUCK_RUN_LIMIT > 0 &&
+        tail.length === STUCK_RUN_LIMIT &&
+        tail.every((e) => e.lesson === lessonName && e.type !== 'answer')
       ) {
-        const shape = tail[tail.length - 1].promptShape;
-        journal.push({ type: 'driverStuck', lesson: lessonName, step, shape, screens: UNGRADED_RUN_LIMIT });
+        const shape = tail[tail.length - 1].promptShape || tail[tail.length - 1].type;
+        journal.push({ type: 'driverStuck', lesson: lessonName, step, shape, screens: STUCK_RUN_LIMIT });
         console.log(
-          `    ⚠ ${lessonName}: ${UNGRADED_RUN_LIMIT} unanswerable "${shape}" screens in a row — a playtest.js fault, not a finding`
+          `    ⚠ ${lessonName}: ${STUCK_RUN_LIMIT} screens in a row with nothing answered ("${shape}") — a playtest.js fault, not a finding`
         );
         await page.screenshot({ path: path.join(OUT, `driver-stuck-${stats.lessonsEntered}.png`) }).catch(() => {});
         break;
