@@ -208,18 +208,29 @@ const TRIPWIRES = {
    */
   zeroShapeAfter: Number(argOf('zero-after', 20)),
   /**
-   * How many strings may sit in one cluster before the memory model is judged
-   * to have collapsed. A word, its reading, its meaning and a stray header is
-   * four; the run that typed "alif" for "book" had twenty-one after two
-   * lessons and four figures by the end.
+   * How many *names* one meaning may have before the model is judged to have
+   * collapsed.
+   *
+   * Not how many strings: a meaning is allowed to wear many shapes. A letter
+   * has four faces plus its isolated form, and two letters can honestly share
+   * some of them — baṛī ye is written with choṭī ye's shapes at the start of a
+   * word and in the middle of one, so a learner meeting یـ cannot tell which
+   * letter it is, and neither should this model. Counting strings tripped on
+   * exactly that, at nine, and ended a run five lessons early over correct
+   * Urdu.
+   *
+   * What a collapse looks like instead is a meaning with several names: `be`
+   * and `te` and "these look alike" and "✕" in one entry, or `happy`, `family`
+   * and `name` joined by the instruction printed above all three. A word has
+   * its reading and its meaning, a letter its name and perhaps its sound; more
+   * than three names is the model merging things it should not.
    */
-  clusterMax: Number(argOf('cluster-max', 8)),
+  clusterNames: Number(argOf('cluster-names', 3)),
   /**
-   * How far a meaning the `knows-urdu` persona walked in with may grow while
-   * playing before the same suspicion applies. A word picking up the odd extra
-   * form from a screen is normal; five is a merge.
+   * A backstop on sheer size, set well above anything legitimate, for a
+   * runaway that somehow keeps its names down.
    */
-  clusterGrowth: Number(argOf('cluster-growth', 4)),
+  clusterMax: Number(argOf('cluster-max', 16)),
 };
 
 /**
@@ -326,16 +337,19 @@ function tripwires(journal, memory, limits = TRIPWIRES) {
     }
   }
 
-  // What is being watched for is accretion during play, not size as such: a
-  // meaning seeded at eight strings was eight strings before a single screen
-  // was read, and it is the growth past that which means the model is merging
-  // things it should not.
-  const roomFor = (c) => (c.fluent ? c.seeded + limits.clusterGrowth : limits.clusterMax);
-  const swollen = memory.clusters.find((c) => c.tokens.size > roomFor(c));
+  // See `clusterNames`: a meaning may wear many shapes, but it should not
+  // answer to many names.
+  const namesIn = (c) => [...c.tokens].filter((t) => !/[\u0600-\u06ff]/.test(t));
+  const swollen = memory.clusters.find(
+    (c) => namesIn(c).length > limits.clusterNames || c.tokens.size > limits.clusterMax
+  );
   if (swollen) {
+    const names = namesIn(swollen);
     fired.push({
       name: 'the learner’s memory has collapsed',
-      detail: `${swollen.tokens.size} strings in one meaning — ${[...swollen.tokens].slice(0, 6).join(', ')}`,
+      detail:
+        `${swollen.tokens.size} strings in one meaning, under ${names.length} names — ` +
+        `${names.slice(0, 6).join(', ') || [...swollen.tokens].slice(0, 6).join(', ')}`,
       note: 'Every "recalled" after this point is fiction, and so is every count in the report built on one.',
     });
   }
