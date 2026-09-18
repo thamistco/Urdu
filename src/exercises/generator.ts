@@ -2667,7 +2667,34 @@ export function buildLessonExercises(
         woven.push(wordExercise(w, poolFor(w), track, 'recall'));
       }
     }
-    exercises.splice(1, 0, ...woven);
+    /**
+     * After the first exercise — unless that would land between a first
+     * question and the card that answers it.
+     *
+     * A vocabulary lesson opens on a pretest, and `wordTeach` sits immediately
+     * after it *as the answer to it*: that adjacency is the whole design (see
+     * `wordTeach` in types.ts, and the evidence it cites, where the benefit of
+     * guessing first depends entirely on corrective feedback arriving after
+     * the guess). Splicing at 1 put two unrelated recall questions in between,
+     * so the learner guessed at a word they had never seen, answered two
+     * questions about other words, and only then met the card that was
+     * supposed to be the answer.
+     *
+     * Measured over the course with review items woven in: 234 of 2,291
+     * pretests were separated this way, always the lesson's own first word,
+     * because the weave always goes to the front. Nothing could see it —
+     * `check:order` enumerated lessons with no review refs, which is the one
+     * case where the bug does not happen.
+     *
+     * Inserting *before* a pretest is fine and stays allowed; only landing
+     * between the pair is not.
+     */
+    // `pretest` lives only on the three word-choice kinds, so it is read
+    // through a narrowing rather than off the union.
+    const opensOnAPretest = (ex: Exercise | undefined) =>
+      !!ex && (ex.kind === 'multipleChoice' || ex.kind === 'meaningPick' || ex.kind === 'listenTap') && !!ex.pretest;
+    const splitsAPair = opensOnAPretest(exercises[0]) && exercises[1]?.kind === 'wordTeach';
+    exercises.splice(splitsAPair ? 2 : 1, 0, ...woven);
   }
 
   // A vocabulary lesson is composed to an exact shape — meet, recall, type,

@@ -648,7 +648,68 @@ for (const lesson of ALL_LESSONS) {
   }
 }
 
+/**
+ * Within a lesson: a first question is never separated from its answer card.
+ *
+ * A vocabulary lesson opens on a pretest, and `wordTeach` sits immediately
+ * after it *as the answer to it* — the adjacency is the design, and the
+ * evidence `types.ts` cites for guessing-before-telling depends entirely on
+ * the correction arriving after the guess.
+ *
+ * Enumerated **with review refs**, which is the whole point of this pass. The
+ * weave that puts up to two due items near the front of a lesson used to
+ * splice at index 1, landing between that pair: 234 of the course's 2,291
+ * pretests, always the lesson's own first word. Every other walk in this file
+ * enumerates with no refs, which is precisely the one case where it cannot
+ * happen — a check that could only ever see the healthy shape.
+ *
+ * Three real word ids rather than a synthetic ref, so `weavable` accepts them
+ * and the weave actually runs; a ref that resolves to nothing would make this
+ * pass by doing nothing, which is the same failure one layer along.
+ */
+const WEAVE_REFS = ['w-paani', 'w-kitaab', 'w-anda'].map((id) => ({ id, type: 'word' }));
+const splitPairs = [];
+{
+  const resolvable = WEAVE_REFS.filter((r) => WORDS.some((w) => w.id === r.id));
+  if (resolvable.length < WEAVE_REFS.length)
+    splitPairs.push(`the ids this pass weaves with no longer all exist: ${WEAVE_REFS.map((r) => r.id).join(' ')}`);
+  const known = new Set(resolvable.map((r) => r.id));
+  for (const lesson of ALL_LESSONS) {
+    const exercises = buildLessonExercises(lesson, resolvable, 'both', known);
+    exercises.forEach((e, i) => {
+      if (!e.pretest || !e.word) return;
+      const card = exercises.findIndex((x, k) => k > i && x.kind === 'wordTeach' && x.word && x.word.id === e.word.id);
+      if (card !== i + 1)
+        splitPairs.push(
+          `${lesson.id}: ${e.word.id} is asked at ${i} and answered at ${card} ` +
+            `(between: ${
+              exercises
+                .slice(i + 1, card < 0 ? i + 1 : card)
+                .map((x) => x.kind)
+                .join(', ') || 'nothing — the card is missing'
+            })`
+        );
+    });
+  }
+}
+
+console.log(`\n-- within a lesson: a first question is answered by the very next screen --`);
+if (splitPairs.length) {
+  console.log(`${splitPairs.length} finding(s):`);
+  for (const f of splitPairs.slice(0, 20)) console.log(`  ${f}`);
+  if (splitPairs.length > 20) console.log(`  … and ${splitPairs.length - 20} more`);
+} else {
+  console.log('none — every first question is followed straight away by the card that answers it.');
+}
+
 console.log(`\n-- within a lesson: every numeral read in digits the lesson has shown --`);
+if (splitPairs.length) {
+  console.error(
+    `${splitPairs.length} first question(s) are separated from the card that answers them. ` +
+      `See the review weave in generator.ts: it must not splice between a pretest and its wordTeach.`
+  );
+  process.exit(1);
+}
 if (unshownDigits.length) {
   console.log(`${unshownDigits.length} finding(s):`);
   for (const f of unshownDigits.slice(0, 20)) console.log(`  ${f}`);
