@@ -301,7 +301,17 @@ function resumeState(n, track) {
     const ofLesson = [];
     for (const ex of buildLessonExercises(lesson, [], track)) {
       if (ex.word) ofLesson.push([ex.word.urdu, ex.word.roman, ex.word.meaning]);
-      if (ex.letter) ofLesson.push([ex.letter.name, ex.letter.forms.isolated]);
+      // All four faces, as the card itself shows them — seeding the isolated
+      // form alone left a resumed learner meeting صـ at lesson 200 as
+      // something the course had never shown it.
+      if (ex.letter)
+        ofLesson.push([
+          ex.letter.name,
+          ex.letter.forms.isolated,
+          ex.letter.forms.initial,
+          ex.letter.forms.medial,
+          ex.letter.forms.final,
+        ]);
       if (ex.sentence) ofLesson.push([ex.sentence.words.join(' '), ex.sentence.roman, ex.sentence.meaning]);
     }
     taught.push(ofLesson);
