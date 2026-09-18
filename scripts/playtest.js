@@ -1901,7 +1901,30 @@ async function main() {
        * there in its own journal entry.
        */
       if ((screen.right || screen.wrong) && !screen.lessonDone) {
-        if (await pressContinue(page)) {
+        /**
+         * The footer's own control, and nothing else.
+         *
+         * `pressContinue` also accepts "Start", which is a way forward on some
+         * screens and, on "Which position is this letter showing?", the label
+         * of one of the four answers. When the verdict banner was up but the
+         * footer had not finished sliding in, this guard pressed that option
+         * instead — already answered, already disabled — read the same screen
+         * again, and pressed it again. Seven lessons of one slice were spent
+         * that way, one question answered in each.
+         *
+         * Falling through is the right thing when the footer is not there yet:
+         * the branches below wait for it properly.
+         */
+        const moved = await page.evaluate(() => {
+          const n = Array.from(document.querySelectorAll('[role="button"]')).find((b) =>
+            /^(continue|finish)$/i.test((b.textContent || '').trim())
+          );
+          if (!n) return false;
+          n.scrollIntoView({ block: 'center' });
+          n.click();
+          return true;
+        });
+        if (moved) {
           await page.waitForTimeout(500);
           continue;
         }
