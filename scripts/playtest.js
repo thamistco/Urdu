@@ -1493,7 +1493,26 @@ function findings(journal) {
     out.push({
       kind: 'met once, gone by the time it was tested',
       count: forgot.length,
-      note: `${forgot.length} questions were about something taught earlier but too long ago, or too few times, to stick.`,
+      /**
+       * How stale these were, as a distribution rather than as six examples.
+       *
+       * The count alone says a number of questions went unanswered by a learner
+       * who had met the thing; it does not say whether the course asked again
+       * after eight screens or after a thousand, and those want opposite fixes.
+       * The examples carried a per-question gap that read 0 on every one of
+       * them until it was measured at the right moment — worth printing now
+       * that it is true, and worth printing as a spread, because the median and
+       * the tail of this one are two different stories.
+       */
+      note:
+        `${forgot.length} questions were about something taught earlier but too long ago, or too few times, to stick.` +
+        (() => {
+          const gaps = forgot.map((e) => e.gapSteps).filter((g) => typeof g === 'number');
+          if (gaps.length < 8) return '';
+          gaps.sort((a, b) => a - b);
+          const at = (q) => gaps[Math.min(gaps.length - 1, Math.floor(gaps.length * q))];
+          return ` Last seen ${at(0.5)} screens earlier at the median, ${at(0.9)} at the ninetieth, ${gaps[gaps.length - 1]} at the worst.`;
+        })(),
       examples: forgot.slice(0, 6).map((e) => ({ lesson: e.lesson, prompt: e.prompt, gapSteps: e.gapSteps })),
     });
   }
