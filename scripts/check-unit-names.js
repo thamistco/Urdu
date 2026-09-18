@@ -27,6 +27,14 @@
  * Words are matched on their first four letters so that "Numbers" answers for
  * "numbers past a hundred" and "teeth" does not answer for "toothed".
  *
+ * ## And the review ids, which are the same question asked of the source
+ *
+ * A review has no content of its own to be named after, so it takes the unit's
+ * slug as its id — the one id in `units.ts` written out by hand rather than
+ * derived. Sixteen of the 41 had stopped matching their unit, two of them
+ * before the regrouping that prompted this, because renaming a unit does not
+ * touch a hand-written string and nothing looked.
+ *
  * Run with:  npm run check:unit-names
  */
 
@@ -115,7 +123,40 @@ for (const track of ['script', 'roman']) {
   }
 }
 
-console.log(`check:unit-names — ${checked} topics across ${UNITS.length} units, on both tracks.`);
+/**
+ * `rev-<slug of the unit's title>`, with "Unit 7 · " dropped and "&" spelled
+ * out — the spelling `REV(...)` is called with in `units.ts`.
+ *
+ * Deliberately exact rather than fuzzy, unlike the topic rule above. A review
+ * id is not read by a learner and nothing resolves a unit through it
+ * (`taughtInUnit` matches on which lessons a unit holds), so the only thing it
+ * can cost is a reader who cannot tell whether the id or the title is the stale
+ * one. A rule that accepts "close enough" would not have caught the sixteen.
+ */
+const revSlug = (title) =>
+  title
+    .replace(/^Unit\s+\d+\s*·\s*/, '')
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+
+const stale = [];
+let reviews = 0;
+for (const unit of UNITS) {
+  for (const lesson of unit.lessons) {
+    if (lesson.kind !== 'review') continue;
+    reviews++;
+    const want = `rev-${revSlug(unit.title)}`;
+    if (lesson.id !== want) {
+      stale.push(`${unit.id} review id is "${lesson.id}", but "${unit.title}" slugs to "${want}"`);
+    }
+  }
+}
+
+console.log(
+  `check:unit-names — ${checked} topics across ${UNITS.length} units, on both tracks; ${reviews} review ids.`
+);
 
 if (gaps.length) {
   console.error(`\n${gaps.length} topic(s) a learner cannot see from the unit header:`);
@@ -124,7 +165,14 @@ if (gaps.length) {
   console.error(
     `\nName it in the unit's title or subtitle. The header is the only place that says what the unit is for.`
   );
-  process.exit(1);
 }
 
-console.log('  Every topic a unit teaches is named by the unit that holds it.');
+if (stale.length) {
+  console.error(`\n${stale.length} review id(s) that no longer say which unit they close:`);
+  for (const s of stale) console.error(`  ${s}`);
+  console.error(`\nRename the id to match the unit. Nothing resolves a unit through it, so nothing breaks.`);
+}
+
+if (gaps.length || stale.length) process.exit(1);
+
+console.log('  Every topic a unit teaches is named by the unit that holds it, and every review id is its unit.');

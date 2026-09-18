@@ -282,12 +282,12 @@ describe("URD-017: Daily Review's letter share reflects this learner's position,
   });
 
   it("an on-path review's letter share is unaffected — still keyed on course position, not known", () => {
-    // rev-the-wider-world (u41) is placed on the path, so this fix's
+    // rev-journeys-and-milestones (u41) is placed on the path, so this fix's
     // known-based branch must not apply to it regardless of what `known`
     // contains — course position stays the measure there.
     const allWords = Array.from({ length: 200 }, (_, i) => `w-fake-${i}`);
     const knownEverything = new Set(allWords);
-    const letters = letterCountOf('rev-the-wider-world', knownEverything);
+    const letters = letterCountOf('rev-journeys-and-milestones', knownEverything);
     expect(letters).toBeLessThanOrEqual(1);
   });
 });
@@ -307,7 +307,7 @@ describe('URD-017: a review with any letters in scope always asks at least one',
   });
 
   it('holds even at a review size real content never happens to produce', () => {
-    // rev-the-wider-world's real size was 39 (set by coverTopics, generous
+    // rev-journeys-and-milestones's real size was 39 (set by coverTopics, generous
     // enough that Math.round alone never rounded its ~1.98% letter share
     // down to 0) until URD-A02 split its unit in two and this review's own
     // half fell to 22 — coverTopics's own minimum, and exactly the size this
@@ -316,7 +316,7 @@ describe('URD-017: a review with any letters in scope always asks at least one',
     // override stays rather than trusting real content to keep landing here
     // by coincidence, so this doesn't depend on staying lucky as units and
     // reviews are added or resized again.
-    const lesson = { ...resolveLesson('rev-the-wider-world')!, size: 22 };
+    const lesson = { ...resolveLesson('rev-journeys-and-milestones')!, size: 22 };
     const exercises = buildLessonExercises(lesson, [], 'both', new Set());
     const letters = exercises.filter((e) => LETTER_KINDS.has(e.kind)).length;
     expect(letters).toBeGreaterThanOrEqual(1);
@@ -352,7 +352,7 @@ describe('URD-018: review gives the learner a real chance to read Urdu and say w
     // entirely of typeable words used to route every third-sighting
     // question to `typeWord` instead of ever reaching `meaningPick`'s old
     // fallback path, so this case is exactly the one the old design missed.
-    const lesson = resolveLesson('rev-gender-and-number')!;
+    const lesson = resolveLesson('rev-work-and-school')!;
     const exercises = buildLessonExercises(lesson, [], 'both', new Set());
     expect(exercises.filter((e) => e.kind === 'meaningPick').length).toBeGreaterThanOrEqual(1);
   });
@@ -1830,10 +1830,10 @@ describe('URD-035: a grammarDrill exercise carries romanOptions on every track, 
 });
 
 describe('URD-040: a review touches the grammar concept(s) its own unit taught', () => {
-  it('rev-saying-who-you-are (u4) asks about both g-pronouns and g-to-be, the concepts the unit is named for and organized around', () => {
+  it('rev-describing-things (u4) asks about both g-pronouns and g-to-be, the concepts its unit exists to introduce', () => {
     // The item's own measured example: this review used to draw entirely
     // from V('rooms')/V('adjectives') and never once touch either concept.
-    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const lesson = resolveLesson('rev-describing-things')!;
     const exercises = buildLessonExercises(lesson, [], 'both');
     const seen = new Set(exercises.filter((e) => e.kind === 'grammarDrill').map((e) => e.concept.id));
     expect(seen).toEqual(new Set(['g-pronouns', 'g-to-be']));
@@ -1859,7 +1859,7 @@ describe('URD-040: a review touches the grammar concept(s) its own unit taught',
   });
 
   it("does not grow a review's total exercise count -- the concept exercise(s) are budgeted out of the existing size, not appended past it", () => {
-    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const lesson = resolveLesson('rev-describing-things')!;
     const exercises = buildLessonExercises(lesson, [], 'both');
     expect(exercises.length).toBe(lesson.size);
   });
@@ -1886,8 +1886,8 @@ describe('URD-040: a review touches the grammar concept(s) its own unit taught',
     // silently lost its last `conceptBudget` items — real, scheduler-
     // flagged material — to make room for a grammarDrill that isn't even
     // SRS-gradable. Reproduced live pre-fix: a full 22-item due queue for
-    // rev-saying-who-you-are dropped two due words.
-    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    // rev-describing-things dropped two due words.
+    const lesson = resolveLesson('rev-describing-things')!;
     const taught = taughtUpTo(lesson.id).words;
     const due = taught.slice(0, lesson.size).map((id) => ({ id, type: 'word' as const }));
     const known = new Set(taught);
@@ -1905,7 +1905,7 @@ describe('URD-040: a review touches the grammar concept(s) its own unit taught',
   });
 
   it('still surfaces the grammar concept(s) when the due queue leaves genuine room', () => {
-    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const lesson = resolveLesson('rev-describing-things')!;
     const taught = taughtUpTo(lesson.id).words;
     const due = taught.slice(0, lesson.size - 5).map((id) => ({ id, type: 'word' as const }));
     const known = new Set(taught);
@@ -1932,7 +1932,7 @@ describe('URD-040: a review touches the grammar concept(s) its own unit taught',
     // about a second truncation point elsewhere in this function — the
     // fix THE CRITIC asked for so this doesn't quietly depend on
     // `LessonScreen`'s own behavior forever. This test locks that in.
-    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const lesson = resolveLesson('rev-describing-things')!;
     const taught = taughtUpTo(lesson.id).words;
     const due = taught.slice(0, lesson.size + 5).map((id) => ({ id, type: 'word' as const }));
     const known = new Set(taught);
@@ -1948,13 +1948,13 @@ describe('URD-040: a review touches the grammar concept(s) its own unit taught',
 
   it('CURRICULUM CRITIC: which drill a concept surfaces rotates across replays, not the same one forever', () => {
     // g-to-be has 3 real drills — a first version of this fix always asked
-    // for c.drills[0], so every replay of rev-saying-who-you-are showed the
+    // for c.drills[0], so every replay of rev-describing-things showed the
     // literal same prompt/blank/answer for g-to-be, forever: a learner
     // stops reasoning about the concept and starts recalling "the answer to
     // this exact screen". Threading `visit` (URD-039's replay counter, this
     // branch's own base) through the drill pick fixes it the same way
     // URD-039 fixed the identical staleness for words/letters.
-    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const lesson = resolveLesson('rev-describing-things')!;
     const drillIdsFor = (visit: number) => {
       const exercises = buildLessonExercises(lesson, [], 'both', new Set(), visit);
       return exercises
@@ -1967,7 +1967,7 @@ describe('URD-040: a review touches the grammar concept(s) its own unit taught',
   });
 
   it('the same visit reproduces the identical drill pick — a rotation, not fresh randomness on every render', () => {
-    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const lesson = resolveLesson('rev-describing-things')!;
     const pickAt = (visit: number) =>
       buildLessonExercises(lesson, [], 'both', new Set(), visit)
         .filter((e) => e.kind === 'grammarDrill')
@@ -1981,7 +1981,7 @@ describe('URD-040: a review touches the grammar concept(s) its own unit taught',
     // (`rand`, top of this file), so two calls with identical arguments
     // already differ in ways unrelated to `visit`. The drill *pick* itself
     // is what `visit` controls, so that's what omitting it should match.
-    const lesson = resolveLesson('rev-saying-who-you-are')!;
+    const lesson = resolveLesson('rev-describing-things')!;
     const drillIds = (exercises: ReturnType<typeof buildLessonExercises>) =>
       exercises.filter((e) => e.kind === 'grammarDrill').map((e) => `${e.concept.id}:${e.drill.id}`);
     const withDefault = drillIds(buildLessonExercises(lesson, [], 'both'));
@@ -2040,7 +2040,7 @@ describe("URD-041: a review's letter exercise(s) don't always land on the same k
     // concern URD-039/URD-040 already closed for words/letters and grammar
     // drills respectively.
     const kindsAcrossVisits = new Set(
-      Array.from({ length: 6 }, (_, visit) => letterKindsOf('rev-the-wider-world', visit).join(','))
+      Array.from({ length: 6 }, (_, visit) => letterKindsOf('rev-journeys-and-milestones', visit).join(','))
     );
     expect(kindsAcrossVisits.size).toBeGreaterThan(1);
   });
@@ -2094,7 +2094,7 @@ describe('URD-042: every letter gets review exposure somewhere across the whole 
     // taught forced in to satisfy this item's own assignment.
     //
     // THE CRITIC: a first version of this test targeted only
-    // rev-the-wider-world — which turns out to be the one review lesson
+    // rev-journeys-and-milestones — which turns out to be the one review lesson
     // (of 41) with no coverage assignment at all (everything already
     // claimed by the review before it), so the `assigned` guard this test
     // is meant to pin was never actually exercised: it passed purely on

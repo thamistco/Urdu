@@ -67,11 +67,11 @@ export type Unit = {
   /**
    * What this unit is called on the Roman track.
    *
-   * The first five units are named after the letter groups they teach, because
-   * that is the spine of a script-first course: "First Faces", "The
-   * Non-Joiners", "Teeth & Emphasis". Take the letters out for a learner who
-   * asked not to be taught them and the names describe nothing that is left in
-   * the unit. These name what actually remains.
+   * A beginner unit teaches a letter group and a subject together, and the
+   * script track's name may lead with either. The Roman track never shows the
+   * letter lessons at all, so where a script name leans on them — "First
+   * Faces" — the Roman one names what is left. Where the two tracks would say
+   * the same thing, this is left out and the script name is used for both.
    */
   romanTitle?: string;
   romanSubtitle?: string;
@@ -325,7 +325,7 @@ const PLANNED_UNITS: Unit[] = [
       L(2, 'The jeem family', 'jeem · che · he · khe'),
       V('family', 'Family', 'The people you love'),
       V('family-more', 'More family', 'Aunts, uncles and in-laws'),
-      REV('hooks-and-throats'),
+      REV('the-people-you-know'),
     ],
   },
   {
@@ -342,7 +342,7 @@ const PLANNED_UNITS: Unit[] = [
       V('quantity', 'How much', 'Very, a little, all, some'),
       V('time', 'Time & day', 'Morning, night, today, tomorrow'),
       V('days', 'Days & months', 'Monday to Sunday, and the year'),
-      REV('the-non-joiners'),
+      REV('counting-and-time'),
     ],
   },
   {
@@ -377,7 +377,7 @@ const PLANNED_UNITS: Unit[] = [
        * taught, which is the one thing `check:order` exists to prevent.
        */
       S('beginner', 'Build a sentence', 'Put the words in order'),
-      REV('saying-who-you-are'),
+      REV('describing-things'),
     ],
   },
   {
@@ -393,7 +393,7 @@ const PLANNED_UNITS: Unit[] = [
       V('rooms', 'Rooms', 'Where you sit, sleep and cook'),
       V('home', 'Around the home', 'Everyday objects'),
       V('places', 'Places', 'The market, the school, the park'),
-      REV('teeth-and-emphasis'),
+      REV('home-and-where-you-go'),
     ],
   },
   {
@@ -411,7 +411,7 @@ const PLANNED_UNITS: Unit[] = [
       G('g-gender', 'Gender & number', 'Masculine and feminine'),
       G('g-plurals', 'Making plurals', 'One book, two books'),
       S('beginner', 'More sentences', 'Say what something is'),
-      REV('gender-and-number'),
+      REV('work-and-school'),
     ],
   },
   {
@@ -458,7 +458,7 @@ const PLANNED_UNITS: Unit[] = [
       V('questions', 'Question words', 'Who, what, where, when'),
       V('verbs', 'Actions', 'Eat, drink, go, come'),
       {
-        ...REV('asking-and-opposites', 'Script review', 'Every letter so far', 40, 12),
+        ...REV('asking-and-doing', 'Script review', 'Every letter so far', 40, 12),
         romanTitle: 'Unit review',
         romanSubtitle: 'Everything so far',
       },
@@ -570,7 +570,7 @@ const PLANNED_UNITS: Unit[] = [
       G('g-negation', 'Saying no', 'نہیں · نہ · مت'),
       D('d-3', 'Talk: Where do you live?', 'Small talk that goes somewhere'),
       R('r-8', 'Reading: At school', 'A morning and an afternoon'),
-      REV('kitchen-and-bath'),
+      REV('around-the-house'),
     ],
   },
   {
@@ -613,7 +613,7 @@ const PLANNED_UNITS: Unit[] = [
     lessons: [
       V('numbers-more', 'Bigger numbers', 'Eleven to a hundred'),
       G('g-questions', 'Asking questions', 'who · what · where · when'),
-      REV('days-and-things'),
+      REV('numbers-past-a-hundred'),
     ],
   },
   {
@@ -630,7 +630,7 @@ const PLANNED_UNITS: Unit[] = [
       R('r-9', 'Reading: The garden behind the house', 'A quiet place'),
       R('r-10', 'Reading: My friend Sara', 'Talking about someone'),
       S('elementary', 'Sentence practice', 'Longer, joined-up sentences'),
-      REV('people-and-play'),
+      REV('friends-play-and-joining-ideas'),
     ],
   },
 
@@ -663,7 +663,7 @@ const PLANNED_UNITS: Unit[] = [
       G('g-past', 'Past tense', 'تھا، تھی, was and were'),
       V('grains', 'Grains & staples', 'The pantry basics'),
       R('r-2', 'Reading: A day at the market', 'Shopping in Urdu'),
-      REV('money-and-shopping'),
+      REV('money-markets-and-meals'),
     ],
   },
   {
@@ -693,7 +693,7 @@ const PLANNED_UNITS: Unit[] = [
       V('illness', 'Illness & symptoms', 'Fever, cough, pain'),
       D('d-7', 'Talk: At the doctor', 'Describing a symptom'),
       G('g-future', 'Future tense', 'What you will do'),
-      REV('health-and-work'),
+      REV('health-and-illness'),
     ],
   },
   {
@@ -742,7 +742,7 @@ const PLANNED_UNITS: Unit[] = [
       V('appliances', 'Appliances', 'Machines around the house'),
       V('containers', 'Containers', 'Holding and carrying'),
       V('clothing-more', 'More clothing', 'Garments and adornment'),
-      REV('materials-and-machines'),
+      REV('things-people-make'),
     ],
   },
   {
@@ -755,7 +755,7 @@ const PLANNED_UNITS: Unit[] = [
       V('farm', 'Farm & field', 'Agriculture and livestock'),
       V('cooking', 'Cooking', 'In the kitchen, making food'),
       R('r-12', 'Reading: The rainy day', 'When the weather decides'),
-      REV('house-and-field'),
+      REV('field-and-kitchen'),
     ],
   },
   {
@@ -819,7 +819,7 @@ const PLANNED_UNITS: Unit[] = [
       V('idioms', 'Idioms & sayings', 'Phrases that mean more than their words'),
       V('measure-time', 'Measures & order', 'Sequence, rank and amount'),
       S('advanced', 'Complex sentences', 'Shade your meaning'),
-      REV('fine-description'),
+      REV('saying-it-precisely'),
     ],
   },
   {
@@ -848,7 +848,7 @@ const PLANNED_UNITS: Unit[] = [
       V('subjects', 'Fields of study', 'What you can study'),
       G('g-relative', 'Relative clauses', 'جو … وہ, matched pairs'),
       R('r-16', 'Reading: Work and rest', 'An argument, gently made'),
-      REV('thought-and-belief'),
+      REV('thought-belief-and-study'),
     ],
   },
   {
@@ -933,7 +933,7 @@ const PLANNED_UNITS: Unit[] = [
     // URD-A02: was the second half of a single 15-lesson 'u39' — 2 over
     // MAX_LESSONS_PER_UNIT. Split by theme (land/sky content here, travel and
     // formal register in the unit after); see that unit's own comment for
-    // what this does to 'rev-the-wider-world', which moved there.
+    // what this does to 'rev-journeys-and-milestones', which moved there.
     id: 'u40',
     level: 'advanced',
     color: GOLD,
@@ -958,7 +958,7 @@ const PLANNED_UNITS: Unit[] = [
       V('lifeevents', 'Life events', 'Birth, success, destiny'),
       S('advanced', 'Complex sentences', 'Write the way Urdu writes'),
       /**
-       * URD-A02: kept the pre-split id ('rev-the-wider-world') and its
+       * URD-A02: kept the pre-split id ('rev-journeys-and-milestones') and its
        * course-completion framing, because this unit is still genuinely the
        * last one in the path — the split moved half its vocabulary to
        * 'land-and-sky' above, not its position. `coverTopics` sizes every
@@ -978,7 +978,7 @@ const PLANNED_UNITS: Unit[] = [
        * real content is measured. Overruled, not ignored (gauntlet/ROLES.md:
        * a lead may overrule a critic if the ledger records why) — because
        * this is not a new pattern this split introduced. Every CEFR-boundary
-       * review already does the identical thing: rev-asking-and-opposites
+       * review already does the identical thing: rev-asking-and-doing
        * (40xp), rev-your-first-readings (40xp) and rev-describing-people
        * (45xp) all land at this course's own 22-exercise review floor too
        * (measured directly, not assumed), each carrying elevated xp a
@@ -988,7 +988,7 @@ const PLANNED_UNITS: Unit[] = [
        * escalating pattern (30 -> 40 -> 45 -> 60 as the course progresses),
        * not a departure from it.
        */
-      REV('the-wider-world', 'Grand review', 'Everything you know', 60),
+      REV('journeys-and-milestones', 'Grand review', 'Everything you know', 60),
     ],
   },
 ];
