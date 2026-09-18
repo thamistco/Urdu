@@ -321,6 +321,12 @@ const ok = (name, cond) => {
   ye.learn(['baṛī ye', 'ے', 'یـ', 'ـیـ', 'ـے']);
   ok('two letters sharing their faces is not a collapse', tripwires([], ye, limits).length === 0);
   ok('even at eight strings', ye.clusterFor('یـ').tokens.size === 8);
+  // And each of them brings a sound as well as a name. A sound is neither a
+  // shape nor a name — it is how the letter is pronounced, written in curly
+  // quotes — and counting the pair's two sounds as names stopped a second run.
+  ye.learn(['choṭī ye', 'ی', '“y / ee”']);
+  ye.learn(['baṛī ye', 'ے', '“e / ai”']);
+  ok('nor are the sounds they are read with', tripwires([], ye, limits).length === 0);
 
   // Names are not. This is the shape the real blob had: separate meanings
   // dragged together by what was printed above them.

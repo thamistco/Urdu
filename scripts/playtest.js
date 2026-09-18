@@ -339,7 +339,17 @@ function tripwires(journal, memory, limits = TRIPWIRES) {
 
   // See `clusterNames`: a meaning may wear many shapes, but it should not
   // answer to many names.
-  const namesIn = (c) => [...c.tokens].filter((t) => !/[\u0600-\u06ff]/.test(t));
+  const namesIn = (c) =>
+    [...c.tokens].filter(
+      (t) =>
+        // A shape is not a name.
+        !/[\u0600-\u06ff]/.test(t) &&
+        // Neither is a sound. The app writes one in curly quotes — “a / aa” —
+        // and two letters that share their faces bring two names and two
+        // sounds with them, which is four strings and one honest meaning:
+        // choṭī ye and baṛī ye, the pair this wire has now stopped twice.
+        !/^[“"'].*[”"']$/.test(t)
+    );
   const swollen = memory.clusters.find(
     (c) => namesIn(c).length > limits.clusterNames || c.tokens.size > limits.clusterMax
   );
