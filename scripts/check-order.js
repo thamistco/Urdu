@@ -85,6 +85,7 @@ const { classify: classifyWord } = require('./lib/urdu-morph');
 const { ALL_LESSONS, UNITS } = load('src/data/units.ts');
 const { WORDS, PHRASES, TOPICS } = load('src/data/words.ts');
 const { GRAMMAR } = load('src/data/grammar.ts');
+const { NUMERALS } = load('src/data/art.ts');
 const { SENTENCES, PASSAGES, DIALOGUES } = load('src/data/sentences.ts');
 const { GRAMMAR_TRANSLIT } = load('src/data/translit.ts');
 const { buildLessonExercises } = load('src/exercises/generator.ts');
@@ -622,6 +623,39 @@ for (const lesson of ALL_LESSONS) {
   }
 }
 
+/**
+ * Within a lesson: a number is only asked about in digits the lesson has shown.
+ *
+ * `numeralRead` is the one exercise whose question is not an item — it shows
+ * ۴۷ and asks what it is worth — so nothing above can see it. The generator
+ * builds each one from the numeral glyphs of the very words that lesson
+ * teaches, which makes this rule hold by construction today; that is exactly
+ * why it is worth pinning. Move the call above the climb, or widen it to the
+ * whole topic, and a learner meets a digit in a question before any card has
+ * shown it, with nothing else in this file able to notice.
+ *
+ * Read off the enumerated exercises rather than the word list, so it measures
+ * the order a learner actually meets them in.
+ */
+const unshownDigits = [];
+for (const lesson of ALL_LESSONS) {
+  const shown = new Set();
+  for (const ex of buildLessonExercises(lesson, [], 'both', new Set())) {
+    if (ex.kind === 'wordTeach' && ex.word) for (const g of NUMERALS[ex.word.id] || '') shown.add(g);
+    if (ex.kind !== 'numeralRead') continue;
+    const missing = [...ex.glyphs].filter((g) => !shown.has(g));
+    if (missing.length) unshownDigits.push(`${lesson.id} asks about ${ex.glyphs} before showing ${missing.join(' ')}`);
+  }
+}
+
+console.log(`\n-- within a lesson: every numeral read in digits the lesson has shown --`);
+if (unshownDigits.length) {
+  console.log(`${unshownDigits.length} finding(s):`);
+  for (const f of unshownDigits.slice(0, 20)) console.log(`  ${f}`);
+} else {
+  console.log('none — no number is asked about in a digit its lesson has not taught.');
+}
+
 console.log(`\n-- every sentence introduced before it is produced --`);
 if (lateSentences.length) {
   console.log(`${lateSentences.length} finding(s):`);
@@ -645,6 +679,13 @@ if (earlyWords.length) {
   console.error(
     `${earlyWords.length} exercise(s) test a word before the lesson teaches it. The fix is usually the picture: ` +
       `words that share one cue collide, and a matching board that cannot seat them tops up from the rest of the topic.`
+  );
+  process.exit(1);
+}
+if (unshownDigits.length) {
+  console.error(
+    `${unshownDigits.length} numeral question(s) use a digit their own lesson has not shown. ` +
+      `See numeralReadExercises: the digits come from the lesson's own words, so this means the call moved.`
   );
   process.exit(1);
 }

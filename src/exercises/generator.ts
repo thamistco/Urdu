@@ -14,7 +14,8 @@ import {
   registerOf as pronounRegisterOf,
   type Sentence,
 } from '../data/sentences';
-import { cueOf, VERDICT_CUES } from '../data/art';
+import { cueOf, VERDICT_CUES, NUMERALS } from '../data/art';
+import { toUrduDigits, reversedOf } from '../lib/numerals';
 import { GLYPH_MASKS } from '../data/glyphMasks';
 import { shuffle, seededShuffle } from '../lib/shuffle';
 import {
@@ -1353,6 +1354,101 @@ function produceExercise(w: Word, pool: Word[], track: LearnTrack, teachesScript
   return wordExercise(w, pool, track, 'meet', 1);
 }
 
+/**
+ * How many numbers a lesson asks the learner to read, when it teaches digits.
+ *
+ * Two, at the end of the climb. Not more: this is a reading skill attached to a
+ * vocabulary lesson, and the lesson's job is still the words. Not fewer,
+ * because one of anything is a curiosity rather than a thing being taught, and
+ * the second question is where the reversal distractor gets its second chance
+ * to be met and understood.
+ */
+const NUMERALS_PER_LESSON = 2;
+
+/**
+ * Numbers to read, built out of the digits this lesson has just taught.
+ *
+ * The course teaches the ten digit glyphs, but only ever as the picture on a
+ * number word's card — ۷ is what "saat" looks like, the way a pomegranate is
+ * what "anaar" looks like. Measured against this generator over the whole
+ * course, a numeral glyph is the subject of nine questions in 12,081
+ * exercises, always as one of the eleven-to-twenty vocabulary items, and Urdu
+ * digits appear in exactly one source file: the map of pictures. A learner who
+ * finishes Harf has never been asked to read ۴۷.
+ *
+ * Scoped by the digits rather than by the topic, which is what keeps this
+ * honest without a list of lesson ids to maintain: a lesson that teaches no
+ * word with a numeral offers no digits, `has` is false for every candidate, and
+ * this returns nothing. Only the numbers lessons teach digits, so only they get
+ * these — and a future lesson that teaches some gets them too.
+ *
+ * Conservative by one digit, on purpose. A learner reaching "Bigger numbers,
+ * 2 of 2" has met ۲ two lessons back, but this asks only what the lesson in
+ * front of them has shown, so numbers containing it are not drawn there.
+ * Threading what a learner has met into here would make this function answer
+ * differently for the same lesson depending on the profile, and `check:order`
+ * enumerates it without one.
+ *
+ * ## The distractors are the exercise
+ *
+ * Three, each a specific misreading:
+ *
+ *   the reversal         ۴۷ read right to left is 74, and the script around it
+ *                        really does run right to left. This is the mistake,
+ *                        and the screen names it when it is the one made.
+ *   one digit off        same tens, a different unit: knowing it starts with a
+ *                        four is not reading it.
+ *   the other digit off  same unit, a different ten.
+ *
+ * All four are distinct by construction: a candidate has two different non-zero
+ * digits, so its reversal is another two-digit number and neither swap can
+ * collide with it or with the answer.
+ */
+function numeralReadExercises(lesson: Lesson, picks: readonly Word[]): Exercise[] {
+  const digits = new Set<string>();
+  for (const w of picks) for (const g of NUMERALS[w.id] ?? '') digits.add(g);
+  const has = (n: number) => [...toUrduDigits(n)].every((g) => digits.has(g));
+
+  const candidates: number[] = [];
+  for (let n = 21; n <= 98; n++) {
+    const tens = Math.floor(n / 10);
+    const unit = n % 10;
+    // A zero unit reverses to a one-digit number and a repeated digit reverses
+    // to itself; either way the distractor this exercise is built around stops
+    // being one.
+    if (unit === 0 || tens === unit) continue;
+    if (has(n)) candidates.push(n);
+  }
+  if (candidates.length < NUMERALS_PER_LESSON * 4) return [];
+
+  const DIGITS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  return seededShuffle(candidates, `${lesson.id}:numerals`)
+    .slice(0, NUMERALS_PER_LESSON)
+    .map((value): Exercise => {
+      const tens = Math.floor(value / 10);
+      const unit = value % 10;
+      const otherThan = (d: number, avoid: number, key: string) =>
+        seededShuffle(
+          DIGITS.filter((x) => x !== d && x !== avoid),
+          `${lesson.id}:${value}:${key}`
+        )[0];
+      const options = [
+        value,
+        reversedOf(value),
+        tens * 10 + otherThan(unit, tens, 'unit'),
+        otherThan(tens, unit, 'tens') * 10 + unit,
+      ];
+      return {
+        kind: 'numeralRead',
+        glyphs: toUrduDigits(value),
+        value,
+        // Seated by a real shuffle rather than left answer-first: see
+        // `seededShuffle`'s own note on what that cost when it was not.
+        options: seededShuffle(options, `${lesson.id}:${value}:seat`),
+      };
+    });
+}
+
 // ---- lesson composition --------------------------------------------------
 
 export function buildLessonExercises(
@@ -2031,6 +2127,11 @@ export function buildLessonExercises(
         }
       }
     }
+
+    // Reading the digits, which the words above have just shown and nothing in
+    // the course has ever asked about. Before the board rather than after it,
+    // so the lesson still closes the way every vocabulary lesson closes.
+    exercises.push(...numeralReadExercises(lesson, picks));
 
     // Close with a matching board (Drops-style); its four pictures must differ.
     // Short lessons introduce fewer than four words, so the board is topped up
@@ -2775,6 +2876,9 @@ export function itemsOf(ex: Exercise): ItemRef[] {
     default:
       // grammar, sentence-building and reading aren't tied to a single
       // vocabulary item, so they don't feed the spaced-repetition queue.
+      // `numeralRead` is here for the same reason and a sharper one: reading
+      // ۴۷ is not recalling چار, and crediting the digits' word cards for it
+      // would put a spaced-repetition card on the wrong thing.
       return [];
   }
 }
