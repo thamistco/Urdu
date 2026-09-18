@@ -2144,3 +2144,80 @@ describe('URD-042: every letter gets review exposure somewhere across the whole 
     expect(lettersAcrossVisits.size).toBeGreaterThan(1);
   });
 });
+
+/**
+ * Reading the digits.
+ *
+ * The course teaches ten digit glyphs and, before this, only ever as the
+ * picture on a number word's card: measured over the whole generated course, a
+ * numeral was the subject of nine questions in 12,081 exercises and Urdu digits
+ * appeared in one source file. A learner could finish Harf without once being
+ * asked what ۴۷ is worth.
+ *
+ * These hold the exercise to the three things that make it one: it asks in
+ * digits the lesson has shown, it offers the misreading it exists to catch, and
+ * it stays out of the spaced-repetition queue, which is about words.
+ */
+describe('numeralRead', () => {
+  const numeralsIn = (lessonId: string) =>
+    buildLessonExercises(resolveLesson(lessonId)!, [], 'both', new Set()).filter(
+      (e): e is Extract<Exercise, { kind: 'numeralRead' }> => e.kind === 'numeralRead'
+    );
+
+  it('asks the numbers lessons to read, and leaves every other lesson alone', () => {
+    expect(numeralsIn('v-numbers')).toHaveLength(2);
+    expect(numeralsIn('v-numbers-more')).toHaveLength(2);
+    // Scoped by the digits a lesson teaches rather than by a list of lesson
+    // ids, so a lesson with no numerals gets none without anything saying so.
+    expect(numeralsIn('v-family')).toHaveLength(0);
+    const all = ALL_LESSONS.flatMap((l) => numeralsIn(l.id));
+    expect(all.length).toBe(6);
+  });
+
+  it('asks only in digits the lesson has already shown', () => {
+    for (const lesson of ALL_LESSONS) {
+      const shown = new Set<string>();
+      for (const ex of buildLessonExercises(lesson, [], 'both', new Set())) {
+        if (ex.kind === 'wordTeach') for (const g of NUMERALS[ex.word.id] ?? '') shown.add(g);
+        if (ex.kind !== 'numeralRead') continue;
+        for (const g of ex.glyphs) expect(shown.has(g), `${lesson.id}: ${ex.glyphs} uses ${g}`).toBe(true);
+      }
+    }
+  });
+
+  it('offers the reversed reading, which is the mistake it is about', () => {
+    for (const ex of ALL_LESSONS.flatMap((l) => numeralsIn(l.id))) {
+      const reversed = Number([...String(ex.value)].reverse().join(''));
+      expect(reversed, `${ex.glyphs} reverses to itself`).not.toBe(ex.value);
+      expect(ex.options, `${ex.glyphs}`).toContain(reversed);
+      expect(ex.options).toContain(ex.value);
+      expect(new Set(ex.options).size).toBe(ex.options.length);
+      expect(ex.options).toHaveLength(4);
+    }
+  });
+
+  it('shows the number it is asking about', () => {
+    const digits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+    for (const ex of ALL_LESSONS.flatMap((l) => numeralsIn(l.id))) {
+      expect([...ex.glyphs].map((g) => digits.indexOf(g)).join('')).toBe(String(ex.value));
+    }
+  });
+
+  it('is the same on both tracks, because the digits are', () => {
+    // The one exercise a Roman-track learner reads in the script on purpose.
+    const script = ALL_LESSONS.flatMap((l) =>
+      buildLessonExercises(resolveLesson(l.id)!, [], 'script', new Set()).filter((e) => e.kind === 'numeralRead')
+    );
+    const roman = ALL_LESSONS.flatMap((l) =>
+      buildLessonExercises(resolveLesson(l.id)!, [], 'roman', new Set()).filter((e) => e.kind === 'numeralRead')
+    );
+    expect(roman).toEqual(script);
+    expect(roman.length).toBe(6);
+  });
+
+  it('feeds nothing to spaced repetition, because it is not about a word', () => {
+    // Reading ۴۷ is not recalling چار; crediting the digits' word cards for it
+    // would schedule a review of the wrong thing.
+    for (const ex of ALL_LESSONS.flatMap((l) => numeralsIn(l.id))) expect(itemsOf(ex)).toEqual([]);
+  });
+});

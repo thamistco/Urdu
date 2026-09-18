@@ -226,6 +226,31 @@ export type Exercise =
       romanTiles?: string[];
     }
   | {
+      /**
+       * Read a number written in Urdu digits and say what it is worth.
+       *
+       * The course teaches the digit glyphs, but only ever as the picture on a
+       * number word's card: ۷ is what "saat" looks like, the way a pomegranate
+       * is what "anaar" looks like. Measured against the built generator, the
+       * whole 12,081-exercise course asks about a numeral glyph nine times,
+       * always as one of the eleven-to-twenty vocabulary items, and Urdu digits
+       * appear in exactly one source file — this map of pictures. A learner who
+       * finishes Harf has never been asked to read ۴۷.
+       *
+       * That is a different skill from the vocabulary. Knowing چار and سات does
+       * not tell you that ۴۷ is forty-seven rather than seventy-four, and the
+       * direction is the whole difficulty: the script runs right to left and
+       * its numbers do not.
+       */
+      kind: 'numeralRead';
+      /** the number as the learner sees it, in Urdu digits: "۴۷" */
+      glyphs: string;
+      /** what it is worth: 47 */
+      value: number;
+      /** the values on offer, `value` among them */
+      options: number[];
+    }
+  | {
       /** read a short passage, then answer a comprehension question */
       kind: 'reading';
       passage: Passage;

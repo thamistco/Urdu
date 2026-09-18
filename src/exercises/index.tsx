@@ -11,6 +11,7 @@ import { LetterTeachExercise } from './LetterTeach';
 import { GrammarTeachExercise, GrammarDrillExercise } from './GrammarExercises';
 import { SentenceBuildExercise, ReadingExercise } from './SentenceReading';
 import { DialogueExercise } from './DialogueExercise';
+import { NumeralReadExercise } from './NumeralRead';
 import type { Exercise, ExerciseKind, ExerciseProps } from './types';
 
 /**
@@ -50,6 +51,7 @@ const EXERCISE_COMPONENTS: { [K in ExerciseKind]: ComponentType<ExerciseProps<Ex
   sentenceBuild: SentenceBuildExercise,
   reading: ReadingExercise,
   dialogue: DialogueExercise,
+  numeralRead: NumeralReadExercise,
 };
 
 /** Renders the right exercise component for a given exercise. */

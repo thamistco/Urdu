@@ -892,6 +892,29 @@ async function answerButtonOnlyScreen(page, text) {
 // thing that IS fixed: the screen's own `Eyebrow` caption
 // (`SentenceReading.tsx`, `DialogueExercise.tsx`), present on both its intro
 // stage and its dynamic-question stage, so that is matched instead. (The
+/**
+ * `numeralRead` shows a number in Urdu digits and offers four values.
+ *
+ * The one kind whose answer needs no lookup into the content modules at all:
+ * the question is on the screen, and reading it is a digit substitution. That
+ * makes it the cheapest solver here and, unlike the random fallback, one that
+ * exercises the right option rather than a quarter of the time.
+ */
+const URDU_DIGIT_GLYPHS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+async function answerNumeralRead(page, text, wrongOnPurpose) {
+  const line = text
+    .split('\n')
+    .map((l) => l.trim())
+    .find((l) => l.length > 0 && [...l].every((g) => URDU_DIGIT_GLYPHS.includes(g)));
+  if (!line) {
+    if (process.env.SOAK_DEBUG) console.error('[debug] answerNumeralRead: no line of Urdu digits on screen');
+    return false;
+  }
+  const value = String(Number([...line].map((g) => URDU_DIGIT_GLYPHS.indexOf(g)).join('')));
+  const { btns, candidates } = await candidateOptions(page);
+  return clickMatching(page, btns, candidates, value, wrongOnPurpose);
+}
+
 // intro stage is handled above this table, by text, not here — see the
 // `<Button>`-has-no-role comment above `answer()`'s reading/dialogue branch.
 // grammarTeach is handled entirely above this table for the same reason and
@@ -906,6 +929,7 @@ const NAMED_TAP_KIND = [
   [/Which one did you hear\?/i, 'listenTap'],
   [/How do you say it\?/i, 'wordFromMeaning'],
   [/Complete the sentence/i, 'grammarDrill'],
+  [/What number is this\?/i, 'numeralRead'],
   [/^Reading · /im, 'reading'],
   [/^Conversation · /im, 'dialogue'],
 ];
@@ -932,6 +956,7 @@ const NAMED_KIND_SOLVER = {
   letterContrast: (page, text, wrong) => answerLetterPick(page, text, wrong),
   letterSpot: (page, text, wrong) => answerLetterSpot(page, text, wrong),
   grammarDrill: (page, text, wrong) => answerGrammarDrill(page, text, wrong),
+  numeralRead: (page, text, wrong) => answerNumeralRead(page, text, wrong),
 };
 
 /** SOAK_DEBUG-only bookkeeping, pulled out of `tapNamedKind` itself so its

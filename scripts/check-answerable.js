@@ -68,6 +68,7 @@ function verdictFree(ex, where) {
 }
 const { WORDS, glossOf } = load('src/data/words.ts');
 const { romanRevealsMeaning } = load('src/lib/giveaway.ts');
+const { URDU_DIGITS, reversedOf } = load('src/lib/numerals.ts');
 
 // ---- how many options, and where the answer sits --------------------------
 
@@ -133,6 +134,7 @@ const CHOICE_KINDS = new Set([
   'listenTap',
   'wordFromMeaning',
   'letterContrast',
+  'numeralRead',
 ]);
 
 /**
@@ -156,12 +158,26 @@ const CHOICE_KINDS = new Set([
  */
 const FLOOR_EXEMPT_KINDS = new Set(['letterContrast']);
 
+/**
+ * Where the answer is sitting, whatever the options are made of.
+ *
+ * Every other kind offers items with ids; `numeralRead` offers four numbers,
+ * because the answer to "what is this worth" is a value rather than another
+ * object. Reading `.id` off a number gives `undefined`, `undefined` is not
+ * found, and the whole kind would have dropped out of this check silently
+ * while sitting in `CHOICE_KINDS` looking measured — which is the exact
+ * failure the comment on `FLOOR_EXEMPT_KINDS` below describes.
+ */
+function answerSeat(ex) {
+  if (ex.kind === 'numeralRead') return ex.options.findIndex((o) => o === ex.value);
+  const answerId = (ex.word || ex.letter || {}).id;
+  return answerId ? ex.options.findIndex((o) => o.id === answerId) : -1;
+}
+
 function recordOptions(ex) {
   if (!CHOICE_KINDS.has(ex.kind)) return;
   if (!Array.isArray(ex.options) || !ex.options.length) return;
-  const answerId = (ex.word || ex.letter || {}).id;
-  if (!answerId) return;
-  const at = ex.options.findIndex((o) => o.id === answerId);
+  const at = answerSeat(ex);
   if (at < 0) return;
   // An exempt kind has a different number of options, so folding it into the
   // histogram below would quietly make "even would be 25% each" untrue —
@@ -249,6 +265,23 @@ function check(ex, track) {
           `${ex.word.id}: "${ex.word.roman}" is asked about against the option "${ex.word.meaning}"`
         );
       break;
+
+    case 'numeralRead': {
+      // Four numbers, so "answerable" means something plainer here than
+      // anywhere else in this table: the glyphs have to spell the answer, the
+      // answer has to be on offer, and no two options may be the same number.
+      const spelt = [...ex.glyphs].map((g) => URDU_DIGITS.indexOf(g)).join('');
+      if (/-1/.test(spelt) || Number(spelt) !== ex.value)
+        fail('the numeral shown is not the number asked about', `${ex.glyphs} vs ${ex.value}`);
+      if (!ex.options.includes(ex.value)) fail('the answer is not among the options', `${ex.glyphs}`);
+      if (!distinct(ex.options)) fail('two options are the same number', ex.options.join('/'));
+      // The reversal is the misreading this exercise exists to catch, and an
+      // exercise that has stopped offering it has stopped testing the thing —
+      // silently, while still looking like four honest options.
+      if (!ex.options.includes(reversedOf(ex.value)))
+        fail('the reversed reading is not offered as a distractor', `${ex.glyphs} — ${ex.options.join('/')}`);
+      break;
+    }
 
     case 'matching':
       if (!distinct(ex.words.map(cueOf))) fail('matching board shares a picture', ex.words.map((w) => w.id).join(','));
