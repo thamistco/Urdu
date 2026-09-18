@@ -1818,6 +1818,69 @@ async function main() {
         }
       }
 
+      /**
+       * A passage or a conversation, before its question.
+       *
+       * The learner reads it and says so; nothing is graded, because nothing
+       * has been asked yet. Routed through the option reader it looked like a
+       * question with strange options, and every one of these was recorded as
+       * a screen the app never judged — nine in one slice, all of them the app
+       * working exactly as designed.
+       *
+       * The lines are learned, because reading them is how a learner meets
+       * these sentences, which is the whole point of the exercise.
+       */
+      if (/i’ve read it|i've read it/i.test(screen.body)) {
+        // Line by line, each in the script with the transliteration printed
+        // under it — which is how the passage is laid out and how it is read.
+        // Learning four lines together instead would say a passage is one
+        // meaning, and a passage is four sentences.
+        const lines = asContent(screen.lines).filter((l) => l.length < 80 && !/^(✕|i.ve read it)$/i.test(l.trim()));
+        const isScript = (l) => /[\u0600-\u06ff]/.test(l);
+        const learned = [];
+        for (let k = 0; k < lines.length - 1; k++) {
+          if (isScript(lines[k]) && !isScript(lines[k + 1])) {
+            memory.learn([lines[k], lines[k + 1]]);
+            learned.push(`${lines[k]} · ${lines[k + 1]}`);
+          }
+        }
+        journal.push({ type: 'taught', lesson: lessonName, step, shown: learned.slice(0, 6) });
+        await clickByText(page, /^I.ve read it$/i);
+        await page.waitForTimeout(600);
+        continue;
+      }
+
+      /**
+       * A grammar card, which is read in stages.
+       *
+       * "Show the pattern", then "Show examples", then "Got it" — three taps
+       * for one card, and only the last one grades. The option reader clicked
+       * the stage button and recorded a screen the app never judged, once per
+       * stage, on every grammar lesson in the course.
+       */
+      if (/^grammar$/im.test(screen.body) && /show the pattern|show examples/i.test(screen.body)) {
+        await clickByText(page, /^(show the pattern|show examples)$/i);
+        await page.waitForTimeout(500);
+        continue;
+      }
+      // The last tap of that card. It grades itself correct — a teaching card
+      // cannot be failed — and the lesson moves on without a verdict banner,
+      // so waiting for one recorded a dropped screen on every grammar lesson.
+      if (/^grammar$/im.test(screen.body) && /^got it$/im.test(screen.body)) {
+        // Nothing is learned from it. A grammar card explains a pattern; its
+        // lines are headings and prose — "GRAMMAR", "WHO", "FORM", "MEANING" —
+        // and feeding those to a model of what a learner knows made one
+        // meaning with four names on the first card it met, which the collapse
+        // wire stopped the run over, correctly. The sentences the card shows
+        // are learned when they come back as exercises.
+        journal.push({ type: 'taught', lesson: lessonName, step, shown: screen.lines.slice(1, 6) });
+        await clickByText(page, /^Got it$/i);
+        await page.waitForTimeout(500);
+        await pressContinue(page);
+        await page.waitForTimeout(400);
+        continue;
+      }
+
       if (screen.teaching) {
         // A teaching card is the app explaining something. Everything on it is
         // learned together, which is the whole point of the card.
