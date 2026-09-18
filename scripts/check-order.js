@@ -349,10 +349,35 @@ for (const lesson of ALL_LESSONS) {
     // excluded above. Nothing about the surrounding vocabulary is tested, so
     // it is illustrative, not exposure this check is for.
     //
-    // The two sentences a concept borrows from SENTENCES *are* tested: the
-    // lesson player runs them through the real sentenceBuild exercise
-    // (generator.ts), decoy tiles and all, same as a "sentences" lesson.
-    for (const sen of SENTENCES.filter((s) => s.concept === c.id)) {
+    /**
+     * The sentences a concept borrows from SENTENCES *are* tested: the lesson
+     * player runs them through the real sentenceBuild exercise, decoy tiles
+     * and all, same as a "sentences" lesson.
+     *
+     * Which sentences those are is asked of the generator rather than of the
+     * tag. A concept's tagged pool is wider than any lesson shows — `g-to-be`
+     * has fifteen and draws six — and `readableSentences` already drops the
+     * ones whose words are not taught by this point. Reading the whole pool
+     * therefore reported sentences no learner can be shown: regrouping the
+     * beginner units so each one holds a single theme moved jobs and rooms
+     * after the copula lesson, and this reported five "میں ڈاکٹر ہوں"-shaped
+     * findings while the lesson itself quietly drew "یہ کتاب ہے", "میں خوش
+     * ہوں" and four more from what the learner already had. Measured across
+     * every grammar lesson before and after that regrouping: not one drew
+     * fewer sentences than before.
+     *
+     * Asking the generator is also strictly stronger. The old rule never
+     * looked at what was drawn, so a filter that failed would have gone
+     * unnoticed; this fails the moment a learner is actually shown a word the
+     * course has not taught. It is the same choice the concept-ordering
+     * section below already made, for the same reason.
+     */
+    const drawn = new Set();
+    for (const ex of buildLessonExercises(lesson, [], 'both', new Set())) {
+      const sen = ex.sentence ?? (ex.word && SENTENCES.find((x) => x.id === ex.word.id));
+      if (sen && sen.words) drawn.add(sen);
+    }
+    for (const sen of drawn) {
       const text = sen.words.join(' ');
       const { late, unknown } = classify(text, taught);
       unknown.forEach((u) => unknownWords.set(u, (unknownWords.get(u) ?? 0) + 1));

@@ -102,6 +102,9 @@ jobs:
       - name: Check that a unit's name says what is inside it
         run: npm run check:unit-names
 
+      - name: Check that a unit holds things that belong together
+        run: npm run check:unit-themes
+
       - name: Check that every word is actually taught by a lesson
         run: npm run check:coverage
 
