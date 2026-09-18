@@ -384,6 +384,14 @@ const ok = (name, cond) => {
   );
   ok('nonsense that still lists things is', /still listed 7 items/.test(only(search(null, 7, false))[0] || ''));
 
+  const review = (dueClaimed, asked) => [{ type: 'reviewPlayed', pass: 0, dueClaimed, asked, seconds: 30 }];
+  ok('a review that asks about what it said was due is not a finding', only(review(12, 12)).length === 0);
+  ok('a review that asks about fewer than it said is not either', only(review(12, 5)).length === 0);
+  ok(
+    'a review that says twelve are due and then asks nothing is',
+    /said 12 item\(s\) were due and then asked nothing/.test(only(review(12, 0))[0] || '')
+  );
+
   const toggled = (from, to) => [
     { type: 'settingToggled', label: 'Haptics', from, to, stuck: to !== from, rowsAfter: 5 },
   ];
