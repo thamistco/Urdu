@@ -2475,13 +2475,21 @@ async function playSession(page, ctx, sessionName, kind = 'lesson') {
        * Exercises that mark the right option where it stands.
        *
        * `screens/answerReveal.ts` names the kinds that use the reveal panel;
-       * everything else corrects in place, and the grammar drill does it
-       * twice over — the right option turns green and a "Why" note explains
-       * the rule underneath. Counting those as answers shown nothing put
-       * seven complaints in one slice's report about the most thoroughly
-       * explained screen in the app.
+       * everything in its `default` branch corrects in place instead, and the
+       * grammar drill does it twice over — the right option turns green and a
+       * "Why" note explains the rule underneath. Counting those as answers
+       * shown nothing put seven complaints in one slice's report about the
+       * most thoroughly explained screen in the app.
+       *
+       * This list restates that branch, matched on what the screen says rather
+       * than on a kind this file cannot see, so it has to be extended whenever
+       * a kind joins it. "What number is this?" is the proof: the numeral
+       * exercise shipped, landed in `default` correctly — its right answer
+       * turns green and a reversed reading gets named underneath — and the
+       * very next slice reported it twice as a wrong answer the app had
+       * explained nothing about.
        */
-      gradesInPlace: /complete the sentence|reading ·|conversation ·/i.test(screen.body),
+      gradesInPlace: /complete the sentence|reading ·|conversation ·|what number is this/i.test(screen.body),
       optionText: options.map((o) => o.lines.join(' / ')),
       picked: decision.pick.lines.join(' / '),
       how: decision.how,
