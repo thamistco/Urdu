@@ -47,7 +47,7 @@ export const useSettingsStore = create<SettingsState>()(
        * Off by default. When on, a correct answer plays the recorded Urdu clip
        * and then has the *device's English voice* read the meaning aloud — two
        * different speakers on one word, the second of them a stock browser
-       * voice reading English in an app for learning Urdu. It shipped on by
+       * voice reading English in an app for learning Urdu. It was on by
        * default, and it sounded exactly like the bug it was mistaken for.
        *
        * The feature itself is defensible for a learner who wants it, so the
@@ -56,7 +56,8 @@ export const useSettingsStore = create<SettingsState>()(
       speakMeaning: false,
       /**
        * The recorded voice. Defaults to the narrator every clip was made with,
-       * so an install that has never chosen sounds exactly as it always did.
+       * so a learner who never opens the setting hears the voice the course was
+       * recorded in rather than whichever one happens to be listed first.
        */
       voiceGender: 'f',
       track: 'both',
@@ -93,29 +94,17 @@ export const useSettingsStore = create<SettingsState>()(
       name: 'harf-settings',
       storage: createJSONStorage(() => safeStorage),
       /**
-       * Version 1 turns the English gloss off for everyone who already has it.
+       * No `version`, and so no `migrate`. Both migrations that used to live
+       * here — v1 turning the English gloss off for installs that had it on by
+       * default, v2 pinning the voice an install had been hearing before there
+       * was a choice — existed for installs made before the app launched, which
+       * is to say none. Zustand defaults the version to 0 and discards a blob
+       * that does not match, which is what a pre-launch shape change should do.
        *
-       * Changing a default only reaches people who have never opened the app;
-       * this setting shipped on, so every existing install has `true` written
-       * to storage and would go on doing the thing that was reported. A new
-       * default without a migration is a fix that reaches nobody who has the
-       * problem.
-       *
-       * Only this one field is touched — sound, haptics, Roman and track are
-       * carried through as they were, because those the learner may well have
-       * chosen on purpose.
+       * A default changed after launch still reaches nobody who already has the
+       * old value written to storage, so that release adds `version: 1` and a
+       * `migrate` back.
        */
-      version: 2,
-      migrate: (persisted, from) => {
-        let s = (persisted ?? {}) as Partial<SettingsState>;
-        // v1 turned the English gloss off for everyone who already had it on.
-        if (from < 1) s = { ...s, speakMeaning: false };
-        // v2 added the voice choice. An install that predates it has no
-        // preference, and the honest default is the voice it has been hearing
-        // all along rather than a silent switch to a different narrator.
-        if (from < 2) s = { ...s, voiceGender: 'f' };
-        return s;
-      },
       onRehydrateStorage: () => (state) => state?.syncEffects(),
     }
   )

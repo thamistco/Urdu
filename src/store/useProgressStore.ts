@@ -18,7 +18,6 @@ import {
 import { ACHIEVEMENTS } from '../data/achievements';
 import { heartsAreFree } from '../lib/hearts';
 import { repeatReward } from '../lib/repeatReward';
-import { migrateProgress } from '../lib/progress';
 
 export type Goal = 'family' | 'read' | 'heritage' | 'curious';
 /**
@@ -119,25 +118,12 @@ type ProgressState = {
    *  Set on dismissal rather than on render, so a notice that was drawn and
    *  never read is still owed. See lib/progress.ts for who is owed one. */
   pathNoticeSeen: boolean;
-  /** How many lessons the path held when this learner last opened the app.
-   *  `null` means a profile written before this was recorded, which is the
-   *  evidence that the path has moved since. Re-recorded on dismissal, so the
+  /** How many lessons the path held when this learner last opened the app,
+   *  `null` until a Home render records one. Re-recorded on dismissal, so the
    *  next regroup announces itself without anyone bumping the persist version:
    *  detecting the move by which lesson ids died could not see the learner it
    *  mattered to, because a topic's first part keeps the topic's own id. */
   pathSize: number | null;
-
-  /**
-   * True for a profile whose v0/v1 → v2 lesson-id migration emptied
-   * `completedLessons`/`skippedLessons` because it genuinely had some — the
-   * second, worse silence `needsPathMoveNotice` alone cannot see, since that
-   * function's evidence is exactly what this migration deleted. See
-   * `lib/progress.ts`'s `migrateProgress`. Cleared on dismissal, not
-   * re-armed: unlike the path-move notice this describes a one-time
-   * historical fact about an upgrade that already happened, not a
-   * recurring condition to detect again.
-   */
-  ticksWipedByMigration: boolean;
 
   // ---- actions ----
   completeOnboarding: (goal: Goal, startLevel: number, background: Background, skipLessonIds: string[]) => void;
@@ -160,8 +146,6 @@ type ProgressState = {
    *  For the launches where nothing is owed, so a learner is never told about
    *  a move they lived through. */
   notePathSize: (pathSize: number) => void;
-  /** Dismiss the ticks-wiped notice. See `ticksWipedByMigration`. */
-  dismissTicksWipedNotice: () => void;
   addGems: (n: number) => void;
   resetAll: () => void;
 
@@ -218,10 +202,6 @@ export const useProgressStore = create<ProgressState>()(
       // lesson maps, so this default is belt and braces rather than the guard.
       pathNoticeSeen: true,
       pathSize: null,
-      // A profile created now was never migrated, so it has nothing to
-      // report — set for the same belt-and-braces reason as
-      // `pathNoticeSeen` above.
-      ticksWipedByMigration: false,
 
       completeOnboarding: (goal, startLevel, background, skipLessonIds) =>
         set({
@@ -429,7 +409,6 @@ export const useProgressStore = create<ProgressState>()(
 
       dismissPathNotice: (pathSize: number) => set({ pathNoticeSeen: true, pathSize }),
       notePathSize: (pathSize: number) => set({ pathSize }),
-      dismissTicksWipedNotice: () => set({ ticksWipedByMigration: false }),
 
       resetAll: () =>
         set({
@@ -464,7 +443,6 @@ export const useProgressStore = create<ProgressState>()(
           // notice would be about.
           pathNoticeSeen: true,
           pathSize: null,
-          ticksWipedByMigration: false,
         }),
 
       metrics: () => {
@@ -484,54 +462,22 @@ export const useProgressStore = create<ProgressState>()(
     {
       name: 'harf-progress',
       storage: createJSONStorage(() => safeStorage),
-      version: 3,
       /**
-       * v1 → v2: lesson ids stopped being positional.
+       * No `version`, and so no `migrate`. The app has not launched, so no
+       * profile written by an older shape of this store exists anywhere to
+       * migrate from, and both the v1 → v2 lesson-id wipe and the v2 → v3
+       * path-notice reset were code with no population. Zustand defaults the
+       * version to 0; a stored blob whose version does not match is discarded,
+       * which is the right answer for a shape change before launch and needs
+       * nothing written.
        *
-       * They used to be counted along the path (`v-12`), so they named a slot
-       * rather than a lesson; they are now derived from the content a lesson
-       * teaches (`v-colours`). Only the two lesson-keyed maps are affected, and
-       * neither can be translated — the old key genuinely does not say which
-       * lesson it meant, because that depended on a path layout that no longer
-       * exists. They are dropped.
-       *
-       * Everything that represents actual learning survives: `srs`, `srsType`,
-       * `learnedWords` and `learnedLetters` are keyed by word and letter ids,
-       * which never moved, and XP, streak, gems and achievements are scalars.
-       * So a learner loses their ticked-off lessons and keeps their review
-       * schedule, their streak and their level.
-       *
-       * URD-014: that wipe used to say nothing. `needsPathMoveNotice`
-       * (`lib/progress.ts`) requires a surviving completed or skipped
-       * lesson to have anything to report, which is exactly the evidence
-       * this migration deletes — so the learner who lost the most was told
-       * the least. `ticksWipedByMigration` records that it happened, for a
-       * learner who genuinely had ticks to lose.
+       * The first release after launch that changes the persisted shape adds
+       * both back: `version: 1`, and a `migrate` that either translates the old
+       * shape or records what it could not. The path-moved notice is
+       * deliberately not one of those changes — it re-arms off the recorded
+       * path size (`lib/progress.ts`), so regrouping the course never needs a
+       * version bump.
        */
-      /**
-       * v2 → v3: the path was regrouped twice and the learner was not told.
-       *
-       * Nothing is dropped here. Splitting each topic across enough lessons to
-       * cover its vocabulary kept the first part's id, and regrouping those into
-       * sittings kept it again, so a ticked lesson that survived stays ticked and
-       * one that did not is simply absent — which is what `pathMoveNotice` reads.
-       * The only change is that this learner is now owed a sentence about it.
-       *
-       * `pathNoticeSeen: false` and `pathSize: null` rather than a stored
-       * message, because whether there is anything to say depends on whether
-       * *this* profile has a place on the path at all, which is a question about
-       * the profile rather than about the upgrade. A profile that finished
-       * nothing is migrated the same way and told nothing.
-       *
-       * `pathSize: null` is also what makes this the last migration that has to
-       * think about the notice. From here the size of the path is recorded as
-       * the learner sees it, so the next regroup is detected by the path
-       * changing rather than by somebody remembering to bump this number.
-       */
-      // Extracted to lib/progress.ts as `migrateProgress` so the decision is
-      // a plain function a test can drive directly, not an inline arrow
-      // reachable only through zustand's persist middleware.
-      migrate: (persisted, from) => migrateProgress(persisted as Partial<ProgressState>, from) as ProgressState,
     }
   )
 );

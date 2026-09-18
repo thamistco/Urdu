@@ -86,8 +86,12 @@ Run everything: `npm run check:all`.
     first. See rule 3.
 27. 👁 State lives in a Zustand store only if more than one screen needs it.
     Otherwise `useState`.
-28. 👁 Persisted stores must declare a `version` and a `migrate`. A changed
-    default reaches nobody who already has the old value.
+28. 👁 A persisted store declares a `version` and a `migrate` from the first
+    release that changes its shape after launch. A changed default reaches
+    nobody who already has the old value. Before launch nobody has one, so a
+    migration there has no population, cannot be exercised against a real
+    profile, and outlives the thing it was written for — the two stores carry
+    neither, and say where the pair goes back.
 29. 👁 Side effects (audio, storage, network) go behind a module in `lib/`, never
     called inline from a component.
 30. 🤖 Build configuration comes from the environment, never from rewriting a
