@@ -457,18 +457,31 @@ export function HomeScreen() {
          * off, and there the scroll is right, which is what made the constant
          * look like it worked.
          *
-         * The bottom of the visible list is the window less the tab bar, so
-         * that is what it is measured against now, with no margin on top of
-         * it: the question is whether the node is cut off, and a node resting
-         * against the tab bar is not. It rests there by one pixel today, so
-         * a header that grows by two will tip this back into scrolling — and
-         * should, because at that point the node really is below the fold.
+         * The bottom of the visible list is the window less the tab bar, and
+         * the first version of this asked whether the node cleared it exactly.
+         * On the phone it was tuned against, the node cleared it by a single
+         * pixel, and the comment here said that a header growing by two would
+         * tip it back into scrolling and should. That was the wrong call, and
+         * rewriting the unit subtitles to say what each unit contains proved
+         * it: one subtitle wrapped to a second line, the row dropped fifteen
+         * pixels, and a brand new learner's first view of Home became a hint
+         * banner and a list again. Fifteen pixels of a row is not worth the
+         * greeting, the counters, Today's Word and the Letter Lab.
+         *
+         * So the test is whether enough of the row is on screen to be seen and
+         * tapped, rather than whether all of it is. A row is 80px tall and the
+         * comfortable minimum for a touch target is 44; 56 leaves the row
+         * plainly visible while still scrolling for one that is genuinely cut
+         * in half. `check:home-scroll` pins the direction rather than the
+         * number: measured against it, anything up to about 65 keeps the new
+         * learner's Home unscrolled, and 200 puts the failure back.
          *
          * Deeper into the course nothing changes: a node hundreds of pixels
          * down still scrolls, and still lands 200px from the top.
          */
+        const ENOUGH_ON_SCREEN = 56;
         const visibleBottom = Dimensions.get('window').height - tabBarHeight;
-        if (pageY + height <= visibleBottom) return;
+        if (pageY + Math.min(height, ENOUGH_ON_SCREEN) <= visibleBottom) return;
         didAutoScroll.current = true;
         pathRef.current?.scrollTo({ y: pageY - 200, animated: true });
       });
