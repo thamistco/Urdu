@@ -329,6 +329,38 @@ const ok = (name, cond) => {
   ye.learn(['baṛī ye', 'ے', '“e / ai”']);
   ok('nor are the sounds they are read with', tripwires([], ye, limits).length === 0);
 
+  /**
+   * A word the course teaches twice, the second gloss qualifying the first.
+   *
+   * ہفتہ is "Week" in Time & day and "Saturday (also: week)" in Days &
+   * months, and its card shows a keycap digit for the sixth day. Five strings
+   * and a memory that has not collapsed at all — this stopped a 24-lesson
+   * slice at lesson 23 before the rule knew it.
+   *
+   * Checked at a limit of two names rather than the shipped three, and that is
+   * the point rather than a convenience: at three, dropping the picture and
+   * folding the qualifier each take the count from four to three on their own,
+   * so the pair of assertions passed with either rule deleted. Two names makes
+   * each one load-bearing — which is how this was found, by deleting them one
+   * at a time and watching nothing fail.
+   */
+  const strict = { ...limits, clusterNames: 2 };
+  const hafta = new Memory();
+  hafta.learn(['ہفتہ', 'hafta', 'week']);
+  hafta.learn(['ہفتہ', 'hafta', 'Saturday (also: week)', '6️⃣']);
+  ok('a second gloss that qualifies the first is not a collapse', tripwires([], hafta, strict).length === 0);
+  ok('the picture on the card is not a name either', hafta.clusterFor('hafta').tokens.size === 5);
+  // And the shipped limit agrees, which is what the run actually uses.
+  ok('nor is it one at the limit the run is played with', tripwires([], hafta, limits).length === 0);
+  // The honest two names are still two: a word and its reading do not fold
+  // into each other just because both are written in Latin letters.
+  const book = new Memory();
+  book.learn(['کتاب', 'kitaab', 'book']);
+  ok(
+    'a word and its reading still count as two names',
+    tripwires([], book, { ...limits, clusterNames: 1 }).length === 1
+  );
+
   // Names are not. This is the shape the real blob had: separate meanings
   // dragged together by what was printed above them.
   const blob = new Memory();

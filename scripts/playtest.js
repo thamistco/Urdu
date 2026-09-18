@@ -370,8 +370,8 @@ function tripwires(journal, memory, limits = TRIPWIRES) {
 
   // See `clusterNames`: a meaning may wear many shapes, but it should not
   // answer to many names.
-  const namesIn = (c) =>
-    [...c.tokens].filter(
+  const namesIn = (c) => {
+    const plain = [...c.tokens].filter(
       (t) =>
         // A shape is not a name.
         !/[\u0600-\u06ff]/.test(t) &&
@@ -379,8 +379,36 @@ function tripwires(journal, memory, limits = TRIPWIRES) {
         // and two letters that share their faces bring two names and two
         // sounds with them, which is four strings and one honest meaning:
         // choṭī ye and baṛī ye, the pair this wire has now stopped twice.
-        !/^[“"'].*[”"']$/.test(t)
+        !/^[“"'].*[”"']$/.test(t) &&
+        // Nor is the picture on the word's own card. Most are pure
+        // pictographs and never reach a cluster, but a keycap digit carries a
+        // real digit inside it — `6️⃣` for Saturday, the sixth day — so it
+        // passes the "letters or numbers" filter the card branch uses and
+        // arrives here looking like a third name for the word.
+        !/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{20E3}]/u.test(t)
     );
+    /**
+     * A gloss that qualifies another gloss is one name, not two.
+     *
+     * `units.ts` says so in as many words: a meaning may qualify itself, and
+     * the course's own example is the one that stopped this run — ہفتہ is
+     * taught in Time & day as "Week" and again in Days & months as "Saturday
+     * (also: week)". Both are true, both are the same word, and the learner
+     * meeting the second after the first is the app working. Counting them
+     * separately made a correct memory look like a corrupted one and ended a
+     * 24-lesson slice at lesson 23.
+     *
+     * Containment rather than equality, because the qualifier is what differs:
+     * the shorter name sits inside the longer one. A real collapse does not
+     * look like this — the blob this wire exists for was "happy", "family",
+     * "which one did you hear?" and "tap to hear", four names with nothing of
+     * each other in them.
+     */
+    return plain.filter((t) => {
+      const me = t.toLowerCase();
+      return !plain.some((o) => o !== t && o.length < t.length && me.includes(o.toLowerCase()));
+    });
+  };
   const swollen = memory.clusters.find(
     (c) => namesIn(c).length > limits.clusterNames || c.tokens.size > limits.clusterMax
   );
