@@ -1330,7 +1330,14 @@ function findings(journal) {
   // same question five times running when what it actually did was alternate
   // question, card, question, card. That reported the new word card as a
   // monotony regression it had in fact relieved.
-  const screens = journal.filter((e) => e.type === 'answer' || e.type === 'taught' || e.type === 'trace');
+  // The hearts wall counts as a change of scene for the same reason a card
+  // does: it replaces the whole screen, and a learner who has just been
+  // stopped, shown a price and let back in is not looking at the same question
+  // shape four times over. Without it here, two questions either side of a
+  // wall read as a run of four.
+  const screens = journal.filter(
+    (e) => e.type === 'answer' || e.type === 'taught' || e.type === 'trace' || e.type === 'outOfHearts'
+  );
   let run = 1;
   const runs = [];
   const shapeOf = (e) => (e.type === 'answer' ? e.promptShape : null);
