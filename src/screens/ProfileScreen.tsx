@@ -148,7 +148,7 @@ export function ProfileScreen() {
                 <Bold className="text-[0.9375rem]">{league.name} League</Bold>
                 <Txt className="text-xs text-paper/55">{s.weeklyXp} XP this week · tap to see standings</Txt>
               </View>
-              <Txt className="text-paper/55">›</Txt>
+              <Txt className="text-base text-paper/55">›</Txt>
             </View>
           </Pressable>
         </Reveal>
@@ -168,7 +168,7 @@ export function ProfileScreen() {
                   {unlockedAch} of {ACHIEVEMENTS.length} unlocked
                 </Txt>
               </View>
-              <Txt className="text-paper/55">›</Txt>
+              <Txt className="text-base text-paper/55">›</Txt>
             </View>
           </Pressable>
         </Reveal>
@@ -186,7 +186,7 @@ export function ProfileScreen() {
                 <Bold className="text-[0.9375rem]">Settings</Bold>
                 <Txt className="text-xs text-paper/55">Sound, haptics, script & Roman, daily goal</Txt>
               </View>
-              <Txt className="text-paper/55">›</Txt>
+              <Txt className="text-base text-paper/55">›</Txt>
             </View>
           </Pressable>
         </Reveal>

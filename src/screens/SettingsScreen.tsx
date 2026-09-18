@@ -433,7 +433,9 @@ export function SettingsScreen() {
               className="rounded-2xl border p-4"
               style={{ borderColor: withAlpha(palette.rose, 0.3), backgroundColor: withAlpha(palette.rose, 0.08) }}
             >
-              <Bold style={{ color: palette.roseLight }}>Reset all progress</Bold>
+              <Bold className="text-[0.9375rem]" style={{ color: palette.roseLight }}>
+                Reset all progress
+              </Bold>
               <Txt className="mt-0.5 text-xs text-paper/55">Clears streak, XP, gems and memory. Cannot be undone.</Txt>
             </View>
           </Pressable>

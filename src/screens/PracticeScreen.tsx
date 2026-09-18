@@ -328,7 +328,7 @@ export function PracticeScreen() {
                       {g.summary}
                     </Txt>
                   </View>
-                  <Txt className="text-paper/55">›</Txt>
+                  <Txt className="text-base text-paper/55">›</Txt>
                 </View>
               </Pressable>
             ))}
@@ -363,7 +363,7 @@ export function PracticeScreen() {
                       {p.kind === 'conversation' ? 'Conversation' : 'Passage'} · {p.lines} lines
                     </Txt>
                   </View>
-                  <Txt className="text-paper/55">›</Txt>
+                  <Txt className="text-base text-paper/55">›</Txt>
                 </View>
               </Pressable>
             ))}
