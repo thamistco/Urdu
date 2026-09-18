@@ -1513,7 +1513,12 @@ function writeReport(journal, memory, stats) {
   const scriptOf = (l) => /[\u0600-\u06ff]/.test(l);
   const taughtWords = [];
   journal.forEach((e, i) => {
+    // Words and letters only. A reading passage is read once by design and a
+    // grammar card explains a rule in prose, so counting either as something
+    // that ought to come back put eight "never revisited" in one slice's
+    // report, not one of which was a word.
     if (e.type !== 'taught' || !e.shown || e.shown.length < 2) return;
+    if (e.what && e.what !== 'word' && e.what !== 'letter') return;
     const u = e.shown.find(scriptOf);
     if (u) taughtWords.push({ u: norm(u), at: i });
   });
@@ -1890,7 +1895,7 @@ async function main() {
             learned.push(`${lines[k]} · ${lines[k + 1]}`);
           }
         }
-        journal.push({ type: 'taught', lesson: lessonName, step, shown: learned.slice(0, 6) });
+        journal.push({ type: 'taught', what: 'passage', lesson: lessonName, step, shown: learned.slice(0, 6) });
         await clickByText(page, /^I.ve read it$/i);
         await page.waitForTimeout(600);
         continue;
@@ -1919,7 +1924,7 @@ async function main() {
         // meaning with four names on the first card it met, which the collapse
         // wire stopped the run over, correctly. The sentences the card shows
         // are learned when they come back as exercises.
-        journal.push({ type: 'taught', lesson: lessonName, step, shown: screen.lines.slice(1, 6) });
+        journal.push({ type: 'taught', what: 'grammar', lesson: lessonName, step, shown: screen.lines.slice(1, 6) });
         await clickByText(page, /^Got it$/i);
         await page.waitForTimeout(500);
         await pressContinue(page);
@@ -1932,7 +1937,7 @@ async function main() {
         // learned together, which is the whole point of the card.
         const shown = screen.lines.filter((l) => l.length < 60 && !/^(continue|finish)$/i.test(l));
         memory.learn(shown.slice(0, 4));
-        journal.push({ type: 'taught', lesson: lessonName, step, shown: shown.slice(0, 6) });
+        journal.push({ type: 'taught', what: 'card', lesson: lessonName, step, shown: shown.slice(0, 6) });
         await pressContinue(page);
         await page.waitForTimeout(600);
         continue;
@@ -1966,7 +1971,7 @@ async function main() {
             !/^[^\p{L}\p{N}]+$/u.test(l)
         );
         memory.learn(shown.slice(0, 3));
-        journal.push({ type: 'taught', lesson: lessonName, step, shown: shown.slice(0, 3) });
+        journal.push({ type: 'taught', what: 'word', lesson: lessonName, step, shown: shown.slice(0, 3) });
         await clickByText(page, /^Got it$/i);
         await page.waitForTimeout(500);
         await pressContinue(page);
@@ -2021,7 +2026,13 @@ async function main() {
           if (exampleScript && gloss) memory.learn([exampleScript, ...gloss.split('·').map((x) => x.trim())]);
         }
 
-        journal.push({ type: 'taught', lesson: lessonName, step, shown: [named, ...faces].filter(Boolean) });
+        journal.push({
+          type: 'taught',
+          what: 'letter',
+          lesson: lessonName,
+          step,
+          shown: [named, ...faces].filter(Boolean),
+        });
         await clickByText(page, /^Got it$/i);
         await page.waitForTimeout(500);
         await pressContinue(page);
