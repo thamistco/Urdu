@@ -639,6 +639,17 @@ async function readOptions(page) {
   return { btns, options: out };
 }
 
+/**
+ * Does this screen say the lesson is over?
+ *
+ * Kept as a named function rather than an inline regex so `playtest-selftest`
+ * can hold it against the literal strings in `src/screens/LessonComplete.tsx`
+ * — the only place that decides what this screen says.
+ */
+function lessonDoneText(body) {
+  return /session complete|flawless session|lesson complete|you finished|xp earned/i.test(body || '');
+}
+
 /** What the screen is asking, and what it is telling. */
 /**
  * The text of the screen the learner is actually on.
@@ -692,9 +703,23 @@ async function readScreen(page) {
     wrong: /not quite/i.test(body),
     right: /beautifully done/i.test(body),
     teaching: /keep that in mind/i.test(body),
-    // The app says "SESSION COMPLETE", which none of the guessed wordings
-    // matched, so a run that finished eight lessons reported finishing none.
-    lessonDone: /session complete|lesson complete|you finished|xp earned/i.test(body),
+    /**
+     * The end-of-lesson screen, in both of the things it can say.
+     *
+     * `LessonComplete` prints "Session complete" — or "Flawless session" when
+     * nothing was missed. This knew the first and not the second, so a lesson
+     * the learner got entirely right was never recognised as finished: the
+     * driver pressed on past the completion screen, landed back on the tabs,
+     * tapped the Letter Lab, and spent eight screens in a browse view with
+     * nothing to answer before the stuck-run breaker ended the lesson. Its own
+     * earlier comment records the first half of this same mistake — guessed
+     * wordings, one of which was right — and guessing again is what cost the
+     * second half.
+     *
+     * `lessonDoneText` is what the self-test holds against the app's own
+     * source, so a third wording cannot quietly repeat this.
+     */
+    lessonDone: lessonDoneText(body),
     outOfHearts: /out of hearts/i.test(body),
     graded: /not quite|beautifully done|keep that in mind/i.test(body),
   };
@@ -2975,6 +3000,7 @@ if (require.main === module) {
 
 module.exports = {
   Memory,
+  lessonDoneText,
   surfaceFindings,
   revealFrom,
   record,

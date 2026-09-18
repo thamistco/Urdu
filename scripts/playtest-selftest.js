@@ -30,6 +30,9 @@
  * cannot see.
  */
 
+const fs = require('fs');
+const path = require('path');
+
 const {
   record,
   classify,
@@ -41,6 +44,7 @@ const {
   chooseOption,
   asContent,
   surfaceFindings,
+  lessonDoneText,
 } = require('./playtest.js');
 
 let fails = 0;
@@ -434,6 +438,33 @@ const ok = (name, cond) => {
   ok('a reset that asks first is not a finding', only(reset(true, true)).length === 0);
   ok('a reset that does not ask is', /ran without asking for confirmation/.test(only(reset(true, false))[0] || ''));
   ok('a reset control that cannot be found is', /could not be found/.test(only(reset(false, false))[0] || ''));
+}
+
+/**
+ * "The lesson is over" has to mean what the app says it means.
+ *
+ * Read out of `LessonComplete.tsx` rather than written down here, because
+ * writing it down here is exactly how this broke twice. The first time, every
+ * wording was a guess and one happened to be right, so a run that finished
+ * eight lessons reported none. The second time, the guess that was right
+ * covered only half of what the screen can say: it prints "Flawless session"
+ * when nothing was missed, and a lesson the learner got entirely right was
+ * never recognised as finished — the driver walked past the completion screen
+ * into the Letter Lab and spent eight screens there with nothing to answer.
+ *
+ * So the strings come from the one line that decides them. A rename that this
+ * file cannot find fails loudly rather than silently teaching the driver to
+ * walk past the end of a lesson.
+ */
+{
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src/screens/LessonComplete.tsx'), 'utf8');
+  const line = /result\.perfect \? '([^']+)' : '([^']+)'/.exec(src);
+  ok('the completion screen still decides its wording in one place', !!line);
+  for (const said of line ? [line[1], line[2]] : []) {
+    // Upper-cased on screen by its own style, so both cases are checked.
+    ok(`"${said}" is recognised as the end of a lesson`, lessonDoneText(said) && lessonDoneText(said.toUpperCase()));
+  }
+  ok('and an ordinary screen is not', !lessonDoneText('READING · COLOURS AROUND ME'));
 }
 
 console.log(fails ? `\n${fails} failed` : '\nall good');
