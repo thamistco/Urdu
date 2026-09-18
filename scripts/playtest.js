@@ -181,6 +181,24 @@ const LESSON_BUDGET_MS = Number(argOf('budget', 360)) * 1000;
 const STUCK_RUN_LIMIT = Number(argOf('stuck-limit', 8));
 
 /**
+ * How often the run leaves the path.
+ *
+ * A learner does not spend an hour on lessons and then discover Practice; they
+ * dip into it, change a setting, come back. Interleaving matters for more than
+ * realism — a setting changed mid-course is the one that can break the next
+ * lesson, and a practice session is only interesting once there is something
+ * in the review pool for it to draw on.
+ *
+ * `0` turns either off, which is how a run that only wants the path asks for
+ * one.
+ */
+const PRACTICE_EVERY = Number(argOf('practice-every', 6));
+const SETTINGS_EVERY = Number(argOf('settings-every', 12));
+/** Skip the path entirely: one practice pass and one settings pass, for
+ *  checking those two surfaces without paying for a course walk. */
+const SURFACES_ONLY = has('surfaces-only');
+
+/**
  * When to stop the whole run rather than finish it and read the wreckage.
  *
  * Two runs were lost to this. A stalled lesson was visible in the journal four
@@ -529,8 +547,21 @@ class Memory {
 async function readOptions(page) {
   const btns = page.locator('[role="button"]');
   const n = await btns.count();
+  // The buttons belonging to screens behind this one — see `readScreen`. The
+  // index is kept, not compacted, because the caller clicks `nth(i)` on this
+  // same locator.
+  const live = new Set(
+    await page
+      .evaluate(() =>
+        Array.from(document.querySelectorAll('[role="button"]'))
+          .map((b, i) => (getComputedStyle(b).pointerEvents === 'none' ? -1 : i))
+          .filter((i) => i >= 0)
+      )
+      .catch(() => null)
+  );
   const out = [];
   for (let i = 0; i < n; i++) {
+    if (live.size && !live.has(i)) continue;
     const box = await btns
       .nth(i)
       .boundingBox()
@@ -564,8 +595,41 @@ async function readOptions(page) {
 }
 
 /** What the screen is asking, and what it is telling. */
+/**
+ * The text of the screen the learner is actually on.
+ *
+ * React Navigation leaves the screens behind the one in front mounted, at full
+ * size, with their own buttons and their own words: Practice is still there
+ * while a practice session plays on top of it, and so is Learn. The one thing
+ * that separates them is `pointer-events`, which it sets to `none` on the ones
+ * behind — measured against the real build, because `offsetParent`,
+ * `checkVisibility()` and a non-empty bounding box all report them as visible,
+ * so a reader built on any of those three reads the wrong screen and looks
+ * like it works.
+ *
+ * Their text is subtracted from `body.innerText` rather than rebuilt from
+ * scratch: `innerText` runs the same algorithm on a subtree as on the whole
+ * document, so a mounted screen's text appears in the page's verbatim, and if
+ * it ever does not, the subtraction does nothing and this falls back to what it
+ * read before. Rebuilding the text by walking nodes would change the line
+ * breaks every branch in the step loop matches on.
+ */
 async function readScreen(page) {
-  const body = await page.evaluate(() => document.body.innerText).catch(() => '');
+  const body = await page
+    .evaluate(() => {
+      const dead = Array.from(document.querySelectorAll('div')).filter(
+        (n) =>
+          getComputedStyle(n).pointerEvents === 'none' &&
+          !(n.parentElement && getComputedStyle(n.parentElement).pointerEvents === 'none')
+      );
+      let text = document.body.innerText;
+      for (const n of dead) {
+        const t = n.innerText;
+        if (t && t.length > 10) text = text.split(t).join('\n');
+      }
+      return text;
+    })
+    .catch(() => '');
   const lines = body
     .split('\n')
     .map((l) => l.trim())
@@ -992,8 +1056,37 @@ async function buildWord(page, memory, promptLine) {
  * one of four cards never is.
  */
 async function typeWord(page, memory, promptLine) {
-  const input = page.locator('input, textarea').first();
-  if (!(await input.count().catch(() => 0))) return { typed: null, taught: false, knew: false };
+  /**
+   * The answer box on this screen, not the first `<input>` in the document.
+   *
+   * A practice session is entered by tapping a card on the Practice tab, which
+   * stays mounted behind it — and it has an `<input>` of its own, its search
+   * box, sitting earlier in the DOM. The first practice run typed every answer
+   * into that instead: `fill` timed out on it, Check stayed disabled, nothing
+   * was graded, and the session ended after eight silent screens with the
+   * answer box on screen and empty.
+   *
+   * Both halves of the test are load-bearing, and each was measured on the
+   * real build rather than reasoned about:
+   *
+   *   pointer-events   a tab that is not in front keeps a full-size, visible,
+   *                    hit-testable box; `none` is the only thing that marks it.
+   *   a non-zero box   a screen underneath a pushed one keeps `pointer-events:
+   *                    auto` and `display: block`, and collapses to 0×0.
+   *
+   * Either test alone lets one of the two cases through, which is how this cost
+   * a session: the first fix here checked only the first.
+   */
+  const at = await page
+    .evaluate(() =>
+      Array.from(document.querySelectorAll('input, textarea')).findIndex((n) => {
+        const r = n.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && getComputedStyle(n).pointerEvents !== 'none';
+      })
+    )
+    .catch(() => -1);
+  if (at < 0) return { typed: null, taught: false, knew: false };
+  const input = page.locator('input, textarea').nth(at);
 
   const cluster = memory.clusterFor(promptLine);
   const tokens = cluster ? [...cluster.tokens] : [];
@@ -1161,15 +1254,6 @@ async function matchPairs(page, memory) {
   return { pairs, right, taught, cleared };
 }
 
-async function tapText(page, re) {
-  const el = page.locator(`text=${re}`).first();
-  if (!(await el.count())) return false;
-  const box = await el.boundingBox().catch(() => null);
-  if (!box) return false;
-  await el.click().catch(() => {});
-  return true;
-}
-
 /**
  * Click a control by the words on it.
  *
@@ -1187,6 +1271,7 @@ async function clickByText(page, re) {
       let best = null;
       for (const n of document.querySelectorAll('div, span, p')) {
         if (n.children.length) continue; // leaf nodes only: the label itself
+        if (getComputedStyle(n).pointerEvents === 'none') continue; // see readScreen
         const t = (n.textContent || '').trim();
         if (!rx.test(t)) continue;
         const r = n.getBoundingClientRect();
@@ -1217,6 +1302,7 @@ async function clickByText(page, re) {
       let best = null;
       for (const n of document.querySelectorAll('div, span, p')) {
         if (n.children.length) continue;
+        if (getComputedStyle(n).pointerEvents === 'none') continue; // see readScreen
         const t = (n.textContent || '').trim();
         if (!rx.test(t)) continue;
         const r = n.getBoundingClientRect();
@@ -1440,8 +1526,63 @@ function findings(journal) {
  */
 let flush = () => {};
 
+/**
+ * What went wrong away from the path.
+ *
+ * Kept apart from `findings` because the two answer different questions. That
+ * one asks whether the course teaches what it tests, which is a judgement made
+ * over hundreds of answers. This one asks whether four specific promises the
+ * interface makes to a learner are kept, and each is a single fact: the shelf
+ * that says 78 lists 78, a search finds what is on screen in front of it, a
+ * switch stays where it was put, and nothing erases a profile without asking.
+ *
+ * Every one of them returns a sentence naming the numbers, because "practice
+ * counts wrong" sends a reader back to the journal and "topics says 78, lists
+ * 54" does not.
+ */
+function surfaceFindings(journal) {
+  const out = [];
+
+  for (const e of journal.filter((x) => x.type === 'practiceShelf')) {
+    if (e.claims !== null && e.claims !== e.lists)
+      out.push(`Practice · ${e.shelf}: the tab says ${e.claims} items, the shelf under it lists ${e.lists}.`);
+    if (e.lists === 0) out.push(`Practice · ${e.shelf}: the shelf is empty — nothing to open.`);
+  }
+
+  for (const e of journal.filter((x) => x.type === 'practiceSearch')) {
+    // A term lifted off a card that is already on screen: finding nothing is
+    // the search failing, not the learner mistyping.
+    if (e.of && e.hits === 0)
+      out.push(`Practice · search for "${e.term}" found nothing, though it was taken from "${e.of}" on that shelf.`);
+    if (!e.of && e.hits > 0) out.push(`Practice · search for nonsense ("${e.term}") still listed ${e.hits} items.`);
+    if (!e.of && e.hits === 0 && !e.sawEmptyState)
+      out.push(`Practice · search for "${e.term}" emptied the shelf with nothing on screen to say why.`);
+  }
+
+  for (const e of journal.filter((x) => x.type === 'practiceStuck'))
+    out.push(`Practice · ${e.note}${e.shelf ? ` (${e.shelf})` : ''}.`);
+
+  for (const e of journal.filter((x) => x.type === 'settingToggled')) {
+    if (!e.stuck) out.push(`Settings · "${e.label}" did not change when it was tapped (still ${e.from}).`);
+    if (e.rowsAfter === 0) out.push(`Settings · the screen stopped drawing its rows after "${e.label}" was tapped.`);
+  }
+  for (const e of journal.filter((x) => x.type === 'trackChanged')) {
+    if (!e.moved) out.push(`Settings · the "${e.to}" track could not be chosen.`);
+    else if (!e.stillOnSettings) out.push(`Settings · choosing "${e.to}" left the Settings screen.`);
+  }
+  for (const e of journal.filter((x) => x.type === 'settingsStuck')) out.push(`Settings · ${e.note}.`);
+  for (const e of journal.filter((x) => x.type === 'resetOffered')) {
+    if (e.tapped && !e.confirmed)
+      out.push(`Settings · "Reset progress and start over" ran without asking for confirmation.`);
+    if (!e.tapped) out.push(`Settings · the reset control could not be found.`);
+  }
+
+  return out;
+}
+
 function writeReport(journal, memory, stats) {
   const f = findings(journal);
+  const sf = surfaceFindings(journal);
   const answered = journal.filter((e) => e.type === 'answer');
   const right = answered.filter((e) => e.correct).length;
   const lines = [];
@@ -1483,6 +1624,29 @@ function writeReport(journal, memory, stats) {
       `Learned ${memory.clusters.length} words well enough to have a memory of them.`,
     ``
   );
+  lines.push(
+    `Away from the path: ${stats.practiceSessions} visit(s) to Practice, ${stats.practiceFinished} practice set(s) ` +
+      `played to the end, ${stats.settingsPasses} pass(es) over Settings.`,
+    ``
+  );
+
+  /**
+   * The interface half, first and unconditionally.
+   *
+   * These are facts rather than judgements — a count that disagrees with
+   * itself, a switch that would not move — so they are worth more per line
+   * than anything below, and a reader who stops after the first screen of this
+   * file should have already seen them. The "nothing" line is not padding: it
+   * is the difference between a run that checked and found nothing and a run
+   * where this section never executed, which have looked identical twice.
+   */
+  lines.push(`## Practice and Settings`, ``);
+  if (!stats.practiceSessions && !stats.settingsPasses) lines.push(`Neither surface was visited on this run.`, ``);
+  else if (!sf.length) lines.push(`Nothing wrong found on either.`, ``);
+  else {
+    for (const s of sf) lines.push(`- ${s}`);
+    lines.push(``);
+  }
 
   /**
    * How big the largest thing this learner thinks is one word got.
@@ -1643,6 +1807,907 @@ function writeReport(journal, memory, stats) {
 
 // ------------------------------------------------------------------------ run
 
+/**
+ * Play one session, screen by screen, until it ends.
+ *
+ * Extracted from `main`'s lesson loop unchanged, because a practice session and
+ * a path lesson are the same screen sequence behind different entry points —
+ * `LessonScreen` renders both. A driver that could only reach the path could
+ * only report on the path, and "practice" is a third of what the app offers.
+ *
+ * `sessionName` is what every journal entry is filed under, so a finding can be
+ * traced back to the lesson or the practice set it came from. Returns whether a
+ * tripwire stopped the run, which is the only condition that ends the whole
+ * playtest rather than this one session.
+ */
+async function playSession(page, ctx, sessionName, kind = 'lesson') {
+  const { journal, memory, stats, browser } = ctx;
+  // Counted apart from the path's own tally: a practice set that finishes is
+  // not a lesson finished, and adding it to that number made a run that walked
+  // no path at all report "0 lessons played, 1 finished".
+  const finishedKey = kind === 'lesson' ? 'lessonsFinished' : 'practiceFinished';
+  const startedAt = Date.now();
+  let stopped = false;
+
+  for (let step = 0; step < 140; step++) {
+    // A step cap alone does not bound a lesson: the cap counts screens, and a
+    // screen that the driver cannot read costs seconds rather than
+    // milliseconds. One lesson ran for twenty-five minutes inside a cap of
+    // 140. Wall clock is what a person waiting on the run actually cares
+    // about, so it is what ends the lesson, and it is recorded rather than
+    // hidden because a lesson hitting this is a bug in this file.
+    const spent = Date.now() - startedAt;
+    if (spent > LESSON_BUDGET_MS) {
+      journal.push({ type: 'lessonTimedOut', lesson: sessionName, step, seconds: Math.round(spent / 1000) });
+      console.log(`    lesson ${sessionName} gave up after ${Math.round(spent / 1000)}s at step ${step}`);
+      await page.screenshot({ path: path.join(OUT, `slow-${stats.lessonsEntered}.png`) }).catch(() => {});
+      break;
+    }
+
+    // See `STUCK_RUN_LIMIT`: a screen the driver cannot answer repeats
+    // silently and cheaply, so the run has to notice the repetition itself.
+    /**
+     * Nothing answered for a while, in this lesson.
+     *
+     * The first version of this counted `ungraded` screens, which is one way
+     * a lesson stalls and not the only one: a dialogue whose "I've read it"
+     * button sat below the fold was pressed, missed, and re-read 560 times,
+     * and every one of those was journalled as a teaching card rather than a
+     * dropped screen. The honest signal is that the lesson has stopped
+     * producing answers at all. Eight is past any legitimate run of teaching
+     * cards — a letter lesson opens with two or three before its first
+     * question.
+     */
+    const tail = journal.slice(-STUCK_RUN_LIMIT);
+    if (
+      STUCK_RUN_LIMIT > 0 &&
+      tail.length === STUCK_RUN_LIMIT &&
+      tail.every((e) => e.lesson === sessionName && e.type !== 'answer')
+    ) {
+      const shape = tail[tail.length - 1].promptShape || tail[tail.length - 1].type;
+      journal.push({ type: 'driverStuck', lesson: sessionName, step, shape, screens: STUCK_RUN_LIMIT });
+      console.log(
+        `    ⚠ ${sessionName}: ${STUCK_RUN_LIMIT} screens in a row with nothing answered ("${shape}") — a playtest.js fault, not a finding`
+      );
+      await page.screenshot({ path: path.join(OUT, `driver-stuck-${stats.lessonsEntered}.png`) }).catch(() => {});
+      break;
+    }
+
+    // See `TRIPWIRES`. Checked here, on every screen, rather than at the end
+    // of the run or at some checkpoint: both of the things these catch were
+    // decidable within minutes and were found hours later.
+    const fired = tripwires(journal, memory);
+    if (fired.length) {
+      for (const t of fired) {
+        journal.push({ type: 'tripwire', lesson: sessionName, step, name: t.name, detail: t.detail });
+        console.log(`\n  ⛔ ${t.name}: ${t.detail}\n     ${t.note}`);
+      }
+      await page.screenshot({ path: path.join(OUT, `tripwire-${stats.lessonsEntered}.png`) }).catch(() => {});
+      console.log(`  stopped after ${stats.lessonsEntered} lessons. Journal and report in ${OUT}/.`);
+      stopped = true;
+      break;
+    }
+
+    memory.step++;
+    const screen = await readScreen(page);
+
+    /**
+     * Stop and photograph the first screen matching `--shot <pattern>`.
+     *
+     * For looking at a screen that is hard to reach by hand. A tile question
+     * sits several exercises into a letter lesson behind a tracing pad that
+     * has to actually be drawn on, and three throwaway scripts failed to get
+     * there before this existed — `role="button"` finds nothing on some of
+     * these screens, so a driver that can already play the course is the
+     * cheapest way to reach one and look at it.
+     */
+    if (SHOT && SHOT.test(screen.body)) {
+      const file = path.join(OUT, `shot-${sessionName.replace(/\W+/g, '-')}-${step}.png`);
+      await page.screenshot({ path: file, fullPage: true }).catch(() => {});
+      console.log(`  shot: ${file}`);
+      await browser.close();
+      process.exit(0);
+    }
+
+    if (process.env.PLAYTEST_DEBUG)
+      console.log(
+        `    [${step}] ${JSON.stringify(screen.lines.slice(0, 4))}${screen.wrong ? ' WRONG' : ''}${screen.right ? ' RIGHT' : ''}`
+      );
+
+    if (screen.lessonDone) {
+      stats[finishedKey]++;
+      journal.push({ type: 'lessonDone', kind, lesson: sessionName, step });
+      await pressContinue(page);
+      await page.waitForTimeout(800);
+      break;
+    }
+    if (screen.outOfHearts) {
+      // Recorded rather than worked around silently: how often a beginner is
+      // stopped mid-lesson, and how far in, is one of the things this run
+      // exists to measure. Then the hearts are topped up and the lesson
+      // continues, because the alternative is a playtest that never sees past
+      // the first unit and therefore has nothing to say about the course.
+      journal.push({
+        type: 'outOfHearts',
+        lesson: sessionName,
+        step,
+        told: screen.lines.slice(0, 8),
+        // The run carries gems a real beginner would not have earned yet, so
+        // it can buy its way back in and keep going. Recorded on every one of
+        // these, because without the note the journal would read as though
+        // the wall were passable, and for the learner it is not.
+        onlyPastItBecause: 'the harness was given gems; a real beginner has none this early',
+      });
+      await page.screenshot({ path: path.join(OUT, `hearts-${journal.length}.png`) }).catch(() => {});
+      const resumed = await clickByText(page, /^REFILL/i);
+      await page.waitForTimeout(800);
+      if (!resumed) {
+        await topUpHearts(page);
+        break;
+      }
+      continue;
+    }
+    /**
+     * A screen still showing the verdict for the answer just given.
+     *
+     * The way forward was pressed and did not take — the footer was still
+     * sliding, or the click landed a moment early — so the next read is the
+     * same graded screen. Every branch below assumes it is looking at a
+     * question, and the trace branch proved what that costs: it drew over a
+     * letter the app had already accepted, found no Check button, and ended
+     * the lesson with "no way forward" on a screen whose CONTINUE was right
+     * there in its own journal entry.
+     */
+    if ((screen.right || screen.wrong) && !screen.lessonDone) {
+      /**
+       * The footer's own control, and nothing else.
+       *
+       * `pressContinue` also accepts "Start", which is a way forward on some
+       * screens and, on "Which position is this letter showing?", the label
+       * of one of the four answers. When the verdict banner was up but the
+       * footer had not finished sliding in, this guard pressed that option
+       * instead — already answered, already disabled — read the same screen
+       * again, and pressed it again. Seven lessons of one slice were spent
+       * that way, one question answered in each.
+       *
+       * Falling through is the right thing when the footer is not there yet:
+       * the branches below wait for it properly.
+       */
+      const moved = await page.evaluate(() => {
+        const n = Array.from(document.querySelectorAll('[role="button"]')).find((b) =>
+          /^(continue|finish)$/i.test((b.textContent || '').trim())
+        );
+        if (!n) return false;
+        n.scrollIntoView({ block: 'center' });
+        n.click();
+        return true;
+      });
+      if (moved) {
+        await page.waitForTimeout(500);
+        continue;
+      }
+    }
+
+    /**
+     * A passage or a conversation, before its question.
+     *
+     * The learner reads it and says so; nothing is graded, because nothing
+     * has been asked yet. Routed through the option reader it looked like a
+     * question with strange options, and every one of these was recorded as
+     * a screen the app never judged — nine in one slice, all of them the app
+     * working exactly as designed.
+     *
+     * The lines are learned, because reading them is how a learner meets
+     * these sentences, which is the whole point of the exercise.
+     */
+    if (/i’ve read it|i've read it/i.test(screen.body)) {
+      // Line by line, each in the script with the transliteration printed
+      // under it — which is how the passage is laid out and how it is read.
+      // Learning four lines together instead would say a passage is one
+      // meaning, and a passage is four sentences.
+      const lines = asContent(screen.lines).filter((l) => l.length < 80 && !/^(✕|i.ve read it)$/i.test(l.trim()));
+      const isScript = (l) => /[\u0600-\u06ff]/.test(l);
+      const learned = [];
+      for (let k = 0; k < lines.length - 1; k++) {
+        if (isScript(lines[k]) && !isScript(lines[k + 1])) {
+          memory.learn([lines[k], lines[k + 1]]);
+          learned.push(`${lines[k]} · ${lines[k + 1]}`);
+        }
+      }
+      journal.push({ type: 'taught', what: 'passage', lesson: sessionName, step, shown: learned.slice(0, 6) });
+      await clickByText(page, /^I.ve read it$/i);
+      await page.waitForTimeout(600);
+      continue;
+    }
+
+    /**
+     * A grammar card, which is read in stages.
+     *
+     * "Show the pattern", then "Show examples", then "Got it" — three taps
+     * for one card, and only the last one grades. The option reader clicked
+     * the stage button and recorded a screen the app never judged, once per
+     * stage, on every grammar lesson in the course.
+     */
+    if (/^grammar$/im.test(screen.body) && /show the pattern|show examples/i.test(screen.body)) {
+      await clickByText(page, /^(show the pattern|show examples)$/i);
+      await page.waitForTimeout(500);
+      continue;
+    }
+    // The last tap of that card. It grades itself correct — a teaching card
+    // cannot be failed — and the lesson moves on without a verdict banner,
+    // so waiting for one recorded a dropped screen on every grammar lesson.
+    if (/^grammar$/im.test(screen.body) && /^got it$/im.test(screen.body)) {
+      // Nothing is learned from it. A grammar card explains a pattern; its
+      // lines are headings and prose — "GRAMMAR", "WHO", "FORM", "MEANING" —
+      // and feeding those to a model of what a learner knows made one
+      // meaning with four names on the first card it met, which the collapse
+      // wire stopped the run over, correctly. The sentences the card shows
+      // are learned when they come back as exercises.
+      journal.push({ type: 'taught', what: 'grammar', lesson: sessionName, step, shown: screen.lines.slice(1, 6) });
+      await clickByText(page, /^Got it$/i);
+      await page.waitForTimeout(500);
+      await pressContinue(page);
+      await page.waitForTimeout(400);
+      continue;
+    }
+
+    if (screen.teaching) {
+      // A teaching card is the app explaining something. Everything on it is
+      // learned together, which is the whole point of the card.
+      const shown = screen.lines.filter((l) => l.length < 60 && !/^(continue|finish)$/i.test(l));
+      memory.learn(shown.slice(0, 4));
+      journal.push({ type: 'taught', what: 'card', lesson: sessionName, step, shown: shown.slice(0, 6) });
+      await pressContinue(page);
+      await page.waitForTimeout(600);
+      continue;
+    }
+
+    /**
+     * A word being introduced: picture, script, reading, meaning, and a
+     * button. Nothing to answer.
+     *
+     * This is the screen the whole course was missing, so the learner has to
+     * read it the way a person would — the three forms of the word go into
+     * memory together, which is what makes every later question about it
+     * answerable. Handled before the option reader gets here, because "Got
+     * it" looks like a choice to it: the driver would tap it, the teaching
+     * footer would come up, and a card that cannot be failed would be
+     * recorded as a wrong answer.
+     */
+    if (/^a new word$/im.test(screen.body)) {
+      // Screen chrome as well as the card's own labels. The close button is a
+      // single glyph that appears on every screen in the app, and letting it
+      // through put it in the cluster for every word taught — which, because
+      // a cluster is a set of strings that mean the same thing, quietly
+      // merged all of them into one. The learner then "recalled" words it had
+      // never met: 34 recalls at 18% correct, against 73% when the model is
+      // honest. Anything that is not the word, its reading or its meaning has
+      // to be kept out of here.
+      const shown = screen.lines.filter(
+        (l) =>
+          l.length < 60 &&
+          !/^(a new word|got it|continue|finish|check|hear\b.*)$/i.test(l) &&
+          !/^[^\p{L}\p{N}]+$/u.test(l)
+      );
+      memory.learn(shown.slice(0, 3));
+      journal.push({ type: 'taught', what: 'word', lesson: sessionName, step, shown: shown.slice(0, 3) });
+      await clickByText(page, /^Got it$/i);
+      await page.waitForTimeout(500);
+      await pressContinue(page);
+      await page.waitForTimeout(500);
+      continue;
+    }
+
+    /**
+     * A letter being introduced: the glyph, its name and sound, its four
+     * positional shapes, an example word, and a button.
+     *
+     * The same card as "a new word" above, and missing here for as long as
+     * this file has existed. The option reader tapped "Got it", `LetterTeach`
+     * advanced without grading anything — deliberately, since looking at a
+     * letter is not evidence of recalling it — and every one of these was
+     * filed as a screen the app never judged: 24 of the 159 in one 30-lesson
+     * run, all of them this branch's absence rather than anything about the
+     * app.
+     */
+    if (/^a new letter$/im.test(screen.body)) {
+      // "alif · sounds like “a / aa”" — the trace branch's narrower
+      // `/^[A-Za-z’']+\s*·/` misses the two-word names (alif madda, bari ye).
+      const named = screen.lines.find((l) => /·\s*sounds like/i.test(l));
+      const isScript = (l) => /^[\u0600-\u06FF\u200E\u200F]+$/.test(l);
+
+      /**
+       * All four faces, not just the isolated one.
+       *
+       * The card's whole point is that a letter changes shape by position,
+       * and it shows every shape under a heading that says so. Learning only
+       * the glyph at the top left the learner meeting the medial pe in the
+       * next question as something it had never seen: ten of one 24-lesson
+       * run's nineteen "tested before taught" were a face of a letter the app
+       * had just displayed four faces of.
+       *
+       * The card's own labels bound them — the faces sit between "It changes
+       * shape…" and "As in", and what follows "As in" is a whole word, which
+       * must not join the letter's cluster.
+       */
+      const from = screen.lines.findIndex((l) => /it changes shape/i.test(l));
+      const to = screen.lines.findIndex((l) => /^as in$/i.test(l));
+      const faces =
+        from > -1 && to > from ? screen.lines.slice(from + 1, to).filter(isScript) : screen.lines.filter(isScript);
+      const glyph = screen.lines.find(isScript);
+      if (named) memory.learn([named.split('·')[0].trim(), ...new Set([glyph, ...faces].filter(Boolean))]);
+
+      // And the word the letter is met inside, which this card teaches as
+      // plainly as any "a new word" screen: the script over "anaar · pomegranate".
+      if (to > -1) {
+        const exampleScript = screen.lines.slice(to + 1).find(isScript);
+        const gloss = screen.lines.slice(to + 1).find((l) => /·/.test(l) && !isScript(l));
+        if (exampleScript && gloss) memory.learn([exampleScript, ...gloss.split('·').map((x) => x.trim())]);
+      }
+
+      journal.push({
+        type: 'taught',
+        what: 'letter',
+        lesson: sessionName,
+        step,
+        shown: [named, ...faces].filter(Boolean),
+      });
+      await clickByText(page, /^Got it$/i);
+      await page.waitForTimeout(500);
+      await pressContinue(page);
+      await page.waitForTimeout(500);
+      continue;
+    }
+
+    // A tracing exercise has no options, only a pad. Roughly one attempt in
+    // five is deliberately sloppy, because being refused is part of what a
+    // beginner meets and the wording of that refusal is under test too.
+    if (/trace the letter|draw over the grey letter/i.test(screen.body)) {
+      const sloppy = rand() < 0.2;
+      const traced = await traceLetter(page, sloppy);
+      const after = await waitForGraded(page);
+
+      // A tracing screen names the letter it is showing — "ALIF · ALONE"
+      // over the glyph — so it teaches, and the learner has to leave it
+      // knowing alif. Skipping this said the app had never introduced any
+      // letter it taught by tracing, which put every later letter question
+      // under "tested before taught": 201 of 536 in the run that found it,
+      // the report's largest finding, and wrong.
+      const named = screen.lines.find((l) => /^[A-Za-z’']+\s*·/.test(l));
+      const glyph = screen.lines.find((l) => /^[\u0600-\u06ff\u200e\u200f]+$/.test(l));
+      if (named && glyph) memory.learn([named.split('·')[0].trim(), glyph]);
+
+      journal.push({
+        type: 'trace',
+        lesson: sessionName,
+        step,
+        sloppy,
+        traced,
+        accepted: after.right,
+        told: after.lines.slice(0, 6),
+      });
+      if (!traced) {
+        journal.push({ type: 'noWayForward', lesson: sessionName, step, lines: screen.lines.slice(0, 8) });
+        await page.screenshot({ path: path.join(OUT, `stuck-${journal.length}.png`) }).catch(() => {});
+        break;
+      }
+      await pressContinue(page);
+      await page.waitForTimeout(600);
+      continue;
+    }
+
+    // Back on the learn path: the lesson ended without a completion screen,
+    // usually by being left. Answering the path's own lesson rows as though
+    // they were options put 36 junk entries in one run's journal.
+    if (/tap any lesson to jump ahead/i.test(screen.body)) {
+      journal.push({ type: 'leftLesson', lesson: sessionName, step });
+      break;
+    }
+
+    // Matching pairs a word with a gloss, so it needs two taps, not one.
+    if (/match each word/i.test(screen.body)) {
+      const m = await matchPairs(page, memory);
+      // A board that rendered always offers at least one pair to try, so
+      // zero attempts is this script failing to read the screen rather than
+      // a learner failing to pair it. It stayed invisible for exactly that
+      // reason: the journal wrote "0 of 0 tries matched" alongside genuine
+      // scores, the lesson never finished, the run re-entered it, and the
+      // console said only that Numbers was being played again.
+      if (m.pairs === 0)
+        console.log(`  ⚠ matching board unreadable in ${sessionName} — a playtest.js fault, not a finding`);
+      journal.push({
+        type: 'answer',
+        lesson: sessionName,
+        step,
+        prompt: 'Match each word to its picture',
+        promptShape: 'match each word to its picture',
+        optionText: [],
+        picked: `${m.right} of ${m.pairs} tries matched`,
+        correct: m.cleared,
+        ...classify(m.taught > 0, m.right > 0),
+        strength: 0,
+        reveal: null,
+        // Matching corrects a pair where it stands instead of showing the
+        // reveal panel, so a null here is the exercise working as designed,
+        // not the app withholding the answer. The reveal finding skips it.
+        gradesInPlace: true,
+      });
+      await pressContinue(page);
+      await page.waitForTimeout(700);
+      continue;
+    }
+
+    // Typing: nothing on screen to pick from, so this is pure recall.
+    if (/type this word|type the word/i.test(screen.body)) {
+      // Line 1 is not reliably the word: on a listen-and-type screen it is
+      // the speaker button, and a run that took it literally typed "🔊" into
+      // the box and then blamed the app for not explaining the answer.
+      const prompt = screen.lines.slice(1).find((l) => /\p{L}/u.test(l) && !/^(type|check|continue)\b/i.test(l)) || '';
+      const t = await typeWord(page, memory, prompt);
+      const after = await waitForGraded(page);
+      const reveal = revealFrom(after.lines);
+      const knewAnswer = knewRevealedAnswer(memory, reveal);
+      if (reveal && reveal.length >= 2) memory.learn(reveal);
+      record(journal, after, {
+        lesson: sessionName,
+        step,
+        prompt,
+        promptShape: 'type this word',
+        optionText: [],
+        picked: t.typed,
+        ...classify(t.taught, t.knew),
+        strength: 0,
+        reveal,
+        knewAnswer,
+      });
+      await pressContinue(page);
+      await page.waitForTimeout(600);
+      continue;
+    }
+
+    // Tile trays: building a word or a sentence out of pieces.
+    if (/build the word|build the sentence|tap the letters|tap the words/i.test(screen.body)) {
+      /**
+       * Which line says what is being built.
+       *
+       * A word carries its own: "Water · paani". A sentence does not — its
+       * card shows the English on a line of its own — so the fallback was
+       * `lines[1]`, which is the question itself, and every sentence build
+       * was played as "Build the sentence": no cluster, nothing known,
+       * nothing placed on purpose. 0 of 43 in the run that showed it up,
+       * while the same learner was answering questions about those very
+       * sentences correctly two screens earlier.
+       */
+      const chrome =
+        /^(✕|check|continue|finish|the answer|tap the words below|tap the letters below|build the (word|sentence)|hear the sentence|tap a word to take it back)$/i;
+      const meaningLine = screen.lines.find(
+        (l) => l.trim() && !chrome.test(l.trim()) && /[a-z]/i.test(l) && !/[؀-ۿ]/.test(l)
+      );
+      const prompt = screen.lines.find((l) => /·/.test(l)) || meaningLine || screen.lines[1] || '';
+      const promptLine = prompt.split('·')[0].trim();
+      const built = await buildWord(page, memory, promptLine);
+      if (built.unreadable)
+        console.log(`  ⚠ tile tray unreadable in ${sessionName} — a playtest.js fault, not a finding`);
+      const after = await waitForGraded(page);
+      const reveal = revealFrom(after.lines);
+      const knewAnswer = knewRevealedAnswer(memory, reveal);
+      // A sentence reveal is script and transliteration only — its English is
+      // the prompt, deliberately not repeated (see `answerReveal`). Learning
+      // the reveal alone therefore never ties the sentence to the meaning the
+      // next exercise asks it by, so the pairing the learner actually makes
+      // is the one recorded here.
+      if (reveal && reveal.length >= 2) memory.learn(built.mode === 'sentence' ? [promptLine, ...reveal] : reveal);
+      record(journal, after, {
+        lesson: sessionName,
+        step,
+        prompt,
+        // From the screen rather than from `built`, so a tray this driver
+        // failed to read is still filed under the exercise it belongs to.
+        promptShape: /build the sentence|tap the words/i.test(screen.body) ? 'build the sentence' : 'build the word',
+        optionText: [],
+        picked: `${built.tapped} tiles`,
+        ...classify(built.taught, built.knew),
+        strength: 0,
+        reveal,
+        knewAnswer,
+      });
+      await pressContinue(page);
+      await page.waitForTimeout(600);
+      continue;
+    }
+
+    const { options } = await readOptions(page);
+    if (!options.length) {
+      // Nothing to choose: a trace, a typing box, or a screen that only has a
+      // way forward. A beginner presses on.
+      const moved = await pressContinue(page);
+      if (!moved) {
+        journal.push({ type: 'noWayForward', lesson: sessionName, step, lines: screen.lines.slice(0, 8) });
+        await page.screenshot({ path: path.join(OUT, `stuck-${journal.length}.png`) }).catch(() => {});
+        break;
+      }
+      await page.waitForTimeout(600);
+      continue;
+    }
+
+    const prompt = screen.prompt || screen.lines[1] || '';
+    const context = screen.lines.filter((l) => !options.some((o) => o.lines.includes(l))).slice(0, 4);
+    const decision = chooseOption(memory, [prompt, ...context], options);
+    const cluster = decision.strength > 0 ? null : null;
+
+    await page
+      .locator('[role="button"]')
+      .nth(decision.pick.i)
+      .click()
+      .catch(() => {});
+    const after = await waitForGraded(page);
+    const reveal = revealFrom(after.lines);
+    const knewAnswer = knewRevealedAnswer(memory, reveal, prompt);
+    const correct = after.right;
+
+    // The learner learns from being told, right or wrong. This is the only
+    // way anything ever enters memory.
+    if (reveal && reveal.length >= 2) memory.learn(reveal);
+    /**
+     * A right answer teaches the pairing that produced it — except when the
+     * answer is not a form of anything.
+     *
+     * "Which position is this letter showing?" is answered by "Middle /
+     * joined on both sides", and every letter in the course shares those
+     * four labels. Learning them merged alif madda, jeem, baṛī he, daal and
+     * ṛe into a single seven-string meaning in one 24-lesson run — the
+     * largest cluster in it, and one screen away from tripping the collapse
+     * wire. The question is about the shape on screen, not about a word.
+     */
+    if (correct && !/which position is this letter showing/i.test(prompt))
+      memory.learn([...decision.pick.lines, ...asContent(context)].slice(0, 4));
+
+    record(journal, after, {
+      lesson: sessionName,
+      step,
+      prompt,
+      context,
+      promptShape: prompt
+        .replace(/[^a-z ]/gi, '')
+        .slice(0, 40)
+        .toLowerCase(),
+      /**
+       * Exercises that mark the right option where it stands.
+       *
+       * `screens/answerReveal.ts` names the kinds that use the reveal panel;
+       * everything else corrects in place, and the grammar drill does it
+       * twice over — the right option turns green and a "Why" note explains
+       * the rule underneath. Counting those as answers shown nothing put
+       * seven complaints in one slice's report about the most thoroughly
+       * explained screen in the app.
+       */
+      gradesInPlace: /complete the sentence|reading ·|conversation ·/i.test(screen.body),
+      optionText: options.map((o) => o.lines.join(' / ')),
+      picked: decision.pick.lines.join(' / '),
+      how: decision.how,
+      couldHaveKnown: decision.couldHaveKnown,
+      strength: Number(decision.strength.toFixed(2)),
+      gapSteps: decision.couldHaveKnown ? memory.step - (memory.clusterFor(prompt)?.lastSeen ?? memory.step) : null,
+      reveal,
+      knewAnswer,
+    });
+
+    await pressContinue(page);
+    await page.waitForTimeout(600);
+  }
+  return { stopped, seconds: Math.round((Date.now() - startedAt) / 1000) };
+}
+
+/* ---------------------------------------------------------------------- *
+ * The two surfaces that are not the path.
+ *
+ * A learner meets three things: lessons on the path, the Practice tab, and
+ * Settings. Only the first had ever been played here, so two thirds of what
+ * the app offers had never been driven by anything except a crash finder —
+ * and the questions those surfaces raise are not crash questions. Does the
+ * shelf that says it holds 78 topics list 78? Does searching for something
+ * the screen is already showing find it? Does a toggle stay toggled? Does
+ * the button that erases everything ask first?
+ *
+ * Practice sessions are played through `playSession`, the same function the
+ * path uses, because `LessonScreen` renders both — a practice set is a lesson
+ * reached by another door, and a driver that treated it as something else
+ * would be measuring the door.
+ * ---------------------------------------------------------------------- */
+
+/** The shelves the Practice tab browses by, in the order its own tabs sit. */
+const PRACTICE_SHELVES = ['topics', 'grammar', 'reading'];
+
+/**
+ * The deploy's subpath, read from the page rather than assumed.
+ *
+ * The build writes it into a meta tag (`scripts/inject-web-meta.js`) and every
+ * route carries it, so a local build and the deploy-shaped build CI produces
+ * do not agree on where `/practice` lives. Hard-coding either one gives a
+ * driver that silently plays the wrong app half the time.
+ */
+async function siteRoot(page) {
+  const base = await page
+    .evaluate(() =>
+      (document.querySelector('meta[name="harf:base"]')?.getAttribute('content') || '').replace(/^\/+|\/+$/g, '')
+    )
+    .catch(() => '');
+  return `http://127.0.0.1:${PORT}/${base ? `${base}/` : ''}`;
+}
+
+/** Open a screen by its own URL, the way a bookmark would. */
+async function openScreen(page, where) {
+  await page.goto((await siteRoot(page)) + where);
+  await page.waitForTimeout(2600);
+}
+
+/**
+ * What is on the screen in front of the learner, and nothing else.
+ *
+ * A tab that has been visited stays mounted: Learn is still in the DOM at full
+ * size, with all 214 of its buttons, while Practice is the tab in front. The
+ * one thing that separates them is `pointer-events`, which React Navigation
+ * sets to `none` on the screens behind. Measured rather than assumed — Learn's
+ * buttons come back from `offsetParent`, from `checkVisibility()` and from a
+ * non-empty bounding box alike, so a reader built on any of those three reads
+ * the wrong screen while looking like it works.
+ */
+async function readSurface(page) {
+  return page.evaluate(() => {
+    const live = (n) => getComputedStyle(n).pointerEvents !== 'none';
+    const clean = (s) => (s || '').replace(/\s+/g, ' ').trim();
+    const controls = Array.from(document.querySelectorAll('[role="button"],[role="tab"],[role="radio"]'))
+      .filter(live)
+      .map((n) => clean(n.getAttribute('aria-label') || n.textContent))
+      .filter(Boolean);
+    const switches = Array.from(document.querySelectorAll('input[type="checkbox"]'))
+      .filter(live)
+      .map((n, i) => ({
+        i,
+        // The label is the row's, not the input's: `Row` in SettingsScreen
+        // draws the name and the hint beside the switch rather than on it.
+        label: clean((n.closest('div')?.parentElement?.innerText || '').split('\n')[0]),
+        on: n.checked,
+      }));
+    const lines = Array.from(document.querySelectorAll('div,span,p'))
+      .filter((n) => live(n) && !n.firstElementChild && clean(n.textContent))
+      .map((n) => clean(n.textContent));
+    return { controls, switches, lines, text: lines.join('\n') };
+  });
+}
+
+/** Tap the first live control whose label matches. */
+async function tapControl(page, re) {
+  return page.evaluate((src) => {
+    const rx = new RegExp(src, 'i');
+    const live = (n) => getComputedStyle(n).pointerEvents !== 'none';
+    const n = Array.from(document.querySelectorAll('[role="button"],[role="tab"],[role="radio"]'))
+      .filter(live)
+      .find((b) => rx.test((b.getAttribute('aria-label') || b.textContent || '').replace(/\s+/g, ' ').trim()));
+    if (!n) return false;
+    n.scrollIntoView({ block: 'center' });
+    n.click();
+    return true;
+  }, re.source);
+}
+
+/**
+ * A pass over the Practice tab: what it claims, what it lists, and one of its
+ * sets actually played.
+ *
+ * The shelf browsed rotates with `pass`, so a run of several passes covers
+ * topics, grammar and readings rather than the first one three times.
+ */
+async function practiceSession(page, ctx, pass) {
+  const { journal, stats } = ctx;
+  stats.practiceSessions++;
+  await openScreen(page, 'practice');
+  const shelf = PRACTICE_SHELVES[pass % PRACTICE_SHELVES.length];
+
+  const opened = await readSurface(page);
+  if (!/daily review/i.test(opened.text)) {
+    journal.push({ type: 'practiceStuck', pass, note: 'the Practice tab did not open', saw: opened.lines.slice(0, 8) });
+    await page.screenshot({ path: path.join(OUT, `practice-stuck-${pass}.png`) }).catch(() => {});
+    return { stopped: false };
+  }
+
+  /**
+   * The shelf tabs carry their own counts — "topics: 78 items" — so the screen
+   * states a number that the list under it either meets or does not. That is
+   * the one thing on this screen checkable without a second source.
+   */
+  const claimed = {};
+  for (const c of opened.controls) {
+    const m = /^(topics|grammar|reading):\s*(\d+)\s*items?$/i.exec(c);
+    if (m) claimed[m[1].toLowerCase()] = Number(m[2]);
+  }
+  await tapControl(page, new RegExp(`^${shelf}: `));
+  await page.waitForTimeout(900);
+  const shelved = await readSurface(page);
+  const listed = shelved.controls.filter((c) => /^(practise |passage:|conversation:)/i.test(c));
+  journal.push({
+    type: 'practiceShelf',
+    pass,
+    shelf,
+    claims: claimed[shelf] ?? null,
+    lists: listed.length,
+    due: /nothing to review yet/i.test(shelved.text) ? 0 : null,
+    first: listed.slice(0, 3),
+  });
+
+  /**
+   * Search for something the screen is already showing.
+   *
+   * The item's own title, taken off the card in front of us, so a shelf that
+   * cannot find what it is displaying is the finding — not a guess about what
+   * a learner might type. A word of three letters or fewer is skipped: the
+   * search matches substrings, and "day" finding forty things is not evidence
+   * of anything.
+   */
+  const target = (listed[0] || '')
+    .replace(/^(practise |passage:|conversation:)\s*/i, '')
+    .split(/[.,]/)[0]
+    .trim();
+  const term = target.split(' ').find((w) => w.length > 3) || '';
+  if (term) {
+    await page
+      .locator('[aria-label="Search practice content"]')
+      .fill(term)
+      .catch(() => {});
+    await page.waitForTimeout(800);
+    const found = await readSurface(page);
+    const hits = found.controls.filter((c) => /^(practise |passage:|conversation:)/i.test(c));
+    journal.push({
+      type: 'practiceSearch',
+      pass,
+      shelf,
+      term,
+      of: target,
+      hits: hits.length,
+      sawEmptyState: /nothing matches/i.test(found.text),
+    });
+    await page
+      .locator('[aria-label="Search practice content"]')
+      .fill('')
+      .catch(() => {});
+    await page.waitForTimeout(600);
+  }
+
+  // A nonsense query, to see the empty state say so rather than show a blank
+  // shelf with no explanation.
+  await page
+    .locator('[aria-label="Search practice content"]')
+    .fill('zzqxwv')
+    .catch(() => {});
+  await page.waitForTimeout(800);
+  const empty = await readSurface(page);
+  journal.push({
+    type: 'practiceSearch',
+    pass,
+    shelf,
+    term: 'zzqxwv',
+    of: null,
+    hits: empty.controls.filter((c) => /^(practise |passage:|conversation:)/i.test(c)).length,
+    sawEmptyState: /nothing matches/i.test(empty.text),
+  });
+  await page
+    .locator('[aria-label="Search practice content"]')
+    .fill('')
+    .catch(() => {});
+  await page.waitForTimeout(600);
+
+  // And then play one, which is what the screen is for.
+  const pick = listed[pass % Math.max(listed.length, 1)] || listed[0];
+  if (!pick) {
+    journal.push({ type: 'practiceStuck', pass, shelf, note: 'the shelf listed nothing to open' });
+    return { stopped: false };
+  }
+  const started = await tapControl(page, new RegExp(`^${pick.slice(0, 28).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+  await page.waitForTimeout(2400);
+  if (!started) {
+    journal.push({ type: 'practiceStuck', pass, shelf, note: `could not open "${pick}"` });
+    return { stopped: false };
+  }
+  const name = `practice · ${pick
+    .replace(/^(practise |passage:|conversation:)\s*/i, '')
+    .split(/[.,]/)[0]
+    .trim()}`;
+  const outcome = await playSession(page, ctx, name, 'practice');
+  journal.push({ type: 'practicePlayed', pass, shelf, session: name, seconds: outcome.seconds });
+  return outcome;
+}
+
+/**
+ * A pass over Settings: every switch flipped and read back, the track changed
+ * and changed back, and the button that erases everything asked to prove it
+ * asks first.
+ *
+ * Each switch is restored afterwards, because the next lesson is played with
+ * whatever this leaves behind — a run that turned Roman off and walked away
+ * would be reporting on a different app from the one it started in.
+ */
+async function settingsSession(page, ctx) {
+  const { journal, stats } = ctx;
+  stats.settingsPasses++;
+  await openScreen(page, 'settings');
+  const opened = await readSurface(page);
+  if (!/sound effects/i.test(opened.text)) {
+    journal.push({ type: 'settingsStuck', note: 'Settings did not open', saw: opened.lines.slice(0, 8) });
+    await page.screenshot({ path: path.join(OUT, `settings-stuck-${stats.settingsPasses}.png`) }).catch(() => {});
+    return;
+  }
+
+  for (let i = 0; i < opened.switches.length; i++) {
+    const was = opened.switches[i];
+    await page
+      .locator('input[type="checkbox"]')
+      .nth(i)
+      .click({ force: true })
+      .catch(() => {});
+    await page.waitForTimeout(700);
+    const mid = await readSurface(page);
+    const now = mid.switches[i];
+    journal.push({
+      type: 'settingToggled',
+      label: was.label,
+      from: was.on,
+      to: now ? now.on : null,
+      stuck: now ? now.on !== was.on : false,
+      // A screen that stops rendering its own rows after a toggle is the
+      // failure worth catching here; the count says whether it still does.
+      rowsAfter: mid.switches.length,
+    });
+    await page
+      .locator('input[type="checkbox"]')
+      .nth(i)
+      .click({ force: true })
+      .catch(() => {});
+    await page.waitForTimeout(600);
+  }
+
+  const restore = TRACK === 'roman' ? /^Roman|Roman first/i : TRACK === 'script' ? /Script first/i : /Both together/i;
+  for (const [label, re] of [
+    ['Script first', /Script first/i],
+    ['Both together', /Both together/i],
+  ]) {
+    const moved = await tapControl(page, re);
+    await page.waitForTimeout(900);
+    const after = await readSurface(page);
+    journal.push({ type: 'trackChanged', to: label, moved, stillOnSettings: /learning track/i.test(after.text) });
+  }
+  await tapControl(page, restore);
+  await page.waitForTimeout(800);
+
+  const voiced = await tapControl(page, /’s voice/i);
+  await page.waitForTimeout(800);
+  journal.push({ type: 'voicePicked', moved: voiced });
+
+  /**
+   * The destructive control, and the only question worth asking of it: does
+   * anything stand between a mis-tap and an erased profile? The dialog is
+   * dismissed, never accepted — a run that wiped its own progress would report
+   * the rest of the course as never taught.
+   */
+  let asked = false;
+  const watch = (d) => {
+    asked = true;
+    d.dismiss().catch(() => {});
+  };
+  page.on('dialog', watch);
+  const tapped = await tapControl(page, /^Reset all progress/i);
+  await page.waitForTimeout(1200);
+  page.off('dialog', watch);
+  const afterReset = await readSurface(page);
+  journal.push({
+    type: 'resetOffered',
+    tapped,
+    confirmed: asked,
+    // If the tap went through and nothing asked, the profile is gone — which
+    // this can see, because Settings still knows how many lessons are done.
+    stillOnSettings: /learning track/i.test(afterReset.text),
+  });
+}
+
 async function main() {
   if (!fs.existsSync(path.join(DIST, 'index.html'))) {
     console.error('playtest — no dist/. Run `npm run build:web` first.');
@@ -1668,7 +2733,9 @@ async function main() {
 
   const memory = new Memory();
   const journal = [];
-  const stats = { lessonsEntered: 0, lessonsFinished: 0 };
+  const stats = { lessonsEntered: 0, lessonsFinished: 0, practiceSessions: 0, practiceFinished: 0, settingsPasses: 0 };
+  /** Everything a session needs to play and to write down what it saw. */
+  const ctx = { journal, memory, stats, browser };
   /**
    * Both files, every lesson.
    *
@@ -1713,7 +2780,14 @@ async function main() {
   await page.reload();
   await page.waitForTimeout(2500);
 
-  for (let lesson = 0; lesson < LESSONS; lesson++) {
+  if (SURFACES_ONLY) {
+    await practiceSession(page, ctx, 0);
+    flush();
+    await settingsSession(page, ctx);
+    flush();
+  }
+
+  for (let lesson = 0; lesson < (SURFACES_ONLY ? 0 : LESSONS); lesson++) {
     await topUpHearts(page);
     /**
      * Back to the path, not just back to where we were.
@@ -1768,589 +2842,36 @@ async function main() {
     }
     const lessonName = opened.split('.')[0];
     stats.lessonsEntered++;
-    const startedAt = Date.now();
     await page.waitForTimeout(2200);
 
-    for (let step = 0; step < 140; step++) {
-      // A step cap alone does not bound a lesson: the cap counts screens, and a
-      // screen that the driver cannot read costs seconds rather than
-      // milliseconds. One lesson ran for twenty-five minutes inside a cap of
-      // 140. Wall clock is what a person waiting on the run actually cares
-      // about, so it is what ends the lesson, and it is recorded rather than
-      // hidden because a lesson hitting this is a bug in this file.
-      const spent = Date.now() - startedAt;
-      if (spent > LESSON_BUDGET_MS) {
-        journal.push({ type: 'lessonTimedOut', lesson: lessonName, step, seconds: Math.round(spent / 1000) });
-        console.log(`    lesson ${lessonName} gave up after ${Math.round(spent / 1000)}s at step ${step}`);
-        await page.screenshot({ path: path.join(OUT, `slow-${stats.lessonsEntered}.png`) }).catch(() => {});
-        break;
-      }
-
-      // See `STUCK_RUN_LIMIT`: a screen the driver cannot answer repeats
-      // silently and cheaply, so the run has to notice the repetition itself.
-      /**
-       * Nothing answered for a while, in this lesson.
-       *
-       * The first version of this counted `ungraded` screens, which is one way
-       * a lesson stalls and not the only one: a dialogue whose "I've read it"
-       * button sat below the fold was pressed, missed, and re-read 560 times,
-       * and every one of those was journalled as a teaching card rather than a
-       * dropped screen. The honest signal is that the lesson has stopped
-       * producing answers at all. Eight is past any legitimate run of teaching
-       * cards — a letter lesson opens with two or three before its first
-       * question.
-       */
-      const tail = journal.slice(-STUCK_RUN_LIMIT);
-      if (
-        STUCK_RUN_LIMIT > 0 &&
-        tail.length === STUCK_RUN_LIMIT &&
-        tail.every((e) => e.lesson === lessonName && e.type !== 'answer')
-      ) {
-        const shape = tail[tail.length - 1].promptShape || tail[tail.length - 1].type;
-        journal.push({ type: 'driverStuck', lesson: lessonName, step, shape, screens: STUCK_RUN_LIMIT });
-        console.log(
-          `    ⚠ ${lessonName}: ${STUCK_RUN_LIMIT} screens in a row with nothing answered ("${shape}") — a playtest.js fault, not a finding`
-        );
-        await page.screenshot({ path: path.join(OUT, `driver-stuck-${stats.lessonsEntered}.png`) }).catch(() => {});
-        break;
-      }
-
-      // See `TRIPWIRES`. Checked here, on every screen, rather than at the end
-      // of the run or at some checkpoint: both of the things these catch were
-      // decidable within minutes and were found hours later.
-      const fired = tripwires(journal, memory);
-      if (fired.length) {
-        for (const t of fired) {
-          journal.push({ type: 'tripwire', lesson: lessonName, step, name: t.name, detail: t.detail });
-          console.log(`\n  ⛔ ${t.name}: ${t.detail}\n     ${t.note}`);
-        }
-        await page.screenshot({ path: path.join(OUT, `tripwire-${stats.lessonsEntered}.png`) }).catch(() => {});
-        console.log(`  stopped after ${stats.lessonsEntered} lessons. Journal and report in ${OUT}/.`);
-        stopped = true;
-        break;
-      }
-
-      memory.step++;
-      const screen = await readScreen(page);
-
-      /**
-       * Stop and photograph the first screen matching `--shot <pattern>`.
-       *
-       * For looking at a screen that is hard to reach by hand. A tile question
-       * sits several exercises into a letter lesson behind a tracing pad that
-       * has to actually be drawn on, and three throwaway scripts failed to get
-       * there before this existed — `role="button"` finds nothing on some of
-       * these screens, so a driver that can already play the course is the
-       * cheapest way to reach one and look at it.
-       */
-      if (SHOT && SHOT.test(screen.body)) {
-        const file = path.join(OUT, `shot-${lessonName.replace(/\W+/g, '-')}-${step}.png`);
-        await page.screenshot({ path: file, fullPage: true }).catch(() => {});
-        console.log(`  shot: ${file}`);
-        await browser.close();
-        process.exit(0);
-      }
-
-      if (process.env.PLAYTEST_DEBUG)
-        console.log(
-          `    [${step}] ${JSON.stringify(screen.lines.slice(0, 4))}${screen.wrong ? ' WRONG' : ''}${screen.right ? ' RIGHT' : ''}`
-        );
-
-      if (screen.lessonDone) {
-        stats.lessonsFinished++;
-        journal.push({ type: 'lessonDone', lesson: lessonName, step });
-        await pressContinue(page);
-        await page.waitForTimeout(800);
-        break;
-      }
-      if (screen.outOfHearts) {
-        // Recorded rather than worked around silently: how often a beginner is
-        // stopped mid-lesson, and how far in, is one of the things this run
-        // exists to measure. Then the hearts are topped up and the lesson
-        // continues, because the alternative is a playtest that never sees past
-        // the first unit and therefore has nothing to say about the course.
-        journal.push({
-          type: 'outOfHearts',
-          lesson: lessonName,
-          step,
-          told: screen.lines.slice(0, 8),
-          // The run carries gems a real beginner would not have earned yet, so
-          // it can buy its way back in and keep going. Recorded on every one of
-          // these, because without the note the journal would read as though
-          // the wall were passable, and for the learner it is not.
-          onlyPastItBecause: 'the harness was given gems; a real beginner has none this early',
-        });
-        await page.screenshot({ path: path.join(OUT, `hearts-${journal.length}.png`) }).catch(() => {});
-        const resumed = await clickByText(page, /^REFILL/i);
-        await page.waitForTimeout(800);
-        if (!resumed) {
-          await topUpHearts(page);
-          break;
-        }
-        continue;
-      }
-      /**
-       * A screen still showing the verdict for the answer just given.
-       *
-       * The way forward was pressed and did not take — the footer was still
-       * sliding, or the click landed a moment early — so the next read is the
-       * same graded screen. Every branch below assumes it is looking at a
-       * question, and the trace branch proved what that costs: it drew over a
-       * letter the app had already accepted, found no Check button, and ended
-       * the lesson with "no way forward" on a screen whose CONTINUE was right
-       * there in its own journal entry.
-       */
-      if ((screen.right || screen.wrong) && !screen.lessonDone) {
-        /**
-         * The footer's own control, and nothing else.
-         *
-         * `pressContinue` also accepts "Start", which is a way forward on some
-         * screens and, on "Which position is this letter showing?", the label
-         * of one of the four answers. When the verdict banner was up but the
-         * footer had not finished sliding in, this guard pressed that option
-         * instead — already answered, already disabled — read the same screen
-         * again, and pressed it again. Seven lessons of one slice were spent
-         * that way, one question answered in each.
-         *
-         * Falling through is the right thing when the footer is not there yet:
-         * the branches below wait for it properly.
-         */
-        const moved = await page.evaluate(() => {
-          const n = Array.from(document.querySelectorAll('[role="button"]')).find((b) =>
-            /^(continue|finish)$/i.test((b.textContent || '').trim())
-          );
-          if (!n) return false;
-          n.scrollIntoView({ block: 'center' });
-          n.click();
-          return true;
-        });
-        if (moved) {
-          await page.waitForTimeout(500);
-          continue;
-        }
-      }
-
-      /**
-       * A passage or a conversation, before its question.
-       *
-       * The learner reads it and says so; nothing is graded, because nothing
-       * has been asked yet. Routed through the option reader it looked like a
-       * question with strange options, and every one of these was recorded as
-       * a screen the app never judged — nine in one slice, all of them the app
-       * working exactly as designed.
-       *
-       * The lines are learned, because reading them is how a learner meets
-       * these sentences, which is the whole point of the exercise.
-       */
-      if (/i’ve read it|i've read it/i.test(screen.body)) {
-        // Line by line, each in the script with the transliteration printed
-        // under it — which is how the passage is laid out and how it is read.
-        // Learning four lines together instead would say a passage is one
-        // meaning, and a passage is four sentences.
-        const lines = asContent(screen.lines).filter((l) => l.length < 80 && !/^(✕|i.ve read it)$/i.test(l.trim()));
-        const isScript = (l) => /[\u0600-\u06ff]/.test(l);
-        const learned = [];
-        for (let k = 0; k < lines.length - 1; k++) {
-          if (isScript(lines[k]) && !isScript(lines[k + 1])) {
-            memory.learn([lines[k], lines[k + 1]]);
-            learned.push(`${lines[k]} · ${lines[k + 1]}`);
-          }
-        }
-        journal.push({ type: 'taught', what: 'passage', lesson: lessonName, step, shown: learned.slice(0, 6) });
-        await clickByText(page, /^I.ve read it$/i);
-        await page.waitForTimeout(600);
-        continue;
-      }
-
-      /**
-       * A grammar card, which is read in stages.
-       *
-       * "Show the pattern", then "Show examples", then "Got it" — three taps
-       * for one card, and only the last one grades. The option reader clicked
-       * the stage button and recorded a screen the app never judged, once per
-       * stage, on every grammar lesson in the course.
-       */
-      if (/^grammar$/im.test(screen.body) && /show the pattern|show examples/i.test(screen.body)) {
-        await clickByText(page, /^(show the pattern|show examples)$/i);
-        await page.waitForTimeout(500);
-        continue;
-      }
-      // The last tap of that card. It grades itself correct — a teaching card
-      // cannot be failed — and the lesson moves on without a verdict banner,
-      // so waiting for one recorded a dropped screen on every grammar lesson.
-      if (/^grammar$/im.test(screen.body) && /^got it$/im.test(screen.body)) {
-        // Nothing is learned from it. A grammar card explains a pattern; its
-        // lines are headings and prose — "GRAMMAR", "WHO", "FORM", "MEANING" —
-        // and feeding those to a model of what a learner knows made one
-        // meaning with four names on the first card it met, which the collapse
-        // wire stopped the run over, correctly. The sentences the card shows
-        // are learned when they come back as exercises.
-        journal.push({ type: 'taught', what: 'grammar', lesson: lessonName, step, shown: screen.lines.slice(1, 6) });
-        await clickByText(page, /^Got it$/i);
-        await page.waitForTimeout(500);
-        await pressContinue(page);
-        await page.waitForTimeout(400);
-        continue;
-      }
-
-      if (screen.teaching) {
-        // A teaching card is the app explaining something. Everything on it is
-        // learned together, which is the whole point of the card.
-        const shown = screen.lines.filter((l) => l.length < 60 && !/^(continue|finish)$/i.test(l));
-        memory.learn(shown.slice(0, 4));
-        journal.push({ type: 'taught', what: 'card', lesson: lessonName, step, shown: shown.slice(0, 6) });
-        await pressContinue(page);
-        await page.waitForTimeout(600);
-        continue;
-      }
-
-      /**
-       * A word being introduced: picture, script, reading, meaning, and a
-       * button. Nothing to answer.
-       *
-       * This is the screen the whole course was missing, so the learner has to
-       * read it the way a person would — the three forms of the word go into
-       * memory together, which is what makes every later question about it
-       * answerable. Handled before the option reader gets here, because "Got
-       * it" looks like a choice to it: the driver would tap it, the teaching
-       * footer would come up, and a card that cannot be failed would be
-       * recorded as a wrong answer.
-       */
-      if (/^a new word$/im.test(screen.body)) {
-        // Screen chrome as well as the card's own labels. The close button is a
-        // single glyph that appears on every screen in the app, and letting it
-        // through put it in the cluster for every word taught — which, because
-        // a cluster is a set of strings that mean the same thing, quietly
-        // merged all of them into one. The learner then "recalled" words it had
-        // never met: 34 recalls at 18% correct, against 73% when the model is
-        // honest. Anything that is not the word, its reading or its meaning has
-        // to be kept out of here.
-        const shown = screen.lines.filter(
-          (l) =>
-            l.length < 60 &&
-            !/^(a new word|got it|continue|finish|check|hear\b.*)$/i.test(l) &&
-            !/^[^\p{L}\p{N}]+$/u.test(l)
-        );
-        memory.learn(shown.slice(0, 3));
-        journal.push({ type: 'taught', what: 'word', lesson: lessonName, step, shown: shown.slice(0, 3) });
-        await clickByText(page, /^Got it$/i);
-        await page.waitForTimeout(500);
-        await pressContinue(page);
-        await page.waitForTimeout(500);
-        continue;
-      }
-
-      /**
-       * A letter being introduced: the glyph, its name and sound, its four
-       * positional shapes, an example word, and a button.
-       *
-       * The same card as "a new word" above, and missing here for as long as
-       * this file has existed. The option reader tapped "Got it", `LetterTeach`
-       * advanced without grading anything — deliberately, since looking at a
-       * letter is not evidence of recalling it — and every one of these was
-       * filed as a screen the app never judged: 24 of the 159 in one 30-lesson
-       * run, all of them this branch's absence rather than anything about the
-       * app.
-       */
-      if (/^a new letter$/im.test(screen.body)) {
-        // "alif · sounds like “a / aa”" — the trace branch's narrower
-        // `/^[A-Za-z’']+\s*·/` misses the two-word names (alif madda, bari ye).
-        const named = screen.lines.find((l) => /·\s*sounds like/i.test(l));
-        const isScript = (l) => /^[\u0600-\u06FF\u200E\u200F]+$/.test(l);
-
-        /**
-         * All four faces, not just the isolated one.
-         *
-         * The card's whole point is that a letter changes shape by position,
-         * and it shows every shape under a heading that says so. Learning only
-         * the glyph at the top left the learner meeting the medial pe in the
-         * next question as something it had never seen: ten of one 24-lesson
-         * run's nineteen "tested before taught" were a face of a letter the app
-         * had just displayed four faces of.
-         *
-         * The card's own labels bound them — the faces sit between "It changes
-         * shape…" and "As in", and what follows "As in" is a whole word, which
-         * must not join the letter's cluster.
-         */
-        const from = screen.lines.findIndex((l) => /it changes shape/i.test(l));
-        const to = screen.lines.findIndex((l) => /^as in$/i.test(l));
-        const faces =
-          from > -1 && to > from ? screen.lines.slice(from + 1, to).filter(isScript) : screen.lines.filter(isScript);
-        const glyph = screen.lines.find(isScript);
-        if (named) memory.learn([named.split('·')[0].trim(), ...new Set([glyph, ...faces].filter(Boolean))]);
-
-        // And the word the letter is met inside, which this card teaches as
-        // plainly as any "a new word" screen: the script over "anaar · pomegranate".
-        if (to > -1) {
-          const exampleScript = screen.lines.slice(to + 1).find(isScript);
-          const gloss = screen.lines.slice(to + 1).find((l) => /·/.test(l) && !isScript(l));
-          if (exampleScript && gloss) memory.learn([exampleScript, ...gloss.split('·').map((x) => x.trim())]);
-        }
-
-        journal.push({
-          type: 'taught',
-          what: 'letter',
-          lesson: lessonName,
-          step,
-          shown: [named, ...faces].filter(Boolean),
-        });
-        await clickByText(page, /^Got it$/i);
-        await page.waitForTimeout(500);
-        await pressContinue(page);
-        await page.waitForTimeout(500);
-        continue;
-      }
-
-      // A tracing exercise has no options, only a pad. Roughly one attempt in
-      // five is deliberately sloppy, because being refused is part of what a
-      // beginner meets and the wording of that refusal is under test too.
-      if (/trace the letter|draw over the grey letter/i.test(screen.body)) {
-        const sloppy = rand() < 0.2;
-        const traced = await traceLetter(page, sloppy);
-        const after = await waitForGraded(page);
-
-        // A tracing screen names the letter it is showing — "ALIF · ALONE"
-        // over the glyph — so it teaches, and the learner has to leave it
-        // knowing alif. Skipping this said the app had never introduced any
-        // letter it taught by tracing, which put every later letter question
-        // under "tested before taught": 201 of 536 in the run that found it,
-        // the report's largest finding, and wrong.
-        const named = screen.lines.find((l) => /^[A-Za-z’']+\s*·/.test(l));
-        const glyph = screen.lines.find((l) => /^[\u0600-\u06ff\u200e\u200f]+$/.test(l));
-        if (named && glyph) memory.learn([named.split('·')[0].trim(), glyph]);
-
-        journal.push({
-          type: 'trace',
-          lesson: lessonName,
-          step,
-          sloppy,
-          traced,
-          accepted: after.right,
-          told: after.lines.slice(0, 6),
-        });
-        if (!traced) {
-          journal.push({ type: 'noWayForward', lesson: lessonName, step, lines: screen.lines.slice(0, 8) });
-          await page.screenshot({ path: path.join(OUT, `stuck-${journal.length}.png`) }).catch(() => {});
-          break;
-        }
-        await pressContinue(page);
-        await page.waitForTimeout(600);
-        continue;
-      }
-
-      // Back on the learn path: the lesson ended without a completion screen,
-      // usually by being left. Answering the path's own lesson rows as though
-      // they were options put 36 junk entries in one run's journal.
-      if (/tap any lesson to jump ahead/i.test(screen.body)) {
-        journal.push({ type: 'leftLesson', lesson: lessonName, step });
-        break;
-      }
-
-      // Matching pairs a word with a gloss, so it needs two taps, not one.
-      if (/match each word/i.test(screen.body)) {
-        const m = await matchPairs(page, memory);
-        // A board that rendered always offers at least one pair to try, so
-        // zero attempts is this script failing to read the screen rather than
-        // a learner failing to pair it. It stayed invisible for exactly that
-        // reason: the journal wrote "0 of 0 tries matched" alongside genuine
-        // scores, the lesson never finished, the run re-entered it, and the
-        // console said only that Numbers was being played again.
-        if (m.pairs === 0)
-          console.log(`  ⚠ matching board unreadable in ${lessonName} — a playtest.js fault, not a finding`);
-        journal.push({
-          type: 'answer',
-          lesson: lessonName,
-          step,
-          prompt: 'Match each word to its picture',
-          promptShape: 'match each word to its picture',
-          optionText: [],
-          picked: `${m.right} of ${m.pairs} tries matched`,
-          correct: m.cleared,
-          ...classify(m.taught > 0, m.right > 0),
-          strength: 0,
-          reveal: null,
-          // Matching corrects a pair where it stands instead of showing the
-          // reveal panel, so a null here is the exercise working as designed,
-          // not the app withholding the answer. The reveal finding skips it.
-          gradesInPlace: true,
-        });
-        await pressContinue(page);
-        await page.waitForTimeout(700);
-        continue;
-      }
-
-      // Typing: nothing on screen to pick from, so this is pure recall.
-      if (/type this word|type the word/i.test(screen.body)) {
-        // Line 1 is not reliably the word: on a listen-and-type screen it is
-        // the speaker button, and a run that took it literally typed "🔊" into
-        // the box and then blamed the app for not explaining the answer.
-        const prompt =
-          screen.lines.slice(1).find((l) => /\p{L}/u.test(l) && !/^(type|check|continue)\b/i.test(l)) || '';
-        const t = await typeWord(page, memory, prompt);
-        const after = await waitForGraded(page);
-        const reveal = revealFrom(after.lines);
-        const knewAnswer = knewRevealedAnswer(memory, reveal);
-        if (reveal && reveal.length >= 2) memory.learn(reveal);
-        record(journal, after, {
-          lesson: lessonName,
-          step,
-          prompt,
-          promptShape: 'type this word',
-          optionText: [],
-          picked: t.typed,
-          ...classify(t.taught, t.knew),
-          strength: 0,
-          reveal,
-          knewAnswer,
-        });
-        await pressContinue(page);
-        await page.waitForTimeout(600);
-        continue;
-      }
-
-      // Tile trays: building a word or a sentence out of pieces.
-      if (/build the word|build the sentence|tap the letters|tap the words/i.test(screen.body)) {
-        /**
-         * Which line says what is being built.
-         *
-         * A word carries its own: "Water · paani". A sentence does not — its
-         * card shows the English on a line of its own — so the fallback was
-         * `lines[1]`, which is the question itself, and every sentence build
-         * was played as "Build the sentence": no cluster, nothing known,
-         * nothing placed on purpose. 0 of 43 in the run that showed it up,
-         * while the same learner was answering questions about those very
-         * sentences correctly two screens earlier.
-         */
-        const chrome =
-          /^(✕|check|continue|finish|the answer|tap the words below|tap the letters below|build the (word|sentence)|hear the sentence|tap a word to take it back)$/i;
-        const meaningLine = screen.lines.find(
-          (l) => l.trim() && !chrome.test(l.trim()) && /[a-z]/i.test(l) && !/[؀-ۿ]/.test(l)
-        );
-        const prompt = screen.lines.find((l) => /·/.test(l)) || meaningLine || screen.lines[1] || '';
-        const promptLine = prompt.split('·')[0].trim();
-        const built = await buildWord(page, memory, promptLine);
-        if (built.unreadable)
-          console.log(`  ⚠ tile tray unreadable in ${lessonName} — a playtest.js fault, not a finding`);
-        const after = await waitForGraded(page);
-        const reveal = revealFrom(after.lines);
-        const knewAnswer = knewRevealedAnswer(memory, reveal);
-        // A sentence reveal is script and transliteration only — its English is
-        // the prompt, deliberately not repeated (see `answerReveal`). Learning
-        // the reveal alone therefore never ties the sentence to the meaning the
-        // next exercise asks it by, so the pairing the learner actually makes
-        // is the one recorded here.
-        if (reveal && reveal.length >= 2) memory.learn(built.mode === 'sentence' ? [promptLine, ...reveal] : reveal);
-        record(journal, after, {
-          lesson: lessonName,
-          step,
-          prompt,
-          // From the screen rather than from `built`, so a tray this driver
-          // failed to read is still filed under the exercise it belongs to.
-          promptShape: /build the sentence|tap the words/i.test(screen.body) ? 'build the sentence' : 'build the word',
-          optionText: [],
-          picked: `${built.tapped} tiles`,
-          ...classify(built.taught, built.knew),
-          strength: 0,
-          reveal,
-          knewAnswer,
-        });
-        await pressContinue(page);
-        await page.waitForTimeout(600);
-        continue;
-      }
-
-      const { options } = await readOptions(page);
-      if (!options.length) {
-        // Nothing to choose: a trace, a typing box, or a screen that only has a
-        // way forward. A beginner presses on.
-        const moved = await pressContinue(page);
-        if (!moved) {
-          journal.push({ type: 'noWayForward', lesson: lessonName, step, lines: screen.lines.slice(0, 8) });
-          await page.screenshot({ path: path.join(OUT, `stuck-${journal.length}.png`) }).catch(() => {});
-          break;
-        }
-        await page.waitForTimeout(600);
-        continue;
-      }
-
-      const prompt = screen.prompt || screen.lines[1] || '';
-      const context = screen.lines.filter((l) => !options.some((o) => o.lines.includes(l))).slice(0, 4);
-      const decision = chooseOption(memory, [prompt, ...context], options);
-      const cluster = decision.strength > 0 ? null : null;
-
-      await page
-        .locator('[role="button"]')
-        .nth(decision.pick.i)
-        .click()
-        .catch(() => {});
-      const after = await waitForGraded(page);
-      const reveal = revealFrom(after.lines);
-      const knewAnswer = knewRevealedAnswer(memory, reveal, prompt);
-      const correct = after.right;
-
-      // The learner learns from being told, right or wrong. This is the only
-      // way anything ever enters memory.
-      if (reveal && reveal.length >= 2) memory.learn(reveal);
-      /**
-       * A right answer teaches the pairing that produced it — except when the
-       * answer is not a form of anything.
-       *
-       * "Which position is this letter showing?" is answered by "Middle /
-       * joined on both sides", and every letter in the course shares those
-       * four labels. Learning them merged alif madda, jeem, baṛī he, daal and
-       * ṛe into a single seven-string meaning in one 24-lesson run — the
-       * largest cluster in it, and one screen away from tripping the collapse
-       * wire. The question is about the shape on screen, not about a word.
-       */
-      if (correct && !/which position is this letter showing/i.test(prompt))
-        memory.learn([...decision.pick.lines, ...asContent(context)].slice(0, 4));
-
-      record(journal, after, {
-        lesson: lessonName,
-        step,
-        prompt,
-        context,
-        promptShape: prompt
-          .replace(/[^a-z ]/gi, '')
-          .slice(0, 40)
-          .toLowerCase(),
-        /**
-         * Exercises that mark the right option where it stands.
-         *
-         * `screens/answerReveal.ts` names the kinds that use the reveal panel;
-         * everything else corrects in place, and the grammar drill does it
-         * twice over — the right option turns green and a "Why" note explains
-         * the rule underneath. Counting those as answers shown nothing put
-         * seven complaints in one slice's report about the most thoroughly
-         * explained screen in the app.
-         */
-        gradesInPlace: /complete the sentence|reading ·|conversation ·/i.test(screen.body),
-        optionText: options.map((o) => o.lines.join(' / ')),
-        picked: decision.pick.lines.join(' / '),
-        how: decision.how,
-        couldHaveKnown: decision.couldHaveKnown,
-        strength: Number(decision.strength.toFixed(2)),
-        gapSteps: decision.couldHaveKnown ? memory.step - (memory.clusterFor(prompt)?.lastSeen ?? memory.step) : null,
-        reveal,
-        knewAnswer,
-      });
-
-      await pressContinue(page);
-      await page.waitForTimeout(600);
-    }
+    const outcome = await playSession(page, ctx, lessonName);
+    if (outcome.stopped) stopped = true;
     flush();
     const answers = journal.filter((e) => e.type === 'answer').length;
     console.log(
       `  lesson ${stats.lessonsEntered}: ${lessonName} — ${answers} answered so far, ` +
-        `${stats.lessonsFinished} finished, ${Math.round((Date.now() - startedAt) / 1000)}s`
+        `${stats.lessonsFinished} finished, ${outcome.seconds}s`
     );
     if (stopped) break;
+
+    // Off the path and back again. After the lesson rather than before it, so
+    // a practice session has the words this lesson just taught to draw on.
+    if (PRACTICE_EVERY > 0 && stats.lessonsEntered % PRACTICE_EVERY === 0) {
+      const p = await practiceSession(page, ctx, stats.practiceSessions);
+      flush();
+      if (p && p.stopped) break;
+    }
+    if (SETTINGS_EVERY > 0 && stats.lessonsEntered % SETTINGS_EVERY === 0) {
+      await settingsSession(page, ctx);
+      flush();
+    }
   }
 
   flush();
   const answered = journal.filter((e) => e.type === 'answer');
   console.log(
     `playtest — ${stats.lessonsEntered} lessons entered, ${stats.lessonsFinished} finished, ` +
+      `${stats.practiceSessions} practice visit(s), ${stats.settingsPasses} settings pass(es), ` +
       `${answered.length} questions answered, ${answered.filter((e) => e.correct).length} right` +
       `${stopped ? ', run stopped early by a tripwire' : ''}.`
   );
@@ -2371,6 +2892,7 @@ if (require.main === module) {
 
 module.exports = {
   Memory,
+  surfaceFindings,
   revealFrom,
   record,
   classify,

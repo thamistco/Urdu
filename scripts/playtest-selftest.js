@@ -40,6 +40,7 @@ const {
   tripwires,
   chooseOption,
   asContent,
+  surfaceFindings,
 } = require('./playtest.js');
 
 let fails = 0;
@@ -335,6 +336,64 @@ const ok = (name, cond) => {
   blob.learn(['family', 'خاندان', 'which one did you hear?', 'tap to hear']);
   const fired = tripwires([], blob, limits);
   ok('one meaning answering to four names is', fired.length === 1 && /memory/.test(fired[0].name));
+}
+
+/**
+ * The Practice and Settings rules.
+ *
+ * Each of these is one promise the interface makes, and each pair below is the
+ * same promise kept and broken — because a rule that has only ever been handed
+ * the passing case is a rule nobody has seen work. The kept case matters as
+ * much as the broken one here: the first draft of the search rule fired on
+ * every single search, including the ones that found exactly what they were
+ * asked for, and a report that complains about a working screen is worse than
+ * one that says nothing.
+ */
+{
+  const only = (j) => surfaceFindings(j);
+
+  const shelf = (claims, lists) => [{ type: 'practiceShelf', shelf: 'topics', claims, lists, first: [] }];
+  ok('a shelf that lists what it claims is not a finding', only(shelf(78, 78)).length === 0);
+  ok(
+    'a shelf that claims more than it lists is',
+    /says 78 items, the shelf under it lists 54/.test(only(shelf(78, 54))[0] || '')
+  );
+  ok(
+    'an empty shelf is named as empty',
+    only(shelf(0, 0)).some((s) => /is empty/.test(s))
+  );
+
+  const search = (of, hits, sawEmptyState) => [
+    { type: 'practiceSearch', shelf: 'topics', term: 'colours', of, hits, sawEmptyState },
+  ];
+  ok(
+    'a search that finds the card it was copied from is not a finding',
+    only(search('Colours', 3, false)).length === 0
+  );
+  ok(
+    'a search that loses it is',
+    /found nothing, though it was taken from "Colours"/.test(only(search('Colours', 0, false))[0] || '')
+  );
+  ok(
+    'nonsense matching nothing, with the empty state shown, is not a finding',
+    only(search(null, 0, true)).length === 0
+  );
+  ok(
+    'nonsense matching nothing silently is',
+    /nothing on screen to say why/.test(only(search(null, 0, false))[0] || '')
+  );
+  ok('nonsense that still lists things is', /still listed 7 items/.test(only(search(null, 7, false))[0] || ''));
+
+  const toggled = (from, to) => [
+    { type: 'settingToggled', label: 'Haptics', from, to, stuck: to !== from, rowsAfter: 5 },
+  ];
+  ok('a switch that moves is not a finding', only(toggled(true, false)).length === 0);
+  ok('a switch that does not is', /"Haptics" did not change/.test(only(toggled(true, true))[0] || ''));
+
+  const reset = (tapped, confirmed) => [{ type: 'resetOffered', tapped, confirmed, stillOnSettings: true }];
+  ok('a reset that asks first is not a finding', only(reset(true, true)).length === 0);
+  ok('a reset that does not ask is', /ran without asking for confirmation/.test(only(reset(true, false))[0] || ''));
+  ok('a reset control that cannot be found is', /could not be found/.test(only(reset(false, false))[0] || ''));
 }
 
 console.log(fails ? `\n${fails} failed` : '\nall good');
