@@ -1800,6 +1800,24 @@ async function main() {
         }
         continue;
       }
+      /**
+       * A screen still showing the verdict for the answer just given.
+       *
+       * The way forward was pressed and did not take — the footer was still
+       * sliding, or the click landed a moment early — so the next read is the
+       * same graded screen. Every branch below assumes it is looking at a
+       * question, and the trace branch proved what that costs: it drew over a
+       * letter the app had already accepted, found no Check button, and ended
+       * the lesson with "no way forward" on a screen whose CONTINUE was right
+       * there in its own journal entry.
+       */
+      if ((screen.right || screen.wrong) && !screen.lessonDone) {
+        if (await pressContinue(page)) {
+          await page.waitForTimeout(500);
+          continue;
+        }
+      }
+
       if (screen.teaching) {
         // A teaching card is the app explaining something. Everything on it is
         // learned together, which is the whole point of the card.
