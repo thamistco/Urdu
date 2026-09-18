@@ -575,14 +575,31 @@ class Memory {
 async function readOptions(page) {
   const btns = page.locator('[role="button"]');
   const n = await btns.count();
-  // The buttons belonging to screens behind this one — see `readScreen`. The
-  // index is kept, not compacted, because the caller clicks `nth(i)` on this
-  // same locator.
+  /**
+   * The buttons belonging to screens behind this one — see `readScreen`. The
+   * index is kept, not compacted, because the caller clicks `nth(i)` on this
+   * same locator.
+   *
+   * A *disabled* control is kept, and the exception is load-bearing rather
+   * than defensive. React Native Web gives a disabled Pressable
+   * `pointer-events: none`, the same as a screen that is not in front, so the
+   * first version of this filter threw away every spent tile on a matching
+   * board. The board empties as it is solved, an emptied board returned no
+   * options at all, `matchPairs` broke out before it could notice it had won,
+   * and twenty boards that were solved four pairs out of four were recorded as
+   * failures — which then tripped the run's own "this exercise is at zero"
+   * wire, exactly as that wire is meant to do.
+   *
+   * `aria-disabled` is what separates the two: a spent tile carries it, the
+   * buttons on a screen behind do not.
+   */
   const live = new Set(
     await page
       .evaluate(() =>
         Array.from(document.querySelectorAll('[role="button"]'))
-          .map((b, i) => (getComputedStyle(b).pointerEvents === 'none' ? -1 : i))
+          .map((b, i) =>
+            getComputedStyle(b).pointerEvents === 'none' && b.getAttribute('aria-disabled') !== 'true' ? -1 : i
+          )
           .filter((i) => i >= 0)
       )
       .catch(() => null)
@@ -1201,9 +1218,17 @@ async function matchPairs(page, memory) {
   // of the words to finish, tight enough that one who cannot still stops. A
   // board left unfinished is recorded as such rather than retried forever.
   let barren = 0;
+  let why = 'ran out of rounds';
   for (let round = 0; round < 30 && barren < 10; round++) {
     const { options } = await readOptions(page);
-    if (!options.length) break;
+    // Nothing on the board at all. Not the same as a finished board — that one
+    // still has its spent tiles on screen — so it is recorded as its own
+    // outcome rather than scored, because the only ways to get here are a
+    // screen this file cannot read and an app that drew nothing.
+    if (!options.length) {
+      why = 'no tiles could be read';
+      break;
+    }
     const before = await matchedCount(page);
     // A matched tile stays on screen, disabled. Leaving those in the pool meant
     // the driver kept tapping dead tiles: both boards of one probe stalled at
@@ -1235,6 +1260,7 @@ async function matchPairs(page, memory) {
     // in five tries, and still scored zero.
     if (!words.length || !glosses.length) {
       if (pairs) cleared = true;
+      why = pairs ? 'every pair matched' : 'a column was empty before anything was tried';
       break;
     }
 
@@ -1276,10 +1302,11 @@ async function matchPairs(page, memory) {
     // so reported every matching screen in a run as a failure.
     if (!/match each word/i.test(now.body)) {
       cleared = true;
+      why = 'the app moved off the board';
       break;
     }
   }
-  return { pairs, right, taught, cleared };
+  return { pairs, right, taught, cleared, why };
 }
 
 /**
@@ -2264,6 +2291,10 @@ async function playSession(page, ctx, sessionName, kind = 'lesson') {
         // reveal panel, so a null here is the exercise working as designed,
         // not the app withholding the answer. The reveal finding skips it.
         gradesInPlace: true,
+        // How the board ended, so a zero can never again be indistinguishable
+        // between "the learner could not solve it" and "this file stopped
+        // looking at it".
+        why: m.why,
       });
       await pressContinue(page);
       await page.waitForTimeout(700);
@@ -2545,100 +2576,24 @@ async function practiceSession(page, ctx, pass) {
   }
 
   /**
-   * The shelf tabs carry their own counts — "topics: 78 items" — so the screen
-   * states a number that the list under it either meets or does not. That is
-   * the one thing on this screen checkable without a second source.
-   */
-  const claimed = {};
-  for (const c of opened.controls) {
-    const m = /^(topics|grammar|reading):\s*(\d+)\s*items?$/i.exec(c);
-    if (m) claimed[m[1].toLowerCase()] = Number(m[2]);
-  }
-  await tapControl(page, new RegExp(`^${shelf}: `));
-  await page.waitForTimeout(900);
-  const shelved = await readSurface(page);
-  const listed = shelved.controls.filter((c) => /^(practise |passage:|conversation:)/i.test(c));
-  journal.push({
-    type: 'practiceShelf',
-    pass,
-    shelf,
-    claims: claimed[shelf] ?? null,
-    lists: listed.length,
-    due: /nothing to review yet/i.test(shelved.text) ? 0 : null,
-    first: listed.slice(0, 3),
-  });
-
-  /**
-   * Search for something the screen is already showing.
+   * The daily review first, because it is the top of the screen and because it
+   * is the one thing here that navigates away.
    *
-   * The item's own title, taken off the card in front of us, so a shelf that
-   * cannot find what it is displaying is the finding — not a guess about what
-   * a learner might type. A word of three letters or fewer is skipped: the
-   * search matches substrings, and "day" finding forty things is not evidence
-   * of anything.
-   */
-  const target = (listed[0] || '')
-    .replace(/^(practise |passage:|conversation:)\s*/i, '')
-    .split(/[.,]/)[0]
-    .trim();
-  const term = target.split(' ').find((w) => w.length > 3) || '';
-  if (term) {
-    await page
-      .locator('[aria-label="Search practice content"]')
-      .fill(term)
-      .catch(() => {});
-    await page.waitForTimeout(800);
-    const found = await readSurface(page);
-    const hits = found.controls.filter((c) => /^(practise |passage:|conversation:)/i.test(c));
-    journal.push({
-      type: 'practiceSearch',
-      pass,
-      shelf,
-      term,
-      of: target,
-      hits: hits.length,
-      sawEmptyState: /nothing matches/i.test(found.text),
-    });
-    await page
-      .locator('[aria-label="Search practice content"]')
-      .fill('')
-      .catch(() => {});
-    await page.waitForTimeout(600);
-  }
-
-  // A nonsense query, to see the empty state say so rather than show a blank
-  // shelf with no explanation.
-  await page
-    .locator('[aria-label="Search practice content"]')
-    .fill('zzqxwv')
-    .catch(() => {});
-  await page.waitForTimeout(800);
-  const empty = await readSurface(page);
-  journal.push({
-    type: 'practiceSearch',
-    pass,
-    shelf,
-    term: 'zzqxwv',
-    of: null,
-    hits: empty.controls.filter((c) => /^(practise |passage:|conversation:)/i.test(c)).length,
-    sawEmptyState: /nothing matches/i.test(empty.text),
-  });
-  await page
-    .locator('[aria-label="Search practice content"]')
-    .fill('')
-    .catch(() => {});
-  await page.waitForTimeout(600);
-
-  /**
-   * The daily review, which is the primary action of this screen.
+   * It used to run after the shelf was browsed, and coming back from it cost
+   * two of slice two's four practice visits: a review returns to `/practice`,
+   * which mounts on its default `topics` tab, so the grammar point and the
+   * passage this file had just picked off the grammar and reading shelves were
+   * no longer rendered and could not be tapped. Both were recorded as the app
+   * failing to open them. Doing the review before anything is chosen removes
+   * the state to restore rather than restoring it.
    *
-   * The card states a number — "12 items due" — and then a session either
-   * brings that many things back or it does not, which is the one promise on
-   * this screen that can be checked against what happens next. With nothing
-   * due the card is disabled on purpose and is left alone; tapping a disabled
-   * hero and reporting that nothing happened would be reporting the design.
+   * The card states a number — "84 items due" — and a session either brings
+   * something back or it does not, which is the one claim on this screen the
+   * next screen can be held to. Left alone when nothing is due, because the
+   * card is deliberately disabled then; tapping it and reporting that nothing
+   * happened would be reporting the design.
    */
-  const dueLine = /(\d+)\s+items?\s+due/i.exec(shelved.text);
+  const dueLine = /(\d+)\s+items?\s+due/i.exec(opened.text);
   const dueClaimed = dueLine ? Number(dueLine[1]) : 0;
   if (dueClaimed > 0) {
     const before = journal.filter((e) => e.type === 'answer').length;
@@ -2657,9 +2612,72 @@ async function practiceSession(page, ctx, pass) {
       });
       if (r.stopped) return r;
       await openScreen(page, 'practice');
-      await page.waitForTimeout(600);
     }
   }
+
+  /**
+   * The shelf tabs carry their own counts — "topics: 122 items" — so the screen
+   * states a number that the list under it either meets or does not. That is
+   * the one thing on this screen checkable without a second source.
+   */
+  const claimed = {};
+  for (const c of (await readSurface(page)).controls) {
+    const m = /^(topics|grammar|reading):\s*(\d+)\s*items?$/i.exec(c);
+    if (m) claimed[m[1].toLowerCase()] = Number(m[2]);
+  }
+  await tapControl(page, new RegExp(`^${shelf}: `));
+  await page.waitForTimeout(900);
+  const shelved = await readSurface(page);
+  const listed = shelved.controls.filter((c) => /^(practise |passage:|conversation:)/i.test(c));
+  journal.push({
+    type: 'practiceShelf',
+    pass,
+    shelf,
+    claims: claimed[shelf] ?? null,
+    lists: listed.length,
+    first: listed.slice(0, 3),
+  });
+
+  /**
+   * Search for something the screen is already showing.
+   *
+   * The item's own title, taken off the card in front of us, so a shelf that
+   * cannot find what it is displaying is the finding — not a guess about what
+   * a learner might type. A word of three letters or fewer is skipped: the
+   * search matches substrings, and "day" finding forty things is not evidence
+   * of anything.
+   */
+  const target = (listed[0] || '')
+    .replace(/^(practise |passage:|conversation:)\s*/i, '')
+    .split(/[.,]/)[0]
+    .trim();
+  const term = target.split(' ').find((w) => w.length > 3) || '';
+  const searchFor = async (text, of) => {
+    await page
+      .locator('[aria-label="Search practice content"]')
+      .fill(text)
+      .catch(() => {});
+    await page.waitForTimeout(800);
+    const found = await readSurface(page);
+    journal.push({
+      type: 'practiceSearch',
+      pass,
+      shelf,
+      term: text,
+      of,
+      hits: found.controls.filter((c) => /^(practise |passage:|conversation:)/i.test(c)).length,
+      sawEmptyState: /nothing matches/i.test(found.text),
+    });
+    await page
+      .locator('[aria-label="Search practice content"]')
+      .fill('')
+      .catch(() => {});
+    await page.waitForTimeout(600);
+  };
+  if (term) await searchFor(term, target);
+  // And a query that matches nothing, to see the empty state say so rather
+  // than leave a blank shelf with no explanation.
+  await searchFor('zzqxwv', null);
 
   // And then play one of the sets, which is the other half of this screen.
   const pick = listed[pass % Math.max(listed.length, 1)] || listed[0];
