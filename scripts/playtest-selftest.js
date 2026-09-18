@@ -306,29 +306,29 @@ const ok = (name, cond) => {
 }
 
 {
-  const limits = { zeroShapeAfter: 20, clusterMax: 8, clusterGrowth: 4 };
+  const limits = { zeroShapeAfter: 20, clusterNames: 3, clusterMax: 16 };
   const m = new Memory();
   m.learn(['کتاب', 'kitaab', 'book']);
   ok('a word, its reading and its meaning is not a collapse', tripwires([], m, limits).length === 0);
-  // Force one cluster past the limit the only way the model allows: the same
-  // meaning, said in more and more forms.
-  m.learn(['کتاب', 'kitaab', 'a', 'b', 'c', 'd', 'e', 'f', 'g']);
-  const fired = tripwires([], m, limits);
-  ok('nine strings in one meaning is', fired.length === 1 && /memory/.test(fired[0].name));
-}
 
-{
-  // The `knows-urdu` persona walks in with choṭī ye and baṛī ye already one
-  // meaning of eight strings — correct, and exactly the beginner's limit. What
-  // is watched for is growth past what was seeded, not size.
-  const limits = { zeroShapeAfter: 20, clusterMax: 8, clusterGrowth: 4 };
-  const m = new Memory();
-  m.knewAlready(['ye', 'ی', 'یـ', 'ـیـ', 'ـی', 'ے', 'ـے', 'baṛī ye']);
-  ok('a large meaning known before the app opened is not a collapse', tripwires([], m, limits).length === 0);
-  m.learn(['ye', 'ی', 'p', 'q', 'r', 'traced it']);
-  ok('four more strings picked up while playing is still not', tripwires([], m, limits).length === 0);
-  m.learn(['ye', 'ی', 's']);
-  ok('five is', tripwires([], m, limits).length === 1);
+  // Shapes are free. Baṛī ye is written with choṭī ye's forms at the start of
+  // a word and in the middle of one, so the two letters honestly share two of
+  // their faces and the model merges them — eight strings under two names,
+  // which is correct Urdu and stopped a real run five lessons early when this
+  // was counted by size.
+  const ye = new Memory();
+  ye.learn(['choṭī ye', 'ی', 'یـ', 'ـیـ', 'ـی']);
+  ye.learn(['baṛī ye', 'ے', 'یـ', 'ـیـ', 'ـے']);
+  ok('two letters sharing their faces is not a collapse', tripwires([], ye, limits).length === 0);
+  ok('even at eight strings', ye.clusterFor('یـ').tokens.size === 8);
+
+  // Names are not. This is the shape the real blob had: separate meanings
+  // dragged together by what was printed above them.
+  const blob = new Memory();
+  blob.learn(['happy', 'خوش', 'which one did you hear?', 'tap to hear']);
+  blob.learn(['family', 'خاندان', 'which one did you hear?', 'tap to hear']);
+  const fired = tripwires([], blob, limits);
+  ok('one meaning answering to four names is', fired.length === 1 && /memory/.test(fired[0].name));
 }
 
 console.log(fails ? `\n${fails} failed` : '\nall good');
