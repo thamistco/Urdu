@@ -467,5 +467,27 @@ const ok = (name, cond) => {
   ok('and an ordinary screen is not', !lessonDoneText('READING · COLOURS AROUND ME'));
 }
 
+/**
+ * The staleness a question was asked at, measured before the answer teaches.
+ *
+ * It was computed after the fact and read 0 on 2,069 of the 2,071 answers that
+ * carried it — a number that looked like evidence and was an artefact of when
+ * it was taken.
+ */
+{
+  const m = new Memory();
+  m.learn(['کتاب', 'kitaab', 'book']);
+  for (let i = 0; i < 12; i++) m.step++;
+  const options = [
+    { i: 0, lines: ['کتاب'] },
+    { i: 1, lines: ['پانی'] },
+  ];
+  const d = chooseOption(m, ['How do you say it?', 'book'], options);
+  ok('the gap is the distance since the last sighting, not zero', d.gapSteps === 12);
+  // And a question about something never met carries no gap rather than a 0.
+  const blank = chooseOption(new Memory(), ['How do you say it?', 'book'], options);
+  ok('a word never met has no gap at all', blank.gapSteps === null);
+}
+
 console.log(fails ? `\n${fails} failed` : '\nall good');
 process.exit(fails ? 1 : 0);

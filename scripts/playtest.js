@@ -943,12 +943,23 @@ function chooseOption(memory, promptLines, options) {
   const known = options.filter(inTarget);
   const couldHaveKnown = !!target && known.length > 0;
   const strength = target ? memory.recall(target.via) : 0;
+  /**
+   * How long since the learner last met this, read here rather than later.
+   *
+   * The journal used to work it out after the answer was recorded, by which
+   * time the screen's own `learn` calls had already refreshed the cluster: it
+   * read 0 on 2,069 of the 2,071 answers that carried it. A field that is
+   * always zero is worse than an absent one — it prints in the report's own
+   * examples beside real numbers and reads as evidence that nothing the course
+   * asks about is ever stale, which is the opposite of what every run finds.
+   */
+  const gapSteps = target ? memory.step - target.cluster.lastSeen : null;
 
   if (couldHaveKnown && rand() < strength) {
-    return { pick: known[0], couldHaveKnown, strength, how: 'recalled' };
+    return { pick: known[0], couldHaveKnown, strength, gapSteps, how: 'recalled' };
   }
   const pick = options[Math.floor(rand() * options.length)];
-  return { pick, couldHaveKnown, strength, how: couldHaveKnown ? 'forgot' : 'guessed' };
+  return { pick, couldHaveKnown, strength, gapSteps, how: couldHaveKnown ? 'forgot' : 'guessed' };
 }
 
 /**
@@ -2476,7 +2487,9 @@ async function playSession(page, ctx, sessionName, kind = 'lesson') {
       how: decision.how,
       couldHaveKnown: decision.couldHaveKnown,
       strength: Number(decision.strength.toFixed(2)),
-      gapSteps: decision.couldHaveKnown ? memory.step - (memory.clusterFor(prompt)?.lastSeen ?? memory.step) : null,
+      // From the decision, which read it before this screen taught anything.
+      // See `chooseOption`.
+      gapSteps: decision.couldHaveKnown ? decision.gapSteps : null,
       reveal,
       knewAnswer,
     });
