@@ -16,11 +16,15 @@ describe('taughtInUnit', () => {
     // u6 · "Work & School": one letter lesson (group 5), the jobs and school
     // topics, two grammar lessons, one sentence lesson, then its review.
     //
-    // The id is the slug of what this unit was called when it was written.
-    // Review ids are permanent — a learner's finished lessons are keyed on
-    // them — so they keep their original spelling when a unit is renamed or
-    // its topics regrouped, and the title is what says what a unit holds.
-    const u6 = taughtInUnit('rev-gender-and-number');
+    // The id is the slug of the unit's own name, and is kept that way: a
+    // renamed unit gets its review id renamed with it, which `check:unit-names`
+    // now enforces. Nothing has launched, so no finished-lesson record is keyed
+    // on the old spelling and the rename costs nothing. It does not change what
+    // this test measures — `taughtInUnit` finds the unit by which lessons it
+    // holds, not by the id's spelling — what a stale id costs is a reader, who
+    // sees `rev-gender-and-number` sitting on a unit called "Work & School"
+    // and has no way to tell which of the two is the mistake.
+    const u6 = taughtInUnit('rev-work-and-school');
     expect(u6).not.toBeNull();
     expect(u6!.letters).toEqual(['toe', 'zoe', 'ain', 'ghain']);
     // Real course numbers, not guessed: the jobs and school topics, split
@@ -113,24 +117,24 @@ describe('prioritizedPool', () => {
 });
 
 describe('reviewWordPool / reviewLetterPool — a review draws mostly from the unit it closes', () => {
-  it('rev-gender-and-number: every word offered comes from u6, not the wider course', () => {
+  it('rev-work-and-school: every word offered comes from u6, not the wider course', () => {
     // A default-sized review (size 9) asks for Math.floor(9 / 2) = 4 words.
     // u6 alone teaches 20 — comfortably enough to fill that without ever
     // reaching for the course-wide fallback.
     const pool = reviewWordPool(
-      'rev-gender-and-number',
+      'rev-work-and-school',
       new Set(),
       ['w-from-elsewhere-1', 'w-from-elsewhere-2'],
       [],
       ['w-corpus-1']
     );
-    const unitWords = new Set(taughtInUnit('rev-gender-and-number')!.words);
+    const unitWords = new Set(taughtInUnit('rev-work-and-school')!.words);
     const offered = pool.slice(0, 4);
     expect(offered.every((id) => unitWords.has(id))).toBe(true);
   });
 
-  it('rev-gender-and-number: letters also come from u6 first', () => {
-    const pool = reviewLetterPool('rev-gender-and-number', new Set(), [], ['toe-from-course-wide'], ['corpus-letter']);
+  it('rev-work-and-school: letters also come from u6 first', () => {
+    const pool = reviewLetterPool('rev-work-and-school', new Set(), [], ['toe-from-course-wide'], ['corpus-letter']);
     // u6 teaches exactly 4 letters (toe, zoe, ain, ghain) — a review asking
     // for up to Math.ceil(9 / 2) = 5 letters gets all 4 of them before ever
     // touching the fallback tiers.
@@ -149,10 +153,10 @@ describe('reviewWordPool / reviewLetterPool — a review draws mostly from the u
   });
 
   it('restricts to known material the moment anything reachable has been graded, unit-known first', () => {
-    const unitWords = taughtInUnit('rev-gender-and-number')!.words;
+    const unitWords = taughtInUnit('rev-work-and-school')!.words;
     const courseWide = [...unitWords, 'w-course-wide-only'];
     const known = new Set([unitWords[3], 'w-course-wide-only']);
-    const pool = reviewWordPool('rev-gender-and-number', known, courseWide, [], ['w-corpus']);
+    const pool = reviewWordPool('rev-work-and-school', known, courseWide, [], ['w-corpus']);
     // Both known ids appear, the unit one first — but nothing ungraded does,
     // even though the unit alone has 20 words it could otherwise offer.
     expect(pool).toEqual([unitWords[3], 'w-course-wide-only']);
@@ -165,11 +169,11 @@ describe('reviewWordPool / reviewLetterPool — a review draws mostly from the u
     // widened to the unit's full taught list — untaught-to-the-learner but
     // taught-by-the-course — which is precisely the material a review with
     // nothing due is supposed to stay off of.
-    const unitWords = taughtInUnit('rev-gender-and-number')!.words;
+    const unitWords = taughtInUnit('rev-work-and-school')!.words;
     const knownElsewhere = 'w-known-from-a-different-unit';
     const courseWide = [...unitWords, knownElsewhere];
     const known = new Set([knownElsewhere]);
-    const pool = reviewWordPool('rev-gender-and-number', known, courseWide, [], ['w-corpus']);
+    const pool = reviewWordPool('rev-work-and-school', known, courseWide, [], ['w-corpus']);
     expect(pool).toEqual([knownElsewhere]);
   });
 
@@ -194,44 +198,44 @@ describe('reviewWordPool / reviewLetterPool — a review draws mostly from the u
   it('regression (THE CRITIC): grading letters but zero words must not unlock every untaught word', () => {
     // The mirror image of the above, for completeness — the joint check has
     // to work symmetrically in both directions.
-    const unitLetters = taughtInUnit('rev-gender-and-number')!.letters;
+    const unitLetters = taughtInUnit('rev-work-and-school')!.letters;
     const courseWords = ['w-untaught-1', 'w-untaught-2'];
     const courseLetters = [...unitLetters, 'l-elsewhere'];
     const known = new Set([unitLetters[0], 'l-elsewhere']); // letters only, no words
-    const wordPool = reviewWordPool('rev-gender-and-number', known, courseWords, courseLetters, ['corpus-word']);
+    const wordPool = reviewWordPool('rev-work-and-school', known, courseWords, courseLetters, ['corpus-word']);
     expect(wordPool).toEqual([]);
   });
 });
 
 describe("URD-039: a review's fallback rotates once the whole unit is already known", () => {
   it('offers a different slice of a fully-known unit on different visits, not the same one forever', () => {
-    // rev-gender-and-number (u6): every word of the unit graded — the exact
+    // rev-work-and-school (u6): every word of the unit graded — the exact
     // shape measured in the item: with `visit` fixed at its old implicit 0,
     // the same 4 words came back on every single call and the rest never
     // surfaced this way at all. The unit held 20 words when that was measured
     // and holds 42 now that it is jobs and school; what the case needs is a
     // unit with more words than one visit can show.
-    const unitWords = taughtInUnit('rev-gender-and-number')!.words;
+    const unitWords = taughtInUnit('rev-work-and-school')!.words;
     expect(unitWords.length).toBe(42);
     const known = new Set(unitWords);
-    const visit0 = reviewWordPool('rev-gender-and-number', known, unitWords, [], [], 0).slice(0, 4);
-    const visit1 = reviewWordPool('rev-gender-and-number', known, unitWords, [], [], 1).slice(0, 4);
+    const visit0 = reviewWordPool('rev-work-and-school', known, unitWords, [], [], 0).slice(0, 4);
+    const visit1 = reviewWordPool('rev-work-and-school', known, unitWords, [], [], 1).slice(0, 4);
     expect(visit0).not.toEqual(visit1);
   });
 
   it('is still deterministic for the same visit — a rotation, not fresh randomness on every render', () => {
-    const unitWords = taughtInUnit('rev-gender-and-number')!.words;
+    const unitWords = taughtInUnit('rev-work-and-school')!.words;
     const known = new Set(unitWords);
-    const a = reviewWordPool('rev-gender-and-number', known, unitWords, [], [], 3);
-    const b = reviewWordPool('rev-gender-and-number', known, unitWords, [], [], 3);
+    const a = reviewWordPool('rev-work-and-school', known, unitWords, [], [], 3);
+    const b = reviewWordPool('rev-work-and-school', known, unitWords, [], [], 3);
     expect(a).toEqual(b);
   });
 
   it('defaults to visit 0 when omitted, matching every pre-URD-039 caller', () => {
-    const unitWords = taughtInUnit('rev-gender-and-number')!.words;
+    const unitWords = taughtInUnit('rev-work-and-school')!.words;
     const known = new Set(unitWords);
-    const withDefault = reviewWordPool('rev-gender-and-number', known, unitWords, [], []);
-    const explicit0 = reviewWordPool('rev-gender-and-number', known, unitWords, [], [], 0);
+    const withDefault = reviewWordPool('rev-work-and-school', known, unitWords, [], []);
+    const explicit0 = reviewWordPool('rev-work-and-school', known, unitWords, [], [], 0);
     expect(withDefault).toEqual(explicit0);
   });
 
@@ -243,11 +247,11 @@ describe("URD-039: a review's fallback rotates once the whole unit is already kn
     // shuffle-algorithm change even though the rotation itself is real.
     // Sampling many visits and asserting the orderings aren't all identical
     // doesn't depend on which specific pair happens to differ right now.
-    const unitLetters = taughtInUnit('rev-gender-and-number')!.letters;
+    const unitLetters = taughtInUnit('rev-work-and-school')!.letters;
     const known = new Set(unitLetters);
     const orderings = new Set(
       Array.from({ length: 20 }, (_, visit) =>
-        reviewLetterPool('rev-gender-and-number', known, [], unitLetters, [], visit).join(',')
+        reviewLetterPool('rev-work-and-school', known, [], unitLetters, [], visit).join(',')
       )
     );
     // Only 4 letters in this unit, so a full-pool comparison (not a 4-slice)
@@ -265,18 +269,18 @@ describe("reviewLetterShare — a review's letter share decays once the alphabet
     // regardless of how far the review sits from the alphabet units. Real
     // course data instead: rev-first-faces (u1) is still mid-alphabet, so a
     // meaningful share of everything taught so far is still letters;
-    // rev-the-wider-world (u41, the course's last unit) is thirty-two units
+    // rev-journeys-and-milestones (u41, the course's last unit) is thirty-two units
     // past the last letter lesson, so letters are a rounding error against
     // the words taught since.
     const early = taughtUpTo('rev-first-faces');
-    const late = taughtUpTo('rev-the-wider-world');
+    const late = taughtUpTo('rev-journeys-and-milestones');
     const earlyShare = reviewLetterShare(early.words, early.letters);
     const lateShare = reviewLetterShare(late.words, late.letters);
     expect(earlyShare).toBeGreaterThan(lateShare);
   });
 
   it('reaches near zero by the units this measurement covers', () => {
-    const late = taughtUpTo('rev-the-wider-world');
+    const late = taughtUpTo('rev-journeys-and-milestones');
     expect(reviewLetterShare(late.words, late.letters)).toBeLessThan(0.05);
   });
 
@@ -365,7 +369,7 @@ describe('URD-042: reviewLetterPool guarantees full-course letter coverage, not 
     // no known letters of its own).
     //
     // THE CRITIC: a first version of this test targeted only
-    // rev-the-wider-world — the one review lesson (of 41) with no coverage
+    // rev-journeys-and-milestones — the one review lesson (of 41) with no coverage
     // assignment at all — so the `assigned` guard this test names was
     // never actually exercised; it passed even with the guard
     // deliberately removed. Swept across every real review instead, each

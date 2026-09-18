@@ -2220,7 +2220,7 @@ export function buildLessonExercises(
      * that cap silently dropped the last `conceptBudget` due items:
      * genuinely overdue, scheduler-flagged material, to make room for a
      * grammar drill that isn't even SRS-gradable. Reproduced live:
-     * rev-saying-who-you-are fed a full 22-item due queue dropped
+     * rev-describing-things fed a full 22-item due queue dropped
      * w-maan and w-baap — the exact "the words you got wrong come back
      * first" guarantee `check:srs` exists to hold, contradicted by this
      * function's own comment on `due` two screens up.
@@ -2727,14 +2727,14 @@ function fallbackReviewRefs(
   // CURRICULUM CRITIC, URD-017: `Math.round` alone stays >= 1 today only
   // because every real review is large enough (`coverTopics` floors review
   // size at 22) — a coincidence of current content sizes, not a guarantee.
-  // At the lowest measured share (1.98%, rev-the-wider-world) a review as
+  // At the lowest measured share (1.98%, rev-journeys-and-milestones) a review as
   // small as 22 already rounds to 0. Floor it at 1 whenever this context
   // has any letters to ask about at all, so "near zero" never silently
   // becomes "none, if content changes under it".
   // CURRICULUM CRITIC, URD-017: `Math.round` alone stays >= 1 today only
   // because every real review is large enough (`coverTopics` floors review
   // size at 22) — a coincidence of current content sizes, not a guarantee.
-  // At the lowest measured share (1.98%, rev-the-wider-world) a review as
+  // At the lowest measured share (1.98%, rev-journeys-and-milestones) a review as
   // small as 22 already rounds to 0. Floor it at 1 whenever this context
   // has any letters to ask about at all, so "near zero" never silently
   // becomes "none, if content changes under it".
