@@ -102,12 +102,26 @@ export function LeaderboardScreen() {
                     borderStartColor: zoneColor,
                   }}
                 >
-                  <Bold style={{ width: 26, color: rank <= 3 ? palette.gold : palette.cream }}>{rank}</Bold>
+                  {/* Sized in rem like every other line in this row. Left at
+                      the component default, both this and the initial below
+                      rendered at react-native-web's fixed 14px and stayed
+                      there while the name and the XP beside them doubled for a
+                      reader who asks for larger text — 30 of the app's 34
+                      non-growing label lines were on this one screen. The
+                      column widens with them for the same reason. */}
+                  <Bold
+                    className="w-[1.625rem] text-[0.9375rem]"
+                    style={{ color: rank <= 3 ? palette.gold : palette.cream }}
+                  >
+                    {rank}
+                  </Bold>
                   <View
                     className="h-9 w-9 items-center justify-center rounded-full"
                     style={{ backgroundColor: r.me ? palette.gold : withAlpha(palette.white, 0.1) }}
                   >
-                    <Bold style={{ color: r.me ? palette.ink : palette.cream }}>{r.name[0]}</Bold>
+                    <Bold className="text-[0.9375rem]" style={{ color: r.me ? palette.ink : palette.cream }}>
+                      {r.name[0]}
+                    </Bold>
                   </View>
                   <Bold className="flex-1 text-[0.9375rem]" style={{ color: r.me ? palette.gold : palette.cream }}>
                     {r.name}
