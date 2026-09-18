@@ -1270,7 +1270,28 @@ function findings(journal) {
   for (let i = 0; i < journal.length - 1; i++) {
     if (journal[i].type === 'answer' && journal[i + 1].type === 'taught') pretest.add(journal[i]);
   }
-  const untaught = answered.filter((e) => e.knewAnswer === false && !e.correct && !pretest.has(e));
+
+  /**
+   * The kinds that ask a learner to *recognise* something.
+   *
+   * Every one of them reveals its answer, so meeting an item here is the app
+   * telling the learner about it — the ask-then-tell design above, in the case
+   * where what does the telling is the reveal panel rather than a card. A
+   * sentence has no card at all, and a word's card can be an exercise or two
+   * later once review has woven something in between, so the "next entry is a
+   * card" rule missed both: 27 of one slice's questions were counted as the
+   * course testing what it had never taught, and every one was the first half
+   * of ask-then-tell.
+   *
+   * What the finding is for is the other case: being asked to *produce* or
+   * *recall* something never met — to type it, build it from tiles, or pick it
+   * from an English prompt. `check:order` proves the same property against the
+   * generator, and found 382 of them before the sentence climb was fixed.
+   */
+  const MEETS = /^(what does it mean|which word means this|which word is this|tap to hear)$/i;
+  const untaught = answered.filter(
+    (e) => e.knewAnswer === false && !e.correct && !pretest.has(e) && !MEETS.test(e.promptShape || '')
+  );
   if (untaught.length) {
     out.push({
       kind: 'tested before taught',
