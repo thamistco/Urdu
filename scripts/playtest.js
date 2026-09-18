@@ -1559,6 +1559,11 @@ function surfaceFindings(journal) {
       out.push(`Practice · search for "${e.term}" emptied the shelf with nothing on screen to say why.`);
   }
 
+  for (const e of journal.filter((x) => x.type === 'reviewPlayed')) {
+    if (e.asked === 0)
+      out.push(`Practice · the daily review said ${e.dueClaimed} item(s) were due and then asked nothing.`);
+  }
+
   for (const e of journal.filter((x) => x.type === 'practiceStuck'))
     out.push(`Practice · ${e.note}${e.shelf ? ` (${e.shelf})` : ''}.`);
 
@@ -2596,7 +2601,39 @@ async function practiceSession(page, ctx, pass) {
     .catch(() => {});
   await page.waitForTimeout(600);
 
-  // And then play one, which is what the screen is for.
+  /**
+   * The daily review, which is the primary action of this screen.
+   *
+   * The card states a number — "12 items due" — and then a session either
+   * brings that many things back or it does not, which is the one promise on
+   * this screen that can be checked against what happens next. With nothing
+   * due the card is disabled on purpose and is left alone; tapping a disabled
+   * hero and reporting that nothing happened would be reporting the design.
+   */
+  const dueLine = /(\d+)\s+items?\s+due/i.exec(shelved.text);
+  const dueClaimed = dueLine ? Number(dueLine[1]) : 0;
+  if (dueClaimed > 0) {
+    const before = journal.filter((e) => e.type === 'answer').length;
+    const entered = await tapControl(page, /^Daily review/i);
+    await page.waitForTimeout(2400);
+    if (!entered)
+      journal.push({ type: 'practiceStuck', pass, note: `the daily review card would not open (${dueClaimed} due)` });
+    else {
+      const r = await playSession(page, ctx, 'practice · daily review', 'practice');
+      journal.push({
+        type: 'reviewPlayed',
+        pass,
+        dueClaimed,
+        asked: journal.filter((e) => e.type === 'answer').length - before,
+        seconds: r.seconds,
+      });
+      if (r.stopped) return r;
+      await openScreen(page, 'practice');
+      await page.waitForTimeout(600);
+    }
+  }
+
+  // And then play one of the sets, which is the other half of this screen.
   const pick = listed[pass % Math.max(listed.length, 1)] || listed[0];
   if (!pick) {
     journal.push({ type: 'practiceStuck', pass, shelf, note: 'the shelf listed nothing to open' });
