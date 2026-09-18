@@ -13,14 +13,20 @@ import {
 
 describe('taughtInUnit', () => {
   it('scopes to the unit a review lesson actually closes, not the whole course', () => {
-    // u6 · "Gender & Number": one letter lesson (group 5), two colour-topic
-    // vocab lessons, two grammar lessons, one sentence lesson, then its review.
+    // u6 · "Work & School": one letter lesson (group 5), the jobs and school
+    // topics, two grammar lessons, one sentence lesson, then its review.
+    //
+    // The id is the slug of what this unit was called when it was written.
+    // Review ids are permanent — a learner's finished lessons are keyed on
+    // them — so they keep their original spelling when a unit is renamed or
+    // its topics regrouped, and the title is what says what a unit holds.
     const u6 = taughtInUnit('rev-gender-and-number');
     expect(u6).not.toBeNull();
     expect(u6!.letters).toEqual(['toe', 'zoe', 'ain', 'ghain']);
-    // Real course numbers, not guessed: the colours topic split across two
-    // lessons teaches 20 words total by the time this review is reached.
-    expect(u6!.words.length).toBe(20);
+    // Real course numbers, not guessed: the jobs and school topics, split
+    // across two lessons each, teach 42 words by the time this review is
+    // reached.
+    expect(u6!.words.length).toBe(42);
   });
 
   it('is empty, not a crash, for a unit that teaches no vocabulary of its own', () => {
@@ -199,12 +205,14 @@ describe('reviewWordPool / reviewLetterPool — a review draws mostly from the u
 
 describe("URD-039: a review's fallback rotates once the whole unit is already known", () => {
   it('offers a different slice of a fully-known unit on different visits, not the same one forever', () => {
-    // rev-gender-and-number (u6): 20 words, all graded — the exact shape
-    // measured in the item: with `visit` fixed at its old implicit 0, the
-    // same 4 words (w-surkh, w-gulaabi, w-pyaazi, w-neela) came back on
-    // every single call and the other 16 never surfaced this way at all.
+    // rev-gender-and-number (u6): every word of the unit graded — the exact
+    // shape measured in the item: with `visit` fixed at its old implicit 0,
+    // the same 4 words came back on every single call and the rest never
+    // surfaced this way at all. The unit held 20 words when that was measured
+    // and holds 42 now that it is jobs and school; what the case needs is a
+    // unit with more words than one visit can show.
     const unitWords = taughtInUnit('rev-gender-and-number')!.words;
-    expect(unitWords.length).toBe(20);
+    expect(unitWords.length).toBe(42);
     const known = new Set(unitWords);
     const visit0 = reviewWordPool('rev-gender-and-number', known, unitWords, [], [], 0).slice(0, 4);
     const visit1 = reviewWordPool('rev-gender-and-number', known, unitWords, [], [], 1).slice(0, 4);
