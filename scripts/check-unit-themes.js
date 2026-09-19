@@ -224,4 +224,36 @@ if (problems.length) {
   process.exit(1);
 }
 
+/**
+ * A floor on how many units hold one theme, not just a cap on the worst unit.
+ *
+ * The two-theme cap says no unit may be a grab bag. It says nothing about the
+ * course drifting back, one unit at a time, from mostly-single-theme to
+ * mostly-paired — and that drift is what actually happened: this
+ * reorganisation has now been done twice, and the second time began with a
+ * reader saying the units still did not feel cohesive.
+ *
+ * So the count is a ratchet. It was 24 when the pairs were first split apart
+ * and is `SINGLE_THEME_FLOOR` now; moving a stray topic to a unit that shares
+ * its subject raises it, and nothing is allowed to lower it. Raise the floor
+ * when it rises. Never lower it to make a change pass — that is the whole
+ * point of it being here.
+ *
+ * It is deliberately not "every unit must hold one theme". Six units pair two
+ * subjects their own titles name, and six more hold a stray that has nowhere
+ * to go: a topic can only move within its CEFR stage, and for those there is
+ * no unit in the same stage that shares their theme. Demanding perfection here
+ * would mean either moving a topic to the wrong level or inventing a unit for
+ * it, and both are worse than an honest pairing.
+ */
+const SINGLE_THEME_FLOOR = 26;
+if (single < SINGLE_THEME_FLOOR) {
+  console.error(
+    `\nOnly ${single} units hold a single theme, down from ${SINGLE_THEME_FLOOR}. ` +
+      `A unit that gained a topic from somewhere else has made the course less cohesive, not more.`
+  );
+  process.exit(1);
+}
+
 console.log('  No unit holds more than two themes of vocabulary.');
+console.log(`  ${single} of ${withVocab} hold exactly one, which is the floor and may only rise.`);
