@@ -661,7 +661,6 @@ const PLANNED_UNITS: Unit[] = [
       V('restaurant', 'At a restaurant', 'Ordering and the bill'),
       G('g-past', 'Past tense', 'تھا، تھی, was and were'),
       V('grains', 'Grains & staples', 'The pantry basics'),
-      R('r-2', 'Reading: A day at the market', 'Shopping in Urdu'),
       REV('eating-out'),
     ],
   },
@@ -676,6 +675,11 @@ const PLANNED_UNITS: Unit[] = [
       V('bank', 'At the bank', 'Accounts and transactions'),
       V('shopping-talk', 'Bargaining', 'Haggling in the bazaar'),
       G('g-comparative', 'Comparing things', 'Bigger than, the biggest'),
+      // The market reading followed the money here rather than staying behind
+      // in the food unit: it opens "میں نے پھل اور سبزی خریدی" and خریدنا is a
+      // money word, so where it sat it was read one unit before the topic that
+      // teaches it. `check:order` caught that the moment money moved.
+      R('r-2', 'Reading: A day at the market', 'Shopping in Urdu'),
       S('intermediate', 'Sentence practice', 'Weigh one thing against another'),
       REV('money-and-bargaining'),
     ],
