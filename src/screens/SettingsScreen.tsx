@@ -32,7 +32,7 @@ function Row({
   return (
     <View className="flex-row items-center justify-between py-3">
       <View className="flex-1 pe-4">
-        <Bold className="text-[15px]">{label}</Bold>
+        <Bold className="text-[0.9375rem]">{label}</Bold>
         {hint ? <Txt className="text-xs text-paper/55">{hint}</Txt> : null}
       </View>
       <Switch
@@ -210,15 +210,31 @@ export function SettingsScreen() {
   const setDailyGoal = useProgressStore((st) => st.setDailyGoal);
   const email = useAuthStore((st) => st.session?.user?.email ?? null);
   const signOut = useAuthStore((st) => st.signOut);
+  const authConfigured = useAuthStore((st) => st.authConfigured);
   const [, force] = useState(0);
 
   const onAuthAction = () => {
     if (email) {
       confirmAction('Sign out?', 'Your progress stays saved to your account.', 'Sign out', () => signOut());
     } else {
-      signOut(); // clears guest mode → returns to the sign-in screen
+      // Leaving guest mode is only a way *in* when the front door has a way in.
+      // The button is not rendered otherwise — see `canSignIn` below.
+      signOut();
     }
   };
+
+  /**
+   * Whether "Sign in" leads anywhere.
+   *
+   * It calls `signOut()`, which clears guest mode and returns the learner to
+   * the front door. That is the right move when the door offers Google and
+   * Apple. When no backend is configured the login screen shows a single
+   * "Start learning" button, so the round trip ejects someone from the app and
+   * hands them back exactly where they were — a control promising something
+   * the build cannot do. The login screen already hides its providers on this
+   * same test; this is the other half of it.
+   */
+  const canSignIn = !!email || authConfigured;
 
   const confirmReset = () => {
     confirmAction(
@@ -242,25 +258,27 @@ export function SettingsScreen() {
           <Card className="mb-5">
             <View className="flex-row items-center justify-between">
               <View className="flex-1 pe-3">
-                <Bold className="text-[15px]">{email ?? 'Guest'}</Bold>
+                <Bold className="text-[0.9375rem]">{email ?? 'Guest'}</Bold>
                 <Txt className="text-xs text-paper/55">
                   {email ? 'Progress is saved to your account' : 'Progress is saved on this device'}
                 </Txt>
               </View>
-              <Pressable onPress={onAuthAction}>
-                <View
-                  className="rounded-xl px-4 py-2"
-                  style={{
-                    backgroundColor: withAlpha(email ? palette.rose : palette.gold, 0.15),
-                    borderWidth: 1,
-                    borderColor: withAlpha(email ? palette.rose : palette.gold, 0.35),
-                  }}
-                >
-                  <Bold style={{ color: email ? palette.roseLight : palette.gold }} className="text-sm">
-                    {email ? 'Sign out' : 'Sign in'}
-                  </Bold>
-                </View>
-              </Pressable>
+              {canSignIn ? (
+                <Pressable accessibilityRole="button" onPress={onAuthAction}>
+                  <View
+                    className="rounded-xl px-4 py-2"
+                    style={{
+                      backgroundColor: withAlpha(email ? palette.rose : palette.gold, 0.15),
+                      borderWidth: 1,
+                      borderColor: withAlpha(email ? palette.rose : palette.gold, 0.35),
+                    }}
+                  >
+                    <Bold style={{ color: email ? palette.roseLight : palette.gold }} className="text-sm">
+                      {email ? 'Sign out' : 'Sign in'}
+                    </Bold>
+                  </View>
+                </Pressable>
+              ) : null}
             </View>
           </Card>
         </Reveal>
@@ -344,7 +362,7 @@ export function SettingsScreen() {
                     );
                   })}
                 </View>
-                <Txt className="mt-2 text-[11px] text-paper/55">Tap to hear the change.</Txt>
+                <Txt className="mt-2 text-[0.6875rem] text-paper/55">Tap to hear the change.</Txt>
               </>
             )}
           </Card>
@@ -379,6 +397,7 @@ export function SettingsScreen() {
                 const active = dailyGoalId === g.id;
                 return (
                   <Pressable
+                    accessibilityRole="button"
                     key={g.id}
                     onPress={() => {
                       feedback.tap();
@@ -396,7 +415,7 @@ export function SettingsScreen() {
                       }}
                     >
                       <Bold className="text-sm">{g.label}</Bold>
-                      <Txt className="text-[11px] text-paper/55">
+                      <Txt className="text-[0.6875rem] text-paper/55">
                         {g.desc} · +{g.xp} XP
                       </Txt>
                     </View>
@@ -409,12 +428,14 @@ export function SettingsScreen() {
 
         <Reveal delay={180}>
           <Eyebrow className="mb-2 text-paper/55">Data</Eyebrow>
-          <Pressable onPress={confirmReset}>
+          <Pressable accessibilityRole="button" onPress={confirmReset}>
             <View
               className="rounded-2xl border p-4"
               style={{ borderColor: withAlpha(palette.rose, 0.3), backgroundColor: withAlpha(palette.rose, 0.08) }}
             >
-              <Bold style={{ color: palette.roseLight }}>Reset all progress</Bold>
+              <Bold className="text-[0.9375rem]" style={{ color: palette.roseLight }}>
+                Reset all progress
+              </Bold>
               <Txt className="mt-0.5 text-xs text-paper/55">Clears streak, XP, gems and memory. Cannot be undone.</Txt>
             </View>
           </Pressable>

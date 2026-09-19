@@ -47,7 +47,7 @@ export function DialogueExercise({ exercise, track, showRoman, locked, onGraded 
           const tint = isA ? palette.gold : palette.jadeLight;
           return (
             <View key={i} className={isA ? 'items-start' : 'items-end'}>
-              <Eyebrow style={{ color: tint, fontSize: 9 }} className="mb-1 px-1">
+              <Eyebrow style={{ color: tint }} className="mb-1 px-1 text-[0.5625rem]">
                 {l.name}
               </Eyebrow>
               <View
@@ -80,7 +80,7 @@ export function DialogueExercise({ exercise, track, showRoman, locked, onGraded 
                       {l.urdu}
                     </Urdu>
                     {showRoman ? (
-                      <Txt style={{ color: palette.ink }} className="mt-2 text-[11px] leading-4 opacity-50">
+                      <Txt style={{ color: palette.ink }} className="mt-2 text-[0.6875rem] leading-4 opacity-65">
                         {l.roman}
                       </Txt>
                     ) : null}
@@ -122,7 +122,7 @@ export function DialogueExercise({ exercise, track, showRoman, locked, onGraded 
                 picked == null ? 'idle' : o === dialogue.question.answer ? 'correct' : o === picked ? 'wrong' : 'muted';
               return (
                 <Choice key={o} state={state} disabled={picked != null || locked} onPress={() => choose(o)}>
-                  <Bold className="text-center text-[15px]">{o}</Bold>
+                  <Bold className="text-center text-[0.9375rem]">{o}</Bold>
                 </Choice>
               );
             })}

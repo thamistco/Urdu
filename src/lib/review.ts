@@ -6,8 +6,8 @@
  * from every word and letter taught anywhere up to the review — the right
  * question for "has this learner seen this at all", and the wrong one for "is
  * this review mostly about the unit it closes". Measured on real generated
- * output with nothing due: rev-gender-and-number (u6) drew 0-5% of its words
- * from u6 itself, and rev-the-wider-world (then a single, larger u39; split
+ * output with nothing due: rev-work-and-school (u6) drew 0-5% of its words
+ * from u6 itself, and rev-journeys-and-milestones (then a single, larger u39; split
  * by URD-A02 into u40/u41) drew 3-5% from its own unit. A unit's
  * own dozen-or-so words are a rounding error against the hundreds taught
  * before it, so a flat course-wide pool all but guarantees a review is mostly
@@ -59,10 +59,10 @@ export function taughtInUnit(lessonId: string): TaughtPool | null {
  * URD-040: a review only ever drew on `taughtInUnit`'s vocabulary, never on
  * the grammar concept(s) its own unit's grammar lesson(s) taught — even
  * though a review exists to consolidate everything the unit covered.
- * rev-saying-who-you-are (u4, "Saying Who You Are") drew its entire review
- * from `V('rooms')`/`V('adjectives')` and never once touched `g-pronouns`
- * or `g-to-be`, the two concepts the unit is organized around and named
- * for.
+ * The unit that teaches the copula (u4, since renamed "Describing Things"
+ * and regrouped around colours, adjectives and opposites) drew its entire
+ * review from that vocabulary and never once touched `g-pronouns` or
+ * `g-to-be`, the two concepts it exists to introduce.
  *
  * `[]`, not an error, for a unit with no grammar lesson of its own — the
  * common case, since grammar teaching clusters early in the course the same
@@ -151,7 +151,7 @@ export function taughtConceptsUpTo(lessonId: string): ReadonlySet<string> {
  * on them anyway. Measured on real course data: cumulative letters-vs-words
  * taught gives a letter share of 18.2% at rev-first-faces (u1) — already
  * below the old fixed 50%, because most units teach several words alongside
- * a letter group — falling to 2.0% by rev-the-wider-world (u41, the
+ * a letter group — falling to 2.0% by rev-journeys-and-milestones (u41, the
  * course's last unit after URD-A02 split its old, larger u39 in two),
  * monotonically, as word teaching keeps going long after the last letter
  * lesson does.
@@ -357,7 +357,7 @@ export function reviewWordPool(
    * doc comment for why *which* tier this affects at all is limited: once a
    * learner has graded a unit's whole word list, `seen(unit?.words ?? [])`
    * is the entire unit in one tier, and a fixed seed always sliced off the
-   * same subset of it — measured directly on rev-gender-and-number (u6, 20
+   * same subset of it — measured directly on rev-work-and-school (u6, 20
    * words all known): the same 4 words on every single call, the other 16
    * never once surfacing this way.
    */

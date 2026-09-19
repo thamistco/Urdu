@@ -1,13 +1,13 @@
 /**
  * Telling a returning learner why their place on the path moved.
  *
- * Three times now the course has been rebuilt underneath people. Splitting each
- * topic across enough lessons to cover its vocabulary took it from 174 lessons
- * to 608; regrouping those into sittings took it from 608 to 348; and the work
- * still open on lesson length will move it again. Every time, a learner's unit
- * counts changed while they were asleep.
+ * The course changes shape between releases, and each time it does, a
+ * learner's unit counts change while they are asleep. Splitting each topic
+ * across enough lessons to cover its vocabulary took the path from 174 lessons
+ * to 608; regrouping those into sittings took it from 608 to 348; the work
+ * still open on lesson length will move it again.
  *
- * Nothing was lost on any of those and the denominators got more honest, but
+ * Nothing is lost when that happens and the denominators get more honest, but
  * that is invisible from inside the app. What a learner sees is a number that
  * went down on its own, which reads as lost progress, which is the single thing
  * most likely to make somebody stop opening it.
@@ -20,20 +20,19 @@
  * topic's original id, so someone who finished "First words" before the split
  * still has a live tick — and review measured it: of the 237 lesson ids in the
  * pre-split path, **zero** are absent from the path today. A learner who had
- * finished 55 of 55 beginner lessons now reads 55 of 81, and by the missing-id
- * test they had nothing to be told. Ten of their units fell and the app was
- * silent, while a unit test asserting the notice worked stayed green.
+ * finished 55 of 55 beginner lessons would read 55 of 81 afterwards, and by the
+ * missing-id test they had nothing to be told. Ten of their units fall and the
+ * app says nothing, while a unit test asserting the notice worked stays green.
  *
  * So detection is by the *shape of the path*, not by absence. The profile
  * carries the size of the path the learner last saw; if it differs from the path
- * in front of them, it moved under them. A profile from before this was recorded
- * carries `null`, which is itself the evidence — it can only have been written
- * by a build whose path has since been replaced.
+ * in front of them, it moved under them.
  *
  * That also re-arms it. Recording "told" alone made the notice single use, so
  * the next regroup would have re-incurred the same debt silently and depended on
  * somebody remembering to bump the persist version. The size is re-recorded when
- * the learner dismisses it, so the next move announces itself.
+ * the learner dismisses it, so the next move announces itself — which is why
+ * neither store carries a persist migration for this.
  *
  * ## Why this returns a yes or no and not a count
  *
@@ -46,55 +45,6 @@
  * ungrammatical to the rest is not worth the second code path.
  */
 
-/**
- * The v1 → v2 lesson-id migration (`useProgressStore.ts`) empties
- * `completedLessons`/`skippedLessons` for a profile that predates
- * content-derived ids, because a positional id like `v-12` genuinely does
- * not say which lesson it meant once the path has been reshuffled. That is
- * correct — but for a learner who actually had ticks, it is also a second,
- * worse silence than the one `needsPathMoveNotice` exists to close.
- *
- * URD-014: `needsPathMoveNotice` requires a *surviving* completed or
- * skipped lesson to have anything to say — exactly the evidence this wipe
- * just deleted. A learner who finished 55 lessons on the old path upgrades,
- * loses every tick, and reads 0 of 81 with no explanation whatsoever,
- * while `needsPathMoveNotice` looks at their now-empty `completed`/
- * `skipped` and correctly (by its own question) finds nothing to report.
- * The bug is not in that function; it is that this migration destroyed the
- * only evidence it reads, without recording that it had.
- *
- * `migrateProgress` is what `useProgressStore.ts`'s `persist` config calls,
- * extracted here so this decision is a plain function a test can drive
- * directly rather than an inline arrow reachable only through zustand's
- * persist middleware.
- */
-export type MigratableProgress = {
-  completedLessons?: Readonly<Record<string, unknown>>;
-  skippedLessons?: Readonly<Record<string, unknown>>;
-  [key: string]: unknown;
-};
-
-export function migrateProgress(persisted: MigratableProgress, from: number): Record<string, unknown> {
-  // v2 → v3 (and later): nothing is dropped. See useProgressStore.ts's own
-  // migrate comment for why `pathNoticeSeen`/`pathSize` still reset here.
-  const owed = { pathNoticeSeen: false, pathSize: null };
-  if (from >= 2) return { ...persisted, ...owed };
-
-  // v0/v1 → v2: lesson ids were positional and cannot be translated. Record
-  // whether there was anything to lose — a profile that had ticked nothing
-  // is migrated the same way and, correctly, told nothing, matching
-  // `needsPathMoveNotice`'s own "nothing ticked" branch below.
-  const hadTicks =
-    Object.keys(persisted.completedLessons ?? {}).length > 0 || Object.keys(persisted.skippedLessons ?? {}).length > 0;
-  return {
-    ...persisted,
-    completedLessons: {},
-    skippedLessons: {},
-    ticksWipedByMigration: hadTicks,
-    ...owed,
-  };
-}
-
 export type PathNoticeInput = {
   /** `completedLessons` from the store — only its keys are read. */
   completed: Readonly<Record<string, unknown>>;
@@ -106,8 +56,9 @@ export type PathNoticeInput = {
   seen: boolean;
   /**
    * How many lessons the path held when this learner last opened the app, or
-   * `null` for a profile written before that was recorded — which is every
-   * profile that predates this notice, and so exactly the profiles owed one.
+   * `null` for a profile that has never recorded one — a profile created but
+   * not yet carried through a Home render. Such a profile has also finished
+   * nothing, which is the branch that actually answers it.
    */
   lastPathSize: number | null;
 };

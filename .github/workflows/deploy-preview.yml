@@ -99,6 +99,12 @@ jobs:
       - name: Check that words are taught before they are tested
         run: npm run check:order
 
+      - name: Check that a unit's name says what is inside it
+        run: npm run check:unit-names
+
+      - name: Check that a unit holds things that belong together
+        run: npm run check:unit-themes
+
       - name: Check that every word is actually taught by a lesson
         run: npm run check:coverage
 
@@ -261,6 +267,31 @@ jobs:
         run: |
           CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
             npm run check:stage-advance-scroll
+
+      # Settings offered a guest a "Sign in" button that called signOut() and
+      # dropped them on a door with nothing behind it. Every test that only
+      # asks whether screens render was happy with it.
+      - name: Check no control promises something the build cannot do
+        run: |
+          CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
+            npm run check:controls
+
+      # 108 fixed-pixel text sites ignored the browser's text setting, so at
+      # twice the default size the body copy doubled and every small label
+      # stayed put — the hierarchy inverted exactly for the reader who asked
+      # for help reading.
+      - name: Check small text grows with the reader's text setting
+        run: |
+          CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
+            npm run check:text-scale
+
+      # The web build lived at one URL, so the browser back button — the
+      # hardware back button on Android — left the app instead of backing out
+      # of a lesson, and nothing could be linked to.
+      - name: Check every screen has a URL and back stays inside the app
+        run: |
+          CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
+            npm run check:links
 
       - name: SPA fallback + disable Jekyll
         run: |

@@ -131,6 +131,20 @@ export function Button({
   const border = disabled ? withAlpha(palette.paper, 0.15) : isGhost ? withAlpha(palette.cream, 0.2) : palette.ink;
   return (
     <Pressable
+      /**
+       * Without this the Pressable renders focusable but role-less, and every
+       * button built from this component is announced as a run of text. On the
+       * sign-in screen that is the entire screen: one control, read out as a
+       * sentence, with nothing to say it can be pressed.
+       *
+       * `accessibilityState` rather than leaving `disabled` implicit, because
+       * this button has two ways of being unavailable and they mean different
+       * things: `disabled` is "not yet", `loading` is "already, wait". A
+       * screen reader that says "dimmed" for the first and "busy" for the
+       * second is telling the truth about both.
+       */
+      accessibilityRole="button"
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
       disabled={disabled || loading}
       onPress={() => {
         if (sound) feedback.tap();
@@ -167,7 +181,7 @@ export function Button({
             ) : (
               <>
                 {icon}
-                <Bold style={{ color: text }} className="text-[15px] uppercase tracking-[1.5px]">
+                <Bold style={{ color: text }} className="text-[0.9375rem] uppercase tracking-[1.5px]">
                   {children}
                 </Bold>
               </>

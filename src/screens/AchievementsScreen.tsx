@@ -87,13 +87,13 @@ export function AchievementsScreen() {
                     </View>
                     <View className="flex-1">
                       <View className="flex-row items-center gap-2">
-                        <Bold className="text-[15px]">{a.title}</Bold>
+                        <Bold className="text-[0.9375rem]">{a.title}</Bold>
                         {tier > 0 && (
                           <View
                             className="rounded-full px-2 py-0.5"
                             style={{ backgroundColor: withAlpha(palette.gold, 0.2) }}
                           >
-                            <Eyebrow style={{ color: palette.gold, fontSize: 8 }}>
+                            <Eyebrow className="text-[0.5rem]" style={{ color: palette.gold }}>
                               {isMax ? 'MAX' : `Tier ${tier}`}
                             </Eyebrow>
                           </View>
@@ -109,7 +109,7 @@ export function AchievementsScreen() {
                       height={7}
                       spring={false}
                     />
-                    <Txt className="mt-1 text-right text-[11px] text-paper/55">
+                    <Txt className="mt-1 text-right text-[0.6875rem] text-paper/55">
                       {isMax ? `${value} · complete` : `${value} / ${nextThreshold}`}
                     </Txt>
                   </View>

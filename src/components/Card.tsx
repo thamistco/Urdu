@@ -40,6 +40,7 @@ export function Card({
   if (!onPress) return inner;
   return (
     <Pressable
+      accessibilityRole="button"
       onPress={() => {
         feedback.tap();
         onPress();

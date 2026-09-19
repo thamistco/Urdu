@@ -268,7 +268,19 @@ const checked = [];
         await advance();
         continue;
       }
-      if (/draw over the grey letter|Got it/.test(t)) {
+      // Case-insensitive because this reads `innerText`, which applies the
+      // button's `uppercase` transform and hands back "GOT IT". The selector
+      // below matches the untransformed text, so it worked while this test did
+      // not, and teaching cards quietly fell through to the answer path
+      // instead. That was invisible for as long as acknowledging a card left
+      // the card on screen; the moment "Got it" started advancing the lesson
+      // — which is what a card that cannot be got wrong should do — this
+      // reported the question as having been replaced under the learner.
+      //
+      // A teaching card is not a question and has never been graded, so it is
+      // outside what this check is about. The check is not being relaxed: the
+      // branch that was always meant to catch these now actually catches them.
+      if (/draw over the grey letter|got it/i.test(t)) {
         if (await tapOnScreen('text=/^Got it$/')) {
           await page.waitForTimeout(700);
           await advance();
@@ -352,10 +364,9 @@ const checked = [];
    *
    * A fresh page per call, not the `page` reused everywhere else above.
    * Reusing it once carried a live hydration race from the *previous*
-   * call's dismissal into this one — the ticks-wiped scenario's own
-   * persisted `ticksWipedByMigration: true` lost to a stale rehydration
-   * and the *other* notice rendered instead, silently testing the wrong
-   * card. Caught only by dumping the live DOM and the actual localStorage
+   * call's dismissal into this one: the seeded profile lost to a stale
+   * rehydration and the notice never rendered, silently testing an empty
+   * screen. Caught only by dumping the live DOM and the actual localStorage
    * value side by side after the fact — the reported "no problems found"
    * looked identical either way.
    */
@@ -403,10 +414,13 @@ const checked = [];
       todayXp: 0,
       pathNoticeSeen: false,
       pathSize: null,
-      ticksWipedByMigration: false,
       ...extra,
     };
-    raw.version = 3;
+    // The stores carry no persist version (see useProgressStore.ts), so this
+    // blob must not either — zustand discards a state whose stored version
+    // does not match, and a seed that is silently thrown away would make every
+    // check below pass against a profile that never loaded.
+    raw.version = 0;
     localStorage.setItem('harf-progress', JSON.stringify(raw));
     localStorage.setItem(
       'harf-settings',
@@ -524,23 +538,9 @@ const checked = [];
     }
   }
 
-  const pathMovedSeed = { pathSize: 1, pathNoticeSeen: false, ticksWipedByMigration: false };
+  const pathMovedSeed = { pathSize: 1, pathNoticeSeen: false };
   await checkNoticeExit('path-moved notice', pathMovedSeed, 'Got it');
   await checkNoticeSurvivesDoubleTap('path-moved notice', pathMovedSeed, 'Got it');
-
-  /**
-   * `pathNoticeSeen: true` here matters: the base seed above otherwise also
-   * satisfies the path-moved notice's own condition, so dismissing the
-   * ticks-wiped card — correctly, by design — reveals that second, real
-   * notice queued right behind it (URD-014's stacking fix). Its "Got it"
-   * button lands close enough to the just-dismissed one that this check
-   * mistook the new card for the old one still fading: a false pass, found
-   * only by dumping the post-click page and seeing the *other* notice's
-   * body text where "nothing tappable" was expected.
-   */
-  const ticksWipedSeed = { ticksWipedByMigration: true, pathNoticeSeen: true };
-  await checkNoticeExit('ticks-wiped notice', ticksWipedSeed, 'Got it');
-  await checkNoticeSurvivesDoubleTap('ticks-wiped notice', ticksWipedSeed, 'Got it');
 
   await browser.close();
   server.close();

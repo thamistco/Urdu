@@ -7,10 +7,16 @@ import { LeagueBadge } from '../components/Illustration';
 import { Reveal } from '../components/Reveal';
 import { Txt, Bold, Eyebrow, Heading } from '../components/Text';
 import { palette, withAlpha } from '../theme';
-import { getLeague, promote, demote } from '../lib/gamification';
+import { getLeague, leagueAbove, leagueBelow, leagueMovementLine } from '../lib/gamification';
 import { useProgressStore } from '../store/useProgressStore';
 
-/** Believable weekly cohort. Deterministic per-week so it feels stable. */
+/**
+ * A practice cohort. Deterministic per-week so it feels stable.
+ *
+ * Named on screen for what it is — see the line under the league header. It
+ * exists so the league can teach pacing before there is anyone to pace
+ * against; it is not a claim that these people are playing.
+ */
 const NAMES = [
   'Ayesha',
   'Bilal',
@@ -46,8 +52,13 @@ export function LeaderboardScreen() {
     return all.sort((a, b) => b.xp - a.xp);
   }, [weekKey, weeklyXp]);
 
-  const PROMOTE_ZONE = 5;
-  const DEMOTE_ZONE = rows.length - 3;
+  // A zone that leads nowhere is not a zone. In Emerald there is nothing to
+  // rise to and in Clay nothing to fall to, so those stripes and their legend
+  // entries come off rather than colouring rows for a move that cannot happen.
+  const canRise = leagueAbove(leagueId) !== null;
+  const canFall = leagueBelow(leagueId) !== null;
+  const PROMOTE_ZONE = canRise ? 5 : 0;
+  const DEMOTE_ZONE = canFall ? rows.length - 3 : rows.length;
 
   return (
     <View className="flex-1 bg-ink">
@@ -60,9 +71,16 @@ export function LeaderboardScreen() {
             <Heading className="mt-2 text-2xl" style={{ color: league.color }}>
               {league.name} League
             </Heading>
-            <Txt className="mt-1 text-center text-xs text-paper/55">
-              Top 5 rise to {getLeague(promote(leagueId)).name} · bottom 3 fall to {getLeague(demote(leagueId)).name}.
-              Resets weekly.
+            <Txt className="mt-1 text-center text-xs text-paper/55">{leagueMovementLine(leagueId)} Resets weekly.</Txt>
+            {/* The fourteen names below are generated from the week number.
+                The code has always been honest about it — "Believable weekly
+                cohort" — and the screen was not: it presented them exactly
+                like real competitors, with nothing anywhere saying otherwise.
+                Kept, because a league with nobody in it teaches nothing about
+                pacing, and said out loud, because this was the one place the
+                app told a learner something untrue. */}
+            <Txt className="mt-2 text-center text-[0.6875rem] text-paper/55">
+              The other names are a practice cohort, not real people. Your XP is the only real number here.
             </Txt>
           </View>
         </Reveal>
@@ -84,14 +102,28 @@ export function LeaderboardScreen() {
                     borderStartColor: zoneColor,
                   }}
                 >
-                  <Bold style={{ width: 26, color: rank <= 3 ? palette.gold : palette.cream }}>{rank}</Bold>
+                  {/* Sized in rem like every other line in this row. Left at
+                      the component default, both this and the initial below
+                      rendered at react-native-web's fixed 14px and stayed
+                      there while the name and the XP beside them doubled for a
+                      reader who asks for larger text — 30 of the app's 34
+                      non-growing label lines were on this one screen. The
+                      column widens with them for the same reason. */}
+                  <Bold
+                    className="w-[1.625rem] text-[0.9375rem]"
+                    style={{ color: rank <= 3 ? palette.gold : palette.cream }}
+                  >
+                    {rank}
+                  </Bold>
                   <View
                     className="h-9 w-9 items-center justify-center rounded-full"
                     style={{ backgroundColor: r.me ? palette.gold : withAlpha(palette.white, 0.1) }}
                   >
-                    <Bold style={{ color: r.me ? palette.ink : palette.cream }}>{r.name[0]}</Bold>
+                    <Bold className="text-[0.9375rem]" style={{ color: r.me ? palette.ink : palette.cream }}>
+                      {r.name[0]}
+                    </Bold>
                   </View>
-                  <Bold className="flex-1 text-[15px]" style={{ color: r.me ? palette.gold : palette.cream }}>
+                  <Bold className="flex-1 text-[0.9375rem]" style={{ color: r.me ? palette.gold : palette.cream }}>
                     {r.name}
                   </Bold>
                   <Bold className="text-sm text-paper/70">{r.xp} XP</Bold>
@@ -102,18 +134,18 @@ export function LeaderboardScreen() {
         </View>
 
         <View className="mt-5 flex-row items-center justify-center gap-4">
-          <View className="flex-row items-center gap-1.5">
-            <View className="h-3 w-3 rounded-full" style={{ backgroundColor: palette.jade }} />
-            <Eyebrow className="text-paper/55" style={{ fontSize: 9 }}>
-              Promotion
-            </Eyebrow>
-          </View>
-          <View className="flex-row items-center gap-1.5">
-            <View className="h-3 w-3 rounded-full" style={{ backgroundColor: palette.rose }} />
-            <Eyebrow className="text-paper/55" style={{ fontSize: 9 }}>
-              Demotion
-            </Eyebrow>
-          </View>
+          {canRise && (
+            <View className="flex-row items-center gap-1.5">
+              <View className="h-3 w-3 rounded-full" style={{ backgroundColor: palette.jade }} />
+              <Eyebrow className="text-paper/55 text-[0.5625rem]">Promotion</Eyebrow>
+            </View>
+          )}
+          {canFall && (
+            <View className="flex-row items-center gap-1.5">
+              <View className="h-3 w-3 rounded-full" style={{ backgroundColor: palette.rose }} />
+              <Eyebrow className="text-paper/55 text-[0.5625rem]">Demotion</Eyebrow>
+            </View>
+          )}
         </View>
         <View className="h-6" />
       </Screen>

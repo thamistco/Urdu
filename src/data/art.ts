@@ -230,6 +230,52 @@ export const NUMERALS: Record<string, string> = {
   'w-aath': '۸',
   'w-nau': '۹',
   'w-das': '۱۰',
+  // Eleven upward, for the same reason and then some. These ten shared a
+  // single picture — 🔢, all of them — so a teaching card for "eleven" and one
+  // for "twelve" showed the learner the same thing, and `cueOf` saw one cue
+  // where there were ten words.
+  //
+  // That collision reached content: `v-numbers-more` teaches eleven to twenty,
+  // and its closing matching board could seat only one of them before every
+  // other candidate collided. It topped up from the rest of the topic, as its
+  // comment says it may, and drew sau, hazaar and laakh — all three taught in
+  // the *next* lesson. A four-pair board, three pairs never seen.
+  'w-gyarah': '۱۱',
+  'w-barah': '۱۲',
+  'w-terah': '۱۳',
+  'w-chaudah': '۱۴',
+  'w-pandrah': '۱۵',
+  'w-solah': '۱۶',
+  'w-satrah': '۱۷',
+  'w-atharah': '۱۸',
+  'w-unnees': '۱۹',
+  'w-bees': '۲۰',
+  /**
+   * And the tens, which had been left behind by the fix above.
+   *
+   * Thirty to ninety are seven separate words in `v-numbers-more-p2` and all
+   * seven carried the same 🔢 — the identical collision this map was written
+   * to close for eleven to twenty, one lesson later in the same topic. The
+   * consequence is the one the comment above already describes: `cueOf` saw a
+   * single cue where there were seven words, so that lesson's matching board
+   * could seat at most one of them and `pictureIdentifies` was false for every
+   * one, which kept all seven out of picture-prompt questions entirely.
+   *
+   * Found by playing the course rather than by reading it: the numbers topic
+   * was the one place a run kept meeting a number word it had no picture for.
+   */
+  'w-tees': '۳۰',
+  'w-chalees': '۴۰',
+  'w-pachaas': '۵۰',
+  'w-saath': '۶۰',
+  'w-sattar': '۷۰',
+  'w-assi': '۸۰',
+  'w-nabbe': '۹۰',
+  // And the three that were merely arbitrary rather than identical: hazaar,
+  // a thousand, was drawn as 🔟.
+  'w-sau': '۱۰۰',
+  'w-hazaar': '۱۰۰۰',
+  'w-laakh': '۱۰۰۰۰۰',
 };
 
 /**

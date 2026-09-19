@@ -10,6 +10,7 @@ import { Illustration } from '../components/Illustration';
 import type { IconName } from '../art/icons';
 import { palette, withAlpha } from '../theme';
 import { levelTitle } from '../lib/gamification';
+import { count } from '../lib/plural';
 import type { FinishResult } from '../store/useProgressStore';
 
 function RewardTile({ icon, value, label, color }: { icon: IconName; value: string; label: string; color: string }) {
@@ -22,7 +23,7 @@ function RewardTile({ icon, value, label, color }: { icon: IconName; value: stri
       <Display style={{ color }} className="mt-1 text-2xl">
         {value}
       </Display>
-      <Eyebrow style={{ color: withAlpha(color, 0.8), fontSize: 9 }} className="mt-0.5">
+      <Eyebrow style={{ color: withAlpha(color, 0.8) }} className="mt-0.5 text-[0.5625rem]">
         {label}
       </Eyebrow>
     </View>
@@ -106,7 +107,9 @@ export function LessonComplete({
                   }}
                 >
                   <Illustration name="flame" tile={false} size={26} />
-                  <Bold style={{ color: palette.flameLight }}>{result.streak} days in a row. Keep it alight!</Bold>
+                  <Bold style={{ color: palette.flameLight }}>
+                    {count(result.streak, 'day')} in a row. Keep it alight!
+                  </Bold>
                 </View>
               </Reveal>
             )}
@@ -134,7 +137,7 @@ export function LessonComplete({
                   <Illustration name={a.icon} tile={false} size={30} />
                   <View className="flex-1">
                     <Eyebrow style={{ color: palette.jadeLight }}>Achievement · Tier {a.tier}</Eyebrow>
-                    <Bold className="text-[15px]">{a.title}</Bold>
+                    <Bold className="text-[0.9375rem]">{a.title}</Bold>
                   </View>
                 </View>
               </Reveal>

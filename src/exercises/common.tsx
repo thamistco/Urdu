@@ -127,7 +127,7 @@ export function BuildDirection({ roman }: { roman?: boolean }) {
       <Txt style={{ color: palette.gold }} className="text-xs">
         {roman ? '→' : '←'}
       </Txt>
-      <Txt className="text-[11px] text-paper/55">
+      <Txt className="text-[0.6875rem] text-paper/55">
         {roman ? 'builds left to right' : 'builds right to left, like Urdu'}
       </Txt>
     </View>

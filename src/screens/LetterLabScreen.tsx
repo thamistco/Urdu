@@ -42,7 +42,7 @@ export function LetterLabScreen() {
             const active = i === idx;
             const known = learned.includes(l.id);
             return (
-              <Pressable key={l.id} onPress={() => selectLetter(i)} className="mx-1">
+              <Pressable accessibilityRole="button" key={l.id} onPress={() => selectLetter(i)} className="mx-1">
                 <View
                   className="h-14 w-14 items-center justify-center rounded-2xl border"
                   style={{
@@ -59,7 +59,9 @@ export function LetterLabScreen() {
                       className="absolute -right-1 -top-1 h-4 w-4 items-center justify-center rounded-full"
                       style={{ backgroundColor: palette.jade }}
                     >
-                      <Txt style={{ fontSize: 9, color: palette.white }}>✓</Txt>
+                      <Txt className="text-[0.5625rem]" style={{ color: palette.white }}>
+                        ✓
+                      </Txt>
                     </View>
                   )}
                 </View>
@@ -75,7 +77,9 @@ export function LetterLabScreen() {
             </Eyebrow>
             {!letter.connects && (
               <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: withAlpha(palette.rose, 0.2) }}>
-                <Eyebrow style={{ color: palette.roseLight, fontSize: 8 }}>Never joins forward</Eyebrow>
+                <Eyebrow className="text-[0.5rem]" style={{ color: palette.roseLight }}>
+                  Never joins forward
+                </Eyebrow>
               </View>
             )}
           </View>
@@ -85,7 +89,7 @@ export function LetterLabScreen() {
             {tracing ? (
               <TracePad key={tracePadKey(letter.id, pos)} letter={letter} position={pos} />
             ) : (
-              <Pressable onPress={() => speak(letter.word, letter.roman)}>
+              <Pressable accessibilityRole="button" onPress={() => speak(letter.word, letter.roman)}>
                 <View
                   className="rounded-2xl bg-parchment px-6 pb-5 pt-3"
                   style={{ borderWidth: 2, borderColor: palette.ink }}
@@ -96,7 +100,7 @@ export function LetterLabScreen() {
                     </Urdu>
                   </View>
                   <View className="items-center border-t pt-3" style={{ borderTopColor: withAlpha(palette.ink, 0.1) }}>
-                    <Txt style={{ color: palette.ink }} className="text-xs opacity-60">
+                    <Txt style={{ color: palette.ink }} className="text-xs opacity-65">
                       {POSITIONS.find((p) => p.key === pos)?.hint} · tap to hear
                     </Txt>
                   </View>
@@ -137,6 +141,7 @@ export function LetterLabScreen() {
               const active = pos === p.key;
               return (
                 <Pressable
+                  accessibilityRole="button"
                   key={p.key}
                   className="flex-1"
                   onPress={() => {
@@ -156,8 +161,8 @@ export function LetterLabScreen() {
                       {letter.forms[p.key]}
                     </Urdu>
                     <Eyebrow
-                      style={{ color: active ? palette.gold : withAlpha(palette.paper, 0.55), fontSize: 9 }}
-                      className="mt-1"
+                      style={{ color: active ? palette.gold : withAlpha(palette.paper, 0.55) }}
+                      className="mt-1 text-[0.5625rem]"
                     >
                       {p.label}
                     </Eyebrow>
@@ -194,7 +199,11 @@ export function LetterLabScreen() {
           </View>
 
           <View className="mb-8 flex-row items-center justify-between">
-            <Pressable disabled={idx === 0} onPress={() => selectLetter(Math.max(0, idx - 1))}>
+            <Pressable
+              accessibilityRole="button"
+              disabled={idx === 0}
+              onPress={() => selectLetter(Math.max(0, idx - 1))}
+            >
               <Bold className="text-sm text-paper/60" style={{ opacity: idx === 0 ? 0.3 : 1 }}>
                 ← Previous
               </Bold>
@@ -203,6 +212,7 @@ export function LetterLabScreen() {
               {idx + 1} / {LETTERS.length}
             </Txt>
             <Pressable
+              accessibilityRole="button"
               disabled={idx === LETTERS.length - 1}
               onPress={() => selectLetter(Math.min(LETTERS.length - 1, idx + 1))}
             >
