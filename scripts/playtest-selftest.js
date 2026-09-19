@@ -529,5 +529,34 @@ const ok = (name, cond) => {
   ok('a word never met has no gap at all', blank.gapSteps === null);
 }
 
+/**
+ * The fluent learner's own wire.
+ *
+ * The fixtures are the measurements, not invented numbers: three healthy
+ * knows-urdu slices got 96%, 97% and 96% of what they knew; a beginner over
+ * the same measure gets 63%; a letters-only stretch dipped to 77% over 13
+ * questions, which is the small sample the window exists to ignore.
+ */
+{
+  const L = { zeroShapeAfter: 20, clusterNames: 3, clusterMax: 16, fluentFloor: 0.8, fluentWindow: 60, fluent: true };
+  const run = (n, share) =>
+    Array.from({ length: n }, (_, i) => ({ type: 'answer', couldHaveKnown: true, correct: i < Math.round(n * share) }));
+  const fire = (j, over) => tripwires(j, new Memory(), { ...L, ...over });
+
+  ok('a fluent run at 96% of what it knows is fine', fire(run(60, 0.96)).length === 0);
+  ok('and at 97%', fire(run(60, 0.97)).length === 0);
+  ok(
+    'a fluent run scoring like a beginner is stopped',
+    /scoring like a beginner/.test((fire(run(60, 0.63))[0] || {}).name || '')
+  );
+  ok('the letters-only dip is too small a sample to fire', fire(run(13, 0.77)).length === 0);
+  // The same numbers on a beginner are the beginner working, not a fault.
+  ok('a beginner scoring like a beginner is not', fire(run(60, 0.63), { fluent: false }).length === 0);
+  // Guesses are not misses: a speaker on the letter lessons guesses a lot and
+  // knows little, and none of that reaches this wire.
+  const guessing = Array.from({ length: 200 }, () => ({ type: 'answer', couldHaveKnown: false, correct: false }));
+  ok('questions it never had the answer for leave the wire alone', fire(guessing).length === 0);
+}
+
 console.log(fails ? `\n${fails} failed` : '\nall good');
 process.exit(fails ? 1 : 0);

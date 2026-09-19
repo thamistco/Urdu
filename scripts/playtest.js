@@ -227,6 +227,30 @@ const ONBOARD = has('onboard');
  */
 const TRIPWIRES = {
   /**
+   * A learner who already speaks Urdu, scoring like one who does not.
+   *
+   * This persona exists to reach what a beginner cannot, and the way it fails
+   * is silent: it plays a full slice, the report reads plausibly, and only a
+   * side-by-side with a beginner's numbers shows that the fluency never
+   * arrived. That has happened — a knows-urdu run once scored 46%, one point
+   * above the beginner it was meant to outclass, on screens it could read
+   * perfectly, and it took reading two reports an hour apart to notice.
+   *
+   * Measured over three healthy slices rather than guessed: of the questions
+   * this learner had the answer for, it got 96%, 97% and 96% right. A beginner
+   * over the same measure gets 63%. The floor sits between them with room on
+   * both sides, and the window is large enough that the small-sample dip a
+   * letters-only stretch produces — 77% over 13 questions — cannot reach it.
+   *
+   * Scoped to what it *knew*, not to the raw score, on purpose. A speaker
+   * skips the vocabulary and lands on the letter lessons, where this driver
+   * genuinely cannot see glyph joining and scores 40%; those show up as
+   * guesses, not as things known and missed, so they leave this untouched.
+   */
+  fluentFloor: Number(argOf('fluent-floor', 0.8)),
+  fluentWindow: Number(argOf('fluent-window', 60)),
+
+  /**
    * Attempts at one exercise shape, all wrong, where the learner was supposed
    * to know the answer.
    *
@@ -418,6 +442,27 @@ function tripwires(journal, memory, limits = TRIPWIRES) {
       return !plain.some((o) => o !== t && o.length < t.length && me.includes(o.toLowerCase()));
     });
   };
+  /**
+   * The fluent learner missing what it knows. See `fluentFloor` above for the
+   * measurements behind the numbers.
+   */
+  if (limits.fluent) {
+    const known = journal.filter((e) => e.type === 'answer' && e.couldHaveKnown).slice(-limits.fluentWindow);
+    if (known.length >= limits.fluentWindow) {
+      const right = known.filter((e) => e.correct).length;
+      const share = right / known.length;
+      if (share < limits.fluentFloor) {
+        fired.push({
+          name: 'the fluent learner is scoring like a beginner',
+          detail:
+            `${right} of the last ${known.length} questions it had the answer for ` +
+            `(${Math.round(share * 100)}%, and a healthy run of this persona sits at 96%)`,
+          note: 'Either the fluency never reached the screen or the app is refusing answers that are right.',
+        });
+      }
+    }
+  }
+
   const swollen = memory.clusters.find(
     (c) => namesIn(c).length > limits.clusterNames || c.tokens.size > limits.clusterMax
   );
@@ -1735,13 +1780,36 @@ function writeReport(journal, memory, stats) {
       `Replay with \`npm run playtest -- --seed ${SEED} --track ${TRACK} --persona ${PERSONA}\`.`,
     ``
   );
-  if (PERSONA === 'knows-urdu')
+  if (PERSONA === 'knows-urdu') {
+    /**
+     * The one number that says whether the fluency arrived.
+     *
+     * A run where the seeding never reached the screen reads perfectly
+     * otherwise — it plays every lesson, finishes every slice, and files a
+     * plausible report. What gives it away is this: of the questions it had
+     * the answer for, a healthy run of this persona gets 96%. One that scored
+     * 46% overall, a point above the beginner it was meant to outclass, went
+     * unnoticed for an hour because nothing printed it. The tripwire stops a
+     * run that falls this far; the line is here so a run that drifts halfway
+     * is visible without a second report to compare against.
+     */
+    const known = answered.filter((e) => e.couldHaveKnown);
+    const kRight = known.filter((e) => e.correct).length;
     lines.push(
       `This learner already knew the language when the app opened, so "tested before taught" and ` +
         `"met once, gone" cannot fire — read this run for what a beginner never reaches: reviews ` +
         `falling due, lessons that are too easy, streaks and leagues held long enough to matter.`,
       ``
     );
+    lines.push(
+      known.length
+        ? `Of the ${known.length} questions it had the answer for, it got ${kRight} right ` +
+            `(${Math.round((kRight / known.length) * 100)}%). A healthy run of this persona sits at 96%; ` +
+            `a beginner over the same measure gets 63%.`
+        : `It was never asked anything it had the answer for, which is itself the finding.`,
+      ``
+    );
+  }
   /**
    * When this file was last written, and how far the run had got.
    *
@@ -2019,7 +2087,7 @@ async function playSession(page, ctx, sessionName, kind = 'lesson') {
     // See `TRIPWIRES`. Checked here, on every screen, rather than at the end
     // of the run or at some checkpoint: both of the things these catch were
     // decidable within minutes and were found hours later.
-    const fired = tripwires(journal, memory);
+    const fired = tripwires(journal, memory, { ...TRIPWIRES, fluent: PERSONA === 'knows-urdu' });
     if (fired.length) {
       for (const t of fired) {
         journal.push({ type: 'tripwire', lesson: sessionName, step, name: t.name, detail: t.detail });
