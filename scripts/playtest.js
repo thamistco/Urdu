@@ -3158,7 +3158,10 @@ async function main() {
      * its twenty-four lessons, and reported it as though the app had run out of
      * course.
      */
-    await page.goto(`http://127.0.0.1:${PORT}/`);
+    // Same explicit timeout as the retry below, and for the same reason: the
+    // 1.5s default that makes locator misses cheap is far too short for a
+    // page load, and a throw here would end the run rather than be reported.
+    await page.goto(`http://127.0.0.1:${PORT}/`, { timeout: 30000 }).catch(() => {});
     // Wait for the path to actually be on screen. A fixed sleep here reported
     // "no lesson could be opened" on a perfectly healthy app, because three
     // reloads in a row take longer to mount than any number guessed in advance.
@@ -3172,16 +3175,59 @@ async function main() {
       )
       .catch(() => {});
 
-    const opened = await page.evaluate(() => {
-      const n = Array.from(document.querySelectorAll('[role="button"]')).find((n) =>
-        /start this lesson/i.test(n.getAttribute('aria-label') || '')
-      );
-      if (!n) return null;
-      n.scrollIntoView({ block: 'center' });
-      const label = n.getAttribute('aria-label');
-      n.click();
-      return label;
-    });
+    /**
+     * Open the next lesson on the path, and give a dead page one more chance.
+     *
+     * A knows-urdu run stopped after five lessons on "no lesson could be
+     * opened — 0 buttons on screen". The app was fine: the screenshot taken
+     * immediately afterwards shows Home fully drawn, and the journal's own
+     * capture of the DOM at that moment reads `body: ''`. The page had simply
+     * not come up, and the wait above had already spent its twenty-five
+     * seconds on an empty document.
+     *
+     * One reload is the whole fix, and it is worth 19 lessons: that is what
+     * the run threw away rather than press the button again. A second failure
+     * still stops the run — this retries a blank page, it does not paper over
+     * a path that genuinely has nothing to open.
+     */
+    const openNext = () =>
+      page.evaluate(() => {
+        const n = Array.from(document.querySelectorAll('[role="button"]')).find((b) =>
+          /start this lesson/i.test(b.getAttribute('aria-label') || '')
+        );
+        if (!n) return null;
+        n.scrollIntoView({ block: 'center' });
+        const label = n.getAttribute('aria-label');
+        n.click();
+        return label;
+      });
+    let opened = await openNext();
+    if (!opened) {
+      const blank = await page.evaluate(() => document.body.innerText.trim() === '').catch(() => false);
+      journal.push({ type: 'pathRetried', lesson: stats.lessonsEntered + 1, blank });
+      console.log(`    the path did not come up${blank ? ' (the page was blank)' : ''} — reloading once`);
+      /**
+       * An explicit timeout, because `setDefaultTimeout(1500)` governs
+       * navigation too.
+       *
+       * The first version of this retry called a bare `page.reload()`, which
+       * gave up after 1.5 seconds, threw into its own `.catch`, and left the
+       * page half-navigated — so the retry reliably produced the blank
+       * document it was written to recover from. Measured directly: a reload
+       * with room to finish comes back with 4,786 characters and 88 buttons.
+       */
+      await page.reload({ timeout: 30000 }).catch(() => {});
+      await page
+        .waitForFunction(
+          () =>
+            Array.from(document.querySelectorAll('[role="button"]')).some((n) =>
+              /start this lesson/i.test(n.getAttribute('aria-label') || '')
+            ),
+          { timeout: 25000 }
+        )
+        .catch(() => {});
+      opened = await openNext();
+    }
     if (!opened) {
       // With a screenshot and what was on screen, because the bare note has
       // now twice been the entire content of a failed run: a reader cannot
