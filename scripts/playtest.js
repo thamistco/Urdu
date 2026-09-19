@@ -197,6 +197,15 @@ const SETTINGS_EVERY = Number(argOf('settings-every', 12));
 /** Skip the path entirely: one practice pass and one settings pass, for
  *  checking those two surfaces without paying for a course walk. */
 const SURFACES_ONLY = has('surfaces-only');
+/**
+ * Walk the eight screens before the first lesson instead of skipping them.
+ *
+ * Off by default, so a resumed slice still starts where it is told to. On, the
+ * run enters with `onboarded: false` and plays the real flow — which is the
+ * only way the speaker's basic-vocabulary skip and the alphabet-skip offer are
+ * ever reached, both being decided there and nowhere else.
+ */
+const ONBOARD = has('onboard');
 
 /**
  * When to stop the whole run rather than finish it and read the wreckage.
@@ -1685,6 +1694,25 @@ function surfaceFindings(journal) {
     if (!e.moved) out.push(`Settings · the "${e.to}" track could not be chosen.`);
     else if (!e.stillOnSettings) out.push(`Settings · choosing "${e.to}" left the Settings screen.`);
   }
+  for (const e of journal.filter((x) => x.type === 'onboardingStuck'))
+    out.push(`Onboarding · it did not get past "${e.at}".`);
+  for (const e of journal.filter((x) => x.type === 'onboarded')) {
+    if (!e.reachedHome) out.push(`Onboarding · finishing it did not land on the learn path.`);
+    if (!e.onboarded) out.push(`Onboarding · it finished without recording that it had.`);
+    if (e.asked < 4) out.push(`Onboarding · the placement quiz asked ${e.asked} question(s), not 4.`);
+    // The two things the flow exists to decide for a learner who already
+    // speaks Urdu. Both are false for a beginner, correctly, so neither is
+    // checked against one.
+    if (e.speaker) {
+      if (e.background !== 'speaker')
+        out.push(`Onboarding · said "I already speak it" and the profile recorded "${e.background}".`);
+      if (!e.skipped)
+        out.push(`Onboarding · a speaker finished with no lesson skipped, so the basics skip did nothing.`);
+    } else if (e.skipped) {
+      out.push(`Onboarding · a learner starting from scratch had ${e.skipped} lesson(s) skipped for them.`);
+    }
+  }
+
   for (const e of journal.filter((x) => x.type === 'settingsStuck')) out.push(`Settings · ${e.note}.`);
   for (const e of journal.filter((x) => x.type === 'resetOffered')) {
     if (e.tapped && !e.confirmed)
@@ -2856,6 +2884,160 @@ async function settingsSession(page, ctx) {
   });
 }
 
+/**
+ * Walk the eight screens a learner meets before the first lesson.
+ *
+ * This had never been driven by anything. Every run here — fifteen slices and
+ * both personas — entered through `enterAsGuest`, which writes `onboarded:
+ * true` straight into the store, and no check script visits `/setup` either.
+ * So the first thing every real learner sees was the one flow nothing had
+ * played.
+ *
+ * It matters most for the persona that already speaks Urdu, because this is
+ * where the app treats the two apart: `background === 'speaker'` is what skips
+ * the basic vocabulary, and a speaker who also scores full marks on the
+ * placement quiz is the only learner ever offered the alphabet skip. That code
+ * exists for this persona alone. Without walking it, a knows-urdu run is a
+ * beginner with a better memory starting at lesson one.
+ *
+ * The persona answers as itself: it says whether it speaks Urdu, and it
+ * answers the placement questions out of the same memory it plays lessons
+ * with. Nothing here is told the right answer.
+ */
+async function onboardingSession(page, ctx) {
+  const { journal, memory, stats } = ctx;
+  stats.onboardings++;
+  const speaker = PERSONA === 'knows-urdu';
+  const steps = [];
+  const note = (step, did) => steps.push(`${step}: ${did}`);
+
+  await page.goto(`http://127.0.0.1:${PORT}/`);
+  await page.waitForTimeout(3000);
+  const opening = await readSurface(page);
+  if (!/let.s start/i.test(opening.text)) {
+    journal.push({ type: 'onboardingStuck', at: 'welcome', saw: opening.lines.slice(0, 8) });
+    await page.screenshot({ path: path.join(OUT, 'onboarding-stuck.png') }).catch(() => {});
+    return { finished: false, steps };
+  }
+
+  await tapControl(page, /^Let.s start$/i);
+  await page.waitForTimeout(900);
+  note('welcome', 'started');
+
+  // Goal, track, voice: whatever is on offer. None of the three changes what
+  // the learner is taught, and picking the first keeps the run replayable.
+  const goal = (await readSurface(page)).controls.find((c) =>
+    /^(Speak with family|Read & write|Reconnect|I.m just curious)/i.test(c)
+  );
+  if (goal) await tapControl(page, new RegExp(`^${goal.slice(0, 18).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+  await page.waitForTimeout(500);
+  note('goal', goal || 'nothing on offer');
+  await tapControl(page, /^Continue$/i);
+  await page.waitForTimeout(900);
+
+  // The track step is the one this run is already pinned to, so it takes the
+  // track the run was started with rather than whatever sits first.
+  const wanted = TRACK === 'roman' ? /Roman/i : TRACK === 'script' ? /Script first/i : /Both together/i;
+  note('track', (await tapControl(page, wanted)) ? TRACK : `could not choose ${TRACK}`);
+  await page.waitForTimeout(500);
+  await tapControl(page, /^Continue$/i);
+  await page.waitForTimeout(900);
+
+  // Voice only exists when a second voice shipped; skipped silently when not.
+  if (/’s voice|Tap to hear it/i.test((await readSurface(page)).text)) {
+    await tapControl(page, /’s voice|Tap to hear it/i);
+    await page.waitForTimeout(500);
+    await tapControl(page, /^Continue$/i);
+    await page.waitForTimeout(900);
+    note('voice', 'picked one');
+  }
+
+  /**
+   * The answer that separates the two personas, given as the learner's own
+   * self-report — which is what the app says it trusts over the quiz.
+   */
+  const said = speaker ? /already speak or understand/i : /starting from scratch/i;
+  note(
+    'background',
+    (await tapControl(page, said)) ? (speaker ? 'already speaks it' : 'starting from scratch') : 'could not answer'
+  );
+  await page.waitForTimeout(500);
+  await tapControl(page, /^Continue$/i);
+  await page.waitForTimeout(1200);
+
+  /**
+   * The placement quiz, answered out of memory like any other question.
+   *
+   * Four questions, each advancing on the tap, so there is no Continue to
+   * press. A beginner guesses and scores what a beginner scores; a speaker
+   * knows them and should reach the top level — which is the only way the
+   * alphabet skip is ever offered, and so the only way that branch is tested.
+   */
+  let asked = 0;
+  for (let i = 0; i < 8; i++) {
+    const screen = await readSurface(page);
+    if (!/question \d|of 4/i.test(screen.text) && !/which letter|what does|which of these/i.test(screen.text)) break;
+    const { options } = await readOptions(page);
+    if (!options.length) break;
+    const prompt = screen.lines.slice(0, 6).join(' ');
+    const decision = chooseOption(memory, [prompt, ...screen.lines.slice(0, 4)], options);
+    await page
+      .locator('[role="button"]')
+      .nth(decision.pick.i)
+      .click()
+      .catch(() => {});
+    asked++;
+    await page.waitForTimeout(1100);
+  }
+  note('placement', `${asked} question(s) answered`);
+
+  // Daily goal, then the summary screen.
+  await tapControl(page, /^(Steady|Casual|Serious|Intense|Gentle)/i);
+  await page.waitForTimeout(500);
+  await tapControl(page, /^Continue$/i);
+  await page.waitForTimeout(1200);
+
+  const ready = await readSurface(page);
+  /**
+   * The alphabet skip, offered only to a speaker who scored full marks.
+   * Declined on purpose: the run is here to walk the course, and a driver that
+   * skipped the thirteen letter lessons would report on a path it had chosen
+   * not to see. That it was *offered* is the thing worth recording.
+   */
+  const offeredScriptSkip = /alphabet|letter lessons|skip the script/i.test(ready.text);
+  note('ready', offeredScriptSkip ? 'was offered the alphabet skip' : 'no alphabet skip offered');
+
+  const started = await tapControl(page, /^Start learning$/i);
+  await page.waitForTimeout(3000);
+  const home = await readSurface(page);
+  const onPath = /start this lesson|tap any lesson/i.test(home.text);
+
+  const state = await page
+    .evaluate(() => {
+      const raw = JSON.parse(localStorage.getItem('harf-progress') || 'null');
+      const s = raw && raw.state ? raw.state : {};
+      return {
+        onboarded: !!s.onboarded,
+        background: s.background ?? null,
+        startLevel: s.startLevel ?? null,
+        skipped: Object.keys(s.skippedLessons || {}).length,
+      };
+    })
+    .catch(() => ({}));
+
+  journal.push({
+    type: 'onboarded',
+    persona: PERSONA,
+    speaker,
+    steps,
+    asked,
+    offeredScriptSkip,
+    reachedHome: started && onPath,
+    ...state,
+  });
+  return { finished: started && onPath, steps };
+}
+
 async function main() {
   if (!fs.existsSync(path.join(DIST, 'index.html'))) {
     console.error('playtest — no dist/. Run `npm run build:web` first.');
@@ -2881,7 +3063,14 @@ async function main() {
 
   const memory = new Memory();
   const journal = [];
-  const stats = { lessonsEntered: 0, lessonsFinished: 0, practiceSessions: 0, practiceFinished: 0, settingsPasses: 0 };
+  const stats = {
+    lessonsEntered: 0,
+    lessonsFinished: 0,
+    practiceSessions: 0,
+    practiceFinished: 0,
+    settingsPasses: 0,
+    onboardings: 0,
+  };
   /** Everything a session needs to play and to write down what it saw. */
   const ctx = { journal, memory, stats, browser };
   /**
@@ -2922,11 +3111,29 @@ async function main() {
   await enterAsGuest(
     page,
     `http://127.0.0.1:${PORT}/`,
-    { hearts: 5, gems: 9999, ...(resume ? { completedLessons: resume.completedLessons } : {}) },
+    {
+      hearts: 5,
+      gems: 9999,
+      // `enterAsGuest` writes `onboarded: true`; this is the one run that wants
+      // it left undone, so the flow can actually be played.
+      ...(ONBOARD ? { onboarded: false } : {}),
+      ...(resume ? { completedLessons: resume.completedLessons } : {}),
+    },
     { track: TRACK }
   );
   await page.reload();
   await page.waitForTimeout(2500);
+
+  if (ONBOARD) {
+    const done = await onboardingSession(page, ctx);
+    flush();
+    if (!done.finished) {
+      console.log(`  ⚠ onboarding did not reach the path — ${done.steps.join(' · ')}`);
+      await browser.close();
+      process.exit(1);
+    }
+    console.log(`  onboarding: ${done.steps.join(' · ')}`);
+  }
 
   if (SURFACES_ONLY) {
     await practiceSession(page, ctx, 0);
