@@ -2926,12 +2926,15 @@ async function onboardingSession(page, ctx) {
 
   // Goal, track, voice: whatever is on offer. None of the three changes what
   // the learner is taught, and picking the first keeps the run replayable.
-  const goal = (await readSurface(page)).controls.find((c) =>
-    /^(Speak with family|Read & write|Reconnect|I.m just curious)/i.test(c)
-  );
-  if (goal) await tapControl(page, new RegExp(`^${goal.slice(0, 18).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+  // A goal card carries its label and its description in one run of text, so
+  // the journal line read "Speak with familyParents, grandparents, relatives
+  // back home". Only the label is the choice; the rest is the card talking.
+  const GOALS = /^(Speak with family|Read & write it|Reconnect with heritage|I.m just curious)/i;
+  const onOffer = (await readSurface(page)).controls.find((c) => GOALS.test(c));
+  const goalName = onOffer ? GOALS.exec(onOffer)[0] : null;
+  if (goalName) await tapControl(page, GOALS);
   await page.waitForTimeout(500);
-  note('goal', goal || 'nothing on offer');
+  note('goal', goalName || 'nothing on offer');
   await tapControl(page, /^Continue$/i);
   await page.waitForTimeout(900);
 
