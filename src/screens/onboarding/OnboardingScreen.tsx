@@ -299,7 +299,21 @@ export function OnboardingScreen() {
   // The placement level and what it (plus a heritage background) skips —
   // computed here rather than inline in `finish` so the "ready" screen can
   // also describe it before the learner commits.
-  const lvl = pCorrect >= 4 ? 2 : pCorrect >= 2 ? 1 : 0;
+  /**
+   * Scored against how many were actually asked, not against a hard four.
+   *
+   * The Roman track filters `PLACEMENT` to its own questions and takes four,
+   * and there are exactly four of them — so the top level needed a clean sweep
+   * with no margin at all. Deleting one Roman question, or adding a third
+   * track, would have capped that track at level 1 for everybody, silently:
+   * nothing reads `lvl` except the level a learner starts on and whether a
+   * speaker is offered the alphabet skip, and neither announces itself.
+   *
+   * Written as "all of them" and "half of them" so the thresholds move with
+   * the quiz instead of being two numbers that happen to match today.
+   */
+  const asked = placementQuestions.length;
+  const lvl = asked === 0 ? 0 : pCorrect >= asked ? 2 : pCorrect >= Math.ceil(asked / 2) ? 1 : 0;
 
   /**
    * Two different claims, so two different skips.

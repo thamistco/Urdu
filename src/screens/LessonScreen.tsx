@@ -139,6 +139,31 @@ export function LessonScreen() {
     (id: string, type: string, grade: SrsGrade) => gradeItem(id, type as ItemType, grade),
     [gradeItem]
   );
+  /**
+   * Items this lesson has already taken a heart for: a heart for not knowing
+   * the thing, not for the lesson asking twice.
+   *
+   * A vocabulary lesson climbs — meet the word, recall it, then produce it —
+   * so one word it has not taught yet cost two or three hearts before the
+   * lesson was over. That is the repetition working as designed, charged to
+   * the learner as though it were three separate failures.
+   *
+   * Measured over a beginner walking all 350 lessons: 12.9 wrong answers per
+   * lesson but only 6.5 *distinct* items wrong, or 1.99 hearts per item
+   * missed. With five hearts that is 2.6 walls in every lesson — and the wall
+   * is meant to be a choice between waiting and paying. It was neither: a
+   * lesson pays 5 gems and a refill costs 40, so a learner earning their way
+   * out needs eight clean lessons to buy back one wall they hit twice in the
+   * lesson they are standing in.
+   *
+   * Charging once per item takes those to 6.5 and 1.3. The mechanic is
+   * untouched for a learner who genuinely does not know five different things;
+   * what goes is the multiplier the climb was adding on top.
+   *
+   * Keyed on the item, so an exercise covering several — a matching board —
+   * only spares the ones already paid for.
+   */
+  const chargedRef = useRef<Set<string>>(new Set());
   const loseHeart = useProgressStore((s) => s.loseHeart);
   const finishLesson = useProgressStore((s) => s.finishLesson);
   const refillHearts = useProgressStore((s) => s.refillHearts);
@@ -301,6 +326,10 @@ export function LessonScreen() {
       if (result.correct) {
         setCorrectCount((c) => c + 1);
       } else if (!isTeaching(exercises[idx]) && !isPretest(exercises[idx])) {
+        // One heart per item per lesson — see `chargedRef`.
+        const already = result.items.length > 0 && result.items.every((it) => chargedRef.current.has(it.id));
+        result.items.forEach((it) => chargedRef.current.add(it.id));
+        if (already) return;
         loseHeart();
         if (useProgressStore.getState().hearts <= 0) {
           // Held until the learner moves on, rather than shown on a timer.
@@ -375,6 +404,18 @@ export function LessonScreen() {
   useEffect(() => {
     advanceRef.current = advance;
   });
+
+  /**
+   * A fresh ledger per lesson.
+   *
+   * The screen is pushed per lesson and so normally mounts fresh, but "practise
+   * again" on the same id reuses it, and a ref outlives a re-render. Without
+   * this, a second run of the same lesson would start with every item already
+   * paid for and cost no hearts at all.
+   */
+  useEffect(() => {
+    chargedRef.current = new Set();
+  }, [lesson.id]);
 
   if (done && result) {
     return <LessonComplete result={result} correct={correctCount} total={total} onHome={() => nav.navigate('Main')} />;
