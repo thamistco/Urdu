@@ -434,6 +434,46 @@ const ok = (name, cond) => {
   ok('a switch that moves is not a finding', only(toggled(true, false)).length === 0);
   ok('a switch that does not is', /"Haptics" did not change/.test(only(toggled(true, true))[0] || ''));
 
+  /**
+   * Onboarding decides two things for a learner who already speaks Urdu, and
+   * nothing else in the app decides them: the basic vocabulary is skipped, and
+   * the self-report is what is recorded. A beginner gets neither, and a
+   * beginner who somehow got the skip is just as wrong.
+   */
+  const onboarded = (over) => [
+    {
+      type: 'onboarded',
+      persona: 'knows-urdu',
+      speaker: true,
+      steps: [],
+      asked: 4,
+      reachedHome: true,
+      onboarded: true,
+      background: 'speaker',
+      startLevel: 2,
+      skipped: 30,
+      ...over,
+    },
+  ];
+  ok('a speaker who lands on the path with lessons skipped is not a finding', only(onboarded({})).length === 0);
+  ok('a speaker whose basics were not skipped is', /no lesson skipped/.test(only(onboarded({ skipped: 0 }))[0] || ''));
+  ok('a speaker recorded as something else is', /recorded "new"/.test(only(onboarded({ background: 'new' }))[0] || ''));
+  ok('a short placement quiz is', /asked 2 question\(s\), not 4/.test(only(onboarded({ asked: 2 }))[0] || ''));
+  ok(
+    'finishing without reaching the path is',
+    /did not land on the learn path/.test(only(onboarded({ reachedHome: false }))[0] || '')
+  );
+  ok(
+    'a beginner handed a skip is',
+    /starting from scratch had 30 lesson/.test(
+      only(onboarded({ speaker: false, persona: 'beginner', background: 'new' }))[0] || ''
+    )
+  );
+  ok(
+    'and a beginner with nothing skipped is not',
+    only(onboarded({ speaker: false, persona: 'beginner', background: 'new', skipped: 0 })).length === 0
+  );
+
   const reset = (tapped, confirmed) => [{ type: 'resetOffered', tapped, confirmed, stillOnSettings: true }];
   ok('a reset that asks first is not a finding', only(reset(true, true)).length === 0);
   ok('a reset that does not ask is', /ran without asking for confirmation/.test(only(reset(true, false))[0] || ''));
