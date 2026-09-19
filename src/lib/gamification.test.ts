@@ -8,6 +8,9 @@ import {
   gemsForLesson,
   gemsShortOfRefill,
   getLeague,
+  leagueAbove,
+  leagueBelow,
+  leagueMovementLine,
   LEAGUES,
   levelFromXp,
   levelProgress,
@@ -152,6 +155,55 @@ describe('the league ladder', () => {
       expect(demote(promote(id))).toBe(id);
       expect(promote(demote(id))).toBe(id);
     }
+  });
+});
+
+/**
+ * The ends of the ladder, which is where the leaderboard was lying.
+ *
+ * `promote`/`demote` clamp, correctly — you stay where you are rather than
+ * falling out of the bottom league. The screen read them as "the league next
+ * door" and so told a learner standing in Clay that the bottom three fall to
+ * Clay, and a learner in Emerald that the top five rise to Emerald. Clay is
+ * the league every single learner starts in, so the wrong half of this was
+ * also the half everybody saw.
+ *
+ * The sentence is asserted whole rather than through the helpers, because the
+ * defect was the sentence.
+ */
+describe('what a week in a league can do to you', () => {
+  const bottom = LEAGUES[0].id;
+  const top = LEAGUES[LEAGUES.length - 1].id;
+
+  it('has no neighbour past either end', () => {
+    expect(leagueBelow(bottom)).toBeNull();
+    expect(leagueAbove(top)).toBeNull();
+  });
+
+  it('has both neighbours everywhere in between', () => {
+    for (let i = 1; i < LEAGUES.length - 1; i++) {
+      expect(leagueAbove(LEAGUES[i].id)).toBe(LEAGUES[i + 1].id);
+      expect(leagueBelow(LEAGUES[i].id)).toBe(LEAGUES[i - 1].id);
+    }
+  });
+
+  it('never names the league you are standing in as somewhere to move to', () => {
+    for (const l of LEAGUES) {
+      const line = leagueMovementLine(l.id);
+      expect(line, `${l.name}: "${line}"`).not.toMatch(new RegExp(`(rise|fall) to ${l.name}`));
+    }
+  });
+
+  it('says the true thing in the league everybody starts in', () => {
+    expect(leagueMovementLine(bottom)).toBe('Top 5 rise to Copper · nobody falls out of Clay.');
+  });
+
+  it('says the true thing at the top', () => {
+    expect(leagueMovementLine(top)).toBe('Emerald is the top league · bottom 3 fall to Ruby.');
+  });
+
+  it('still promises both moves in the middle', () => {
+    expect(leagueMovementLine('gold')).toBe('Top 5 rise to Sapphire · bottom 3 fall to Silver.');
   });
 });
 

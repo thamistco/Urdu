@@ -144,6 +144,7 @@ export function PracticeScreen() {
         {/* daily review hero */}
         <Reveal delay={80}>
           <Pressable
+            accessibilityRole="button"
             disabled={!started}
             onPress={() => go('practice-review')}
             style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
@@ -315,19 +316,19 @@ export function PracticeScreen() {
                     className="rounded-lg px-2 py-1"
                     style={{ backgroundColor: withAlpha(LEVEL_META[g.level].color, 0.18) }}
                   >
-                    <Bold style={{ color: LEVEL_META[g.level].color }} className="text-[10px]">
+                    <Bold style={{ color: LEVEL_META[g.level].color }} className="text-[0.625rem]">
                       {LEVEL_META[g.level].tag}
                     </Bold>
                   </View>
                   <View className="flex-1">
-                    <Bold className="text-[15px]" style={{ writingDirection: 'ltr', textAlign: 'left' }}>
+                    <Bold className="text-[0.9375rem]" style={{ writingDirection: 'ltr', textAlign: 'left' }}>
                       {g.title}
                     </Bold>
                     <Txt className="text-xs text-paper/55" style={{ writingDirection: 'ltr', textAlign: 'left' }}>
                       {g.summary}
                     </Txt>
                   </View>
-                  <Txt className="text-paper/55">›</Txt>
+                  <Txt className="text-base text-paper/55">›</Txt>
                 </View>
               </Pressable>
             ))}
@@ -350,19 +351,19 @@ export function PracticeScreen() {
                     className="rounded-lg px-2 py-1"
                     style={{ backgroundColor: withAlpha(LEVEL_META[p.level].color, 0.18) }}
                   >
-                    <Bold style={{ color: LEVEL_META[p.level].color }} className="text-[10px]">
+                    <Bold style={{ color: LEVEL_META[p.level].color }} className="text-[0.625rem]">
                       {LEVEL_META[p.level].tag}
                     </Bold>
                   </View>
                   <View className="flex-1">
-                    <Bold className="text-[15px]" style={{ writingDirection: 'ltr', textAlign: 'left' }}>
+                    <Bold className="text-[0.9375rem]" style={{ writingDirection: 'ltr', textAlign: 'left' }}>
                       {p.title}
                     </Bold>
                     <Txt className="text-xs text-paper/55">
                       {p.kind === 'conversation' ? 'Conversation' : 'Passage'} · {p.lines} lines
                     </Txt>
                   </View>
-                  <Txt className="text-paper/55">›</Txt>
+                  <Txt className="text-base text-paper/55">›</Txt>
                 </View>
               </Pressable>
             ))}
@@ -382,7 +383,7 @@ export function PracticeScreen() {
                   <Bold style={{ color: meta.color }} className="text-xs uppercase tracking-wider">
                     {meta.tag} · {meta.title}
                   </Bold>
-                  <Txt className="text-[11px] text-paper/55">{levelTopics.length} sets</Txt>
+                  <Txt className="text-[0.6875rem] text-paper/55">{levelTopics.length} sets</Txt>
                 </View>
                 <View className="flex-row flex-wrap justify-between">
                   {levelTopics.map((t, i) => {
@@ -401,7 +402,7 @@ export function PracticeScreen() {
                             <Bold className="mt-2 text-sm" numberOfLines={1}>
                               {t.title}
                             </Bold>
-                            <Txt className="mt-0.5 text-[11px] text-paper/55">
+                            <Txt className="mt-0.5 text-[0.6875rem] text-paper/55">
                               {known}/{words.length} words
                             </Txt>
                             <View className="mt-2">

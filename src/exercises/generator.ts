@@ -14,7 +14,8 @@ import {
   registerOf as pronounRegisterOf,
   type Sentence,
 } from '../data/sentences';
-import { cueOf, VERDICT_CUES } from '../data/art';
+import { cueOf, VERDICT_CUES, NUMERALS } from '../data/art';
+import { toUrduDigits, reversedOf } from '../lib/numerals';
 import { GLYPH_MASKS } from '../data/glyphMasks';
 import { shuffle, seededShuffle } from '../lib/shuffle';
 import {
@@ -1038,9 +1039,43 @@ function sentenceExercise(sentence: Sentence, track: LearnTrack): Exercise | und
  */
 function sentenceReinforceClimb(picks: Sentence[], pool: Word[], track: LearnTrack, exercises: Exercise[]): void {
   const ROUNDS = 5;
-  for (let round = 0; round < ROUNDS; round++) {
-    picks.forEach((sen, idx) => {
-      const turn = (round + idx) % ROUNDS;
+  /**
+   * Every sentence starts at turn 0 — the turn that introduces it.
+   *
+   * `turn = (round + idx) % ROUNDS` staggered the kinds so a round would not
+   * play the same one five times over, and it did that. What it also did was
+   * decide where each sentence *entered* the cycle: only `idx` 0 began on the
+   * meet turn. In a real pronouns lesson four of five sentences were asked to
+   * be produced or recalled before they had ever been shown, and two of them
+   * met the meet turn last — exercise 24 of 28. A playtest caught it as five
+   * sentences its learner could only guess at; the generator's own output
+   * confirms it without a browser.
+   *
+   * The stagger moves to *when* a sentence enters instead of *where*: sentence
+   * `idx` starts one slot later than the one before it, and then walks its own
+   * turns 0..4 in order. Within a slot the sentences are therefore at
+   * consecutive turns, whose kinds differ (meet, produce, recall, produce,
+   * recall), so the no-two-alike-in-a-row property the cycle was built for
+   * holds exactly as it did — and the counts per kind are untouched, which is
+   * what `check:shape`'s 40% cap is measured against.
+   */
+  for (let slot = 0; slot < ROUNDS + picks.length - 1; slot++) {
+    /**
+     * The sentences in flight this slot, oldest first — and, when the slot
+     * would open on the kind the previous one closed with, rotated so it does
+     * not. Only the two-sentence case actually needs it (its every slot held a
+     * matching pair, giving two adjacent repeats where the old cycle had none);
+     * larger lessons are left as the diagonal produces them.
+     */
+    const inFlight = picks.map((sen, idx) => ({ sen, turn: slot - idx })).filter((x) => x.turn >= 0 && x.turn < ROUNDS);
+    const lastKind = exercises.length ? exercises[exercises.length - 1].kind : '';
+    const kindOf = (turn: number) =>
+      turn === 1 || turn === 3 ? 'sentenceBuild' : turn === 0 ? 'meaningPick' : 'wordFromMeaning';
+    if (inFlight.length > 1 && kindOf(inFlight[0].turn) === lastKind) {
+      const j = inFlight.findIndex((x) => kindOf(x.turn) !== lastKind);
+      if (j > 0) inFlight.unshift(...inFlight.splice(j, 1));
+    }
+    inFlight.forEach(({ sen, turn }) => {
       const w = SENTENCE_WORDS.find((x) => x.id === sen.id);
       if (!w) return;
       if (turn === 1 || turn === 3) {
@@ -1317,6 +1352,101 @@ function produceExercise(w: Word, pool: Word[], track: LearnTrack, teachesScript
    * guards, so the Roman-loanword and verdict-cue cases stay handled.
    */
   return wordExercise(w, pool, track, 'meet', 1);
+}
+
+/**
+ * How many numbers a lesson asks the learner to read, when it teaches digits.
+ *
+ * Two, at the end of the climb. Not more: this is a reading skill attached to a
+ * vocabulary lesson, and the lesson's job is still the words. Not fewer,
+ * because one of anything is a curiosity rather than a thing being taught, and
+ * the second question is where the reversal distractor gets its second chance
+ * to be met and understood.
+ */
+const NUMERALS_PER_LESSON = 2;
+
+/**
+ * Numbers to read, built out of the digits this lesson has just taught.
+ *
+ * The course teaches the ten digit glyphs, but only ever as the picture on a
+ * number word's card — ۷ is what "saat" looks like, the way a pomegranate is
+ * what "anaar" looks like. Measured against this generator over the whole
+ * course, a numeral glyph is the subject of nine questions in 12,081
+ * exercises, always as one of the eleven-to-twenty vocabulary items, and Urdu
+ * digits appear in exactly one source file: the map of pictures. A learner who
+ * finishes Harf has never been asked to read ۴۷.
+ *
+ * Scoped by the digits rather than by the topic, which is what keeps this
+ * honest without a list of lesson ids to maintain: a lesson that teaches no
+ * word with a numeral offers no digits, `has` is false for every candidate, and
+ * this returns nothing. Only the numbers lessons teach digits, so only they get
+ * these — and a future lesson that teaches some gets them too.
+ *
+ * Conservative by one digit, on purpose. A learner reaching "Bigger numbers,
+ * 2 of 2" has met ۲ two lessons back, but this asks only what the lesson in
+ * front of them has shown, so numbers containing it are not drawn there.
+ * Threading what a learner has met into here would make this function answer
+ * differently for the same lesson depending on the profile, and `check:order`
+ * enumerates it without one.
+ *
+ * ## The distractors are the exercise
+ *
+ * Three, each a specific misreading:
+ *
+ *   the reversal         ۴۷ read right to left is 74, and the script around it
+ *                        really does run right to left. This is the mistake,
+ *                        and the screen names it when it is the one made.
+ *   one digit off        same tens, a different unit: knowing it starts with a
+ *                        four is not reading it.
+ *   the other digit off  same unit, a different ten.
+ *
+ * All four are distinct by construction: a candidate has two different non-zero
+ * digits, so its reversal is another two-digit number and neither swap can
+ * collide with it or with the answer.
+ */
+function numeralReadExercises(lesson: Lesson, picks: readonly Word[]): Exercise[] {
+  const digits = new Set<string>();
+  for (const w of picks) for (const g of NUMERALS[w.id] ?? '') digits.add(g);
+  const has = (n: number) => [...toUrduDigits(n)].every((g) => digits.has(g));
+
+  const candidates: number[] = [];
+  for (let n = 21; n <= 98; n++) {
+    const tens = Math.floor(n / 10);
+    const unit = n % 10;
+    // A zero unit reverses to a one-digit number and a repeated digit reverses
+    // to itself; either way the distractor this exercise is built around stops
+    // being one.
+    if (unit === 0 || tens === unit) continue;
+    if (has(n)) candidates.push(n);
+  }
+  if (candidates.length < NUMERALS_PER_LESSON * 4) return [];
+
+  const DIGITS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  return seededShuffle(candidates, `${lesson.id}:numerals`)
+    .slice(0, NUMERALS_PER_LESSON)
+    .map((value): Exercise => {
+      const tens = Math.floor(value / 10);
+      const unit = value % 10;
+      const otherThan = (d: number, avoid: number, key: string) =>
+        seededShuffle(
+          DIGITS.filter((x) => x !== d && x !== avoid),
+          `${lesson.id}:${value}:${key}`
+        )[0];
+      const options = [
+        value,
+        reversedOf(value),
+        tens * 10 + otherThan(unit, tens, 'unit'),
+        otherThan(tens, unit, 'tens') * 10 + unit,
+      ];
+      return {
+        kind: 'numeralRead',
+        glyphs: toUrduDigits(value),
+        value,
+        // Seated by a real shuffle rather than left answer-first: see
+        // `seededShuffle`'s own note on what that cost when it was not.
+        options: seededShuffle(options, `${lesson.id}:${value}:seat`),
+      };
+    });
 }
 
 // ---- lesson composition --------------------------------------------------
@@ -1998,6 +2128,11 @@ export function buildLessonExercises(
       }
     }
 
+    // Reading the digits, which the words above have just shown and nothing in
+    // the course has ever asked about. Before the board rather than after it,
+    // so the lesson still closes the way every vocabulary lesson closes.
+    exercises.push(...numeralReadExercises(lesson, picks));
+
     // Close with a matching board (Drops-style); its four pictures must differ.
     // Short lessons introduce fewer than four words, so the board is topped up
     // from the rest of the topic rather than dropped.
@@ -2186,7 +2321,7 @@ export function buildLessonExercises(
      * that cap silently dropped the last `conceptBudget` due items:
      * genuinely overdue, scheduler-flagged material, to make room for a
      * grammar drill that isn't even SRS-gradable. Reproduced live:
-     * rev-saying-who-you-are fed a full 22-item due queue dropped
+     * rev-describing-things fed a full 22-item due queue dropped
      * w-maan and w-baap — the exact "the words you got wrong come back
      * first" guarantee `check:srs` exists to hold, contradicted by this
      * function's own comment on `due` two screens up.
@@ -2532,7 +2667,34 @@ export function buildLessonExercises(
         woven.push(wordExercise(w, poolFor(w), track, 'recall'));
       }
     }
-    exercises.splice(1, 0, ...woven);
+    /**
+     * After the first exercise — unless that would land between a first
+     * question and the card that answers it.
+     *
+     * A vocabulary lesson opens on a pretest, and `wordTeach` sits immediately
+     * after it *as the answer to it*: that adjacency is the whole design (see
+     * `wordTeach` in types.ts, and the evidence it cites, where the benefit of
+     * guessing first depends entirely on corrective feedback arriving after
+     * the guess). Splicing at 1 put two unrelated recall questions in between,
+     * so the learner guessed at a word they had never seen, answered two
+     * questions about other words, and only then met the card that was
+     * supposed to be the answer.
+     *
+     * Measured over the course with review items woven in: 234 of 2,291
+     * pretests were separated this way, always the lesson's own first word,
+     * because the weave always goes to the front. Nothing could see it —
+     * `check:order` enumerated lessons with no review refs, which is the one
+     * case where the bug does not happen.
+     *
+     * Inserting *before* a pretest is fine and stays allowed; only landing
+     * between the pair is not.
+     */
+    // `pretest` lives only on the three word-choice kinds, so it is read
+    // through a narrowing rather than off the union.
+    const opensOnAPretest = (ex: Exercise | undefined) =>
+      !!ex && (ex.kind === 'multipleChoice' || ex.kind === 'meaningPick' || ex.kind === 'listenTap') && !!ex.pretest;
+    const splitsAPair = opensOnAPretest(exercises[0]) && exercises[1]?.kind === 'wordTeach';
+    exercises.splice(splitsAPair ? 2 : 1, 0, ...woven);
   }
 
   // A vocabulary lesson is composed to an exact shape — meet, recall, type,
@@ -2693,14 +2855,14 @@ function fallbackReviewRefs(
   // CURRICULUM CRITIC, URD-017: `Math.round` alone stays >= 1 today only
   // because every real review is large enough (`coverTopics` floors review
   // size at 22) — a coincidence of current content sizes, not a guarantee.
-  // At the lowest measured share (1.98%, rev-the-wider-world) a review as
+  // At the lowest measured share (1.98%, rev-journeys-and-milestones) a review as
   // small as 22 already rounds to 0. Floor it at 1 whenever this context
   // has any letters to ask about at all, so "near zero" never silently
   // becomes "none, if content changes under it".
   // CURRICULUM CRITIC, URD-017: `Math.round` alone stays >= 1 today only
   // because every real review is large enough (`coverTopics` floors review
   // size at 22) — a coincidence of current content sizes, not a guarantee.
-  // At the lowest measured share (1.98%, rev-the-wider-world) a review as
+  // At the lowest measured share (1.98%, rev-journeys-and-milestones) a review as
   // small as 22 already rounds to 0. Floor it at 1 whenever this context
   // has any letters to ask about at all, so "near zero" never silently
   // becomes "none, if content changes under it".
@@ -2741,6 +2903,9 @@ export function itemsOf(ex: Exercise): ItemRef[] {
     default:
       // grammar, sentence-building and reading aren't tied to a single
       // vocabulary item, so they don't feed the spaced-repetition queue.
+      // `numeralRead` is here for the same reason and a sharper one: reading
+      // ۴۷ is not recalling چار, and crediting the digits' word cards for it
+      // would put a spaced-repetition card on the wrong thing.
       return [];
   }
 }

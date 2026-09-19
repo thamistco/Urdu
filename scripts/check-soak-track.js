@@ -74,9 +74,14 @@ async function readTrack(page) {
     const page = await browser.newPage({ viewport: { width: 412, height: 900 } });
     await enterAsGuest(page, url, {}, settings);
     const track = await readTrack(page);
-    if (track !== expected) {
+    // `expected` may be a list: see the unset case below for the one place
+    // where two answers are both the setting being left alone.
+    const ok = (Array.isArray(expected) ? expected : [expected]).includes(track);
+    if (!ok) {
       console.error(
-        `check:soak-track — ${label}: expected track ${JSON.stringify(expected)}, got ${JSON.stringify(track)}`
+        `check:soak-track — ${label}: expected track ` +
+          `${(Array.isArray(expected) ? expected : [expected]).map((e) => (e === undefined ? 'not written' : JSON.stringify(e))).join(' or ')}` +
+          `, got ${track === undefined ? 'not written' : JSON.stringify(track)}`
       );
       problems++;
     } else {
@@ -90,10 +95,23 @@ async function readTrack(page) {
     // makes (see `soak.js`'s own `enterAsGuest` call).
     await check('--track roman', { track: 'roman' }, 'roman');
     await check('--track script', { track: 'script' }, 'script');
-    // The unset case has to stay the guest default — a fix that always wrote
-    // `track` regardless of the caller would silently change every *other*
-    // browser check's entry state, not only soak's.
-    await check('no override (plain soak / every other browser check)', {}, 'both');
+    /**
+     * The unset case has to leave the setting alone — a fix that always wrote
+     * `track` regardless of the caller would silently change every *other*
+     * browser check's entry state, not only soak's. That is what this case is
+     * for, and writing an unasked-for `'roman'` still fails it.
+     *
+     * Absent counts as left alone, and used not to. `harf-settings` is written
+     * when something calls a setter, and for a guest who has touched nothing,
+     * nothing has. It read `'both'` only because the settings store carried a
+     * persist migration: the seeded blob's version never matched, zustand ran
+     * `migrate` on every load, and writing the migrated state back put the
+     * whole default into storage as a side effect. That migration existed for
+     * installs made before a change the app has never shipped, and went with
+     * the rest of the pre-launch machinery — which is a change to when the
+     * defaults are written down, not to what they are.
+     */
+    await check('no override (plain soak / every other browser check)', {}, [undefined, 'both']);
   } catch (e) {
     await fail(`threw: ${e.message}`);
   }

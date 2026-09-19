@@ -85,6 +85,7 @@ const { classify: classifyWord } = require('./lib/urdu-morph');
 const { ALL_LESSONS, UNITS } = load('src/data/units.ts');
 const { WORDS, PHRASES, TOPICS } = load('src/data/words.ts');
 const { GRAMMAR } = load('src/data/grammar.ts');
+const { NUMERALS } = load('src/data/art.ts');
 const { SENTENCES, PASSAGES, DIALOGUES } = load('src/data/sentences.ts');
 const { GRAMMAR_TRANSLIT } = load('src/data/translit.ts');
 const { buildLessonExercises } = load('src/exercises/generator.ts');
@@ -349,10 +350,35 @@ for (const lesson of ALL_LESSONS) {
     // excluded above. Nothing about the surrounding vocabulary is tested, so
     // it is illustrative, not exposure this check is for.
     //
-    // The two sentences a concept borrows from SENTENCES *are* tested: the
-    // lesson player runs them through the real sentenceBuild exercise
-    // (generator.ts), decoy tiles and all, same as a "sentences" lesson.
-    for (const sen of SENTENCES.filter((s) => s.concept === c.id)) {
+    /**
+     * The sentences a concept borrows from SENTENCES *are* tested: the lesson
+     * player runs them through the real sentenceBuild exercise, decoy tiles
+     * and all, same as a "sentences" lesson.
+     *
+     * Which sentences those are is asked of the generator rather than of the
+     * tag. A concept's tagged pool is wider than any lesson shows — `g-to-be`
+     * has fifteen and draws six — and `readableSentences` already drops the
+     * ones whose words are not taught by this point. Reading the whole pool
+     * therefore reported sentences no learner can be shown: regrouping the
+     * beginner units so each one holds a single theme moved jobs and rooms
+     * after the copula lesson, and this reported five "میں ڈاکٹر ہوں"-shaped
+     * findings while the lesson itself quietly drew "یہ کتاب ہے", "میں خوش
+     * ہوں" and four more from what the learner already had. Measured across
+     * every grammar lesson before and after that regrouping: not one drew
+     * fewer sentences than before.
+     *
+     * Asking the generator is also strictly stronger. The old rule never
+     * looked at what was drawn, so a filter that failed would have gone
+     * unnoticed; this fails the moment a learner is actually shown a word the
+     * course has not taught. It is the same choice the concept-ordering
+     * section below already made, for the same reason.
+     */
+    const drawn = new Set();
+    for (const ex of buildLessonExercises(lesson, [], 'both', new Set())) {
+      const sen = ex.sentence ?? (ex.word && SENTENCES.find((x) => x.id === ex.word.id));
+      if (sen && sen.words) drawn.add(sen);
+    }
+    for (const sen of drawn) {
       const text = sen.words.join(' ');
       const { late, unknown } = classify(text, taught);
       unknown.forEach((u) => unknownWords.set(u, (unknownWords.get(u) ?? 0) + 1));
@@ -504,7 +530,233 @@ if (unknownWords.size) {
   console.log(`  ${ranked.map(([w, c]) => `${w}${c > 1 ? ` ×${c}` : ''}`).join(', ')}`);
 }
 
+/**
+ * Within a vocab lesson: is every word it tests one it has already taught?
+ *
+ * The check above exempts vocab lessons, on a premise its own doc comment
+ * states — "a topic maps to exactly one lesson, so a vocab lesson only ever
+ * tests the topic it introduces". That stopped being true when topics were
+ * split into parts. A topic's words are now spread across several lessons, and
+ * a lesson's exercises are drawn from the topic, so part one can test a word
+ * part two teaches. The exemption held; the reason for it had gone.
+ *
+ * Found by measuring rather than by reading: `v-numbers-more` teaches eleven
+ * to twenty, and its closing matching board seated sau, hazaar and laakh —
+ * all three taught in the next lesson. The cause was that eleven to twenty
+ * shared one picture, so the board could seat only one of them and topped up
+ * from the rest of the topic, which is behaviour its own comment allows.
+ *
+ * Pretests are excluded: guessing before being told is the point of those, and
+ * they cost no heart. Sentences are excluded because a grammar card teaches
+ * them, not a word card — the block above is what covers those.
+ */
+const TESTS_THE_WORD = new Set([
+  'multipleChoice',
+  'meaningPick',
+  'wordFromMeaning',
+  'listenTap',
+  'wordBuild',
+  'typeWord',
+  'matching',
+]);
+
+const earlyWords = [];
+{
+  const taughtAlready = new Set();
+  for (const lesson of ALL_LESSONS) {
+    const exercises = buildLessonExercises(lesson, [], 'both');
+    const teachAt = new Map();
+    exercises.forEach((e, i) => {
+      if (e.kind === 'wordTeach' && e.word && !teachAt.has(e.word.id)) teachAt.set(e.word.id, i);
+    });
+    exercises.forEach((e, i) => {
+      if (!TESTS_THE_WORD.has(e.kind) || e.pretest) return;
+      const ids = e.kind === 'matching' ? (e.words || []).map((w) => w.id) : e.word ? [e.word.id] : [];
+      for (const id of ids) {
+        if (!id.startsWith('w-') || taughtAlready.has(id)) continue;
+        const at = teachAt.get(id);
+        if (at === undefined || at > i) {
+          earlyWords.push(
+            `${lesson.id} exercise ${i} (${e.kind}) tests ${id}, taught ` +
+              (at === undefined ? 'in a later lesson' : `at exercise ${at} of this one`)
+          );
+        }
+      }
+    });
+    exercises.forEach((e) => {
+      if (e.kind === 'wordTeach' && e.word) taughtAlready.add(e.word.id);
+    });
+  }
+}
+
+/**
+ * A sentence is met before it is produced.
+ *
+ * `sentenceReinforceClimb` walks each sentence through meet → produce →
+ * recall → produce → recall, and the turn a sentence *entered* that cycle used
+ * to depend on its position in the list: `turn = (round + idx) % ROUNDS`, so
+ * only the first sentence began on the meet turn. Across the course 382 of
+ * 524 sentences were asked to be assembled from tiles, or recalled from their
+ * English, before the app had ever shown them — in one pronouns lesson, two of
+ * five met their meet turn at exercise 24 of 28.
+ *
+ * A playtester found it as five sentences it could only guess at. This is the
+ * same fact without a browser: for every lesson on both tracks, the first
+ * exercise that uses a sentence must be the one that introduces it.
+ */
+const lateSentences = [];
+for (const lesson of ALL_LESSONS) {
+  for (const track of ['both', 'script']) {
+    const exercises = buildLessonExercises(lesson, [], track);
+    const firstUse = new Map();
+    exercises.forEach((e, i) => {
+      // A sentence rides in `word` for the two recognition kinds and in
+      // `sentence` for the build — it is one item either way.
+      const id = e.sentence ? e.sentence.id : e.word ? e.word.id : null;
+      if (!id || !id.startsWith('s-') || firstUse.has(id)) return;
+      firstUse.set(id, { kind: e.kind, at: i });
+    });
+    for (const [id, use] of firstUse) {
+      if (use.kind === 'meaningPick') continue;
+      lateSentences.push(`${lesson.id} (${track}) meets ${id} with ${use.kind} at exercise ${use.at}`);
+    }
+  }
+}
+
+/**
+ * Within a lesson: a number is only asked about in digits the lesson has shown.
+ *
+ * `numeralRead` is the one exercise whose question is not an item — it shows
+ * ۴۷ and asks what it is worth — so nothing above can see it. The generator
+ * builds each one from the numeral glyphs of the very words that lesson
+ * teaches, which makes this rule hold by construction today; that is exactly
+ * why it is worth pinning. Move the call above the climb, or widen it to the
+ * whole topic, and a learner meets a digit in a question before any card has
+ * shown it, with nothing else in this file able to notice.
+ *
+ * Read off the enumerated exercises rather than the word list, so it measures
+ * the order a learner actually meets them in.
+ */
+const unshownDigits = [];
+for (const lesson of ALL_LESSONS) {
+  const shown = new Set();
+  for (const ex of buildLessonExercises(lesson, [], 'both', new Set())) {
+    if (ex.kind === 'wordTeach' && ex.word) for (const g of NUMERALS[ex.word.id] || '') shown.add(g);
+    if (ex.kind !== 'numeralRead') continue;
+    const missing = [...ex.glyphs].filter((g) => !shown.has(g));
+    if (missing.length) unshownDigits.push(`${lesson.id} asks about ${ex.glyphs} before showing ${missing.join(' ')}`);
+  }
+}
+
+/**
+ * Within a lesson: a first question is never separated from its answer card.
+ *
+ * A vocabulary lesson opens on a pretest, and `wordTeach` sits immediately
+ * after it *as the answer to it* — the adjacency is the design, and the
+ * evidence `types.ts` cites for guessing-before-telling depends entirely on
+ * the correction arriving after the guess.
+ *
+ * Enumerated **with review refs**, which is the whole point of this pass. The
+ * weave that puts up to two due items near the front of a lesson used to
+ * splice at index 1, landing between that pair: 234 of the course's 2,291
+ * pretests, always the lesson's own first word. Every other walk in this file
+ * enumerates with no refs, which is precisely the one case where it cannot
+ * happen — a check that could only ever see the healthy shape.
+ *
+ * Three real word ids rather than a synthetic ref, so `weavable` accepts them
+ * and the weave actually runs; a ref that resolves to nothing would make this
+ * pass by doing nothing, which is the same failure one layer along.
+ */
+const WEAVE_REFS = ['w-paani', 'w-kitaab', 'w-anda'].map((id) => ({ id, type: 'word' }));
+const splitPairs = [];
+{
+  const resolvable = WEAVE_REFS.filter((r) => WORDS.some((w) => w.id === r.id));
+  if (resolvable.length < WEAVE_REFS.length)
+    splitPairs.push(`the ids this pass weaves with no longer all exist: ${WEAVE_REFS.map((r) => r.id).join(' ')}`);
+  const known = new Set(resolvable.map((r) => r.id));
+  for (const lesson of ALL_LESSONS) {
+    const exercises = buildLessonExercises(lesson, resolvable, 'both', known);
+    exercises.forEach((e, i) => {
+      if (!e.pretest || !e.word) return;
+      const card = exercises.findIndex((x, k) => k > i && x.kind === 'wordTeach' && x.word && x.word.id === e.word.id);
+      if (card !== i + 1)
+        splitPairs.push(
+          `${lesson.id}: ${e.word.id} is asked at ${i} and answered at ${card} ` +
+            `(between: ${
+              exercises
+                .slice(i + 1, card < 0 ? i + 1 : card)
+                .map((x) => x.kind)
+                .join(', ') || 'nothing — the card is missing'
+            })`
+        );
+    });
+  }
+}
+
+console.log(`\n-- within a lesson: a first question is answered by the very next screen --`);
+if (splitPairs.length) {
+  console.log(`${splitPairs.length} finding(s):`);
+  for (const f of splitPairs.slice(0, 20)) console.log(`  ${f}`);
+  if (splitPairs.length > 20) console.log(`  … and ${splitPairs.length - 20} more`);
+} else {
+  console.log('none — every first question is followed straight away by the card that answers it.');
+}
+
+console.log(`\n-- within a lesson: every numeral read in digits the lesson has shown --`);
+if (splitPairs.length) {
+  console.error(
+    `${splitPairs.length} first question(s) are separated from the card that answers them. ` +
+      `See the review weave in generator.ts: it must not splice between a pretest and its wordTeach.`
+  );
+  process.exit(1);
+}
+if (unshownDigits.length) {
+  console.log(`${unshownDigits.length} finding(s):`);
+  for (const f of unshownDigits.slice(0, 20)) console.log(`  ${f}`);
+} else {
+  console.log('none — no number is asked about in a digit its lesson has not taught.');
+}
+
+console.log(`\n-- every sentence introduced before it is produced --`);
+if (lateSentences.length) {
+  console.log(`${lateSentences.length} finding(s):`);
+  for (const f of lateSentences.slice(0, 20)) console.log(`  ${f}`);
+  if (lateSentences.length > 20) console.log(`  … and ${lateSentences.length - 20} more`);
+} else {
+  console.log('none — every sentence is shown before the learner is asked to produce it.');
+}
+
+console.log(`\n-- within a lesson: every word tested after the card that teaches it --`);
+if (earlyWords.length) {
+  console.log(`${earlyWords.length} finding(s):`);
+  for (const f of earlyWords.slice(0, 20)) console.log(`  ${f}`);
+  if (earlyWords.length > 20) console.log(`  … and ${earlyWords.length - 20} more`);
+} else {
+  console.log('none — no lesson asks about a word before it has shown it.');
+}
+
 console.log('');
+if (earlyWords.length) {
+  console.error(
+    `${earlyWords.length} exercise(s) test a word before the lesson teaches it. The fix is usually the picture: ` +
+      `words that share one cue collide, and a matching board that cannot seat them tops up from the rest of the topic.`
+  );
+  process.exit(1);
+}
+if (unshownDigits.length) {
+  console.error(
+    `${unshownDigits.length} numeral question(s) use a digit their own lesson has not shown. ` +
+      `See numeralReadExercises: the digits come from the lesson's own words, so this means the call moved.`
+  );
+  process.exit(1);
+}
+if (lateSentences.length) {
+  console.error(
+    `${lateSentences.length} sentence(s) are produced or recalled before the exercise that introduces them. ` +
+      `See sentenceReinforceClimb: the turn a sentence enters the cycle on must not depend on its position.`
+  );
+  process.exit(1);
+}
 if (positionUniq.length) {
   console.error(
     `${positionUniq.length} place(s) test a word before its topic's lesson is reached. ` +

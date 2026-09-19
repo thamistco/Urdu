@@ -30,7 +30,22 @@
  * cannot see.
  */
 
-const { record, classify, revealFrom, findings, knewRevealedAnswer } = require('./playtest.js');
+const fs = require('fs');
+const path = require('path');
+
+const {
+  record,
+  classify,
+  revealFrom,
+  findings,
+  knewRevealedAnswer,
+  Memory,
+  tripwires,
+  chooseOption,
+  asContent,
+  surfaceFindings,
+  lessonDoneText,
+} = require('./playtest.js');
 
 let fails = 0;
 const ok = (name, cond) => {
@@ -156,6 +171,15 @@ const ok = (name, cond) => {
     'an Urdu answer already shown does not',
     knewRevealedAnswer({ knows: () => true }, ['\u0644\u0627\u0644']) === true
   );
+  // "Which tile is alif?" reveals \u067e\u0627\u0646 \u2014 one letter wrapped in its neighbours,
+  // a slice of the word on screen rather than a word. The learner was never
+  // taught it and never will be; 25 of one run's 64 "tested before taught"
+  // were this shape.
+  ok(
+    'a tile is a slice of a word, not vocabulary',
+    knewRevealedAnswer(M, ['\u067e\u0627\u0646'], 'Which tile is alif?') === null &&
+      knewRevealedAnswer(M, ['\u067e\u0627\u0646'], 'Which word means this?') === false
+  );
 }
 {
   // null must not be counted as "never taught" — that is the bug this rule
@@ -184,6 +208,354 @@ const ok = (name, cond) => {
   const opener = { type: 'answer', correct: false, knewAnswer: false, reveal: ['\u06af\u06be\u0631'] };
   const f = findings([opener, { type: 'taught', lesson: 'L' }, wrong]).find((x) => x.kind === 'tested before taught');
   ok('a question answered by the card after it is not counted as untaught', !!f && f.count === 1);
+}
+
+// -- a cluster is one meaning, and stays one ---------------------------------
+
+{
+  // The bug this file was extended for: every screen in the app carries the
+  // same close button, so one shared string chained every cluster that had
+  // ever been learned beside one into a single blob. Two lessons in, the
+  // largest held 21 strings; over 34 the learner answered "Book" with "alif".
+  const m = new Memory();
+  m.learn(['کتاب', 'kitaab', 'book', '✕']);
+  m.learn(['پانی', 'paani', 'water', '✕']);
+  ok('screen chrome never joins a cluster', !m.knows('✕'));
+  ok('and cannot merge two words through itself', m.clusterFor('book') !== m.clusterFor('water'));
+  ok('the words themselves are still learned', m.knows('book') && m.knows('paani'));
+}
+
+{
+  // One shared string is a coincidence — a header above an unrelated question,
+  // a gloss that happens to repeat. Two is the same word said twice.
+  const m = new Memory();
+  m.learn(['الف', 'alif']);
+  m.learn(['alif', 'these look alike']);
+  ok('one shared string does not merge two meanings', m.clusterFor('these look alike') !== m.clusterFor('الف'));
+  m.learn(['الف', 'alif', 'a / aa']);
+  ok('two shared strings do', m.clusterFor('a / aa') === m.clusterFor('الف'));
+}
+
+{
+  // A string can sit in more than one meaning. Recall reads the best of them,
+  // because a learner who knows either one knows this string.
+  const m = new Memory();
+  m.learn(['ایک', 'ek', 'one']);
+  for (let i = 0; i < 6; i++) m.learn(['ایک', 'ek', 'one']);
+  m.learn(['one another', 'one']);
+  ok('a token in two meanings recalls the better one', m.recall('one') > 0.8);
+}
+
+// -- a question about a sentence is answerable -------------------------------
+
+{
+  // A sentence is remembered under its whole text, so a reader that only ever
+  // looks up the individual words never finds it. A learner resumed at lesson
+  // 31, where the course has turned to sentences, guessed 100 times out of 100
+  // with the answer sitting in its memory.
+  const m = new Memory();
+  m.learn(['میں خوش ہوں', 'main khush hoon', 'I am happy']);
+  const options = [{ lines: ['📝', 'We are friends'] }, { lines: ['📝', 'I am happy'] }];
+  const d = chooseOption(m, ['What does it mean?', '✕', 'میں خوش ہوں'], options);
+  ok('a whole sentence on screen is looked up as itself', d.couldHaveKnown === true);
+  // And the words inside a line still are, which is how every single-word
+  // question has always worked.
+  const w = new Memory();
+  w.learn(['پانی', 'paani', 'water']);
+  ok(
+    'and the words within it still are',
+    chooseOption(w, ['What does it mean?', '✕', 'پانی'], [{ lines: ['Water'] }, { lines: ['Book'] }]).couldHaveKnown ===
+      true
+  );
+}
+
+// -- what a screen asks is not what it is about ------------------------------
+
+{
+  // "Tap to hear" and "Which one did you hear?" head every listening question
+  // in the course, so learning them beside the answer joined `happy`, `family`
+  // and `name` into one meaning inside sixteen lessons.
+  const chrome = ['Tap to hear', 'Which one did you hear?', '✕'];
+  const m = new Memory();
+  m.learn(['happy', 'خوش', ...asContent(chrome)]);
+  m.learn(['family', 'خاندان', ...asContent(chrome)]);
+  ok(
+    'an instruction cannot join two words',
+    !!m.clusterFor('happy') && !!m.clusterFor('family') && m.clusterFor('happy') !== m.clusterFor('family')
+  );
+  ok('and is not learned at all', !m.knows('tap to hear') && !m.knows('which one did you hear?'));
+  // A real gloss beside the answer still is.
+  ok('a word beside its meaning still is', asContent(['Water', 'پانی']).length === 2);
+}
+
+// -- the run is allowed to fail ----------------------------------------------
+
+{
+  const limits = { zeroShapeAfter: 20, clusterMax: 8 };
+  const quiet = new Memory();
+  const typed = (n, right, couldHaveKnown = true) =>
+    Array.from({ length: n }, (_, i) => ({
+      type: 'answer',
+      promptShape: 'type this word',
+      couldHaveKnown,
+      correct: i < right,
+    }));
+
+  ok('a shape being lost is not by itself a tripwire', tripwires(typed(19, 0), quiet, limits).length === 0);
+  ok('twenty in a row the learner should have known is', tripwires(typed(20, 0), quiet, limits).length === 1);
+  ok('one of them going right is not', tripwires(typed(40, 1), quiet, limits).length === 0);
+  // A real beginner does get its first twenty typed words wrong, and that is
+  // the finding, not a fault. Only questions the model believed were
+  // answerable count.
+  ok('a beginner guessing badly is not a fault', tripwires(typed(40, 0, false), quiet, limits).length === 0);
+}
+
+{
+  const limits = { zeroShapeAfter: 20, clusterNames: 3, clusterMax: 16 };
+  const m = new Memory();
+  m.learn(['کتاب', 'kitaab', 'book']);
+  ok('a word, its reading and its meaning is not a collapse', tripwires([], m, limits).length === 0);
+
+  // Shapes are free. Baṛī ye is written with choṭī ye's forms at the start of
+  // a word and in the middle of one, so the two letters honestly share two of
+  // their faces and the model merges them — eight strings under two names,
+  // which is correct Urdu and stopped a real run five lessons early when this
+  // was counted by size.
+  const ye = new Memory();
+  ye.learn(['choṭī ye', 'ی', 'یـ', 'ـیـ', 'ـی']);
+  ye.learn(['baṛī ye', 'ے', 'یـ', 'ـیـ', 'ـے']);
+  ok('two letters sharing their faces is not a collapse', tripwires([], ye, limits).length === 0);
+  ok('even at eight strings', ye.clusterFor('یـ').tokens.size === 8);
+  // And each of them brings a sound as well as a name. A sound is neither a
+  // shape nor a name — it is how the letter is pronounced, written in curly
+  // quotes — and counting the pair's two sounds as names stopped a second run.
+  ye.learn(['choṭī ye', 'ی', '“y / ee”']);
+  ye.learn(['baṛī ye', 'ے', '“e / ai”']);
+  ok('nor are the sounds they are read with', tripwires([], ye, limits).length === 0);
+
+  /**
+   * A word the course teaches twice, the second gloss qualifying the first.
+   *
+   * ہفتہ is "Week" in Time & day and "Saturday (also: week)" in Days &
+   * months, and its card shows a keycap digit for the sixth day. Five strings
+   * and a memory that has not collapsed at all — this stopped a 24-lesson
+   * slice at lesson 23 before the rule knew it.
+   *
+   * Checked at a limit of two names rather than the shipped three, and that is
+   * the point rather than a convenience: at three, dropping the picture and
+   * folding the qualifier each take the count from four to three on their own,
+   * so the pair of assertions passed with either rule deleted. Two names makes
+   * each one load-bearing — which is how this was found, by deleting them one
+   * at a time and watching nothing fail.
+   */
+  const strict = { ...limits, clusterNames: 2 };
+  const hafta = new Memory();
+  hafta.learn(['ہفتہ', 'hafta', 'week']);
+  hafta.learn(['ہفتہ', 'hafta', 'Saturday (also: week)', '6️⃣']);
+  ok('a second gloss that qualifies the first is not a collapse', tripwires([], hafta, strict).length === 0);
+  ok('the picture on the card is not a name either', hafta.clusterFor('hafta').tokens.size === 5);
+  // And the shipped limit agrees, which is what the run actually uses.
+  ok('nor is it one at the limit the run is played with', tripwires([], hafta, limits).length === 0);
+  // The honest two names are still two: a word and its reading do not fold
+  // into each other just because both are written in Latin letters.
+  const book = new Memory();
+  book.learn(['کتاب', 'kitaab', 'book']);
+  ok(
+    'a word and its reading still count as two names',
+    tripwires([], book, { ...limits, clusterNames: 1 }).length === 1
+  );
+
+  // Names are not. This is the shape the real blob had: separate meanings
+  // dragged together by what was printed above them.
+  const blob = new Memory();
+  blob.learn(['happy', 'خوش', 'which one did you hear?', 'tap to hear']);
+  blob.learn(['family', 'خاندان', 'which one did you hear?', 'tap to hear']);
+  const fired = tripwires([], blob, limits);
+  ok('one meaning answering to four names is', fired.length === 1 && /memory/.test(fired[0].name));
+}
+
+/**
+ * The Practice and Settings rules.
+ *
+ * Each of these is one promise the interface makes, and each pair below is the
+ * same promise kept and broken — because a rule that has only ever been handed
+ * the passing case is a rule nobody has seen work. The kept case matters as
+ * much as the broken one here: the first draft of the search rule fired on
+ * every single search, including the ones that found exactly what they were
+ * asked for, and a report that complains about a working screen is worse than
+ * one that says nothing.
+ */
+{
+  const only = (j) => surfaceFindings(j);
+
+  const shelf = (claims, lists) => [{ type: 'practiceShelf', shelf: 'topics', claims, lists, first: [] }];
+  ok('a shelf that lists what it claims is not a finding', only(shelf(78, 78)).length === 0);
+  ok(
+    'a shelf that claims more than it lists is',
+    /says 78 items, the shelf under it lists 54/.test(only(shelf(78, 54))[0] || '')
+  );
+  ok(
+    'an empty shelf is named as empty',
+    only(shelf(0, 0)).some((s) => /is empty/.test(s))
+  );
+
+  const search = (of, hits, sawEmptyState) => [
+    { type: 'practiceSearch', shelf: 'topics', term: 'colours', of, hits, sawEmptyState },
+  ];
+  ok(
+    'a search that finds the card it was copied from is not a finding',
+    only(search('Colours', 3, false)).length === 0
+  );
+  ok(
+    'a search that loses it is',
+    /found nothing, though it was taken from "Colours"/.test(only(search('Colours', 0, false))[0] || '')
+  );
+  ok(
+    'nonsense matching nothing, with the empty state shown, is not a finding',
+    only(search(null, 0, true)).length === 0
+  );
+  ok(
+    'nonsense matching nothing silently is',
+    /nothing on screen to say why/.test(only(search(null, 0, false))[0] || '')
+  );
+  ok('nonsense that still lists things is', /still listed 7 items/.test(only(search(null, 7, false))[0] || ''));
+
+  const review = (dueClaimed, asked) => [{ type: 'reviewPlayed', pass: 0, dueClaimed, asked, seconds: 30 }];
+  ok('a review that asks about what it said was due is not a finding', only(review(12, 12)).length === 0);
+  ok('a review that asks about fewer than it said is not either', only(review(12, 5)).length === 0);
+  ok(
+    'a review that says twelve are due and then asks nothing is',
+    /said 12 item\(s\) were due and then asked nothing/.test(only(review(12, 0))[0] || '')
+  );
+
+  const toggled = (from, to) => [
+    { type: 'settingToggled', label: 'Haptics', from, to, stuck: to !== from, rowsAfter: 5 },
+  ];
+  ok('a switch that moves is not a finding', only(toggled(true, false)).length === 0);
+  ok('a switch that does not is', /"Haptics" did not change/.test(only(toggled(true, true))[0] || ''));
+
+  /**
+   * Onboarding decides two things for a learner who already speaks Urdu, and
+   * nothing else in the app decides them: the basic vocabulary is skipped, and
+   * the self-report is what is recorded. A beginner gets neither, and a
+   * beginner who somehow got the skip is just as wrong.
+   */
+  const onboarded = (over) => [
+    {
+      type: 'onboarded',
+      persona: 'knows-urdu',
+      speaker: true,
+      steps: [],
+      asked: 4,
+      reachedHome: true,
+      onboarded: true,
+      background: 'speaker',
+      startLevel: 2,
+      skipped: 30,
+      ...over,
+    },
+  ];
+  ok('a speaker who lands on the path with lessons skipped is not a finding', only(onboarded({})).length === 0);
+  ok('a speaker whose basics were not skipped is', /no lesson skipped/.test(only(onboarded({ skipped: 0 }))[0] || ''));
+  ok('a speaker recorded as something else is', /recorded "new"/.test(only(onboarded({ background: 'new' }))[0] || ''));
+  ok('a short placement quiz is', /asked 2 question\(s\), not 4/.test(only(onboarded({ asked: 2 }))[0] || ''));
+  ok(
+    'finishing without reaching the path is',
+    /did not land on the learn path/.test(only(onboarded({ reachedHome: false }))[0] || '')
+  );
+  ok(
+    'a beginner handed a skip is',
+    /starting from scratch had 30 lesson/.test(
+      only(onboarded({ speaker: false, persona: 'beginner', background: 'new' }))[0] || ''
+    )
+  );
+  ok(
+    'and a beginner with nothing skipped is not',
+    only(onboarded({ speaker: false, persona: 'beginner', background: 'new', skipped: 0 })).length === 0
+  );
+
+  const reset = (tapped, confirmed) => [{ type: 'resetOffered', tapped, confirmed, stillOnSettings: true }];
+  ok('a reset that asks first is not a finding', only(reset(true, true)).length === 0);
+  ok('a reset that does not ask is', /ran without asking for confirmation/.test(only(reset(true, false))[0] || ''));
+  ok('a reset control that cannot be found is', /could not be found/.test(only(reset(false, false))[0] || ''));
+}
+
+/**
+ * "The lesson is over" has to mean what the app says it means.
+ *
+ * Read out of `LessonComplete.tsx` rather than written down here, because
+ * writing it down here is exactly how this broke twice. The first time, every
+ * wording was a guess and one happened to be right, so a run that finished
+ * eight lessons reported none. The second time, the guess that was right
+ * covered only half of what the screen can say: it prints "Flawless session"
+ * when nothing was missed, and a lesson the learner got entirely right was
+ * never recognised as finished — the driver walked past the completion screen
+ * into the Letter Lab and spent eight screens there with nothing to answer.
+ *
+ * So the strings come from the one line that decides them. A rename that this
+ * file cannot find fails loudly rather than silently teaching the driver to
+ * walk past the end of a lesson.
+ */
+{
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src/screens/LessonComplete.tsx'), 'utf8');
+  const line = /result\.perfect \? '([^']+)' : '([^']+)'/.exec(src);
+  ok('the completion screen still decides its wording in one place', !!line);
+  for (const said of line ? [line[1], line[2]] : []) {
+    // Upper-cased on screen by its own style, so both cases are checked.
+    ok(`"${said}" is recognised as the end of a lesson`, lessonDoneText(said) && lessonDoneText(said.toUpperCase()));
+  }
+  ok('and an ordinary screen is not', !lessonDoneText('READING · COLOURS AROUND ME'));
+}
+
+/**
+ * The staleness a question was asked at, measured before the answer teaches.
+ *
+ * It was computed after the fact and read 0 on 2,069 of the 2,071 answers that
+ * carried it — a number that looked like evidence and was an artefact of when
+ * it was taken.
+ */
+{
+  const m = new Memory();
+  m.learn(['کتاب', 'kitaab', 'book']);
+  for (let i = 0; i < 12; i++) m.step++;
+  const options = [
+    { i: 0, lines: ['کتاب'] },
+    { i: 1, lines: ['پانی'] },
+  ];
+  const d = chooseOption(m, ['How do you say it?', 'book'], options);
+  ok('the gap is the distance since the last sighting, not zero', d.gapSteps === 12);
+  // And a question about something never met carries no gap rather than a 0.
+  const blank = chooseOption(new Memory(), ['How do you say it?', 'book'], options);
+  ok('a word never met has no gap at all', blank.gapSteps === null);
+}
+
+/**
+ * The fluent learner's own wire.
+ *
+ * The fixtures are the measurements, not invented numbers: three healthy
+ * knows-urdu slices got 96%, 97% and 96% of what they knew; a beginner over
+ * the same measure gets 63%; a letters-only stretch dipped to 77% over 13
+ * questions, which is the small sample the window exists to ignore.
+ */
+{
+  const L = { zeroShapeAfter: 20, clusterNames: 3, clusterMax: 16, fluentFloor: 0.8, fluentWindow: 60, fluent: true };
+  const run = (n, share) =>
+    Array.from({ length: n }, (_, i) => ({ type: 'answer', couldHaveKnown: true, correct: i < Math.round(n * share) }));
+  const fire = (j, over) => tripwires(j, new Memory(), { ...L, ...over });
+
+  ok('a fluent run at 96% of what it knows is fine', fire(run(60, 0.96)).length === 0);
+  ok('and at 97%', fire(run(60, 0.97)).length === 0);
+  ok(
+    'a fluent run scoring like a beginner is stopped',
+    /scoring like a beginner/.test((fire(run(60, 0.63))[0] || {}).name || '')
+  );
+  ok('the letters-only dip is too small a sample to fire', fire(run(13, 0.77)).length === 0);
+  // The same numbers on a beginner are the beginner working, not a fault.
+  ok('a beginner scoring like a beginner is not', fire(run(60, 0.63), { fluent: false }).length === 0);
+  // Guesses are not misses: a speaker on the letter lessons guesses a lot and
+  // knows little, and none of that reaches this wire.
+  const guessing = Array.from({ length: 200 }, () => ({ type: 'answer', couldHaveKnown: false, correct: false }));
+  ok('questions it never had the answer for leave the wire alone', fire(guessing).length === 0);
 }
 
 console.log(fails ? `\n${fails} failed` : '\nall good');

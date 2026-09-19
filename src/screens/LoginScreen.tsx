@@ -14,6 +14,7 @@ import { useAuthStore } from '../store/useAuthStore';
 function ProviderButton({ label, onPress, loading }: { label: string; onPress: () => void; loading?: boolean }) {
   return (
     <Pressable
+      accessibilityRole="button"
       onPress={() => {
         feedback.tap();
         onPress();
@@ -27,7 +28,7 @@ function ProviderButton({ label, onPress, loading }: { label: string; onPress: (
         {loading ? (
           <ActivityIndicator color={palette.ink} />
         ) : (
-          <Bold style={{ color: palette.ink }} className="text-[15px]">
+          <Bold style={{ color: palette.ink }} className="text-[0.9375rem]">
             {label}
           </Bold>
         )}
@@ -157,7 +158,7 @@ export function LoginScreen() {
                 providers and the guest button: a band this tight can afford
                 decoration or it can afford saying what the app is, and the
                 ghost button is already distinct enough to separate itself. */}
-            <Txt className="mb-3 text-center text-[13px] leading-5 text-paper/70">
+            <Txt className="mb-3 text-center text-[0.8125rem] leading-5 text-paper/70">
               The alphabet, the words, the grammar and the sound of it. The whole language.
             </Txt>
             {/* Two doors or one, depending on whether there is anything behind
@@ -189,7 +190,7 @@ export function LoginScreen() {
                 className="mt-3 rounded-xl border-s-2 p-2.5"
                 style={{ borderStartColor: palette.gold, backgroundColor: withAlpha(palette.gold, 0.08) }}
               >
-                <Txt className="text-[11px] leading-4 text-paper/75">{note}</Txt>
+                <Txt className="text-[0.6875rem] leading-4 text-paper/75">{note}</Txt>
               </View>
             </Reveal>
           )}
@@ -201,7 +202,7 @@ export function LoginScreen() {
                   nothing; with those gone there is nothing to excuse, and what
                   is left is the one fact a learner actually needs, which is
                   where their progress lives. */}
-              <Txt className="mt-3 text-center text-[11px] leading-4 text-paper/70">
+              <Txt className="mt-3 text-center text-[0.6875rem] leading-4 text-paper/70">
                 Your progress is saved on this device.
               </Txt>
             </Reveal>

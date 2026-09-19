@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Pressable, ScrollView } from 'react-native';
+import { View, Pressable, ScrollView, Dimensions } from 'react-native';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -22,6 +23,7 @@ import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { Lesson, unitsForTrack, findLesson, ALL_LESSONS } from '../data/units';
 import { needsPathMoveNotice } from '../lib/progress';
+import { LETTERS } from '../data/letters';
 import { LEVEL_META, LEVEL_ORDER, type Level, glossOf } from '../data/words';
 import { WORDS } from '../data/words';
 import { DAILY_GOALS } from '../data/achievements';
@@ -37,28 +39,13 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 const PATH_SIZE = ALL_LESSONS.length;
 
 /** Said once, so it lives once. Also read aloud by the notice's own
- *  accessibility label, which is why it is a string rather than JSX. */
-const NOTICE_BODY =
-  'Short lessons were merged into fewer, longer ones, so your units hold a different number of lessons than when you were last here. Nothing you learned was lost: your streak, your level and everything the app remembers about your words are untouched.';
-
-/**
- * URD-014: a genuinely different truth from `NOTICE_BODY` above, and said
- * with different copy on purpose. `NOTICE_BODY` can honestly promise
- * nothing was lost, because a regroup keeps a topic's first-part id. This
- * one cannot: an old update really did drop this learner's lesson
- * checkmarks (`ticksWipedByMigration` — see `lib/progress.ts`), so it says
- * so plainly and reassures only about what is actually still true.
+ *  accessibility label, which is why it is a string rather than JSX.
  *
- * Says "lesson progress" rather than "finished lessons" on purpose — THE
- * CRITIC found `hadTicks` (progress.ts) correctly counts a skip-only wipe
- * (lessons pre-satisfied at onboarding, never actually attempted) as
- * something lost, but the first draft's copy described only the completed
- * case. A heritage learner who skipped lessons at onboarding and lost
- * those skips had nothing "finished" to overclaim.
- */
-const TICKS_WIPED_NOTICE_TITLE = 'Your lesson progress wasn’t carried over';
-const TICKS_WIPED_NOTICE_BODY =
-  'An old update couldn’t carry over your lesson history, so your lesson progress was reset. Your streak, your level and everything the app remembers about your words and letters are untouched. Pick back up wherever feels right.';
+ *  Names no particular change on purpose: this fires whenever the path is a
+ *  different size than it was when the learner last opened the app, and which
+ *  reshuffle that was is not something the app knows by then. */
+const NOTICE_BODY =
+  'The course was reorganised since you were last here, so your units hold a different number of lessons. Nothing you learned was lost: your streak, your level and everything the app remembers about your words are untouched.';
 
 const GREETING: Record<string, string> = {
   family: 'Speak with them',
@@ -155,7 +142,9 @@ function LessonNode({
             className="absolute -right-1 -top-1 rounded-full px-1.5 py-0.5"
             style={{ backgroundColor: palette.gold }}
           >
-            <Eyebrow style={{ color: palette.ink, fontSize: 8 }}>Start</Eyebrow>
+            <Eyebrow className="text-[0.5rem]" style={{ color: palette.ink }}>
+              Start
+            </Eyebrow>
           </View>
         )}
         {state === 'locked' && (
@@ -171,13 +160,13 @@ function LessonNode({
             className="absolute -right-1 -top-1 h-5 w-5 items-center justify-center rounded-full"
             style={{ backgroundColor: palette.jadeDark, borderWidth: 1, borderColor: withAlpha(palette.white, 0.15) }}
           >
-            <Txt style={{ fontSize: 10 }}>⏭</Txt>
+            <Txt className="text-[0.625rem]">⏭</Txt>
           </View>
         )}
       </Pressable>
       <View className="ms-4 flex-1">
         <Bold
-          className="text-[15px]"
+          className="text-[0.9375rem]"
           style={{ opacity: state === 'locked' ? 0.5 : 1, writingDirection: 'ltr', textAlign: 'left' }}
         >
           {lesson.title}
@@ -216,7 +205,7 @@ export function HomeScreen() {
   // appears and clears as answers land instead of only on a remount.
   const dueNow = useMemo(() => dueCount(store.srs), [store.srs]);
 
-  const { level, ratio } = levelProgress(store.totalXp);
+  const { level, ratio, into, span } = levelProgress(store.totalXp);
   const goal = DAILY_GOALS.find((g) => g.id === store.dailyGoalId) ?? DAILY_GOALS[1];
   const dailyRatio = Math.min(1, store.todayXp / goal.xp);
   const word = WORDS[new Date().getDate() % WORDS.length];
@@ -229,37 +218,13 @@ export function HomeScreen() {
    * Roman track `units` drops the thirteen alphabet lessons, so a track switch
    * would otherwise register as the course changing size underneath them.
    */
-  /**
-   * URD-014, THE CRITIC's MAJOR: two dismiss-once alert cards can otherwise
-   * stack on Home. A wiped profile's first render always has empty
-   * `completed`/`skipped`, so `needsPathMoveNotice` itself starts false —
-   * but if the learner leaves the ticks-wiped notice up, does a few lessons,
-   * and the path regroups again before they dismiss it, `needsPathMoveNotice`
-   * turns true while `ticksWipedByMigration` is still true too.
-   *
-   * Kept as two names on purpose, not one gated boolean. `rawPathNotice` is
-   * what the path-moved notice is actually true of, independent of whether
-   * anything else is currently showing; `pathNotice` is what gets rendered
-   * — the two notices queued strictly one at a time. The `notePathSize`
-   * effect just below has to read `rawPathNotice`, not `pathNotice`: an
-   * earlier version of this fix read the gated value there too, and it
-   * silently re-recorded `pathSize` to the current path the moment the
-   * wipe notice appeared — "nothing is owed" was true only because the
-   * gate said so, not because the path genuinely matched — which erased
-   * the path-moved notice's own evidence before the learner ever saw it,
-   * the identical shape of silent loss this whole item exists to close,
-   * one layer up. Caught by testing the sequence live, not by reading the
-   * code: dismissing the wipe notice never revealed a path-moved notice
-   * that a stale `pathSize` should have produced.
-   */
-  const rawPathNotice = needsPathMoveNotice({
+  const pathNotice = needsPathMoveNotice({
     completed: store.completedLessons,
     skipped: store.skippedLessons,
     pathSize: PATH_SIZE,
     seen: store.pathNoticeSeen,
     lastPathSize: store.pathSize,
   });
-  const pathNotice = !store.ticksWipedByMigration && rawPathNotice;
 
   /**
    * URD-015: dismissing a notice used to remove its whole card — 275px on
@@ -273,10 +238,6 @@ export function HomeScreen() {
    * alone, so a card can't be yanked from under its own exit animation by
    * some unrelated re-render.
    */
-  const [showTicksWiped, setShowTicksWiped] = useState(store.ticksWipedByMigration);
-  useEffect(() => {
-    if (store.ticksWipedByMigration) setShowTicksWiped(true);
-  }, [store.ticksWipedByMigration]);
   const [showPathNotice, setShowPathNotice] = useState(pathNotice);
   useEffect(() => {
     if (pathNotice) setShowPathNotice(true);
@@ -288,13 +249,11 @@ export function HomeScreen() {
    * apart from someone who was last here two paths ago. Runs on the launches
    * where nothing is shown; the dismissal records it on the launches where
    * something is.
-   *
-   * Reads `rawPathNotice`, not `pathNotice` — see the comment above.
    */
   const notePathSize = useProgressStore((s) => s.notePathSize);
   useEffect(() => {
-    if (!rawPathNotice && store.pathSize !== PATH_SIZE) notePathSize(PATH_SIZE);
-  }, [rawPathNotice, store.pathSize, notePathSize]);
+    if (!pathNotice && store.pathSize !== PATH_SIZE) notePathSize(PATH_SIZE);
+  }, [pathNotice, store.pathSize, notePathSize]);
   const order = useMemo(() => units.flatMap((u) => u.lessons.map((l) => l.id)), [units]);
 
   // The one next thing to do: the first lesson on the path not yet finished
@@ -329,22 +288,15 @@ export function HomeScreen() {
    * either. The notice is the one thing on the screen that has to be read before
    * anything else makes sense; the scroll runs when it is gone.
    *
-   * URD-014's ticks-wiped notice sits above this same ScrollView the same way,
-   * and needs the identical guard — THE CRITIC caught this reviewing that item:
-   * `pathNotice` alone let the wipe notice get auto-scrolled past within ~1.5s
-   * for exactly the population it exists for (a wiped profile always starts at
-   * the very first lesson, which combined with the header and the notice card
-   * itself reliably clears the 420px threshold below). Gated on both now, not
-   * just the older of the two.
-   *
-   * URD-015: gated on `showTicksWiped`/`showPathNotice` — whether either card
-   * is still rendering at all — rather than the raw store flags. A dismissed
+   * URD-015: gated on `showPathNotice` — whether the card is still rendering
+   * at all — rather than the raw store flag. A dismissed
    * notice keeps rendering, fading in place, for the whole of its exit (see
    * `Reveal.tsx`); the raw flags go false the instant the tap lands, before
    * that fade even starts. Scrolling while a card is still visibly there,
    * mid-fade, is exactly the same "not while the notice is up" case the
    * comment above already argues for.
    */
+  const tabBarHeight = useBottomTabBarHeight();
   const pathRef = useRef<ScrollView>(null);
   const currentNode = useRef<View>(null);
   const didAutoScroll = useRef(false);
@@ -429,22 +381,60 @@ export function HomeScreen() {
   }, [currentLevel]);
 
   useEffect(() => {
-    if (didAutoScroll.current || showPathNotice || showTicksWiped) return;
+    if (didAutoScroll.current || showPathNotice) return;
     const t = setTimeout(() => {
       // `measure` reports pageY — position on screen. The list has not been
       // scrolled yet at this point, so pageY is also the content offset we
       // want. Accumulating nested onLayout values instead would mean summing
       // three levels of parent-relative coordinates, which silently goes wrong
       // the first time the tree gains a wrapper.
-      currentNode.current?.measure((_x, _y, _w, _h, _px, pageY) => {
-        if (typeof pageY === 'number' && pageY > 420) {
-          didAutoScroll.current = true;
-          pathRef.current?.scrollTo({ y: pageY - 200, animated: true });
-        }
+      currentNode.current?.measure((_x, _y, _w, height, _px, pageY) => {
+        if (typeof pageY !== 'number' || typeof height !== 'number') return;
+        /**
+         * Scroll only when the node is actually out of sight.
+         *
+         * The guard used to be `pageY > 420`, a constant that knows nothing
+         * about how tall the screen is. On the two commonest phone sizes a
+         * learner in Unit 1 has their current lesson sitting at 705-773 with
+         * the tab bar starting at 774 — fully visible, nothing to fix — and
+         * this scrolled 505px anyway, past the greeting, the streak and gem
+         * counters, the level card, the "Start here" card, Today's Word and
+         * the Letter Lab. A new learner's first ever view of Home was a hint
+         * banner and a list. On a 320x568 screen the same node really is cut
+         * off, and there the scroll is right, which is what made the constant
+         * look like it worked.
+         *
+         * The bottom of the visible list is the window less the tab bar, and
+         * the first version of this asked whether the node cleared it exactly.
+         * On the phone it was tuned against, the node cleared it by a single
+         * pixel, and the comment here said that a header growing by two would
+         * tip it back into scrolling and should. That was the wrong call, and
+         * rewriting the unit subtitles to say what each unit contains proved
+         * it: one subtitle wrapped to a second line, the row dropped fifteen
+         * pixels, and a brand new learner's first view of Home became a hint
+         * banner and a list again. Fifteen pixels of a row is not worth the
+         * greeting, the counters, Today's Word and the Letter Lab.
+         *
+         * So the test is whether enough of the row is on screen to be seen and
+         * tapped, rather than whether all of it is. A row is 80px tall and the
+         * comfortable minimum for a touch target is 44; 56 leaves the row
+         * plainly visible while still scrolling for one that is genuinely cut
+         * in half. `check:home-scroll` pins the direction rather than the
+         * number: measured against it, anything up to about 65 keeps the new
+         * learner's Home unscrolled, and 200 puts the failure back.
+         *
+         * Deeper into the course nothing changes: a node hundreds of pixels
+         * down still scrolls, and still lands 200px from the top.
+         */
+        const ENOUGH_ON_SCREEN = 56;
+        const visibleBottom = Dimensions.get('window').height - tabBarHeight;
+        if (pageY + Math.min(height, ENOUGH_ON_SCREEN) <= visibleBottom) return;
+        didAutoScroll.current = true;
+        pathRef.current?.scrollTo({ y: pageY - 200, animated: true });
       });
     }, 500);
     return () => clearTimeout(t);
-  }, [currentId, showPathNotice, showTicksWiped]);
+  }, [currentId, showPathNotice, tabBarHeight]);
 
   /**
    * Opening a stage below the fold used to leave the scroll position exactly
@@ -607,45 +597,13 @@ export function HomeScreen() {
             </SafeAreaView>
           </Reveal>
 
-          {/* URD-014: the learner who lost the most, told the least.
-            An old profile's lesson-id migration empties completedLessons and
-            skippedLessons, because a positional id from before the path was
-            content-keyed genuinely cannot be translated. That is correct —
-            but it also deletes the only evidence `needsPathMoveNotice` reads,
-            so the notice below it never fires for exactly this learner. This
-            card is that second, separate truth, with its own honest copy:
-            unlike a regroup, something really was dropped here. */}
-          {showTicksWiped && (
-            <Reveal delay={20} visible={store.ticksWipedByMigration} onExited={() => setShowTicksWiped(false)}>
-              <Card
-                className="mb-4"
-                accent={palette.gold}
-                accessibilityRole="alert"
-                accessibilityLabel={`${TICKS_WIPED_NOTICE_TITLE}. ${TICKS_WIPED_NOTICE_BODY}`}
-              >
-                <Bold className="text-base">{TICKS_WIPED_NOTICE_TITLE}</Bold>
-                <Txt className="mt-2 text-sm leading-6 text-paper/75">{TICKS_WIPED_NOTICE_BODY}</Txt>
-                <View className="mt-3 flex-row">
-                  <Button
-                    variant="ghost"
-                    onPress={() => {
-                      feedback.tap();
-                      store.dismissTicksWipedNotice();
-                    }}
-                  >
-                    Got it
-                  </Button>
-                </View>
-              </Card>
-            </Reveal>
-          )}
-
           {/* Why the unit counts moved.
-            The path has been rebuilt underneath people twice and will move
-            again: once splitting each topic across enough lessons to cover its
-            vocabulary, once regrouping those into sittings. What a returning
-            learner sees is not a lost tick, because a topic's first part keeps
-            its id, but a unit that read 55 of 55 now reading 55 of 81. That is
+            The path changes shape between releases and will keep doing so:
+            splitting each topic across enough lessons to cover its vocabulary,
+            regrouping those into sittings, regrouping the units by theme. What
+            a returning learner sees is not a lost tick, because a topic's first
+            part keeps its id, but a unit that read 55 of 55 now reading 55 of
+            81. That is
             indistinguishable from lost progress from the inside, and lost
             progress is the thing most likely to make somebody stop opening it.
 
@@ -703,18 +661,26 @@ export function HomeScreen() {
                   </View>
                   <Bold className="text-sm">{levelTitle(level)}</Bold>
                 </View>
+                {/* This card stacks two bars that measure different things, and
+                    the only number on it used to be "0/30 XP today" — sitting
+                    directly above the *level* bar, which counts XP for the
+                    whole course. The daily bar below it got a bare "0%" and an
+                    unexplained sparkle. Neither bar could be identified from
+                    the screen, and the one label there was named the wrong one.
+                    Profile already says "40 / 300 XP to level 6"; this now says
+                    the same kind of thing, with each number over its own bar. */}
                 <Txt className="text-xs text-paper/55">
-                  {store.todayXp}/{goal.xp} XP today
+                  {into} / {span} XP to level {level + 1}
                 </Txt>
               </View>
               <ProgressBar progress={ratio} height={10} />
               <View className="mt-3 flex-row items-center gap-2">
-                <Illustration name="sparkle" tile={false} size={16} />
+                <Txt className="text-[0.6875rem] text-paper/55">Today</Txt>
                 <View className="flex-1">
                   <ProgressBar progress={dailyRatio} color={palette.jade} height={8} />
                 </View>
-                <Txt className="text-[11px] text-paper/55">
-                  {dailyRatio >= 1 ? 'Goal met ✓' : `${Math.round(dailyRatio * 100)}%`}
+                <Txt className="text-[0.6875rem] text-paper/55">
+                  {dailyRatio >= 1 ? 'Goal met ✓' : `${store.todayXp}/${goal.xp} XP`}
                 </Txt>
               </View>
             </Card>
@@ -753,7 +719,7 @@ export function HomeScreen() {
                   </View>
                   <View className="flex-1">
                     <Eyebrow style={{ color: palette.jade }}>Due for review</Eyebrow>
-                    <Bold className="mt-0.5 text-[15px]">
+                    <Bold className="mt-0.5 text-[0.9375rem]">
                       {dueNow} {dueNow === 1 ? 'thing' : 'things'} to bring back
                     </Bold>
                     <Txt className="text-xs text-paper/55">
@@ -809,7 +775,7 @@ export function HomeScreen() {
                           ? 'Continue'
                           : 'Start here'}
                     </Eyebrow>
-                    <Bold className="mt-0.5 text-[15px]">{finished ? 'Keep it warm' : currentLesson.title}</Bold>
+                    <Bold className="mt-0.5 text-[0.9375rem]">{finished ? 'Keep it warm' : currentLesson.title}</Bold>
                     <Txt className="text-xs text-paper/55">
                       {finished
                         ? 'You’ve made it through the whole course. Daily review keeps it fresh.'
@@ -839,14 +805,28 @@ export function HomeScreen() {
                       color={palette.ink}
                       align="left"
                     />
-                    <Txt style={{ color: palette.ink }} className="text-xs opacity-60">
+                    <Txt style={{ color: palette.ink }} className="text-xs opacity-65">
                       {glossOf(word)}
                     </Txt>
                   </View>
                   <WordArt word={word} size={46} />
                 </View>
               </Card>
+              {/* The best reference screen in the app was reached through a
+                  96px tile labelled in 9px type broken across two lines, with
+                  no accessible name at all — a pen, and a word too small to
+                  read at a glance. It is wider now and says what it is on one
+                  line at a legible size, with the alphabet counted underneath
+                  so the tile explains itself rather than only naming itself.
+
+                  Width, not height. Anything added above the path pushes the
+                  current lesson below the fold, and the auto-scroll would
+                  then correctly scroll past this whole header to reveal it —
+                  undoing the fix that put the header on screen in the first
+                  place. */}
               <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Letter Lab. Every letter of the alphabet, its four joining shapes, and tracing practice."
                 onPress={() => {
                   feedback.tap();
                   nav.navigate('LetterLab');
@@ -854,13 +834,16 @@ export function HomeScreen() {
                 style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.97 : 1 }] })}
               >
                 <View
-                  className="h-full w-24 items-center justify-center rounded-2xl border px-2 py-4"
+                  className="h-full w-28 items-center justify-center rounded-2xl border px-2 py-4"
                   style={{ borderColor: withAlpha(palette.gold, 0.3), backgroundColor: withAlpha(palette.gold, 0.1) }}
                 >
-                  <Illustration name="pen" tile={false} size={40} />
-                  <Eyebrow style={{ color: palette.gold, fontSize: 9 }} className="mt-3 text-center">
-                    Letter{'\n'}Lab
-                  </Eyebrow>
+                  <Illustration name="pen" tile={false} size={36} />
+                  <Bold style={{ color: palette.gold }} className="mt-2 text-center text-[0.8125rem]">
+                    Letter Lab
+                  </Bold>
+                  <Txt style={{ color: withAlpha(palette.gold, 0.75) }} className="text-center text-[0.625rem]">
+                    all {LETTERS.length} letters
+                  </Txt>
                 </View>
               </Pressable>
             </View>
@@ -874,7 +857,7 @@ export function HomeScreen() {
                 style={{ backgroundColor: withAlpha(palette.gold, 0.08) }}
               >
                 <Illustration name="sparkle" tile={false} size={15} />
-                <Txt className="flex-1 text-[11px] text-paper/55">
+                <Txt className="flex-1 text-[0.6875rem] text-paper/55">
                   Tap any lesson to jump ahead. Locked ones unlock as you pass them.
                 </Txt>
               </View>
@@ -923,16 +906,21 @@ export function HomeScreen() {
                         {(track === 'roman' && meta.romanBlurb) || meta.blurb}
                       </Txt>
                     </View>
-                    <Txt className="text-[11px] text-paper/55">
+                    <Txt className="text-[0.6875rem] text-paper/55">
                       {done}/{total}
                     </Txt>
-                    <Txt style={{ color: withAlpha(palette.cream, 0.5), fontSize: 15 }}>{isOpen(lvl) ? '⌃' : '⌄'}</Txt>
+                    {/* Scales with the stage title it sits beside: a chevron
+                        frozen at 15px next to a doubled heading reads as a
+                        stray mark rather than as that row's control. */}
+                    <Txt className="text-[0.9375rem]" style={{ color: withAlpha(palette.cream, 0.5) }}>
+                      {isOpen(lvl) ? '⌃' : '⌄'}
+                    </Txt>
                   </View>
                   <View className="mb-1 mt-2">
                     <ProgressBar progress={total ? done / total : 0} color={meta.color} height={6} spring={false} />
                   </View>
                   {!isOpen(lvl) && (
-                    <Txt className="mt-2 text-[11px] text-paper/55">{levelUnits.length} units · tap to open</Txt>
+                    <Txt className="mt-2 text-[0.6875rem] text-paper/55">{levelUnits.length} units · tap to open</Txt>
                   )}
                 </Pressable>
               </Reveal>

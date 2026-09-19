@@ -175,9 +175,9 @@ const COPY_KEYS = new Set([
  *
  * The keyed scan below finds `desc: '…'`. It cannot find a sentence parked in
  * a module-level `const`, returned from a ternary, or built as a template
- * literal, and all three ship: an em dash sat in `TICKS_WIPED_NOTICE_BODY`,
- * and two straight apostrophes in a ternary and a backtick string, through a
- * green pipeline, until they were found by reading the screen. That is the
+ * literal, and all three ship: an em dash sat in a module-level notice body on
+ * Home, and two straight apostrophes in a ternary and a backtick string, went
+ * through a green pipeline until they were found by reading the screen. That is the
  * failure this check exists to make impossible.
  *
  * Restricted to the directories that are all interface, because `src/data`

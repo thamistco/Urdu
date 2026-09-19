@@ -133,7 +133,7 @@ export function LetterContrastExercise({ exercise, locked, onGraded }: ExerciseP
         <Bold style={{ color: palette.ink }} className="text-3xl">
           {letter.name}
         </Bold>
-        <Txt style={{ color: palette.ink }} className="mt-2 text-base opacity-60">
+        <Txt style={{ color: palette.ink }} className="mt-2 text-base opacity-65">
           sounds like “{letter.sound}”
         </Txt>
       </PromptCard>
@@ -225,7 +225,7 @@ export function LetterPickExercise({ exercise, locked, onGraded }: ExerciseProps
         <Bold style={{ color: palette.ink }} className="text-3xl">
           “{letter.sound}”
         </Bold>
-        <Txt style={{ color: palette.ink }} className="mt-2 text-base opacity-60">
+        <Txt style={{ color: palette.ink }} className="mt-2 text-base opacity-65">
           {letter.name}
         </Txt>
       </PromptCard>

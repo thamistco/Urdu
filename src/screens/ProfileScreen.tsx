@@ -27,9 +27,7 @@ function StatBox({ icon, value, label }: { icon: IconName; value: string | numbe
     <View className="w-[31%] items-center rounded-2xl border border-white/10 bg-ink-700 py-4">
       <Illustration name={icon} tile={false} size={24} />
       <Display className="mt-1 text-xl">{value}</Display>
-      <Eyebrow className="mt-0.5 text-paper/55" style={{ fontSize: 9 }}>
-        {label}
-      </Eyebrow>
+      <Eyebrow className="mt-0.5 text-paper/55 text-[0.5625rem]">{label}</Eyebrow>
     </View>
   );
 }
@@ -70,7 +68,7 @@ function WeekChart() {
                 backgroundColor: isToday ? palette.gold : withAlpha(palette.gold, 0.35),
               }}
             />
-            <Txt className="mt-1.5 text-[10px] text-paper/55">{labels[dow]}</Txt>
+            <Txt className="mt-1.5 text-[0.625rem] text-paper/55">{labels[dow]}</Txt>
           </View>
         );
       })}
@@ -107,7 +105,7 @@ export function ProfileScreen() {
               <Eyebrow style={{ color: palette.gold }}>{levelTitle(level)}</Eyebrow>
               <View className="mt-3 w-full px-6">
                 <ProgressBar progress={ratio} height={8} />
-                <Txt className="mt-1 text-center text-[11px] text-paper/55">
+                <Txt className="mt-1 text-center text-[0.6875rem] text-paper/55">
                   {into} / {span} XP to level {level + 1}
                 </Txt>
               </View>
@@ -140,16 +138,17 @@ export function ProfileScreen() {
         {/* league */}
         <Reveal delay={180}>
           <Pressable
+            accessibilityRole="button"
             onPress={link('Leaderboard')}
             style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
           >
             <View className="mb-3 flex-row items-center gap-3 rounded-2xl border border-white/10 bg-ink-700 p-4">
               <LeagueBadge color={league.color} size={30} />
               <View className="flex-1">
-                <Bold className="text-[15px]">{league.name} League</Bold>
+                <Bold className="text-[0.9375rem]">{league.name} League</Bold>
                 <Txt className="text-xs text-paper/55">{s.weeklyXp} XP this week · tap to see standings</Txt>
               </View>
-              <Txt className="text-paper/55">›</Txt>
+              <Txt className="text-base text-paper/55">›</Txt>
             </View>
           </Pressable>
         </Reveal>
@@ -157,18 +156,19 @@ export function ProfileScreen() {
         {/* achievements */}
         <Reveal delay={220}>
           <Pressable
+            accessibilityRole="button"
             onPress={link('Achievements')}
             style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
           >
             <View className="mb-3 flex-row items-center gap-3 rounded-2xl border border-white/10 bg-ink-700 p-4">
               <Illustration name="medal" tile={false} size={30} />
               <View className="flex-1">
-                <Bold className="text-[15px]">Achievements</Bold>
+                <Bold className="text-[0.9375rem]">Achievements</Bold>
                 <Txt className="text-xs text-paper/55">
                   {unlockedAch} of {ACHIEVEMENTS.length} unlocked
                 </Txt>
               </View>
-              <Txt className="text-paper/55">›</Txt>
+              <Txt className="text-base text-paper/55">›</Txt>
             </View>
           </Pressable>
         </Reveal>
@@ -176,16 +176,17 @@ export function ProfileScreen() {
         {/* settings */}
         <Reveal delay={260}>
           <Pressable
+            accessibilityRole="button"
             onPress={link('Settings')}
             style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
           >
             <View className="mb-8 flex-row items-center gap-3 rounded-2xl border border-white/10 bg-ink-700 p-4">
               <Illustration name="gear" tile={false} size={28} />
               <View className="flex-1">
-                <Bold className="text-[15px]">Settings</Bold>
+                <Bold className="text-[0.9375rem]">Settings</Bold>
                 <Txt className="text-xs text-paper/55">Sound, haptics, script & Roman, daily goal</Txt>
               </View>
-              <Txt className="text-paper/55">›</Txt>
+              <Txt className="text-base text-paper/55">›</Txt>
             </View>
           </Pressable>
         </Reveal>
