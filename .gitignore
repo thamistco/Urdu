@@ -70,3 +70,6 @@ yarn-error.*
 # check:all stamps the tree it verified here, for the pre-push hook. Local to
 # one machine and one run, never committed.
 .check-all-pass
+
+# Which of check:all / the playtest currently owns dist/. Process-local.
+.playtest.lock

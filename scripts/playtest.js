@@ -61,6 +61,7 @@
  *   npm run playtest -- --headed      watch it play
  */
 
+const { refuseIfBusy, take, CHECK_ALL_LOCK, PLAYTEST_LOCK } = require('./lib/dist-lock');
 const fs = require('fs');
 const path = require('path');
 const { serveDist, findChromium, enterAsGuest } = require('./lib/serve-dist');
@@ -3289,6 +3290,14 @@ async function passADay(page, ctx) {
   ctx.journal.push({ type: 'dayPassed', after: ctx.stats.lessonsEntered, ...moved });
   return moved;
 }
+
+/**
+ * check:all deletes and rebuilds dist/ as its first act, and this serves dist/
+ * for the length of the run. Taken before the browser opens, so a refusal
+ * costs nothing and a crash still gives the lock back.
+ */
+refuseIfBusy('playtest', CHECK_ALL_LOCK);
+take(PLAYTEST_LOCK, 'playtest');
 
 async function main() {
   if (!fs.existsSync(path.join(DIST, 'index.html'))) {

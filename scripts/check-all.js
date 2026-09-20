@@ -31,6 +31,7 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 const { readSteps } = require('./lib/workflow-steps');
+const { refuseIfBusy, PLAYTEST_LOCK } = require('./lib/dist-lock');
 
 const ROOT = path.join(__dirname, '..');
 const WORKFLOW = path.join(ROOT, '.github', 'workflows', 'deploy-preview.yml');
@@ -143,6 +144,13 @@ function isAlive(pid) {
     return e.code === 'EPERM';
   }
 }
+
+/**
+ * A playtest holds dist/ for the length of its run, and this deletes dist/ as
+ * its first act. Checked before this run's own lock is taken, so a refusal
+ * leaves nothing behind.
+ */
+refuseIfBusy('check:all', PLAYTEST_LOCK);
 
 function acquireLock() {
   if (fs.existsSync(LOCKFILE)) {
