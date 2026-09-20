@@ -49,14 +49,20 @@ These are the ones this project has been burned by. Each cost a real bug.
 4. **Measure rather than estimate.** A comment promised 6:1 contrast above code
    that measured 4.47:1. Alpha compositing, contrast ratios and file sizes get
    measured.
-5. **Fix the cause.** The same deploy broke four times because CI rewrote a
+5. **A number without its precondition is not a result.** "0 hearts walls in 8
+   lessons" was reported as a win; all eight were inside the unit where hearts
+   are free by design. A 12,108-answer gap distribution was read as a pacing
+   finding; the schedule works in days and the run took an afternoon, so
+   nothing ever came due. Both read exactly like real results. Every playtest
+   report now prints what the run is *not* evidence for — keep it honest.
+6. **Fix the cause.** The same deploy broke four times because CI rewrote a
    tracked file to configure the build, so CI and local produced different
    artifacts. The fix was the build, not the fourth symptom.
-6. **Never silence a linter to go green.** Fix the code, or disable at the site
+7. **Never silence a linter to go green.** Fix the code, or disable at the site
    with a comment saying why the rule is wrong there.
-7. **No secrets, anywhere.** Not in code, comments, or fixtures. `check:secrets`
+8. **No secrets, anywhere.** Not in code, comments, or fixtures. `check:secrets`
    runs first in CI.
-8. **Say what you did not do.** Report skipped or blocked work as plainly as
+9. **Say what you did not do.** Report skipped or blocked work as plainly as
    finished work.
 
 ## Where things live
@@ -69,6 +75,10 @@ src/exercises/   one file per exercise type  src/store/      zustand stores
                                              src/theme/      the only source of colour
 scripts/         checks and generators       scripts/lib/    shared script helpers
 ```
+
+`check:all` and a playtest cannot run at the same time — the first deletes and
+rebuilds `dist/`, the second serves it — and each now refuses while the other
+holds it, rather than relying on whoever is driving to remember.
 
 ## Two kinds of test, no overlap
 
