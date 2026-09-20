@@ -1,0 +1,100 @@
+#!/bin/sh
+#
+# Refuse to push the branch the site deploys from unless check:all has passed
+# against exactly the content being pushed.
+#
+# 71188a6 was pushed to this branch without the pipeline having seen it. The
+# run that finally did see it was red, so for a day nobody could say whether
+# the live site was built from a good commit, and answering it cost three more
+# full pipeline runs. A green check:all on a *different* tree is not evidence
+# about this one, which is why the stamp records the tree and not just "it
+# passed recently".
+#
+# Other branches push freely: this guards what deploys, not what exists.
+#
+#   git config core.hooksPath .githooks     (npm install does this for you)
+#
+# HARF_SKIP_PREPUSH=1 pushes anyway, and prints what it is overriding.
+
+set -e
+
+DEPLOYS_FROM=$(sed -n '/^on:/,/^[a-z]/p' .github/workflows/deploy-preview.yml \
+  | sed -n 's/^      - \(.*\)$/\1/p' | head -1)
+
+if [ -z "$DEPLOYS_FROM" ]; then
+  echo "pre-push: could not read the deploying branch out of the workflow." >&2
+  echo "          That is this hook's whole premise, so it stops rather than waving you through." >&2
+  exit 1
+fi
+
+STAMP=.check-all-pass
+blocked=0
+
+while read -r _local_ref local_sha remote_ref _remote_sha; do
+  [ "$local_sha" = "0000000000000000000000000000000000000000" ] && continue
+  case "$remote_ref" in
+    "refs/heads/$DEPLOYS_FROM") ;;
+    *) continue ;;
+  esac
+
+  pushing_tree=$(git rev-parse "$local_sha^{tree}")
+
+  if [ ! -f "$STAMP" ]; then
+    echo "pre-push: $DEPLOYS_FROM is the branch the site deploys from, and check:all has not passed here." >&2
+    echo "          Run: npm run check:all" >&2
+    blocked=1
+    continue
+  fi
+
+  # Parsed with node rather than sed. The first version matched `"tree": "..."`
+  # with a literal space, so it read an empty string out of the same JSON
+  # written compactly and then reported "check:all passed on a different tree"
+  # against a tree that matched perfectly. A guard that blocks correct pushes
+  # gets switched off, which would cost more than the bug it prevents.
+  verified_tree=$(node -e 'try{const s=JSON.parse(require("fs").readFileSync(".check-all-pass","utf8"));process.stdout.write(String(s.tree||""))}catch(e){process.stdout.write("")}')
+  was_dirty=$(node -e 'try{const s=JSON.parse(require("fs").readFileSync(".check-all-pass","utf8"));process.stdout.write(s.dirty?"true":"false")}catch(e){process.stdout.write("unreadable")}')
+  verified_at=$(node -e 'try{const s=JSON.parse(require("fs").readFileSync(".check-all-pass","utf8"));process.stdout.write(String(s.at||"an unknown time"))}catch(e){process.stdout.write("an unknown time")}')
+
+  if [ "$was_dirty" = "unreadable" ] || [ -z "$verified_tree" ]; then
+    echo "pre-push: $STAMP exists but could not be read as check:all's stamp." >&2
+    echo "          Not knowing what was verified is the same as nothing being verified." >&2
+    echo "          Run: npm run check:all" >&2
+    blocked=1
+    continue
+  fi
+
+  if [ "$was_dirty" = "true" ]; then
+    echo "pre-push: check:all last passed with uncommitted changes in the tree ($verified_at)," >&2
+    echo "          so what it verified is not what this push contains." >&2
+    echo "          Commit everything, then run: npm run check:all" >&2
+    blocked=1
+    continue
+  fi
+
+  if [ "$verified_tree" != "$pushing_tree" ]; then
+    echo "pre-push: check:all passed on a different tree than the one being pushed." >&2
+    echo "          verified $verified_at: $verified_tree" >&2
+    echo "          pushing:              $pushing_tree" >&2
+    echo "          Run: npm run check:all" >&2
+    blocked=1
+    continue
+  fi
+
+  echo "pre-push: check:all verified this exact tree at $verified_at."
+done
+
+if [ "$blocked" = "1" ]; then
+  if [ -n "$HARF_SKIP_PREPUSH" ]; then
+    echo "pre-push: HARF_SKIP_PREPUSH set — pushing an unverified tree to $DEPLOYS_FROM anyway." >&2
+    exit 0
+  fi
+  echo "" >&2
+  echo "          (HARF_SKIP_PREPUSH=1 overrides this, and says so in the output.)" >&2
+  exit 1
+fi
+
+# Explicit, because a shell script's status is its last command's, and a false
+# `if` with no else is a failure. Without this the hook blocked every push,
+# including the ones it had just verified -- caught by checking the exit codes
+# rather than reading the messages, which all looked right.
+exit 0

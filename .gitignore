@@ -66,3 +66,7 @@ yarn-error.*
 # check:all's own lock against two concurrent runs corrupting one dist/
 # rebuild (URD-056) — process-local, never meant to be committed.
 .check-all.lock
+
+# check:all stamps the tree it verified here, for the pre-push hook. Local to
+# one machine and one run, never committed.
+.check-all-pass

@@ -27,6 +27,7 @@
  * prevent.
  */
 
+const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 const { readSteps, beforeTheBuild, ROOT } = require('./lib/workflow-steps');
@@ -43,6 +44,37 @@ const SELF = 'check:fast';
     for (const f of stray) console.error(`  ${f}`);
     console.error('\nRemove it, or move it under the session scratchpad, then run check:fast again.');
     process.exit(1);
+  }
+}
+
+/**
+ * Is the pre-push hook actually installed?
+ *
+ * `.githooks/pre-push` refuses to push the deploying branch unless check:all
+ * has passed on exactly that tree. Git does not use it until `core.hooksPath`
+ * points there, which `npm install` does — so a checkout that skipped that
+ * step has a guard sitting in the repository doing nothing, which is worse
+ * than not having one, because it is easy to believe it is working.
+ *
+ * A warning rather than a failure: a fresh clone is in exactly this state
+ * before its first install, and failing there would be a confusing first
+ * impression of a check that is not about the code at all.
+ */
+if (!process.env.CI) {
+  const hook = path.join(ROOT, '.githooks', 'pre-push');
+  let configured = '';
+  try {
+    configured = execSync('git config --get core.hooksPath', { cwd: ROOT, encoding: 'utf8' }).trim();
+  } catch {
+    configured = '';
+  }
+  if (fs.existsSync(hook) && configured !== '.githooks') {
+    console.warn(
+      `\x1b[33m${SELF} — the pre-push hook is present but git is not using it` +
+        `${configured ? ` (core.hooksPath is "${configured}")` : ''}.\x1b[0m\n` +
+        '  Nothing stops an unverified push to the deploying branch until you run:\n' +
+        '    git config core.hooksPath .githooks\n'
+    );
   }
 }
 

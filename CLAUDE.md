@@ -92,5 +92,10 @@ re-theme. Mark those `check:theme-ok` on the line, or wrap a region in
 ## Git
 
 Work on `claude/language-learning-android-app-yu2gzz`, never the default branch.
+
+That branch is what the site deploys from, so `.githooks/pre-push` refuses to
+push it unless `check:all` has passed against exactly the tree being pushed —
+not "recently", and not with uncommitted changes in the way. `npm install`
+points git at the hook; `check:fast` warns if it ever stops being installed.
 One logical change per commit; the body says *why*, and names what broke if it
 is a fix. Mechanical changes — formatting, renames — go in their own commit.
