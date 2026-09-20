@@ -26,8 +26,10 @@ cannot drift from what CI runs.
 npm run check:fast
 ```
 
-The same pipeline, stopping where the workflow builds: 25 of the 37 steps in
-about 30 seconds. Run it before committing. It is **not** the gate and says so
+The same pipeline, stopping where the workflow builds — currently about
+thirty seconds. It prints how many steps that was and how many it skipped on
+every run, rather than stating a count here that goes stale the next time the
+workflow gains a step. Run it before committing. It is **not** the gate and says so
 on every run — it never builds and never drives the app — but being told in
 twenty seconds that Prettier wanted double quotes costs twenty seconds, and
 being told by `check:all` costs a web build plus a dozen browser checks, twice.
@@ -54,7 +56,7 @@ These are the ones this project has been burned by. Each cost a real bug.
    are free by design. A 12,108-answer gap distribution was read as a pacing
    finding; the schedule works in days and the run took an afternoon, so
    nothing ever came due. Both read exactly like real results. Every playtest
-   report now prints what the run is *not* evidence for — keep it honest.
+   report now prints what the run is _not_ evidence for — keep it honest.
 6. **Fix the cause.** The same deploy broke four times because CI rewrote a
    tracked file to configure the build, so CI and local produced different
    artifacts. The fix was the build, not the fourth symptom.
@@ -116,5 +118,5 @@ That branch is what the site deploys from, so `.githooks/pre-push` refuses to
 push it unless `check:all` has passed against exactly the tree being pushed —
 not "recently", and not with uncommitted changes in the way. `npm install`
 points git at the hook; `check:fast` warns if it ever stops being installed.
-One logical change per commit; the body says *why*, and names what broke if it
+One logical change per commit; the body says _why_, and names what broke if it
 is a fix. Mechanical changes — formatting, renames — go in their own commit.
