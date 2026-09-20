@@ -194,6 +194,27 @@ const STUCK_RUN_LIMIT = Number(argOf('stuck-limit', 8));
  */
 const PRACTICE_EVERY = Number(argOf('practice-every', 6));
 const SETTINGS_EVERY = Number(argOf('settings-every', 12));
+/**
+ * Lessons per simulated day — `0`, the default, means the clock never moves.
+ *
+ * Spaced repetition here is measured in days: `srs.ts` hands out intervals of
+ * one day, then three, then interval times ease, and the only step shorter
+ * than that is the sixty seconds a missed card waits. A playtest plays a
+ * 350-lesson course in a few hours, so no card it ever answers correctly comes
+ * due again inside the run. Every gap this harness has measured describes the
+ * app with its scheduler switched off, and the hole it found in the spacing
+ * curve — 304 asks between 21 and 100 screens, against 6,528 repeats overall —
+ * is partly the harness's own shadow.
+ *
+ * A check that cannot exercise the mechanism it is pointed at reports on
+ * something else. So the run can carry a calendar: every `n` lessons, wind
+ * every stored timestamp back a day, which is what a day passing looks like
+ * from inside the app. Both stores are wound together — a learner who slept
+ * also got their hearts back — and the page is reloaded afterwards, because
+ * the in-memory store would otherwise write its own copy straight back over
+ * the edit.
+ */
+const DAY_EVERY = Number(argOf('day-every', 0));
 /** Skip the path entirely: one practice pass and one settings pass, for
  *  checking those two surfaces without paying for a course walk. */
 const SURFACES_ONLY = has('surfaces-only');
@@ -3109,6 +3130,65 @@ async function onboardingSession(page, ctx) {
   return { finished: started && onPath, steps };
 }
 
+/**
+ * Wind every timestamp in the progress store back by one day.
+ *
+ * Winding the stored timestamps back is the same thing as moving `Date.now()`
+ * forward, and it needs no seam in the app to do it: everything time-based in
+ * the progress store is an epoch millisecond.
+ *
+ * Pure, and applied in node rather than in the page, so the arithmetic that
+ * decides whether the day did anything is covered by `playtest:selftest`
+ * rather than only by a thirty-minute browser run.
+ *
+ * Returns what crossed the line: the number of cards that were not due before
+ * and are now, out of how many the learner holds. `becameDue === 0` over a run
+ * means the calendar is turning and the schedule still is not, which is a
+ * finding rather than a nuisance.
+ */
+function windBackADay(state, now = Date.now()) {
+  if (!state || typeof state !== 'object') return null;
+  const DAY = 24 * 60 * 60 * 1000;
+  const cards = Object.values(state.srs || {});
+  let becameDue = 0;
+  for (const card of cards) {
+    if (typeof card.due !== 'number') continue;
+    const wasDue = card.due <= now;
+    card.due -= DAY;
+    // Moved with `due`, so "how long since this was seen" stays the same
+    // distance behind it. Leaving it put would age every card by a day in the
+    // one field the app reads for recency while pretending no time had passed.
+    if (typeof card.lastSeen === 'number') card.lastSeen -= DAY;
+    if (!wasDue && card.due <= now) becameDue++;
+  }
+  // A learner who slept also got their hearts back.
+  if (typeof state.heartsUpdatedAt === 'number' && state.heartsUpdatedAt > 0) state.heartsUpdatedAt -= DAY;
+  return { becameDue, cards: cards.length };
+}
+
+/**
+ * Move the app's calendar on by one day, and let the app rehydrate onto it.
+ */
+async function passADay(page, ctx) {
+  const raw = await page.evaluate(() => localStorage.getItem('harf-progress')).catch(() => null);
+  if (!raw) return null;
+  let store;
+  try {
+    store = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  const moved = windBackADay(store && store.state, Date.now());
+  if (!moved) return null;
+  await page.evaluate((text) => localStorage.setItem('harf-progress', text), JSON.stringify(store));
+  // The store in memory still holds the old timestamps and writes them back on
+  // its next change, so the edit only counts once the page has rehydrated.
+  await page.reload({ timeout: 30000 });
+  await page.waitForTimeout(2500);
+  ctx.journal.push({ type: 'dayPassed', after: ctx.stats.lessonsEntered, ...moved });
+  return moved;
+}
+
 async function main() {
   if (!fs.existsSync(path.join(DIST, 'index.html'))) {
     console.error('playtest — no dist/. Run `npm run build:web` first.');
@@ -3337,6 +3417,12 @@ async function main() {
       await settingsSession(page, ctx);
       flush();
     }
+    // Last, so the day turns over between sittings rather than inside one.
+    if (DAY_EVERY > 0 && stats.lessonsEntered % DAY_EVERY === 0) {
+      const moved = await passADay(page, ctx);
+      flush();
+      if (moved) console.log(`  — a day passes: ${moved.becameDue} of ${moved.cards} cards came due`);
+    }
   }
 
   flush();
@@ -3364,6 +3450,7 @@ if (require.main === module) {
 
 module.exports = {
   Memory,
+  windBackADay,
   lessonDoneText,
   surfaceFindings,
   revealFrom,

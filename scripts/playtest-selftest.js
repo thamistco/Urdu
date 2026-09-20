@@ -45,6 +45,7 @@ const {
   asContent,
   surfaceFindings,
   lessonDoneText,
+  windBackADay,
 } = require('./playtest.js');
 
 let fails = 0;
@@ -557,6 +558,60 @@ const ok = (name, cond) => {
   const guessing = Array.from({ length: 200 }, () => ({ type: 'answer', couldHaveKnown: false, correct: false }));
   ok('questions it never had the answer for leave the wire alone', fire(guessing).length === 0);
 }
+
+// -- the calendar actually moves ---------------------------------------------
+
+/**
+ * `--day-every` exists because the app's schedule is measured in days and a
+ * playtest is measured in minutes. `srs.ts` hands out one day, then three,
+ * then interval times ease; the only shorter step is the sixty seconds a
+ * missed card waits. So in every run made before this flag, no card answered
+ * correctly ever came due again, and the gap distribution the harness
+ * reported described an app with spaced repetition switched off. The 21-to-100
+ * screen hole in that distribution — 304 asks against 6,528 repeats overall —
+ * was partly the harness's own shadow.
+ *
+ * These hold the arithmetic that decides whether a simulated day did anything,
+ * because "the calendar turned" and "cards came due" are different claims and
+ * only the second one is worth running for.
+ */
+{
+  const now = 1_700_000_000_000;
+  const DAY = 24 * 60 * 60 * 1000;
+  const state = {
+    heartsUpdatedAt: now,
+    srs: {
+      tomorrow: { due: now + DAY - 1000, lastSeen: now, interval: 1 },
+      inThreeDays: { due: now + 3 * DAY, lastSeen: now, interval: 3 },
+      alreadyDue: { due: now - 5000, lastSeen: now - DAY, interval: 0 },
+    },
+  };
+  const moved = windBackADay(state, now);
+  ok('a day passing brings tomorrow\'s card due', state.srs.tomorrow.due <= now);
+  ok('a day passing does not bring a card due in three days due', state.srs.inThreeDays.due > now);
+  ok('only the card that crossed the line is counted', moved.becameDue === 1 && moved.cards === 3);
+  ok(
+    'a card already due is not counted again',
+    windBackADay({ srs: { alreadyDue: { due: now - 5000, lastSeen: now } } }, now).becameDue === 0
+  );
+  ok('lastSeen moves with due, so recency is not silently aged', state.srs.tomorrow.lastSeen === now - DAY);
+  ok('the learner got their hearts back overnight', state.heartsUpdatedAt === now - DAY);
+}
+{
+  ok('a store with no cards reports none rather than throwing', windBackADay({}, 1).cards === 0);
+  ok('no state at all is not a day', windBackADay(null, 1) === null);
+  ok(
+    'a card with no timestamp is left alone rather than turned into NaN',
+    !Number.isNaN(
+      (() => {
+        const st = { srs: { odd: { lastSeen: 5 } } };
+        windBackADay(st, 10);
+        return st.srs.odd.due === undefined ? 0 : st.srs.odd.due;
+      })()
+    )
+  );
+}
+
 
 console.log(fails ? `\n${fails} failed` : '\nall good');
 process.exit(fails ? 1 : 0);
