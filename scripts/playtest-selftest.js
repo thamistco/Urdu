@@ -46,6 +46,7 @@ const {
   surfaceFindings,
   lessonDoneText,
   windBackADay,
+  windBack,
   caveats,
 } = require('./playtest.js');
 
@@ -652,6 +653,9 @@ const ok = (name, cond) => {
     graceLessons: 9,
     dayEvery: 4,
     practiceSessions: 1,
+    // Paced too: without this the run plays a lesson in a minute, and a
+    // wall-clock interval lands nowhere near where it would for a person.
+    minutesPerLesson: 5,
     journal: [{ type: 'dayPassed', becameDue: 26 }],
   });
   ok('a clocked run with cards coming due carries no caveat at all', clocked.length === 0);
@@ -676,6 +680,49 @@ const ok = (name, cond) => {
   );
 
   ok('a run that played nothing claims nothing', caveats({ lessonsEntered: 0 }).length === 0);
+}
+
+// -- the clock can be paced like a person, and says when it was not ---------
+
+/**
+ * A whole validation run was spent before this existed. The harness plays a
+ * lesson in about 65 seconds and a person takes about five minutes over the
+ * same 33 screens, and every interval the scheduler hands out is in wall-clock
+ * time -- so an interval lands four to five times further from its last
+ * sighting here than it would for a learner. A ten-minute step meant to put a
+ * word's second sighting ~66 screens later put it ~283 screens later here, in
+ * the band where the word is already gone, and the measurement showed no
+ * improvement for a change that was not the problem.
+ */
+{
+  const now = 2_000_000_000_000;
+  const MIN = 60 * 1000;
+  const state = { srs: { soon: { due: now + 8 * MIN, lastSeen: now, interval: 0 } } };
+  const moved = windBack(state, 10 * MIN, now);
+  ok('winding ten minutes brings a card due eight minutes out', moved.becameDue === 1);
+
+  const notYet = { srs: { later: { due: now + 20 * MIN, lastSeen: now, interval: 0 } } };
+  ok('winding ten minutes leaves a card twenty minutes out alone', windBack(notYet, 10 * MIN, now).becameDue === 0);
+
+  const day = { srs: { x: { due: now + 23 * 60 * MIN, lastSeen: now, interval: 1 } } };
+  ok('windBackADay is still exactly a day of it', windBackADay(day, now).becameDue === 1);
+
+  const unpaced = caveats({ resumeAfter: 30, lessonsEntered: 24, graceLessons: 9, dayEvery: 4, practiceSessions: 1 });
+  ok(
+    'a run at harness pace says its gap readings measure the harness',
+    unpaced.some((c) => /harness pace/.test(c))
+  );
+
+  const paced = caveats({
+    resumeAfter: 30,
+    lessonsEntered: 24,
+    graceLessons: 9,
+    dayEvery: 4,
+    practiceSessions: 1,
+    minutesPerLesson: 5,
+    journal: [{ type: 'dayPassed', becameDue: 20 }],
+  });
+  ok('a paced, clocked run that used the review carries no caveat', paced.length === 0);
 }
 
 console.log(fails ? `\n${fails} failed` : '\nall good');
