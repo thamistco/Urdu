@@ -1789,6 +1789,93 @@ function surfaceFindings(journal) {
   return out;
 }
 
+/**
+ * What this run is not evidence for.
+ *
+ * Two findings from this harness were measured against a precondition that
+ * was not met, and in both cases the number looked fine:
+ *
+ *  - "0 hearts walls in 8 lessons, against a 2.6 baseline" was reported as a
+ *    45% improvement. Every one of those eight lessons was inside the first
+ *    unit, where `hearts.ts` makes hearts free by design. The run could not
+ *    have produced a wall whatever the code did.
+ *  - A gap distribution over 12,108 answers was read as a finding about the
+ *    course's pacing. The schedule's shortest successful interval is one day
+ *    and the run took an afternoon, so no card answered correctly ever came
+ *    due: the numbers described the app with spaced repetition switched off.
+ *
+ * Neither was caught by anything, because a report that states a number and
+ * not its precondition reads exactly the same either way. So every report now
+ * carries the preconditions it failed to meet, in the place a reader looks
+ * before the numbers rather than after.
+ *
+ * Pure, and covered by `playtest:selftest`: the whole point is that this
+ * cannot quietly stop firing.
+ */
+function caveats({
+  resumeAfter = 0,
+  lessonsEntered = 0,
+  graceLessons = 0,
+  dayEvery = 0,
+  practiceSessions = 0,
+  journal = [],
+}) {
+  const out = [];
+  const first = resumeAfter + 1;
+  const last = resumeAfter + lessonsEntered;
+
+  if (lessonsEntered > 0 && graceLessons > 0 && first <= graceLessons) {
+    const walls = journal.filter((e) => e.type === 'outOfHearts').length;
+    out.push(
+      last <= graceLessons
+        ? `**Hearts prove nothing here.** This run played lessons ${first}-${last}, and hearts are free ` +
+            `through lesson ${graceLessons} by design. A wall was not possible here, so the ${walls} recorded ` +
+            `say nothing about the hearts economy. Re-run past it: \`--resume-after ${graceLessons}\` or more.`
+        : `**Hearts are only measurable for part of this run.** Lessons ${first}-${graceLessons} are inside ` +
+            `the free-hearts grace, so the ${walls} wall(s) here come from lessons ${graceLessons + 1}-${last} ` +
+            `alone — divide by those, not by ${lessonsEntered}.`
+    );
+  }
+
+  const days = journal.filter((e) => e.type === 'dayPassed');
+  // Guarded on having played something: these describe a run's findings, and a
+  // run with no lessons has none to qualify.
+  if (lessonsEntered > 0 && dayEvery <= 0) {
+    out.push(
+      `**No day passed.** The schedule hands out intervals of a day and upward, and the only shorter step ` +
+        `is the minute a missed card waits — so nothing answered correctly came due during this run. ` +
+        `Anything this run says about spacing or review load describes the app with its scheduler inert. ` +
+        `Use \`--day-every n\` to measure that.`
+    );
+  } else if (lessonsEntered > 0 && days.length && days.every((d) => !d.becameDue)) {
+    out.push(
+      `**The calendar turned ${days.length} times and no card ever came due.** That is a finding about the ` +
+        `schedule, not a caveat: with --day-every set, cards should be crossing into due.`
+    );
+  }
+
+  if (lessonsEntered > 0 && practiceSessions === 0) {
+    out.push(
+      `**Daily Review was never opened.** It is the one surface that takes due items in bulk, so a review ` +
+        `backlog measured here is the backlog of a learner who only ever plays the path.`
+    );
+  }
+  return out;
+}
+
+/** How many lessons deep the free-hearts grace runs, or 0 if it cannot be read. */
+function graceLessonCount() {
+  try {
+    const { load } = require('./lib/load-ts');
+    const { ALL_LESSONS } = load('src/data/units.ts');
+    const { GRACE_ENDS_AFTER } = load('src/lib/hearts.ts');
+    const i = ALL_LESSONS.findIndex((l) => l.id === GRACE_ENDS_AFTER);
+    return i === -1 ? 0 : i + 1;
+  } catch {
+    return 0;
+  }
+}
+
 function writeReport(journal, memory, stats) {
   const f = findings(journal);
   const sf = surfaceFindings(journal);
@@ -1861,6 +1948,20 @@ function writeReport(journal, memory, stats) {
       `played to the end, ${stats.settingsPasses} pass(es) over Settings.`,
     ``
   );
+
+  // Before the numbers, not after them.
+  const unmet = caveats({
+    resumeAfter: RESUME_AFTER,
+    lessonsEntered: stats.lessonsEntered,
+    graceLessons: graceLessonCount(),
+    dayEvery: DAY_EVERY,
+    practiceSessions: stats.practiceSessions,
+    journal,
+  });
+  if (unmet.length) {
+    lines.push(`## What this run is not evidence for`, ``);
+    for (const c of unmet) lines.push(`- ${c}`, ``);
+  }
 
   /**
    * The interface half, first and unconditionally.
@@ -3451,6 +3552,7 @@ if (require.main === module) {
 module.exports = {
   Memory,
   windBackADay,
+  caveats,
   lessonDoneText,
   surfaceFindings,
   revealFrom,
