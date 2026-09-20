@@ -80,6 +80,15 @@ scripts/         checks and generators       scripts/lib/    shared script helpe
 rebuilds `dist/`, the second serves it — and each now refuses while the other
 holds it, rather than relying on whoever is driving to remember.
 
+**Never wait with `pgrep -f`.** `until ! pgrep -f "scripts/playtest.js"` matches
+the shell that is asking, because the pattern is in that shell's own command
+line, so it waits forever for itself. This has cost six hours in one session
+and stalled two more, and each time it looked like a slow run rather than a
+stuck one. Wait on the lock file instead — `until [ ! -f .playtest.lock ]` —
+which a process cannot accidentally match, or just start `check:all` and let it
+refuse. Logs are dated for the other half of that failure: a run that never
+started leaves the previous run's log sitting there, and it reads as current.
+
 ## Two kinds of test, no overlap
 
 - **Unit tests** (`src/**/*.test.ts`, vitest) cover pure logic. Test properties
