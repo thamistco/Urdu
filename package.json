@@ -58,7 +58,8 @@
     "check:grammar-distractors": "node scripts/check-grammar-distractors.js",
     "check:claims": "node scripts/check-claims.js",
     "playtest": "node scripts/playtest.js",
-    "playtest:selftest": "node scripts/playtest-selftest.js"
+    "playtest:selftest": "node scripts/playtest-selftest.js",
+    "prepare": "git config core.hooksPath .githooks || true"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "^0.2.3",

@@ -259,3 +259,38 @@ if (failed) {
   process.exit(1);
 }
 console.log(`\n[32mcheck:all — all ${steps.length} steps pass against a deploy-shaped build.[0m`);
+
+/**
+ * Leave a note of exactly what passed, for the pre-push hook to read.
+ *
+ * A green run only licenses pushing the tree it ran against. 71188a6 went
+ * straight to the branch the site deploys from without this pipeline having
+ * seen it, and the run that finally did see it was red -- so whether the
+ * deployed commit was good was unknown for a day, and finding out cost three
+ * more full runs.
+ *
+ * The stamp records the commit, the tree, and whether anything was
+ * uncommitted at the time. The tree is the part that matters: two commits with
+ * different messages and identical content are the same test, and a commit
+ * with one character changed is not.
+ */
+try {
+  const at = (c) => execSync(c, { cwd: ROOT, encoding: 'utf8' }).trim();
+  fs.writeFileSync(
+    path.join(ROOT, '.check-all-pass'),
+    JSON.stringify(
+      {
+        head: at('git rev-parse HEAD'),
+        tree: at('git rev-parse HEAD^{tree}'),
+        dirty: at('git status --porcelain') !== '',
+        steps: steps.length,
+        at: new Date().toISOString(),
+      },
+      null,
+      2
+    ) + '\n'
+  );
+} catch {
+  // Not a git checkout, or git is unavailable. The pipeline still passed; the
+  // hook will simply have nothing to read, and says so rather than assuming.
+}
