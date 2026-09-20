@@ -22,6 +22,17 @@ built the way the deploy builds it. **Nothing is done until this passes.**
 It reads its step list out of `.github/workflows/deploy-preview.yml`, so it
 cannot drift from what CI runs.
 
+```bash
+npm run check:fast
+```
+
+The same pipeline, stopping where the workflow builds: 25 of the 37 steps in
+about 30 seconds. Run it before committing. It is **not** the gate and says so
+on every run — it never builds and never drives the app — but being told in
+twenty seconds that Prettier wanted double quotes costs twenty seconds, and
+being told by `check:all` costs a web build plus a dozen browser checks, twice.
+Same parser, so it cannot drift from CI or from `check:all`.
+
 ## Non-negotiables
 
 These are the ones this project has been burned by. Each cost a real bug.
