@@ -247,6 +247,23 @@ const BUILD = 'rm -rf dist && npm run build:web';
 console.log(`check:all \u2014 ${steps.length} steps, read from ${path.relative(ROOT, WORKFLOW)}`);
 console.log(`Building with HARF_BASE_URL="/${REPO}", as the deploy does. No files are modified.`);
 
+/**
+ * Stamp the run into its own output.
+ *
+ * A ten-minute run gets redirected to a log and read later, and a log with no
+ * date in it looks identical whether it is from this run or from one two days
+ * ago. That is not hypothetical: a failure was reported here from a log file
+ * whose run had never started, because the command that should have
+ * overwritten it never ran and nothing in the file said so.
+ */
+try {
+  const head = execSync('git rev-parse --short HEAD', { cwd: ROOT, encoding: 'utf8' }).trim();
+  const dirty = execSync('git status --porcelain', { cwd: ROOT, encoding: 'utf8' }).trim() !== '';
+  console.log(`Started ${new Date().toISOString()} on ${head}${dirty ? ' plus uncommitted changes' : ''}.`);
+} catch {
+  console.log(`Started ${new Date().toISOString()}.`);
+}
+
 let exported = false;
 for (const step of steps) {
   // Anything that drives the built app needs the bundle to exist first. The

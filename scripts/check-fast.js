@@ -97,6 +97,9 @@ const ENV = {
 };
 
 console.log(`${SELF} — ${steps.length} of ${all.length} steps, everything the workflow runs before it builds.`);
+// Dated for the same reason check:all's output is: a log read later must say
+// which run it is from.
+console.log(`Started ${new Date().toISOString()}.`);
 
 const started = Date.now();
 let failed = null;
