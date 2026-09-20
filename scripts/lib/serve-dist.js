@@ -250,4 +250,13 @@ async function enterAsGuest(page, url, state = {}, settings = {}) {
   await page.waitForTimeout(2500);
 }
 
-module.exports = { serveDist, resolveAsset, findChromium, enterAsGuest, openTheDoor, renderedScreen, AT_THE_DOOR, MIME };
+module.exports = {
+  serveDist,
+  resolveAsset,
+  findChromium,
+  enterAsGuest,
+  openTheDoor,
+  renderedScreen,
+  AT_THE_DOOR,
+  MIME,
+};

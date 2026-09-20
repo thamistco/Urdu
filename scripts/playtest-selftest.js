@@ -587,7 +587,7 @@ const ok = (name, cond) => {
     },
   };
   const moved = windBackADay(state, now);
-  ok('a day passing brings tomorrow\'s card due', state.srs.tomorrow.due <= now);
+  ok("a day passing brings tomorrow's card due", state.srs.tomorrow.due <= now);
   ok('a day passing does not bring a card due in three days due', state.srs.inThreeDays.due > now);
   ok('only the card that crossed the line is counted', moved.becameDue === 1 && moved.cards === 3);
   ok(
@@ -611,7 +611,6 @@ const ok = (name, cond) => {
     )
   );
 }
-
 
 console.log(fails ? `\n${fails} failed` : '\nall good');
 process.exit(fails ? 1 : 0);
