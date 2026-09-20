@@ -46,6 +46,7 @@ const {
   surfaceFindings,
   lessonDoneText,
   windBackADay,
+  caveats,
 } = require('./playtest.js');
 
 let fails = 0;
@@ -610,6 +611,71 @@ const ok = (name, cond) => {
       })()
     )
   );
+}
+
+// -- a report says what it is not evidence for -------------------------------
+
+/**
+ * Two findings from this harness were measured against a precondition that was
+ * not met, and in both cases the number looked fine: "0 hearts walls in 8
+ * lessons" over eight lessons where `hearts.ts` makes hearts free, and a gap
+ * distribution over 12,108 answers taken in an afternoon, where the schedule's
+ * shortest successful interval is a day. A report that states a number and not
+ * its precondition reads identically either way, which is why nothing caught
+ * either one.
+ */
+{
+  const inGrace = caveats({ resumeAfter: 0, lessonsEntered: 8, graceLessons: 9, dayEvery: 4, practiceSessions: 1 });
+  ok(
+    'a run entirely inside the free-hearts grace says so',
+    inGrace.some((c) => /Hearts prove nothing/.test(c))
+  );
+
+  const past = caveats({ resumeAfter: 30, lessonsEntered: 12, graceLessons: 9, dayEvery: 4, practiceSessions: 1 });
+  ok('a run past the grace does not cry wolf about hearts', !past.some((c) => /Hearts/.test(c)));
+
+  const straddles = caveats({ resumeAfter: 5, lessonsEntered: 10, graceLessons: 9, dayEvery: 4, practiceSessions: 1 });
+  ok(
+    'a run straddling the grace says which lessons the walls came from',
+    straddles.some((c) => /only measurable for part/.test(c) && /10-15/.test(c))
+  );
+
+  const noClock = caveats({ resumeAfter: 30, lessonsEntered: 12, graceLessons: 9, dayEvery: 0, practiceSessions: 1 });
+  ok(
+    'a run with no calendar says its spacing numbers describe an inert scheduler',
+    noClock.some((c) => /No day passed/.test(c))
+  );
+
+  const clocked = caveats({
+    resumeAfter: 30,
+    lessonsEntered: 12,
+    graceLessons: 9,
+    dayEvery: 4,
+    practiceSessions: 1,
+    journal: [{ type: 'dayPassed', becameDue: 26 }],
+  });
+  ok('a clocked run with cards coming due carries no caveat at all', clocked.length === 0);
+
+  const deadClock = caveats({
+    resumeAfter: 30,
+    lessonsEntered: 12,
+    graceLessons: 9,
+    dayEvery: 4,
+    practiceSessions: 1,
+    journal: [{ type: 'dayPassed', becameDue: 0 }],
+  });
+  ok(
+    'a calendar that turns with nothing coming due is reported',
+    deadClock.some((c) => /no card ever came due/.test(c))
+  );
+
+  const noReview = caveats({ resumeAfter: 30, lessonsEntered: 12, graceLessons: 9, dayEvery: 4, practiceSessions: 0 });
+  ok(
+    'a run that never opened Daily Review says so',
+    noReview.some((c) => /Daily Review was never opened/.test(c))
+  );
+
+  ok('a run that played nothing claims nothing', caveats({ lessonsEntered: 0 }).length === 0);
 }
 
 console.log(fails ? `\n${fails} failed` : '\nall good');
