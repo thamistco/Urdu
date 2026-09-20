@@ -216,6 +216,27 @@ const SETTINGS_EVERY = Number(argOf('settings-every', 12));
  * the edit.
  */
 const DAY_EVERY = Number(argOf('day-every', 0));
+/**
+ * How long a lesson should cost the app's clock — `0`, the default, means real
+ * elapsed time, which is not a person's.
+ *
+ * The harness plays a lesson in about 65 seconds. A person takes about five
+ * minutes over the same 33 screens. Every interval the scheduler hands out is
+ * in wall-clock time, so that 4.6x difference decides which *gap* an interval
+ * lands at, and a run measured at harness pace answers a question nobody
+ * asked.
+ *
+ * It cost a whole validation run to find out. A ten-minute step between a
+ * word's first correct answer and its next sighting lands about 66 screens
+ * later for a person — the band where retrieval still works — and about 283
+ * screens later here, which is past the point where the word is gone. The
+ * measurement showed no improvement and the change was fine; the clock was
+ * wrong.
+ *
+ * So the run can pay the difference: after each lesson, wind the stored
+ * timestamps back by whatever the lesson *should* have taken and did not.
+ */
+const MINUTES_PER_LESSON = Number(argOf('minutes-per-lesson', 0));
 /** Skip the path entirely: one practice pass and one settings pass, for
  *  checking those two surfaces without paying for a course walk. */
 const SURFACES_ONLY = has('surfaces-only');
@@ -1819,6 +1840,7 @@ function caveats({
   graceLessons = 0,
   dayEvery = 0,
   practiceSessions = 0,
+  minutesPerLesson = 0,
   journal = [],
 }) {
   const out = [];
@@ -1852,6 +1874,15 @@ function caveats({
     out.push(
       `**The calendar turned ${days.length} times and no card ever came due.** That is a finding about the ` +
         `schedule, not a caveat: with --day-every set, cards should be crossing into due.`
+    );
+  }
+
+  if (lessonsEntered > 0 && minutesPerLesson <= 0) {
+    out.push(
+      `**This run played at harness pace, not a person's.** A lesson here takes about a minute and takes a ` +
+        `person about five, and every interval the scheduler hands out is in wall-clock time — so an interval ` +
+        `lands four to five times further from its last sighting here than it would for a learner. Any reading ` +
+        `of *where* a repeat falls is measuring the harness. Use \`--minutes-per-lesson 5\`.`
     );
   }
 
@@ -1957,6 +1988,7 @@ function writeReport(journal, memory, stats) {
     graceLessons: graceLessonCount(),
     dayEvery: DAY_EVERY,
     practiceSessions: stats.practiceSessions,
+    minutesPerLesson: MINUTES_PER_LESSON,
     journal,
   });
   if (unmet.length) {
@@ -3248,9 +3280,9 @@ async function onboardingSession(page, ctx) {
  * means the calendar is turning and the schedule still is not, which is a
  * finding rather than a nuisance.
  */
-function windBackADay(state, now = Date.now()) {
+function windBack(state, ms, now = Date.now()) {
   if (!state || typeof state !== 'object') return null;
-  const DAY = 24 * 60 * 60 * 1000;
+  const DAY = ms;
   const cards = Object.values(state.srs || {});
   let becameDue = 0;
   for (const card of cards) {
@@ -3268,10 +3300,15 @@ function windBackADay(state, now = Date.now()) {
   return { becameDue, cards: cards.length };
 }
 
+/** One day of it, which is what `--day-every` moves. */
+function windBackADay(state, now = Date.now()) {
+  return windBack(state, 24 * 60 * 60 * 1000, now);
+}
+
 /**
- * Move the app's calendar on by one day, and let the app rehydrate onto it.
+ * Move the app's clock on by `ms`, and let the app rehydrate onto it.
  */
-async function passADay(page, ctx) {
+async function advanceClock(page, ctx, ms, kind) {
   const raw = await page.evaluate(() => localStorage.getItem('harf-progress')).catch(() => null);
   if (!raw) return null;
   let store;
@@ -3280,16 +3317,18 @@ async function passADay(page, ctx) {
   } catch {
     return null;
   }
-  const moved = windBackADay(store && store.state, Date.now());
+  const moved = windBack(store && store.state, ms, Date.now());
   if (!moved) return null;
   await page.evaluate((text) => localStorage.setItem('harf-progress', text), JSON.stringify(store));
   // The store in memory still holds the old timestamps and writes them back on
   // its next change, so the edit only counts once the page has rehydrated.
   await page.reload({ timeout: 30000 });
   await page.waitForTimeout(2500);
-  ctx.journal.push({ type: 'dayPassed', after: ctx.stats.lessonsEntered, ...moved });
+  ctx.journal.push({ type: kind, after: ctx.stats.lessonsEntered, ms, ...moved });
   return moved;
 }
+
+const passADay = (page, ctx) => advanceClock(page, ctx, 24 * 60 * 60 * 1000, 'dayPassed');
 
 /**
  * check:all deletes and rebuilds dist/ as its first act, and this serves dist/
@@ -3527,6 +3566,13 @@ async function main() {
       await settingsSession(page, ctx);
       flush();
     }
+    // A lesson costs the clock what it would cost a person, before any day
+    // boundary is considered — so a sitting of four lessons is twenty minutes
+    // of app time rather than four.
+    if (MINUTES_PER_LESSON > 0) {
+      const owed = MINUTES_PER_LESSON * 60 - (outcome.seconds || 0);
+      if (owed > 0) await advanceClock(page, ctx, owed * 1000, 'clockPaced');
+    }
     // Last, so the day turns over between sittings rather than inside one.
     if (DAY_EVERY > 0 && stats.lessonsEntered % DAY_EVERY === 0) {
       const moved = await passADay(page, ctx);
@@ -3561,6 +3607,7 @@ if (require.main === module) {
 module.exports = {
   Memory,
   windBackADay,
+  windBack,
   caveats,
   lessonDoneText,
   surfaceFindings,
