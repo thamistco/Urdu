@@ -146,8 +146,56 @@ const AT_THE_DOOR = /the whole language\./i;
  *
  * So it throws rather than shrugs, and names the door.
  */
+/**
+ * The least text any real screen in this app puts on a page.
+ *
+ * A booting page holds none. The sign-in screen, the emptiest screen a check
+ * ever lands on cold, holds over a hundred characters, so the floor only has
+ * to separate "something rendered" from "nothing yet" and is set well under
+ * the smaller of the two.
+ */
+const MOUNTED_CHARS = 20;
+
+/**
+ * Wait until a screen is actually on the page, and say so when none arrives.
+ *
+ * A blank page is not "already inside". `openTheDoor` used to decide from a
+ * single read of `document.body.innerText`: text that does not look like the
+ * sign-in screen meant the session was seeded and already past it. A page that
+ * has not finished booting has no text at all, which does not look like the
+ * sign-in screen either — so a slow start was read as a successful entry, and
+ * everything downstream drove a signed-out app.
+ *
+ * That is the same mistake the comment above this function was written about,
+ * one level up: there it was "no such button" read as "already inside", here
+ * it was "no such text". Both resolve an unknown state to the favourable one.
+ *
+ * Measured, with a 350-lesson playtest sharing the machine: one `check:links`
+ * run in three seeded against a still-blank page. Two of that check's three
+ * assertions then failed on the LoginScreen it had silently left up, reported
+ * as a deep link that would not open and as back navigation escaping the app.
+ * Neither was true, and a re-run cleared both — which is the worst outcome a
+ * check can have, because it teaches whoever sees it to run it again.
+ *
+ * So this waits for the app to say which state it is in, and throws when it
+ * never does rather than guessing.
+ */
+async function renderedScreen(page, timeoutMs = 20000) {
+  const started = Date.now();
+  let saw = '';
+  while (Date.now() - started < timeoutMs) {
+    saw = await page.evaluate(() => document.body.innerText).catch(() => '');
+    if (saw.trim().length >= MOUNTED_CHARS) return saw;
+    await page.waitForTimeout(100);
+  }
+  throw new Error(
+    `the app never rendered a screen: ${Math.round(timeoutMs / 1000)}s after loading, the page still holds ` +
+      `${saw.trim().length} characters of text. Nothing measured after this would mean anything, so it stops here.`
+  );
+}
+
 async function openTheDoor(page) {
-  if (!(await page.evaluate((re) => new RegExp(re, 'i').test(document.body.innerText), AT_THE_DOOR.source))) {
+  if (!AT_THE_DOOR.test(await renderedScreen(page))) {
     return false; // already through — a seeded session, or a later navigation
   }
   const door = page.locator('text=/^(continue as a guest|start learning)$/i').first();
@@ -158,16 +206,21 @@ async function openTheDoor(page) {
     );
   }
   await door.click();
-  await page.waitForTimeout(1200);
-  if (await page.evaluate((re) => new RegExp(re, 'i').test(document.body.innerText), AT_THE_DOOR.source)) {
-    throw new Error('tapped the way in and the sign-in screen is still showing');
+  // Polled rather than slept off for the same reason as the read above: 1200ms
+  // was enough on an idle machine and not on a loaded one, and the shortfall
+  // was reported as the door refusing to open.
+  const shut = Date.now() + 15000;
+  while (Date.now() < shut) {
+    if (!AT_THE_DOOR.test(await page.evaluate(() => document.body.innerText).catch(() => ''))) return true;
+    await page.waitForTimeout(100);
   }
-  return true;
+  throw new Error('tapped the way in and the sign-in screen is still showing 15s later');
 }
 
 async function enterAsGuest(page, url, state = {}, settings = {}) {
   await page.goto(url);
-  await page.waitForTimeout(2000);
+  // `openTheDoor` waits for the screen itself; a fixed sleep here is what it
+  // used to race against.
   await openTheDoor(page);
   await page.evaluate(
     ({ extra, settingsExtra }) => {
@@ -197,4 +250,4 @@ async function enterAsGuest(page, url, state = {}, settings = {}) {
   await page.waitForTimeout(2500);
 }
 
-module.exports = { serveDist, resolveAsset, findChromium, enterAsGuest, openTheDoor, MIME };
+module.exports = { serveDist, resolveAsset, findChromium, enterAsGuest, openTheDoor, renderedScreen, AT_THE_DOOR, MIME };
