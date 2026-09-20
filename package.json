@@ -49,6 +49,7 @@
     "check:secrets": "node scripts/check-secrets.js",
     "test": "vitest run",
     "check:structure": "node scripts/check-structure.js",
+    "check:waits": "node scripts/check-waits.js",
     "check:order": "node scripts/check-order.js",
     "check:unit-names": "node scripts/check-unit-names.js",
     "check:unit-themes": "node scripts/check-unit-themes.js",

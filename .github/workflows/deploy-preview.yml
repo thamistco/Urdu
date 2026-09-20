@@ -63,6 +63,9 @@ jobs:
       - name: Check the project structure
         run: npm run check:structure
 
+      - name: Check the gates wait for conditions, not for durations
+        run: npm run check:waits
+
       # Unit tests for the pure logic: the XP curve, the league ladder, the gem
       # payout and the streak arithmetic. The check:* scripts cover content and
       # rendering; this covers the functions.
