@@ -24,7 +24,7 @@
 
 const path = require('path');
 const fs = require('fs');
-const { serveDist, findChromium, enterAsGuest } = require('./lib/serve-dist');
+const { serveDist, findChromium, enterAsGuest, renderedScreen, AT_THE_DOOR } = require('./lib/serve-dist');
 
 const DIST = path.join(__dirname, '..', 'dist');
 const PORT = 8336;
@@ -50,6 +50,48 @@ const ROUTES = [
   { path: '/lesson/l-1', shows: /A NEW LETTER/i },
 ];
 
+/**
+ * A screen is up and it is not the front door.
+ *
+ * Every wait in this check used to be a fixed sleep, and each one was long
+ * enough on an idle machine. Under the load of a playtest on the same box, one
+ * run in three read a screen mid-boot: a deep link was reported as opening the
+ * wrong screen, and back navigation as leaving the app, because what the check
+ * was looking at was the sign-in screen rather than the app. Both diagnoses
+ * were wrong and both cleared on a re-run.
+ *
+ * This waits for the state the assertions are written against — an app past
+ * the door — without waiting for any particular *screen*, so what each
+ * assertion then checks is still its own to prove.
+ */
+async function arrived(page) {
+  await renderedScreen(page);
+  const until = Date.now() + 15000;
+  while (Date.now() < until) {
+    if (!AT_THE_DOOR.test(await page.evaluate(() => document.body.innerText).catch(() => ''))) return;
+    await page.waitForTimeout(100);
+  }
+}
+
+/**
+ * The address has stopped moving.
+ *
+ * Used after `goBack`, where waiting for a particular path would decide the
+ * thing the next two assertions exist to decide. Two identical reads a fifth
+ * of a second apart, after a screen is up, is as far as this can go without
+ * answering its own question.
+ */
+async function settled(page) {
+  await renderedScreen(page);
+  let last = null;
+  for (let i = 0; i < 40; i++) {
+    const now = await page.evaluate(() => location.pathname).catch(() => null);
+    if (now && now === last) return;
+    last = now;
+    await page.waitForTimeout(200);
+  }
+}
+
 async function main() {
   const server = await serveDist(DIST, PORT);
   const { chromium } = require('playwright-core');
@@ -66,12 +108,11 @@ async function main() {
     // Seeded once; every goto below reuses the same storage, so these are cold
     // loads of a learner who is already past the front door.
     await enterAsGuest(page, `${origin}/Urdu/`, seed);
-    await page.waitForTimeout(1500);
 
     for (const route of ROUTES) {
       const url = `${BASE}${route.path}`;
       await page.goto(`${origin}${url}`);
-      await page.waitForTimeout(2200);
+      await arrived(page);
       const landed = await page.evaluate(() => location.pathname);
       const body = await page.evaluate(() => document.body.innerText);
 
@@ -90,17 +131,17 @@ async function main() {
 
     // Back has to move inside the app. Three screens deep, then back twice.
     await page.goto(`${origin}${BASE}/`);
-    await page.waitForTimeout(2000);
+    await arrived(page);
     await page.goto(`${origin}${BASE}/profile`);
-    await page.waitForTimeout(1600);
+    await arrived(page);
     await page.goto(`${origin}${BASE}/achievements`);
-    await page.waitForTimeout(1600);
+    await arrived(page);
 
     await page.goBack();
-    await page.waitForTimeout(1400);
+    await settled(page);
     const afterOne = await page.evaluate(() => location.pathname);
     await page.goBack();
-    await page.waitForTimeout(1400);
+    await settled(page);
     const afterTwo = await page.evaluate(() => location.pathname);
     const stillInside = await page.evaluate(() => /HARF|Speak with them|Level/i.test(document.body.innerText));
 
