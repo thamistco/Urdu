@@ -23,6 +23,7 @@ Rules that keep this worth reading:
 ---
 
 ## CLAIMED · URD-A01 · 2026-08-08T08:12Z
+
 Give every topic a category.
 verify: `npm run check:shape`
 branch: claude/gauntlet-topic-categories
@@ -33,18 +34,22 @@ Confirmed by probe session_01HJWQQgf9fVGsH91Bach9bZ, which reported
 "empty /home/user, no git, no gauntlet/QUEUE.md". Two fires produced nothing.
 
 ## CRITIQUE · URD-A01 · 2026-08-08T08:35Z
+
 Dispatched THE CRITIC (always) and the CURRICULUM CRITIC (the item touches
 lessons and words). Not the design critic or the player: no screen changes and
 no lesson behaviour changes, nothing consumes `category` yet.
 
 ### THE CRITIC — BLOCKING
+
 1. The delivery commit 7db8465 was missing `festivals` and failed its own verify
    command. Cause, in the critic's words: "it committed a state it had not
    re-run the verify command against." True. The lead ran `git add -A` while a
    subagent was mid experiment on the working tree and committed its scratch
    state. CLAUDE.md non-negotiable #1. Fixed, and the lesson is process: never
    stage while a critic is running.
+
 ### THE CRITIC — MAJOR
+
 2. The file claimed a topic missing from the map is "a TypeScript error at this
    map and a check:shape failure, in that order". False, and proven false:
    `npx tsc --noEmit` exits 0 with an entry deleted. `noUncheckedIndexedAccess`
@@ -56,19 +61,23 @@ no lesson behaviour changes, nothing consumes `category` yet.
    check:shape pass. Recorded rather than fixed.
 4. `work` and `travel` were junk drawers. "Free time" filed under work while the
    other games topic sat under home. Fixed, see below.
+
 ### THE CRITIC — MINOR
+
 5, 6, 7. Stale comment, a branch that could never fire, no dead key detection.
-   All three fixed. The two new guards were broken on purpose and watched to
-   fail before being trusted.
+All three fixed. The two new guards were broken on purpose and watched to
+fail before being trusted.
 
 ### CURRICULUM CRITIC — BLOCKING
+
 1. Same festivals finding, independently.
-2. `culture` was 14 of 14 advanced, every topic first met in units 32 to 37 of
-   39. It restated `level` and carried no information of its own. Its Urdu point
+2. `culture` was 14 of 14 advanced, every topic first met in units 32 to 37 of 39. It restated `level` and carried no information of its own. Its Urdu point
    is the sharper one: a learner who picks Urdu over Hindi often comes for the
    ghazal, for family or for faith, and the taxonomy gated 100% of that behind
    advanced.
+
 ### CURRICULUM CRITIC — MAJOR
+
 3. `language` held three incompatible things. Register and set phrases moved to
    culture; twelve genuine word class packs remain.
 4. The clinical cluster was severed: health, illness and medicine under work
@@ -80,6 +89,7 @@ no lesson behaviour changes, nothing consumes `category` yet.
 8. Four categories are dead ends across levels. Recorded as URD-A03.
 
 ### What changed as a result
+
 Nine categories became eleven. `everyday` carries the dealings of ordinary life
 (money, bank, bazaar, phone, services, emergency) which were under travel, true
 only for a tourist; Harf's likelier learner lives there. `leisure` carries sport,
@@ -88,6 +98,7 @@ answer to culture-equals-advanced: leisure spans elementary to advanced, so the
 pleasure of the language is no longer entirely gated behind the last third.
 
 ### What was NOT fixed, and why
+
 The residue of BLOCKING 2 is a content fact, not a taxonomy fact. `culture` is
 still advanced-heavy because the course contains no beginner cultural material
 to categorise. No arrangement of labels fixes that; writing a first festival, a
@@ -95,19 +106,21 @@ first couplet and the names of the months does. Queued as URD-A03 rather than
 papered over. Finding recorded first, reason second, per ROLES.md.
 
 ## PASSED · URD-A01 · 2026-08-08T08:41Z
+
 $ npm run check:shape
-  check:shape — 608 lessons, 493 of them vocabulary.
-  ... 5 problems  (lesson length, sightings x2, parts per topic, unit size)
-  NO categorisation failure. That is this item's stated done condition; the
-  remaining five belong to URD-A02.
+check:shape — 608 lessons, 493 of them vocabulary.
+... 5 problems (lesson length, sightings x2, parts per topic, unit size)
+NO categorisation failure. That is this item's stated done condition; the
+remaining five belong to URD-A02.
 
 $ npm run check:all
-  check:all — all 24 steps pass against a deploy-shaped build.
-  Run after the final edit, not before it.
+check:all — all 24 steps pass against a deploy-shaped build.
+Run after the final edit, not before it.
 
 branch: claude/gauntlet-topic-categories
 
 ## BLOCKED · URD-A03 · 2026-08-08T08:50Z
+
 Cannot be done by an agent session. The item needs new beginner cultural words;
 `check:voice` requires a clip per speakable word in both voices, and generating
 clips needs the Google TTS key, which this session does not hold and should not.
@@ -123,12 +136,14 @@ Checked before claiming rather than after working, which is the only reason this
 cost minutes instead of a whole run.
 
 ## CLAIMED · URD-A02 · 2026-08-08T08:52Z
+
 Make a lesson a sitting.
 verify: `npm run check:shape`
 branch: claude/gauntlet-lesson-sitting, cut from claude/gauntlet-topic-categories
 because check:shape's category rule landed there and this item needs it.
 
 ## CRITIQUE · URD-A02 · 2026-08-09T01:40Z
+
 Dispatched THE CRITIC (always) and the CURRICULUM CRITIC (the item touches
 lessons, words, order and the BENCHMARKS targets). Not the design critic: no
 screen changed. The PLAYER was not dispatched either, and that is a gap rather
@@ -140,94 +155,101 @@ hit a limit. So this item carries one verdict, not two, which is another reason
 it is not eligible to be recorded PASSED.
 
 ### THE CRITIC — BLOCKING
+
 B1. `npm run check:shape` exits 1. 86 of 319 timed lessons are under 3 minutes
-    (review 39, grammar 25, sentences 12, letters 9, phrases 1, vocabulary 0),
-    and u27 has 13 lessons and u39 has 15 against a ceiling of 12. It is also
-    not wired into the workflow, which the item's definition of done requires.
-    Accepted in full. The vocabulary half of the item is done and the rest is
-    not; see the FAILED entry below.
-B2. The three passes were emitted as three whole-lesson blocks, so recall — 
-    always `wordFromMeaning` — asked the same question n times consecutively.
-    Longest run 14; 199 of 233 vocabulary lessons had a run of 9 or more, on
-    both tracks. Accepted. Fixed in d778928.
+(review 39, grammar 25, sentences 12, letters 9, phrases 1, vocabulary 0),
+and u27 has 13 lessons and u39 has 15 against a ceiling of 12. It is also
+not wired into the workflow, which the item's definition of done requires.
+Accepted in full. The vocabulary half of the item is done and the rest is
+not; see the FAILED entry below.
+B2. The three passes were emitted as three whole-lesson blocks, so recall —
+always `wordFromMeaning` — asked the same question n times consecutively.
+Longest run 14; 199 of 233 vocabulary lessons had a run of 9 or more, on
+both tracks. Accepted. Fixed in d778928.
 B3. The Roman track received none of the previous commit's fix. `canBuild` is
-    `... && teachesScript`, always false on Roman, so produce was pure
-    `typeWord`: 162 of 233 Roman lessons with 9+ consecutive typeWord, max 14,
-    against 3 on the script track. The critic also noted the commit message
-    named no track, which is how it went unnoticed. And that check:shape
-    compared the tracks by exercise *count* only — identical for all 233
-    lessons — so the check was structurally blind to it. All three accepted.
-    Fixed in d778928, including the check.
+`... && teachesScript`, always false on Roman, so produce was pure
+`typeWord`: 162 of 233 Roman lessons with 9+ consecutive typeWord, max 14,
+against 3 on the script track. The critic also noted the commit message
+named no track, which is how it went unnoticed. And that check:shape
+compared the tracks by exercise _count_ only — identical for all 233
+lessons — so the check was structurally blind to it. All three accepted.
+Fixed in d778928, including the check.
 
 ### THE CRITIC — MAJOR, recorded as queue items rather than fixed
+
 M1. Course XP fell 11,888 to 7,220 and the reachable maximum level 20 to 16.
-    URD-004's "1.6 times the course" is now 2.49. → folded into URD-004.
+URD-004's "1.6 times the course" is now 2.49. → folded into URD-004.
 M2. Daily goal labels understate by about half: 12.54 XP/min became 3.95, so
-    "20 min a day" is really 30.4 minutes. → new URD-009.
+"20 min a day" is really 30.4 minutes. → new URD-009.
 M3. Gems roughly halve while HEARTS_MAX stays 5 against 43-exercise lessons.
-    → folded into URD-006.
-M4. 260 of the 608 old lesson ids evaporate, and this landed *before* URD-003,
-    which the item's own notes forbid. Accepted as accurate and as a sequencing
-    error by the lead. URD-003 moves to the top of the queue.
+→ folded into URD-006.
+M4. 260 of the 608 old lesson ids evaporate, and this landed _before_ URD-003,
+which the item's own notes forbid. Accepted as accurate and as a sequencing
+error by the lead. URD-003 moves to the top of the queue.
 M5. `emitted()` passes `reviewRefs = []`, so the 39 review lessons among the 86
-    length failures are measured only in their nothing-due fallback.
-    → new URD-010.
+length failures are measured only in their nothing-due fallback.
+→ new URD-010.
 M6. 82 duplicate (kind, word) pairs across 49 lessons, from the produce
-    fallback repeating the recall question. Fixed as part of B2: the fallback
-    now asks the meaning instead.
+fallback repeating the recall question. Fixed as part of B2: the fallback
+now asks the meaning instead.
 
 ### THE CRITIC — MINOR
+
 m1. `size` is wrong by exactly 3 on all 233 vocabulary lessons — `3n+4`
-    budgeted against `3n+1` emitted. Harmless today because nothing reads it
-    for vocabulary lessons, and check:shape deliberately generates rather than
-    trusting it. → new URD-011.
+budgeted against `3n+1` emitted. Harmless today because nothing reads it
+for vocabulary lessons, and check:shape deliberately generates rather than
+trusting it. → new URD-011.
 m3. 5,070 `buildLessonExercises` calls per check:shape run, 2.5 to 3.4s.
-    Memoising on lesson id would cut it to about 700. Not done; the check is
-    not on the CI critical path. → new URD-011.
+Memoising on lesson id would cut it to about 700. Not done; the check is
+not on the CI critical path. → new URD-011.
 
 ### Found by the new check rules, not by a critic
+
 The run and share rules added in d778928 fail on data this item never touched,
 which is the evidence that they are not hypotheses:
-  - `phrases` lessons are 100% meaningPick, 6 in a row.
-  - `rev-your-first-readings` emits 9 consecutive wordFromMeaning.
-  - 20 script and 41 Roman lessons are over 40% a single kind.
-→ new URD-012.
+
+- `phrases` lessons are 100% meaningPick, 6 in a row.
+- `rev-your-first-readings` emits 9 consecutive wordFromMeaning.
+- 20 script and 41 Roman lessons are over 40% a single kind.
+  → new URD-012.
 
 `letterExercise` also calls `Math.random()` per exercise, so letter lessons are
 regenerated differently every time they are opened and every count over them is
 flaky run to run. Pre-existing, not caused by this item. → new URD-013.
 
 ## FAILED · URD-A02 · 2026-08-09T01:55Z
+
 attempt 1 of 3. The verify command does not exit 0, so the item is not done,
 and the definition of done is not being rewritten to match what was achieved.
 
 $ npm run check:shape
-  check:shape — 348 lessons, 233 of them vocabulary.
-    mean lesson 3.3 min · 9.8 new words · 22.1 exercises emitted
-    whole course 19.3 hours
-  check:shape — 6 problems
-    86 of 319 timed lessons are under 3 minutes.
-        shortest: g-continuous at 0.6 min (4 exercises)
-    3 lessons emit more than 3 identical exercises in a row on the both track.
-        worst: phrases — 6 consecutive meaningPick
-    20 lessons are more than 40% one exercise kind on the both track.
-        worst: phrases — 100% meaningPick
-    29 lessons emit more than 3 identical exercises in a row on the roman track.
-        worst: rev-your-first-readings — 9 consecutive wordFromMeaning
-    41 lessons are more than 40% one exercise kind on the roman track.
-        worst: phrases — 100% meaningPick
-    2 of 39 units are outside 4 to 12 lessons.
-        u27 — 13 lessons
-        u39 — 15 lessons
-  exit 1
+check:shape — 348 lessons, 233 of them vocabulary.
+mean lesson 3.3 min · 9.8 new words · 22.1 exercises emitted
+whole course 19.3 hours
+check:shape — 6 problems
+86 of 319 timed lessons are under 3 minutes.
+shortest: g-continuous at 0.6 min (4 exercises)
+3 lessons emit more than 3 identical exercises in a row on the both track.
+worst: phrases — 6 consecutive meaningPick
+20 lessons are more than 40% one exercise kind on the both track.
+worst: phrases — 100% meaningPick
+29 lessons emit more than 3 identical exercises in a row on the roman track.
+worst: rev-your-first-readings — 9 consecutive wordFromMeaning
+41 lessons are more than 40% one exercise kind on the roman track.
+worst: phrases — 100% meaningPick
+2 of 39 units are outside 4 to 12 lessons.
+u27 — 13 lessons
+u39 — 15 lessons
+exit 1
 
 $ npm run check:all
-  check:all — all 24 steps pass against a deploy-shaped build.
-  Run alone on a still tree. The previous run of this straddled two commits
-  because two check:all runs overlapped and one deleted dist/index.html out
-  from under the other; that result is void and this one replaces it.
+check:all — all 24 steps pass against a deploy-shaped build.
+Run alone on a still tree. The previous run of this straddled two commits
+because two check:all runs overlapped and one deleted dist/index.html out
+from under the other; that result is void and this one replaces it.
 
 ### What was achieved, and it is most of the item
+
 Vocabulary lessons: 493 → 233, 4.6 → 9.8 new words each, 1.8 → 3.07 sightings
 per word, 1.3 → 3.3 to 6.5 minutes. Not one vocabulary lesson is outside the
 3 to 8 minute band and not one is under the sightings floor. Every one of the
@@ -235,6 +257,7 @@ per word, 1.3 → 3.3 to 6.5 minutes. Not one vocabulary lesson is outside the
 and check:answerable all pass untouched.
 
 ### What was not achieved
+
 Everything that is not a vocabulary lesson. The 86 short lessons are review,
 grammar, sentences, letters and phrases, and each needs a different answer:
 review length depends on the due queue (M5), a grammar concept has as many
@@ -243,12 +266,14 @@ over the ceiling. None of that was attempted, and the item stays at the top of
 the queue at attempt 1 with its scope split in the notes.
 
 ### Lead errors recorded against itself
+
 - Sequencing: this landed before URD-003 when its own notes said never before.
 - The PLAYER was not dispatched on an item that changes what a lesson does.
 - The previous commit fixed one track and said so in neither its message nor
   its comment, which is what let B3 live.
 
 ## CLAIMED · URD-003 · 2026-08-09T04:20Z
+
 Tell a returning learner why their progress moved.
 verify: `npm test -- src/lib/progress.test.ts`
 branch: claude/gauntlet-progress-moved, cut from claude/gauntlet-lesson-sitting.
@@ -256,6 +281,7 @@ Moved to the top of the queue by URD-A02's own critique, which found that item
 had landed before this one when its notes said never before.
 
 ## CRITIQUE · URD-003 · 2026-08-09T05:05Z
+
 Dispatched THE CRITIC (always) and the DESIGN CRITIC (it adds a card to the
 Learn screen). Not the curriculum critic: no lesson, word or order changed. Not
 the PLAYER: the soak drives lessons, and this is a launch-time notice a soak run
@@ -266,29 +292,31 @@ Both critics independently found the same first defect from opposite directions,
 which is the strongest signal this loop has produced so far.
 
 ### THE CRITIC — BLOCKING
+
 B1. The notice never fires for the learner the item is about. Detection was by
-    missing lesson id, and `coverTopics` gives a topic's first part the topic's
-    own id on purpose, so the ids survive. The critic dumped UNITS at 9792f8a
-    and at HEAD: **0 of 237** pre-split ids are absent today. A pre-split learner
-    with 60 lessons finished goes beginner 55/55 (100%) to 55/81 (68%), overall
-    25.3% to 17.2%, ten units fall, and the app says nothing while
-    `npm test -- src/lib/progress.test.ts` is 10/10 green. Accepted in full. This
-    is the item's central design error and it was mine.
+missing lesson id, and `coverTopics` gives a topic's first part the topic's
+own id on purpose, so the ids survive. The critic dumped UNITS at 9792f8a
+and at HEAD: **0 of 237** pre-split ids are absent today. A pre-split learner
+with 60 lessons finished goes beginner 55/55 (100%) to 55/81 (68%), overall
+25.3% to 17.2%, ten units fall, and the app says nothing while
+`npm test -- src/lib/progress.test.ts` is 10/10 green. Accepted in full. This
+is the item's central design error and it was mine.
 B2. The copy said "the percentages start lower". Measured over every triggering
-    prefix profile (K=1..608, old path at 46dc8a3 against HEAD): overall
-    percentage is the same or higher in **466 of 604** triggering states, and per
-    unit rose 241, fell 295, unchanged 12,341. Two profiles driven in the browser
-    were shown the false sentence while the screen behind the card contradicted
-    it. Accepted: under the severity rule, the app lying is blocking.
+prefix profile (K=1..608, old path at 46dc8a3 against HEAD): overall
+percentage is the same or higher in **466 of 604** triggering states, and per
+unit rose 241, fell 295, unchanged 12,341. Two profiles driven in the browser
+were shown the false sentence while the screen behind the card contradicted
+it. Accepted: under the severity rule, the app lying is blocking.
 
 ### DESIGN CRITIC — BLOCKING
+
 D1. The notice is rendered and never seen. `HomeScreen` auto-scrolls to the
-    current lesson 500ms after mount whenever its pageY exceeds 420, which is
-    always true once four cards sit above the path, and the notice is at the top
-    of that same ScrollView. Measured landing offsets: the card sits 646 to
-    **4,597 px** above the viewport, `fullyVisible: false` in all eight sampled
-    profiles. Because dismissal is on tap and not on render, it is never
-    dismissed either, so it re-renders unseen forever.
+current lesson 500ms after mount whenever its pageY exceeds 420, which is
+always true once four cards sit above the path, and the notice is at the top
+of that same ScrollView. Measured landing offsets: the card sits 646 to
+**4,597 px** above the viewport, `fullyVisible: false` in all eight sampled
+profiles. Because dismissal is on tap and not on render, it is never
+dismissed either, so it re-renders unseen forever.
 
     It also caught the lead's own false claim, which is recorded here in full:
     the previous commit message said "verified against the real built app … is
@@ -297,56 +325,61 @@ D1. The notice is rendered and never seen. `HomeScreen` auto-scrolls to the
     CLAUDE.md non-negotiable #1, from the hand that wrote the rule down.
 
 ### All three fixed in 9136f1e, before STEP 4
+
 Detection is now by the size of the path the learner last saw against the path
 in front of them, with null meaning a profile written before that was recorded.
 The direction claim and the count are both gone from the copy. The auto-scroll
 waits until the notice is dismissed.
 
 ### THE CRITIC — MAJOR
+
 M1. The verify command could not fail on the bug: the suite only exercised the
-    pure function against hand-built profiles, and all ten stayed green while the
-    named learner got silence. Fixed rather than queued, because it is the
-    repo's non-negotiable #3. Reinstating the missing-id detection behind the new
-    signature now fails 6 of 10, including that learner.
+pure function against hand-built profiles, and all ten stayed green while the
+named learner got silence. Fixed rather than queued, because it is the
+repo's non-negotiable #3. Reinstating the missing-id detection behind the new
+signature now fails 6 of 10, including that learner.
 M2. "1 of the 1 you had finished are now part of other lessons" at gone === 1,
-    which is the commonest returning profile there is, plus a missing noun. Fixed
-    by removing the count entirely.
+which is the commonest returning profile there is, plus a missing noun. Fixed
+by removing the count entirely.
 M3. `pathNoticeSeen` recorded "told", not "told about which move", so the notice
-    was single use and the next regroup would silently re-incur the debt. Fixed:
-    dismissal records the path size, so the next move re-arms it with no version
-    bump. Verified live.
+was single use and the next regroup would silently re-incur the debt. Fixed:
+dismissal records the path size, so the next move re-arms it with no version
+bump. Verified live.
 
 ### DESIGN CRITIC — MAJOR
+
 D2. At 320x568 the card was 297 px of a 568 px viewport, pushing Continue and
-    Today's word below the fold. Partly fixed: the copy went from four sentences
-    of 12px fine print to two at body size. It still fills the small phone.
-    OVERRULED in part, finding first and reason second: on the one launch this
-    appears, the notice *is* the screen's subject, and the auto-scroll fix means
-    the learner lands on it rather than past it. Continue returns the moment it
-    is dismissed, which is now a single tap away rather than a scroll up. A
-    notice small enough to share the fold with the CTA is a notice that competes
-    with the CTA and loses.
+Today's word below the fold. Partly fixed: the copy went from four sentences
+of 12px fine print to two at body size. It still fills the small phone.
+OVERRULED in part, finding first and reason second: on the one launch this
+appears, the notice _is_ the screen's subject, and the auto-scroll fix means
+the learner lands on it rather than past it. Continue returns the moment it
+is dismissed, which is now a single tap away rather than a scroll up. A
+notice small enough to share the fold with the CTA is a notice that competes
+with the CTA and loses.
 D3. The Got it button was the brightest thing on the screen — mean luminance
-    0.623 against 0.044 for the Continue card, 10.38:1 against its own card —
-    wearing the primary CTA costume for an action whose only job is to make a
-    message go away. Fixed: ghost variant.
+0.623 against 0.044 for the Continue card, 10.38:1 against its own card —
+wearing the primary CTA costume for an action whose only job is to make a
+message go away. Fixed: ghost variant.
 D4. 52 words of 12px caption type carrying the only message in the app a learner
-    has to read. Fixed: 2 sentences at text-sm/leading-6.
+has to read. Fixed: 2 sentences at text-sm/leading-6.
 
 ### MINOR
+
 m1 (CRITIC). A v0 or v1 profile is wiped by the older migration and then told
-   nothing, because it has no ticks left. Pre-existing wipe; the new code passes
-   straight through it. → new URD-014.
+nothing, because it has no ticks left. Pre-existing wipe; the new code passes
+straight through it. → new URD-014.
 m2 (CRITIC). The notice was not announced to a screen reader. Fixed: `Card`
-   takes an accessibility role and the notice is an alert with its body as label.
+takes an accessibility role and the notice is an alert with its body as label.
 m3 (CRITIC). A 348-id Set rebuilt on every completion, on the screen URD-002
-   exists to lighten. Fixed: module scope, and it is a count now rather than a
-   Set.
+exists to lighten. Fixed: module scope, and it is a count now rather than a
+Set.
 m4 (DESIGN). 23 px of tap-through: the band under the finger becomes the
-   Continue card the instant the notice is removed, with no exit transition.
-   → new URD-015.
+Continue card the instant the notice is removed, with no exit transition.
+→ new URD-015.
 
 ### What both critics checked and passed
+
 Zustand's migrate/merge semantics read from node_modules rather than memory, and
 confirmed live: a seeded v2 profile returns as v3 with the migrated value intact
 and the initialiser's default not overriding it. `known` being the whole path
@@ -358,36 +391,38 @@ tap target 102x57. The claim that a fourth guard in progress.ts was dead code wa
 independently verified as accurate.
 
 ## PASSED · URD-003 · 2026-08-09T05:40Z
+
 $ npm test -- src/lib/progress.test.ts
-   Test Files  1 passed (1)
-        Tests  10 passed (10)
+Test Files 1 passed (1)
+Tests 10 passed (10)
 
 $ npm run check:all
-  check:all — all 24 steps pass against a deploy-shaped build.
-  Run alone on a still tree, after the last edit.
+check:all — all 24 steps pass against a deploy-shaped build.
+Run alone on a still tree, after the last edit.
 
 Induced failure, per the rule that a check which has never failed is a
 hypothesis. Missing-id detection reinstated behind the new signature:
-  × tells a learner whose lessons all still exist but whose path grew
-  × tells a learner whose path changed size under them
-  × says nothing to a learner who has finished nothing
-  × counts a lesson skipped at onboarding as a place on the path
-  × fires once — the second launch is silent
-  × re-arms when the path moves again
-   Tests  6 failed | 4 passed (10)
+× tells a learner whose lessons all still exist but whose path grew
+× tells a learner whose path changed size under them
+× says nothing to a learner who has finished nothing
+× counts a lesson skipped at onboarding as a place on the path
+× fires once — the second launch is silent
+× re-arms when the path moves again
+Tests 6 failed | 4 passed (10)
 
 Driven in the built bundle at 412x900 and 320x568, with no scrolling:
-  survivors-only (the cohort B1 missed)  rendered=true landed_in_view=true top=134
-  survivors-only (small phone)           rendered=true landed_in_view=true top=170
-  608-era, dead ids                      rendered=true landed_in_view=true top=134
-  nothing finished (fresh)               rendered=false
-  after dismiss / after reload           rendered=false
-  persisted v3 pathNoticeSeen=true pathSize=348 ticks kept=40
-  re-armed after another move            rendered=true
+survivors-only (the cohort B1 missed) rendered=true landed_in_view=true top=134
+survivors-only (small phone) rendered=true landed_in_view=true top=170
+608-era, dead ids rendered=true landed_in_view=true top=134
+nothing finished (fresh) rendered=false
+after dismiss / after reload rendered=false
+persisted v3 pathNoticeSeen=true pathSize=348 ticks kept=40
+re-armed after another move rendered=true
 
 branch: claude/gauntlet-progress-moved
 
 ## CLAIMED · URD-010 · 2026-08-09T10:04Z
+
 Measure a review lesson against a real due queue.
 verify: `npm run check:shape` (unfiltered; the item is recorded against
 `npm run check:shape -- --kind=review`, a scoping flag added this run — see
@@ -398,6 +433,7 @@ review lessons measured with `reviewRefs = []`, the one state a review lesson
 is almost never in.
 
 ## CRITIQUE · URD-010 · 2026-08-09T11:40Z
+
 Dispatched THE CRITIC (always) and the CURRICULUM CRITIC (touches lesson
 content and BENCHMARKS.md targets). Not the design critic: no screen changed.
 Not the PLAYER: soak drives lessons and would dismiss a review without
@@ -410,6 +446,7 @@ verdict, since they produced nothing to weigh. Retried after the limit reset
 (confirmed by wall clock) as fresh runs, not continuations.
 
 ### THE CRITIC — BLOCKING
+
 Verified independently rather than trusting the commit's own numbers, and
 reproduced from a fresh process: the top-up capped `refs` to `lesson.size`
 before generation, on the assumption every ref renders one exercise. `srs` is
@@ -460,6 +497,7 @@ condition that the ledger not present a filtered pass as satisfying the
 item's stated unfiltered verify line, which is why this entry does both.
 
 ### THE CRITIC — MINOR
+
 Dedupe keyed on `r.id` alone, not `(id, type)` — not exploitable today (0
 overlap between word, letter and phrase ids, confirmed), but one content edit
 away from silently merging a due letter and an unrelated due word. Fixed in
@@ -467,6 +505,7 @@ daca650 rather than queued, since it was touching the exact lines already
 open.
 
 ### CURRICULUM CRITIC — MAJOR
+
 1. A review almost never reviews the unit it closes. `fallbackReviewRefs`
    draws uniformly from everything taught to that point, with no weighting
    toward the closing unit. Measured on real generated output, nothing due:
@@ -488,6 +527,7 @@ open.
    independently from the curriculum side; fixed with it.
 
 ### CURRICULUM CRITIC — not blocking, and answered directly
+
 Two-thirds of reviews (26 of 39) are governed purely by `REVIEW_MIN`, not by
 the unit's actual size — the same shape of problem this item's commit set out
 to fix, relocated from a flat 9 to a flat 22. THE CRITIC found the identical
@@ -500,7 +540,7 @@ On fighting the SRS scheduler (curriculum critic's Q1): confirmed
 `dueBudget('review', size)` already lets a review absorb up to `size` real
 due items, so the larger size is a genuine win when a backlog exists — u27
 and u39 clamp to 37 and 39, well past the old flat 9. The finding is about
-what fills the *rest* of a review when nothing is due, which on a first,
+what fills the _rest_ of a review when nothing is due, which on a first,
 on-pace pass is the entire lesson, since SM-2's first interval is about a day
 and a review is usually met before then.
 Course length: +86.5 minutes (19.3h to 20.7h), matching the 3.3-6.0 min per
@@ -514,17 +554,19 @@ gets shown, which is outside both checks' scope and squarely inside review's
 job.
 
 ### CURRICULUM CRITIC — MINOR
+
 Fixed-cadence letter/word alternation (was: shuffled together, clustering up
 to four deep; now: strict letter-word-letter-word). Traded one predictable
 pattern for a different, more mechanical one. Not fixed; flagged for whoever
 takes URD-016 or URD-017, since both touch the same interleave.
 
 ## PASSED · URD-010 · 2026-08-09T12:15Z
+
 $ npm run check:shape -- --kind=review
-  check:shape — 348 lessons, 0 of them vocabulary.
-    mean lesson 3.6 min · 0.0 new words · 23.8 exercises emitted
-  scoped to --kind=review. This is a working tool, not the gate.
-  Every lesson is a sitting, every word is drilled, every topic has a home.
+check:shape — 348 lessons, 0 of them vocabulary.
+mean lesson 3.6 min · 0.0 new words · 23.8 exercises emitted
+scoped to --kind=review. This is a working tool, not the gate.
+Every lesson is a sitting, every word is drilled, every topic has a home.
 
 Unfiltered `npm run check:shape`, for the record and not as this item's pass
 condition — the item's own DoD verify line names the unfiltered command,
@@ -534,8 +576,8 @@ problems are gone; every remaining problem is `phrases` or unit-count, neither
 touched by this item.
 
 $ npm run check:all
-  check:all — all 24 steps pass against a deploy-shaped build.
-  Run alone on a still tree, after the final edit.
+check:all — all 24 steps pass against a deploy-shaped build.
+Run alone on a still tree, after the final edit.
 
 Induced failure, on the specific repro THE CRITIC gave: restoring the
 cap-before-filter order reproduces 17 of 22 for five due letters on Roman
@@ -550,6 +592,7 @@ own unit), URD-017 (letter share should decay past the alphabet), URD-018
 branch: claude/gauntlet-review-queue
 
 ## CLAIMED · URD-013 · 2026-08-09T12:40Z
+
 A letter lesson must be the same lesson twice, folded with URD-A02's letters
 row (9 lessons under the 3-8 minute band).
 verify: `npm test -- src/lib/shuffle.test.ts`
@@ -559,6 +602,7 @@ Picked as a contained, well-scoped slice of URD-A02's remaining backlog
 in one claim.
 
 ## CRITIQUE · URD-013 · 2026-08-09T15:50Z
+
 Dispatched THE CRITIC (always) and the CURRICULUM CRITIC (touches how a
 letter is taught). Not the design critic: no screen changed, only the
 generator and the store. Not the PLAYER: no soak run was driven this item;
@@ -573,29 +617,32 @@ is not enough. The full sequence is below so the pattern is visible rather
 than only the final state.
 
 ### ROUND 1 — commit 0de9479
+
 Every letter lesson went from one exercise per letter (under a minute) to
 `SIGHTINGS_PER_LETTER` (6) per letter, landing all 9 in the 3-8 minute band.
 Folded in URD-013's own fix: `letterExerciseAt`, positional rather than
 `Math.random()`-based, reused from the review pipeline (URD-010).
 
 ### THE CRITIC — BLOCKING (round 1)
+
 B1. The loop was letter-outer, round-inner — it pushed all 6 sightings of
-    the first letter before the second ever appeared, contradicting the
-    commit's own doc comment and message. `l-3` measured `daal×6, Daal×6,
+the first letter before the second ever appeared, contradicting the
+commit's own doc comment and message. `l-3` measured `daal×6, Daal×6,
     zaal×6, ...`. check:shape's run detector missed it because it measures
-    identical *kind*, and kind still rotated within the block.
+identical _kind_, and kind still rotated within the block.
 B2. `l-1` ("Meet the letters") and `l-1-2` ("Position practice") —
-    differently-titled lessons that deliberately share their six letters —
-    generated byte-identical content, because the sequence depended only on
-    letter and array position, never on which lesson was asking.
+differently-titled lessons that deliberately share their six letters —
+generated byte-identical content, because the sequence depended only on
+letter and array position, never on which lesson was asking.
 
 ### CURRICULUM CRITIC — BLOCKING (round 1)
+
 B3. Every sighting independently called `gradeItem`, walking the real SM-2
-    scheduler as an independent day's review. Simulated: 6 correct answers
-    to one letter in one sitting pushed its interval from 1 day to 98 days,
-    from a single 5-minute lesson. Not new to letters — the vocab pipeline
-    already meets a word 3x a lesson — letters made it 6x worse and loud
-    enough to find.
+scheduler as an independent day's review. Simulated: 6 correct answers
+to one letter in one sitting pushed its interval from 1 day to 98 days,
+from a single 5-minute lesson. Not new to letters — the vocab pipeline
+already meets a word 3x a lesson — letters made it 6x worse and loud
+enough to find.
 
 Also recorded, not fixed this round: recognition (96.8% of exercises)
 overweighted against reading-in-context; no progression across the 6
@@ -604,6 +651,7 @@ letter; no confusability-aware ordering of visually similar letters
 (daal/Daal, seen/sheen).
 
 ### ROUND 2 — commit 1b91818 (fixing B1, B2, B3)
+
 B1: round-major loop, `turn` locked to round so every letter in a round
 shares a kind. B2: two hashes (`hashSeed`, new, extracted from
 `seededShuffle`) offsetting turn and position per lesson id. B3: new
@@ -613,6 +661,7 @@ sighting of an item per lesson visit, wired generically into
 of the same bug.
 
 ### THE CRITIC — re-review, BLOCKING (round 2)
+
 B1 was not fixed, it moved. Locking `turn` to round meant every letter in a
 round shared the identical exercise kind — `l-3` measured 7 consecutive
 `letterPick`. `check:shape` — cheap, and explicitly the right tool — was not
@@ -627,12 +676,13 @@ collision for one suffix vs 8.22% for unrelated ids). Not blocking; no
 lesson today reaches it.
 
 ### CURRICULUM CRITIC — re-review (round 2)
+
 B3 (SRS) downgraded BLOCKING to MAJOR by the same critic who raised it. The
 defeated-scheduler bug is genuinely fixed — verified independently against
 real `newCard`/`review`. But "first sighting decides the session's grade"
 discards a teaching lesson's strongest signal: a learner who answers wrong,
 then right five times running, leaves with identical SRS state to one who
-answered wrong six times. Proposed alternative: grade on the *last* sighting
+answered wrong six times. Proposed alternative: grade on the _last_ sighting
 instead, still capped to one `gradeItem` call per item per visit. Recorded
 as a queue item (URD-019) rather than fixed here, since it is a real
 disagreement about policy, not a bug, and the lead's turn was already deep
@@ -646,6 +696,7 @@ show variety in kind rather than six identical exercises, though the
 per-round structure is still mechanically identical for every letter.
 
 ### ROUND 3 — commit a4cef10 (fixing THE CRITIC's B1)
+
 `turn` made to depend on the letter's own position in the group as well as
 the round, so it increments letter-to-letter within a round rather than
 staying fixed. Re-verified all properties together this time rather than
@@ -654,13 +705,14 @@ run 1, max same-kind run 1-2, `l-1`/`l-1-2` still differ, deterministic
 within and across processes.
 
 ### THE CRITIC — third-pass re-review (round 3)
+
 No BLOCKING. Properties 1, 2, 4, 5, 6 (no same-letter runs; check:shape
 clean; determinism; no (turn,position) degenerate cycles; group-size
 interaction) all verified independently and held.
 One MAJOR: `l-1`/`l-1-2` still collided on the axis that matters most.
 `hashSeed('l-1') % 3 === hashSeed('l-1-2') % 3` — `turnOffset` collided
-again, so the two lessons' *kind sequences* were byte-identical across all
-36 exercises, even though enough *positions* differed (24 of 36) to pass the
+again, so the two lessons' _kind sequences_ were byte-identical across all
+36 exercises, even though enough _positions_ differed (24 of 36) to pass the
 round-2 regression check, which counted per-exercise kind-or-position
 divergence rather than the kind sequence on its own. The check measured the
 wrong granularity and a real collision passed it twice running.
@@ -669,6 +721,7 @@ coverage is complete, 160/160), untested by anything that would notice a
 future regression there.
 
 ### ROUND 4 — commit 2d6cc5a (fixing the recurring collision, by the lead's own initiative before re-dispatching)
+
 Replaced both hashes with `siblingIndex`: which lesson, in path order, this
 is among every lesson built from the exact same letter sequence. Two
 siblings always get different indices by construction, not probably
@@ -691,25 +744,27 @@ a cycle rather than continuing it, and every property named across all
 three critique rounds was re-measured together and held.
 
 ## PASSED · URD-013 · 2026-08-09T16:10Z
+
 $ npm test -- src/lib/shuffle.test.ts src/lib/sessionGrading.test.ts
-   Test Files  2 passed (2)
-        Tests  27 passed (27)
+Test Files 2 passed (2)
+Tests 27 passed (27)
 
 $ npm run check:shape
-  0 letter-lesson findings (length, run, share, or otherwise).
-  Remaining 38 short-lesson failures are grammar/sentences/phrases/units,
-  none of them letters.
+0 letter-lesson findings (length, run, share, or otherwise).
+Remaining 38 short-lesson failures are grammar/sentences/phrases/units,
+none of them letters.
 
 $ npm run check:all
-  check:all — all 24 steps pass against a deploy-shaped build.
-  Run alone on a still tree, after the final edit.
+check:all — all 24 steps pass against a deploy-shaped build.
+Run alone on a still tree, after the final edit.
 
 Induced failures, both confirmed to reproduce the exact defect they guard:
-  - `letters.forEach((l) => letterExercise(l))` in place of the round-major
-    loop: fails "is identical in kind across repeated generations" — no, it
-    fails differently, it fails determinism entirely (Math.random reinstated).
-  - `turnOffset` pinned to a constant: l-1/l-1-2 kind sequences collide
-    fully again, confirmed by direct measurement.
+
+- `letters.forEach((l) => letterExercise(l))` in place of the round-major
+  loop: fails "is identical in kind across repeated generations" — no, it
+  fails differently, it fails determinism entirely (Math.random reinstated).
+- `turnOffset` pinned to a constant: l-1/l-1-2 kind sequences collide
+  fully again, confirmed by direct measurement.
 
 Four new queue items from what stayed open across the critique rounds:
 URD-019 (SRS: last-sighting-wins instead of first), URD-020 (letters:
@@ -721,6 +776,7 @@ visually similar letters).
 branch: claude/gauntlet-shape-cleanup
 
 ## CLAIMED · URD-012 · 2026-08-09T16:40Z
+
 A phrase lesson is not six of the same question, the smallest contained
 slice of URD-A02's remaining backlog (grammar/sentences/phrases).
 verify: `npm run check:shape -- --kind=phrases` (unfiltered check:shape
@@ -729,6 +785,7 @@ declared scope)
 branch: claude/gauntlet-phrases-grammar, cut from claude/gauntlet-shape-cleanup.
 
 ## CRITIQUE · URD-012 · 2026-08-09T18:20Z
+
 Dispatched THE CRITIC only, across three rounds. Not the curriculum critic:
 nothing about which phrases are taught, their order, or session length
 changed — only the mix of exercise kinds asking about the same fixed set.
@@ -736,6 +793,7 @@ Not the design critic: no screen changed. Not the PLAYER: no lesson behaviour
 a soak run would notice changed either. Recorded as skipped, not as unneeded.
 
 ### ROUND 1 — commit 307365a
+
 `phrases` was 100% meaningPick, 6 in a row, because phrases share one icon
 and `wordExercise`'s own picture-availability guard silently folds any
 attempt at multipleChoice/listenTap back to meaningPick. Fixed with a greedy
@@ -745,6 +803,7 @@ the scarcer kind. Verified against the real 6-phrase draw: 2/2/2, no run
 over 1, both tracks.
 
 ### THE CRITIC — round 1
+
 BLOCKING. Two phrases in the corpus ("My name is ...", "I am from ...") are
 literal fill-in-the-blank templates. `isTypeable` counted the letters around
 the `...` as short enough, so the new produce path could route either to
@@ -766,6 +825,7 @@ exercise kinds are fixed by concept data and a hardcoded cap, not a free
 per-item choice the way meet/recall/produce are for a phrase.
 
 ### ROUND 2 — commit 7d9d269
+
 Both fixed. Template phrases excluded from `produce` eligibility by
 checking for a literal `...` in either script. The greedy per-phrase choice
 replaced with a target computed from the whole draw first —
@@ -778,6 +838,7 @@ queued (URD-023). A `P()` size guard added, rejecting sizes 4 and 7 —
 `Math.ceil(size/3)/size` exceeds 0.4 there regardless of content.
 
 ### THE CRITIC — round 2
+
 No BLOCKING. Both round-1 findings verified fixed independently: 35,000
 synthetic draws with zero template-phrase-to-typeWord routings; the exact
 adversarial ordering now lands 2/2/2. Confirmed the degenerate <2-typeable
@@ -796,6 +857,7 @@ residual rate exactly (hypergeometric): 8.24%, against the round-2 comment's
 sampled "about 7.6%".
 
 ### ROUND 3 — commit b98bda2
+
 Both MINORs fixed immediately rather than only queued, since they were
 cheap and directly in the code just written. `P()` now checks the
 inequality directly instead of two hardcoded numbers. The residual-risk
@@ -803,20 +865,21 @@ comment corrected to the exact 8.24% and now names sampling-bias as the
 first, cheapest fix option, not a narrowed list of two costlier ones.
 
 ## PASSED · URD-012 · 2026-08-09T18:45Z
+
 $ npm run check:shape -- --kind=phrases
-  0 run/share problems. (Length is out of scope for this item and stays
-  open — the phrases lesson is 0.9 min, folding into URD-A02's remaining
-  backlog alongside grammar and sentences.)
+0 run/share problems. (Length is out of scope for this item and stays
+open — the phrases lesson is 0.9 min, folding into URD-A02's remaining
+backlog alongside grammar and sentences.)
 
 $ npm run check:answerable
-  every generated exercise is answerable from what it puts on screen
+every generated exercise is answerable from what it puts on screen
 
 $ npm run check:voice
-  every clip is audible
+every clip is audible
 
 $ npm run check:all
-  check:all — all 24 steps pass against a deploy-shaped build.
-  Run alone on a still tree, after the final edit.
+check:all — all 24 steps pass against a deploy-shaped build.
+Run alone on a still tree, after the final edit.
 
 Induced failure: reverted to the single-meaningPick-variant version and
 confirmed check:shape reports the original 6-consecutive/100% failure
@@ -829,6 +892,7 @@ first).
 branch: claude/gauntlet-phrases-grammar
 
 ## CLAIMED · URD-024 · 2026-08-10T21:20Z
+
 The sentences row of URD-A02's remaining backlog. Was one exercise per
 sentence — `size` sentences, `size` exercises, 0.8-1.3 min, an
 interruption rather than a sitting. Gave it the same meet-recall-produce
@@ -844,6 +908,7 @@ branch: claude/gauntlet-sentences-length, cut from
 claude/gauntlet-phrases-grammar after URD-012 shipped.
 
 ## CRITIQUE · URD-024 · 2026-08-11T13:35Z
+
 Dispatched all three: THE CRITIC (the exercise-kind and pool-plumbing
 changes), CURRICULUM CRITIC (a sentence's climb is a pedagogy question
 letters/phrases weren't — segmenting or not segmenting a sentence changes
@@ -859,6 +924,7 @@ no verdict. Re-dispatched fresh once the limit cleared; all three
 completed against the same commit.
 
 ### THE CRITIC
+
 PASS (conditional on recording MAJORs, not BLOCKING). Checked, not
 assumed: zero id collisions across the vocab/PHRASE_WORDS/SENTENCE_WORDS
 pools `getAnyWord` now falls through (exhaustive script, all ~2,565 ids).
@@ -882,12 +948,13 @@ Confirmed the flagged risk: fixed 26px font, no length adaptation, wraps a
 37-char option to 3-4 lines against 1-2 line siblings. Worse than
 cosmetic — reproduced, three times with different distractor draws, the
 feedback footer landing directly on top of unpicked option cards' Urdu
-text on a *correct* answer at 375x812. Confirmed recoverable by a manual
+text on a _correct_ answer at 375x812. Confirmed recoverable by a manual
 ~300px scroll (not a stuck state, no content permanently hidden) and
 confirmed no existing check catches it (`check:sizes` never opens a
 lesson).
 
 ### CURRICULUM CRITIC
+
 Not BLOCKING, three MAJOR. Distractor quality checked directly across 4
 sampled lessons (24 questions): same-level, similar-length, genuinely
 distinct wrong options, no giveaways, no two-right-answers. SRS-defeat
@@ -915,6 +982,7 @@ vocab-coverage gap this project's gauntlet work started from, previously
 unmeasured for sentences, not fixed by raising `size`. Queued: URD-027.
 
 ### DESIGN CRITIC
+
 PASS, two MAJOR, independently converging on THE CRITIC's screenshot
 finding rather than duplicating it blind. 14 real screenshots at 375px and
 320px, driven against the real production build with `completedLessons`
@@ -946,6 +1014,7 @@ cosmetic, the correct order is already shown in the exercise body
 separately, no information lost.
 
 ## FIX ROUND — commit (pending, see PASSED entry)
+
 Two independent MAJORs (THE CRITIC + DESIGN CRITIC) converged on the same
 fixable root cause, so fixed inline rather than only queued:
 `WordFromMeaningExercise` now sizes all four options off the longest
@@ -981,14 +1050,15 @@ URD-A02's other rows (review/letters/phrases) left their own non-length
 defects queued rather than folded into the length fix.
 
 ## PASSED · URD-024 · 2026-08-11T14:05Z
+
 $ npm run check:shape
-  26 of 319 short lessons (was 38 before this item; the 12-lesson drop is
-  exactly the sentences row closing). Remaining short lessons are grammar
-  (25) and phrases (1) — both pre-existing, out of this item's scope.
+26 of 319 short lessons (was 38 before this item; the 12-lesson drop is
+exactly the sentences row closing). Remaining short lessons are grammar
+(25) and phrases (1) — both pre-existing, out of this item's scope.
 
 $ npm run check:all
-  check:all — all 24 steps pass against a deploy-shaped build.
-  Run alone on a still tree, after the final edit.
+check:all — all 24 steps pass against a deploy-shaped build.
+Run alone on a still tree, after the final edit.
 
 Induced failure: reverted the `composed` exemption to `lesson.kind ===
 'vocab'` only (dropping `sentences`), confirmed check:shape reports the
@@ -1003,6 +1073,7 @@ URD-028 (check:coverage blind spot on the two new exercise kinds).
 branch: claude/gauntlet-sentences-length
 
 ## CLAIMED · URD-031 · 2026-08-11T14:35Z
+
 The last unaddressed row of URD-A02's remaining backlog: grammar. A
 grammar lesson taught its concept, drilled it once per hand-authored
 drill (1-3, fixed by content), showed up to 2 static sentences, and
@@ -1015,6 +1086,7 @@ branch: claude/gauntlet-grammar-length, cut from
 claude/gauntlet-sentences-length after URD-024 shipped.
 
 ## CRITIQUE · URD-031 · 2026-08-11T15:10Z
+
 Dispatched THE CRITIC and CURRICULUM CRITIC. Not DESIGN CRITIC: no new
 screen or component, the same reused exercise shapes DESIGN CRITIC
 already screened reviewing URD-024. Not PLAYER: no session-length or
@@ -1022,6 +1094,7 @@ lesson-selection behavior beyond what check:shape/order/coverage measure
 directly.
 
 ### THE CRITIC
+
 PASS, one MAJOR, one MINOR. Checked, not assumed, across all 25 grammar
 lessons x 2 tracks: zero duplicate drill ids, zero duplicate (sentence,
 kind) pairs, no run over MAX_RUN=3. `lesson.size` semantic drift (grammar
@@ -1047,6 +1120,7 @@ by `readableSentences` for using an untaught word, "میز"). Fixed in this
 round.
 
 ### CURRICULUM CRITIC
+
 Not BLOCKING, two new MAJOR. Teach-then-drill-then-reinforce order judged
 sound. SRS interaction checked directly (not assumed): `shouldUpdateSrs`'s
 per-lesson dedupe holds at this new call site for the same structural
@@ -1062,8 +1136,7 @@ reproduced verbatim here rather than being a new defect. Recommended
 broadening URD-025 to cover both call sites rather than opening a
 duplicate; done.
 MAJOR (new root cause, not URD-025): measured across all 290
-meaningPick/wordFromMeaning exercises the climb emits — only 26.9% (78 of
-290) have even one distractor sharing the correct answer's grammar
+meaningPick/wordFromMeaning exercises the climb emits — only 26.9% (78 of 290) have even one distractor sharing the correct answer's grammar
 concept. The other 73.1% are answerable by topic/vocabulary recognition
 alone, without parsing the construction being taught. Filed as URD-030,
 kept separate from URD-025 since it's about which pool feeds distractors,
@@ -1075,6 +1148,7 @@ before recording this PASSED, per ROLES.md's rule that a lead may not
 record PASSED with a referenced-but-missing queue item.
 
 ## FIX ROUND — commit (pending, see PASSED entry)
+
 Comment corrected to say "3 readable of 4 tagged" for g-plurals rather
 than implying all 4 feed the climb, and to note the placement-vs-content
 distinction CURRICULUM CRITIC raised. URD-025 broadened (title, file
@@ -1088,20 +1162,21 @@ URD-030 (the grammar climb's distractor pool isn't concept-aware, 73.1%
 of questions answerable by topic recognition alone).
 
 ## PASSED · URD-031 · 2026-08-11T15:35Z
+
 $ npm run check:shape -- --kind=grammar
-  3 of 25 short lessons (was 25 before this item). g-plurals, g-pronouns,
-  g-ability remain short — thin tagged-sentence pools, documented as
-  URD-029, not solved by repetition.
+3 of 25 short lessons (was 25 before this item). g-plurals, g-pronouns,
+g-ability remain short — thin tagged-sentence pools, documented as
+URD-029, not solved by repetition.
 
 $ npm run check:shape (unfiltered)
-  4 of 319 short lessons course-wide (was 26 before this item — 22 of the
-  25 grammar lessons closed). The g-to-be run/share violation (50%
-  grammarDrill) is gone as a side effect: no run/share problems reported
-  for any grammar lesson.
+4 of 319 short lessons course-wide (was 26 before this item — 22 of the
+25 grammar lessons closed). The g-to-be run/share violation (50%
+grammarDrill) is gone as a side effect: no run/share problems reported
+for any grammar lesson.
 
 $ npm run check:all
-  check:all — all 24 steps pass against a deploy-shaped build.
-  Run alone on a still tree, after the final edit.
+check:all — all 24 steps pass against a deploy-shaped build.
+Run alone on a still tree, after the final edit.
 
 Induced failure: reverted the `composed` exemption to drop `grammar`,
 confirmed check:shape --kind=grammar reports the original 25-of-25
@@ -1116,6 +1191,7 @@ sharpened to name grammar explicitly.
 branch: claude/gauntlet-grammar-length
 
 ## CLAIMED · URD-001 · 2026-08-11T16:07Z
+
 Top unclaimed item once the length dimension closed across URD-A02's
 whole backlog. 20 `@typescript-eslint/no-explicit-any` warnings across 4
 files, exactly as the spec named: `src/components/Reveal.tsx` (1),
@@ -1126,6 +1202,7 @@ branch: claude/gauntlet-lint-any, cut from claude/gauntlet-grammar-length
 after URD-031 shipped.
 
 ## CRITIQUE · URD-001 · 2026-08-11T16:16Z
+
 Dispatched THE CRITIC (mandatory) and PLAYER — not for a behavior change
 (none was intended; this is a type-safety refactor), but because the
 highest-risk change, `exercises/index.tsx`'s switch-to-lookup-table
@@ -1135,6 +1212,7 @@ being a real, silent, learner-facing bug. Not CURRICULUM CRITIC (no
 content changed) or DESIGN CRITIC (no new screen).
 
 ### THE CRITIC
+
 PASS, two MINOR, no BLOCKING/MAJOR. Reproduced everything independently
 rather than trusting the commit message. Diffed the 15-entry
 `EXERCISE_COMPONENTS` table against the original switch key-by-key: exact
@@ -1168,6 +1246,7 @@ Reproduced `eslint`, `tsc`, `vitest` (78/78) and `check:all` (24/24)
 independently, fresh, on a clean tree.
 
 ### PLAYER
+
 No BLOCKING/MAJOR — corroborated THE CRITIC via a different method
 (reading the real shipping source of the two highest-risk components
 directly, rather than only screenshotting them) and surfaced one useful,
@@ -1197,18 +1276,19 @@ papering over it, and relied on direct source-reading (converging with
 THE CRITIC's independent, stronger compile-time proof) for the other 12.
 
 ## PASSED · URD-001 · 2026-08-11T16:20Z
+
 $ npx eslint . --max-warnings 0
-  (no output — clean)
+(no output — clean)
 
 $ npx tsc --noEmit
-  (no output — clean)
+(no output — clean)
 
 $ npx vitest run
-  6 files, 78/78 tests passed
+6 files, 78/78 tests passed
 
 $ npm run check:all
-  check:all — all 24 steps pass against a deploy-shaped build.
-  Run alone on a still tree, after the final edit.
+check:all — all 24 steps pass against a deploy-shaped build.
+Run alone on a still tree, after the final edit.
 
 Induced failure: reverted `Reveal.tsx`'s `style?: StyleProp<ViewStyle>`
 back to `style?: any`, confirmed eslint reports the warning again (plus
@@ -1222,6 +1302,7 @@ covered the root cause exactly.
 branch: claude/gauntlet-lint-any
 
 ## CLAIMED · URD-002 · 2026-08-11T16:35Z
+
 Top unclaimed item below URD-A02 in QUEUE.md: the learn path was
 described as a flat ScrollView mounting all 348 lesson rows.
 verify: `npm run check:path`
@@ -1229,6 +1310,7 @@ branch: claude/gauntlet-path-mount, cut from claude/gauntlet-lint-any
 after URD-001 shipped.
 
 ## INVESTIGATION · URD-002 · 2026-08-11T16:50Z
+
 Measured first rather than assumed. `HomeScreen.tsx` already had a
 pre-existing `isOpen(lvl) &&` gate collapsing every course stage except
 the learner's current one (introduced well before this session, commit
@@ -1247,37 +1329,41 @@ was open, making the multi-open state unrepresentable rather than merely
 detectable.
 
 ## CRITIQUE · URD-002 · round 1, 2026-08-11T17:15Z
+
 Dispatched THE CRITIC and DESIGN CRITIC — the accordion is a real
 interaction-behavior change on the Home screen, not just a new check.
 
 ### THE CRITIC — round 1
+
 PASS, no BLOCKING. Confirmed the "already mitigated" claim two ways: code
 inspection (plain `&&`-gated `.map()`, no display:none trick) and
 measurement (mounted counts land exactly on each open level's real
 total). Confirmed `lesson.size`-style semantic drift doesn't apply here
 (nothing reads a lesson count off this screen). Sampled distractor... n/a
 (not a content item). Four MAJOR findings:
+
 1. `check:path`'s `BOUND` (`maxLevelLessons + 20`) had no ceiling against
    `ALL_LESSONS.length` — if a future regroup ever concentrated the
    course into fewer, bigger levels, the bound could climb toward the
    whole course and the check would quietly stop being able to fail.
 2. The accordion pin (`openLevel`) persisted for the rest of the session
-   once a learner touched *any* header, not just the one that would later
+   once a learner touched _any_ header, not just the one that would later
    become current — `HomeScreen` never remounts between lessons — silently
    defeating both "open my current stage" and the mount-time
    auto-scroll-to-current-lesson for the remainder of the visit.
 3. `check:path`'s third scenario used `page.getByRole('button', {name:
-   /Expand/}).first()`, which always grabs the topmost DOM match — verified
+/Expand/}).first()`, which always grabs the topmost DOM match — verified
    live it only ever oscillated between Beginner and Elementary, never
    reaching Intermediate (94, the real largest level).
 4. Recorded that this item could not close on THE CRITIC's verdict alone
    per ROLES.md, since DESIGN CRITIC's screenshot review was still
    outstanding — and (live evidence in the same checkout) already turning
    up a further real bug.
-Also flagged a MINOR (content-coupled lesson-row-suffix heuristic, unlikely
-to misfire) not requiring action.
+   Also flagged a MINOR (content-coupled lesson-row-suffix heuristic, unlikely
+   to misfire) not requiring action.
 
 ### DESIGN CRITIC — round 1
+
 **BLOCK.** Real repro, not hypothetical: default state (Beginner open,
 ~8000px), scroll down to Elementary's collapsed header, tap it. Measured
 the actual scroll container: `scrollTop` unchanged (8420) both 50ms and
@@ -1294,10 +1380,12 @@ touching) and confirmed the collapse-to-none state reads as intentional,
 not broken.
 
 ## FIX ROUND — round 2, commit 1344973
+
 All four of THE CRITIC's findings and DESIGN CRITIC's BLOCKING finding
 addressed in one round:
+
 - BOUND capped at `Math.min(maxLevelLessons + 20, Math.ceil(ALL_LESSONS.length
-  / 2))`, with the cap itself reported as a problem if it ever engages
+/ 2))`, with the cap itself reported as a problem if it ever engages
   (not silently widened to allow a future regression through).
 - `useEffect(() => setOpenLevel(undefined), [currentLevel])` added — the
   pin now clears when the learner's actual progress advances to a new
@@ -1320,6 +1408,7 @@ addressed in one round:
 ## CRITIQUE · URD-002 · round 2, 2026-08-11T18:05Z
 
 ### DESIGN CRITIC — round 2
+
 **PASS.** Reproduced the exact round-1 repro at both 375px and 320px:
 `scrollTop === 0` after the tap settles in both cases, sampled the
 animation at 25ms resolution (eased, ~700ms, no hard cut), and confirmed
@@ -1334,6 +1423,7 @@ tighter landing (just above the accordion) would still guarantee a
 labeled state while roughly halving that 500px — filed as URD-032.
 
 ### THE CRITIC — round 2
+
 **PASS.** Verified all four fixes independently, not by re-reading the
 diff. BOUND: reproduced the exact 81/94/94/bound-114 numbers, hand-checked
 the cap's arithmetic and confirmed (by simulating larger `maxLevelLessons`
@@ -1358,13 +1448,14 @@ is scrolled elsewhere (folded into URD-032 alongside DESIGN CRITIC's
 finding).
 
 ## PASSED · URD-002 · 2026-08-11T18:25Z
+
 $ npm run check:path
-  3/3 scenarios pass: 81 / 94 / 94 lesson rows mounted, bound 114 (largest
-  single level 94 of 348 total).
+3/3 scenarios pass: 81 / 94 / 94 lesson rows mounted, bound 114 (largest
+single level 94 of 348 total).
 
 $ npm run check:all
-  check:all — all 25 steps pass against a deploy-shaped build.
-  Run alone on a still tree, after the final edit.
+check:all — all 25 steps pass against a deploy-shaped build.
+Run alone on a still tree, after the final edit.
 
 Induced failure: reverted the `isOpen(lvl) &&` gate to `true &&`,
 confirmed all three check:path scenarios report 348-of-348 mounted
@@ -1378,6 +1469,7 @@ needs to, and the mount-time auto-scroll doesn't re-fire when
 branch: claude/gauntlet-path-mount
 
 ## CLAIMED · URD-004 · 2026-08-11T20:10Z
+
 Top unclaimed item below URD-A02. "Master," the top level title, sits at
 level 25 (18,000 XP); a complete playthrough (sum of every lesson's `.xp`
 across `ALL_LESSONS`) pays out ~7,220 XP — 2.49x the whole course,
@@ -1390,12 +1482,14 @@ branch: claude/gauntlet-top-title, cut from claude/gauntlet-path-mount
 after URD-002 shipped.
 
 ## CRITIQUE · URD-004 · 2026-08-11T20:55Z
+
 Dispatched THE CRITIC only. Not CURRICULUM CRITIC (no lesson/word/order
 content changed), not DESIGN CRITIC (no screen changed — titles render
 through the same existing UI at different XP amounts), not PLAYER (no
 exercise/lesson behavior changed).
 
 ### THE CRITIC
+
 PASS. Reproduced the core numbers independently rather than trusting the
 commit: summed `ALL_LESSONS[].xp` directly (7,220, matching exactly),
 recomputed `xpForLevel(14)=5,460` (24.38% margin) and `xpForLevel(16)=7,200`
@@ -1424,12 +1518,13 @@ computed, so the next re-space has something to check against besides
 eyeballing again.
 
 ## PASSED · URD-004 · 2026-08-11T21:05Z
+
 $ npx vitest run
-  6 files, 79/79 tests passed (was 78 — one new test).
+6 files, 79/79 tests passed (was 78 — one new test).
 
 $ npm run check:all
-  check:all — all 25 steps pass against a deploy-shaped build.
-  Run alone on a still tree, after the final edit.
+check:all — all 25 steps pass against a deploy-shaped build.
+Run alone on a still tree, after the final edit.
 
 Induced failure (three ways, per THE CRITIC's brief): reverted the
 threshold to level 25 — test failed with "expected 18000 to be less than
@@ -1446,6 +1541,7 @@ level titles, in a system this item never touched).
 branch: claude/gauntlet-top-title
 
 ## CLAIMED · URD-005 · 2026-08-11T21:10Z
+
 Top unclaimed item below URD-004. `npm run soak` reports only `tap` and
 `letterTrace` from a default run, because it starts at lesson one and the
 alphabet units never reach most exercise kinds. Add `--start`/`--require`
@@ -1455,12 +1551,14 @@ branch: claude/gauntlet-soak-coverage, cut from claude/gauntlet-top-title
 after URD-004 shipped.
 
 ## CRITIQUE · URD-005 · 2026-08-12T00:20Z
+
 Dispatched THE CRITIC and PLAYER (this item rewrites `scripts/soak.js`
 itself — PLAYER's own instrument — and its correctness needs an
 adversarial read, not curriculum or screen review; no lesson content or
 UI changed, so CURRICULUM CRITIC and DESIGN CRITIC were not dispatched).
 
 ### PLAYER
+
 No BLOCKING/MAJOR authority, clean report. Independently completed a real
 run (`--start 90 --lessons 20 --seed 7 --require wordBuild`, own numbers:
 141 exercises, `wordBuild 3`, exit 0) after tracking down an environment
@@ -1481,6 +1579,7 @@ different exercise counts (130 vs 141), evidently perturbed by real
 browser/network timing the RNG doesn't control. Worth a doc caveat.
 
 ### THE CRITIC
+
 Verdict: FAIL, 1 BLOCKING.
 
 B1 (BLOCKING): `--require` can never recognize `reading`, `dialogue` or
@@ -1517,6 +1616,7 @@ URD-034 rather than a fourth item, since it is a smaller instance of the
 same "soak's simplifying assumptions don't hold once you look" pattern.
 
 ## FIX ROUND — URD-005, commit (pending)
+
 B1 fixed, and fixing it exactly as scoped immediately surfaced two more
 real, previously-unknown bugs that made the fix's own verification fail
 until they were fixed too — documented here in the order they were found,
@@ -1559,10 +1659,10 @@ each with the real run that caught it.
    the page to its bottom directly.
 
 4. **Recovery.** A separate, pre-existing gap this now reaches: `why ===
-   'ran out'` (a lesson that hits its 90-step budget) was never given the
+'ran out'` (a lesson that hits its 90-step budget) was never given the
    same `page.goto(url)` recovery `why === 'stuck'` gets, so a timed-out
    lesson could leave the browser on a mid-lesson screen (observed: an
-   affordable-refill "Out of hearts" prompt) and the *next* attempt's
+   affordable-refill "Out of hearts" prompt) and the _next_ attempt's
    `openNextLesson` then failed against that stale screen, cascading into
    a second, unrelated `no lesson to open` failure. Fixed by extending the
    reset to both outcomes.
@@ -1570,7 +1670,7 @@ each with the real run that caught it.
 5. **A real, separate app bug, left unfixed and queued as URD-035.**
    Fixing 1-4 let a run reach far enough into `GrammarTeachExercise` to
    trigger an uncaught `TypeError: Cannot read properties of undefined
-   (reading 'N')` partway through its reveal-a-stage flow, blanking the
+(reading 'N')` partway through its reveal-a-stage flow, blanking the
    screen — reproduced on two independent concepts and seeds
    (`g-pronouns`/seed 7/`--start 29`; `g-gender`/seed 11/`--start 45`).
    Ruled out a driver-timing race first (the card's own `setTimeout(120)`
@@ -1581,25 +1681,26 @@ each with the real run that caught it.
    silently working around it or leaving it undocumented.
 
 ## PASSED · URD-005 · 2026-08-12T04:05Z
+
 $ node -c scripts/soak.js && npx eslint scripts/soak.js && npx prettier --check scripts/soak.js
-  syntax OK, 0 lint errors, formatted.
+syntax OK, 0 lint errors, formatted.
 
 $ npm run check:all
-  check:all — all 25 steps pass against a deploy-shaped build.
-  Run alone on a still tree, after the final edit.
+check:all — all 25 steps pass against a deploy-shaped build.
+Run alone on a still tree, after the final edit.
 
 Real (non-diagnostic, real hearts economy, no code hacks) verify runs,
 each independently re-run after the B1 fix round and confirmed clean:
 
-  npm run soak -- --start 90 --lessons 20 --seed 7 --require wordBuild
-    → 0 lessons completed (expected — see URD-034), wordBuild seen,
-      required kinds all seen, Nothing broke. Seed 7.
-  npm run soak -- --start 97 --lessons 15 --seed 7 --require sentenceBuild
-    → same shape, sentenceBuild seen, Nothing broke.
-  npm run soak -- --start 74 --lessons 2 --seed 7 --require reading
-    → 2/2 lessons completed, reading seen twice, Nothing broke.
-  npm run soak -- --start 77 --lessons 3 --seed 7 --require dialogue
-    → 3/3 lessons completed, dialogue seen twice, Nothing broke.
+npm run soak -- --start 90 --lessons 20 --seed 7 --require wordBuild
+→ 0 lessons completed (expected — see URD-034), wordBuild seen,
+required kinds all seen, Nothing broke. Seed 7.
+npm run soak -- --start 97 --lessons 15 --seed 7 --require sentenceBuild
+→ same shape, sentenceBuild seen, Nothing broke.
+npm run soak -- --start 74 --lessons 2 --seed 7 --require reading
+→ 2/2 lessons completed, reading seen twice, Nothing broke.
+npm run soak -- --start 77 --lessons 3 --seed 7 --require dialogue
+→ 3/3 lessons completed, dialogue seen twice, Nothing broke.
 
 Induced failure, per THE CRITIC's own live method: reverted the matching
 board's `y > 80` bound to the original `150`, the `:not([aria-disabled=
@@ -1642,6 +1743,7 @@ card, found chasing THE CRITIC's B1 fix, app code not soak.js).
 branch: claude/gauntlet-soak-coverage
 
 ## CLAIMED · URD-006 · 2026-08-12T04:20Z
+
 Top unclaimed item below URD-A02. The "Out of hearts" lockout screen's
 refill button is correctly `disabled={gems < 40}`, but a fresh profile
 starts at 20 gems against a 40-gem refill and pays 5-8 gems a lesson —
@@ -1652,6 +1754,7 @@ branch: claude/gauntlet-lockout-screen, cut from claude/gauntlet-soak-coverage
 after URD-005 shipped.
 
 ## CRITIQUE · URD-006 · 2026-08-12T07:35Z
+
 Dispatched THE CRITIC (mandatory) and DESIGN CRITIC (this item changes the
 lockout screen's rendered text and disabled-state wiring). Not CURRICULUM
 CRITIC (no lesson content). PLAYER not dispatched — the change is a small,
@@ -1661,6 +1764,7 @@ much of the same ground a soak run would; noted here rather than silently
 skipped, per ROLES.md.
 
 ### THE CRITIC
+
 First dispatch hung indefinitely: it tried to `git diff`/`EnterWorktree`
 the shared checkout to see this item's still-uncommitted change from its
 own isolated worktree (whose git history predates the change), and
@@ -1700,6 +1804,7 @@ boundary cases (gems exactly 40, elapsed exactly 30/0/negative minutes,
 singular/plural wording) — all correct as read.
 
 ### DESIGN CRITIC
+
 Built (`npx expo export` after `build:web` hit a stale cross-worktree
 metro cache — an environment issue, not this item) and screenshotted the
 real lockout screen at four gem/wait combinations via Playwright/chromium,
@@ -1721,9 +1826,9 @@ Flagged, not fixed (explicitly out of this item's scope, filed
 separately): the disabled `primary`-variant button is still only
 `opacity: 0.4` on an otherwise-unchanged gold pill — "at a glance, before
 reading, a warm 40%-opacity gold pill still reads as 'a button,' just a
-slightly duller one." The new copy closes the *explanation* gap (a
-learner who reads understands why it won't respond) but not the *visual
-affordance* gap (before reading, it doesn't obviously look disabled).
+slightly duller one." The new copy closes the _explanation_ gap (a
+learner who reads understands why it won't respond) but not the _visual
+affordance_ gap (before reading, it doesn't obviously look disabled).
 Matches the item's own original note; DESIGN CRITIC correctly declined to
 recommend changing `Button`'s shared disabled styling inline, since that
 touches every disabled button in the app and needs its own review — filed
@@ -1734,15 +1839,16 @@ case for a fresh profile) now states a real number instead of a
 one-size-fits-all sentence a learner in this situation could never act on.
 
 ## PASSED · URD-006 · 2026-08-12T07:40Z
+
 $ npx vitest run src/lib/gamification.test.ts
-  22/22 pass.
+22/22 pass.
 
 $ npx tsc --noEmit
-  clean.
+clean.
 
 $ npm run check:all
-  check:all — all 25 steps pass against a deploy-shaped build.
-  Run alone on a still tree, after the final edit.
+check:all — all 25 steps pass against a deploy-shaped build.
+Run alone on a still tree, after the final edit.
 
 Induced failure, per THE CRITIC's own finding: reverted
 `minutesUntilNextHeart`'s return to a hardcoded `0`, confirmed the fixed
@@ -1761,6 +1867,7 @@ reproduced standalone, unrelated to this item's own files).
 branch: claude/gauntlet-lockout-screen
 
 ## CLAIMED · URD-007 · 2026-08-12T12:22Z
+
 Top unclaimed item below URD-A02. ذ ز ض ظ (zaal/ze/zwaad/zoe) are four
 different letters all pronounced "z" — `letterPick` ("which letter makes
 this sound?") drew distractors uniformly from all 38 letters with no
@@ -1772,6 +1879,7 @@ branch: claude/gauntlet-similar-letters, cut from claude/gauntlet-lockout-screen
 after URD-006 shipped.
 
 ## CRITIQUE · URD-007 · 2026-08-12T12:45Z
+
 Dispatched THE CRITIC (mandatory) and CURRICULUM CRITIC (this changes how a
 homophone letter group is taught/tested, not just engineering correctness).
 Not DESIGN CRITIC (no screen changed — only `letterPick`'s distractor pool
@@ -1781,12 +1889,13 @@ is more exhaustive for this specific property than a soak run would be;
 noted here rather than silently skipped, per ROLES.md.
 
 ### THE CRITIC
+
 Verdict: PASS. No BLOCKING, no MAJOR.
 Independently re-derived the fix rather than trusting it: read
 `distractLetters`/`bareSound` (as they stood at review time) by hand against
 all 40 letters (32 distinct bare sounds then), confirmed the exclusion was
 genuinely pairwise (distractor-vs-distractor, not just vs-target), and
-reproduced *both* induced-failure states the lead claimed — the naive
+reproduced _both_ induced-failure states the lead claimed — the naive
 target-only exclusion (142 failures) and an intermediate single-pass,
 target-sound-only variant that still let two unrelated distractors collide
 with each other (reproduced the exact gap: "alif (\"a / aa\") among ze,
@@ -1804,12 +1913,13 @@ project's own stated test-philosophy split — fixed by adding
 `src/exercises/generator.test.ts`.
 
 ### CURRICULUM CRITIC
+
 Verdict: passes this item's own definition of done. One MAJOR (fixed same
 round, see below) and one MAJOR left open as a new queue item.
 Found, empirically, that the lead's own doc comment overclaimed: a first
 version of the sound-equality check normalized each letter to one string
 ("z", "h", …), so it matched "z" against "z" but missed that alif ("a /
-aa") and alif-madda ("aa") are different *strings* sharing a *reading* —
+aa") and alif-madda ("aa") are different _strings_ sharing a _reading_ —
 sampled 2,902 of 3,000 real `letterPick` generations offering both
 together, disproving the comment's claim that the fix was generic enough to
 catch "a new homophone letter" automatically. FIXED same round: rewrote
@@ -1821,7 +1931,7 @@ pairs — and re-ran the full induced-failure cycle against the corrected
 version (see PASSED below).
 Also found, not fixed here (explicitly out of this item's "not generated"
 branch, filed as URD-038): none of the four ذ ز ض ظ letters' `note` fields
-in `letters.ts` teach a rule for *which* letter a word actually uses — they
+in `letters.ts` teach a rule for _which_ letter a word actually uses — they
 only name the collision ("another of the four ways Urdu spells 'z'"). The
 gap is real but muted today because `TypeWordExercise` matches Roman input
 (`skeleton()` in `src/lib/roman.ts`), so a learner who types "zaroorat"
@@ -1845,22 +1955,23 @@ context-word coverage, visual-confusability weighting) — none of those
 mechanisms were touched by this diff.
 
 ## PASSED · URD-007 · 2026-08-12T12:47Z
+
 $ npm run check:answerable
-  107,610 exercises generated across 2 tracks × 6 passes.
-  "every generated exercise is answerable from what it puts on screen"
+107,610 exercises generated across 2 tracks × 6 passes.
+"every generated exercise is answerable from what it puts on screen"
 
 $ npx vitest run src/exercises/generator.test.ts
-  10/10 pass.
+10/10 pass.
 
 $ npx tsc --noEmit
-  clean.
+clean.
 
 $ npm run lint
-  clean.
+clean.
 
 $ npm run check:all
-  check:all — all 25 steps pass against a deploy-shaped build.
-  Run alone on a still tree, after the final edit.
+check:all — all 25 steps pass against a deploy-shaped build.
+Run alone on a still tree, after the final edit.
 
 Induced failure, twice: (1) reverted `distractLetters` to a naive
 target-only exclusion — `check:answerable` failed immediately (142
@@ -1883,6 +1994,7 @@ from CURRICULUM CRITIC).
 branch: claude/gauntlet-similar-letters
 
 ## CLAIMED · URD-008 · 2026-08-12T13:11Z
+
 Top unclaimed item below URD-A02. `ml-`/`mr-`/`pl-`/`pr-` and inline
 `marginLeft`/`paddingRight`/`borderLeftWidth` etc. in components that can
 render Urdu pin spacing to a screen side rather than a position in reading
@@ -1894,6 +2006,7 @@ branch: claude/gauntlet-logical-direction, cut from
 claude/gauntlet-similar-letters after URD-007 shipped.
 
 ## CRITIQUE · URD-008 · 2026-08-18T22:53Z
+
 Dispatched THE CRITIC (mandatory) and DESIGN CRITIC (this touches rendered
 UI in 9 files, even though the change is reasoned to be a visual no-op —
 ROLES.md: "anything that changes a screen needs the design critic"). Not
@@ -1904,6 +2017,7 @@ same screens), and `check:sizes`/`check:scenery` already render every
 touched screen across 8 sizes with real contrast measurement.
 
 ### THE CRITIC
+
 Verdict: PASS. No BLOCKING. One MAJOR (fixed same round).
 Independently reproduced the lead's induced-failure claim (reverted
 `Card.tsx:32`, confirmed `check:direction` fails at the right line,
@@ -1940,6 +2054,7 @@ repro (caught), plus a quoted-key variant (caught), both restored and
 `check:all` re-run clean (26/26) after the fix.
 
 ### DESIGN CRITIC
+
 Two dispatches, both terminated mid-review by the same account-level error
 ("You've hit your monthly spend limit") — an infrastructure interruption,
 not a finding about the work. Not retried a third time against a
@@ -1954,45 +2069,47 @@ real taps, no mocking), and screenshotted the two highest-risk sites both
 critics would have prioritized — the accent-stripe pattern, where a typo'd
 `borderStartColor` without its paired width, or a wrong side, would be
 immediately visible:
-  - `LetterLabScreen.tsx`'s note card (`border-s-2` + `borderStartColor:
-    palette.jade`, converted from `border-l-2`/`borderLeftColor`): reached
-    via Home → "LETTER LAB" → alif. Screenshot shows a solid jade-green
-    stripe on the card's left edge (start = left, this app is always LTR),
-    same visual treatment as before the property rename.
-  - `LeaderboardScreen.tsx`'s per-row promote/demote accent
-    (`borderStartWidth`/`borderStartColor`, converted from
-    `borderLeftWidth`/`borderLeftColor`): reached via Profile → League.
-    Screenshot shows every row's colored zone stripe on the left edge,
-    rendering identically to the pre-conversion property.
-Both confirm the "visually a complete no-op" claim for the two sites most
-likely to show a real regression if the rename had gone wrong anywhere.
-Not a substitute for a full DESIGN CRITIC pass — `GrammarExercises.tsx`,
-`DialogueExercise.tsx`'s bubble-corner mapping, `LoginScreen.tsx`'s
-conditional note card, and the plain-spacing sites (`HomeScreen.tsx`,
-`PracticeScreen.tsx`, `SettingsScreen.tsx`, `SentenceReading.tsx`) were not
-independently screenshotted here — those rest on THE CRITIC's by-hand trace
-of the source (confirmed correct, including the one bubble-corner site
-specifically) plus `check:sizes`/`check:stability`/`check:scenery` all
-passing clean against the real built app across every touched screen.
+
+- `LetterLabScreen.tsx`'s note card (`border-s-2` + `borderStartColor:
+palette.jade`, converted from `border-l-2`/`borderLeftColor`): reached
+  via Home → "LETTER LAB" → alif. Screenshot shows a solid jade-green
+  stripe on the card's left edge (start = left, this app is always LTR),
+  same visual treatment as before the property rename.
+- `LeaderboardScreen.tsx`'s per-row promote/demote accent
+  (`borderStartWidth`/`borderStartColor`, converted from
+  `borderLeftWidth`/`borderLeftColor`): reached via Profile → League.
+  Screenshot shows every row's colored zone stripe on the left edge,
+  rendering identically to the pre-conversion property.
+  Both confirm the "visually a complete no-op" claim for the two sites most
+  likely to show a real regression if the rename had gone wrong anywhere.
+  Not a substitute for a full DESIGN CRITIC pass — `GrammarExercises.tsx`,
+  `DialogueExercise.tsx`'s bubble-corner mapping, `LoginScreen.tsx`'s
+  conditional note card, and the plain-spacing sites (`HomeScreen.tsx`,
+  `PracticeScreen.tsx`, `SettingsScreen.tsx`, `SentenceReading.tsx`) were not
+  independently screenshotted here — those rest on THE CRITIC's by-hand trace
+  of the source (confirmed correct, including the one bubble-corner site
+  specifically) plus `check:sizes`/`check:stability`/`check:scenery` all
+  passing clean against the real built app across every touched screen.
 
 ## PASSED · URD-008 · 2026-08-18T23:05Z
+
 $ node scripts/check-direction.js
-  no physical margin/padding/border-left/right property in
-  src/components, src/screens or src/exercises.
+no physical margin/padding/border-left/right property in
+src/components, src/screens or src/exercises.
 
 $ npx tsc --noEmit
-  clean.
+clean.
 
 $ npm run lint
-  clean.
+clean.
 
 $ npm run format:check
-  clean.
+clean.
 
 $ npm run check:all
-  check:all — all 26 steps pass against a deploy-shaped build (was 25;
-  check:direction is now wired in, right after check:theme).
-  Run alone on a still tree, after the final edit.
+check:all — all 26 steps pass against a deploy-shaped build (was 25;
+check:direction is now wired in, right after check:theme).
+Run alone on a still tree, after the final edit.
 
 Induced failure, three times: (1) reverted `Card.tsx`'s
 `borderStartWidth`/`borderStartColor` to physical — `check:direction` failed
@@ -2009,6 +2126,7 @@ is recorded above rather than filed as follow-up work.
 branch: claude/gauntlet-logical-direction
 
 ## CLAIMED · URD-009 · 2026-08-18T23:31Z
+
 Top unclaimed item below URD-A02. `DAILY_GOALS`' minute labels ("20 min a
 day") were hand-set once at 12.54 XP/min; the course has moved twice since
 (3.95 XP/min after URD-A02 attempt 1, 4.77 XP/min measured just now) and
@@ -2018,6 +2136,7 @@ branch: claude/gauntlet-daily-goal-rate, cut from
 claude/gauntlet-logical-direction after URD-008 shipped.
 
 ## CRITIQUE · URD-009 · 2026-08-18T23:50Z
+
 Dispatched THE CRITIC only (mandatory). Not DESIGN CRITIC — no screen code
 changed; the only rendered difference is digits inside an already-existing,
 unchanged-layout string, and `check:sizes` already renders both display
@@ -2029,27 +2148,27 @@ arithmetic. THE CRITIC agreed with all three calls after confirming, via
 `src/lib/achievements.*` files changed.
 
 ### THE CRITIC
+
 Verdict: PASS. No BLOCKING, no MAJOR. Three MINOR.
 Independently recomputed `courseXpPerMinute()` from scratch (own standalone
 probe): 4.768197335095254 XP/min, matching the reported 4.77; reran three
 fresh processes to confirm the memoised value is stable and not leaking
 `Math.random()` noise from the generator's content-selection logic into
-exercise *counts*. Reproduced the induced-failure test independently
+exercise _counts_. Reproduced the induced-failure test independently
 (reverted `calm`'s tier to the stale 3-minute label, confirmed the "within
 a minute" assertion fails at 1.19 min over, restored, reconfirmed green).
 Traced the numerator-exclusion question by hand: `useProgressStore.ts`
 credits `todayXp`/`totalXp` for every lesson kind including reading/dialogue,
 so `courseXpPerMinute()`'s exclusion of those kinds is local to its own
-rate *denominator* only, not a leak into real progress tracking — and
-computed the rate *with* them included (5.28 XP/min) to show why excluding
+rate _denominator_ only, not a leak into real progress tracking — and
+computed the rate _with_ them included (5.28 XP/min) to show why excluding
 them is the more honest choice: 17 reading lessons model to only 153 total
 seconds under the 9-sec/exercise assumption, wildly underestimating real
 reading time. Ran `check:all` independently to completion: 26/26.
 
 MINOR 1 (verification-claim correction, no code change): the dispatch
 description claimed `OnboardingScreen.tsx` reads `DAILY_GOALS` at two
-render sites; THE CRITIC found only one does (`step === 'daily'`, ~line
-702) — the other site the claim pointed at (~line 440) maps a different,
+render sites; THE CRITIC found only one does (`step === 'daily'`, ~line 702) — the other site the claim pointed at (~line 440) maps a different,
 unrelated `GOALS` array (the motivation picker: "Speak with family" /
 "Read & write it" / etc.). No functional bug — THE CRITIC confirmed no
 stray duplicate of the stale numbers exists anywhere — but the claim
@@ -2079,21 +2198,22 @@ expected mid-review, not a defect; this CRITIQUE/PASSED pair and the
 QUEUE.md/done/ update close it.
 
 ## PASSED · URD-009 · 2026-08-18T23:55Z
+
 $ npx vitest run src/lib/achievements.test.ts
-  4/4 pass.
+4/4 pass.
 
 $ npx tsc --noEmit
-  clean.
+clean.
 
 $ npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npm test
-  97/97 pass across 8 files.
+97/97 pass across 8 files.
 
 $ npm run check:all
-  check:all — all 26 steps pass against a deploy-shaped build.
-  Run alone on a still tree, after the final edit.
+check:all — all 26 steps pass against a deploy-shaped build.
+Run alone on a still tree, after the final edit.
 
 Induced failure, twice (once by the lead, reproduced independently by THE
 CRITIC): reverted `DAILY_GOALS`'s stale `minutes`/`desc` values (3/7/12/20),
@@ -2109,6 +2229,7 @@ paperwork gap closed by this entry itself).
 branch: claude/gauntlet-daily-goal-rate
 
 ## CLAIMED · URD-011 · 2026-08-19T00:12Z
+
 Top unclaimed item below URD-A02. `buildLessonExercises` runs 5,070+ times
 per `check:shape` run (measured just now: 5,839 requests) because several
 independent call sites each regenerate the same (lesson, refs, track)
@@ -2121,6 +2242,7 @@ branch: claude/gauntlet-shape-perf, cut from claude/gauntlet-daily-goal-rate
 after URD-009 shipped.
 
 ## CRITIQUE · URD-011 · 2026-08-19T00:29Z
+
 Dispatched THE CRITIC only (mandatory). Not DESIGN CRITIC — no screen or UI
 code touched. Not CURRICULUM CRITIC — no taught content, word order, or
 exercise design changed; the real generator output for every vocabulary
@@ -2133,6 +2255,7 @@ confirming the diff's whole blast radius is two files with no other reader
 of the changed values anywhere in the app.
 
 ### THE CRITIC
+
 Verdict: PASS. No BLOCKING, no MAJOR. One MINOR.
 Independently reproduced every claim from scratch rather than trusting the
 report: confirmed the cache key (`` `${lesson.id}:${track}:${refs...}` ``)
@@ -2169,34 +2292,35 @@ it implicit, so the next person touching topic sizing sees the risk at the
 site rather than rediscovering it.
 
 ## PASSED · URD-011 · 2026-08-19T00:31Z
+
 $ npm run check:shape
-  same 2 pre-existing, unrelated problems as before this change (4 short
-  lessons, 2 units outside the 4-12 band — both already-known URD-A02
-  remainder rows, not touched here); byte-identical summary stats
-  (3.9 min · 9.8 new words · 26.2 exercises emitted). Confirmed via
-  `git stash`/`git stash pop` A/B comparison: this item's own requirement
-  ("check:shape still exiting the same way") holds exactly, not just
-  approximately.
+same 2 pre-existing, unrelated problems as before this change (4 short
+lessons, 2 units outside the 4-12 band — both already-known URD-A02
+remainder rows, not touched here); byte-identical summary stats
+(3.9 min · 9.8 new words · 26.2 exercises emitted). Confirmed via
+`git stash`/`git stash pop` A/B comparison: this item's own requirement
+("check:shape still exiting the same way") holds exactly, not just
+approximately.
 
-  Real generation calls: 5,839 total requests → 999 unique generations
-  (measured directly, instrumented cache counters) — the shape of
-  reduction this item names, on today's larger course (the item's own
-  5,070→~700 figures were measured on an earlier, smaller version of the
-  path).
+Real generation calls: 5,839 total requests → 999 unique generations
+(measured directly, instrumented cache counters) — the shape of
+reduction this item names, on today's larger course (the item's own
+5,070→~700 figures were measured on an earlier, smaller version of the
+path).
 
-  Vocabulary lesson `size` accuracy: 233 of 233 real vocabulary lessons'
-  recorded `size` now exactly equals what the generator actually emits
-  (was 0 of 233, off by exactly 3 on every one, before the fix).
+Vocabulary lesson `size` accuracy: 233 of 233 real vocabulary lessons'
+recorded `size` now exactly equals what the generator actually emits
+(was 0 of 233, off by exactly 3 on every one, before the fix).
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npm test
-  97/97 pass across 8 files.
+97/97 pass across 8 files.
 
 $ npm run check:all
-  check:all — all 26 steps pass against a deploy-shaped build.
-  Run alone on a still tree, after the final edit.
+check:all — all 26 steps pass against a deploy-shaped build.
+Run alone on a still tree, after the final edit.
 
 Induced failure: reverted `CLOSING_EXERCISES` to `4`, reran the 233-lesson
 verification — 0/233 exact matches, all off by exactly 3, restored,
@@ -2210,6 +2334,7 @@ New queue items: none.
 branch: claude/gauntlet-shape-perf
 
 ## CLAIMED · URD-014 · 2026-08-19T00:54Z
+
 Top unclaimed item below URD-A02. A profile persisted at v0/v1 has
 `completedLessons`/`skippedLessons` emptied by the migration to content-
 derived lesson ids, because a positional id genuinely cannot say which
@@ -2223,6 +2348,7 @@ branch: claude/gauntlet-migration-notice, cut from claude/gauntlet-shape-perf
 after URD-011 shipped.
 
 ## CRITIQUE · URD-014 · 2026-08-19T20:59Z
+
 Dispatched THE CRITIC (mandatory) and DESIGN CRITIC (a new screen notice
 was added to Home). Not CURRICULUM CRITIC (no lesson content or pedagogy
 touched). Not PLAYER (no interaction/completion surface changes a soak
@@ -2230,6 +2356,7 @@ run would exercise differently — this is a one-time migration notice, not
 a lesson mechanic).
 
 ### THE CRITIC (round 1)
+
 Verdict: BLOCKING. One BLOCKING, one MAJOR, two MINOR.
 
 BLOCKING: `HomeScreen.tsx`'s mount-time auto-scroll effect (scrolls to the
@@ -2285,6 +2412,7 @@ the second notice on its own next render, with `pathSize` proven
 undisturbed by the wipe-notice dismissal.
 
 ### THE CRITIC (round 2, re-review of the fixes)
+
 Verdict: PASS. No BLOCKING, no MAJOR. One soft MINOR.
 Independently reproduced every claim from round 1's fix rather than
 trusting the summary: rebuilt fresh, reproduced the exact BLOCKING
@@ -2313,6 +2441,7 @@ fixed anyway since it was one word: "your lesson checkmarks" → "your
 lesson progress," matching the title's own already-accurate phrasing.
 
 ### DESIGN CRITIC
+
 Not blocking (never blocks, per ROLES.md). One MINOR, one MAJOR-flagged-
 but-unverified-by-DESIGN-CRITIC-itself (the same stacking issue THE
 CRITIC independently found and blocked on, and which is now fixed and
@@ -2327,23 +2456,24 @@ Dismiss reflow clean, no lingering gap. MINOR: at 320×568 (the tightest
 phone this project tests) the card is 353px/568px, 62% of the viewport —
 slightly more than the sibling notice's own previously-accepted 52%
 footprint, covered by the same precedent DESIGN CRITIC already overruled
-for that sibling ("on the one launch this appears, the notice *is* the
+for that sibling ("on the one launch this appears, the notice _is_ the
 screen's subject") — not re-litigated here, noted as a boundary this
 precedent should not be stretched further without review.
 
 ## PASSED · URD-014 · 2026-08-19T21:05Z
+
 $ npx vitest run src/lib/progress.test.ts
-  17/17 pass (10 pre-existing + 7 new).
+17/17 pass (10 pre-existing + 7 new).
 
 $ npx tsc --noEmit / npm run lint / npm run format:check / npm run check:writing
-  clean.
+clean.
 
 $ npm test
-  104/104 pass across 8 files.
+104/104 pass across 8 files.
 
 $ npm run check:all
-  check:all — all 26 steps pass against a deploy-shaped build.
-  Run alone on a still tree, after the final edit.
+check:all — all 26 steps pass against a deploy-shaped build.
+Run alone on a still tree, after the final edit.
 
 Induced failure, on the core migration logic: reverted `migrateProgress`
 to the pre-fix shape (no `ticksWipedByMigration` at all) — 4 of 17 tests
@@ -2359,6 +2489,7 @@ New queue items: none.
 branch: claude/gauntlet-migration-notice
 
 ## CLAIMED · URD-015 · 2026-08-19T21:10Z
+
 Top unclaimed item below URD-A02. Dismissing either HomeScreen notice card
 removes ~275px of content in the same instant as the tap that dismissed
 it, so a finger still settling from that tap can land on whatever
@@ -2372,6 +2503,7 @@ branch: claude/gauntlet-notice-exit, cut from claude/gauntlet-migration-notice
 after URD-014 shipped.
 
 ## CRITIQUE · URD-015 · 2026-08-19T23:40Z
+
 Dispatched THE CRITIC (mandatory) and DESIGN CRITIC (the fix changes what
 a learner sees and how it moves on a real screen). Not CURRICULUM CRITIC
 (no lesson content or pedagogy touched). Not PLAYER (a narrow, already
@@ -2379,6 +2511,7 @@ adversarially-tested interaction-timing fix, not a broad content/play-
 through surface `npm run soak` would add anything to).
 
 ### Before either critic ran
+
 Building `checkNoticeExit` itself surfaced two false passes in the check,
 found by deliberately reverting the real fix and watching the check not
 notice (this project's own non-negotiable #2):
@@ -2386,7 +2519,7 @@ notice (this project's own non-negotiable #2):
 1. First draft detected the tappable control at the release point via
    `[role="button"]`. This app's `Button` never sets an explicit
    `accessibilityRole`, so react-native-web renders it as a bare `<div
-   tabindex="0">` — confirmed by dumping the live DOM at the exact point.
+tabindex="0">` — confirmed by dumping the live DOM at the exact point.
    `[role="button"]` matched nothing, ever, so the check passed
    regardless of what was actually on screen. Fixed: detect via
    `closest('[tabindex]')` instead.
@@ -2397,17 +2530,18 @@ notice (this project's own non-negotiable #2):
    queued right behind it, and its "Got it" button happened to land close
    enough to the just-dismissed one that the check mistook the new card
    for the old one still fading: another false pass. Found by dumping the
-   post-click page and seeing the *other* notice's title where "nothing
+   post-click page and seeing the _other_ notice's title where "nothing
    tappable" was expected. Fixed: seed `pathNoticeSeen: true` for that
    scenario so only the one notice under test can possibly show.
 
 With both fixed, reverting `Reveal.tsx`/`HomeScreen.tsx` to the pre-fix
 shape made `check:stability` fail with a correct, specific message for
-*both* notices ("a different control snapped in under the finger before
+_both_ notices ("a different control snapped in under the finger before
 the dismissed card finished leaving"), and restoring the fix made it
 pass clean — the induced-failure bar this project holds every check to.
 
 ### THE CRITIC
+
 Verdict: BLOCKING. One BLOCKING, one MAJOR.
 
 BLOCKING: `Reveal.tsx`'s reduced-motion exit path is not resilient to a
@@ -2419,8 +2553,8 @@ mechanism. Root cause: the exit effect's dependency array included
 callers never memoise it) and `reduced`. Any unrelated re-render during
 the exit window reran the effect; React tears down the previous run's
 cleanup first, cancelling the pending reduced-motion `setTimeout` — and
-the `wasVisible` guard, whose job is to stop an exit from *restarting*,
-also stops it from ever being *rescheduled*, since it had already
+the `wasVisible` guard, whose job is to stop an exit from _restarting_,
+also stops it from ever being _rescheduled_, since it had already
 flipped to `false` when the timer first started. Two real, reachable
 triggers: (1) a rapid double-tap on the same "Got it" button — literally
 the "finger still moving" case this item exists for, just relocated from
@@ -2468,6 +2602,7 @@ appears cleanly with exactly one "Got it" on screen, no stuck or
 duplicate control.
 
 ### DESIGN CRITIC
+
 Not blocking (never blocks, per ROLES.md). No blocking findings, two
 MINOR/informational.
 
@@ -2500,21 +2635,22 @@ entrance, which is conventional for exits, and comfortably inside a real
 gesture's press-to-release time.
 
 ## PASSED · URD-015 · 2026-08-19T23:45Z
+
 $ npm run check:stability
-  checked 28 answered questions and notice dismissals across path and
-  practice lessons, both tracks (24 base + 2 exit-safety + 2 double-tap).
-  the question and its options stay put when answered.
+checked 28 answered questions and notice dismissals across path and
+practice lessons, both tracks (24 base + 2 exit-safety + 2 double-tap).
+the question and its options stay put when answered.
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npm test
-  104/104 pass across 8 files (no new unit-testable pure logic — this
-  item is UI/interaction timing, covered by the extended check above).
+104/104 pass across 8 files (no new unit-testable pure logic — this
+item is UI/interaction timing, covered by the extended check above).
 
 $ npm run check:all
-  check:all — all 26 steps pass against a deploy-shaped build.
-  Run alone on a still tree, after the final edit.
+check:all — all 26 steps pass against a deploy-shaped build.
+Run alone on a still tree, after the final edit.
 
 Induced failure, twice over: (1) reverted `Reveal.tsx`/`HomeScreen.tsx`
 to their pre-URD-015 shape entirely — both new `checkNoticeExit` checks
@@ -2534,6 +2670,7 @@ round rather than filed forward.
 branch: claude/gauntlet-notice-exit
 
 ## CLAIMED · URD-016 · 2026-08-20T12:22Z
+
 Top unclaimed item below URD-A02. `fallbackReviewRefs` in generator.ts
 draws uniformly from every word and letter taught up to the review, with
 no weighting toward the unit it closes. Measured on real generated
@@ -2547,6 +2684,7 @@ branch: claude/gauntlet-review-scope, cut from claude/gauntlet-notice-exit
 after URD-015 shipped.
 
 ## CRITIQUE · URD-016 · 2026-08-20T13:10Z
+
 Dispatched THE CRITIC (mandatory) and CURRICULUM CRITIC (this rescopes
 what a review lesson actually teaches — squarely a curriculum question).
 Not DESIGN CRITIC (no screen or rendering touched — this is pure
@@ -2555,10 +2693,11 @@ adversarially-tested generation-logic fix, not a broad
 content/play-through surface `npm run soak` would add anything to).
 
 ### Implementation
+
 New `src/lib/review.ts`: `taughtInUnit(lessonId)` (words/letters taught
 by lessons in the SAME unit as a lesson, via `UNITS`, not the whole
 course), `prioritizedPool(tiers, seedBase)` (concatenates pools in
-priority order, deduping, shuffling *within* each tier independently —
+priority order, deduping, shuffling _within_ each tier independently —
 the actual fix, since shuffling a concatenation together lets a huge
 low-priority tier dilute a tiny high-priority one by chance), and
 `reviewWordPool`/`reviewLetterPool` (the full tiered logic).
@@ -2576,7 +2715,7 @@ running the full check suite (not just the new test) and seeing
 `check-srs.js` fail: treating "known within the unit" and "taught
 course-wide, ungraded" as two tiers in the same priority list meant that
 once the unit's own known words ran out, the pool quietly widened to
-*any* taught material — reintroducing the exact thing
+_any_ taught material — reintroducing the exact thing
 "a review with nothing due never asks about a word outside what the
 learner has been graded on" exists to catch. Fixed: whether `known`
 restricts the pool at all is an all-or-nothing decision — if the learner
@@ -2588,6 +2727,7 @@ broken shape, confirmed both `check-srs.js` and the new `review.test.ts`
 fail with the exact leaked-word list, restored, reconfirmed clean.
 
 ### THE CRITIC
+
 Verdict: BLOCKING. One BLOCKING, one MAJOR.
 
 BLOCKING: the "is anything known" decision above was still per-type —
@@ -2599,10 +2739,10 @@ words but zero letters is not synthetic: studying the Roman track (which
 drops letter lessons from the path entirely) for a stretch, then
 switching to Script or Both, reaches exactly this state on the very next
 review. Deciding the letter side alone found `known ∩ courseWideLetters`
-empty and widened to *every letter ever taught* — reproduced live
+empty and widened to _every letter ever taught_ — reproduced live
 against the real built generator: 12 of 16 exercises were letters the
 learner had never once been shown. Fixed: both pools now key off whether
-*anything*, of either type, has been graded (`anythingKnown`, checking
+_anything_, of either type, has been graded (`anythingKnown`, checking
 both course-wide arrays), so a learner known on words alone gets a
 correctly empty, never-taught-material letter pool — topped up from more
 words by the generator's own existing shortfall logic — rather than a
@@ -2637,19 +2777,20 @@ tiers; a known id absent from every real pool) neither leak nor
 spuriously trigger restriction; full check suite (review.test.ts 16/16
 at the time, check:srs 19/19, check:answerable, check:order,
 check:coverage, full `npx vitest run` 120/120) all clean; the two
-explicitly-out-of-scope notes (review *sizing* left untouched; the
+explicitly-out-of-scope notes (review _sizing_ left untouched; the
 rigid letter/word cadence MINOR) independently agreed to be legitimately
 out of scope, not silently dropped.
 
 ### CURRICULUM CRITIC
+
 Not blocking (never blocks, per ROLES.md). Two MAJOR, confirming the
 fix does what it claims for words specifically while surfacing that the
-*whole lesson* a learner experiences is a different, larger story.
+_whole lesson_ a learner experiences is a different, larger story.
 
 Measured across all 39 reviews, track 'both' (the default), nothing
 due: word-side scoping holds exactly as claimed — 100% in-unit for
 every unit that teaches any vocabulary, 0% (correct fallback) for the
-one that doesn't. But *overall* in-unit share (words and letters
+one that doesn't. But _overall_ in-unit share (words and letters
 together, what a learner actually experiences) averages only 53.5% and
 is ≤50% for 30 of 39 reviews — traced to `fallbackReviewRefs`'s
 pre-existing, unconditional 50/50 letter/word split colliding with the
@@ -2674,7 +2815,7 @@ URD-039 (see above).
 Also: due-vs-fallback division of labor confirmed sound (due items are
 untouched by this change and are placed first; the fallback only widens
 past the unit for the rare "nothing anywhere graded, unit supplies
-nothing" case). Landing scoping now while leaving review *size*
+nothing" case). Landing scoping now while leaving review _size_
 untouched judged acceptable — sizing already meets `BENCHMARKS.md`'s
 3-8 minute band regardless. Rigid letter/word cadence restated as
 MINOR, unchanged by this diff. Bonus finding, filed as new URD-040:
@@ -2684,26 +2825,27 @@ unit its name (`rev-saying-who-you-are` never touches `g-pronouns` or
 not a regression, worth its own item.
 
 ## PASSED · URD-016 · 2026-08-20T13:15Z
+
 $ npx vitest run src/lib/review.test.ts
-  18/18 pass.
+18/18 pass.
 
 $ npm run check:srs
-  19/19 pass, including "a review with nothing due never asks about a
-  word outside what the learner has been graded on."
+19/19 pass, including "a review with nothing due never asks about a
+word outside what the learner has been graded on."
 
 $ npx tsc --noEmit / npm run lint / npm run format:check / npm run check:writing
-  clean.
+clean.
 
 $ npm run check:answerable / npm run check:order / npm run check:coverage
-  clean — every generated exercise answerable, every position-ordering
-  and coverage invariant holds with the new review pool wiring.
+clean — every generated exercise answerable, every position-ordering
+and coverage invariant holds with the new review pool wiring.
 
 $ npm test
-  122/122 pass across 9 files.
+122/122 pass across 9 files.
 
 $ npm run check:all
-  check:all — all 26 steps pass against a deploy-shaped build.
-  Run alone on a still tree, after the final edit.
+check:all — all 26 steps pass against a deploy-shaped build.
+Run alone on a still tree, after the final edit.
 
 Induced failure, three times over: (1) reverted the whole unit-scoping
 approach in `generator.ts` — real generated output for
@@ -2731,6 +2873,7 @@ content).
 branch: claude/gauntlet-review-scope
 
 ## CLAIMED · URD-017 · 2026-08-20T13:22Z
+
 Top unclaimed item, chained off claude/gauntlet-review-scope after
 URD-016 shipped. `fallbackReviewRefs` splits every review's fallback
 `Math.ceil(n/2)` letters / `Math.floor(n/2)` words, unconditionally,
@@ -2746,6 +2889,7 @@ branch: claude/gauntlet-review-letter-decay, cut from
 claude/gauntlet-review-scope after URD-016 shipped.
 
 ## CRITIQUE · URD-017 · 2026-08-20T13:45Z
+
 Dispatched THE CRITIC (mandatory) and CURRICULUM CRITIC (this is
 squarely a curriculum-pacing question — how many of a review's
 questions should be about the alphabet — the same pairing used for
@@ -2769,7 +2913,7 @@ u39 (rev-the-wider-world).
 
 THE CRITIC found MAJOR: `taughtUpTo('practice-review')` — the synthetic
 Daily Review screen, not placed anywhere on the path — never satisfies
-its own `break` and so returns the *entire* course (2,281 words, 46
+its own `break` and so returns the _entire_ course (2,281 words, 46
 letters), pinning that screen's letter share at its end-of-course value
 (≈2%) from the very first time it is ever opened, regardless of whether
 the learner is on day one or has finished the course. Reproduced live: a
@@ -2795,7 +2939,7 @@ now-mostly-empty letter side: (1) with only one letter slot from ~u14 on,
 `letterExerciseAt(l, i, i)` is always called with `i=0` (the letter
 always lands first in the interleaved mix), and `turn=0` always resolves
 to `letterTrace` when a glyph mask exists — measured, u14 through u39
-(26 straight reviews) draw `letterTrace` and *only* `letterTrace`;
+(26 straight reviews) draw `letterTrace` and _only_ `letterTrace`;
 `letterForm`, the app's own core joining-position drill, never appears
 in that entire stretch. (2) with each review's one letter drawn from an
 independent per-lesson shuffle of the full 46-letter pool, only 21 of 40
@@ -2823,27 +2967,28 @@ touches grammar/sentences) and URD-039 (fallback pool never rotates) as
 reasoning for sequencing, not a defect of this item.
 
 ## PASSED · URD-017 · 2026-08-20T13:44Z
+
 $ npx vitest run src/lib/review.test.ts src/exercises/generator.test.ts
-  21/21 and 15/15 pass, including the item's own acceptance test (letter
-  share at rev-first-faces > rev-the-wider-world, and < 5% by u39) and
-  new regression tests for both critique fixes (Daily Review's letter
-  share reflects `known` rather than the whole course; every real review
-  asks about at least one letter, including at a size real content
-  doesn't currently produce).
+21/21 and 15/15 pass, including the item's own acceptance test (letter
+share at rev-first-faces > rev-the-wider-world, and < 5% by u39) and
+new regression tests for both critique fixes (Daily Review's letter
+share reflects `known` rather than the whole course; every real review
+asks about at least one letter, including at a size real content
+doesn't currently produce).
 
 $ npm run check:srs
-  19/19 pass, unaffected — review letter/word ratio is orthogonal to
-  due-queue behaviour.
+19/19 pass, unaffected — review letter/word ratio is orthogonal to
+due-queue behaviour.
 
 $ npx tsc --noEmit
-  clean.
+clean.
 
 $ npm test
-  130/130 pass across 9 files.
+130/130 pass across 9 files.
 
 $ npm run check:all
-  check:all — all 26 steps pass against a deploy-shaped build.
-  Run alone on a still tree, after the final edit.
+check:all — all 26 steps pass against a deploy-shaped build.
+Run alone on a still tree, after the final edit.
 
 Induced failure, three times over: (1) reverted `reviewLetterShare` to
 the old fixed `0.5` — the three new `reviewLetterShare` tests in
@@ -2863,6 +3008,7 @@ exposure across the back two-thirds of the course).
 branch: claude/gauntlet-review-letter-decay
 
 ## CLAIMED · URD-018 · 2026-08-20T14:00Z
+
 Top unclaimed item, chained off claude/gauntlet-review-letter-decay
 after URD-017 shipped. Across all 39 review lessons on both tracks
 (1,856 exercises measured), `meaningPick` — the only exercise that
@@ -2877,6 +3023,7 @@ branch: claude/gauntlet-review-meaning-direction, cut from
 claude/gauntlet-review-letter-decay after URD-017 shipped.
 
 ## CRITIQUE · URD-018 · 2026-08-20T15:00Z
+
 Dispatched THE CRITIC (mandatory) and CURRICULUM CRITIC (this is a
 curriculum-pacing/exercise-direction question — how much of review
 should ask for meaning rather than form — the same pairing used for
@@ -2902,7 +3049,7 @@ THE CRITIC found BLOCKING, twice over. (1) `meaningPick`'s own
 distractor call omitted `distinctCue`, the guard `pictureOptions` two
 lines above it already requests — so a verdict-cue word (yes/no/
 correct/wrong/good/bad/approved/rejected) could be offered as a
-*wrong* option, and `MeaningPickExercise` renders every option's own
+_wrong_ option, and `MeaningPickExercise` renders every option's own
 ✅/❌ regardless of correctness. Measured: 689 of 19,170 sampled
 instances (~3.6%) leaked a verdict icon onto a wrong option, across 45
 of 117 lesson×track combinations, including the very first and very
@@ -2934,12 +3081,12 @@ exactly at (not over) `check:shape`'s own MAX_RUN.
 
 CURRICULUM CRITIC found MAJOR (design-level, addressed by a redesign
 rather than a patch): the flat fourth turn funded `meaningPick` by
-cutting recall *and* produce equally by a quarter each — the two
+cutting recall _and_ produce equally by a quarter each — the two
 demands this same file's own comment, two lines above the turn logic,
 calls "the harder demands [that] belong" in review — nearly doubling
 review's overall share of first-teaching-tier ("meet") demand from
 ~34.5% to ~52%. Recommended (and the lead adopted): split the
-*existing* middle third between `listenTap` and `meaningPick` instead
+_existing_ middle third between `listenTap` and `meaningPick` instead
 of adding a new quarter, so recall and produce keep exactly the shares
 they had before this item, and the read direction gets a real,
 non-trivial share without diluting review's demand level. Also raised,
@@ -2950,7 +3097,7 @@ this is the `both` track's own pre-existing, global, by-design
 behaviour for every exercise that shows Urdu (not something this fix
 introduced or could fix in scope), and for ordinary vocabulary the
 Roman caption reveals pronunciation, not meaning — the specific case
-where it *would* reveal meaning (a loanword whose transliteration is
+where it _would_ reveal meaning (a loanword whose transliteration is
 the English word) is already routed away from `meaningPick` by the
 pre-existing `romanRevealsMeaning` guard. Recorded here as a
 curriculum-critic finding correctly not requiring a code change, not
@@ -2974,40 +3121,41 @@ read turn; not eliminated, comfortably under MAX_RUN=3, and a MINOR
 worth a note rather than a block).
 
 ## PASSED · URD-018 · 2026-08-20T15:18Z
+
 $ npx vitest run src/lib/review.test.ts src/exercises/generator.test.ts
-  21/21 and 21/21 pass — the item's own named verify command
-  (unaffected, since this item's logic lives in generator.ts) plus the
-  real acceptance and regression tests: every review lesson on every
-  track asks at least one meaning-direction question; a review of
-  typeable words does too; meaningPick's real share (>10%, measured at
-  15.5%); no meaningPick option carries an undeserved verdict icon
-  (THE CRITIC regression); a due queue with letters and words
-  interleaved 1:1 still reaches meaningPick (THE CRITIC regression);
-  no real review generates a run of 3+ identical kinds (CURRICULUM
-  CRITIC regression).
+21/21 and 21/21 pass — the item's own named verify command
+(unaffected, since this item's logic lives in generator.ts) plus the
+real acceptance and regression tests: every review lesson on every
+track asks at least one meaning-direction question; a review of
+typeable words does too; meaningPick's real share (>10%, measured at
+15.5%); no meaningPick option carries an undeserved verdict icon
+(THE CRITIC regression); a due queue with letters and words
+interleaved 1:1 still reaches meaningPick (THE CRITIC regression);
+no real review generates a run of 3+ identical kinds (CURRICULUM
+CRITIC regression).
 
 $ npm run check:srs
-  19/19 pass, unaffected.
+19/19 pass, unaffected.
 
 $ npx tsc --noEmit
-  clean.
+clean.
 
 $ npm run check:answerable
-  107,610 exercises generated across 2 tracks × 6 passes — every
-  generated exercise is answerable from what it puts on screen;
-  answer position 0:24.7% 1:24.9% 2:25.0% 3:25.4% (even would be 25%).
+107,610 exercises generated across 2 tracks × 6 passes — every
+generated exercise is answerable from what it puts on screen;
+answer position 0:24.7% 1:24.9% 2:25.0% 3:25.4% (even would be 25%).
 
 $ npm run check:coverage
-  all 2,281 words taught by exactly one of 233 vocabulary lessons,
-  unaffected.
+all 2,281 words taught by exactly one of 233 vocabulary lessons,
+unaffected.
 
 $ npm test
-  136/136 pass across 9 files.
+136/136 pass across 9 files.
 
 $ npm run check:all
-  check:all — all 26 steps pass against a deploy-shaped build.
-  (First run caught a real prettier formatting issue in the new test
-  file — fixed with `prettier --write`, reconfirmed clean on rerun.)
+check:all — all 26 steps pass against a deploy-shaped build.
+(First run caught a real prettier formatting issue in the new test
+file — fixed with `prettier --write`, reconfirmed clean on rerun.)
 
 Induced failure, four times over: (1) reverted the `distinctCue: true`
 fix on `meaningPick`'s distractor call — the new verdict-icon
@@ -3032,6 +3180,7 @@ in this same redesign rather than filed forward.
 branch: claude/gauntlet-review-meaning-direction
 
 ## CLAIMED · URD-019 · 2026-08-20T23:35Z
+
 Top unclaimed item, chained off claude/gauntlet-review-meaning-direction
 after URD-018 shipped. `shouldUpdateSrs` caps SRS advancement to the
 first sighting of an item per lesson visit, which fixed a real bug (six
@@ -3045,6 +3194,7 @@ branch: claude/gauntlet-session-grading-last-sighting, cut from
 claude/gauntlet-review-meaning-direction after URD-018 shipped.
 
 ## CRITIQUE · URD-019 · 2026-08-21T00:00Z
+
 Dispatched THE CRITIC (mandatory) and CURRICULUM CRITIC (this item was
 itself found by a curriculum critic reviewing URD-013 — squarely a
 pedagogy-scheduling question, which sighting's evidence a teaching
@@ -3089,7 +3239,7 @@ CURRICULUM CRITIC found the mechanism's premise incomplete: "grade on
 the last sighting" is provably correct for vocabulary (100% of 2,281
 words' staggered climb ends on the hardest, `produce` demand, both
 tracks, measured directly) but not for letters, where the turn
-rotation lands the *last* round on an easier recognise-tier kind 67.4%
+rotation lands the _last_ round on an easier recognise-tier kind 67.4%
 of the time (31 of 46 sampled) because the letter pipeline rotates
 turns rather than climbing meet→recall→produce the way vocabulary
 does. More directly actionable: no guard existed anywhere against a
@@ -3110,34 +3260,35 @@ mastered. The deeper letter-vs-vocabulary demand-tier mismatch is a
 separate, real gap the two-sighting guard mitigates in practice but
 does not fully close — filed forward as URD-043 (checked against
 URD-020/021/022, the already-queued letter-pipeline content items, for
-overlap; none found — this is about turn *diagnosticity*, those are
+overlap; none found — this is about turn _diagnosticity_, those are
 about content composition).
 
 ## PASSED · URD-019 · 2026-08-21T00:15Z
+
 $ npx vitest run src/lib/sessionGrading.test.ts
-  11/11 pass — the item's own acceptance criterion (wrong-then-five-
-  right differs from all-wrong) plus THE CRITIC's and CURRICULUM
-  CRITIC's regression tests (single-sighting trust, two-agree, the
-  guess-through case, the forgetting-within-session case, only-last-
-  two-matter).
+11/11 pass — the item's own acceptance criterion (wrong-then-five-
+right differs from all-wrong) plus THE CRITIC's and CURRICULUM
+CRITIC's regression tests (single-sighting trust, two-agree, the
+guess-through case, the forgetting-within-session case, only-last-
+two-matter).
 
 $ npm run check:srs
-  19/19 pass, unaffected — SM-2 scheduling itself untouched.
+19/19 pass, unaffected — SM-2 scheduling itself untouched.
 
 $ npx tsc --noEmit
-  clean.
+clean.
 
 $ npm run check:stability
-  28 answered questions and notice dismissals checked across path and
-  practice lessons, both tracks, plus Profile/Achievements/League —
-  clean; drives the real LessonScreen this item's wiring lives in.
+28 answered questions and notice dismissals checked across path and
+practice lessons, both tracks, plus Profile/Achievements/League —
+clean; drives the real LessonScreen this item's wiring lives in.
 
 $ npm test
-  142/142 pass across 9 files.
+142/142 pass across 9 files.
 
 $ npm run check:all
-  check:all — all 26 steps pass against a deploy-shaped build.
-  Run alone on a still tree, after the final edit.
+check:all — all 26 steps pass against a deploy-shaped build.
+Run alone on a still tree, after the final edit.
 
 Induced failure, twice over: (1) reverted `recordSighting` to gate-
 and-skip (first sighting wins) — the acceptance test and the "tracks
@@ -3163,6 +3314,7 @@ LessonScreen↔SRS-grading wiring end-to-end).
 branch: claude/gauntlet-session-grading-last-sighting
 
 ## CLAIMED · URD-020 · 2026-08-21T00:52Z
+
 Top unclaimed item, chained off claude/gauntlet-session-grading-last-
 sighting after URD-019 shipped. Across all 9 letter lessons,
 `letterTrace`/`letterForm`/`letterPick` account for 276 of 285
@@ -3175,6 +3327,7 @@ branch: claude/gauntlet-letters-in-context, cut from
 claude/gauntlet-session-grading-last-sighting after URD-019 shipped.
 
 ## CRITIQUE · URD-020 · 2026-08-21T01:05Z
+
 Dispatched THE CRITIC (mandatory, twice — once on the first design, once
 again after a full redesign in response to its own BLOCKING finding) and
 CURRICULUM CRITIC (a curriculum-composition question — how a learner
@@ -3252,7 +3405,7 @@ the time of this ledger entry.
 
 CURRICULUM CRITIC's remaining MAJOR — none of the three possible
 exercise kinds (`multipleChoice`/`meaningPick`/`listenTap`) ask the
-learner to find or identify the taught letter's shape *within* the
+learner to find or identify the taught letter's shape _within_ the
 word; a learner answers by picture/meaning matching without ever
 parsing the letter in context — was not fixed inline: it is exactly
 the item's own second, bigger design option ("a dedicated 'spot the
@@ -3266,44 +3419,45 @@ transliteration substring — confirmed by CURRICULUM CRITIC and by this
 item's own tests. Closed as resolved rather than left stale.
 
 ## PASSED · URD-020 · 2026-08-21T01:15Z
+
 $ npx vitest run src/exercises/generator.test.ts
-  27/27 pass — per-letter exact context-sighting count (not just an
-  aggregate total), never opens a lesson on a context word, every
-  context word is a real `WORDS` entry, every context word contains its
-  letter's own glyph, no two letters in one lesson share a word.
+27/27 pass — per-letter exact context-sighting count (not just an
+aggregate total), never opens a lesson on a context word, every
+context word is a real `WORDS` entry, every context word contains its
+letter's own glyph, no two letters in one lesson share a word.
 
 $ npm run check:shape -- --kind=letters
-  exits 0 — both the aggregate in-context-share floor (10%, real output
-  16.7%) and the per-letter exact-assignment rule (every taught letter's
-  own `LETTER_CONTEXT_WORD` actually appears in its lesson's real
-  output, matched by word id, not loose glyph presence).
+exits 0 — both the aggregate in-context-share floor (10%, real output
+16.7%) and the per-letter exact-assignment rule (every taught letter's
+own `LETTER_CONTEXT_WORD` actually appears in its lesson's real
+output, matched by word id, not loose glyph presence).
 
 $ npm run audit
-  no problems found — confirms no two letters share an example word,
-  the exact rule that caught the baRi-ye/hamza چائے collision.
+no problems found — confirms no two letters share an example word,
+the exact rule that caught the baRi-ye/hamza چائے collision.
 
 $ node scripts/check-voice.js
-  2720/2720 speakable items covered, unchanged — no new content
-  introduced that needs a clip nobody has recorded.
+2720/2720 speakable items covered, unchanged — no new content
+introduced that needs a clip nobody has recorded.
 
 $ node scripts/check-answerable.js
-  107,556 exercises generated across 2 tracks × 6 passes, every one
-  answerable from what it puts on screen.
+107,556 exercises generated across 2 tracks × 6 passes, every one
+answerable from what it puts on screen.
 
 $ node scripts/check-coverage.js
-  all 2,281 words taught by exactly one lesson, unaffected.
+all 2,281 words taught by exactly one lesson, unaffected.
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npm test
-  148/148 pass across 9 files.
+148/148 pass across 9 files.
 
 $ npm run check:all
-  check:all — all 26 steps pass against a deploy-shaped build.
-  (First run caught the real حچائے/hamza example-word collision via
-  `npm run audit`, one of check:all's own 26 steps — fixed, rerun
-  clean.)
+check:all — all 26 steps pass against a deploy-shaped build.
+(First run caught the real حچائے/hamza example-word collision via
+`npm run audit`, one of check:all's own 26 steps — fixed, rerun
+clean.)
 
 Induced failure, four times over: (1) reverted `contextRound` to allow
 round 0 — the "never opens on a context word" test failed on real
@@ -3331,6 +3485,7 @@ open.
 branch: claude/gauntlet-letters-in-context
 
 ## CLAIMED · URD-022 · 2026-08-21T05:38Z
+
 Top unclaimed item, chained off claude/gauntlet-letters-in-context after
 URD-020/021 shipped. `l-3` teaches `daal`/`Daal`/`zaal` and
 `re`/`Re`/`ze`/`zhe` — dot-pairs distinguished only by a diacritic — with
@@ -3342,6 +3497,7 @@ branch: claude/gauntlet-letter-confusability, cut from
 claude/gauntlet-letters-in-context after URD-020/021 shipped.
 
 ## CRITIQUE · URD-022 · 2026-08-21T06:02Z
+
 Dispatched THE CRITIC (mandatory) and CURRICULUM CRITIC (a curriculum-
 composition question, same pairing used for every letter-pipeline item
 this session). Not DESIGN CRITIC (no new UI). Not PLAYER (content-
@@ -3365,8 +3521,8 @@ circular-arrangement bound, `2*4-7=1`, claimed as the sole occurrence.
 CURRICULUM CRITIC found a real gap between that claim and what actually
 shipped, by running the real generator output directly rather than
 trusting the reasoning: the new check-shape.js rule and both new tests
-looped `i < n - 1` where `n` was the lesson's *letter count* (7 for
-l-3), not its *exercise count* (42) — so they only ever scanned round 0
+looped `i < n - 1` where `n` was the lesson's _letter count_ (7 for
+l-3), not its _exercise count_ (42) — so they only ever scanned round 0
 and compared one fixed pair for the "wrap," never the other 4 round
 transitions. Both passed "clean" while the real generated `l-3` actually
 drilled `zhe` immediately before `re` five times — once at every round
@@ -3399,7 +3555,7 @@ MINOR suggestions (a merged jeem/baRi-he/khe family; fe/qaaf) — both
 critics themselves rated these low-confidence or textually unsupported.
 
 Fixed: check-shape.js's rule now scans every adjacent pair in the full
-generated sequence and asserts an *exact* computed count (bucket size
+generated sequence and asserts an _exact_ computed count (bucket size
 forcing `max(0, 2*largest-n)` adjacencies per round transition, times
 `rounds-1` transitions) rather than a loose presence check — too few
 would mean the rule regressed, too many would mean the generator did.
@@ -3408,10 +3564,11 @@ formula. `letters.ts` gained 3 more `confusableWith` entries
 (`alif-madda`→`alif`, `noon-ghunna`→`noon`, `baRi-ye`→`choti-ye`).
 `separateConfusables`'s doc comment was rewritten to state the true,
 proven count (5 recurring identical-pair wrap adjacencies for l-3, not
-1) with the endpoint-pigeonhole proof, and to honestly compare against
-the measured pre-fix baseline (30 — 5 confusable pairs internal to every
-one of l-3's 6 rounds under raw `letterIds` order) rather than
-overclaiming perfect elimination.
+
+1. with the endpoint-pigeonhole proof, and to honestly compare against
+   the measured pre-fix baseline (30 — 5 confusable pairs internal to every
+   one of l-3's 6 rounds under raw `letterIds` order) rather than
+   overclaiming perfect elimination.
 
 THE CRITIC's other finding (a doc comment said "five other pairs" where
 the real count was eight, now eleven after this fix's additions) was
@@ -3449,24 +3606,25 @@ complete generated sequence except `l-3`, which has exactly 5 — the
 proven, computed minimum, not a residual bug.
 
 $ npx vitest run src/exercises/generator.test.ts
-  28/28 pass (27 pre-existing + 1 corrected, replacing 2 buggy ones).
+28/28 pass (27 pre-existing + 1 corrected, replacing 2 buggy ones).
 
 $ npm run check:shape -- --kind=letters
-  exits 0 — no confusable-adjacent pairs beyond the proven minimum.
+exits 0 — no confusable-adjacent pairs beyond the proven minimum.
 
 $ npm run check:shape (unfiltered)
-  2 problems, both pre-existing and unrelated (a phrases lesson under 3
-  minutes; 2 units outside the 4-12 lesson band) — zero confusable-
-  adjacency findings across the full corpus.
+2 problems, both pre-existing and unrelated (a phrases lesson under 3
+minutes; 2 units outside the 4-12 lesson band) — zero confusable-
+adjacency findings across the full corpus.
 
 $ npx tsc --noEmit / npx eslint / npx prettier --check
-  clean.
+clean.
 
 ## PASSED · URD-022 · 2026-08-21T06:10Z
+
 $ npm run check:all
-  check:all — all 26 steps pass against a deploy-shaped build. No
-  failures anywhere in the run (checked the full log, not just the
-  summary line).
+check:all — all 26 steps pass against a deploy-shaped build. No
+failures anywhere in the run (checked the full log, not just the
+summary line).
 
 New queue items: URD-046 (spread which specific pair collides at l-3's
 one forced wrap, instead of the identical zhe/re pair five times over),
@@ -3478,10 +3636,12 @@ QUEUE.md and done/ for duplicates first — none found.
 branch: claude/gauntlet-letter-confusability
 
 ## CLAIMED · URD-023 · 2026-08-21T07:15Z
+
 files: src/exercises/generator.ts (+ src/exercises/generator.test.ts)
 branch: claude/gauntlet-phrases-typeable-floor
 
 ## CRITIQUE · URD-023
+
 THE CRITIC: no BLOCKING. Verified the share-floor guarantee holds at
 every lesson size P() (units.ts) accepts, by hand and by script;
 confirmed no arithmetic underflow/duplication; confirmed determinism
@@ -3499,18 +3659,19 @@ the floor" refinement — real but low-value given one real lesson and
 no tracked progress-preservation concern.
 
 ## PASSED · URD-023 · 2026-08-21T07:40Z
+
 $ npm run check:all
-  check:all — all 26 steps pass against a deploy-shaped build. No
-  failures anywhere in the run (checked the full log).
+check:all — all 26 steps pass against a deploy-shaped build. No
+failures anywhere in the run (checked the full log).
 
 $ npx vitest run src/exercises/generator.test.ts
-  31 passed (31) — 3 new URD-023 tests: share floor over 500 synthetic
-  draws, ≥2 typeable phrases over 500 synthetic draws, the real shipped
-  lesson directly.
+31 passed (31) — 3 new URD-023 tests: share floor over 500 synthetic
+draws, ≥2 typeable phrases over 500 synthetic draws, the real shipped
+lesson directly.
 
 $ node -e "... 2000 synthetic phrases lessons at size 6 ..."
-  0 draws with fewer than 2 typeable phrases, 0 single-kind shares over
-  40%, out of 2000 — measured, not assumed.
+0 draws with fewer than 2 typeable phrases, 0 single-kind shares over
+40%, out of 2000 — measured, not assumed.
 
 Induced failure: reverted to the old single-draw-then-reassign logic,
 both new tests failed exactly as predicted (a draw landing 1 typeable
@@ -3522,11 +3683,13 @@ to clear the bar for a new item — see done/URD-023.md).
 branch: claude/gauntlet-phrases-typeable-floor
 
 ## CLAIMED · URD-025 · 2026-08-21T13:40Z
+
 files: src/exercises/generator.ts (+ src/data/achievements.ts,
-  src/exercises/generator.test.ts, gauntlet/QUEUE.md's URD-029 entry)
+src/exercises/generator.test.ts, gauntlet/QUEUE.md's URD-029 entry)
 branch: claude/gauntlet-sentence-build-ratio
 
 ## CRITIQUE · URD-025
+
 THE CRITIC: BLOCKING — the item's literal verify command
 (check:shape --kind=grammar) still exits 1 on g-plurals (2.7 min, pre-
 existing content gap, URD-029). Confirmed pre-existing and worse before
@@ -3549,19 +3712,20 @@ clear the 3-minute floor as a side effect); recommended URD-029's
 queue text be updated to reflect the narrower remaining gap — done.
 
 ## PASSED · URD-025 · 2026-08-21T14:20Z
+
 $ npm run check:all
-  check:all — all 26 steps pass against a deploy-shaped build.
+check:all — all 26 steps pass against a deploy-shaped build.
 
 $ npm run check:shape -- --kind=sentences
   0 problems.
 $ npm run check:shape -- --kind=grammar
-  1 problem (g-plurals, 2.7 min — pre-existing, tracked separately as
-  URD-029, not this item's files to fix; see done/URD-025.md).
+1 problem (g-plurals, 2.7 min — pre-existing, tracked separately as
+URD-029, not this item's files to fix; see done/URD-025.md).
 
 $ npx vitest run src/exercises/generator.test.ts
-  35 passed (35) — 4 new URD-025 tests: sentences ratio, grammar ratio,
-  40% share ceiling, and the 3-8 minute band with g-plurals' known
-  exception named explicitly.
+35 passed (35) — 4 new URD-025 tests: sentences ratio, grammar ratio,
+40% share ceiling, and the 3-8 minute band with g-plurals' known
+exception named explicitly.
 
 Induced failure: reverted sentenceReinforceClimb to the old 3-round
 1:1:1 logic, both new ratio tests failed exactly as predicted — restored
@@ -3570,11 +3734,13 @@ and reconfirmed clean.
 branch: claude/gauntlet-sentence-build-ratio
 
 ## CLAIMED · URD-026 · 2026-08-21T14:35Z
+
 files: src/lib/review.ts, src/exercises/generator.ts (readableSentences),
-  scripts/check-order.js, src/lib/review.test.ts
+scripts/check-order.js, src/lib/review.test.ts
 branch: claude/gauntlet-grammar-readiness
 
 ## CRITIQUE · URD-026
+
 THE CRITIC: no BLOCKING. Confirmed inclusive-self semantics on
 taughtConceptsUpTo are load-bearing (exclusive would empty all 25
 concepts' own pools, triggering the unfiltered-pool fallback). Confirmed
@@ -3593,16 +3759,17 @@ reachable sentence set churned by 41 members even though its aggregate
 size, 81/256, is unchanged) — added to URD-027's queue entry.
 
 ## PASSED · URD-026 · 2026-08-21T15:05Z
+
 $ npm run check:all
-  check:all — all 26 steps pass against a deploy-shaped build (check:order
-  now includes the new grammar-concept-ordering section, 0 findings).
+check:all — all 26 steps pass against a deploy-shaped build (check:order
+now includes the new grammar-concept-ordering section, 0 findings).
 
 $ npm run check:order
-  0 concept-ordering findings across 348 lessons.
+0 concept-ordering findings across 348 lessons.
 
 $ npx vitest run
-  160 passed (160) — 4 new URD-026 tests in review.test.ts covering
-  taughtConceptsUpTo's pure logic.
+160 passed (160) — 4 new URD-026 tests in review.test.ts covering
+taughtConceptsUpTo's pure logic.
 
 Induced failure: reverted readableSentences' concept-filter clause,
 check:order reported exactly 41 real violations (matching both critics'
@@ -3611,12 +3778,14 @@ independent counts) — restored and reconfirmed clean.
 branch: claude/gauntlet-grammar-readiness
 
 ## CLAIMED · URD-027 · 2026-08-21T15:00Z
+
 files: src/exercises/generator.ts, scripts/check-sentence-coverage.js
-  (new), scripts/check-all.js, package.json, .github/workflows/
-  deploy-preview.yml, src/exercises/generator.test.ts
+(new), scripts/check-all.js, package.json, .github/workflows/
+deploy-preview.yml, src/exercises/generator.test.ts
 branch: claude/gauntlet-sentence-coverage
 
 ## CRITIQUE · URD-027
+
 THE CRITIC: no BLOCKING. Verified sibling-exclusion recursion terminates
 and unions all earlier siblings correctly (hand-traced intermediate's
 real 4 siblings); verified URD-026 interaction composes correctly (a
@@ -3634,18 +3803,19 @@ in-band ceiling raise (S() size 8→10) was available and unexplored —
 filed forward as URD-048 (requires units.ts, out of this item's scope).
 
 ## PASSED · URD-027 · 2026-08-21T15:45Z
+
 $ npm run check:all
-  check:all — all 27 steps pass against a deploy-shaped build (new
-  check:sentence-coverage step included).
+check:all — all 27 steps pass against a deploy-shaped build (new
+check:sentence-coverage step included).
 
 $ npm run check:sentence-coverage
-  96 of 256 sentences reachable (37.5%, up from 81/256 = 31.6%); every
-  level reaches its exact capacity ceiling; 0 of 25 grammar concepts at
-  zero sentences-lesson reinforcement (was 2: g-future, g-compound).
+96 of 256 sentences reachable (37.5%, up from 81/256 = 31.6%); every
+level reaches its exact capacity ceiling; 0 of 25 grammar concepts at
+zero sentences-lesson reinforcement (was 2: g-future, g-compound).
 
 $ npx vitest run
-  161 passed — 2 new URD-027 tests (disjoint sibling draws at ceiling,
-  zero-reinforcement-concept guarantee).
+161 passed — 2 new URD-027 tests (disjoint sibling draws at ceiling,
+zero-reinforcement-concept guarantee).
 
 Induced failure, twice: (1) reverted sentencesForLesson's sibling
 exclusion, check:sentence-coverage reproduced the exact original 81/256
@@ -3660,12 +3830,14 @@ added. Confirmed no other existing script name was affected.
 branch: claude/gauntlet-sentence-coverage
 
 ## CLAIMED · URD-048 · 2026-08-21T15:50Z
+
 files: src/data/units.ts (+ src/exercises/generator.ts,
-  scripts/check-sentence-coverage.js, src/exercises/generator.test.ts —
-  a real bug the size bump exposed in URD-027's own mechanism)
+scripts/check-sentence-coverage.js, src/exercises/generator.test.ts —
+a real bug the size bump exposed in URD-027's own mechanism)
 branch: claude/gauntlet-sentence-lesson-size
 
 ## CRITIQUE · URD-048
+
 THE CRITIC: two MAJOR, both fixed. (1) units.ts's own doc comment quoted
 the pre-discovery estimate (115/256) after the real number (116/256) was
 known — corrected. (2) found and root-caused an unrelated, pre-existing
@@ -3681,18 +3853,19 @@ every other adjacent-lesson pair), and confirmed no degenerate 0-sentence
 lesson risk (check:answerable's own empty-lesson guard would catch it).
 
 ## PASSED · URD-048 · 2026-08-21T16:15Z
+
 $ npm run check:sentence-coverage
-  116 of 256 sentences reachable (45.3%, up from 96/256 = 37.5%); 1
-  lesson (s-intermediate-2, 6/10) drew short of its designed size — a
-  real, honest position scarcity, not an error; zero overlap anywhere.
+116 of 256 sentences reachable (45.3%, up from 96/256 = 37.5%); 1
+lesson (s-intermediate-2, 6/10) drew short of its designed size — a
+real, honest position scarcity, not an error; zero overlap anywhere.
 
 $ npm run check:shape -- --kind=sentences
-  0 problems.
+0 problems.
 
 $ npm run check:all
-  all 27 steps pass, confirmed twice (before and after the two MAJOR
-  fixes above landed) — including 3 standalone check:answerable reruns
-  to confirm URD-049's flakiness wasn't currently manifesting.
+all 27 steps pass, confirmed twice (before and after the two MAJOR
+fixes above landed) — including 3 standalone check:answerable reruns
+to confirm URD-049's flakiness wasn't currently manifesting.
 
 Induced failure: reintroduced the old claimed-sentence-reuse fallback in
 sentencesForLesson, both check:sentence-coverage and the vitest test
@@ -3704,10 +3877,12 @@ flakiness, found by THE CRITIC, unrelated to this item's diff).
 branch: claude/gauntlet-sentence-lesson-size
 
 ## CLAIMED · URD-049 · 2026-08-21T16:15Z
+
 files: src/exercises/generator.ts (distractorsFor)
 branch: claude/gauntlet-homograph-distractors
 
 ## CRITIQUE · URD-049
+
 THE CRITIC: no BLOCKING. Confirmed the `usedUrdu.add` placement (before
 later distinctCue/distinctMeaning rejection checks) is a harmless
 conservative tradeoff, identical to the pre-existing usedCues/
@@ -3717,19 +3892,20 @@ fail clearly with the guard disabled, pass restored), and the 15/15
 clean check:answerable confirmation with the fix in place.
 
 ## PASSED · URD-049 · 2026-08-21T16:45Z
+
 $ for i in 1..20; do npm run check:answerable; done
-  0 of 20 standalone runs failed (fix in place).
+0 of 20 standalone runs failed (fix in place).
 
 $ (fix reverted) for i in 1..15; do npm run check:answerable; done
-  1 of 15 failed with "two options are the same word" — reproduced the
-  original flakiness, confirming the fix is responsible.
+1 of 15 failed with "two options are the same word" — reproduced the
+original flakiness, confirming the fix is responsible.
 
 $ npx vitest run
-  165 passed (165) — 3 new URD-049 tests, both deterministic (not
-  relying on random collision, unlike the bug they test for).
+165 passed (165) — 3 new URD-049 tests, both deterministic (not
+relying on random collision, unlike the bug they test for).
 
 $ npm run check:all
-  all 27 steps pass, confirmed twice.
+all 27 steps pass, confirmed twice.
 
 Induced failure: disabled the new usedUrdu guard, both new tests failed
 with clear messages — restored and reconfirmed clean.
@@ -3737,10 +3913,12 @@ with clear messages — restored and reconfirmed clean.
 branch: claude/gauntlet-homograph-distractors
 
 ## CLAIMED · URD-028 · 2026-08-21T17:00Z
+
 files: scripts/check-coverage.js
 branch: claude/gauntlet-coverage-sentence-words
 
 ## CRITIQUE · URD-028
+
 THE CRITIC: no BLOCKING (two independent passes — the original dispatch's
 full verdict arrived late; a narrower follow-up got the verdict faster,
 and both agree). Both independently reproduced the exact 19-violation
@@ -3753,9 +3931,10 @@ no stray diff. Two minor documentation-density observations only, not
 actioned.
 
 ## PASSED · URD-028 · 2026-08-21T23:40Z
+
 $ npm run check:coverage
-  0 problems (before and after the fix, on real content — the
-  "coincidence" this item describes still holds today).
+0 problems (before and after the fix, on real content — the
+"coincidence" this item describes still holds today).
 
 Induced failure: temporarily made sentenceExercise always return
 undefined and readableSentences always return its input pool unfiltered
@@ -3767,28 +3946,30 @@ violations. Restored generator.ts to its exact original content;
 git status --short showed no diff on that file afterward.
 
 $ npx tsc --noEmit
-  clean.
+clean.
 
 $ npx vitest run
-  165 passed (165) — no new tests added; this project's "two kinds of
-  test, no overlap" convention puts a check-script's own whole-system
-  property under live induced-failure verification (above), not a
-  redundant vitest fixture assertion.
+165 passed (165) — no new tests added; this project's "two kinds of
+test, no overlap" convention puts a check-script's own whole-system
+property under live induced-failure verification (above), not a
+redundant vitest fixture assertion.
 
 $ npm run check:all
-  all 27 steps pass, confirmed on two separate solo runs (the first
-  attempt collided with a concurrently-running critic subagent's own
-  check:all, producing a spurious dist/ ENOENT at check:stability — not
-  a real regression; re-run alone came back clean, and the final
-  from-scratch confirmation run also passed clean end to end).
+all 27 steps pass, confirmed on two separate solo runs (the first
+attempt collided with a concurrently-running critic subagent's own
+check:all, producing a spurious dist/ ENOENT at check:stability — not
+a real regression; re-run alone came back clean, and the final
+from-scratch confirmation run also passed clean end to end).
 
 branch: claude/gauntlet-coverage-sentence-words
 
 ## CLAIMED · URD-029 · 2026-08-21T23:59Z
+
 files: src/data/sentences.ts, src/exercises/generator.test.ts
 branch: claude/gauntlet-grammar-plurals-length
 
 ## CRITIQUE · URD-029
+
 THE CRITIC: no BLOCKING on final HEAD. Independently verified every
 lesson-position number cited (g-plurals 46, تین 14, دوست 1, میز 34, پر
 132 — exactly "86 lesson-positions later" as claimed), g-possess's
@@ -3816,29 +3997,30 @@ factor in abandoning s-257 for the final re-tag-based fix (s-77, دوست→
 pedagogically preferable to relocating the lesson in the path.
 
 ## PASSED · URD-029 · 2026-08-22T00:21Z
+
 $ npm run check:shape -- --kind=grammar
-  0 problems (was: 1 of 25 timed lessons under 3 minutes — g-plurals at
-  2.7 min).
+0 problems (was: 1 of 25 timed lessons under 3 minutes — g-plurals at
+2.7 min).
 
 $ npm run check:order
-  0 findings in all three sections (position/level/grammar-concept
-  ordering), 256 sentences.
+0 findings in all three sections (position/level/grammar-concept
+ordering), 256 sentences.
 
 $ npm run check:coverage / check:sentence-coverage / check:voice /
-  check:answerable / npm run audit
-  all clean, 256 sentences unchanged (no new content ultimately shipped
-  — two earlier approaches, s-15 and a new sentence s-257, were tried
-  and fully reverted; see gauntlet/done/URD-029.md for why).
+check:answerable / npm run audit
+all clean, 256 sentences unchanged (no new content ultimately shipped
+— two earlier approaches, s-15 and a new sentence s-257, were tried
+and fully reverted; see gauntlet/done/URD-029.md for why).
 
 $ npx tsc --noEmit
-  clean.
+clean.
 
 $ npx vitest run
-  165 passed (165) — updated the pre-existing test that was deliberately
-  built to fail loudly the moment this exact gap closed (it did).
+165 passed (165) — updated the pre-existing test that was deliberately
+built to fail loudly the moment this exact gap closed (it did).
 
 $ npm run check:all
-  all 27 steps pass, confirmed solo twice on the final tree.
+all 27 steps pass, confirmed solo twice on the final tree.
 
 Induced failure: reverted s-77's tag back to g-possess, reproduced the
 exact original failure (g-plurals at 2.70 min, 18 exercises) — restored
@@ -3852,10 +4034,12 @@ rather than smoothed over.
 branch: claude/gauntlet-grammar-plurals-length
 
 ## CLAIMED · URD-030 · 2026-08-22T00:32Z
+
 files: src/data/words.ts, src/exercises/generator.ts
 branch: claude/gauntlet-grammar-distractor-concept
 
 ## CRITIQUE · URD-030
+
 CURRICULUM CRITIC: MAJOR — an uncapped preferred-pool draw saturated
 every distractor slot whenever a concept had enough near-misses (580 of
 584 wordFromMeaning exercises had ALL three distractors same-concept,
@@ -3894,30 +4078,31 @@ CRITIC fix above by the time it was reported. Confirmed full check:all
 (27 steps) passing on its own, separately from the parent's run.
 
 ## PASSED · URD-030 · 2026-08-22T00:50Z
+
 $ npm run check:grammar-distractors
-  584 of 876 grammar-climb exercises (66.7%) offer a same-concept
-  distractor — meaningPick 0/292 (structural, filed as URD-050),
-  wordFromMeaning 584/584 with exactly 2 of 3 same-concept and one
-  non-concept anchor, never 3 of 3.
+584 of 876 grammar-climb exercises (66.7%) offer a same-concept
+distractor — meaningPick 0/292 (structural, filed as URD-050),
+wordFromMeaning 584/584 with exactly 2 of 3 same-concept and one
+non-concept anchor, never 3 of 3.
 
 $ npm run check:answerable
-  114,600 exercises generated, all clean — still answerable.
+114,600 exercises generated, all clean — still answerable.
 
 $ npx tsc --noEmit
-  clean.
+clean.
 
 $ npx vitest run
-  171 passed (171) — 5 new URD-030 tests (2 isolate distractorsFor's
-  preferred parameter and cap with synthetic words, 1 against real
-  g-plurals content, 1 against real sentences-kind content, 1 proving
-  the reserved slot survives even when the main pool still contains
-  the capped-out preferred candidates).
+171 passed (171) — 5 new URD-030 tests (2 isolate distractorsFor's
+preferred parameter and cap with synthetic words, 1 against real
+g-plurals content, 1 against real sentences-kind content, 1 proving
+the reserved slot survives even when the main pool still contains
+the capped-out preferred candidates).
 
 $ npm run format:check
-  clean.
+clean.
 
 $ npm run check:all
-  all 27 steps pass, confirmed solo on the final tree.
+all 27 steps pass, confirmed solo on the final tree.
 
 Induced failure: temporarily uncapped consider(preferred), all 4
 cap-dependent tests failed with clear messages; restored and
@@ -3932,10 +4117,12 @@ deeper).
 branch: claude/gauntlet-grammar-distractor-concept
 
 ## CLAIMED · URD-032 · 2026-08-22T01:05Z
+
 files: src/screens/HomeScreen.tsx
 branch: claude/gauntlet-home-scroll-tightening
 
 ## CRITIQUE · URD-032
+
 DESIGN CRITIC: no BLOCKING authority. Drove the real app, screenshotted
 the landing after opening a collapsed stage from scrolled-to-bottom —
 clean, the newly-opened stage's own header is unambiguously the visual
@@ -3959,7 +4146,7 @@ frame-level re-trace was not repeated.
 THE CRITIC: found one BLOCKING, no other MAJOR, two MINOR (neither
 actioned — narrow, not required to un-block). BLOCKING: the mid-session
 auto-scroll re-arm never actually fires on the transition it exists
-for. The reset effect (keyed on `currentLevel`) was declared *after*
+for. The reset effect (keyed on `currentLevel`) was declared _after_
 the auto-scroll effect (keyed on `currentId`); a real stage advance
 changes both in the same commit, and React runs a component's effects
 in hook-declaration order within one commit, so the auto-scroll effect
@@ -3995,43 +4182,46 @@ intent); `check:stage-advance-scroll` is committed to hold the observed
 behavior in place rather than assert the specific internal mechanism.
 
 ## PASSED · URD-032 · 2026-08-22T02:10Z
+
 $ npm run check:home-scroll
-  scrolled to bottom (9574px), opened "Beginner. 81 of 81 lessons done.
-  Expand", landed at 539px — deterministic across repeat runs, fails
-  correctly under induced failure (reverted to y:0, reproduced the
-  pre-fix full-reset message).
+scrolled to bottom (9574px), opened "Beginner. 81 of 81 lessons done.
+Expand", landed at 539px — deterministic across repeat runs, fails
+correctly under induced failure (reverted to y:0, reproduced the
+pre-fix full-reset message).
 
 $ npm run check:stage-advance-scroll
-  scrolled away to 8362px, finished 'd-1' (a real lesson playthrough, no
-  reload), returned to Home landed at 619px with the new current lesson
-  visible — deterministic across repeat runs. Did NOT fail under the
-  specific induced fault (original effect order restored) — see
-  CRITIQUE above; reported plainly rather than smoothed over, per this
-  project's "a check that has never failed is a hypothesis."
+scrolled away to 8362px, finished 'd-1' (a real lesson playthrough, no
+reload), returned to Home landed at 619px with the new current lesson
+visible — deterministic across repeat runs. Did NOT fail under the
+specific induced fault (original effect order restored) — see
+CRITIQUE above; reported plainly rather than smoothed over, per this
+project's "a check that has never failed is a hypothesis."
 
 $ npx tsc --noEmit
-  clean.
+clean.
 
 $ npx vitest run
-  171 passed (171) — no new unit tests; both parts of this fix are
-  whole-system scroll/timing behavior covered by the two check scripts
-  above, not pure logic, and this project's vitest config carries no
-  DOM environment to test component effects directly.
+171 passed (171) — no new unit tests; both parts of this fix are
+whole-system scroll/timing behavior covered by the two check scripts
+above, not pure logic, and this project's vitest config carries no
+DOM environment to test component effects directly.
 
 $ npm run format:check
-  clean.
+clean.
 
 $ npm run check:all
-  all 29 steps pass (up from 27), confirmed solo on the final tree.
+all 29 steps pass (up from 27), confirmed solo on the final tree.
 
 branch: claude/gauntlet-home-scroll-tightening
 
 ## CLAIMED · URD-033 · 2026-08-22T02:15Z
+
 files: src/data/achievements.ts
 branch: claude/gauntlet-achievement-tiers-reachable, cut from
 claude/gauntlet-home-scroll-tightening after URD-032 shipped.
 
 ## CRITIQUE · URD-033
+
 Dispatched THE CRITIC only, matching URD-004's own precedent for the
 identical shape of fix — no lesson, word, screen, or exercise-behavior
 content changed (achievements re-tune is pure data + a test).
@@ -4057,18 +4247,19 @@ pre-existing, unrelated `src/lib/achievements.test.ts` (confirmed not a
 bug, just a `git grep` trap).
 
 ## PASSED · URD-033 · 2026-08-22T02:20Z
+
 $ npx vitest run src/data/achievements.test.ts
-  6/6 passed, including the induced-failure-confirmed scholar
-  reachability assertions.
+6/6 passed, including the induced-failure-confirmed scholar
+reachability assertions.
 
 $ npx tsc --noEmit
-  clean.
+clean.
 
 $ npx vitest run
-  177 passed (177) — up from 171, 6 new tests.
+177 passed (177) — up from 171, 6 new tests.
 
 $ npm run format:check
-  clean.
+clean.
 
 Induced failure: reverted scholar's tiers to [100, 500, 2000, 10000],
 both new scholar-specific assertions failed with clear messages
@@ -4078,11 +4269,13 @@ both new scholar-specific assertions failed with clear messages
 branch: claude/gauntlet-achievement-tiers-reachable
 
 ## CLAIMED · URD-034 · 2026-08-22T03:00Z
+
 files: scripts/soak.js
 branch: claude/gauntlet-soak-answer-correctness, cut from
 claude/gauntlet-achievement-tiers-reachable after URD-033 shipped.
 
 ## CRITIQUE · URD-034
+
 Dispatched THE CRITIC only, matching URD-004's own precedent for the
 identical shape of fix — a driver-only fix to scripts/soak.js, no
 lesson, word, screen, or exercise-behavior content changed.
@@ -4124,26 +4317,27 @@ crash shape from two other seeds/lessons — recorded as a third
 reproduction there rather than filed as new.
 
 ## PASSED · URD-034 · 2026-08-22T03:10Z
+
 $ SOAK_DEBUG=1 node scripts/soak.js --start 0 --lessons 2
-  solverStats {"solved":15}, zero fallbacks — all 40 letters via both
-  letterPick and letterForm.
+solverStats {"solved":15}, zero fallbacks — all 40 letters via both
+letterPick and letterForm.
 
 $ SOAK_DEBUG=1 node scripts/soak.js --start 200 --track roman --lessons 3
-  grammarDrill solved 3/3 via the romanAll fix.
+grammarDrill solved 3/3 via the romanAll fix.
 
 $ node -e (binomial recompute)
-  P(≤4 wrong of 25 at 33.5%) ≈ 4.5%, of 33 ≈ 0.5%, of 40 ≈ 0.06% —
-  corrected the module doc comment and done-file, which had
-  miscomputed the last two as ≈5.9%/≈1.6%.
+P(≤4 wrong of 25 at 33.5%) ≈ 4.5%, of 33 ≈ 0.5%, of 40 ≈ 0.06% —
+corrected the module doc comment and done-file, which had
+miscomputed the last two as ≈5.9%/≈1.6%.
 
 $ npx tsc --noEmit
-  clean.
+clean.
 
 $ npm run lint
-  clean.
+clean.
 
 $ npm run format:check
-  clean.
+clean.
 
 Real non-diagnostic verify run (`--start 90`, no hearts override, 15
 attempts) still completes zero lessons — reported plainly, not
@@ -4155,6 +4349,7 @@ done-file), attributable to URD-006, out of this item's scope.
 branch: claude/gauntlet-soak-answer-correctness
 
 ## CLAIMED · URD-A02 · 2026-08-22T17:40Z
+
 files: src/data/units.ts, src/exercises/generator.ts, src/exercises/generator.test.ts
 branch: claude/gauntlet-lesson-shape-remainder, cut from
 claude/gauntlet-soak-answer-correctness after URD-034 shipped. Closed
@@ -4164,12 +4359,14 @@ attempt 1 and the follow-on items it spawned — URD-010/012/013/029 and
 the sentences/grammar-length work — left open).
 
 ## CRITIQUE · URD-A02
+
 Dispatched THE CRITIC and the curriculum critic, both explicitly named
 in this item's own queue entry ("this item is a rewrite of the
 decision made in 35fa67a, by the same hand that made it, which is
 exactly the situation the critics exist for").
 
 THE CRITIC: no BLOCKING. 5 MINOR, all fixed:
+
 1. New adjacent unit u28/u29 both JADE (a real regression this diff
    introduced, confirmed by diffing against the pre-split file) —
    recolored u28 to ROSE.
@@ -4188,6 +4385,7 @@ THE CRITIC: no BLOCKING. 5 MINOR, all fixed:
    only per THE CRITIC's own report; historical record, not rewritten.
 
 Curriculum critic: 2 MAJOR, both real.
+
 1. The phrases lesson's own length fix (size 6->24, drawn once each)
    moved 24 of 28 phrases from "seen once, ever" to "seen once, ever"
    — the same trap this item's own notes warn against ("the trap is
@@ -4233,41 +4431,42 @@ passed clean; the curriculum critic's asymmetric-split and title
 findings stand as accepted MINORs, not re-actioned.
 
 ## PASSED · URD-A02 · 2026-08-22T18:20Z
+
 $ node scripts/check-shape.js
-  0 problems (was 2): 350 lessons, mean 4.2 min/lesson, 9.8 new
-  words/lesson, 24.3h course. Phrases lesson and all 41 units within
-  band.
+0 problems (was 2): 350 lessons, mean 4.2 min/lesson, 9.8 new
+words/lesson, 24.3h course. Phrases lesson and all 41 units within
+band.
 
 $ node -e (real phrases lesson, both tracks)
-  emitted 36, mins 5.40, counts {meaningPick:13, wordFromMeaning:12,
-  typeWord:11}, maxShare 36.1%, longestRun 3, distinctPhrases 12,
-  every phrase sighted exactly 3 times (min==max==3).
+emitted 36, mins 5.40, counts {meaningPick:13, wordFromMeaning:12,
+typeWord:11}, maxShare 36.1%, longestRun 3, distinctPhrases 12,
+every phrase sighted exactly 3 times (min==max==3).
 
 $ node -e (review sizes)
-  rev-materials-and-machines 22, rev-house-and-field 22,
-  rev-land-and-sky 22, rev-the-wider-world 22 — all match hand-computed
-  predictions from each half's real word count exactly.
+rev-materials-and-machines 22, rev-house-and-field 22,
+rev-land-and-sky 22, rev-the-wider-world 22 — all match hand-computed
+predictions from each half's real word count exactly.
 
 $ npx tsc --noEmit
-  clean.
+clean.
 
 $ npm run lint
-  clean.
+clean.
 
 $ npm run format:check
-  clean (one round needed prettier --write on generator.ts's new
-  phrases branch; no logic change).
+clean (one round needed prettier --write on generator.ts's new
+phrases branch; no logic change).
 
 $ npx vitest run
-  178 passed (178) — 177 + 1 new (phrases sightings-count assertion).
-  1 test failed and was fixed mid-session: review.test.ts's "scales to
-  a unit with many vocabulary lessons" hardcoded rev-the-wider-world's
-  pre-split 117-word count; retargeted to rev-senses-and-seasons (96
-  words, now the largest single-unit pool, unaffected by this item).
+178 passed (178) — 177 + 1 new (phrases sightings-count assertion).
+1 test failed and was fixed mid-session: review.test.ts's "scales to
+a unit with many vocabulary lessons" hardcoded rev-the-wider-world's
+pre-split 117-word count; retargeted to rev-senses-and-seasons (96
+words, now the largest single-unit pool, unaffected by this item).
 
 $ npm run check:all
-  all 29 steps pass, confirmed twice more after the critic-fix round
-  (once mid-fix, once on the final committed state).
+all 29 steps pass, confirmed twice more after the critic-fix round
+(once mid-fix, once on the final committed state).
 
 Two units (old u27, 13 lessons; old u39, 15 lessons) split by theme
 into four (new u27/u28, u40/u41); every unit from old u28 through u38
@@ -4291,11 +4490,13 @@ this item's own changes, rather than silently rerun without comment.
 branch: claude/gauntlet-lesson-shape-remainder
 
 ## CLAIMED · URD-035 · 2026-08-22T18:35Z
+
 files: src/exercises/GrammarExercises.tsx
 branch: claude/gauntlet-grammar-teach-crash, cut from
 claude/gauntlet-lesson-shape-remainder after URD-A02 shipped.
 
 ## CRITIQUE · URD-035
+
 Dispatched THE CRITIC. First dispatch failed mid-review on a session
 spend limit (external resource constraint, not a finding); redispatched
 and completed.
@@ -4325,28 +4526,29 @@ today) shows the un-filled prompt next to a correctly-filled sentence
 — not wrong, not the cleanest possible degrade either.
 
 ## PASSED · URD-035 · 2026-08-22T19:05Z
+
 $ npm run soak -- --start 29 --lessons 3 --seed 7 --require grammarTeach
-  0 failures (was: uncaught error + blank screen, every attempt).
+0 failures (was: uncaught error + blank screen, every attempt).
 
 $ npm run soak -- --start 45 --lessons 3 --seed 11 --require grammarTeach
-  0 failures (was: identical crash shape).
+0 failures (was: identical crash shape).
 
 $ npm run soak -- --start 200 --track roman --seed 55 --lessons 3
-  0 failures (was: identical crash shape; per THE CRITIC's finding
-  above this was never actually the Roman track, but the same real
-  bug on `both` either way).
+0 failures (was: identical crash shape; per THE CRITIC's finding
+above this was never actually the Roman track, but the same real
+bug on `both` either way).
 
 $ npx vitest run
-  180 passed (180) — 178 + 2 new. Confirmed the new test genuinely
-  regresses: reverted generator.ts alone, re-ran just the new test,
-  it failed with "g-pronouns (both): [...] expected undefined to be
-  defined" — the exact live-observed shape; restored and reconfirmed.
+180 passed (180) — 178 + 2 new. Confirmed the new test genuinely
+regresses: reverted generator.ts alone, re-ran just the new test,
+it failed with "g-pronouns (both): [...] expected undefined to be
+defined" — the exact live-observed shape; restored and reconfirmed.
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npm run check:all
-  30/30.
+30/30.
 
 Root cause correction recorded plainly: the item's own prior notes
 blamed GrammarTeachExercise; the real site, found via a new
@@ -4359,11 +4561,13 @@ the actual stack until this session.
 branch: claude/gauntlet-grammar-teach-crash
 
 ## CLAIMED · URD-036 · 2026-08-22T22:45Z
+
 files: src/components/Button.tsx
 branch: claude/gauntlet-disabled-button-look, cut from
 claude/gauntlet-grammar-teach-crash after URD-035 shipped.
 
 ## CRITIQUE · URD-036
+
 Dispatched DESIGN CRITIC (this item's own verify command names it
 explicitly) and THE CRITIC (a shared-component change touching the
 whole app's visual language warranted a technical pass too).
@@ -4381,6 +4585,7 @@ locked-row convention (which also layers opacity 0.7, this doesn't).
 
 THE CRITIC: no BLOCKING. Found the disclosed MINORs above understated
 two real defects:
+
 1. border's own ternary checked isGhost before disabled, so ghost
    buttons never got ANY disabled signal beyond the label dimming —
    the exact failure this item exists to fix, relocated onto ghost.
@@ -4393,41 +4598,44 @@ two real defects:
    classNames, not inline withAlpha() calls. Fixed: raised to 55%,
    matching the project's own floor. check:theme's blind spot itself
    filed forward as URD-052 (out of this item's file scope).
-One MINOR fixed in the same pass: edge's own missing isGhost guard
-(masked by a JSX-level ternary, same shape that produced finding 1
-above) — tidied to match fill. One MINOR latent bug fixed cheaply: the
-loading spinner's colour didn't branch on disabled (currently
-unreachable, no caller passes loading to this component today).
+   One MINOR fixed in the same pass: edge's own missing isGhost guard
+   (masked by a JSX-level ternary, same shape that produced finding 1
+   above) — tidied to match fill. One MINOR latent bug fixed cheaply: the
+   loading spinner's colour didn't branch on disabled (currently
+   unreachable, no caller passes loading to this component today).
 
 ## PASSED · URD-036 · 2026-08-22T23:20Z
+
 Screenshots (Out-of-hearts Refill button, gems below/above cost;
 TracePad Clear/Check before and after the ghost-border fix) confirm
 the disabled state reads as unavailable at a glance in every case
 checked, including the ghost variant after both critic rounds.
 
 $ node -e (contrast recompute, same WCAG relative-luminance formula)
-  40% (pre-fix): 3.24:1. 55% (shipped): 4.74:1 — clears AA's 4.5:1
-  floor, matches this project's own PAPER_FLOOR convention.
+40% (pre-fix): 3.24:1. 55% (shipped): 4.74:1 — clears AA's 4.5:1
+floor, matches this project's own PAPER_FLOOR convention.
 
 $ npx tsc --noEmit / npm run lint / npm run format:check / npm run check:theme
-  clean.
+clean.
 
 $ npx vitest run
-  180/180 — unchanged; no test exercises Button's rendering (this repo
-  has no React-component-render harness set up), so verification here
-  leaned entirely on real screenshots against the real built app.
+180/180 — unchanged; no test exercises Button's rendering (this repo
+has no React-component-render harness set up), so verification here
+leaned entirely on real screenshots against the real built app.
 
 $ npm run check:all
-  30/30.
+30/30.
 
 branch: claude/gauntlet-disabled-button-look
 
 ## CLAIMED · URD-037 · 2026-08-25T15:00Z
+
 files: scripts/check-path.js
 branch: claude/gauntlet-check-path-floor, cut from
 claude/gauntlet-disabled-button-look after URD-036 shipped.
 
 ## CRITIQUE · URD-037
+
 Dispatched THE CRITIC only, matching URD-004's own precedent for this
 shape of fix — a pure tooling-correctness change to a check script, no
 lesson/word/screen/exercise-behavior changed.
@@ -4450,30 +4658,33 @@ lessonCountForLevel helper (now does); a stale "81 or 94" comment
 where the real number is 95.
 
 ## PASSED · URD-037 · 2026-08-25T15:30Z
+
 $ node scripts/check-path.js (real app, real content)
-  0 problems: fresh guest 81, deep learner 95, tapping-every-level
-  worst 95 (bound 115) — unchanged from before this fix.
+0 problems: fresh guest 81, deep learner 95, tapping-every-level
+worst 95 (bound 115) — unchanged from before this fix.
 
 $ node scripts/check-path.js (isOpen forced to always return false)
-  3 problems, real exit code 1 (checked directly, not through a pipe):
-  each scenario's own floor named and violated. Reverted; git diff on
-  HomeScreen.tsx empty; reconfirmed clean pass with the original
-  numbers.
+3 problems, real exit code 1 (checked directly, not through a pipe):
+each scenario's own floor named and violated. Reverted; git diff on
+HomeScreen.tsx empty; reconfirmed clean pass with the original
+numbers.
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npx vitest run
-  180/180 — unchanged, no test touches this script.
+180/180 — unchanged, no test touches this script.
 
 branch: claude/gauntlet-check-path-floor
 
 ## CLAIMED · URD-038 · 2026-08-25T15:40Z
+
 files: src/data/letters.ts
 branch: claude/gauntlet-similar-letters-listening, cut from
 claude/gauntlet-check-path-floor after URD-037 shipped.
 
 ## CRITIQUE · URD-038
+
 Dispatched both THE CRITIC and CURRICULUM CRITIC — real learner-facing
 content plus a new test, not a pure tooling change.
 
@@ -4488,6 +4699,7 @@ collide by coincidence if this letter group ever grew) — neither
 actionable today.
 
 CURRICULUM CRITIC: two MAJOR, both real, both fixed:
+
 1. zwaad and zoe's anchor words (their own decorative `word` field)
    are never actually taught anywhere in the app outside letters.ts
    itself — confirmed by diffing against generator.ts's own
@@ -4509,6 +4721,7 @@ do-chashmi-he, te/toe have the identical gap) filed forward as
 URD-053, out of this item's own four-letter-group scope.
 
 ## PASSED · URD-038 · 2026-08-25T16:10Z
+
 Investigated before writing, not assumed: read all 207 real
 occurrences of ذ/ز/ض/ظ in the corpus by hand. ze: 121 words (58%),
 everyday nouns. zaal/zwaad/zoe: 18/39/29, overwhelmingly formal/
@@ -4517,23 +4730,25 @@ found among the 86 words checked for the one-way claim the shipped
 notes make.
 
 $ npx vitest run src/data/letters.test.ts
-  3/3 passed, both critic-identified regressions confirmed to actually
-  fail against the pre-fix wording when reverted.
+3/3 passed, both critic-identified regressions confirmed to actually
+fail against the pre-fix wording when reverted.
 
 $ npx tsc --noEmit / npm run lint / npm run format:check / npm run check:writing
-  clean.
+clean.
 
 $ npx vitest run
-  183/183 (180 + 3 new).
+183/183 (180 + 3 new).
 
 branch: claude/gauntlet-similar-letters-listening
 
 ## CLAIMED · URD-039 · 2026-08-25T16:02Z
+
 files: src/lib/review.ts
 branch: claude/gauntlet-review-fallback-rotation, cut from
 claude/gauntlet-similar-letters-listening after URD-038 shipped.
 
 ## CRITIQUE · URD-039
+
 Dispatched THE CRITIC only — a pure engagement/fairness fix to the
 review-generation pipeline, no new learner-facing teaching content and
 no screen/visual change, so neither CURRICULUM CRITIC nor DESIGN
@@ -4569,30 +4784,33 @@ reaches the previously-unreachable words, and independent of which
 specific pair happens to differ.
 
 ## PASSED · URD-039 · 2026-08-25T16:35Z
+
 $ npx vitest run src/lib/review.test.ts
-  29/29 passed (25 + 4 new). Reverted review.ts/generator.ts alone
-  (keeping the new tests) to confirm two of the four fail against the
-  pre-fix code with the exact regression the item names — the same
-  w-surkh/w-gulaabi/w-pyaazi/w-neela slice on every call; restored and
-  reconfirmed clean.
+29/29 passed (25 + 4 new). Reverted review.ts/generator.ts alone
+(keeping the new tests) to confirm two of the four fail against the
+pre-fix code with the exact regression the item names — the same
+w-surkh/w-gulaabi/w-pyaazi/w-neela slice on every call; restored and
+reconfirmed clean.
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npx vitest run
-  187/187 (183 + 4 new).
+187/187 (183 + 4 new).
 
 $ npm run check:all
-  all 30 steps pass against a deploy-shaped build.
+all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-review-fallback-rotation
 
 ## CLAIMED · URD-040 · 2026-08-25T16:16Z
+
 files: src/lib/review.ts, src/exercises/generator.ts
 branch: claude/gauntlet-review-grammar-concepts, cut from
 claude/gauntlet-review-fallback-rotation after URD-039 shipped.
 
 ## CRITIQUE · URD-040
+
 Dispatched THE CRITIC (real generator/review-pipeline code) and
 CURRICULUM CRITIC (whether the content this adds actually serves
 consolidating a concept, the item's own stated purpose) — both
@@ -4640,46 +4858,49 @@ now structural rather than incidental. The two round-1 MINORs remain
 filed-forward, unchanged.
 
 ## PASSED · URD-040 · 2026-08-25T16:58Z
+
 Confirmed both fixes are real regressions their tests catch, not just
 plausible: reverted generator.ts alone (keeping each new test) for
 both the stale-drill and dropped-due-item fixes; each failed with the
 exact shape its critic named; restored and reconfirmed clean.
 
 $ npx vitest run src/exercises/generator.test.ts
-  59/59 passed (53 + 6 new).
+59/59 passed (53 + 6 new).
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npx vitest run
-  197/197 (191 + 6 new).
+197/197 (191 + 6 new).
 
 $ npm run check:srs / check:shape / check:answerable / check:order /
-  check:coverage / check:sentence-coverage / check:grammar-distractors
-  / check:path
-  no new problems from any of them, rerun individually after each
-  fix round.
+check:coverage / check:sentence-coverage / check:grammar-distractors
+/ check:path
+no new problems from any of them, rerun individually after each
+fix round.
 
 $ npm run check:all
-  first full run on the fully-fixed tree failed once at check:path
-  ("0 lesson rows mounted" against a floor of 81) — investigated
-  rather than assumed: 3/3 standalone check:path reruns immediately
-  after were clean (81/81), and a full fresh check:all rerun passed
-  30/30 clean, check:path included (81/81). Recorded as an observed
-  flake, the same shape already noted in this ledger for
-  check:home-scroll during URD-A02 — not attributed to this item's
-  own change, since nothing in this diff touches HomeScreen or its
-  mounting logic, and a real regression there would not have cleared
-  on an unmodified rerun.
+first full run on the fully-fixed tree failed once at check:path
+("0 lesson rows mounted" against a floor of 81) — investigated
+rather than assumed: 3/3 standalone check:path reruns immediately
+after were clean (81/81), and a full fresh check:all rerun passed
+30/30 clean, check:path included (81/81). Recorded as an observed
+flake, the same shape already noted in this ledger for
+check:home-scroll during URD-A02 — not attributed to this item's
+own change, since nothing in this diff touches HomeScreen or its
+mounting logic, and a real regression there would not have cleared
+on an unmodified rerun.
 
 branch: claude/gauntlet-review-grammar-concepts
 
 ## CLAIMED · URD-041 · 2026-08-25T16:44Z
+
 files: src/exercises/generator.ts
 branch: claude/gauntlet-review-letter-position-rotation, cut from
 claude/gauntlet-review-grammar-concepts after URD-040 shipped.
 
 ## CRITIQUE · URD-041
+
 Dispatched THE CRITIC (real generator code) and CURRICULUM CRITIC
 (this item's own second angle — the one letter slot spent entirely
 on the easy kind, never the app's core position-form skill — is
@@ -4701,7 +4922,7 @@ angles (position always fixed; kind always the easy one) are resolved
 by the same root-cause fix, not just one.
 
 CURRICULUM CRITIC found one real MAJOR — pre-existing, not introduced
-by this item, but newly *reachable in review* because of it:
+by this item, but newly _reachable in review_ because of it:
 `letterForm` is ambiguous for the 13 of 40 `connects: false` letters
 (isolated/initial and medial/final glyphs are literally identical
 strings for a non-connector, e.g. `alif`), and review's one letter
@@ -4721,46 +4942,49 @@ until deleted — confirmed by direct reproduction both ways. Deleted
 before the final `check:all` run below.
 
 ## PASSED · URD-041 · 2026-08-25T17:21Z
+
 Confirmed the fix is a real regression its own tests catch: reverted
 generator.ts alone (keeping the two most targeted new tests), both
 failed with "expected 1 to be greater than 1" — the exact
 single-kind collapse the item names; restored and reconfirmed clean.
 
 $ npx vitest run src/exercises/generator.test.ts
-  62/62 passed (59 + 3 new).
+62/62 passed (59 + 3 new).
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean (after deleting the stray verify041.js noted above).
+clean (after deleting the stray verify041.js noted above).
 
 $ npx vitest run
-  200/200 (197 + 3 new).
+200/200 (197 + 3 new).
 
 $ npm run check:srs / check:answerable / check:shape / check:order /
-  check:coverage
-  no new problems, rerun individually.
+check:coverage
+no new problems, rerun individually.
 
 $ npm run check:all
-  A first full run failed once at check:path with an ENOENT on
-  dist/index.html — investigated rather than assumed: the process
-  tree showed a second, concurrent `npm run check:all` invocation
-  (started by THE CRITIC's own subagent, independently verifying this
-  same fix) rebuilding the same shared `dist/` directory at the same
-  moment — a real race between two independent check:all runs on
-  shared build output, not a defect in this item's own change. Two
-  separate clean full runs afterward (THE CRITIC's own, and a second
-  one run standalone here with nothing else touching `dist/`
-  concurrently) both passed all 30 steps, check:path included
-  (81/81) — confirming the ENOENT was exactly the race it looked
-  like, not a regression.
+A first full run failed once at check:path with an ENOENT on
+dist/index.html — investigated rather than assumed: the process
+tree showed a second, concurrent `npm run check:all` invocation
+(started by THE CRITIC's own subagent, independently verifying this
+same fix) rebuilding the same shared `dist/` directory at the same
+moment — a real race between two independent check:all runs on
+shared build output, not a defect in this item's own change. Two
+separate clean full runs afterward (THE CRITIC's own, and a second
+one run standalone here with nothing else touching `dist/`
+concurrently) both passed all 30 steps, check:path included
+(81/81) — confirming the ENOENT was exactly the race it looked
+like, not a regression.
 
 branch: claude/gauntlet-review-letter-position-rotation
 
 ## CLAIMED · URD-042 · 2026-08-25T17:23Z
+
 files: src/lib/review.ts, src/exercises/generator.ts
 branch: claude/gauntlet-review-letter-coverage, cut from
 claude/gauntlet-review-letter-position-rotation after URD-041 shipped.
 
 ## CRITIQUE · URD-042
+
 Dispatched THE CRITIC (real generator/review-pipeline code) and
 CURRICULUM CRITIC (this item's own discoverer, reviewing URD-017 —
 whether the alphabet is actually retained across the course is
@@ -4808,7 +5032,7 @@ added the identical guard.
 
 CURRICULUM CRITIC's own remaining observations, recorded but not
 acted on: the deterministic once-per-course assignment has no
-curricular logic behind *which* review reinforces *which* letter
+curricular logic behind _which_ review reinforces _which_ letter
 (a pure fixed-shuffle artifact) — defensible for reinforcement
 content, not new instruction, but worth naming; two of the
 latest-taught letters (`do-chashmi-he`, `noon-ghunna`) land their
@@ -4826,6 +5050,7 @@ future content edit, but the sweep test that already exists would
 catch a regression there directly.
 
 ## PASSED · URD-042 · 2026-08-25T17:53Z
+
 Every fix verified as a real regression its own test catches: reverted
 the relevant code alone (keeping each new/retargeted test) for the
 visit-staleness fix, the vacuous-test retargeting, and (via THE
@@ -4833,40 +5058,43 @@ CRITIC's own re-review) the guard-symmetry fix; each failed with the
 exact shape its critic named; restored and reconfirmed clean.
 
 $ npx vitest run
-  206/206 (200 + 6 new/reworked).
+206/206 (200 + 6 new/reworked).
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npm run check:srs / check:answerable / check:shape / check:order /
-  check:coverage
-  no new problems, rerun individually after each fix round.
+check:coverage
+no new problems, rerun individually after each fix round.
 
 $ npm run check:all
-  first full run (this item's own, separate from a concurrent
-  subagent check:all mid-review) failed once at check:path with an
-  ENOENT on dist/index.html — a second, independent check:all
-  (THE CRITIC's own verification run) rebuilding the same shared
-  dist/ directory at the same moment, the identical race class
-  already noted in URD-041's own ledger entry, not a defect in this
-  item. A clean standalone run afterward, and a final fresh run
-  covering the last symmetry-fix commit, both passed all 30 steps.
+first full run (this item's own, separate from a concurrent
+subagent check:all mid-review) failed once at check:path with an
+ENOENT on dist/index.html — a second, independent check:all
+(THE CRITIC's own verification run) rebuilding the same shared
+dist/ directory at the same moment, the identical race class
+already noted in URD-041's own ledger entry, not a defect in this
+item. A clean standalone run afterward, and a final fresh run
+covering the last symmetry-fix commit, both passed all 30 steps.
 
 branch: claude/gauntlet-review-letter-coverage
 
 ## CLAIMED · URD-043 · 2026-08-25T17:53Z
+
 files: src/exercises/generator.ts
 branch: claude/gauntlet-letter-final-sighting-hard, cut from
 claude/gauntlet-review-letter-coverage after URD-042 shipped.
 
 ## CLAIMED · URD-044 · 2026-08-25T18:26Z
+
 files: src/screens/LessonScreen.tsx, src/screens/useSessionGradeFlush.ts
-  (new), src/screens/useSessionGradeFlush.test.ts (new), vitest.config.ts,
-  package.json, package-lock.json
+(new), src/screens/useSessionGradeFlush.test.ts (new), vitest.config.ts,
+package.json, package-lock.json
 branch: claude/gauntlet-lessonscreen-srs-integration-test, cut from
 claude/gauntlet-letter-final-sighting-hard after URD-043 shipped.
 
 ## CRITIQUE · URD-044
+
 Investigated `vitest.config.ts` (pure-logic tests only, no jsdom/RTL) and
 `LessonScreen.tsx`'s ref/effect wiring first. Chose to extract the wiring
 into a standalone hook (`useSessionGradeFlush`) rather than add a
@@ -4892,7 +5120,7 @@ Dispatched THE CRITIC only (real app/tooling code; no curriculum or visual
 content in this item's scope). No BLOCKING. One MAJOR: the item's own
 problem statement — "nothing exercises the LessonScreen↔SRS-grading wiring
 end-to-end" — is only half-closed. `useSessionGradeFlush.test.ts` gives
-real, mutation-tested coverage of the *hook's* ref/effect timing (THE
+real, mutation-tested coverage of the _hook's_ ref/effect timing (THE
 CRITIC independently mutation-tested three broken variants: removing the
 cleanup, removing `pending.clear()`, and flushing the ref instead of the
 closed-over Map — the first two failed correctly, the third passed for a
@@ -4920,6 +5148,7 @@ Re-verified `tsc`/lint/format/`vitest run` clean (213/213) after both
 fixes.
 
 ## PASSED · URD-044 · 2026-08-25T18:44Z
+
 The key regression this item exists to guard against verified as real,
 not assumed: reverted `useSessionGradeFlush`'s effect dependency array to
 a mount-once `[]` and confirmed the visit-change test failed with the
@@ -4930,17 +5159,18 @@ here): two failed correctly, one passed for a real reason (React's
 cleanup-before-next-effect ordering), not a test hole.
 
 $ npx vitest run
-  213/213 (209 + 4 new).
+213/213 (209 + 4 new).
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npm run check:all
-  all 30 steps pass against a deploy-shaped build.
+all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-lessonscreen-srs-integration-test
 
 ## CRITIQUE · URD-043
+
 Dispatched THE CRITIC (real generator code) and CURRICULUM CRITIC
 (this item's own discoverer, reviewing URD-019 — whether a letter's
 last sighting is genuinely diagnostic is squarely curriculum-severity).
@@ -5016,6 +5246,7 @@ file already accepts, for a risk measured to be lower than the
 alternative it would trade for.
 
 ## PASSED · URD-043 · 2026-08-25T18:26Z
+
 Every code fix verified as a real regression its own test catches:
 reverted generator.ts alone (keeping the new tests), all 3 URD-043
 tests failed with the item's own measured shape; restored and
@@ -5024,34 +5255,36 @@ no behavior change, verified by an unchanged 209/209 test count and
 an unchanged `check:shape` clean report after each.
 
 $ npx vitest run
-  209/209 (206 + 3 new).
+209/209 (206 + 3 new).
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npm run check:shape
-  0 problems (re-measured after each fix round, including the
-  confusable-adjacency formula fix).
+0 problems (re-measured after each fix round, including the
+confusable-adjacency formula fix).
 
 $ npm run check:answerable / check:order / check:coverage / check:srs
-  no new problems.
+no new problems.
 
 $ npm run check:all
-  a first run passed all 30 steps clean (before the CURRICULUM
-  CRITIC comment-fix commits); a final fresh run covering those
-  commits also passed all 30 steps clean.
+a first run passed all 30 steps clean (before the CURRICULUM
+CRITIC comment-fix commits); a final fresh run covering those
+commits also passed all 30 steps clean.
 
 branch: claude/gauntlet-letter-final-sighting-hard
 
 ## CLAIMED · URD-045 · 2026-08-25T22:58Z
+
 files: src/exercises/types.ts, src/exercises/generator.ts,
-  src/exercises/LetterSpot.tsx (new), src/exercises/letterSpotGrading.ts
-  (new), src/exercises/index.tsx, src/exercises/common.tsx,
-  src/screens/LessonScreen.tsx, scripts/check-answerable.js
+src/exercises/LetterSpot.tsx (new), src/exercises/letterSpotGrading.ts
+(new), src/exercises/index.tsx, src/exercises/common.tsx,
+src/screens/LessonScreen.tsx, scripts/check-answerable.js
 branch: claude/gauntlet-letter-spot-exercise, cut from
 claude/gauntlet-lessonscreen-srs-integration-test after URD-044 shipped.
 
 ## CRITIQUE · URD-045
+
 New exercise kind `letterSpot`: shows a letter's `LETTER_CONTEXT_WORD`
 sighting as one real, correctly-joined line of script, then asks the
 learner to tap which tile of the word is the letter just taught — replacing
@@ -5114,7 +5347,7 @@ nor the automated checks would have caught:
 
 3. For a 2-character real word (khe/daal/toe/laam), both real positions'
    full left+own+right context is the whole word, so both tiles rendered
-   the *identical* string — a learner cannot tell "the daal tile" from "the
+   the _identical_ string — a learner cannot tell "the daal tile" from "the
    laam tile" in دل, only one of which grades correct. Fixed: merge two
    real tiles whose computed display text collides into one (correct if
    either position was), rather than shipping an unresolvable visual tie —
@@ -5174,34 +5407,36 @@ report-writing-only critic could not have caught without also rendering
 the app.
 
 ## PASSED · URD-045 · 2026-08-25T23:34Z
+
 Every fix (neighbour-context clustering, decoy source, 2-tile merge,
 word-break tracking) verified as a real regression its own test catches —
 reverted each alone and confirmed the matching test failed with the item's
 own measured shape, then restored and reconfirmed clean.
 
 $ npx vitest run
-  226/226 — 213 at URD-044's own PASSED, plus 9 new in generator.test.ts's
-  URD-045 block and 4 new in letterSpotGrading.test.ts.
+226/226 — 213 at URD-044's own PASSED, plus 9 new in generator.test.ts's
+URD-045 block and 4 new in letterSpotGrading.test.ts.
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npm run check:answerable
-  every generated exercise answerable; letterSpot 276 on the `both` track,
-  0 on `roman`.
+every generated exercise answerable; letterSpot 276 on the `both` track,
+0 on `roman`.
 
 $ npm run check:shape
-  clean, unchanged targets.
+clean, unchanged targets.
 
 $ npm run check:all
-  all 30 steps pass against a deploy-shaped build — including
-  `check:direction`, which a mid-review fix (`marginLeft`/`marginRight`
-  for the word-break gap) genuinely broke before being corrected to
-  `marginStart`/`marginEnd` and re-verified.
+all 30 steps pass against a deploy-shaped build — including
+`check:direction`, which a mid-review fix (`marginLeft`/`marginRight`
+for the word-break gap) genuinely broke before being corrected to
+`marginStart`/`marginEnd` and re-verified.
 
 branch: claude/gauntlet-letter-spot-exercise
 
 ## OVERSIGHT · URD-045 · 2026-08-26T00:22Z
+
 First run of the OVERSEER role (added this session, `gauntlet/ROLES.md`).
 Process only; the fix itself was out of brief and was not read.
 
@@ -5209,10 +5444,10 @@ dispatch cost (successful dispatch of each, from the task notifications
 rather than estimated — the CRITIQUE entry above originally said "~550K
 tokens combined" for the DESIGN CRITIC, which was 2.2x the real figure,
 and has been corrected):
-  CURRICULUM CRITIC   85,806 tok /  27 calls / 1 wake / verdict yes
-  THE CRITIC         110,422 tok /  54 calls / 1 wake / verdict yes
-  DESIGN CRITIC      253,607 tok / 207 calls / 3 wakes / verdict NO
-  lead, in-app harness       — / ~15 min / 2 findings
+CURRICULUM CRITIC 85,806 tok / 27 calls / 1 wake / verdict yes
+THE CRITIC 110,422 tok / 54 calls / 1 wake / verdict yes
+DESIGN CRITIC 253,607 tok / 207 calls / 3 wakes / verdict NO
+lead, in-app harness — / ~15 min / 2 findings
 
 The DESIGN CRITIC dispatch was 56% of the review layer's tokens and 72%
 of its tool calls for 20% of its findings, and returned no scored
@@ -5223,7 +5458,7 @@ verdict. Six findings, each carrying a process change now applied:
    solved the same problem in ~15 minutes with a temporary route
    rendering the component against real generator output. ROLES.md's
    DESIGN CRITIC section now says to build that route rather than wait.
-2. The lead waited for a *third* non-verdict wake-up before taking over.
+2. The lead waited for a _third_ non-verdict wake-up before taking over.
    ROLES.md's "usually after the second" is now a hard rule.
 3. One account-wide usage limit killed all three critics mid-review, and
    because critics batch findings to the end, 196,228 tokens were paid
@@ -5267,11 +5502,13 @@ branch: claude/gauntlet-letter-contrast-exercise (recorded retroactively;
 URD-045 itself shipped on claude/gauntlet-letter-spot-exercise)
 
 ## CLAIMED · URD-046 · 2026-08-25T23:39Z
+
 files: src/exercises/generator.ts, src/exercises/generator.test.ts
 branch: claude/gauntlet-confusable-pair-rotation, cut from
 claude/gauntlet-letter-spot-exercise after URD-045 shipped.
 
 ## CRITIQUE · URD-046
+
 `separateConfusables` spreads a lesson's visually-confusable letters apart
 within a round, but a residual "wrap" adjacency (last letter of round r
 next to first letter of round r+1) is mathematically forced whenever a
@@ -5285,11 +5522,11 @@ had already changed that count to 4 without anyone updating the comment).
 
 Fix: `separateConfusables` takes an optional `rotation` (default 0, every
 existing caller unaffected) that rotates each confusable bucket's own
-member order before slotting members into that bucket's *same fixed
-position-set* — varies which letter sits at a round's two ends without
+member order before slotting members into that bucket's _same fixed
+position-set_ — varies which letter sits at a round's two ends without
 touching which positions a bucket occupies, so the "zero internal
 adjacency" property is untouched. The round-major generation loop calls
-this with `round` for each round's *visiting order*, while every letter's
+this with `round` for each round's _visiting order_, while every letter's
 `turn`/`position` index is looked up from a separate, permanent, unrotated
 map built once — so kind-cycling and position-cycling stay completely
 round-invariant; only adjacency varies.
@@ -5334,7 +5571,7 @@ definition of done: "risks teaching the confusion rather than resolving
 it") and the general interleaving-vs-blocking literature on category
 learning — found no curriculum argument favoring the old, unvaried design.
 Also confirmed this correctly leaves URD-047's own separate gap (a
-discrimination exercise kind) untouched — this item only varies *which*
+discrimination exercise kind) untouched — this item only varies _which_
 letters get kept apart, not whether any are ever asked to be told apart.
 One MINOR, fixed: a doc-comment's illustrative example pair (`{zhe,ze}`)
 did not match the real measured pairs — corrected to the actual measured
@@ -5342,6 +5579,7 @@ set and pointed at the test (which re-measures live) rather than
 hardcoding an example that could go stale again.
 
 ## PASSED · URD-046 · 2026-08-26T00:14Z
+
 Both critic-found MINORs fixed and reverified. The core fix itself
 verified as a real regression its own test catches: reverted the rotation
 entirely (reproduced the original "identical pair, 4 times" bug exactly),
@@ -5350,28 +5588,30 @@ twice each" intermediate exactly) — both confirmed independently by THE
 CRITIC via its own mutation testing, not only by the lead.
 
 $ npx vitest run
-  227/227 (226 at URD-045's own PASSED, plus 1 new).
+227/227 (226 at URD-045's own PASSED, plus 1 new).
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npm run check:shape
-  clean, unchanged targets.
+clean, unchanged targets.
 
 $ npm run check:all
-  all 30 steps pass against a deploy-shaped build.
+all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-confusable-pair-rotation
 
 ## CLAIMED · URD-047 · 2026-08-26T20:31Z
+
 files: src/exercises/types.ts, src/exercises/generator.ts,
-  src/exercises/LetterExercises.tsx, src/exercises/letterContrastNotes.ts
-  (new), src/exercises/index.tsx, src/screens/LessonScreen.tsx,
-  scripts/check-shape.js, scripts/check-answerable.js, scripts/soak.js
+src/exercises/LetterExercises.tsx, src/exercises/letterContrastNotes.ts
+(new), src/exercises/index.tsx, src/screens/LessonScreen.tsx,
+scripts/check-shape.js, scripts/check-answerable.js, scripts/soak.js
 branch: claude/gauntlet-letter-contrast-exercise, cut from
 claude/gauntlet-confusable-pair-rotation after URD-046 shipped.
 
 ## CRITIQUE · URD-047
+
 New exercise kind `letterContrast`: poses a letter directly against its
 `confusableWith` bucket-mates — options are exactly the bucket and nothing
 else, the one thing `letterPick`'s alphabet-wide distractors cannot test.
@@ -5461,38 +5701,41 @@ the unit tests and direct DOM measurements, not a completed live-soak run,
 which a real run could not reach.
 
 ## PASSED · URD-047 · 2026-08-27T13:20Z
+
 All BLOCKING/MAJOR findings from both critics fixed and reverified; four
 filed forward as scoped, out-of-file, or genuinely pre-existing (URD-059,
 060, 061, 062), plus one more found during this item's own final
 verification (URD-063).
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npx vitest run
-  239/239 (12 new: URD-047's own generator.test.ts block, seven tests;
-  letterContrastNotes.test.ts, five tests).
+239/239 (12 new: URD-047's own generator.test.ts block, seven tests;
+letterContrastNotes.test.ts, five tests).
 
 $ npm run check:answerable
-  clean. letterContrast: 2236 two-option, 258 three-option, 344 four-option
-  instances, all answerable, all bucket-only, position checked at
-  EXEMPT_PASSES-raised sample sizes via the z-test.
+clean. letterContrast: 2236 two-option, 258 three-option, 344 four-option
+instances, all answerable, all bucket-only, position checked at
+EXEMPT_PASSES-raised sample sizes via the z-test.
 
 $ npm run check:shape
-  clean, unchanged targets (350 lessons, 24.3 hours).
+clean, unchanged targets (350 lessons, 24.3 hours).
 
 $ npm run check:all
-  all 30 steps pass against a deploy-shaped build.
+all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-letter-contrast-exercise
 
 ## CLAIMED · URD-050 · 2026-08-27T12:30Z
+
 files: src/data/art.ts, src/exercises/generator.ts,
-  src/exercises/generator.test.ts
+src/exercises/generator.test.ts
 branch: claude/gauntlet-meaningpick-sentence-distractor, cut from
 claude/gauntlet-letter-contrast-exercise after URD-047 shipped.
 
 ## CRITIQUE · URD-050
+
 `cueOf` now returns `sen:${word.id}` for any Word with `topic ===
 'sentences'` — unique per sentence, the same way `NUMERALS`/`WORD_ICON`
 already key real words with bespoke art off their own id. Every sentence in
@@ -5516,7 +5759,7 @@ variant to `2` (`listenTap`) for whatever due item lands there, and a due
 item can be a previously-graded sentence exactly as easily as a real word.
 Before this fix, that branch's `distinctCue` pass on a sentence fell
 through to real, visually-distinct vocabulary; after, sentences satisfy
-each other directly, so it rendered four *other sentences*, every option
+each other directly, so it rendered four _other sentences_, every option
 showing the identical shared icon — silently defeating
 `check-answerable.js`'s own `distinct(options.map(cueOf))` guard, because
 that check never simulates a due queue and so never reaches this path.
@@ -5554,34 +5797,37 @@ rather than a vocabulary-recall trap — judged stronger than this item's
 own "adds variety" framing gives it credit for.
 
 ## PASSED · URD-050 · 2026-08-27T14:05Z
+
 The one BLOCKING finding fixed and revert-verified; no MAJOR/MINOR findings
 from either critic.
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npx vitest run
-  245/245 (13 new: URD-050's own generator.test.ts block).
+245/245 (13 new: URD-050's own generator.test.ts block).
 
 $ npm run check:grammar-distractors
-  876/876 (100.0%); meaningPick 292/292, wordFromMeaning 584/584 — both at
-  the DISTRACTORS - 1 cap, neither over it.
+876/876 (100.0%); meaningPick 292/292, wordFromMeaning 584/584 — both at
+the DISTRACTORS - 1 cap, neither over it.
 
 $ npm run check:answerable / npm run check:shape
-  clean, unchanged targets and exercise-kind counts.
+clean, unchanged targets and exercise-kind counts.
 
 $ npm run check:all
-  all 30 steps pass against a deploy-shaped build.
+all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-meaningpick-sentence-distractor
 
 ## CLAIMED · URD-051 · 2026-08-27T14:15Z
+
 files: scripts/soak.js, scripts/lib/serve-dist.js, scripts/check-soak-track.js
-  (new), package.json
+(new), package.json
 branch: claude/gauntlet-soak-track-flag, cut from
 claude/gauntlet-meaningpick-sentence-distractor after URD-050 shipped.
 
 ## CRITIQUE · URD-051
+
 `enterAsGuest` (`serve-dist.js`) gained a fourth argument, `settings`, that
 merges into the `harf-settings` write the same way its existing third
 argument (`state`) already merges into `harf-progress`'s — the two stores
@@ -5628,31 +5874,34 @@ the same ROLES.md rule this session already wrote, rather than left for a
 third recurrence to surface it again.
 
 ## PASSED · URD-051 · 2026-08-27T14:50Z
+
 No BLOCKING or MAJOR findings; both MINORs filed forward (URD-064, and an
 unrelated pre-existing gap noted for the record only).
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npx vitest run
-  245/245, unchanged — this item touches no test-covered app code.
+245/245, unchanged — this item touches no test-covered app code.
 
 $ npm run check:soak-track
-  all three cases (roman/script/unset) read back correctly from real
-  localStorage; revert-verified to fail with the predicted shape.
+all three cases (roman/script/unset) read back correctly from real
+localStorage; revert-verified to fail with the predicted shape.
 
 $ npm run check:all
-  all 30 steps pass against a deploy-shaped build.
+all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-soak-track-flag
 
 ## CLAIMED · URD-052 · 2026-08-27T14:55Z
+
 files: scripts/check-theme.js, src/screens/LetterLabScreen.tsx,
-  src/screens/SettingsScreen.tsx
+src/screens/SettingsScreen.tsx
 branch: claude/gauntlet-theme-alpha-floor, cut from
 claude/gauntlet-soak-track-flag after URD-051 shipped.
 
 ## CRITIQUE · URD-052
+
 `check:theme`'s `PAPER_FLOOR` rule now also catches
 `withAlpha(palette.paper, N)` written inline at a genuine text-colour site
 (`color:`/`placeholderTextColor=`), converting the 0-1 fraction to the
@@ -5698,30 +5947,33 @@ the first draft made, the same overclaim this item exists to fix, caught
 one layer deeper in the fix that corrected it.
 
 ## PASSED · URD-052 · 2026-08-27T15:20Z
+
 No BLOCKING; both MAJORs filed forward as real coverage gaps in the check
 itself, not live app defects.
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npx vitest run
-  245/245, unchanged — no test-covered app logic touched.
+245/245, unchanged — no test-covered app logic touched.
 
 $ npm run check:theme
-  clean; revert-verified in both directions (3 real fixes fail reverted,
-  false-positive exclusion holds at an extreme value).
+clean; revert-verified in both directions (3 real fixes fail reverted,
+false-positive exclusion holds at an extreme value).
 
 $ npm run check:all
-  all 30 steps pass against a deploy-shaped build.
+all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-theme-alpha-floor
 
 ## CLAIMED · URD-053 · 2026-08-27T15:25Z
+
 files: src/data/letters.ts, src/data/letters.test.ts
 branch: claude/gauntlet-letter-collision-notes, cut from
 claude/gauntlet-theme-alpha-floor after URD-052 shipped.
 
 ## CRITIQUE · URD-053
+
 Extended URD-038's z-group disambiguation-note treatment to three more
 same-sound collisions: se/seen/swaad (s), baRi-he/choti-he (h), te/toe
 (t). One real correction to the item's own title: `do-chashmi-he` does
@@ -5778,27 +6030,30 @@ cost two redundant "is this real" round-trips that a single direct
 arrived.
 
 ## PASSED · URD-053 · 2026-08-27T16:05Z
+
 No BLOCKING (the reported one was a transcription artifact, verified void
 directly); one MINOR filed forward (URD-067).
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npx vitest run
-  249/249 (4 new tests in letters.test.ts's URD-053 block).
+249/249 (4 new tests in letters.test.ts's URD-053 block).
 
 $ npm run check:all
-  all 30 steps pass against a deploy-shaped build.
+all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-letter-collision-notes
 
 ## CLAIMED · URD-054 · 2026-08-28T00:10Z
+
 files: src/exercises/LetterExercises.tsx, src/exercises/letterFormGrading.ts
-  (new), src/exercises/letterFormGrading.test.ts (new)
+(new), src/exercises/letterFormGrading.test.ts (new)
 branch: claude/gauntlet-letterform-non-connector, cut from
 claude/gauntlet-letter-collision-notes after URD-053 shipped.
 
 ## CRITIQUE · URD-054
+
 Took the "accept either" branch of the item's own two offered fixes.
 `LetterFormExercise` now grades by rendered glyph (`isCorrectPosition`,
 mirroring URD-045's `isCorrectTap` extraction) rather than position name
@@ -5828,7 +6083,7 @@ connectors and exactly 2 exceptions (hamza, baRi-ye) — no third missed.
 Proved zero regression risk for connecting letters two ways (exhaustive
 test + direct algebra on `connector()`'s definition). Noted a nice side-
 effect: `scripts/soak.js`'s `answerLetterForm` solver's glyph-matching
-always resolves to the *first* matching key in declaration order, which
+always resolves to the _first_ matching key in declaration order, which
 was a latent ~50%-of-cases false-wrong bug for non-connectors under the
 old grading — this fix repairs it for free, no `soak.js` change needed.
 
@@ -5841,28 +6096,31 @@ baRi-ye's own position pairs directly, revert-verified against the exact
 mutation that found the gap.
 
 ## PASSED · URD-054 · 2026-08-28T00:35Z
+
 No BLOCKING; both MINORs fixed before shipping.
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npx vitest run
-  255/255 (6 new tests in letterFormGrading.test.ts).
+255/255 (6 new tests in letterFormGrading.test.ts).
 
 $ npm run check:answerable
-  clean, unchanged exercise-kind counts.
+clean, unchanged exercise-kind counts.
 
 $ npm run check:all
-  all 30 steps pass against a deploy-shaped build.
+all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-letterform-non-connector
 
 ## CLAIMED · URD-055 · 2026-08-28T00:40Z
+
 files: src/screens/lessonScreenWiring.test.ts (new)
 branch: claude/gauntlet-lessonscreen-grade-flush, cut from
 claude/gauntlet-letterform-non-connector after URD-054 shipped.
 
 ## CRITIQUE · URD-055
+
 New test reads the real `LessonScreen.tsx` as text, strips comments,
 extracts the `advance` and `onGraded` function bodies by brace-depth
 matching, and asserts `flushPendingGrades()` appears inside `advance()`
@@ -5898,27 +6156,30 @@ CRITIC named explicitly while agreeing the chosen approach is defensible
 given the real cost that alternative would carry.
 
 ## PASSED · URD-055 · 2026-08-28T01:00Z
+
 No BLOCKING or MAJOR; three MINORs accepted, none requiring a code
 change.
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npx vitest run
-  259/259 (4 new tests in lessonScreenWiring.test.ts).
+259/259 (4 new tests in lessonScreenWiring.test.ts).
 
 $ npm run check:all
-  all 30 steps pass against a deploy-shaped build.
+all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-lessonscreen-grade-flush
 
 ## CLAIMED · URD-056 · 2026-08-28T01:05Z
+
 files: scripts/check-all.js, scripts/check-all-lock.js (new), .gitignore,
-  package.json
+package.json
 branch: claude/gauntlet-checkall-lockfile, cut from
 claude/gauntlet-lessonscreen-grade-flush after URD-055 shipped.
 
 ## CRITIQUE · URD-056
+
 `check-all.js` takes a gitignored lockfile before its step loop; a second
 run finds it held by a still-alive PID and refuses by name rather than
 racing the `dist/` rebuild, or finds a dead PID's stale lock and takes it
@@ -5969,32 +6230,35 @@ confined to the lead's own verification script, self-verified by 5+
 consecutive real runs plus one full real `check:all` pass.
 
 ## PASSED · URD-056 · 2026-08-28T01:35Z
+
 No BLOCKING; one real MAJOR fixed and re-verified live; two MINORs
 acknowledged rather than fixed.
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npx vitest run
-  259/259, unchanged — no test-covered app logic touched.
+259/259, unchanged — no test-covered app logic touched.
 
 $ npm run check:all-lock
-  5+ consecutive clean runs, both the graceful and SIGKILL-escalation
-  paths observed and reported honestly.
+5+ consecutive clean runs, both the graceful and SIGKILL-escalation
+paths observed and reported honestly.
 
 $ npm run check:all
-  one full real run (unguarded, no second process racing it): all 30
-  steps pass, lock released cleanly at the end.
+one full real run (unguarded, no second process racing it): all 30
+steps pass, lock released cleanly at the end.
 
 branch: claude/gauntlet-checkall-lockfile
 
 ## CLAIMED · URD-057 · 2026-08-28T01:40Z
+
 files: scripts/check-all.js, scripts/check-clean-tree.js (new),
-  scripts/lib/clean-tree.js (new), package.json
+scripts/lib/clean-tree.js (new), package.json
 branch: claude/gauntlet-scratch-file-guard, cut from
 claude/gauntlet-checkall-lockfile after URD-056 shipped.
 
 ## CRITIQUE · URD-057
+
 `strayFiles()` (`lib/clean-tree.js`) lists every untracked file under
 `src/`/`scripts/` via `git status --porcelain -uall`; `check-clean-tree.js`
 runs it standalone, and `check-all.js` runs the same function as an
@@ -6032,30 +6296,33 @@ this check's own two new files aren't yet staged — self-resolves once
 they are.
 
 ## PASSED · URD-057 · 2026-08-28T01:55Z
+
 One real BLOCKING fixed and re-verified against the exact repro; one
 MAJOR acknowledged via comment; one non-gating MINOR.
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npx vitest run
-  259/259, unchanged — no test-covered app logic touched.
+259/259, unchanged — no test-covered app logic touched.
 
 $ npm run check:clean-tree
-  verified against the item's own text plus THE CRITIC's space/directory
-  adversarial cases; tree confirmed clean after each.
+verified against the item's own text plus THE CRITIC's space/directory
+adversarial cases; tree confirmed clean after each.
 
 $ npm run check:all
-  all 30 steps pass, new guard included as an early step.
+all 30 steps pass, new guard included as an early step.
 
 branch: claude/gauntlet-scratch-file-guard
 
 ## CLAIMED · URD-059 · 2026-08-28T02:10Z
+
 files: scripts/check-answerable.js
 branch: claude/gauntlet-answerable-position-band, cut from
 claude/gauntlet-scratch-file-guard after URD-057 shipped.
 
 ## CRITIQUE · URD-059
+
 The main answer-position histogram now uses the same z-test the
 floor-exempt section already had (shared `SIGMA_LIMIT = 4`, hoisted to
 one declaration) plus a "no seat may be empty" rule mirroring that
@@ -6094,25 +6361,27 @@ MINOR (fixed in passing): the doc comment's "z ≈ 1.3" claim was one
 unseeded run's snapshot, reworded to describe the observed range instead.
 
 ## PASSED · URD-059 · 2026-08-28T02:30Z
+
 No BLOCKING; one real MAJOR fixed and re-verified against the exact
 repro; one MINOR fixed in passing.
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npx vitest run
-  259/259, unchanged — no test-covered app logic touched.
+259/259, unchanged — no test-covered app logic touched.
 
 $ node scripts/check-answerable.js
-  clean; both mutation tests (arithmetic reconstruction + live script
-  mutation) confirmed and reverted.
+clean; both mutation tests (arithmetic reconstruction + live script
+mutation) confirmed and reverted.
 
 $ npm run check:all
-  all 30 steps pass against a deploy-shaped build.
+all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-answerable-position-band
 
 ## CLAIMED · URD-060 · 2026-08-28T02:45Z
+
 files: src/exercises/generator.ts, src/exercises/types.ts,
 src/exercises/LetterExercises.tsx, src/exercises/generator.test.ts,
 scripts/check-answerable.js, scripts/soak.js
@@ -6120,6 +6389,7 @@ branch: claude/gauntlet-letter-form-coverage, cut from
 claude/gauntlet-answerable-position-band after URD-059 shipped.
 
 ## CRITIQUE · URD-060
+
 Took the "give `letterPick` a position" branch. `letterPick` gained a
 `position: PositionKey` field; both construction sites pass the position
 already computed for that call instead of discarding it; the exercise
@@ -6168,7 +6438,7 @@ position × 300 draws (48,000 draws, 0 collisions anywhere, not just the
 known pair); a starvation check across the same sweep at 200 draws each
 (32,000 draws, distractor floor of 3 always met); and a live regression
 check — reverting only `distractLetters` and re-running
-`check-answerable` immediately failed with a *distractor-vs-distractor*
+`check-answerable` immediately failed with a _distractor-vs-distractor_
 collision (`fe @ medial: baRi-ye vs choti-ye`) that neither critic's
 example named, confirming the general fix (not a special case) is what's
 needed.
@@ -6190,7 +6460,7 @@ stable canonical shape; this diff removes that.
 across all 9 real lessons: 12 of 46 letters' first sighting is
 `letterPick` (11 now non-`isolated`), but 19 land on `letterTrace` and 15
 on `letterForm` — both already honour `position` and always have, and 20
-of those 34 were *already* non-`isolated` before this diff touched
+of those 34 were _already_ non-`isolated` before this diff touched
 anything. `nextPos` assigns a rotating position to every call regardless
 of which kind consumes it; `letterForm`/`letterTrace` were never
 special-cased to stay `isolated` at round 0. No "round 0 is always
@@ -6206,6 +6476,7 @@ failure demonstrated for the branch taken — acknowledged as a considered
 alternative, not acted on.
 
 ## PASSED · URD-060 · 2026-08-28T03:10Z
+
 No unresolved BLOCKING; the one real BLOCKING finding (glyph collision)
 fixed and re-verified beyond the repro that found it. One MAJOR
 investigated and shown not to hold (round-0 canonical-shape premise was
@@ -6213,39 +6484,41 @@ already false for 20 of 46 letters before this diff). One architectural
 preference acknowledged, not acted on.
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npx vitest run
-  261/261, including two new exhaustive `distractLetters` tests and the
-  tightened zero-tolerance coverage test.
+261/261, including two new exhaustive `distractLetters` tests and the
+tightened zero-tolerance coverage test.
 
 $ node scripts/check-answerable.js
-  clean; live regression check against the un-fixed generator confirmed
-  the new glyph-uniqueness assertion fires by name.
+clean; live regression check against the un-fixed generator confirmed
+the new glyph-uniqueness assertion fires by name.
 
 $ npm run check:shape
-  clean.
+clean.
 
 $ npm run check:all
-  all 30 steps pass against a deploy-shaped build, on a second full run.
-  A first run failed at `check:home-scroll` — a step unrelated to this
-  diff (home-screen scroll/accordion). Verified rather than assumed
-  (non-negotiable 1): reverted to pre-URD-060 and ran it alone (passed),
-  restored this diff and ran it alone three more times (passed every
-  time), then re-ran the full pipeline end to end a second time, clean.
-  Did not reproduce under any condition — a timing flake (the step waits
-  a fixed 1500ms for the app to render under a simulated deep-progress
-  login), most likely this session's own concurrent load at the time, not
-  a regression.
+all 30 steps pass against a deploy-shaped build, on a second full run.
+A first run failed at `check:home-scroll` — a step unrelated to this
+diff (home-screen scroll/accordion). Verified rather than assumed
+(non-negotiable 1): reverted to pre-URD-060 and ran it alone (passed),
+restored this diff and ran it alone three more times (passed every
+time), then re-ran the full pipeline end to end a second time, clean.
+Did not reproduce under any condition — a timing flake (the step waits
+a fixed 1500ms for the app to render under a simulated deep-progress
+login), most likely this session's own concurrent load at the time, not
+a regression.
 
 branch: claude/gauntlet-letter-form-coverage
 
 ## CLAIMED · URD-061 · 2026-08-28T07:20Z
+
 files: src/exercises/generator.ts, src/exercises/generator.test.ts
 branch: claude/gauntlet-letter-contrast-review, cut from
 claude/gauntlet-letter-form-coverage after URD-060 shipped.
 
 ## CRITIQUE · URD-061
+
 Inside the `review` branch of `buildLessonExercises`, a due letter with a
 confusable mate can now render as `letterContrastExercise` instead of its
 usual `letterExerciseAt` kind — `due` is the SRS flagging the letter as
@@ -6301,6 +6574,7 @@ real but narrow, and doesn't reopen URD-060's teaching-lesson coverage
 guarantee.
 
 ## PASSED · URD-061 · 2026-08-28T07:45Z
+
 No unresolved BLOCKING; one real BLOCKING finding (off-path untaught
 mate) and one real MAJOR (starved bucket member) both fixed and
 re-verified beyond the repros that found them, including a realistic
@@ -6308,33 +6582,35 @@ SRS simulation correcting my own first, flawed re-verification attempt.
 Two MINORs noted, not acted on.
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npx vitest run
-  267/267, including 6 new tests (a review with confusable letters due
-  can emit letterContrast; every one of 29 letters-with-a-mate wins the
-  slot across its post-teaching reviews; exact bucket, no duplicates;
-  never on Roman; the off-path BLOCKING regression; the 3+-member
-  rotation-fairness test).
+267/267, including 6 new tests (a review with confusable letters due
+can emit letterContrast; every one of 29 letters-with-a-mate wins the
+slot across its post-teaching reviews; exact bucket, no duplicates;
+never on Roman; the off-path BLOCKING regression; the 3+-member
+rotation-fairness test).
 
 $ node scripts/check-answerable.js
-  clean.
+clean.
 
 $ npm run check:shape
-  clean — the 84%/19-in-a-row regression this item's own cap prevents
-  does not recur.
+clean — the 84%/19-in-a-row regression this item's own cap prevents
+does not recur.
 
 $ npm run check:all
-  all steps pass against a deploy-shaped build.
+all steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-letter-contrast-review
 
 ## CLAIMED · URD-062 · 2026-08-28T07:55Z
+
 files: src/data/letters.ts, src/data/letters.test.ts
 branch: claude/gauntlet-base-letter-notes, cut from
 claude/gauntlet-letter-contrast-review after URD-061 shipped.
 
 ## CRITIQUE · URD-062
+
 All 13 base letters' `note` fields edited so their first sentence — the
 only part `contrastLine` ever shows in the post-answer panel — names the
 mark separating the base from its variant(s), or explicitly its absence
@@ -6358,7 +6634,7 @@ proves a keyword is present — reproduced live: rewriting `daal`'s note to
 mention "a single dot of ink where the pen first touches the page" (true
 of nothing about `Daal`/`zaal`) still passed. Fixed by requiring the
 variant's own id by name for the 11 single-variant buckets, "madda" (a
-specific diacritic name) for `alif`, and *both* "dot" and "retroflex" for
+specific diacritic name) for `alif`, and _both_ "dot" and "retroflex" for
 the two multi-variant buckets. Re-verified against the exact repro: now
 correctly fails it. THE CRITIC's MINOR (test reimplemented `contrastLine`'s
 split instead of importing it) fixed in the same pass.
@@ -6379,32 +6655,35 @@ their space-separated `name` field instead of their hyphenated id,
 matching the convention already used for `choṭī he`.
 
 ## PASSED · URD-062 · 2026-08-28T08:12Z
+
 No unresolved BLOCKING; two real MAJORs from the critics plus one
 self-caught house-style violation, all fixed and re-verified.
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npx vitest run
-  273/273, including 6 new tests in a new URD-062 describe block.
+273/273, including 6 new tests in a new URD-062 describe block.
 
 $ node scripts/check-writing.js
-  clean — this is what caught the em-dash/hyphenated-id defect above.
+clean — this is what caught the em-dash/hyphenated-id defect above.
 
 $ node scripts/check-answerable.js / npm run check:shape
-  both clean.
+both clean.
 
 $ npm run check:all
-  all steps pass against a deploy-shaped build.
+all steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-base-letter-notes
 
 ## CLAIMED · URD-063 · 2026-08-28T08:15Z
+
 files: scripts/soak.js, src/exercises/LetterSpot.tsx
 branch: claude/gauntlet-lettersspot-soak, cut from
 claude/gauntlet-base-letter-notes after URD-062 shipped.
 
 ## CRITIQUE · URD-063
+
 `LetterSpot.tsx`'s tile gained `min-w-[116px]` (previously no width
 constraint — a bare glyph cluster plus padding, measuring under soak's
 own `b.width > 110` tap-target floor). `soak.js` gained a `letterSpot`
@@ -6454,6 +6733,7 @@ and the already-documented, out-of-scope hearts-economy attrition from an
 earlier item.
 
 ## PASSED · URD-063 · 2026-08-28T09:58Z
+
 No unresolved BLOCKING; one real MAJOR (clickMatching multi-correct bug)
 fixed and re-verified; one pre-existing MAJOR found and correctly filed
 separately (URD-069) rather than fixed out of scope; the item's own
@@ -6461,30 +6741,32 @@ separately (URD-069) rather than fixed out of scope; the item's own
 with a filed follow-up (URD-068) rather than claimed.
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npx vitest run
-  273/273, unchanged.
+273/273, unchanged.
 
 $ npm run check:sizes
-  clean (does not itself exercise the letterSpot screen, per THE CRITIC).
+clean (does not itself exercise the letterSpot screen, per THE CRITIC).
 
 $ npm run soak (several seeds, several lesson budgets)
-  0 letterSpot-related failures throughout; solver succeeds on every
-  real invocation, matched independently by THE CRITIC on an identical
-  seed.
+0 letterSpot-related failures throughout; solver succeeds on every
+real invocation, matched independently by THE CRITIC on an identical
+seed.
 
 $ npm run check:all
-  all steps pass against a deploy-shaped build.
+all steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-lettersspot-soak
 
 ## CLAIMED · URD-064 · 2026-08-28T10:05Z
+
 files: scripts/soak.js, scripts/check-soak-track-arg.js, package.json
 branch: claude/gauntlet-soak-track-validation, cut from
 claude/gauntlet-lettersspot-soak after URD-063 shipped.
 
 ## CRITIQUE · URD-064
+
 `soak.js` gained `VALID_TRACKS` plus an immediate check right after
 `TRACK` is computed — an unrecognised value prints the bad value and the
 three accepted ones and exits 1, before any dist/Chromium check. A new
@@ -6518,50 +6800,55 @@ form first; verified every real flag both ways, plus the space form
 unchanged and an empty `--track=` falling back correctly.
 
 ## PASSED · URD-064 · 2026-08-28T10:30Z
+
 No unresolved BLOCKING; two real MAJORs (test-harness reliability/leak,
 and a second silent-failure path for the exact flag this item is about)
 both fixed and re-verified beyond the repros that found them.
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ npx vitest run
-  273/273, unchanged.
+273/273, unchanged.
 
 $ node scripts/check-soak-track-arg.js
-  clean, both space- and equals-separated forms, no process leaks.
+clean, both space- and equals-separated forms, no process leaks.
 
 $ npm run check:soak-track
-  unaffected (different mechanism), clean.
+unaffected (different mechanism), clean.
 
 $ npm run check:all
-  all steps pass against a deploy-shaped build.
+all steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-soak-track-validation
 
 ## CLAIMED · URD-065 · 2026-08-28T11:00Z
+
 files: scripts/check-theme.js
 definition of done: check:theme now detects withAlpha(palette.paper, N)
-  calls assigned to local variables and then used in text-colour props
-  (e.g. `const text = disabled ? withAlpha(palette.paper, 0.4) : ...; style={{ color: text }}`).
+calls assigned to local variables and then used in text-colour props
+(e.g. `const text = disabled ? withAlpha(palette.paper, 0.4) : ...; style={{ color: text }}`).
 verify: with Button.tsx's `text` variable temporarily set to 0.4,
-  `npm run check:theme` reports it as a legibility-floor violation.
+`npm run check:theme` reports it as a legibility-floor violation.
 branch: claude/gauntlet-theme-withalpha-variable
 
 ## CLAIMED · URD-066 · 2026-08-28T11:00Z
+
 files: scripts/check-theme.js
 definition of done: check:theme now detects withAlpha(palette.paper, N)
-  calls in multi-line ternary expressions wrapped by Prettier (where the
-  withAlpha call appears on a different line than the `color:` key).
+calls in multi-line ternary expressions wrapped by Prettier (where the
+withAlpha call appears on a different line than the `color:` key).
 verify: with LetterLabScreen.tsx:159 reformatted onto multiple lines and
-  the value temporarily set to 0.4, `npm run check:theme` reports it as
-  a legibility-floor violation.
+the value temporarily set to 0.4, `npm run check:theme` reports it as
+a legibility-floor violation.
 branch: claude/gauntlet-theme-withalpha-variable
 
 ## CRITIQUE · URD-065 & URD-066
+
 Both items addressed together in a single implementation:
 
 ### checkVariableWithAlpha() function
+
 Finds `const/let/var X = ... withAlpha(palette.paper, N) ...` declarations
 and tracks uses of that variable in `color:` or `placeholderTextColor=`
 assignments. Scopes the search to the closing brace after the declaration
@@ -6569,37 +6856,43 @@ to avoid false positives across function boundaries. No BLOCKING findings
 in testing; correctly identifies violations when values fall below the 55% floor.
 
 ### checkInlineWithAlphaMultiline() function
+
 Finds `color:` or `placeholderTextColor=` assignments on one line, then looks
 at following lines for `withAlpha(palette.paper, N)` calls until hitting:
-  - Another property definition (line starting with identifier + `:`)
-  - A closing brace or paren
-This conservative approach avoids false positives where a sibling property
-might have its own withAlpha call. Confirmed live against LetterLabScreen's
-multi-line ternary pattern.
+
+- Another property definition (line starting with identifier + `:`)
+- A closing brace or paren
+  This conservative approach avoids false positives where a sibling property
+  might have its own withAlpha call. Confirmed live against LetterLabScreen's
+  multi-line ternary pattern.
 
 ### Documentation updates
+
 Updated the main comment block to note that both URD-065 and URD-066 have
 been fixed, clarifying that the check now covers three common patterns:
-  1. Direct inline: `color: withAlpha(palette.paper, 0.4)`
-  2. Via variable: `const X = withAlpha(...); style={{ color: X }}`
-  3. Multi-line ternary: `color: expr ? A : withAlpha(...)`
+
+1. Direct inline: `color: withAlpha(palette.paper, 0.4)`
+2. Via variable: `const X = withAlpha(...); style={{ color: X }}`
+3. Multi-line ternary: `color: expr ? A : withAlpha(...)`
 
 All tests confirmed:
-  - Violations correctly reported below 55% floor
-  - No false positives on passing values (0.55, 0.7 unchanged)
-  - Patterns match their intended use cases in Button.tsx and LetterLabScreen.tsx
+
+- Violations correctly reported below 55% floor
+- No false positives on passing values (0.55, 0.7 unchanged)
+- Patterns match their intended use cases in Button.tsx and LetterLabScreen.tsx
 
 ## PASSED · URD-065 & URD-066 · 2026-08-28T11:15Z
+
 $ npm run check:theme
-  check:theme — 25 palette tokens, all spent, tailwind.config.js agrees
-  with all of them, no raw hex outside the theme, no faded text under the
-  legibility floor.
+check:theme — 25 palette tokens, all spent, tailwind.config.js agrees
+with all of them, no raw hex outside the theme, no faded text under the
+legibility floor.
 
 $ npm run typecheck / npm run lint / npm run format:check
-  all clean.
+all clean.
 
 $ npm run check:soak-track / npm run check:soak-track-arg
-  both unaffected (different checks), clean.
+both unaffected (different checks), clean.
 
 Induced failures: both test patterns (Button.tsx text=0.4, LetterLabScreen
 ternary=0.4) correctly reported violations before revert; checks passed
@@ -6608,51 +6901,54 @@ clean after restoring to 0.55/0.55.
 branch: claude/gauntlet-theme-withalpha-variable
 
 ## CLAIMED · URD-069 · 2026-08-28T11:30Z
+
 files: src/exercises/common.tsx, src/exercises/LetterSpot.tsx
 definition of done: Choice component's marginStart/marginEnd style props
-  now properly render in the web build, producing the intended gap
-  between tiles at word boundaries.
+now properly render in the web build, producing the intended gap
+between tiles at word boundaries.
 verify: screenshot-based check comparing real LetterSpotExercise render at
-  320px/390px, confirming non-zero gap appears between tiles at word
-  boundaries (14px for wordBreakAfter tiles vs 4px regular).
+320px/390px, confirming non-zero gap appears between tiles at word
+boundaries (14px for wordBreakAfter tiles vs 4px regular).
 branch: claude/gauntlet-choice-margin-start
 
 ## CRITIQUE · URD-069
+
 React Native Web does not properly render logical margins (marginStart/
 marginEnd) when passed through a function-valued style callback, even though
 physical margins (marginLeft/marginRight) would work. The original implementation
 passed these margins through the Pressable's function-valued style prop:
 
-  style={({ pressed }) => ({
-    transform: [...],
-    opacity: ...,
-    ...style,  // marginStart/marginEnd merged here
-  })}
+style={({ pressed }) => ({
+transform: [...],
+opacity: ...,
+...style, // marginStart/marginEnd merged here
+})}
 
 No BLOCKING findings; the fix is straightforward: move margins to a wrapper
 View element, which is a standard pattern in React Native layout.
 
 ## PASSED · URD-069 · 2026-08-28T11:35Z
+
 $ npm run typecheck
-  clean.
+clean.
 
 $ npm run lint
-  clean.
+clean.
 
 $ npm run format:check
-  All matched files use Prettier code style!
+All matched files use Prettier code style!
 
 $ npm run test
-  273 passed (273)
+273 passed (273)
 
 $ npm run check:sizes
-  16 screen renders across 8 sizes, from 320x568 to 1280x800. Nothing clipped,
-  nothing scrolling sideways.
+16 screen renders across 8 sizes, from 320x568 to 1280x800. Nothing clipped,
+nothing scrolling sideways.
 
 The fix wraps each Choice in a View with marginStart/marginEnd styling:
-  <View style={{ marginStart: wordGap, marginEnd: 4 }}>
-    <Choice ... />
-  </View>
+<View style={{ marginStart: wordGap, marginEnd: 4 }}>
+<Choice ... />
+</View>
 
 This moves margins out of the function-valued style callback where react-native-web
 doesn't handle them, onto a simple View where logical margins render correctly.
@@ -6660,14 +6956,16 @@ doesn't handle them, onto a simple View where logical margins render correctly.
 branch: claude/gauntlet-choice-margin-start
 
 ## CLAIMED · URD-068 · 2026-08-28T21:07Z
+
 files: scripts/soak.js
 definition of done: `npm run soak -- --seed 4 --lessons 8` no longer
-  dead-ends on the "be · start / trace the letter" screen; a real
-  re-run shows at least a partial trace drawn before passing or being
-  correctly refused.
+dead-ends on the "be · start / trace the letter" screen; a real
+re-run shows at least a partial trace drawn before passing or being
+correctly refused.
 branch: claude/gauntlet-trace-letter-solver
 
 ## CRITIQUE · URD-068 · process note, not a dispatched critic
+
 No critic was dispatched on this item — recording that plainly rather
 than skipping the section, since the ledger's own rule is to say what
 was not done as well as what was.
@@ -6677,7 +6975,7 @@ each is left in below rather than cleaned up, because the ledger's job
 is showing whether the loop is thinking straight, not just the answer
 it landed on.
 
-**Wrong turn 1**: assumed the drawing area's *height* was the problem
+**Wrong turn 1**: assumed the drawing area's _height_ was the problem
 (the pre-existing code was a hardcoded `box.y - 330`, which goes
 negative off the top of a short viewport) and replaced it with an
 adaptive `calcDrawingArea()` that clamps to available space. This did
@@ -6702,17 +7000,17 @@ replaying `traceTheLetter`'s own pixel logic offline against that saved
 screenshot, rather than reasoning about the live browser further.
 Measured on the real 412px-viewport failure:
 
-  pad (parchment card), measured directly:   x 34-378, y 126-470
-  the old computed clip:                     x 133-411 (348 wide,
-                                              truncated to 278 by the
-                                              viewport), y 112-442
-  dark samples inside that clip:             1578
-  ...that were page background OUTSIDE the pad:  842 (53%)
-  topmost dark pixel (where mouse.down() fires): (135, 114), lum 24.7
-                                              — background, 12px above
-                                              the pad
+pad (parchment card), measured directly: x 34-378, y 126-470
+the old computed clip: x 133-411 (348 wide,
+truncated to 278 by the
+viewport), y 112-442
+dark samples inside that clip: 1578
+...that were page background OUTSIDE the pad: 842 (53%)
+topmost dark pixel (where mouse.down() fires): (135, 114), lum 24.7
+— background, 12px above
+the pad
 
-The rect was inferred from the *caption's* bounding box, not the pad's.
+The rect was inferred from the _caption's_ bounding box, not the pad's.
 The caption is a short centred line, so its geometry says nothing about
 the pad's. More than half of what the old code read as "glyph" was
 dark page background, and the walk's start point sat above the pad
@@ -6739,6 +7037,7 @@ now fails loudly at exercise 3 with `unanswerable screen` instead of
 silently faking 90 answers and dead-ending at exercise 69+.
 
 ## PASSED · URD-068 · 2026-08-28T23:17Z
+
 No critic dispatched (see CRITIQUE note above for why, disclosed
 plainly). Root cause isolated by direct pixel measurement against the
 saved failure screenshot, not inference from the live driver; fix
@@ -6747,21 +7046,21 @@ proven capable of failing.
 
 $ npm run soak -- --seed 4 --lessons 8
 soak — 0 lessons completed, 8 attempts, 101 exercises answered.
-  exercise kinds exercised: letterTrace 23 · letterForm 25 · letterPick 28 ·
-  letterSpot 18 · letterContrast 7
+exercise kinds exercised: letterTrace 23 · letterForm 25 · letterPick 28 ·
+letterSpot 18 · letterContrast 7
 [debug] solverStats: {"solved":78}
-  Nothing broke. Seed 4.
+Nothing broke. Seed 4.
 
 $ (temporarily reverted to the caption-derived rect) npm run soak -- --seed 4 --lessons 2
 [trace] pad 133,112 348x330 → 220 pts
 [trace] pad 133,112 348x330 → 220 pts
 [trace] no stroke registered — pointer missed the pad
-  ✗ unanswerable screen — nothing on screen could be acted on: ✕ / TE · END /
-  Trace the letter / ‏ـت / Draw over the grey letter / CLEAR / CHECK
-  0 lessons completed, 1 attempts, 3 exercises, 1 failures
+✗ unanswerable screen — nothing on screen could be acted on: ✕ / TE · END /
+Trace the letter / ‏ـت / Draw over the grey letter / CLEAR / CHECK
+0 lessons completed, 1 attempts, 3 exercises, 1 failures
 
 $ npm run check:all
-  all 30 steps pass against a deploy-shaped build.
+all 30 steps pass against a deploy-shaped build.
 
 What this does not fix: 0 lessons completed, unchanged from before this
 item — the hearts-economy attrition already attributed to URD-006 in
@@ -6770,15 +7069,17 @@ this file's own comments. Out of this item's scope.
 branch: claude/gauntlet-trace-letter-solver
 
 ## CLAIMED · URD-067 · 2026-08-29T00:24Z
+
 files: src/data/letters.ts
 definition of done: decide, against the real rendered glyphs, whether
-  choti-he and do-chashmi-he are a genuine visual confusable pair —
-  either give them a `confusableWith` link, or record on both entries
-  why they deliberately do not have one — and back the answer with a
-  test in the shape of `letters.test.ts`'s existing bucket invariants.
+choti-he and do-chashmi-he are a genuine visual confusable pair —
+either give them a `confusableWith` link, or record on both entries
+why they deliberately do not have one — and back the answer with a
+test in the shape of `letters.test.ts`'s existing bucket invariants.
 branch: claude/gauntlet-trace-letter-solver
 
 ## CRITIQUE · URD-067 · process note, not a dispatched critic
+
 No critic dispatched. Recorded here because the process itself took two
 wrong quantitative turns before landing on the criterion that actually
 holds, and both are worth keeping so nobody re-derives them.
@@ -6799,7 +7100,7 @@ not width). Checked against exactly two calibration pairs
 (baRi-he ~ khe, kaaf ~ gaaf, both 1.00x) this looked clean, and a
 `confusableWith: 'choti-he'`-free commit went out citing it, with the
 h-pair's 1.17-2.47x as the disqualifier. Checked against all 16 declared
-pairs before the *next* commit, it fails: `alif ~ alif-madda` measures
+pairs before the _next_ commit, it fails: `alif ~ alif-madda` measures
 4.00x and `noon ~ noon-ghunna` 2.29x, both wider apart than the pair
 this rule was ruling out. A mark on a narrow glyph dominates its
 bounding box. The rule would have unlinked eight of sixteen real pairs.
@@ -6818,10 +7119,10 @@ comparison agrees qualitatively: ھ is a wider, flatter double-loop, not
 ہ plus dots.
 
 Two corrections to the item's own premise, found in the process: `khe`
-links to `baRi-he` within the *same* teaching group (both group 2), not
+links to `baRi-he` within the _same_ teaching group (both group 2), not
 "a different group entirely" as stated — checked as a corpus invariant,
 zero cross-group links exist. And the pair is genuinely confusable in
-*sound* (both romanise "h"), which URD-053 already handled in these
+_sound_ (both romanise "h"), which URD-053 already handled in these
 notes; `confusableWith` is documented as visual shape specifically.
 
 Kept `scripts/measure-glyph-pair.js`, the rendering harness that
@@ -6831,34 +7132,36 @@ no verdict, since both numbers it can compute were shown above to
 mislead on their own.
 
 ## PASSED · URD-067 · 2026-08-29T00:44Z
+
 No critic dispatched (see CRITIQUE note). Decision: no `confusableWith`
 link between choti-he and do-chashmi-he. Three new tests in
 `letters.test.ts`, each mutation-tested per non-negotiable #2.
 
 $ npx vitest run src/data/letters.test.ts
-  Tests  16 passed (16)
+Tests 16 passed (16)
 
 Mutations run and watched to fail:
-  add confusableWith: 'choti-he' to do-chashmi-he
-    → fails the bucket test, the new documentation test, AND URD-062's
-      existing "13 multi-member buckets" count (would become 14)
-  point pe at jeem instead of be (a cross-group link)
-    → fails the new group-invariant test and the documentation test
-  strip the shared-shape sentence from zaal's note ("Daal with one dot
-  above" → "A letter with one dot above")
-    → fails the documentation test alone, proving it is not vacuous
+add confusableWith: 'choti-he' to do-chashmi-he
+→ fails the bucket test, the new documentation test, AND URD-062's
+existing "13 multi-member buckets" count (would become 14)
+point pe at jeem instead of be (a cross-group link)
+→ fails the new group-invariant test and the documentation test
+strip the shared-shape sentence from zaal's note ("Daal with one dot
+above" → "A letter with one dot above")
+→ fails the documentation test alone, proving it is not vacuous
 
 $ npx eslint src/data/letters.ts src/data/letters.test.ts scripts/measure-glyph-pair.js
   clean.
 $ npx prettier --check src/data/letters.ts src/data/letters.test.ts scripts/measure-glyph-pair.js
-  All matched files use Prettier code style!
+All matched files use Prettier code style!
 
 $ npm run check:all
-  all 30 steps pass against a deploy-shaped build.
+all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-trace-letter-solver
 
 ## CRITIQUE · URD-067 & URD-068 · retroactive dispatch · 2026-08-29T10:30Z
+
 Both items above were recorded PASSED without a critic verdict — a
 process violation this ledger's own rules call out directly ("The lead
 may not pass its own work... A lead that records PASSED without a
@@ -6939,7 +7242,7 @@ evidence trail depends on with zero CI signal.
 
 MINOR (not queued): the "documentation" invariant is looser than its own
 writeup claims. `choti-ye ~ baRi-ye` — one of the 16 declared pairs — is
-documented only as a *difference* ("not baṛī ye's long sweeping one"),
+documented only as a _difference_ ("not baṛī ye's long sweeping one"),
 not a same-shape-plus-a-mark claim, and `refersTo()` cannot tell those
 apart; it only checks whether a note mentions the other letter by name,
 not whether it makes the specific claim `confusableWith`'s contract
@@ -6965,7 +7268,7 @@ notes" — is true only of the data, not of what a learner ever sees.
 Traced the actual render path: `letter.note` is rendered in exactly one
 place in the whole app, `LetterLabScreen.tsx` — already documented
 elsewhere in this corpus as "flashcard trivia, not part of the real
-lesson path." The only mechanism that surfaces note text *during* a
+lesson path." The only mechanism that surfaces note text _during_ a
 real exercise is `letterContrastExercise`, gated strictly by
 `confusableWith` — which `do-chashmi-he` correctly has none of. Net
 effect: across `do-chashmi-he`'s 6 real sightings in lesson `l-8`, a
@@ -6978,13 +7281,14 @@ gap is the missing explicit "here's the rule" moment, not exposure
 count. Explicitly recommends against fixing this via `confusableWith`
 (would misrepresent an unlike pair as near-identical outlines to the
 contrast-drill UI) — the right-shaped fix is a real exposure path for a
-*function* note, independent of the shape mechanism.
+_function_ note, independent of the shape mechanism.
 
 Also found: BENCHMARKS.md has no quantitative target this item touches
 (no lesson-shape number is affected) — said plainly rather than a
 number being forced where none applies.
 
 ## PASSED · URD-067 & URD-068 · confirmed, retroactively critiqued · 2026-08-29T10:30Z
+
 Both items' PASSED status (recorded 2026-08-28T23:17Z and
 2026-08-29T00:44Z respectively) stands, now with the critic verdicts
 this ledger's own rules require attached above. One MAJOR (URD-070) and
@@ -6994,14 +7298,16 @@ used throughout this ledger for findings that don't gate the item that
 surfaced them.
 
 ## CLAIMED · URD-070 · 2026-08-29T18:44Z
+
 files: scripts/soak.js
 definition of done: `traceTheLetter`'s "stroke registered" guard tells a
-  subtly-wrong `traceArea()` rect (correct at the walk's first point,
-  wrong toward the glyph's edges) apart from a healthy one, rather than
-  only proving the first point landed on the pad.
+subtly-wrong `traceArea()` rect (correct at the walk's first point,
+wrong toward the glyph's edges) apart from a healthy one, rather than
+only proving the first point landed on the pad.
 branch: claude/gauntlet-trace-letter-solver
 
 ## CRITIQUE · URD-070 · process note
+
 No critic dispatched on the fix itself — this item's own finding came
 from a critic (see the retroactive-dispatch entry above), and its fix is
 recorded directly rather than re-dispatching a review of a review.
@@ -7011,9 +7317,9 @@ letter covered" text and fail a real attempt that scores suspiciously
 low — was measured, not assumed, before being built: instrumented the
 coverage read-back and ran it live first.
 
-  $ SOAK_MEASURE_COVERAGE=1 npm run soak -- --seed 4 --lessons 10
-  [trace-coverage] 64% 61% 64% 50% 39% 61% 64% ...
-  n=13  min=39  max=64  mean=60.08
+$ SOAK_MEASURE_COVERAGE=1 npm run soak -- --seed 4 --lessons 10
+[trace-coverage] 64% 61% 64% 50% 39% 61% 64% ...
+n=13 min=39 max=64 mean=60.08
 
 A real, correctly-geometried full trace scores 39-64% coverage on this
 corpus alone — natural noise from the driver's coarse walk not hugging
@@ -7029,54 +7335,57 @@ loudly (`fail('trace geometry drift', ...)`) if any fall outside the
 pad's own surface, with the exact count.
 
 ## PASSED · URD-070 · 2026-08-29T19:14Z
-$ npm run soak -- --seed 4 --lessons 8   (healthy geometry, unmodified)
-  soak — 0 lessons completed, 8 attempts, 101 exercises answered.
-  exercise kinds exercised: letterTrace 23 · letterForm 25 · letterPick 28 ·
-  letterSpot 18 · letterContrast 7
-  Nothing broke. Seed 4.
+
+$ npm run soak -- --seed 4 --lessons 8 (healthy geometry, unmodified)
+soak — 0 lessons completed, 8 attempts, 101 exercises answered.
+exercise kinds exercised: letterTrace 23 · letterForm 25 · letterPick 28 ·
+letterSpot 18 · letterContrast 7
+Nothing broke. Seed 4.
 
 Broken on purpose per non-negotiable #2, exactly as the item's own
 `verify` specified — `traceArea()` temporarily scaled 1.18x around its
 own top-left corner (correct at the near corner, wrong toward the far
 edge):
 
-  $ npm run soak -- --seed 4 --lessons 8   (traceArea scaled, temporarily)
-  trace geometry drift
-    54 of 73 recorded stroke points landed outside the pad's own 348px
-    surface — traceArea()'s rect no longer matches the live pad
-  trace geometry drift
-    165 of 220 recorded stroke points landed outside the pad's own 348px
-    surface — traceArea()'s rect no longer matches the live pad
-  ...(hit the run's own 12-failure cap and exited)
+$ npm run soak -- --seed 4 --lessons 8 (traceArea scaled, temporarily)
+trace geometry drift
+54 of 73 recorded stroke points landed outside the pad's own 348px
+surface — traceArea()'s rect no longer matches the live pad
+trace geometry drift
+165 of 220 recorded stroke points landed outside the pad's own 348px
+surface — traceArea()'s rect no longer matches the live pad
+...(hit the run's own 12-failure cap and exited)
 
 Fires reliably with a concrete measured count each time. Reverted
 immediately after, diffed against a backup to confirm byte-for-byte
 restoration.
 
 $ npx eslint scripts/soak.js / npx vitest run
-  clean / 279 passed (279).
+clean / 279 passed (279).
 
 $ npm run check:all
-  all 30 steps pass against a deploy-shaped build.
+all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-trace-letter-solver
 
 ## CLAIMED · URD-071 · 2026-08-29T18:50Z
+
 files: src/data/letters.ts, src/exercises/LetterExercises.tsx,
-  scripts/check-writing.js
+scripts/check-writing.js
 definition of done: `do-chashmi-he`'s real function (a silent modifier of
-  the preceding consonant) reaches a learner during real play, not only
-  in the letter lab; measure which other letters share the same gap
-  rather than assuming it is unique to this one; do not fix it via
-  `confusableWith`, which URD-067 correctly declined for this pair.
+the preceding consonant) reaches a learner during real play, not only
+in the letter lab; measure which other letters share the same gap
+rather than assuming it is unique to this one; do not fix it via
+`confusableWith`, which URD-067 correctly declined for this pair.
 branch: claude/gauntlet-trace-letter-solver
 
 ## CRITIQUE · URD-071 · process note
+
 No critic dispatched — same reasoning as URD-070 above.
 
 Measured the item's own instruction to check scope before assuming it:
 scanned all 40 letters' notes for the pattern CURRICULUM CRITIC's
-finding turned on (a letter that changes a *neighbouring* sound rather
+finding turned on (a letter that changes a _neighbouring_ sound rather
 than carrying one of its own). Exactly two match —
 `do-chashmi-he`/`noon-ghunna` — plus `waw`, which is a different,
 already-adequately-exposed case (its `sound` field, `'w / o / u'`,
@@ -7104,8 +7413,9 @@ before this item's own source changes; `soak.js` never rebuilds it).
 Rebuilt (`npm run build:web`) before trusting any further live result.
 
 ## PASSED · URD-071 · 2026-08-29T19:14Z
+
 $ npx vitest run src/data/letters.test.ts
-  Tests  19 passed (19)
+Tests 19 passed (19)
 
 Mutation-tested: removing `do-chashmi-he`'s `functionNote` fails the
 2-letter corpus-count test and the "names what it changes" test; adding
@@ -7117,25 +7427,26 @@ Confirmed against a freshly rebuilt dist, driven to `do-chashmi-he`'s
 real `letterForm` screen (`--start 66`, lesson `l-8`'s real index in
 `ALL_LESSONS`) and screenshotted:
 
-  "Silent on its own. It changes the sound of the letter right before
-  it (k → kh, b → bh)." — rendered centred, two lines, directly below
-  the answer choices, where `pickedATwin`'s reveal already appears for
-  other letters. Captured four times across repeated sightings,
-  consistent each time.
+"Silent on its own. It changes the sound of the letter right before
+it (k → kh, b → bh)." — rendered centred, two lines, directly below
+the answer choices, where `pickedATwin`'s reveal already appears for
+other letters. Captured four times across repeated sightings,
+consistent each time.
 
 $ npx tsc --noEmit / npm run lint / npm run format:check
-  clean.
+clean.
 
 $ node scripts/check-writing.js
-  clean — functionNote now scanned, confirmed live by re-breaking it
-  first (see CRITIQUE above).
+clean — functionNote now scanned, confirmed live by re-breaking it
+first (see CRITIQUE above).
 
 $ npm run check:all
-  all 30 steps pass against a deploy-shaped build.
+all 30 steps pass against a deploy-shaped build.
 
 branch: claude/gauntlet-trace-letter-solver
 
 ## CRITIQUE · URD-070 & URD-071 · dispatched properly this time · 2026-08-29T19:20Z
+
 Both items above (`8e29e84`) were recorded PASSED without a critic
 verdict — the exact violation this ledger caught for URD-067/068 earlier
 today, repeated. Not disclosed as "no critic dispatched" this time; just
@@ -7270,6 +7581,7 @@ concrete example, closing the gap CURRICULUM CRITIC judged most worth
 pushing on.
 
 ## PASSED · URD-070 & URD-071 · both MAJORs addressed · 2026-08-29T19:44Z
+
 Fixes applied per both critics' findings, above:
 
 - `scripts/soak.js`: `tracedPointsDrift`'s null path now logs to
@@ -7283,11 +7595,11 @@ Fixes applied per both critics' findings, above:
   directly under the real word it can finally sit beside.
 
 $ npm run build:web && SOAK_MEASURE_DRIFT_MARGIN=1 SOAK_DEBUG=1 \
-    npm run soak -- --seed 4 --start 66 --lessons 3
-  [trace] margin 30-34px of 348px pad   (5 real traces, this run)
-  exercise kinds exercised: letterTrace 9 · letterForm 13 · letterPick 10 ·
-  letterSpot 8 · letterContrast 3
-  Nothing broke. Seed 4.
+npm run soak -- --seed 4 --start 66 --lessons 3
+[trace] margin 30-34px of 348px pad (5 real traces, this run)
+exercise kinds exercised: letterTrace 9 · letterForm 13 · letterPick 10 ·
+letterSpot 8 · letterContrast 3
+Nothing broke. Seed 4.
 
 Screenshotted `do-chashmi-he`'s real `letterSpot` screen against the
 rebuilt dist: "House · Ghar" and "Silent on its own. It changes the
@@ -7295,10 +7607,10 @@ sound of the letter right before it (k → kh, b → bh)." render together,
 directly under the word, no clipping or wrap issues.
 
 $ npx eslint / npx tsc --noEmit / npx vitest run src/data/letters.test.ts
-  clean / clean / 19 passed (19).
+clean / clean / 19 passed (19).
 
 $ npm run check:all
-  all 30 steps pass against a deploy-shaped build.
+all 30 steps pass against a deploy-shaped build.
 
 Filed forward, not fixed here: URD-073 (tracedPointsDrift has no
 independent defense against a wrong-pad-selected bug), URD-074
@@ -7307,3 +7619,73 @@ independent defense against a wrong-pad-selected bug), URD-074
 synthetic-position drilling, unrelated pre-existing gap).
 
 branch: claude/gauntlet-trace-letter-solver
+
+---
+
+## FAILED · spacing · 2026-09-21T00:55Z
+
+Revisit spacing — the fourth of the recommended changes. Two fixes attempted,
+both measured, neither shipped. The diagnosis is the deliverable.
+
+### What was wrong, and it is real
+
+Keyed to the item and counting screens between one sighting and the next, over
+a beginner walking the course with the harness calendar running:
+
+gap 1-20 screens ~40% wrong inside the lesson that taught it
+gap 21-100 ~70% wrong a sitting or two later
+gap 101-300 ~84% wrong
+first ever sighting 86% wrong
+
+Past about a hundred screens a repeat is worth no more than a word never seen.
+The band where retrieval still works held about 6% of all repeats.
+
+### Fix 1 — a learning step in the schedule. Reverted.
+
+srs.ts stepped from the minute a missed card waits straight to a full day,
+with nothing between, and a day is four or more lessons for an engaged
+learner. Added a ten-minute step before the day ladder, and made dueQueue put
+cards still being learned ahead of a long-overdue backlog that would otherwise
+bury them. check:srs was updated to state the new promise and three assertions
+added, each broken on purpose.
+
+It worked as designed and changed nothing that matters. 285 cards were brought
+due across 24 lessons. The band moved 6.3% -> 5.8%, accuracy 52.8% -> 54.8%,
+z=0.78: not distinguishable from noise.
+
+### Fix 2 — more room for review in a lesson. Reverted.
+
+The generator wove in two due items per ordinary lesson while dueBudget was
+already fetching four. Raised it to four. Lesson length 36.0 -> 39.6
+exercises; check:shape and check:order both still passed.
+
+Band 5.8% -> 6.2%, accuracy unchanged at 54.8%, z=0.80. A 10% longer lesson
+for nothing measurable.
+
+### Why both bounced off, which is the finding
+
+A lesson teaches about 12 new items and reviews 4. Over 24 lessons that is 288
+taught against 96 review slots. The review debt grows by about 8 items per
+lesson and nothing pays it down, so making cards due sooner only lengthens a
+queue that capacity can never drain. Daily Review does not rescue it either:
+played once per simulated day it moved the same band from 5.3% to 7.8% while
+the backlog grew to 181 cards.
+
+This is not a scheduler dial. It is how much new material a lesson introduces
+relative to how much it revisits, which is a curriculum-shape decision and
+wants a human to make it.
+
+### What was kept
+
+Only the harness. --minutes-per-lesson, because the first validation run was
+wasted on a clock: the harness plays a lesson in 65 seconds and a person takes
+five minutes, so a ten-minute step landed 283 screens away here and 66 for a
+learner, and the run showed no improvement for a change that was not the
+problem.
+
+Detecting a 2pp accuracy difference at this sample size needs ~9,800 answers
+per arm, about 12 runs and six hours each. Anything smaller than that is not
+measurable here, which is a reason to stop rather than a reason to guess.
+
+verify: `npm run check:all`
+branch: claude/language-learning-android-app-yu2gzz
