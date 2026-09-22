@@ -53,6 +53,12 @@ const MAX_THEMES = Number(process.argv.includes('--max') ? process.argv[process.
 const THEME = {
   'First words': 'everyday',
   Greetings: 'everyday',
+  // Both split out of topics that had stopped describing themselves; see the
+  // notes on `courtesy` and `voices` in src/data/words.ts. Themed by what the
+  // words are: short replies are everyday speech, and talk/news/stories are
+  // what everyday speech is about.
+  'Yes, no and thank you': 'everyday',
+  'Voices & stories': 'everyday',
   'Everyday phrases': 'everyday',
   'Useful expressions': 'everyday',
   'Saying no': 'everyday',

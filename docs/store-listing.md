@@ -94,7 +94,7 @@ brand paying twice for one word.
 > forms — 160 shapes in total — with tracing practice that checks whether you
 > actually drew the letter rather than just filled the space.
 >
-> **2,279 words across 122 topics**, from family and food to law and medicine,
+> **2,279 words across 124 topics**, from family and food to law and medicine,
 > each one recorded in a single consistent voice, with a second full recording
 > in a man's voice if you prefer it. Every clip is bundled with the app, so
 > pronunciation works offline and sounds the same on every phone.
@@ -131,7 +131,7 @@ wrong.
 | Claim                                      | Source                                                    |
 | ------------------------------------------ | --------------------------------------------------------- |
 | 40 letters × 4 forms = 160 shapes          | `LETTERS`, `POSITIONS`                                    |
-| 2,279 words, 122 topics                    | `WORDS`, `TOPICS`                                         |
+| 2,279 words, 124 topics                    | `WORDS`, `TOPICS`                                         |
 | 256 sentences, 17 passages, 12 dialogues   | `SENTENCES`, `PASSAGES`, `DIALOGUES`                      |
 | 25 grammar concepts                        | `GRAMMAR`                                                 |
 | 350 lessons, 41 units                      | `ALL_LESSONS`, `UNITS`                                    |

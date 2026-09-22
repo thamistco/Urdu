@@ -108,6 +108,42 @@ const CORE_TOPICS: Omit<Topic, 'category'>[] = [
     blurb: 'Open and close a conversation warmly.',
     level: 'beginner',
   },
+  /**
+   * Split out of `greetings`, which had become two topics under one name: the
+   * words that open and close a conversation, and the ones you answer with.
+   * Nothing on the path said so, and the second lesson of the pair advertised
+   * itself as "Greetings · 2 of 2 · wellbeing, again, absolutely" — three
+   * words, none of them a greeting, under a heading promising greetings.
+   */
+  {
+    id: 'courtesy',
+    title: 'Yes, No & Thank You',
+    icon: '🙏',
+    blurb: 'The short answers a conversation runs on.',
+    level: 'beginner',
+  },
+  /**
+   * Also split out of a topic that had stopped describing itself. `first-words`
+   * had grown to 32 words, and its third lesson advertised "First words · 3 of
+   * 3 · truth, Urdu, music" — a heading promising the words you reach for every
+   * day, over a slice holding none of them.
+   *
+   * These are early words and have to stay early: اردو alone carries ten
+   * sentences from elementary upward, and the first attempt at this moved them
+   * out to `media`, `abstract` and `countries`, which sit at units 25 to 37 and
+   * stranded every sentence in between. Measured, not guessed — the unit tests
+   * caught it as a sentence lesson falling under its own length floor.
+   *
+   * So they move sideways rather than later: a topic of their own, taught in
+   * the same early unit, named for what they actually are.
+   */
+  {
+    id: 'voices',
+    title: 'Voices & Stories',
+    icon: '🎙️',
+    blurb: 'What people say, read and listen to.',
+    level: 'beginner',
+  },
   { id: 'body', title: 'The Body', icon: '🖐️', blurb: 'Name yourself, head to toe.', level: 'beginner' },
   { id: 'animals', title: 'Animals', icon: '🐐', blurb: 'Creatures at home and in the wild.', level: 'beginner' },
   { id: 'fruits', title: 'Fruits', icon: '🥭', blurb: 'Sweet words for the fruit stall.', level: 'elementary' },
@@ -168,9 +204,9 @@ const CORE_WORDS: Word[] = [
   { id: 'w-duniya', urdu: 'دنیا', roman: 'duniya', meaning: 'world', emoji: '🌍', topic: 'first-words' },
   { id: 'w-log', urdu: 'لوگ', roman: 'log', meaning: 'people', emoji: '👥', topic: 'first-words' },
   { id: 'w-khat', urdu: 'خط', roman: 'khat', meaning: 'letter', emoji: '✉️', topic: 'first-words' },
-  { id: 'w-awaaz', urdu: 'آواز', roman: 'aawaaz', meaning: 'voice / sound', emoji: '🔊', topic: 'first-words' },
+  { id: 'w-awaaz', urdu: 'آواز', roman: 'aawaaz', meaning: 'voice / sound', emoji: '🔊', topic: 'voices' },
   { id: 'w-roshni2', urdu: 'روشنی', roman: 'roshni', meaning: 'light', emoji: '💡', topic: 'first-words' },
-  { id: 'w-baat', urdu: 'بات', roman: 'baat', meaning: 'talk / matter', emoji: '💬', topic: 'first-words' },
+  { id: 'w-baat', urdu: 'بات', roman: 'baat', meaning: 'talk / matter', emoji: '💬', topic: 'voices' },
   { id: 'w-cheez', urdu: 'چیز', roman: 'cheez', meaning: 'thing', emoji: '📦', topic: 'first-words' },
   { id: 'w-aadmi', urdu: 'آدمی', roman: 'aadmi', meaning: 'man / person', emoji: '🧑', topic: 'first-words' },
   { id: 'w-aurat', urdu: 'عورت', roman: 'aurat', meaning: 'woman', emoji: '👩', topic: 'first-words' },
@@ -274,7 +310,7 @@ const CORE_WORDS: Word[] = [
     emoji: '🧱',
     topic: 'home',
   },
-  { id: 'w-kunji', urdu: 'کنجی', roman: 'kunji', meaning: 'key (alt.)', emoji: '🗝️', topic: 'home' },
+  { id: 'w-kunji', urdu: 'کنجی', roman: 'kunji', meaning: 'key (literary)', emoji: '🗝️', topic: 'home' },
   {
     id: 'w-bartan',
     urdu: 'برتن',
@@ -321,7 +357,7 @@ const CORE_WORDS: Word[] = [
   { id: 'w-kaala', urdu: 'کالا', roman: 'kaala', meaning: 'black', emoji: '⬛', topic: 'colours' },
   { id: 'w-safed', urdu: 'سفید', roman: 'safed', meaning: 'white', emoji: '⬜', topic: 'colours' },
   { id: 'w-gulaabi', urdu: 'گلابی', roman: 'gulaabi', meaning: 'pink', emoji: '🩷', topic: 'colours' },
-  { id: 'w-narangi-clr', urdu: 'نارنجی', roman: 'naaranji', meaning: 'orange', emoji: '🟠', topic: 'colours' },
+  { id: 'w-narangi-clr', urdu: 'نارنجی', roman: 'naaranji', meaning: 'orange (colour)', emoji: '🟠', topic: 'colours' },
   { id: 'w-bhoora', urdu: 'بھورا', roman: 'bhoora', meaning: 'brown', emoji: '🟤', topic: 'colours' },
   { id: 'w-jamni', urdu: 'جامنی', roman: 'jamni', meaning: 'purple', emoji: '🟣', topic: 'colours' },
   { id: 'w-khaakstari', urdu: 'خاکستری', roman: 'khaakistari', meaning: 'grey', emoji: '🔘', topic: 'colours' },
@@ -350,11 +386,11 @@ const CORE_WORDS: Word[] = [
 
   // greetings
   { id: 'w-salam', urdu: 'سلام', roman: 'salaam', meaning: 'peace / hello', emoji: '🕊️', topic: 'greetings' },
-  { id: 'w-shukriya', urdu: 'شکریہ', roman: 'shukriya', meaning: 'thank you', emoji: '🙏', topic: 'greetings' },
-  { id: 'w-haan', urdu: 'ہاں', roman: 'haañ', meaning: 'yes', emoji: '✅', topic: 'greetings' },
-  { id: 'w-nahi', urdu: 'نہیں', roman: 'nahiñ', meaning: 'no', emoji: '❌', topic: 'greetings' },
-  { id: 'w-maaf', urdu: 'معاف', roman: 'maaf', meaning: 'forgive / sorry', emoji: '🙇', topic: 'greetings' },
-  { id: 'w-khush', urdu: 'خوش', roman: 'khush', meaning: 'happy', emoji: '😊', topic: 'greetings' },
+  { id: 'w-shukriya', urdu: 'شکریہ', roman: 'shukriya', meaning: 'thank you', emoji: '🙏', topic: 'courtesy' },
+  { id: 'w-haan', urdu: 'ہاں', roman: 'haañ', meaning: 'yes', emoji: '✅', topic: 'courtesy' },
+  { id: 'w-nahi', urdu: 'نہیں', roman: 'nahiñ', meaning: 'no', emoji: '❌', topic: 'courtesy' },
+  { id: 'w-maaf', urdu: 'معاف', roman: 'maaf', meaning: 'forgive / sorry', emoji: '🙇', topic: 'courtesy' },
+  { id: 'w-khush', urdu: 'خوش', roman: 'khush', meaning: 'happy', emoji: '😊', topic: 'adjectives' },
   {
     id: 'w-khushaamdeed',
     urdu: 'خوش آمدید',
@@ -364,19 +400,26 @@ const CORE_WORDS: Word[] = [
     topic: 'greetings',
   },
   { id: 'w-alwida2', urdu: 'الوداع', roman: 'alwidaa', meaning: 'farewell', emoji: '🚶', topic: 'greetings' },
-  { id: 'w-theek', urdu: 'ٹھیک', roman: 'ṭheek', meaning: 'fine / ok', emoji: '👌', topic: 'greetings' },
-  { id: 'w-zaroor2', urdu: 'ضرور', roman: 'zaroor', meaning: 'of course / surely', emoji: '💯', topic: 'greetings' },
+  { id: 'w-theek', urdu: 'ٹھیک', roman: 'ṭheek', meaning: 'fine / ok', emoji: '👌', topic: 'courtesy' },
+  { id: 'w-zaroor2', urdu: 'ضرور', roman: 'zaroor', meaning: 'of course / surely', emoji: '💯', topic: 'courtesy' },
   {
     id: 'w-mehrbani',
     urdu: 'مہربانی',
     roman: 'meherbaani',
     meaning: 'kindness / please',
     emoji: '🙏',
+    topic: 'courtesy',
+  },
+  {
+    id: 'w-khairiyat',
+    urdu: 'خیریت',
+    roman: 'khairiyat',
+    meaning: 'wellbeing (all well?)',
+    emoji: '🤗',
     topic: 'greetings',
   },
-  { id: 'w-khairiyat', urdu: 'خیریت', roman: 'khairiyat', meaning: 'wellbeing', emoji: '🤗', topic: 'greetings' },
-  { id: 'w-dobara2', urdu: 'دوبارہ', roman: 'dobaara', meaning: 'again', emoji: '🔁', topic: 'greetings' },
-  { id: 'w-bilkul2', urdu: 'بالکل', roman: 'bilkul', meaning: 'absolutely', emoji: '✅', topic: 'greetings' },
+  { id: 'w-dobara2', urdu: 'دوبارہ', roman: 'dobaara', meaning: 'again', emoji: '🔁', topic: 'timewords' },
+  { id: 'w-bilkul2', urdu: 'بالکل', roman: 'bilkul', meaning: 'absolutely', emoji: '✅', topic: 'courtesy' },
   // Reported as mispronounced. Unvowelled, the engine has to guess the short
   // vowels in both words — خدا can be read khadā or khidā, and حافظ hāfaz or
   // hāfuz. The damma and kasra leave it nothing to guess at.
@@ -425,10 +468,10 @@ const CORE_WORDS: Word[] = [
     id: 'w-jeehaan2',
     urdu: 'جی ہاں',
     roman: 'ji haañ',
-    meaning: 'yes',
+    meaning: 'yes indeed',
     register: 'polite',
     emoji: '✅',
-    topic: 'greetings',
+    topic: 'courtesy',
   },
 
   // body
@@ -451,7 +494,7 @@ const CORE_WORDS: Word[] = [
     topic: 'body',
     pronounce: 'پَیٹ',
   },
-  { id: 'w-naakhun', urdu: 'ناخن', roman: 'naakhun', meaning: 'nail', emoji: '💅', topic: 'body' },
+  { id: 'w-naakhun', urdu: 'ناخن', roman: 'naakhun', meaning: 'nail (finger)', emoji: '💅', topic: 'body' },
   { id: 'w-bhow', urdu: 'بھؤں', roman: 'bhauñ', meaning: 'eyebrow', emoji: '🤨', topic: 'body' },
   { id: 'w-palken', urdu: 'پلکیں', roman: 'palkeñ', meaning: 'eyelashes', emoji: '👁️', topic: 'body' },
   { id: 'w-gardan2', urdu: 'گردن', roman: 'gardan', meaning: 'neck', emoji: '🧣', topic: 'body' },
@@ -486,7 +529,7 @@ const CORE_WORDS: Word[] = [
   // fruits
   { id: 'w-kela', urdu: 'کیلا', roman: 'kela', meaning: 'banana', emoji: '🍌', topic: 'fruits' },
   { id: 'w-aam', urdu: 'آم', roman: 'aam', meaning: 'mango', emoji: '🥭', topic: 'fruits' },
-  { id: 'w-naarangi', urdu: 'نارنگی', roman: 'naarangi', meaning: 'orange', emoji: '🍊', topic: 'fruits' },
+  { id: 'w-naarangi', urdu: 'نارنگی', roman: 'naarangi', meaning: 'orange (fruit)', emoji: '🍊', topic: 'fruits' },
   { id: 'w-angoor', urdu: 'انگور', roman: 'angoor', meaning: 'grapes', emoji: '🍇', topic: 'fruits' },
   { id: 'w-tarbooz', urdu: 'تربوز', roman: 'tarbooz', meaning: 'watermelon', emoji: '🍉', topic: 'fruits' },
   { id: 'w-laimoon', urdu: 'لیموں', roman: 'laimoon', meaning: 'lemon', emoji: '🍋', topic: 'fruits' },
@@ -876,7 +919,7 @@ const CORE_WORDS: Word[] = [
   { id: 'w-patti2', urdu: 'پٹی', roman: 'paṭṭi', meaning: 'bandage', emoji: '🩹', topic: 'health' },
 
   // money & shopping
-  { id: 'w-paisa', urdu: 'پیسہ', roman: 'paisa', meaning: 'money', emoji: '💰', topic: 'first-words' },
+  { id: 'w-paisa', urdu: 'پیسہ', roman: 'paisa', meaning: 'money', emoji: '💰', topic: 'quantity' },
   { id: 'w-qeemat', urdu: 'قیمت', roman: 'qeemat', meaning: 'price', emoji: '🏷️', topic: 'money' },
   { id: 'w-sasta', urdu: 'سستا', roman: 'sasta', meaning: 'cheap', emoji: '📉', topic: 'adjectives' },
   { id: 'w-mehnga', urdu: 'مہنگا', roman: 'mehnga', meaning: 'expensive', emoji: '📈', topic: 'adjectives' },
@@ -948,7 +991,7 @@ const CORE_WORDS: Word[] = [
   { id: 'w-gali', urdu: 'گلی', roman: 'gali', meaning: 'lane / alley', emoji: '🛤️', topic: 'city' },
   { id: 'w-mehmaan', urdu: 'مہمان', roman: 'mehmaan', meaning: 'guest', emoji: '🙋‍♂️', topic: 'city' },
   { id: 'w-hujoom', urdu: 'ہجوم', roman: 'hujoom', meaning: 'crowd', emoji: '👥', topic: 'city' },
-  { id: 'w-shor', urdu: 'شور', roman: 'shor', meaning: 'noise', emoji: '📢', topic: 'first-words' },
+  { id: 'w-shor', urdu: 'شور', roman: 'shor', meaning: 'noise', emoji: '📢', topic: 'voices' },
   { id: 'w-shahri', urdu: 'شہری', roman: 'shehri', meaning: 'citizen', emoji: '🪪', topic: 'city' },
   { id: 'w-sarkar', urdu: 'سرکار', roman: 'sarkaar', meaning: 'government', emoji: '🏛️', topic: 'city' },
   { id: 'w-maidan', urdu: 'میدان', roman: 'maidaan', meaning: 'ground / field', emoji: '🏞️', topic: 'city' },
@@ -1109,8 +1152,8 @@ const CORE_WORDS: Word[] = [
   { id: 'w-iztiraab', urdu: 'اضطراب', roman: 'iztiraab', meaning: 'agitation', emoji: '😖', topic: 'emotions' },
 
   // ideas & values
-  { id: 'w-sach', urdu: 'سچ', roman: 'sach', meaning: 'truth', emoji: '✅', topic: 'first-words' },
-  { id: 'w-urdu', urdu: 'اردو', roman: 'urdu', meaning: 'Urdu', emoji: '📜', topic: 'first-words' },
+  { id: 'w-sach', urdu: 'سچ', roman: 'sach', meaning: 'truth', emoji: '✅', topic: 'voices' },
+  { id: 'w-urdu', urdu: 'اردو', roman: 'urdu', meaning: 'Urdu', emoji: '📜', topic: 'voices' },
   { id: 'w-jhoot', urdu: 'جھوٹ', roman: 'jhooṭ', meaning: 'lie', emoji: '❌', topic: 'abstract' },
   { id: 'w-insaaf', urdu: 'انصاف', roman: 'insaaf', meaning: 'justice', emoji: '⚖️', topic: 'abstract' },
   { id: 'w-azadi', urdu: 'آزادی', roman: 'aazaadi', meaning: 'freedom', emoji: '🕊️', topic: 'abstract' },
@@ -1143,7 +1186,7 @@ const CORE_WORDS: Word[] = [
   { id: 'w-roza', urdu: 'روزہ', roman: 'roza', meaning: 'fast (Ramadan)', emoji: '🌛', topic: 'culture' },
   { id: 'w-mehndi', urdu: 'مہندی', roman: 'mehndi', meaning: 'henna', emoji: '🌿', topic: 'culture' },
   { id: 'w-dastaan', urdu: 'داستان', roman: 'daastaan', meaning: 'tale / saga', emoji: '📖', topic: 'culture' },
-  { id: 'w-mousiqi', urdu: 'موسیقی', roman: 'mausiqi', meaning: 'music', emoji: '🎵', topic: 'first-words' },
+  { id: 'w-mousiqi', urdu: 'موسیقی', roman: 'mausiqi', meaning: 'music', emoji: '🎵', topic: 'voices' },
   { id: 'w-lokgeet', urdu: 'لوک گیت', roman: 'lok geet', meaning: 'folk song', emoji: '🎤', topic: 'culture' },
   { id: 'w-tehwar', urdu: 'تہوار', roman: 'tehwaar', meaning: 'festival', emoji: '🎉', topic: 'culture' },
   { id: 'w-raag', urdu: 'راگ', roman: 'raag', meaning: 'musical melody', emoji: '🎶', topic: 'culture' },
@@ -1158,11 +1201,11 @@ const CORE_WORDS: Word[] = [
   { id: 'w-computer', urdu: 'کمپیوٹر', roman: 'kampyooṭar', meaning: 'computer', emoji: '💻', topic: 'tech' },
   { id: 'w-mobile', urdu: 'موبائل', roman: 'mobaail', meaning: 'mobile phone', emoji: '📱', topic: 'tech' },
   { id: 'w-internet', urdu: 'انٹرنیٹ', roman: 'inṭarneṭ', meaning: 'internet', emoji: '🌐', topic: 'tech' },
-  { id: 'w-khabar', urdu: 'خبر', roman: 'khabar', meaning: 'news', emoji: '📰', topic: 'first-words' },
-  { id: 'w-akhbaar', urdu: 'اخبار', roman: 'akhbaar', meaning: 'newspaper', emoji: '🗞️', topic: 'first-words' },
+  { id: 'w-khabar', urdu: 'خبر', roman: 'khabar', meaning: 'news', emoji: '📰', topic: 'voices' },
+  { id: 'w-akhbaar', urdu: 'اخبار', roman: 'akhbaar', meaning: 'newspaper', emoji: '🗞️', topic: 'voices' },
   { id: 'w-madad', urdu: 'مدد', roman: 'madad', meaning: 'help', emoji: '🆘', topic: 'first-words' },
-  { id: 'w-kahani', urdu: 'کہانی', roman: 'kahaani', meaning: 'story', emoji: '📚', topic: 'first-words' },
-  { id: 'w-film', urdu: 'فلم', roman: 'film', meaning: 'film', emoji: '🎬', topic: 'first-words' },
+  { id: 'w-kahani', urdu: 'کہانی', roman: 'kahaani', meaning: 'story', emoji: '📚', topic: 'voices' },
+  { id: 'w-film', urdu: 'فلم', roman: 'film', meaning: 'film', emoji: '🎬', topic: 'voices' },
   { id: 'w-haal', urdu: 'حال', roman: 'haal', meaning: 'present / condition', emoji: '⏳', topic: 'first-words' },
   { id: 'w-bijli', urdu: 'بجلی', roman: 'bijli', meaning: 'electricity', emoji: '⚡', topic: 'tech' },
   { id: 'w-machine', urdu: 'مشین', roman: 'masheen', meaning: 'machine', emoji: '⚙️', topic: 'tech' },
@@ -1223,7 +1266,7 @@ const CORE_WORDS: Word[] = [
     id: 'w-chunaanche',
     urdu: 'چنانچہ',
     roman: 'chunaañche',
-    meaning: 'therefore',
+    meaning: 'and so',
     register: 'formal',
     emoji: '➡️',
     topic: 'connectors',
@@ -1237,7 +1280,7 @@ const CORE_WORDS: Word[] = [
     id: 'w-harchand',
     urdu: 'ہر چند',
     roman: 'har chand',
-    meaning: 'although',
+    meaning: 'even though',
     register: 'formal',
     emoji: '🔁',
     topic: 'connectors',
@@ -1294,7 +1337,7 @@ const CORE_WORDS: Word[] = [
 
   // things said
   { id: 'w-hello', urdu: 'ہیلو', roman: 'hello', meaning: 'hello (on the phone)', emoji: '📞', topic: 'greetings' },
-  { id: 'w-maafi', urdu: 'معافی', roman: 'maafi', meaning: 'pardon', emoji: '🙏', topic: 'greetings' },
+  { id: 'w-maafi', urdu: 'معافی', roman: 'maafi', meaning: 'pardon', emoji: '🙏', topic: 'courtesy' },
   { id: 'w-pasand', urdu: 'پسند', roman: 'pasand', meaning: 'liking', emoji: '💗', topic: 'feelings' },
 
   // verbs the course inflects but never introduces
@@ -1341,6 +1384,8 @@ const TOPIC_CATEGORY: Record<string, TopicCategory> = {
   // the scaffolding of any sentence
   'first-words': 'foundations',
   greetings: 'foundations',
+  courtesy: 'foundations',
+  voices: 'foundations',
   numbers: 'foundations',
   'numbers-more': 'foundations',
   quantity: 'foundations',
