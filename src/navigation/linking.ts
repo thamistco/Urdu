@@ -71,6 +71,8 @@ export const linking: LinkingOptions<RootStackParamList> = {
       Leaderboard: at('league'),
       Achievements: at('achievements'),
       Settings: at('settings'),
+      Privacy: at('privacy'),
+      Terms: at('terms'),
     },
   },
 };

@@ -8,6 +8,8 @@ export type RootStackParamList = {
   Leaderboard: undefined;
   Achievements: undefined;
   Settings: undefined;
+  Privacy: undefined;
+  Terms: undefined;
 };
 
 /**

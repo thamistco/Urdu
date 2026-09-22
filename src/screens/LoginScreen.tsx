@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { View, Pressable, ActivityIndicator, useWindowDimensions, LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Screen } from '../components/Screen';
@@ -10,6 +12,9 @@ import { Txt, Bold } from '../components/Text';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { useAuthStore } from '../store/useAuthStore';
+import type { RootStackParamList } from '../navigation/types';
+
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 function ProviderButton({ label, onPress, loading }: { label: string; onPress: () => void; loading?: boolean }) {
   return (
@@ -75,6 +80,7 @@ function ProviderButton({ label, onPress, loading }: { label: string; onPress: (
  * this is one button that starts the course.
  */
 export function LoginScreen() {
+  const nav = useNavigation<Nav>();
   const signIn = useAuthStore((s) => s.signIn);
   const continueAsGuest = useAuthStore((s) => s.continueAsGuest);
   const busy = useAuthStore((s) => s.busy);
@@ -207,6 +213,22 @@ export function LoginScreen() {
               </Txt>
             </Reveal>
           )}
+
+          {/*
+           * Reachable before any guest/sign-in choice, on purpose — a
+           * reviewer or a learner should be able to read either without first
+           * agreeing to use the app. Privacy and Terms are registered outside
+           * RootNavigator's auth gate for exactly this (see RootNavigator.tsx).
+           */}
+          <View className="mt-4 flex-row items-center justify-center gap-3">
+            <Pressable accessibilityRole="link" onPress={() => nav.navigate('Privacy')} hitSlop={8}>
+              <Txt className="text-[0.6875rem] text-paper/55 underline">Privacy Policy</Txt>
+            </Pressable>
+            <Txt className="text-[0.6875rem] text-paper/55">·</Txt>
+            <Pressable accessibilityRole="link" onPress={() => nav.navigate('Terms')} hitSlop={8}>
+              <Txt className="text-[0.6875rem] text-paper/55 underline">Terms of Service</Txt>
+            </Pressable>
+          </View>
         </View>
       </View>
     </Screen>

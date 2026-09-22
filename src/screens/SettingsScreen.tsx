@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { View, Switch, Pressable, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../navigation/types';
 import { Screen } from '../components/Screen';
 import { TopBar } from '../components/TopBar';
 import { Card } from '../components/Card';
@@ -202,8 +204,10 @@ function TesterPanel() {
   );
 }
 
+type Nav = NativeStackNavigationProp<RootStackParamList>;
+
 export function SettingsScreen() {
-  const nav = useNavigation();
+  const nav = useNavigation<Nav>();
   const s = useSettingsStore();
   const resetAll = useProgressStore((st) => st.resetAll);
   const dailyGoalId = useProgressStore((st) => st.dailyGoalId);
@@ -439,6 +443,25 @@ export function SettingsScreen() {
               <Txt className="mt-0.5 text-xs text-paper/55">Clears streak, XP, gems and memory. Cannot be undone.</Txt>
             </View>
           </Pressable>
+        </Reveal>
+
+        <Reveal delay={190}>
+          <Eyebrow className="mb-2 mt-5 text-paper/55">Legal</Eyebrow>
+          <Card>
+            <Pressable accessibilityRole="link" onPress={() => nav.navigate('Privacy')}>
+              <View className="flex-row items-center justify-between py-3">
+                <Bold className="text-[0.9375rem]">Privacy Policy</Bold>
+                <Txt className="text-base text-paper/55">›</Txt>
+              </View>
+            </Pressable>
+            <View className="h-px bg-white/5" />
+            <Pressable accessibilityRole="link" onPress={() => nav.navigate('Terms')}>
+              <View className="flex-row items-center justify-between py-3">
+                <Bold className="text-[0.9375rem]">Terms of Service</Bold>
+                <Txt className="text-base text-paper/55">›</Txt>
+              </View>
+            </Pressable>
+          </Card>
         </Reveal>
 
         {TESTER_MODE_AVAILABLE && (
