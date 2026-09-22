@@ -301,14 +301,19 @@ const PLANNED_UNITS: Unit[] = [
     level: 'beginner',
     color: GOLD,
     title: 'Unit 1 · First Faces',
-    subtitle: 'Your first letters and their positions, first words, greetings and phrases',
+    subtitle:
+      'Your first letters and their positions, first words, greetings, yes, no and thank you, voices and stories, and phrases',
     romanTitle: 'Unit 1 · First Words',
-    romanSubtitle: 'Everyday words, and how to greet someone',
+    romanSubtitle: 'Everyday words, greetings, yes, no and thank you, and voices and stories',
     lessons: [
       L(1, 'Meet the letters', 'alif · be · pe · te · Te'),
       V('first-words', 'First words', 'Everyday vocabulary', 15, 7),
       L(1, 'Position practice', 'Alone · start · middle · end'),
-      V('greetings', 'Greetings', 'Say hello and thank you'),
+      V('greetings', 'Greetings', 'Hello, goodbye and good morning'),
+      // Split out of `greetings`, which was carrying both jobs under one name.
+      // See the note on the `courtesy` topic in words.ts.
+      V('courtesy', 'Yes, no and thank you', 'The short answers you reply with'),
+      V('voices', 'Voices & stories', 'Talk, news, music and the truth of it'),
       P('Everyday phrases', 'Speak, don’t just read'),
       REV('first-faces'),
     ],
@@ -1194,18 +1199,40 @@ const PREVIEW_MAX_CHARS = 30;
 const READS_AS_SCRIPT = /\b(letters?|script|alphabet|nastaliq|glyphs?|handwriting|trace)\b/i;
 
 function previewOf(words: { meaning: string }[]): string {
-  const shown: string[] = [];
-  for (const w of words) {
-    if (shown.length >= PREVIEW_WORDS) break;
-    const m = w.meaning.split('/')[0].split('(')[0].trim();
-    if (!m || READS_AS_SCRIPT.test(m)) continue;
-    // Always at least one, however long it is — "mother's sister's husband" is
-    // a whole row on its own and there is nothing shorter to say. After that,
-    // only what fits: a second word is not worth a wrapped line.
-    if (shown.length && [...shown, m].join(', ').length > PREVIEW_MAX_CHARS) break;
-    shown.push(m);
+  const usable = words
+    .map((w) => w.meaning.split('/')[0].split('(')[0].trim())
+    .filter((m) => m && !READS_AS_SCRIPT.test(m));
+
+  /**
+   * Name more than one thing whenever the slice holds more than one thing.
+   *
+   * Taking strictly the first words meant a single long term could spend the
+   * whole budget: "Family · 2 of 2 · mother's sister's husband" is
+   * twenty-five characters, leaving no room for a second, so the row named one
+   * word out of eleven and told a learner nothing about the lesson. Eight of
+   * the 216 split lessons read that way.
+   *
+   * So an over-long leading term is skipped the same way an alphabet word
+   * already is, and for the same stated reason: this is a sample of the slice,
+   * not its contents list. The long word is still taught, it just does not get
+   * to be the whole advertisement. A slice that genuinely holds nothing
+   * shorter still shows its one word rather than nothing.
+   */
+  const from = (start: number) => {
+    const shown: string[] = [];
+    for (const m of usable.slice(start)) {
+      if (shown.length >= PREVIEW_WORDS) break;
+      if (shown.length && [...shown, m].join(', ').length > PREVIEW_MAX_CHARS) break;
+      shown.push(m);
+    }
+    return shown;
+  };
+
+  for (let start = 0; start < usable.length; start++) {
+    const shown = from(start);
+    if (shown.length > 1) return shown.join(', ');
   }
-  return shown.join(', ');
+  return from(0).join(', ');
 }
 
 /** One planned vocabulary lesson becomes as many lessons as its topic needs. */

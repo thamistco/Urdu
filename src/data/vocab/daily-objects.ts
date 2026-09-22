@@ -54,7 +54,7 @@ export const OBJECT_PACKS: TopicPack[] = [
     { id: 'tools', title: 'Tools', icon: '🔧', blurb: 'Building and mending.', level: 'intermediate' },
     [
       ['w-hathoda', 'ہتھوڑا', 'hathauṛa', 'hammer', '🔨'],
-      ['w-kabza', 'کیل', 'keel', 'nail', '📌'],
+      ['w-kabza', 'کیل', 'keel', 'nail (metal)', '📌'],
       ['w-pech', 'پیچ', 'pech', 'screw', '🔩'],
       ['w-pechkas', 'پیچ کس', 'pechkas', 'screwdriver', '🪛'],
       ['w-aara', 'آرا', 'aara', 'saw', '🪚'],

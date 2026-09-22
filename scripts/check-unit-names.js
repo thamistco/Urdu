@@ -154,6 +154,33 @@ for (const unit of UNITS) {
   }
 }
 
+/**
+ * A split lesson's subtitle names more than one of the words in it.
+ *
+ * The same rule as the unit headers above, one level down: the row is the only
+ * thing that says what the lesson holds. A topic broken into parts advertises
+ * each part by sampling it, and taking strictly the first words meant one long
+ * term could spend the whole budget — "Family · 2 of 2 · mother's sister's
+ * husband" named one word out of eleven. Eight of the split lessons read that
+ * way before `previewOf` learned to skip a term that crowds out every other.
+ *
+ * A slice that genuinely holds nothing shorter is allowed its single word;
+ * what is not allowed is a one-word preview where the slice had alternatives,
+ * which is the case this can actually fail on.
+ */
+const thin = [];
+for (const unit of UNITS) {
+  for (const lesson of unit.lessons) {
+    if (lesson.kind !== 'vocab' || !/ of /.test(lesson.subtitle || '')) continue;
+    const preview = (lesson.subtitle.split('·')[1] || '').trim();
+    if (!preview || preview.includes(',')) continue;
+    const others = (lesson.wordIds || []).length;
+    if (others > 1) {
+      thin.push(`${unit.id} "${lesson.title} · ${lesson.subtitle}" names 1 word of ${others}`);
+    }
+  }
+}
+
 console.log(
   `check:unit-names — ${checked} topics across ${UNITS.length} units, on both tracks; ${reviews} review ids.`
 );
@@ -173,6 +200,15 @@ if (stale.length) {
   console.error(`\nRename the id to match the unit. Nothing resolves a unit through it, so nothing breaks.`);
 }
 
-if (gaps.length || stale.length) process.exit(1);
+if (thin.length) {
+  console.error(`\n${thin.length} split lesson(s) whose row names only one of their words:`);
+  for (const t of thin.slice(0, 25)) console.error(`  ${t}`);
+  console.error(`\nThe row is the only thing that says what the lesson holds. See previewOf in src/data/units.ts.`);
+}
 
-console.log('  Every topic a unit teaches is named by the unit that holds it, and every review id is its unit.');
+if (gaps.length || stale.length || thin.length) process.exit(1);
+
+console.log(
+  '  Every topic a unit teaches is named by the unit that holds it, every review id is its unit,\n' +
+    '  and every split lesson row names more than one of the words in it.'
+);
