@@ -21,6 +21,7 @@ import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { Lesson, unitsForTrack, findLesson, ALL_LESSONS } from '../data/units';
 import { needsPathMoveNotice } from '../lib/progress';
+import { streakStatus } from '../lib/streak';
 import { LETTERS } from '../data/letters';
 import { LEVEL_META, LEVEL_ORDER, type Level, glossOf } from '../data/words';
 import { WORDS } from '../data/words';
@@ -202,6 +203,18 @@ export function HomeScreen() {
   // Recomputed from `store.srs` rather than called as an action, so the card
   // appears and clears as answers land instead of only on a remount.
   const dueNow = useMemo(() => dueCount(store.srs), [store.srs]);
+
+  /**
+   * There is no push notification telling a learner their streak is about to
+   * break — this app has no server to send one from, and no native build to
+   * receive it on; see docs on the notifications gap. This is the fallback
+   * that works today, on the one surface guaranteed to run: whatever is
+   * computed the next time the app is actually open.
+   */
+  const atRiskStreak = useMemo(
+    () => streakStatus(store.streak, store.lastActiveDay) === 'at-risk',
+    [store.streak, store.lastActiveDay]
+  );
 
   const { level, ratio, into, span } = levelProgress(store.totalXp);
   const goal = DAILY_GOALS.find((g) => g.id === store.dailyGoalId) ?? DAILY_GOALS[1];
@@ -544,7 +557,7 @@ export function HomeScreen() {
                   <StatChip
                     icon={<Illustration name="flame" tile={false} size={16} />}
                     value={store.streak}
-                    color={palette.flame}
+                    color={atRiskStreak ? palette.rose : palette.flame}
                   />
                   <StatChip
                     icon={<Illustration name="gem" tile={false} size={16} />}
@@ -553,6 +566,16 @@ export function HomeScreen() {
                   />
                 </View>
               </View>
+              {/*
+               * Colour alone never carries this — the flame above tints rose
+               * too, but a learner who cannot see that difference still gets
+               * the same sentence a sighted one reads next to it.
+               */}
+              {atRiskStreak && (
+                <Txt accessibilityRole="alert" className="mt-1 text-right text-xs" style={{ color: palette.rose }}>
+                  Play today to keep your {store.streak}-day streak
+                </Txt>
+              )}
             </SafeAreaView>
           </Reveal>
 

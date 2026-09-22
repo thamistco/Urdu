@@ -33,6 +33,7 @@
 const path = require('path');
 const fs = require('fs');
 const { serveDist, findChromium, enterAsGuest } = require('./lib/serve-dist');
+const { load } = require('./lib/load-ts');
 
 const DIST = path.join(__dirname, '..', 'dist');
 const PORT = 8332;
@@ -349,6 +350,55 @@ async function main() {
         }
       }
     }
+    /**
+     * A streak that will break today is the one thing this app can say to a
+     * learner without a server to send it from and no native build to receive
+     * it on -- see the note on `atRiskStreak` in HomeScreen.tsx. In its own
+     * page and its own seeded session, since every route above shares one
+     * `enterAsGuest` call and this needs a state none of them set up:
+     * `lastActiveDay` a real calendar day behind "now", read with the app's
+     * own `dayKey` rather than reimplemented here, so a change to what "a day"
+     * means moves this check with it instead of past it.
+     */
+    /**
+     * Polls rather than sleeping a fixed interval, per check:waits -- Home
+     * staggers its cards in on Reveal delays, so a constant here would be
+     * exactly the guess-at-a-machine's-speed pattern that check exists to
+     * catch, and did: the first version of this slept a flat 1.2 seconds instead.
+     */
+    const settledText = async (p, timeoutMs = 8000) => {
+      let last = null;
+      const until = Date.now() + timeoutMs;
+      while (Date.now() < until) {
+        const now = await p.evaluate(() => document.body.innerText).catch(() => null);
+        if (now && now === last) return now;
+        last = now;
+        await p.waitForTimeout(150);
+      }
+      return last;
+    };
+
+    const { dayKey } = load('src/lib/date.ts');
+    const yesterday = dayKey(new Date(Date.now() - 24 * 60 * 60 * 1000));
+    const riskPage = await browser.newPage({ viewport: { width: 412, height: 900 } });
+    await enterAsGuest(riskPage, `http://localhost:${PORT}/Urdu/`, { streak: 6, lastActiveDay: yesterday });
+    const riskBody = await settledText(riskPage);
+    await riskPage.close();
+    if (!/play today to keep your 6-day streak/i.test(riskBody || '')) {
+      problems.push(
+        'A learner one day from losing a 6-day streak is not told so on Home: ' +
+          `${(riskBody || '').replace(/\n/g, ' / ').slice(0, 140)}`
+      );
+    }
+
+    const safePage = await browser.newPage({ viewport: { width: 412, height: 900 } });
+    const today = dayKey(new Date());
+    await enterAsGuest(safePage, `http://localhost:${PORT}/Urdu/`, { streak: 6, lastActiveDay: today });
+    const safeBody = await settledText(safePage);
+    await safePage.close();
+    if (/keep your \d+-day streak/i.test(safeBody || '')) {
+      problems.push('A learner who already played today still sees the streak-at-risk line on Home.');
+    }
   } finally {
     if (browser) await browser.close();
     server.close();
@@ -367,6 +417,9 @@ async function main() {
   console.log('check:controls — a lesson puts what a thumb has to reach in the lower half of the screen.');
   console.log(
     'check:controls — Settings offers a guest no sign-in it cannot honour, and still says where progress lives.'
+  );
+  console.log(
+    'check:controls — a streak one day from breaking says so on Home, and stays silent once today is played.'
   );
 }
 
