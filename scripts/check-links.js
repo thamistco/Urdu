@@ -48,6 +48,13 @@ const ROUTES = [
   { path: '/settings', shows: /Account/i },
   { path: '/letters', shows: /learned/i },
   { path: '/lesson/l-1', shows: /A NEW LETTER/i },
+  // This loop runs against a seeded, already-guest session (see main()), so
+  // this only proves Privacy/Terms still work once already past the door.
+  // The property that actually matters for them -- a cold, unauthenticated
+  // load resolving to real content -- is a different claim and has its own
+  // check below, with no session seeded at all.
+  { path: '/privacy', shows: /Privacy Policy/i },
+  { path: '/terms', shows: /Terms of Service/i },
 ];
 
 /**
@@ -153,6 +160,40 @@ async function main() {
     }
     if (!stillInside) {
       problems.push('Going back twice left the app rather than returning to a screen inside it.');
+    }
+
+    /**
+     * The one property none of the above actually proves.
+     *
+     * Every route above ran against a page `enterAsGuest` had already seeded
+     * with `harf-progress`/`harf-settings` in localStorage — a returning
+     * learner, not the person this screen exists for. An app store reviewer,
+     * or anyone else who lands on /privacy or /terms cold, has no local
+     * storage at all, and RootNavigator's whole reason for registering these
+     * two outside the auth gate is that they must resolve anyway. A brand new
+     * page in the same browser, with nothing written to it first, is what
+     * actually tests that.
+     */
+    for (const route of [
+      { path: '/privacy', shows: /Privacy Policy/i },
+      { path: '/terms', shows: /Terms of Service/i },
+    ]) {
+      const url = `${BASE}${route.path}`;
+      const cold = await browser.newPage({ viewport: { width: 412, height: 900 } });
+      await cold.goto(`${origin}${url}`);
+      await arrived(cold);
+      const body = await cold.evaluate(() => document.body.innerText);
+      const landed = await cold.evaluate(() => location.pathname);
+      await cold.close();
+      if (!route.shows.test(body)) {
+        problems.push(
+          `${url} with NO session seeded did not open the screen it names — a signed-out reviewer would ` +
+            `hit this first: "${body.replace(/\n/g, ' / ').slice(0, 90)}"`
+        );
+      }
+      if (landed.replace(/\/$/, '') !== url.replace(/\/$/, '')) {
+        problems.push(`${url} with no session seeded redirected to ${landed} instead of staying put.`);
+      }
     }
   } finally {
     if (browser) await browser.close();
