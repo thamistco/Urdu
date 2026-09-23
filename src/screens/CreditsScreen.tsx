@@ -82,14 +82,18 @@ export function CreditsScreen() {
           <Para>The recorded words and sentences are synthesised with Google Cloud Text-to-Speech.</Para>
         </Section>
 
-        <Section title="Sounds and illustrations">
+        <Section title="Sounds and pictures">
           <Para>The feedback sounds and the drawn illustrations were made for Harf.</Para>
+          <Para>The evening sky behind the sign-in and welcome screens is an AI-generated image.</Para>
         </Section>
 
         <Section title="Software">
           <Para>
             Harf is built with React Native, Expo and other open-source libraries, each under its own licence.
           </Para>
+          <Pressable accessibilityRole="link" onPress={() => nav.navigate('Licences')}>
+            <Txt className="mb-1 text-[0.8125rem] leading-6 text-gold underline">Open-source licences</Txt>
+          </Pressable>
         </Section>
       </Screen>
     </View>

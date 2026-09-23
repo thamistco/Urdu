@@ -74,6 +74,7 @@ export const linking: LinkingOptions<RootStackParamList> = {
       Privacy: at('privacy'),
       Terms: at('terms'),
       Credits: at('credits'),
+      Licences: at('licences'),
     },
   },
 };

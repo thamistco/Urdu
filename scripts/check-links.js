@@ -56,6 +56,7 @@ const ROUTES = [
   { path: '/privacy', shows: /Privacy Policy/i },
   { path: '/terms', shows: /Terms of Service/i },
   { path: '/credits', shows: /Whose work is in Harf/i },
+  { path: '/licences', shows: /Software Harf is built on/i },
 ];
 
 /**
@@ -169,7 +170,7 @@ async function main() {
      * Every route above ran against a page `enterAsGuest` had already seeded
      * with `harf-progress`/`harf-settings` in localStorage — a returning
      * learner, not the person this screen exists for. An app store reviewer,
-     * or anyone else who lands on /privacy, /terms or /credits cold, has no local
+     * or anyone else who lands on /privacy, /terms, /credits or /licences cold, has no local
      * storage at all, and RootNavigator's whole reason for registering these
      * outside the auth gate is that they must resolve anyway. A brand new
      * page in the same browser, with nothing written to it first, is what
@@ -179,6 +180,7 @@ async function main() {
       { path: '/privacy', shows: /Privacy Policy/i },
       { path: '/terms', shows: /Terms of Service/i },
       { path: '/credits', shows: /Whose work is in Harf/i },
+      { path: '/licences', shows: /Software Harf is built on/i },
     ]) {
       const url = `${BASE}${route.path}`;
       const cold = await browser.newPage({ viewport: { width: 412, height: 900 } });

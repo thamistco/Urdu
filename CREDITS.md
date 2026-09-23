@@ -32,8 +32,19 @@ Feedback sounds (`scripts/generate-sounds.js`) and the illustration set
 Word, sentence and conversation audio is synthesised with Google Cloud
 Text-to-Speech (`scripts/generate-voice.js`, see `VOICE_SETUP.md`).
 
-## Photographs
-`assets/images/evening.jpg` and `assets/images/evening-dusk.jpg` (the sunset
-behind sign-in and the welcome screen): **source not recorded.** The files carry
-no metadata and no commit says where they came from. Record the photographer and
-licence here, or replace them, before a store release.
+## Pictures
+`assets/images/evening.jpg` and `assets/images/evening-dusk.jpg` (the evening
+sky behind sign-in and the welcome screen) are **AI-generated**, per the app's
+owner on 2026-09-23. The generator was not recorded. Before charging for the
+app, confirm that generator's terms allowed commercial use on the plan it was
+made with. Some image generators' free tiers did not. In the US, an image made
+wholly by AI generally has no copyright, so nobody, including Harf, can stop
+others reusing it; it can still be used here.
+
+## Open-source software and fonts
+Every npm package in the shipped bundle and every typeface, with its
+copyright notice and full licence text, is listed in the app at **Settings →
+Credits → Open-source licences** (`/licences`). The list is generated from the
+built bundle by `scripts/generate-licences.js`, and `check:licences` fails the
+deploy when it is out of date. At the time of writing: 82 MIT, 5 BSD, and 3 OFL
+typefaces. Nothing copyleft ships.

@@ -11,6 +11,7 @@ export type RootStackParamList = {
   Privacy: undefined;
   Terms: undefined;
   Credits: undefined;
+  Licences: undefined;
 };
 
 /**
