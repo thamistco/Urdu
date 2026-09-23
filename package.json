@@ -53,6 +53,7 @@
     "check:order": "node scripts/check-order.js",
     "check:unit-names": "node scripts/check-unit-names.js",
     "check:unit-themes": "node scripts/check-unit-themes.js",
+    "check:row-fit": "node scripts/check-row-fit.js",
     "check:coverage": "node scripts/check-coverage.js",
     "check:sentence-coverage": "node scripts/check-sentence-coverage.js",
     "check:shape": "node scripts/check-shape.js",

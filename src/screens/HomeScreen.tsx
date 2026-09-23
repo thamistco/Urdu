@@ -165,24 +165,29 @@ function LessonNode({
       </Pressable>
       <View className="ms-4 flex-1">
         <Bold
+          testID="row-title"
           className="text-[0.9375rem]"
           style={{ opacity: state === 'locked' ? 0.5 : 1, writingDirection: 'ltr', textAlign: 'left' }}
         >
           {lesson.title}
         </Bold>
-        {/* One line, whatever is in it.
+        {/* One line, and never cut off.
 
-            The path zig-zags, so each node sits at a different horizontal
-            offset and every row's text column is a different width. Measured at
-            320pt with the new word previews: "1 of 2 · to know, to accept, to
-            want" fits on one line while "1 of 2 · broom, bucket, soap", eight
-            characters shorter, wraps onto two — the row it happens to land on
-            is what decides. No character budget in the content can fix that,
-            and a subtitle that sometimes doubles a row's height makes the path
-            look ragged. Truncating keeps the rows even and still shows enough
-            to tell one sitting from the next; the full text stays in the
-            accessibility label above. */}
-        <Txt numberOfLines={1} className="text-xs text-paper/55" style={{ writingDirection: 'ltr', textAlign: 'left' }}>
+            The path zig-zags, so each row's text column is a different width,
+            and at 320pt word previews like "1 of 2 · to know, to accept, to
+            want" were cut off. They were ellipsised to keep the rows even, which
+            hid what a learner was told the lesson held. The subtitles are now
+            short enough to fit (a word count, or a few hand-written words), so
+            `numberOfLines` is only a backstop that keeps the row one line tall.
+            It is not the plan. `check:row-fit` renders every row at 320pt on
+            both tracks and fails if any subtitle is actually cut off or any
+            title wraps. */}
+        <Txt
+          testID="row-subtitle"
+          numberOfLines={1}
+          className="text-xs text-paper/55"
+          style={{ writingDirection: 'ltr', textAlign: 'left' }}
+        >
           {lesson.subtitle}
         </Txt>
       </View>

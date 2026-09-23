@@ -2300,7 +2300,7 @@ export const PASSAGES: Passage[] = [
   },
   {
     id: 'r-9',
-    title: 'The garden behind the house',
+    title: 'The back garden',
     level: 'elementary',
     lines: [
       {
