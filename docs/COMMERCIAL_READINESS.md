@@ -104,10 +104,14 @@ let the customer use generated audio commercially. No ElevenLabs audio ships.
 
 ## 4. The evening sky picture: open, small
 
-AI-generated, per the owner. Credited as such. **Confirm the generator and
-that its terms allowed commercial use on the plan used**; some free tiers did
-not. An image made wholly by AI generally has no copyright in the US, so it
-can be used but not protected.
+AI-generated, per the owner (2026-09-23). Not named as such in-app or in
+CREDITS.md: an AI-generated image has no human author, so there is no one to
+credit, and the app's own credits pages list only work that came from a named
+person or a licensed source. This paragraph is the record of it instead.
+**Confirm the generator and that its terms allowed commercial use on the plan
+used**; some free tiers did not. An image made wholly by AI generally has no
+copyright in the US, so it can be used but not protected, and nothing stops
+someone else reusing it too.
 
 ## 5. Drawn art and sounds: done
 
