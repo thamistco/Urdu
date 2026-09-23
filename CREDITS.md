@@ -18,6 +18,8 @@ means the adapted material may not be used "primarily intended for or directed
 towards commercial advantage or monetary compensation". Harf is free with no
 advertisements today. Before it charges, sells a subscription or shows ads,
 either get written permission from the author or replace what was adapted.
+What was and was not adapted, and every other item to settle before Harf
+charges, is in [`docs/COMMERCIAL_READINESS.md`](docs/COMMERCIAL_READINESS.md).
 
 ## Fonts (SIL Open Font License)
 - **Noto Nastaliq Urdu** — Google / SIL OFL
