@@ -461,6 +461,13 @@ export function SettingsScreen() {
                 <Txt className="text-base text-paper/55">›</Txt>
               </View>
             </Pressable>
+            <View className="h-px bg-white/5" />
+            <Pressable accessibilityRole="link" onPress={() => nav.navigate('Credits')}>
+              <View className="flex-row items-center justify-between py-3">
+                <Bold className="text-[0.9375rem]">Credits</Bold>
+                <Txt className="text-base text-paper/55">›</Txt>
+              </View>
+            </Pressable>
           </Card>
         </Reveal>
 

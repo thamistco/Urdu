@@ -12,6 +12,7 @@ import { AchievementsScreen } from '../screens/AchievementsScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { PrivacyScreen } from '../screens/PrivacyScreen';
 import { TermsScreen } from '../screens/TermsScreen';
+import { CreditsScreen } from '../screens/CreditsScreen';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -47,7 +48,7 @@ export function RootNavigator() {
         </>
       )}
       {/*
-       * Privacy and Terms are registered unconditionally, after the
+       * Privacy, Terms and Credits are registered unconditionally, after the
        * auth/onboarding gate above, so /privacy and /terms resolve at any
        * state -- signed out, mid-onboarding, or fully in. An app store
        * reviewer, or anyone else with the link, should never have to create a
@@ -63,6 +64,7 @@ export function RootNavigator() {
        */}
       <Stack.Screen name="Privacy" component={PrivacyScreen} options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="Terms" component={TermsScreen} options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="Credits" component={CreditsScreen} options={{ animation: 'slide_from_right' }} />
     </Stack.Navigator>
   );
 }
