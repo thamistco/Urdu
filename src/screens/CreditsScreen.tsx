@@ -83,8 +83,7 @@ export function CreditsScreen() {
         </Section>
 
         <Section title="Sounds and pictures">
-          <Para>The feedback sounds and the drawn illustrations were made for Harf.</Para>
-          <Para>The evening sky behind the sign-in and welcome screens is an AI-generated image.</Para>
+          <Para>The feedback sounds, the drawn illustrations and the evening sky were made for Harf.</Para>
         </Section>
 
         <Section title="Software">
