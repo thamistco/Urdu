@@ -251,11 +251,63 @@ function walk(dir, out = []) {
  *
  * Without this every doc comment in the project is a finding, and this file's
  * own prose about dashes would fail it.
+ *
+ * It walks the source rather than matching `//` with a regex, because a regex
+ * cannot tell a comment from the `//` in `'https://example.org'`. The regex
+ * version blanked the rest of that line, the string lost its closing quote,
+ * and every quote after it on the page paired with the wrong partner. Found
+ * when a third URL in the Credits screen tipped the pairing over and a
+ * constant was reported as prose; the same mispairing can hide real copy
+ * between two stray quotes, which is the worse half.
+ *
+ * Template literals are followed into `${…}` and back out, so a comment inside
+ * an interpolation is still a comment. A regex literal is the one case not
+ * modelled, and none of the scanned files needs it.
  */
 function stripComments(src) {
-  return src
-    .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
-    .replace(/\/\/[^\n]*/g, (m) => m.replace(/[^\n]/g, ' '));
+  const out = src.split('');
+  const blank = (from, to) => {
+    for (let k = from; k < to; k++) if (out[k] !== '\n') out[k] = ' ';
+  };
+  // Each frame is the string we are inside ('`' for a template) or '{' for
+  // code nested in a template's ${ }.
+  const stack = [];
+  let i = 0;
+  while (i < src.length) {
+    const c = src[i];
+    const top = stack[stack.length - 1];
+    if (top === "'" || top === '"') {
+      if (c === '\\') i += 2;
+      else {
+        if (c === top || c === '\n') stack.pop();
+        i++;
+      }
+      continue;
+    }
+    if (top === '`') {
+      if (c === '\\') i += 2;
+      else if (c === '`') (stack.pop(), i++);
+      else if (c === '$' && src[i + 1] === '{') (stack.push('{'), (i += 2));
+      else i++;
+      continue;
+    }
+    // Code: top-level, or inside a template's ${ }.
+    if (c === '/' && src[i + 1] === '/') {
+      const end = src.indexOf('\n', i);
+      const stop = end < 0 ? src.length : end;
+      blank(i, stop);
+      i = stop;
+    } else if (c === '/' && src[i + 1] === '*') {
+      const end = src.indexOf('*/', i + 2);
+      const stop = end < 0 ? src.length : end + 2;
+      blank(i, stop);
+      i = stop;
+    } else if (c === "'" || c === '"' || c === '`') (stack.push(c), i++);
+    else if (c === '{' && top === '{') (stack.push('{'), i++);
+    else if (c === '}' && top === '{') (stack.pop(), i++);
+    else i++;
+  }
+  return out.join('');
 }
 
 const lineOf = (src, index) => src.slice(0, index).split('\n').length;
