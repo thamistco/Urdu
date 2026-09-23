@@ -107,10 +107,13 @@ const uid = (key: string) => {
 
 // A vocabulary lesson needs room for its closing run — recall, build, type and
 // the matching board — on top of the words it introduces; see the generator.
-const V = (topic: string, title: string, subtitle: string, xp = 18, size = 9): Lesson => ({
+//
+// No subtitle argument: a vocabulary row's subtitle is how many words it
+// teaches, which only `expandLesson` knows. See `wordsLine` there.
+const V = (topic: string, title: string, xp = 18, size = 9): Lesson => ({
   id: uid(`v-${topic}`),
   title,
-  subtitle,
+  subtitle: '',
   icon: '✨',
   kind: 'vocab',
   topic,
@@ -188,20 +191,32 @@ const S = (level: Level, title: string, subtitle: string, xp = 20, size = 10): L
   xp,
   size,
 });
-const R = (passageId: string, title: string, subtitle: string, xp = 25, size = 1): Lesson => ({
+/**
+ * A reading or a conversation is titled by its scene ("My daily routine") and
+ * subtitled by its kind, rather than the other way round.
+ *
+ * Titles used to carry the kind as a prefix ("Reading: The garden behind the
+ * house"), which spent a third of a 320pt row on a word the node's icon also
+ * shows. Thirteen of those titles wrapped onto two or three lines, and the
+ * hand-written subtitles under them were cut off. The subtitle line is where
+ * a row says what kind of thing it is. Vocabulary rows use it for their word
+ * count, and a reading uses it for the word "Reading".
+ */
+const R = (passageId: string, title: string, xp = 25, size = 1): Lesson => ({
   id: uid(passageId),
   title,
-  subtitle,
+  subtitle: 'Reading',
   icon: '📖',
   kind: 'reading',
   passageId,
   xp,
   size,
 });
-const D = (dialogueId: string, title: string, subtitle: string, xp = 25, size = 1): Lesson => ({
+const D = (dialogueId: string, title: string, xp = 25, size = 1): Lesson => ({
   id: uid(dialogueId),
   title,
-  subtitle,
+  // "Conversation", the word the Practice tab already uses for these.
+  subtitle: 'Conversation',
   icon: '💬',
   kind: 'dialogue',
   dialogueId,
@@ -307,13 +322,13 @@ const PLANNED_UNITS: Unit[] = [
     romanSubtitle: 'Everyday words, greetings, yes, no and thank you, and voices and stories',
     lessons: [
       L(1, 'Meet the letters', 'alif · be · pe · te · Te'),
-      V('first-words', 'First words', 'Everyday vocabulary', 15, 7),
+      V('first-words', 'First words', 15, 7),
       L(1, 'Position practice', 'Alone · start · middle · end'),
-      V('greetings', 'Greetings', 'Hello, goodbye and good morning'),
+      V('greetings', 'Greetings'),
       // Split out of `greetings`, which was carrying both jobs under one name.
       // See the note on the `courtesy` topic in words.ts.
-      V('courtesy', 'Yes, no and thank you', 'The short answers you reply with'),
-      V('voices', 'Voices & stories', 'Talk, news, music and the truth of it'),
+      V('courtesy', 'Yes, no and thank you'),
+      V('voices', 'Voices & stories'),
       P('Everyday phrases', 'Speak, don’t just read'),
       REV('first-faces'),
     ],
@@ -328,8 +343,8 @@ const PLANNED_UNITS: Unit[] = [
     romanSubtitle: 'Family, close and extended',
     lessons: [
       L(2, 'The jeem family', 'jeem · che · he · khe'),
-      V('family', 'Family', 'The people you love'),
-      V('family-more', 'More family', 'Aunts, uncles and in-laws'),
+      V('family', 'Family'),
+      V('family-more', 'More family'),
       REV('the-people-you-know'),
     ],
   },
@@ -343,10 +358,10 @@ const PLANNED_UNITS: Unit[] = [
     romanSubtitle: 'Numbers, how much of things, time, days and months',
     lessons: [
       L(3, 'Standing alone', 'daal · re · ze and friends'),
-      V('numbers', 'Numbers', 'Zero to ten'),
-      V('quantity', 'How much', 'Very, a little, all, some'),
-      V('time', 'Time & day', 'Morning, night, today, tomorrow'),
-      V('days', 'Days & months', 'Monday to Sunday, and the year'),
+      V('numbers', 'Numbers'),
+      V('quantity', 'How much'),
+      V('time', 'Time & day'),
+      V('days', 'Days & months'),
       REV('counting-and-time'),
     ],
   },
@@ -361,9 +376,9 @@ const PLANNED_UNITS: Unit[] = [
     // repeats, which is a different milestone and worth naming as itself.
     subtitle: 'Colours, describing what you see, opposites, and your first sentences',
     lessons: [
-      V('colours', 'Colours', 'Describe what you see'),
-      V('adjectives', 'Describing', 'Big, small, hot, cold'),
-      V('opposites', 'Opposites', 'Easy and hard, clean and dirty'),
+      V('colours', 'Colours'),
+      V('adjectives', 'Describing'),
+      V('opposites', 'Opposites'),
       G('g-pronouns', 'Pronouns', 'I, you, he, we, they'),
       G('g-to-be', 'Am, is, are', 'The verb “to be”'),
       /**
@@ -395,9 +410,9 @@ const PLANNED_UNITS: Unit[] = [
     romanSubtitle: 'Rooms, the things around the home, and places',
     lessons: [
       L(4, 'The teeth', 'seen · sheen · swaad · zwaad'),
-      V('rooms', 'Rooms', 'Where you sit, sleep and cook'),
-      V('home', 'Around the home', 'Everyday objects'),
-      V('places', 'Places', 'The market, the school, the park'),
+      V('rooms', 'Rooms'),
+      V('home', 'Around the home'),
+      V('places', 'Places'),
       REV('home-and-where-you-go'),
     ],
   },
@@ -411,8 +426,8 @@ const PLANNED_UNITS: Unit[] = [
     romanSubtitle: 'Jobs, the classroom, and how words agree',
     lessons: [
       L(5, 'Deep sounds', 'to’e · zo’e · ain · ghain'),
-      V('jobs', 'Jobs', 'What people do all day'),
-      V('school', 'School', 'The classroom and what is in it'),
+      V('jobs', 'Jobs'),
+      V('school', 'School'),
       G('g-gender', 'Gender & number', 'Masculine and feminine'),
       G('g-plurals', 'Making plurals', 'One book, two books'),
       S('beginner', 'More sentences', 'Say what something is'),
@@ -429,9 +444,9 @@ const PLANNED_UNITS: Unit[] = [
     romanSubtitle: 'Food and drink, nature, and animals',
     lessons: [
       L(6, 'k, q and g', 'fe · qaaf · kaaf · gaaf'),
-      V('food', 'Food & drink', 'From chai to roti'),
-      V('nature', 'Nature', 'Sky, water and earth'),
-      V('animals', 'Animals', 'At home and in the wild'),
+      V('food', 'Food & drink'),
+      V('nature', 'Nature'),
+      V('animals', 'Animals'),
       REV('food-and-nature'),
     ],
   },
@@ -445,8 +460,8 @@ const PLANNED_UNITS: Unit[] = [
     romanSubtitle: 'The body, and how you feel',
     lessons: [
       L(7, 'The finishers', 'laam · meem · noon · waaw'),
-      V('body', 'The body', 'Name yourself, head to toe'),
-      V('feelings', 'Feelings', 'Happy, tired, hungry'),
+      V('body', 'The body'),
+      V('feelings', 'Feelings'),
       REV('body-and-feeling'),
     ],
   },
@@ -460,8 +475,8 @@ const PLANNED_UNITS: Unit[] = [
     romanSubtitle: 'Question words, and actions you do every day',
     lessons: [
       L(8, 'The h family', 'the two he’s, hamza and ye'),
-      V('questions', 'Question words', 'Who, what, where, when'),
-      V('verbs', 'Actions', 'Eat, drink, go, come'),
+      V('questions', 'Question words'),
+      V('verbs', 'Actions'),
       {
         ...REV('asking-and-doing', 'Script review', 'Every letter so far', 40, 12),
         romanTitle: 'Unit review',
@@ -476,16 +491,15 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 10 · Your First Readings',
     subtitle: 'Whole sentences, and your first pages of Urdu',
     lessons: [
-      R('r-5', 'Reading: My family', 'Five lines you already know'),
-      R('r-6', 'Reading: Tea time', 'A small everyday scene'),
+      R('r-5', 'My family'),
+      R('r-6', 'Tea time'),
       S('beginner', 'Sentence practice', 'Order the words yourself'),
-      D('d-1', 'Talk: Meeting someone', 'Hello, and your name?'),
-      R('r-7', 'Reading: Colours around me', 'Naming what you see'),
-      D('d-2', 'Talk: Tea or coffee?', 'Being offered something'),
-      {
-        ...REV('your-first-readings', 'Beginner review', 'Script, words and sentences', 40, 12),
-        romanSubtitle: 'Words, grammar and sentences',
-      },
+      D('d-1', 'Meeting someone'),
+      R('r-7', 'Colours around me'),
+      D('d-2', 'Tea or coffee?'),
+      // "Everything so far", as the Elementary and Intermediate reviews say.
+      // It was "Script, words and sentences", which was cut off at 320pt.
+      REV('your-first-readings', 'Beginner review', 'Everything so far', 40, 12),
     ],
   },
 
@@ -497,11 +511,11 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 11 · Every Day',
     subtitle: 'Daily routine, more actions, and the present tense',
     lessons: [
-      V('routine', 'Daily routine', 'Wake, wash, work, rest'),
-      V('verbs2', 'More actions', 'Hear, think, give, take'),
+      V('routine', 'Daily routine'),
+      V('verbs2', 'More actions'),
       G('g-present', 'Present habitual', 'What you do every day'),
       G('g-continuous', 'Present continuous', 'What you are doing now'),
-      R('r-3', 'Reading: My daily routine', 'A day from start to end'),
+      R('r-3', 'My daily routine'),
       REV('every-day'),
     ],
   },
@@ -512,10 +526,10 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 12 · The Verbs You Need',
     subtitle: 'Essential verbs, and verbs of motion, mind and speech',
     lessons: [
-      V('verbs3', 'Essential verbs', 'The ones you cannot do without'),
-      V('motion-verbs', 'Verbs of motion', 'Coming, going, moving things'),
-      V('mind-verbs', 'Verbs of mind', 'Knowing, wanting, believing'),
-      V('speech-verbs', 'Verbs of speech', 'Saying, asking, arguing'),
+      V('verbs3', 'Essential verbs'),
+      V('motion-verbs', 'Verbs of motion'),
+      V('mind-verbs', 'Verbs of mind'),
+      V('speech-verbs', 'Verbs of speech'),
       S('intermediate', 'Sentence building', 'Put verbs to work'),
       REV('the-verbs-you-need'),
     ],
@@ -527,10 +541,10 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 13 · Out & About',
     subtitle: 'In the city, directions, getting around and on the road',
     lessons: [
-      V('city', 'In the city', 'Buildings and services'),
-      V('directions', 'Directions', 'Left, right, near, far'),
-      V('transport', 'Getting around', 'Car, bus, train, boat'),
-      V('road', 'On the road', 'Traffic and driving'),
+      V('city', 'In the city'),
+      V('directions', 'Directions'),
+      V('transport', 'Getting around'),
+      V('road', 'On the road'),
       S('intermediate', 'Sentence building', 'Say what you did and will do'),
       REV('out-and-about', 'Elementary review', 'Everything so far', 40, 12),
     ],
@@ -542,7 +556,7 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 14 · You & Your Body',
     subtitle: 'More body parts, and how to say what is yours',
     lessons: [
-      V('body-more', 'More body parts', 'Neck, arm, knee, skin'),
+      V('body-more', 'More body parts'),
       G('g-possess', 'Possession', 'کا، کی، کے, my, your, his'),
       S('elementary', 'Sentence building', 'Say where things are'),
       REV('you-and-your-body'),
@@ -555,10 +569,10 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 15 · Around the House',
     subtitle: 'Furniture, household items, the kitchen, the bathroom, and the words that follow a noun',
     lessons: [
-      V('furniture', 'Furniture', 'What fills the rooms'),
-      V('household', 'Household items', 'Broom, bucket, key'),
-      V('kitchen', 'In the kitchen', 'Utensils and cookware'),
-      V('bathroom', 'Bathroom', 'Washing and grooming'),
+      V('furniture', 'Furniture'),
+      V('household', 'Household items'),
+      V('kitchen', 'In the kitchen'),
+      V('bathroom', 'Bathroom'),
       G('g-postpositions', 'Postpositions', 'in, on, from, after the noun'),
       REV('around-the-house'),
     ],
@@ -570,11 +584,11 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 16 · What You Wear',
     subtitle: 'Clothing, what shape and size things are, and how to say no',
     lessons: [
-      V('clothing', 'Clothing', 'Shirt, cap, shoes'),
-      V('shapes', 'Shapes & sizes', 'Form, measure and dimension'),
+      V('clothing', 'Clothing'),
+      V('shapes', 'Shapes & sizes'),
       G('g-negation', 'Saying no', 'نہیں · نہ · مت'),
-      D('d-3', 'Talk: Where do you live?', 'Small talk that goes somewhere'),
-      R('r-8', 'Reading: At school', 'A morning and an afternoon'),
+      D('d-3', 'Where do you live?'),
+      R('r-8', 'At school'),
       REV('what-you-wear'),
     ],
   },
@@ -585,11 +599,11 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 17 · The Living World',
     subtitle: 'Birds, wild animals, the garden, and the weather over all of it',
     lessons: [
-      V('birds', 'Birds', 'Crow, parrot, peacock'),
-      V('wildlife', 'Wild animals', 'Bear, deer, camel'),
-      V('garden', 'The garden', 'Plants, seeds and leaves'),
-      V('weather', 'Weather', 'Sun, rain, heat and cold'),
-      G('g-oblique', 'The oblique case', 'Nouns change before postpositions'),
+      V('birds', 'Birds'),
+      V('wildlife', 'Wild animals'),
+      V('garden', 'The garden'),
+      V('weather', 'Weather'),
+      G('g-oblique', 'The oblique case', 'Nouns before postpositions'),
       REV('the-living-world'),
     ],
   },
@@ -600,12 +614,12 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 18 · At the Table',
     subtitle: 'Fruits, vegetables, drinks, meals and dishes',
     lessons: [
-      V('fruits', 'Fruits', 'Mango, banana, grapes'),
-      V('vegetables', 'Vegetables', 'Potato, onion, tomato'),
-      V('drinks', 'Drinks', 'Chai, lassi, juice'),
-      V('meals', 'Meals & dishes', 'Biryani, daal, naan'),
-      D('d-4', 'Talk: At the fruit stall', 'Asking a price, and haggling'),
-      R('r-1', 'Reading: My house', 'Your first passage'),
+      V('fruits', 'Fruits'),
+      V('vegetables', 'Vegetables'),
+      V('drinks', 'Drinks'),
+      V('meals', 'Meals & dishes'),
+      D('d-4', 'At the fruit stall'),
+      R('r-1', 'My house'),
       REV('at-the-table'),
     ],
   },
@@ -616,7 +630,7 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 19 · Numbers Past a Hundred',
     subtitle: 'Numbers past a hundred, and asking questions with them',
     lessons: [
-      V('numbers-more', 'Bigger numbers', 'Eleven to a hundred'),
+      V('numbers-more', 'Bigger numbers'),
       G('g-questions', 'Asking questions', 'who · what · where · when'),
       REV('numbers-past-a-hundred'),
     ],
@@ -628,12 +642,12 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 20 · Friends, Play & Joining Ideas',
     subtitle: 'Play and childhood, linking words, and joining ideas',
     lessons: [
-      V('toys', 'Play & childhood', 'Games and growing up'),
-      V('connectors', 'Linking words', 'And, but, because, although'),
+      V('toys', 'Play & childhood'),
+      V('connectors', 'Linking words'),
       G('g-conjunctions', 'Joining ideas', 'and · but · or · because'),
-      D('d-5', 'Talk: Asking the way', 'Directions, given and understood'),
-      R('r-9', 'Reading: The garden behind the house', 'A quiet place'),
-      R('r-10', 'Reading: My friend Sara', 'Talking about someone'),
+      D('d-5', 'Asking the way'),
+      R('r-9', 'The back garden'),
+      R('r-10', 'My friend Sara'),
       S('elementary', 'Sentence practice', 'Longer, joined-up sentences'),
       REV('friends-play-and-joining-ideas'),
     ],
@@ -647,12 +661,12 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 21 · Finding Your Way',
     subtitle: 'Asking the way, on the phone, and useful expressions',
     lessons: [
-      V('directions-more', 'Asking the way', 'Finding your way around'),
-      V('phone', 'On the phone', 'Calling and messaging'),
+      V('directions-more', 'Asking the way'),
+      V('phone', 'On the phone'),
       G('g-dative', 'The مجھے feeling', 'Liking, knowing, being hungry'),
-      V('expressions', 'Useful expressions', 'The glue of real conversation'),
-      D('d-6', 'Talk: On the phone', 'Taking a message'),
-      R('r-11', 'Reading: A trip to Lahore', 'Telling a story in the past'),
+      V('expressions', 'Useful expressions'),
+      D('d-6', 'On the phone'),
+      R('r-11', 'A trip to Lahore'),
       REV('finding-your-way'),
     ],
   },
@@ -663,9 +677,9 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 22 · Eating Out',
     subtitle: 'A restaurant, grains and staples, and talking about what already happened',
     lessons: [
-      V('restaurant', 'At a restaurant', 'Ordering and the bill'),
+      V('restaurant', 'At a restaurant'),
       G('g-past', 'Past tense', 'تھا، تھی, was and were'),
-      V('grains', 'Grains & staples', 'The pantry basics'),
+      V('grains', 'Grains & staples'),
       REV('eating-out'),
     ],
   },
@@ -676,15 +690,15 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 23 · Money & Bargaining',
     subtitle: 'Money and shopping, at the bank, bargaining, and comparing one price with another',
     lessons: [
-      V('money', 'Money & shopping', 'Price, cheap, expensive'),
-      V('bank', 'At the bank', 'Accounts and transactions'),
-      V('shopping-talk', 'Bargaining', 'Haggling in the bazaar'),
+      V('money', 'Money & shopping'),
+      V('bank', 'At the bank'),
+      V('shopping-talk', 'Bargaining'),
       G('g-comparative', 'Comparing things', 'Bigger than, the biggest'),
       // The market reading followed the money here rather than staying behind
       // in the food unit: it opens "میں نے پھل اور سبزی خریدی" and خریدنا is a
       // money word, so where it sat it was read one unit before the topic that
       // teaches it. `check:order` caught that the moment money moved.
-      R('r-2', 'Reading: A day at the market', 'Shopping in Urdu'),
+      R('r-2', 'A day at the market'),
       S('intermediate', 'Sentence practice', 'Weigh one thing against another'),
       REV('money-and-bargaining'),
     ],
@@ -696,9 +710,9 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 24 · Health & Illness',
     subtitle: 'Health, illness and symptoms, and talking about what will happen',
     lessons: [
-      V('health', 'Health', 'Feeling unwell'),
-      V('illness', 'Illness & symptoms', 'Fever, cough, pain'),
-      D('d-7', 'Talk: At the doctor', 'Describing a symptom'),
+      V('health', 'Health'),
+      V('illness', 'Illness & symptoms'),
+      D('d-7', 'At the doctor'),
       G('g-future', 'Future tense', 'What you will do'),
       REV('health-and-illness'),
     ],
@@ -710,12 +724,12 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 25 · Working Life',
     subtitle: 'Working life, the office, more professions, and education',
     lessons: [
-      V('work-life', 'Working life', 'Colleagues, tasks and time off'),
-      V('office', 'The office', 'Desks, meetings and paperwork'),
-      V('jobs-more', 'More professions', 'Trades and callings'),
-      V('education', 'Education', 'Study, exams and learning'),
+      V('work-life', 'Working life'),
+      V('office', 'The office'),
+      V('jobs-more', 'More professions'),
+      V('education', 'Education'),
       G('g-obligation', 'Have to & should', 'چاہیے · ہے · پڑنا'),
-      R('r-13', 'Reading: At the doctor', 'Describing what is wrong'),
+      R('r-13', 'At the doctor'),
       REV('working-life'),
     ],
   },
@@ -726,13 +740,13 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 26 · Travel & Time',
     subtitle: 'Travel, the airport, a hotel, countries and peoples, and time words',
     lessons: [
-      V('travel', 'Travel', 'Tickets, hotels, luggage'),
-      V('airport', 'At the airport', 'Flights and checks'),
-      V('hotel', 'At a hotel', 'Staying somewhere'),
-      V('countries', 'Countries & peoples', 'Places on the map'),
-      V('timewords', 'Time words', 'Before, after, often'),
+      V('travel', 'Travel'),
+      V('airport', 'At the airport'),
+      V('hotel', 'At a hotel'),
+      V('countries', 'Countries & peoples'),
+      V('timewords', 'Time words'),
       G('g-ability', 'Can & could', 'سکنا, being able to'),
-      D('d-8', 'Talk: Booking a room', 'Checking in somewhere'),
+      D('d-8', 'Booking a room'),
       REV('travel-and-time'),
     ],
   },
@@ -746,11 +760,11 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 27 · Things People Make',
     subtitle: 'Tools, materials, appliances, containers and clothing',
     lessons: [
-      V('tools', 'Tools', 'Building and mending'),
-      V('materials', 'Materials', 'What things are made of'),
-      V('appliances', 'Appliances', 'Machines around the house'),
-      V('containers', 'Containers', 'Holding and carrying'),
-      V('clothing-more', 'More clothing', 'Garments and adornment'),
+      V('tools', 'Tools'),
+      V('materials', 'Materials'),
+      V('appliances', 'Appliances'),
+      V('containers', 'Containers'),
+      V('clothing-more', 'More clothing'),
       REV('things-people-make'),
     ],
   },
@@ -760,12 +774,7 @@ const PLANNED_UNITS: Unit[] = [
     color: ROSE,
     title: 'Unit 28 · Field & Kitchen',
     subtitle: 'The farm, the field, and cooking what comes off them',
-    lessons: [
-      V('farm', 'Farm & field', 'Agriculture and livestock'),
-      V('cooking', 'Cooking', 'In the kitchen, making food'),
-      R('r-12', 'Reading: The rainy day', 'When the weather decides'),
-      REV('field-and-kitchen'),
-    ],
+    lessons: [V('farm', 'Farm & field'), V('cooking', 'Cooking'), R('r-12', 'The rainy day'), REV('field-and-kitchen')],
   },
   {
     id: 'u29',
@@ -774,10 +783,10 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 29 · Senses & Seasons',
     subtitle: 'Sounds and senses, tastes and textures, weather and seasons, and sea life',
     lessons: [
-      V('senses', 'Sounds & senses', 'What you perceive'),
-      V('tastes', 'Tastes & textures', 'Sweet, sour, hot and soft'),
-      V('weather-more', 'Weather & seasons', 'The turning year'),
-      V('sealife', 'Sea & insects', 'Water creatures and small crawlers'),
+      V('senses', 'Sounds & senses'),
+      V('tastes', 'Tastes & textures'),
+      V('weather-more', 'Weather & seasons'),
+      V('sealife', 'Sea & insects'),
 
       REV('senses-and-seasons'),
     ],
@@ -789,13 +798,13 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 30 · Together',
     subtitle: 'Social life, sports and leisure, weddings and guests, respect and address',
     lessons: [
-      V('social', 'Social life', 'People together'),
-      V('sports', 'Sports & leisure', 'Games, hobbies and free time'),
-      V('celebrations', 'Weddings & guests', 'Hosting and being hosted'),
-      V('honorifics', 'Respect & address', 'How Urdu shows deference'),
-      D('d-9', 'Talk: Weekend plans', 'Making and accepting a plan'),
-      R('r-14', 'Reading: Eid at home', 'A festival morning'),
-      S('intermediate', 'Sentence practice', 'Speak about people politely'),
+      V('social', 'Social life'),
+      V('sports', 'Sports & leisure'),
+      V('celebrations', 'Weddings & guests'),
+      V('honorifics', 'Respect & address'),
+      D('d-9', 'Weekend plans'),
+      R('r-14', 'Eid at home'),
+      S('intermediate', 'Sentence practice', 'Speaking politely'),
       REV('together'),
     ],
   },
@@ -808,11 +817,11 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 31 · Describing People',
     subtitle: 'Appearance, personality and relationships',
     lessons: [
-      V('appearance', 'Appearance', 'How someone looks'),
-      V('personality', 'Personality', 'Character and temperament'),
-      V('relationships', 'Relationships', 'Friends, trust, marriage'),
-      D('d-10', 'Talk: A late arrival', 'Apologising, and waving it off'),
-      G('g-imperative', 'Requests & commands', 'Asking politely'),
+      V('appearance', 'Appearance'),
+      V('personality', 'Personality'),
+      V('relationships', 'Relationships'),
+      D('d-10', 'A late arrival'),
+      G('g-imperative', 'Requests', 'Asking and telling'),
       REV('describing-people', 'Intermediate review', 'Everything so far', 45, 12),
     ],
   },
@@ -823,10 +832,10 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 32 · Saying It Precisely',
     subtitle: 'Fine description, judgement words, idioms and sayings, measures and order',
     lessons: [
-      V('describing-more', 'Fine description', 'Precise and expressive adjectives'),
-      V('quality', 'Judgement words', 'Evaluating and comparing'),
-      V('idioms', 'Idioms & sayings', 'Phrases that mean more than their words'),
-      V('measure-time', 'Measures & order', 'Sequence, rank and amount'),
+      V('describing-more', 'Fine description'),
+      V('quality', 'Judgement words'),
+      V('idioms', 'Idioms & sayings'),
+      V('measure-time', 'Measures & order'),
       S('advanced', 'Complex sentences', 'Shade your meaning'),
       REV('saying-it-precisely'),
     ],
@@ -838,8 +847,8 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 33 · Mind & Feeling',
     subtitle: 'Emotions and mind, ideas and values, and the subjunctive',
     lessons: [
-      V('emotions', 'Emotions & mind', 'Hope, patience, longing'),
-      V('abstract', 'Ideas & values', 'Truth, justice, freedom'),
+      V('emotions', 'Emotions & mind'),
+      V('abstract', 'Ideas & values'),
       G('g-subjunctive', 'The subjunctive', 'Maybe, should, if'),
       S('advanced', 'Complex sentences', 'Join ideas together'),
       REV('mind-and-feeling'),
@@ -852,11 +861,11 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 34 · Thought, Belief & Study',
     subtitle: 'Thought and philosophy, faith and worship, and the fields people study',
     lessons: [
-      V('philosophy', 'Thought & philosophy', 'Reason, ethics and meaning'),
-      V('faith', 'Faith & worship', 'Belief and practice'),
-      V('subjects', 'Fields of study', 'What you can study'),
+      V('philosophy', 'Thought & philosophy'),
+      V('faith', 'Faith & worship'),
+      V('subjects', 'Fields of study'),
       G('g-relative', 'Relative clauses', 'جو … وہ, matched pairs'),
-      R('r-16', 'Reading: Work and rest', 'An argument, gently made'),
+      R('r-16', 'Work and rest'),
       REV('thought-belief-and-study'),
     ],
   },
@@ -867,12 +876,12 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 35 · Culture & Faith',
     subtitle: 'Culture and faith, festivals, history, literature, music and art',
     lessons: [
-      V('culture', 'Culture & faith', 'Festivals and tradition'),
-      V('festivals', 'Festivals', 'Eid, fairs and celebration'),
-      V('history', 'History', 'The past and its record'),
-      V('literature', 'Literature', 'Poets, verse and story'),
-      V('music-art', 'Music & art', 'Sound, colour and craft'),
-      R('r-4', 'Reading: A letter to a friend', 'Formal written Urdu'),
+      V('culture', 'Culture & faith'),
+      V('festivals', 'Festivals'),
+      V('history', 'History'),
+      V('literature', 'Literature'),
+      V('music-art', 'Music & art'),
+      R('r-4', 'A letter to a friend'),
       REV('culture-and-faith'),
     ],
   },
@@ -883,10 +892,10 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 36 · Poetry & Story',
     subtitle: 'Poetry, music, and the words for writing about them',
     lessons: [
-      V('poetry', 'Poetry & music', 'The Urdu literary tradition'),
-      G('g-compound', 'Compound verbs', 'The little verb that adds colour'),
-      D('d-11', 'Talk: About a book', 'Disagreeing gently'),
-      R('r-17', 'Reading: An evening of poetry', 'Why one couplet silences a room'),
+      V('poetry', 'Poetry & music'),
+      G('g-compound', 'Compound verbs', 'Verbs that add colour'),
+      D('d-11', 'About a book'),
+      R('r-17', 'An evening of poetry'),
       REV('poetry-and-story'),
     ],
   },
@@ -897,12 +906,12 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 37 · The Modern World',
     subtitle: 'Modern and digital life, media and news, business, trade and science',
     lessons: [
-      V('tech', 'Modern life', 'Technology and news'),
-      V('digital', 'Digital life', 'Screens, apps and online'),
-      V('media', 'Media & news', 'Journalism and broadcast'),
-      V('business', 'Business & trade', 'Commerce and money'),
-      V('science', 'Science', 'Enquiry and discovery'),
-      D('d-12', 'Talk: Leaving a job', 'A difficult thing, said well'),
+      V('tech', 'Modern life'),
+      V('digital', 'Digital life'),
+      V('media', 'Media & news'),
+      V('business', 'Business & trade'),
+      V('science', 'Science'),
+      D('d-12', 'Leaving a job'),
       G('g-perfect', 'Completed actions', 'The نے construction'),
       REV('the-modern-world'),
     ],
@@ -914,12 +923,12 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 38 · State & Society',
     subtitle: 'Politics, law and justice, economy, and the formal written register',
     lessons: [
-      V('politics', 'Politics', 'Power, parties and the state'),
-      V('law', 'Law & justice', 'Courts, crime and rights'),
-      V('economy', 'Economy', 'Wealth, work and markets'),
-      V('formal', 'Formal & written', 'Letters, notices and officialese'),
+      V('politics', 'Politics'),
+      V('law', 'Law & justice'),
+      V('economy', 'Economy'),
+      V('formal', 'Formal & written'),
       G('g-passive', 'The passive', 'When the doer disappears'),
-      R('r-15', 'Reading: The old bookseller', 'A character sketch'),
+      R('r-15', 'The old bookseller'),
       REV('state-and-society'),
     ],
   },
@@ -930,10 +939,10 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 39 · Body & Medicine',
     subtitle: 'Inside the body, medicine, emergencies and public services',
     lessons: [
-      V('organs', 'Inside the body', 'Organs and inner workings'),
-      V('medicine', 'Medicine', 'Clinical and specialist terms'),
-      V('emergency', 'Emergencies', 'Urgent help and safety'),
-      V('services', 'Public services', 'Government and law'),
+      V('organs', 'Inside the body'),
+      V('medicine', 'Medicine'),
+      V('emergency', 'Emergencies'),
+      V('services', 'Public services'),
       G('g-causative', 'Causatives', 'Do it · make someone do it'),
       REV('body-and-medicine'),
     ],
@@ -949,10 +958,10 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 40 · Land & Sky',
     subtitle: 'The natural world, landscape, sky and space, and the environment',
     lessons: [
-      V('nature2', 'The natural world', 'Rivers, deserts, seasons'),
-      V('landscape', 'Landscape', 'The shape of the land'),
-      V('sky', 'Sky & space', 'Above the horizon'),
-      V('environment', 'Environment', 'Climate and conservation'),
+      V('nature2', 'The natural world'),
+      V('landscape', 'Landscape'),
+      V('sky', 'Sky & space'),
+      V('environment', 'Environment'),
       REV('land-and-sky'),
     ],
   },
@@ -963,8 +972,8 @@ const PLANNED_UNITS: Unit[] = [
     title: 'Unit 41 · Journeys & Milestones',
     subtitle: 'Journeys, and the events that mark a life',
     lessons: [
-      V('travel-more', 'Journeys', 'Planning and describing trips'),
-      V('lifeevents', 'Life events', 'Birth, success, destiny'),
+      V('travel-more', 'Journeys'),
+      V('lifeevents', 'Life events'),
       S('advanced', 'Complex sentences', 'Write the way Urdu writes'),
       /**
        * URD-A02: kept the pre-split id ('rev-journeys-and-milestones') and its
@@ -1159,80 +1168,30 @@ function coverTopics(units: Unit[]): Unit[] {
 }
 
 /**
- * The first few meanings a part covers, for its subtitle.
+ * What a vocabulary row says under its title: how many new words it teaches,
+ * and which sitting of its topic it is.
  *
- * English, not Roman, because the Script track asked not to be shown Roman and
- * a subtitle is not the place to go back on that. The meaning is also the more
- * useful half here: "house, water, book" says what you will be able to name,
- * where "ghar, paani, kitaab" only says what you will be able to pronounce.
+ * It used to sample the first three meanings — "First words · 1 of 2 · water,
+ * book, house". A learner read that two ways, both wrong. Either the lesson
+ * held three words (it holds twelve), or three unrelated words had been thrown
+ * together, because a sample of three from a topic of thirty has no reason to
+ * look like the topic. Reordering the words to make the sample look better
+ * would only move the problem to another slice. And at 320pt the row cuts
+ * itself off, so the third word often was not shown at all.
  *
- * `meaning` sometimes offers two English words for one Urdu one ("long / tall",
- * "very / much") or qualifies itself ("tall (height)", "Saturday (also: week)").
- * A row on the path wants the short promise, so it takes the first and drops
- * the gloss.
+ * The title already names the topic and the unit header already describes it,
+ * so the row only needs to say what neither of those can: how much is in this
+ * lesson. A count is always true, cannot read as random, and always fits.
+ * Memrise shows the same thing on its lesson list. Duolingo shows nothing under
+ * its path nodes, and a count tells a learner more than that without costing a
+ * second line.
  *
- * Case is left exactly as the data has it. Lowercasing the list to make it read
- * evenly was the first attempt and it is wrong: 38 of the 2,279 meanings start
- * with a capital and every one of them is a proper noun, so it turned the days
- * and months topic into "monday, tuesday, wednesday" and the first-words lesson
- * into "truth, urdu, music".
+ * `check:row-fit` renders every row at the narrowest supported width and
+ * fails if any subtitle or title is cut off.
  */
-const PREVIEW_WORDS = 3;
-const PREVIEW_MAX_CHARS = 30;
-
-/**
- * Meanings that would read as a promise about the alphabet.
- *
- * The Roman track drops the letter lessons because the learner said they do not
- * want the script, and `check:answerable` holds every unit and lesson on that
- * path to it. The first preview written here handed it "First words · 2 of 3 ·
- * letter, voice, light" and it failed, correctly: حرف means both a letter of the
- * alphabet and a letter you post, and a row on the Roman path saying "letter" is
- * the broken promise that rule exists to catch.
- *
- * A preview is a sample rather than a contents list, so a word that reads wrong
- * is simply skipped and the next one shown. Deliberately a second copy of the
- * check's own pattern rather than a shared import: a check that asks the code it
- * is checking what the rule is has stopped being a check. If this list ever
- * drifts below that one, `check:answerable` fails and says which lesson.
- */
-const READS_AS_SCRIPT = /\b(letters?|script|alphabet|nastaliq|glyphs?|handwriting|trace)\b/i;
-
-function previewOf(words: { meaning: string }[]): string {
-  const usable = words
-    .map((w) => w.meaning.split('/')[0].split('(')[0].trim())
-    .filter((m) => m && !READS_AS_SCRIPT.test(m));
-
-  /**
-   * Name more than one thing whenever the slice holds more than one thing.
-   *
-   * Taking strictly the first words meant a single long term could spend the
-   * whole budget: "Family · 2 of 2 · mother's sister's husband" is
-   * twenty-five characters, leaving no room for a second, so the row named one
-   * word out of eleven and told a learner nothing about the lesson. Eight of
-   * the 216 split lessons read that way.
-   *
-   * So an over-long leading term is skipped the same way an alphabet word
-   * already is, and for the same stated reason: this is a sample of the slice,
-   * not its contents list. The long word is still taught, it just does not get
-   * to be the whole advertisement. A slice that genuinely holds nothing
-   * shorter still shows its one word rather than nothing.
-   */
-  const from = (start: number) => {
-    const shown: string[] = [];
-    for (const m of usable.slice(start)) {
-      if (shown.length >= PREVIEW_WORDS) break;
-      if (shown.length && [...shown, m].join(', ').length > PREVIEW_MAX_CHARS) break;
-      shown.push(m);
-    }
-    return shown;
-  };
-
-  for (let start = 0; start < usable.length; start++) {
-    const shown = from(start);
-    if (shown.length > 1) return shown.join(', ');
-  }
-  return from(0).join(', ');
+export function wordsLine(count: number, part: number, parts: number): string {
+  const words = `${count} new word${count === 1 ? '' : 's'}`;
+  return parts > 1 ? `${words} · part ${part} of ${parts}` : words;
 }
 
 /** One planned vocabulary lesson becomes as many lessons as its topic needs. */
@@ -1240,31 +1199,11 @@ function expandLesson(l: Lesson): Lesson[] {
   if (l.kind !== 'vocab' || !l.topic) return [l];
   const parts = balancedParts(wordsByTopic(l.topic), WORDS_PER_LESSON_IDEAL);
   return parts.map((words, i) => {
-    /**
-     * A split topic's parts say what is in them.
-     *
-     * The counter goes on the subtitle rather than the title so the path still
-     * reads as one topic broken into sittings, rather than as a dozen lessons
-     * that happen to share a name. But the rest of the subtitle used to be the
-     * topic's own blurb, repeated verbatim on every part, so three consecutive
-     * rows read "First words · Everyday vocabulary · 1 of 3", then 2 of 3, then
-     * 3 of 3 — same title, same picture, same words, differing in one digit. In
-     * the first forty lessons alone that shape covers "First words" ×3,
-     * "Describing" ×3, "Time & day" ×3 and eight more pairs.
-     *
-     * Each part already owns its `wordIds`, so it can say what it holds instead
-     * of describing the topic it came from. The blurb is not lost: it only ever
-     * restated the title ("First words · Everyday vocabulary"), or previewed the
-     * topic's first words, which is what this now does per part and correctly.
-     */
-    const preview = parts.length > 1 ? previewOf(words) : '';
-    const counted = (base: string) =>
-      preview ? `${i + 1} of ${parts.length} · ${preview}` : `${base} · ${i + 1} of ${parts.length}`;
     return {
       ...l,
       id: i === 0 ? l.id : `${l.id}-p${i + 1}`,
-      subtitle: parts.length > 1 ? counted(l.subtitle) : l.subtitle,
-      romanSubtitle: l.romanSubtitle && parts.length > 1 ? counted(l.romanSubtitle) : l.romanSubtitle,
+      // The same on both tracks: a count names no script.
+      subtitle: wordsLine(words.length, i + 1, parts.length),
       wordIds: words.map((w) => w.id),
       // Three sightings of every new word, plus the closing run. This is the
       // budget the generator fills; `check:shape` measures what it actually

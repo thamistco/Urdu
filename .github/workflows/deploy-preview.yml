@@ -250,6 +250,15 @@ jobs:
           CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
             npm run check:path
 
+      # A lesson row's subtitle is held to one line, and at 320pt 257 of them
+      # were cut off mid-word ("1 of 2 · maternal grandmother, nep…") while
+      # every check stayed green, because clipped text is still in the DOM.
+      # This measures every row on every stage, on both tracks, as rendered.
+      - name: Check every lesson row fits on a small phone
+        run: |
+          CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
+            npm run check:row-fit
+
       # URD-032: opening a collapsed course stage used to reset scroll all the
       # way to the top (a deliberate trade once precise in-accordion measuring
       # was tried and measured wrong live — see HomeScreen.tsx's own comment).
