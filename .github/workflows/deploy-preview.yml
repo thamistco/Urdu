@@ -250,6 +250,14 @@ jobs:
           CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
             npm run check:path
 
+      # MIT, BSD and the Open Font License allow commercial use on condition
+      # their notices ship with the app. The minified bundle carried none. This
+      # exports the app with source maps, reads which packages and fonts
+      # actually ship, and fails if src/data/licences.json (shown in the app
+      # at /licences) does not list exactly those.
+      - name: Check every shipped package and font has its licence notice
+        run: npm run check:licences
+
       # A lesson row's subtitle is held to one line, and at 320pt 257 of them
       # were cut off mid-word ("1 of 2 · maternal grandmother, nep…") while
       # every check stayed green, because clipped text is still in the DOM.
