@@ -10,6 +10,7 @@ export type RootStackParamList = {
   Settings: undefined;
   Privacy: undefined;
   Terms: undefined;
+  Credits: undefined;
 };
 
 /**

@@ -5,18 +5,19 @@ content expands.
 
 ## Licensing rule (read first)
 
-Build content from the **CC-BY source** (with attribution, see `CREDITS.md`) or
-write it **originally**. Copyrighted books listed here are for background only:
+Build content from the **CC BY-NC source** (with attribution, see `CREDITS.md`;
+non-commercial use only) or write it **originally**. Copyrighted books listed here are for background only:
 use **uncopyrightable facts** (alphabet, word meanings, grammar rules) — never
 their specific **expression** (sentences, dialogues, exercises, or the
 selection/arrangement of a word list). This is not legal advice; for a
 commercial release, get a proper IP review.
 
-## Primary, usable source (CC-BY — we can adapt with attribution)
+## Primary source (CC BY-NC 4.0: adapt with attribution, never commercially)
 
 - **"Basic Urdu"** by **Rajiv Ranjan**, Michigan State University Libraries
-  (Pressbooks), licensed **CC-BY**.
-  https://openbooks.lib.msu.edu/basicurdu/
+  (Pressbooks), licensed **CC BY-NC 4.0**, which this file called CC-BY until
+  2026-09-23. See `CREDITS.md` for what that means before Harf earns money.
+  https://openbooks.lib.msu.edu/urdu/
   - Theme-based, novice → ACTFL intermediate-low/mid. Readable (provided as a
     local export), so this is the source we build from. **Attribution is
     required** — see `CREDITS.md`.
