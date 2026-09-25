@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LETTERS, getLetter } from './letters';
+import { LETTERS, POSITIONS, getLetter, positionHint } from './letters';
 import { LETTER_CONTEXT_WORD } from '../exercises/generator';
 import { contrastLine } from '../exercises/letterContrastNotes';
 
@@ -407,5 +407,39 @@ describe('URD-071: a letter that modifies its neighbour rather than sounding on 
     const noonGhunna = getLetter('noon-ghunna')!;
     expect(doChashmiHe.functionNote).toMatch(/letter.*before it/i);
     expect(noonGhunna.functionNote).toMatch(/vowel.*before it/i);
+  });
+});
+
+describe('positionHint', () => {
+  const both = POSITIONS.find((p) => p.key === 'medial')!.hint;
+
+  // The property the Letter Lab promises: the line under a middle form says
+  // "joined on both sides" exactly when the form is not simply the end form
+  // again. Asked of every letter, so a new non-joiner is covered without
+  // being named here.
+  it('never tells a letter whose middle form is its end form that it joins on both sides', () => {
+    for (const l of LETTERS) {
+      const hint = positionHint(l, 'medial');
+      if (l.forms.medial === l.forms.final) expect(hint, l.name).not.toBe(both);
+      else expect(hint, l.name).toBe(both);
+    }
+  });
+
+  // Not a transcription: daal is the case the bug was reported on, and
+  // baṛī ye is the non-joiner whose middle form really does join both ways.
+  it('covers the non-joiners it should and only those', () => {
+    expect(positionHint(getLetter('daal')!, 'medial')).not.toBe(both);
+    expect(LETTERS.find((l) => l.name === 'baṛī ye')!.connects).toBe(false);
+    expect(
+      positionHint(
+        LETTERS.find((l) => l.name === 'baṛī ye')!,
+        'medial'
+      )
+    ).toBe(both);
+  });
+
+  it('leaves the other positions as they were', () => {
+    const daal = getLetter('daal')!;
+    for (const p of POSITIONS.filter((p) => p.key !== 'medial')) expect(positionHint(daal, p.key)).toBe(p.hint);
   });
 });

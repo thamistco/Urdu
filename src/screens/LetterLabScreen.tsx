@@ -9,7 +9,7 @@ import { TracePad, tracePadKey } from '../components/TracePad';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { speak } from '../lib/speech';
-import { LETTERS, POSITIONS, PositionKey } from '../data/letters';
+import { LETTERS, POSITIONS, PositionKey, positionHint } from '../data/letters';
 import { useProgressStore } from '../store/useProgressStore';
 import { Illustration } from '../components/Illustration';
 
@@ -101,7 +101,7 @@ export function LetterLabScreen() {
                   </View>
                   <View className="items-center border-t pt-3" style={{ borderTopColor: withAlpha(palette.ink, 0.1) }}>
                     <Txt style={{ color: palette.ink }} className="text-xs opacity-65">
-                      {POSITIONS.find((p) => p.key === pos)?.hint} · tap to hear
+                      {positionHint(letter, pos)} · tap to hear
                     </Txt>
                   </View>
                 </View>
@@ -142,6 +142,7 @@ export function LetterLabScreen() {
               return (
                 <Pressable
                   accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
                   key={p.key}
                   className="flex-1"
                   onPress={() => {
