@@ -323,7 +323,7 @@ const PLANNED_UNITS: Unit[] = [
     lessons: [
       L(1, 'Meet the letters', 'alif · be · pe · te · Te'),
       V('first-words', 'First words', 15, 7),
-      L(1, 'Position practice', 'Alone · start · middle · end'),
+      L(1, 'Position practice', 'alone · start · middle · end'),
       V('greetings', 'Greetings'),
       // Split out of `greetings`, which was carrying both jobs under one name.
       // See the note on the `courtesy` topic in words.ts.
@@ -443,7 +443,7 @@ const PLANNED_UNITS: Unit[] = [
     romanTitle: 'Unit 7 · Food & Nature',
     romanSubtitle: 'Food and drink, nature, and animals',
     lessons: [
-      L(6, 'k, q and g', 'fe · qaaf · kaaf · gaaf'),
+      L(6, 'f, k, q and g', 'fe · qaaf · kaaf · gaaf'),
       V('food', 'Food & drink'),
       V('nature', 'Nature'),
       V('animals', 'Animals'),
@@ -474,7 +474,7 @@ const PLANNED_UNITS: Unit[] = [
     romanTitle: 'Unit 9 · Asking, and Doing',
     romanSubtitle: 'Question words, and actions you do every day',
     lessons: [
-      L(8, 'The h family', 'the two he’s, hamza and ye'),
+      L(8, 'The h family', 'The two he’s, hamza and ye'),
       V('questions', 'Question words'),
       V('verbs', 'Actions'),
       {
