@@ -669,7 +669,9 @@ export function HomeScreen() {
               </View>
               <ProgressBar progress={ratio} height={10} />
               <View className="mt-3 flex-row items-center gap-2">
-                <Txt className="text-[0.6875rem] text-paper/55">Today</Txt>
+                {/* The goal's name, not just its number: "12/30 XP" says how far,
+                    and only the name says which goal the 30 belongs to. */}
+                <Txt className="text-[0.6875rem] text-paper/55">Today · {goal.label}</Txt>
                 <View className="flex-1">
                   <ProgressBar progress={dailyRatio} color={palette.jade} height={8} />
                 </View>
