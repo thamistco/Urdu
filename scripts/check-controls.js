@@ -348,6 +348,25 @@ async function main() {
         if (!/progress is saved on this device/i.test(body)) {
           problems.push('Settings no longer tells a guest where their progress is saved.');
         }
+        /**
+         * Which daily goal is set was shown only by a gold border. The first fix
+         * used accessibilityState={{ selected }}, typechecked, passed every
+         * gate, and put nothing in the DOM: react-native-web 0.19 reads
+         * accessibilityState for `disabled` and nothing else. So this reads the
+         * attribute a screen reader reads, on the built page: the four goals
+         * are radios, and exactly one of them is checked.
+         */
+        const goals = await page.evaluate(() =>
+          [...document.querySelectorAll('[role="radiogroup"][aria-label="Daily goal"] [role="radio"]')].map((n) =>
+            n.getAttribute('aria-checked')
+          )
+        );
+        if (goals.length !== 4 || goals.filter((c) => c === 'true').length !== 1 || goals.some((c) => c == null)) {
+          problems.push(
+            `Settings' daily goals do not tell a screen reader which one is set: expected 4 radios in a "Daily goal" ` +
+              `group with exactly one aria-checked="true", found ${JSON.stringify(goals)}.`
+          );
+        }
       }
     }
     /**
@@ -418,6 +437,7 @@ async function main() {
   console.log(
     'check:controls — Settings offers a guest no sign-in it cannot honour, and still says where progress lives.'
   );
+  console.log('check:controls — the four daily goals are a radio group, and a screen reader can hear which is set.');
   console.log(
     'check:controls — a streak one day from breaking says so on Home, and stays silent once today is played.'
   );

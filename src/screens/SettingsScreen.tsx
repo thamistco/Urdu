@@ -396,17 +396,22 @@ export function SettingsScreen() {
         <Reveal delay={120}>
           <Eyebrow className="mb-2 text-paper/55">Daily goal</Eyebrow>
           <Card className="mb-5">
-            <View className="flex-row flex-wrap gap-2">
+            <View className="flex-row flex-wrap gap-2" accessibilityRole="radiogroup" aria-label="Daily goal">
               {DAILY_GOALS.map((g) => {
                 const active = dailyGoalId === g.id;
                 return (
                   <Pressable
-                    accessibilityRole="button"
-                    // The gold border is the only sign of which goal is set, and a
-                    // screen reader cannot see it. The time and XP stay in the
-                    // label because an explicit label replaces the button's text.
-                    accessibilityState={{ selected: active }}
-                    accessibilityLabel={`${g.label} daily goal, ${g.desc}, ${g.xp} XP, ${active ? 'selected' : 'not selected'}`}
+                    // One of four, so a radio: the gold border is the only other
+                    // sign of which goal is set, and a screen reader cannot see
+                    // it. aria-checked rather than accessibilityState, because
+                    // react-native-web 0.19 drops accessibilityState (bar
+                    // disabled) and the web build announced nothing; React
+                    // Native maps aria-checked to the native state as well. The
+                    // time and XP stay in the label because an explicit label
+                    // replaces the button's own text.
+                    accessibilityRole="radio"
+                    aria-checked={active}
+                    accessibilityLabel={`${g.label} daily goal, ${g.desc}, ${g.xp} XP`}
                     key={g.id}
                     onPress={() => {
                       feedback.tap();

@@ -136,13 +136,17 @@ export function LetterLabScreen() {
           </View>
 
           {/* position dial */}
-          <View className="mb-5 flex-row gap-2">
+          <View className="mb-5 flex-row gap-2" accessibilityRole="radiogroup" aria-label="Letter position">
             {POSITIONS.map((p) => {
               const active = pos === p.key;
               return (
                 <Pressable
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: active }}
+                  // A radio with aria-checked, as the daily goal in Settings
+                  // does and for the same reason: react-native-web drops
+                  // accessibilityState, so the web never heard which form
+                  // was showing.
+                  accessibilityRole="radio"
+                  aria-checked={active}
                   key={p.key}
                   className="flex-1"
                   onPress={() => {
