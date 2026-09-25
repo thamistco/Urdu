@@ -80,12 +80,19 @@ function lessonState(
 
 function LessonNode({
   lesson,
+  unitTitle,
   color,
   state,
   offset,
   onPress,
 }: {
   lesson: Lesson;
+  /**
+   * Prefixed to the spoken label. Every unit ends in a review titled "Unit
+   * review · Mixed practice", so without the unit a screen reader heard 41
+   * identical buttons and could not tell which review it was on.
+   */
+  unitTitle: string;
   color: string;
   state: 'done' | 'skipped' | 'current' | 'locked';
   offset: number;
@@ -100,7 +107,7 @@ function LessonNode({
         onPress={onPress}
         hitSlop={8}
         accessibilityRole="button"
-        accessibilityLabel={`${lesson.title}. ${lesson.subtitle}. ${
+        accessibilityLabel={`${unitTitle}. ${lesson.title}. ${lesson.subtitle}. ${
           state === 'done'
             ? 'Completed'
             : state === 'skipped'
@@ -929,6 +936,7 @@ export function HomeScreen() {
                           <LessonNode
                             key={lesson.id}
                             lesson={lesson}
+                            unitTitle={unit.title}
                             color={unit.color}
                             state={st}
                             offset={offset}
