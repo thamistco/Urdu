@@ -402,6 +402,11 @@ export function SettingsScreen() {
                 return (
                   <Pressable
                     accessibilityRole="button"
+                    // The gold border is the only sign of which goal is set, and a
+                    // screen reader cannot see it. The time and XP stay in the
+                    // label because an explicit label replaces the button's text.
+                    accessibilityState={{ selected: active }}
+                    accessibilityLabel={`${g.label} daily goal, ${g.desc}, ${g.xp} XP, ${active ? 'selected' : 'not selected'}`}
                     key={g.id}
                     onPress={() => {
                       feedback.tap();
