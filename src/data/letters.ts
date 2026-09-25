@@ -770,4 +770,24 @@ export const POSITIONS = [
 
 export type PositionKey = (typeof POSITIONS)[number]['key'];
 
+/**
+ * The line under a form in the Letter Lab.
+ *
+ * `POSITIONS` says the middle form is "joined on both sides", which is false
+ * for a letter that never joins forward: daal in the middle of a word is joined
+ * from the right only and is drawn exactly as its end form. The Lab shows that
+ * letter a "Never joins forward" badge directly above a hint contradicting it.
+ *
+ * Keyed on the forms rather than on `connects`, because two letters with
+ * `connects: false` do have a two-sided middle form: baṛī ye uses ـیـ, and
+ * hamza's is ئ on a seat. The hint describes the form on screen, so it asks
+ * what that form is.
+ */
+export function positionHint(letter: Pick<Letter, 'forms'>, key: PositionKey): string {
+  if (key === 'medial' && letter.forms.medial === letter.forms.final) {
+    return 'joined only from the right, same as the end form';
+  }
+  return POSITIONS.find((p) => p.key === key)!.hint;
+}
+
 export const getLetter = (id: string) => LETTERS.find((l) => l.id === id);
