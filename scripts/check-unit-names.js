@@ -87,7 +87,7 @@ const words = (s) =>
 /** A topic counts as named when one of its content words is echoed. */
 const echoes = (haystack, topic) => {
   const ws = words(topic);
-  if (!ws.length) return true; // a title that is all punctuation, like "k, q and g"
+  if (!ws.length) return true; // a title that is all punctuation, like "f, k, q and g"
   return ws.some((w) => haystack.some((h) => h.startsWith(w.slice(0, 4)) || w.startsWith(h.slice(0, 4))));
 };
 
