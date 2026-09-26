@@ -133,6 +133,19 @@ export function LetterLabScreen() {
                 </Bold>
               </View>
             </Pressable>
+            {/* Tracing here never marks a letter learned, and a learner who
+                traced all four forms and saw the counter above stay put had
+                no way to know why. It is a choice, not an omission: "learned"
+                means a letter has been graded into the review schedule, and
+                every grade is a review. Repeated Lab traces would each count
+                as one, the same-sitting pile-up sessionGrading.ts exists to
+                prevent. So the Lab says how learning is counted instead. */}
+            {tracing && (
+              <Txt className="mt-2 text-center text-[0.6875rem] leading-4 text-paper/55">
+                Tracing here is practice. A letter counts as learned when you get it right in a lesson, which also
+                brings it back for review.
+              </Txt>
+            )}
           </View>
 
           {/* position dial */}
