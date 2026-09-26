@@ -56,6 +56,44 @@ const clipCache: Record<string, Audio.Sound> = {};
 let lastSound: Audio.Sound | null = null;
 
 /**
+ * Whether something is being said right now, for anything on screen that wants
+ * to show it.
+ *
+ * `announce` resolves as soon as playback *starts* and says nothing after, so a
+ * speaker button had no way to tell a learner their tap had worked: it scaled
+ * while pressed and was otherwise identical playing or silent. This is the one
+ * place that knows both ends, so it is the one place that reports them. Each
+ * start takes a new token; only the matching end clears it, so a clip that
+ * finishes after a newer one has begun cannot mark the newer one silent.
+ */
+let playing = false;
+let playToken = 0;
+const playbackListeners = new Set<(on: boolean) => void>();
+const setPlaying = (on: boolean) => {
+  if (playing === on) return;
+  playing = on;
+  playbackListeners.forEach((l) => l(on));
+};
+const startPlayback = () => {
+  playToken += 1;
+  setPlaying(true);
+  const mine = playToken;
+  return () => {
+    if (mine === playToken) setPlaying(false);
+  };
+};
+
+/** Subscribe to speech starting and stopping. Returns the unsubscribe. */
+export function onPlaybackChange(listener: (on: boolean) => void) {
+  playbackListeners.add(listener);
+  return () => {
+    playbackListeners.delete(listener);
+  };
+}
+
+export const isPlaying = () => playing;
+
+/**
  * Play a bundled clip, returning how long it runs for — or null if there is no
  * clip. `replayAsync` resolves when playback *starts*, so anything that has to
  * follow the audio needs the duration rather than the promise.
@@ -72,26 +110,46 @@ async function playClip(id: string): Promise<number | null> {
       clipCache[cacheKey] = sound;
     }
     lastSound = sound;
-    const status = await sound.replayAsync();
-    return status.isLoaded && typeof status.durationMillis === 'number' ? status.durationMillis : 0;
+    const end = startPlayback();
+    // Ends on the clip's own finish rather than a guess, with its duration
+    // as a backstop in case a platform never reports the finish. Not on
+    // `!isPlaying`: a replay can report that for an instant before it starts.
+    // A stop is covered by invalidateSpeech, a newer clip by the token.
+    sound.setOnPlaybackStatusUpdate((st) => {
+      if (!st.isLoaded || st.didJustFinish) end();
+    });
+    try {
+      const status = await sound.replayAsync();
+      if (!status.isLoaded) end();
+      const ms = status.isLoaded && typeof status.durationMillis === 'number' ? status.durationMillis : 0;
+      setTimeout(end, (ms || 1500) + 400);
+      return ms;
+    } catch {
+      end();
+      return null;
+    }
   } catch {
     return null;
   }
 }
 
 function deviceSpeak(urdu: string, roman?: string) {
+  const end = startPlayback();
   try {
     Speech.stop();
     Speech.speak(urdu, {
       language: 'ur',
       rate: 0.85,
       pitch: 1.0,
+      onDone: end,
+      onStopped: end,
       onError: () => {
-        if (roman) Speech.speak(roman, { rate: 0.9 });
+        if (roman) Speech.speak(roman, { rate: 0.9, onDone: end, onStopped: end, onError: end });
+        else end();
       },
     });
   } catch {
-    // ignore
+    end();
   }
 }
 
@@ -164,4 +222,7 @@ export function invalidateSpeech() {
   epoch += 1;
   stopSpeaking();
   lastSound?.stopAsync().catch(() => {});
+  // A new screen is silent whatever the stopped audio gets round to reporting.
+  playToken += 1;
+  setPlaying(false);
 }
