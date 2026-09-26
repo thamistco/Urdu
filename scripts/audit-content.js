@@ -129,6 +129,17 @@ for (const d of DIALOGUES)
   if (!d.question.options.includes(d.question.answer)) bad(`dialogue ${d.id}: answer not in options`);
 for (const d of DIALOGUES)
   if (new Set(d.question.options).size !== d.question.options.length) bad(`dialogue ${d.id}: repeated option`);
+// The second question each passage and conversation asks on its own screen.
+// Held to the same rules, and to asking something the first one does not.
+for (const [what, x] of [...PASSAGES.map((p) => ['passage', p]), ...DIALOGUES.map((d) => ['dialogue', d])]) {
+  const f = x.followUp;
+  if (!f) bad(`${what} ${x.id}: no follow-up question`);
+  else {
+    if (!f.options.includes(f.answer)) bad(`${what} ${x.id}: follow-up answer not in options`);
+    if (new Set(f.options).size !== f.options.length) bad(`${what} ${x.id}: follow-up repeats an option`);
+    if (f.ask === x.question.ask) bad(`${what} ${x.id}: follow-up asks the same as the first question`);
+  }
+}
 
 // --- Urdu fields contain Urdu, roman fields don't -------------------------
 const URDU = /[؀-ۿݐ-ݿ]/;

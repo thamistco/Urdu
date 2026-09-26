@@ -160,13 +160,16 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
 /** Read a short passage, then answer one comprehension question. */
 export function ReadingExercise({ exercise, track, showRoman, locked, onGraded }: ExerciseProps<ReadEx>) {
   const { passage } = exercise;
-  const [stage, setStage] = useState<'read' | 'answer'>('read');
+  // The follow-up screen asks a second question about text already read, so it
+  // opens on the question rather than on "I've read it" a second time.
+  const question = exercise.followUp ? passage.followUp : passage.question;
+  const [stage, setStage] = useState<'read' | 'answer'>(exercise.followUp ? 'answer' : 'read');
   const [picked, setPicked] = useState<string | null>(null);
 
   const choose = (opt: string) => {
     if (picked || locked) return;
     setPicked(opt);
-    const correct = opt === passage.question.answer;
+    const correct = opt === question.answer;
     correct ? feedback.correct() : feedback.incorrect();
     onGraded({ items: [], correct });
   };
@@ -229,11 +232,11 @@ export function ReadingExercise({ exercise, track, showRoman, locked, onGraded }
         </Button>
       ) : (
         <>
-          <Question>{passage.question.ask}</Question>
+          <Question>{question.ask}</Question>
           <View className="gap-3">
-            {passage.question.options.map((o) => {
+            {question.options.map((o) => {
               const state =
-                picked == null ? 'idle' : o === passage.question.answer ? 'correct' : o === picked ? 'wrong' : 'muted';
+                picked == null ? 'idle' : o === question.answer ? 'correct' : o === picked ? 'wrong' : 'muted';
               return (
                 <Choice key={o} state={state} disabled={picked != null || locked} onPress={() => choose(o)}>
                   <Bold className="text-[0.9375rem]">{o}</Bold>
