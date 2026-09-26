@@ -402,18 +402,22 @@ function check(ex, track) {
         fail('letterSpot tiles/correct/fromWord are out of sync', `${ex.letter.id} — ${ex.word.id}`);
       break;
 
-    case 'reading':
-      if (!ex.passage.question.options.includes(ex.passage.question.answer))
-        fail('passage answer is not among its options', ex.passage.id);
+    case 'reading': {
+      const q = ex.followUp ? ex.passage.followUp : ex.passage.question;
+      if (!q || !q.options.includes(q.answer))
+        fail(`passage ${ex.followUp ? 'follow-up ' : ''}answer is not among its options`, ex.passage.id);
       if (roman && ex.passage.lines.some((l) => !l.roman)) fail('passage line has no transliteration', ex.passage.id);
       break;
+    }
 
-    case 'dialogue':
-      if (!ex.dialogue.question.options.includes(ex.dialogue.question.answer))
-        fail('dialogue answer is not among its options', ex.dialogue.id);
+    case 'dialogue': {
+      const q = ex.followUp ? ex.dialogue.followUp : ex.dialogue.question;
+      if (!q || !q.options.includes(q.answer))
+        fail(`dialogue ${ex.followUp ? 'follow-up ' : ''}answer is not among its options`, ex.dialogue.id);
       if (roman && ex.dialogue.lines.some((l) => !l.roman))
         fail('dialogue line has no transliteration', ex.dialogue.id);
       break;
+    }
 
     default:
       break;

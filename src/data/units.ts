@@ -202,7 +202,7 @@ const S = (level: Level, title: string, subtitle: string, xp = 20, size = 10): L
  * a row says what kind of thing it is. Vocabulary rows use it for their word
  * count, and a reading uses it for the word "Reading".
  */
-const R = (passageId: string, title: string, xp = 25, size = 1): Lesson => ({
+const R = (passageId: string, title: string, xp = 25, size = 2): Lesson => ({
   id: uid(passageId),
   title,
   subtitle: 'Reading',
@@ -212,7 +212,7 @@ const R = (passageId: string, title: string, xp = 25, size = 1): Lesson => ({
   xp,
   size,
 });
-const D = (dialogueId: string, title: string, xp = 25, size = 1): Lesson => ({
+const D = (dialogueId: string, title: string, xp = 25, size = 2): Lesson => ({
   id: uid(dialogueId),
   title,
   // "Conversation", the word the Practice tab already uses for these.

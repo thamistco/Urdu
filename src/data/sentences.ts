@@ -2116,6 +2116,16 @@ export type Passage = {
   /** lines of the passage, in order */
   lines: { urdu: string; roman: string; meaning: string }[];
   question: { ask: string; answer: string; options: string[] };
+  /**
+   * A second question, asked on its own screen after the first.
+   *
+   * A reading or a conversation was a single scored step, so an advanced
+   * reading could be finished with one tap while an early sentence lesson ran
+   * fifty. The follow-up asks about a different line than `question` does, so
+   * the two together cover more of the text. Required, not optional, so a new
+   * passage cannot be written with only one.
+   */
+  followUp: { ask: string; answer: string; options: string[] };
 };
 
 export const PASSAGES: Passage[] = [
@@ -2133,6 +2143,11 @@ export const PASSAGES: Passage[] = [
       ask: 'What is in the garden?',
       answer: 'Flowers',
       options: ['Flowers', 'A car', 'Books', 'Water'],
+    },
+    followUp: {
+      ask: 'What does the writer say about the house?',
+      answer: 'They like it',
+      options: ['They like it', 'It is too small', 'It is new', 'They want to sell it'],
     },
   },
   {
@@ -2155,6 +2170,11 @@ export const PASSAGES: Passage[] = [
       answer: 'The mangoes',
       options: ['The mangoes', 'The vegetables', 'The tickets', 'The tea'],
     },
+    followUp: {
+      ask: 'When did the writer go to the market?',
+      answer: 'In the morning',
+      options: ['In the morning', 'In the evening', 'At night', 'At midday'],
+    },
   },
   {
     id: 'r-3',
@@ -2175,6 +2195,11 @@ export const PASSAGES: Passage[] = [
       ask: 'What does he do first in the morning?',
       answer: 'Drinks tea',
       options: ['Drinks tea', 'Goes to work', 'Reads a book', 'Goes to the market'],
+    },
+    followUp: {
+      ask: 'What does he do at night?',
+      answer: 'Reads a book',
+      options: ['Reads a book', 'Drinks tea', 'Goes to work', 'Watches television'],
     },
   },
   {
@@ -2209,6 +2234,11 @@ export const PASSAGES: Passage[] = [
       answer: 'It is very good',
       options: ['It is very good', 'It is very cold', 'It is raining', 'It is too hot'],
     },
+    followUp: {
+      ask: 'What does the writer ask the friend to do?',
+      answer: 'Come and visit if they have time',
+      options: ['Come and visit if they have time', 'Write back soon', 'Send a gift', 'Call on the telephone'],
+    },
   },
 
   // ---- beginner: four or five short lines, all known words ----
@@ -2227,6 +2257,11 @@ export const PASSAGES: Passage[] = [
       ask: 'What does the father do?',
       answer: 'He is a doctor',
       options: ['He is a doctor', 'He is a teacher', 'He is a student', 'He is a shopkeeper'],
+    },
+    followUp: {
+      ask: 'How many brothers does the writer have?',
+      answer: 'One',
+      options: ['One', 'Two', 'Three', 'None'],
     },
   },
   {
@@ -2249,6 +2284,11 @@ export const PASSAGES: Passage[] = [
       answer: 'Hot and sweet',
       options: ['Hot and sweet', 'Cold and bitter', 'Very strong', 'Without sugar'],
     },
+    followUp: {
+      ask: 'Who brings the bread?',
+      answer: 'Mother',
+      options: ['Mother', 'Father', 'The writer', 'A guest'],
+    },
   },
   {
     id: 'r-7',
@@ -2265,6 +2305,11 @@ export const PASSAGES: Passage[] = [
       ask: 'What colour is the tree?',
       answer: 'Green',
       options: ['Green', 'Blue', 'Red', 'White'],
+    },
+    followUp: {
+      ask: 'What colour is the sky?',
+      answer: 'Blue',
+      options: ['Blue', 'Green', 'Black', 'Red'],
     },
   },
 
@@ -2296,6 +2341,11 @@ export const PASSAGES: Passage[] = [
       ask: 'What do they study?',
       answer: 'Urdu and arithmetic',
       options: ['Urdu and arithmetic', 'Urdu and science', 'Only Urdu', 'History'],
+    },
+    followUp: {
+      ask: 'Where is the school?',
+      answer: 'Near the house',
+      options: ['Near the house', 'In another city', 'Next to the market', 'Far from the house'],
     },
   },
   {
@@ -2334,6 +2384,11 @@ export const PASSAGES: Passage[] = [
       answer: 'They sing',
       options: ['They sing', 'They sleep', 'They fly away', 'They eat fruit'],
     },
+    followUp: {
+      ask: 'What does the writer do in the garden?',
+      answer: 'Sits and reads a book',
+      options: ['Sits and reads a book', 'Waters the trees', 'Plays with friends', 'Sleeps'],
+    },
   },
   {
     id: 'r-10',
@@ -2362,6 +2417,11 @@ export const PASSAGES: Passage[] = [
       ask: 'Where do they often meet?',
       answer: 'In the garden',
       options: ['In the garden', 'At the market', 'At her house', 'In the library'],
+    },
+    followUp: {
+      ask: 'What does Sara like very much?',
+      answer: 'Books',
+      options: ['Books', 'Flowers', 'Tea', 'Music'],
     },
   },
 
@@ -2398,6 +2458,11 @@ export const PASSAGES: Passage[] = [
       answer: 'Because it was cheap',
       options: ['Because it was cheap', 'Because it was fast', 'Because there was no bus', 'Because a friend asked'],
     },
+    followUp: {
+      ask: 'What did he see in Lahore?',
+      answer: 'The old mosque',
+      options: ['The old mosque', 'The new station', 'A museum', 'The river'],
+    },
   },
   {
     id: 'r-12',
@@ -2430,6 +2495,11 @@ export const PASSAGES: Passage[] = [
       ask: 'Why could the children not go to school?',
       answer: 'The roads were full of water',
       options: ['The roads were full of water', 'The school was closed', 'They were ill', 'It was a holiday'],
+    },
+    followUp: {
+      ask: 'What happened in the evening?',
+      answer: 'The weather cleared up',
+      options: ['The weather cleared up', 'It rained harder', 'The school opened', 'Guests arrived'],
     },
   },
   {
@@ -2464,6 +2534,11 @@ export const PASSAGES: Passage[] = [
       answer: 'To rest',
       options: ['To rest', 'To come back tomorrow', 'To go to hospital', 'To eat more'],
     },
+    followUp: {
+      ask: 'How does the writer feel now?',
+      answer: 'Better',
+      options: ['Better', 'Worse', 'The same', 'Very tired'],
+    },
   },
   {
     id: 'r-14',
@@ -2492,6 +2567,11 @@ export const PASSAGES: Passage[] = [
       ask: 'What did the children receive?',
       answer: 'Eidi: gift money',
       options: ['Eidi: gift money', 'New books', 'Sweets only', 'Nothing'],
+    },
+    followUp: {
+      ask: 'What did mother make?',
+      answer: 'Sweet vermicelli',
+      options: ['Sweet vermicelli', 'Rice', 'Bread', 'Tea'],
     },
   },
 
@@ -2537,6 +2617,11 @@ export const PASSAGES: Passage[] = [
         'Because it is the only shop',
       ],
     },
+    followUp: {
+      ask: 'What does the old man do when someone speaks to him?',
+      answer: 'Tells them a story',
+      options: ['Tells them a story', 'Gives them a book', 'Asks them to leave', 'Shows them the price'],
+    },
   },
   {
     id: 'r-16',
@@ -2574,6 +2659,11 @@ export const PASSAGES: Passage[] = [
       answer: 'It is part of working well',
       options: ['It is part of working well', 'It wastes time', 'Only the ill need it', 'It should wait until night'],
     },
+    followUp: {
+      ask: 'What happens to someone who never stops?',
+      answer: 'They soon grow tired',
+      options: ['They soon grow tired', 'They become rich', 'They finish early', 'Nothing at all'],
+    },
   },
   {
     id: 'r-17',
@@ -2603,6 +2693,11 @@ export const PASSAGES: Passage[] = [
       answer: 'Everyone fell silent',
       options: ['Everyone fell silent', 'Everyone applauded', 'They went home', 'Someone recited another'],
     },
+    followUp: {
+      ask: 'When were they sitting with friends?',
+      answer: 'On Friday evening',
+      options: ['On Friday evening', 'On Sunday morning', 'On Eid', 'Late at night'],
+    },
   },
 ];
 
@@ -2628,6 +2723,16 @@ export type Dialogue = {
   /** A and B — labelled so the exercise can align and colour them */
   lines: { speaker: 'A' | 'B'; name: string; urdu: string; roman: string; meaning: string }[];
   question: { ask: string; answer: string; options: string[] };
+  /**
+   * A second question, asked on its own screen after the first.
+   *
+   * A reading or a conversation was a single scored step, so an advanced
+   * reading could be finished with one tap while an early sentence lesson ran
+   * fifty. The follow-up asks about a different line than `question` does, so
+   * the two together cover more of the text. Required, not optional, so a new
+   * passage cannot be written with only one.
+   */
+  followUp: { ask: string; answer: string; options: string[] };
   /**
    * Who each speaker sounds like.
    *
@@ -2699,6 +2804,11 @@ export const DIALOGUES: Dialogue[] = [
         'He does not reply',
       ],
     },
+    followUp: {
+      ask: 'How is Sara?',
+      answer: 'Well',
+      options: ['Well', 'Tired', 'Ill', 'She does not say'],
+    },
   },
   {
     id: 'd-2',
@@ -2716,6 +2826,11 @@ export const DIALOGUES: Dialogue[] = [
       ask: 'What does the guest choose?',
       answer: 'Tea, with a little sugar',
       options: ['Tea, with a little sugar', 'Coffee, with a lot of sugar', 'Tea, with no sugar', 'Nothing at all'],
+    },
+    followUp: {
+      ask: 'What does the host ask after the drink is chosen?',
+      answer: 'How much sugar',
+      options: ['How much sugar', 'Whether they are hungry', 'When they arrived', 'Their name'],
     },
   },
   {
@@ -2759,6 +2874,11 @@ export const DIALOGUES: Dialogue[] = [
       ask: 'Where is Bilal’s house?',
       answer: 'In Lahore, near the city',
       options: ['In Lahore, near the city', 'In Lahore, far from the city', 'In Karachi', 'He did not say'],
+    },
+    followUp: {
+      ask: 'Who asks where the other lives?',
+      answer: 'Ahmed',
+      options: ['Ahmed', 'Bilal', 'Both of them', 'Neither of them'],
     },
   },
   {
@@ -2809,6 +2929,16 @@ export const DIALOGUES: Dialogue[] = [
       answer: 'Buys a kilo anyway',
       options: ['Buys a kilo anyway', 'Walks away', 'Gets a lower price', 'Buys two kilos'],
     },
+    followUp: {
+      ask: 'How much are the mangoes?',
+      answer: 'Two hundred rupees a kilo',
+      options: [
+        'Two hundred rupees a kilo',
+        'A hundred rupees a kilo',
+        'Two hundred rupees each',
+        'Five hundred rupees a kilo',
+      ],
+    },
   },
   {
     id: 'd-5',
@@ -2850,6 +2980,11 @@ export const DIALOGUES: Dialogue[] = [
         'Right, immediately',
         'Back the way they came',
       ],
+    },
+    followUp: {
+      ask: 'How far is the station?',
+      answer: 'Ten minutes on foot',
+      options: ['Ten minutes on foot', 'Ten minutes by car', 'An hour on foot', 'Very close, one minute'],
     },
   },
   {
@@ -2905,6 +3040,11 @@ export const DIALOGUES: Dialogue[] = [
         'To leave a written note',
       ],
     },
+    followUp: {
+      ask: 'When will Imran be back?',
+      answer: 'In the evening',
+      options: ['In the evening', 'Tomorrow', 'In an hour', 'Next week'],
+    },
   },
   {
     id: 'd-7',
@@ -2954,6 +3094,11 @@ export const DIALOGUES: Dialogue[] = [
       answer: 'At night',
       options: ['At night', 'In the morning', 'After eating', 'It is not worse at any time'],
     },
+    followUp: {
+      ask: 'How long has the patient had a fever?',
+      answer: 'Two days',
+      options: ['Two days', 'One day', 'A week', 'Since this morning'],
+    },
   },
   {
     id: 'd-8',
@@ -2996,6 +3141,11 @@ export const DIALOGUES: Dialogue[] = [
       ask: 'What does the clerk ask for?',
       answer: 'An ID card',
       options: ['An ID card', 'Payment in advance', 'A phone number', 'A signature'],
+    },
+    followUp: {
+      ask: 'How long does the traveller want to stay?',
+      answer: 'Two nights',
+      options: ['Two nights', 'One night', 'A week', 'They do not say'],
     },
   },
   {
@@ -3044,6 +3194,11 @@ export const DIALOGUES: Dialogue[] = [
         'She suggests another day',
         'She does not answer',
       ],
+    },
+    followUp: {
+      ask: 'Where are they going on Sunday?',
+      answer: 'To the garden',
+      options: ['To the garden', 'To the market', 'To the office', 'To a wedding'],
     },
   },
   {
@@ -3099,6 +3254,11 @@ export const DIALOGUES: Dialogue[] = [
         'Accepts it coldly',
       ],
     },
+    followUp: {
+      ask: 'Why was the guest late?',
+      answer: 'There was a lot of traffic',
+      options: ['There was a lot of traffic', 'They forgot the time', 'They were ill', 'They got lost'],
+    },
   },
   {
     id: 'd-11',
@@ -3147,6 +3307,11 @@ export const DIALOGUES: Dialogue[] = [
         'It was badly translated',
       ],
     },
+    followUp: {
+      ask: 'How many times has Hamid read the book?',
+      answer: 'Twice',
+      options: ['Twice', 'Once', 'Three times', 'He has not read it'],
+    },
   },
   {
     id: 'd-12',
@@ -3189,6 +3354,11 @@ export const DIALOGUES: Dialogue[] = [
       ask: 'Why is the employee leaving?',
       answer: 'To continue their studies',
       options: ['To continue their studies', 'For a better salary', 'They are moving city', 'They did not say'],
+    },
+    followUp: {
+      ask: 'When is the employee leaving?',
+      answer: 'Next month',
+      options: ['Next month', 'Next week', 'Today', 'Next year'],
     },
   },
 ];

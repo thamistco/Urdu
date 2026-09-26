@@ -254,11 +254,19 @@ export type Exercise =
       /** read a short passage, then answer a comprehension question */
       kind: 'reading';
       passage: Passage;
+      /**
+       * Set on the second screen: the passage's `followUp`, asked with the
+       * passage already read, so the screen opens on the question. Absent on
+       * the first screen, which asks `passage.question` after "I've read it".
+       */
+      followUp?: boolean;
     }
   | {
       /** read a two-speaker exchange, then answer about what was meant */
       kind: 'dialogue';
       dialogue: Dialogue;
+      /** As on `reading`: the second screen, asking `dialogue.followUp`. */
+      followUp?: boolean;
     };
 
 export type ExerciseKind = Exercise['kind'];

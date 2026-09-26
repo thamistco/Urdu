@@ -23,13 +23,16 @@ type DialogueEx = Extract<Exercise, { kind: 'dialogue' }>;
  */
 export function DialogueExercise({ exercise, track, showRoman, locked, onGraded }: ExerciseProps<DialogueEx>) {
   const { dialogue } = exercise;
-  const [stage, setStage] = useState<'read' | 'answer'>('read');
+  // The follow-up screen asks a second question about text already read, so it
+  // opens on the question rather than on "I've read it" a second time.
+  const question = exercise.followUp ? dialogue.followUp : dialogue.question;
+  const [stage, setStage] = useState<'read' | 'answer'>(exercise.followUp ? 'answer' : 'read');
   const [picked, setPicked] = useState<string | null>(null);
 
   const choose = (opt: string) => {
     if (picked || locked) return;
     setPicked(opt);
-    const correct = opt === dialogue.question.answer;
+    const correct = opt === question.answer;
     correct ? feedback.correct() : feedback.incorrect();
     onGraded({ items: [], correct });
   };
@@ -115,11 +118,11 @@ export function DialogueExercise({ exercise, track, showRoman, locked, onGraded 
         </Button>
       ) : (
         <>
-          <Question>{dialogue.question.ask}</Question>
+          <Question>{question.ask}</Question>
           <View className="gap-3">
-            {dialogue.question.options.map((o) => {
+            {question.options.map((o) => {
               const state =
-                picked == null ? 'idle' : o === dialogue.question.answer ? 'correct' : o === picked ? 'wrong' : 'muted';
+                picked == null ? 'idle' : o === question.answer ? 'correct' : o === picked ? 'wrong' : 'muted';
               return (
                 <Choice key={o} state={state} disabled={picked != null || locked} onPress={() => choose(o)}>
                   <Bold className="text-center text-[0.9375rem]">{o}</Bold>

@@ -2289,13 +2289,17 @@ export function buildLessonExercises(
   if (lesson.kind === 'dialogue') {
     const d = lesson.dialogueId ? getDialogue(lesson.dialogueId) : undefined;
     const chosen = d ?? seededShuffle(DIALOGUES, lesson.id)[0];
-    if (chosen) exercises.push({ kind: 'dialogue', dialogue: chosen });
+    // Two screens, two questions: see `followUp` on `Dialogue`.
+    if (chosen)
+      exercises.push({ kind: 'dialogue', dialogue: chosen }, { kind: 'dialogue', dialogue: chosen, followUp: true });
   }
 
   if (lesson.kind === 'reading') {
     const p = lesson.passageId ? getPassage(lesson.passageId) : undefined;
     const chosen = p ?? seededShuffle(PASSAGES, lesson.id)[0];
-    if (chosen) exercises.push({ kind: 'reading', passage: chosen });
+    // Two screens, two questions: see `followUp` on `Passage`.
+    if (chosen)
+      exercises.push({ kind: 'reading', passage: chosen }, { kind: 'reading', passage: chosen, followUp: true });
   }
 
   if (lesson.kind === 'review') {
