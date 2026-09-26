@@ -1059,22 +1059,66 @@ function sentenceReinforceClimb(picks: Sentence[], pool: Word[], track: LearnTra
    * holds exactly as it did — and the counts per kind are untouched, which is
    * what `check:shape`'s 40% cap is measured against.
    */
+  const kindOf = (turn: number) =>
+    turn === 1 || turn === 3 ? 'sentenceBuild' : turn === 0 ? 'meaningPick' : 'wordFromMeaning';
+  type Step = { sen: Sentence; turn: number };
+  const slots: Step[][] = [];
   for (let slot = 0; slot < ROUNDS + picks.length - 1; slot++) {
-    /**
-     * The sentences in flight this slot, oldest first — and, when the slot
-     * would open on the kind the previous one closed with, rotated so it does
-     * not. Only the two-sentence case actually needs it (its every slot held a
-     * matching pair, giving two adjacent repeats where the old cycle had none);
-     * larger lessons are left as the diagonal produces them.
-     */
-    const inFlight = picks.map((sen, idx) => ({ sen, turn: slot - idx })).filter((x) => x.turn >= 0 && x.turn < ROUNDS);
-    const lastKind = exercises.length ? exercises[exercises.length - 1].kind : '';
-    const kindOf = (turn: number) =>
-      turn === 1 || turn === 3 ? 'sentenceBuild' : turn === 0 ? 'meaningPick' : 'wordFromMeaning';
-    if (inFlight.length > 1 && kindOf(inFlight[0].turn) === lastKind) {
-      const j = inFlight.findIndex((x) => kindOf(x.turn) !== lastKind);
-      if (j > 0) inFlight.unshift(...inFlight.splice(j, 1));
+    slots.push(picks.map((sen, idx) => ({ sen, turn: slot - idx })).filter((x) => x.turn >= 0 && x.turn < ROUNDS));
+  }
+
+  /**
+   * The order each slot plays its sentences in, chosen across the whole climb.
+   *
+   * Oldest-first, with one rotation to dodge a repeated kind, put the same
+   * sentence twice in a row twice in every one of the 37 lessons that use this
+   * climb: at the start, where the one sentence in flight is shown and then
+   * built straight after (copying, not recall), and at the end, where the
+   * rotation meant to avoid two alike kinds put the last sentence against
+   * itself. A playtest read it as "building the same sentence twice".
+   *
+   * So each slot's order is picked, by a small dynamic programme over the
+   * slots, to minimise repeats across every boundary: a sentence following
+   * itself costs 10, a kind following itself costs 1. A slot holds at most
+   * five sentences, so trying every order is cheap. Ties keep oldest first.
+   * Nothing moves a sentence's own turns out of order, since each slot holds
+   * each sentence once.
+   */
+  const orders = (xs: Step[]): Step[][] => {
+    if (xs.length <= 1) return [xs];
+    return xs.flatMap((x, i) => orders([...xs.slice(0, i), ...xs.slice(i + 1)]).map((rest) => [x, ...rest]));
+  };
+  const cost = (a: Step | { sen: { id: string } | null; kind: string } | null, b: Step) => {
+    if (!a) return 0;
+    const aKind = 'turn' in a ? kindOf(a.turn) : a.kind;
+    return (a.sen?.id === b.sen.id ? 10 : 0) + (aKind === kindOf(b.turn) ? 1 : 0);
+  };
+  const before = exercises.length ? exercises[exercises.length - 1] : null;
+  const opening = before
+    ? {
+        sen: { id: ('sentence' in before && before.sentence?.id) || ('word' in before && before.word?.id) || '' },
+        kind: before.kind,
+      }
+    : null;
+  // best[k] maps "last step of slot k" to the cheapest way of getting there.
+  let best = new Map<Step | null, { total: number; path: Step[][] }>([[null, { total: 0, path: [] }]]);
+  for (const slot of slots) {
+    const next = new Map<Step | null, { total: number; path: Step[][] }>();
+    for (const [last, sofar] of best) {
+      for (const order of orders(slot)) {
+        if (!order.length) continue;
+        let c = sofar.total + cost(last ?? (sofar.path.length ? null : opening), order[0]);
+        for (let i = 1; i < order.length; i++) c += cost(order[i - 1], order[i]);
+        const end = order[order.length - 1];
+        const cur = next.get(end);
+        if (!cur || c < cur.total) next.set(end, { total: c, path: [...sofar.path, order] });
+      }
     }
+    best = next;
+  }
+  const chosen = [...best.values()].sort((a, b) => a.total - b.total)[0]?.path ?? [];
+
+  for (const inFlight of chosen) {
     inFlight.forEach(({ sen, turn }) => {
       const w = SENTENCE_WORDS.find((x) => x.id === sen.id);
       if (!w) return;

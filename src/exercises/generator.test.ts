@@ -2221,3 +2221,25 @@ describe('numeralRead', () => {
     for (const ex of ALL_LESSONS.flatMap((l) => numeralsIn(l.id))) expect(itemsOf(ex)).toEqual([]);
   });
 });
+
+/**
+ * A playtest saw a sentence lesson ask to build a sentence straight after
+ * showing it, and again at the end. Every one of the 37 sentence and grammar
+ * lessons did it twice: 74 pairs. Asked of the whole course, not one lesson,
+ * so a new lesson is covered without being named.
+ */
+describe('sentence climb ordering', () => {
+  const itemOf = (e: Exercise) =>
+    ('sentence' in e && e.sentence?.id) || ('word' in e && e.word?.id) || ('letter' in e && e.letter?.id) || '';
+  it('never puts the same sentence in two exercises in a row', () => {
+    const repeats: string[] = [];
+    for (const l of ALL_LESSONS.filter((x) => x.kind === 'sentences' || x.kind === 'grammar')) {
+      const ex = buildLessonExercises(l, [], 'both');
+      ex.forEach((e, i) => {
+        const id = itemOf(e);
+        if (i && id.startsWith('s-') && id === itemOf(ex[i - 1])) repeats.push(`${l.id} #${i} ${id}`);
+      });
+    }
+    expect(repeats).toEqual([]);
+  });
+});
