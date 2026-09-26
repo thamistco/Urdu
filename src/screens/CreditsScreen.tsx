@@ -88,7 +88,8 @@ export function CreditsScreen() {
 
         <Section title="Software">
           <Para>
-            Harf is built with React Native, Expo and other open-source libraries, each under its own licence.
+            Harf is written with Expo and React, and runs in your browser through React Native for Web. It also uses
+            other open-source libraries, each under its own licence.
           </Para>
           <Pressable accessibilityRole="link" onPress={() => nav.navigate('Licences')}>
             <Txt className="mb-1 text-[0.8125rem] leading-6 text-gold underline">Open-source licences</Txt>
