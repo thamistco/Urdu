@@ -4,6 +4,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../components/Screen';
 import { TopBar } from '../components/TopBar';
 import { Txt, Bold, Heading } from '../components/Text';
+import { ContactLine } from '../components/ContactLine';
 import type { RootStackParamList } from '../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -76,7 +77,9 @@ export function PrivacyScreen() {
           page will be updated first, and the date above will change.
         </Section>
 
-        <Section title="Contact">Questions about this policy: {'{{SUPPORT_EMAIL}}'}</Section>
+        <Section title="Contact">
+          <ContactLine about="this policy" />
+        </Section>
       </Screen>
     </View>
   );
