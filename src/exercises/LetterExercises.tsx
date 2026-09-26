@@ -9,6 +9,9 @@ import { isCorrectPosition } from './letterFormGrading';
 import type { ExerciseProps, Exercise } from './types';
 
 type FormEx = Extract<Exercise, { kind: 'letterForm' }>;
+
+/** Size of the glyph a position question asks about. See the note where it is drawn. */
+const POSITION_GLYPH_PX = 96;
 type PickEx = Extract<Exercise, { kind: 'letterPick' }>;
 type ContrastEx = Extract<Exercise, { kind: 'letterContrast' }>;
 
@@ -48,8 +51,14 @@ export function LetterFormExercise({ exercise, locked, onGraded }: ExerciseProps
       <Eyebrow style={{ color: palette.gold }} className="mb-2 text-center">
         {letter.name} · sounds like “{letter.sound}”
       </Eyebrow>
-      <PromptCard height={200}>
-        <Urdu style={{ color: palette.ink, ...urduGlyph(66) }}>{letter.forms[position]}</Urdu>
+      {/* 96px, up from 66, because the answer is in a stroke a few pixels
+          long. Measured in the shipped Nastaliq at 66px: te's start form is
+          26px wide and its middle form 30px, the only difference being the
+          joining stub, and 628 pixels separate the two shapes. At 96 that is
+          about 2.1 times as many. The widest of all 160 forms (isolated kaaf)
+          is 1.52em, 146px here, which still fits the card on a 320pt phone. */}
+      <PromptCard>
+        <Urdu style={{ color: palette.ink, ...urduGlyph(POSITION_GLYPH_PX) }}>{letter.forms[position]}</Urdu>
       </PromptCard>
       <View className="h-4" />
       <Question>Which position is this letter showing?</Question>
