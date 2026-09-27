@@ -10,9 +10,14 @@ import { dayKey, daysBetween } from './date';
  * already keeps, rather than a reminder sent while it is closed.
  *
  * `'none'` covers every case where nothing is owed: no streak yet, already
- * played today, or a gap of more than one day — which means the streak has
- * already reset elsewhere (`useProgressStore`'s own `daysBetween` check, on
- * the same grade path this reads from) before this ever runs. This function
+ * played today, or a gap of more than one day. In that last case the streak is
+ * broken, and `rollStreak` below is what says so: the progress store runs it
+ * once when the app opens (`rolloverStreak`) and again inside `finishLesson`,
+ * so a broken streak reads 0 from the moment the app opens rather than only
+ * after the next lesson. This comment used to claim the reset had "already
+ * happened elsewhere before this ever runs"; it had not, because the only
+ * reset was on the lesson path, and a learner back after a week saw their old
+ * streak on Home until a lesson quietly dropped it to 1. This function still
  * does not reset anything itself; it only describes today.
  *
  * A gap of exactly one day is the only "already played today" case *and* the
@@ -38,4 +43,56 @@ export function streakStatus(streak: number, lastActiveDay: string | null, now: 
 
   const today = dayKey(now);
   return daysBetween(lastActiveDay, today) === 1 ? 'at-risk' : 'none';
+}
+
+/** The part of the progress store the streak rules read and write. */
+export type StreakState = { streak: number; freezes: number; lastActiveDay: string | null };
+
+/** The day before `key`, as a key. Through the calendar, so DST cannot skew it. */
+function dayBefore(key: string): string {
+  const d = new Date(key + 'T00:00:00');
+  d.setDate(d.getDate() - 1);
+  return dayKey(d);
+}
+
+/**
+ * Account for the days missed since `lastActiveDay`, without counting today.
+ *
+ * - Played today or yesterday: nothing to do.
+ * - Missed exactly one day, with a freeze and a streak to save: spend the
+ *   freeze, and treat yesterday as covered by moving `lastActiveDay` to it.
+ *   Today's lesson then extends the streak exactly as it would have.
+ * - Anything longer, or one missed day with no freeze: the streak is broken
+ *   and reads 0 until a lesson starts a new one.
+ *
+ * Safe to run any number of times in a day: after one run the gap is at most
+ * one day, or the streak is 0, and neither changes again. The streak must be
+ * above 0 to spend a freeze, so a run over an already-broken streak cannot
+ * burn one on nothing.
+ */
+export function rollStreak(s: StreakState, today: string = dayKey()): StreakState & { froze: boolean } {
+  if (!s.lastActiveDay || s.streak <= 0) return { ...s, froze: false };
+  const gap = daysBetween(s.lastActiveDay, today);
+  if (gap <= 1) return { ...s, froze: false };
+  if (gap === 2 && s.freezes > 0) {
+    return { streak: s.streak, freezes: s.freezes - 1, lastActiveDay: dayBefore(today), froze: true };
+  }
+  return { ...s, streak: 0, froze: false };
+}
+
+/**
+ * Count today, after `rollStreak` has accounted for any gap.
+ *
+ * A first lesson of the day extends a streak whose last day was yesterday and
+ * starts one at 1 otherwise; a second lesson the same day changes nothing.
+ */
+export function markActiveToday(
+  { streak, freezes, lastActiveDay }: StreakState,
+  today: string = dayKey()
+): StreakState & { increased: boolean } {
+  // Only the streak's own fields go through, so a caller passing rollStreak's
+  // result (with its `froze`) gets back a plain state, not a stale flag.
+  if (lastActiveDay === today) return { streak, freezes, lastActiveDay, increased: false };
+  const extends_ = streak > 0 && !!lastActiveDay && daysBetween(lastActiveDay, today) === 1;
+  return { streak: extends_ ? streak + 1 : 1, freezes, lastActiveDay: today, increased: true };
 }

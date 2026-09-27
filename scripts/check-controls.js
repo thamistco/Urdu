@@ -418,6 +418,45 @@ async function main() {
     if (/keep your \d+-day streak/i.test(safeBody || '')) {
       problems.push('A learner who already played today still sees the streak-at-risk line on Home.');
     }
+
+    /**
+     * The streak used to be recomputed only when a lesson finished, so a
+     * learner back after five days saw their old 12-day streak on Home until a
+     * lesson quietly dropped it to 1. `rolloverStreak` now runs when saved
+     * progress loads. The rules are unit-tested in lib/streak.test.ts; this
+     * is the wiring, read from what the built app saves after opening.
+     */
+    const daysAgo = (n) => {
+      const d = new Date();
+      d.setDate(d.getDate() - n);
+      return dayKey(d);
+    };
+    const afterOpening = async (seed) => {
+      const p = await browser.newPage({ viewport: { width: 412, height: 900 } });
+      await enterAsGuest(p, `http://localhost:${PORT}/Urdu/`, seed);
+      const body = await settledText(p);
+      const saved = await p.evaluate(() => JSON.parse(localStorage.getItem('harf-progress') || '{}').state || {});
+      await p.close();
+      return { body: body || '', saved };
+    };
+    const lapsed = await afterOpening({ streak: 12, freezes: 1, lastActiveDay: daysAgo(5) });
+    if (lapsed.saved.streak !== 0 || lapsed.saved.freezes !== 1) {
+      problems.push(
+        `A learner back after 5 days still has streak ${lapsed.saved.streak} (and ${lapsed.saved.freezes} freezes) ` +
+          'on opening the app. It should read 0 until a lesson starts a new one, with no freeze spent on it.'
+      );
+    }
+    const frozen = await afterOpening({ streak: 12, freezes: 1, lastActiveDay: daysAgo(2) });
+    if (frozen.saved.streak !== 12 || frozen.saved.freezes !== 0 || frozen.saved.lastActiveDay !== daysAgo(1)) {
+      problems.push(
+        `A learner who missed one day with a freeze opened to streak ${frozen.saved.streak}, ` +
+          `${frozen.saved.freezes} freezes, last active ${frozen.saved.lastActiveDay}. The freeze should cover ` +
+          'yesterday: streak 12, no freezes left, last active yesterday.'
+      );
+    }
+    if (!/keep your 12-day streak/i.test(frozen.body)) {
+      problems.push('After a freeze covers yesterday, Home does not say today is still needed to keep the streak.');
+    }
   } finally {
     if (browser) await browser.close();
     server.close();
@@ -440,6 +479,9 @@ async function main() {
   console.log('check:controls — the four daily goals are a radio group, and a screen reader can hear which is set.');
   console.log(
     'check:controls — a streak one day from breaking says so on Home, and stays silent once today is played.'
+  );
+  console.log(
+    'check:controls — opening the app applies missed days: a lapsed streak reads 0, one missed day spends a freeze.'
   );
 }
 
