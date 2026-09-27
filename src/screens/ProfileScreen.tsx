@@ -13,7 +13,7 @@ import type { IconName } from '../art/icons';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { levelProgress, levelTitle, getLeague } from '../lib/gamification';
-import { useProgressStore } from '../store/useProgressStore';
+import { useProgressStore, FREEZE_COST, FREEZE_MAX } from '../store/useProgressStore';
 import { lastSevenDayKeys } from '../lib/date';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { LETTERS } from '../data/letters';
@@ -76,6 +76,76 @@ function WeekChart() {
   );
 }
 
+/**
+ * Streak freezes: how many the learner holds, what one does, and a way to buy
+ * another.
+ *
+ * The store has always had them. A new profile starts with one, a single
+ * missed day spends one automatically, and gems could buy more, but nothing on
+ * any screen showed the count or offered the purchase, so a freeze was spent
+ * or kept without the learner ever knowing either had happened. It sits under
+ * the streak because that is what it protects.
+ */
+function FreezeCard() {
+  const freezes = useProgressStore((st) => st.freezes);
+  const gems = useProgressStore((st) => st.gems);
+  const buyFreeze = useProgressStore((st) => st.buyFreeze);
+  const full = freezes >= FREEZE_MAX;
+  const short = gems < FREEZE_COST;
+  const why = full ? `You can hold ${FREEZE_MAX}.` : short ? `Needs ${FREEZE_COST} gems; you have ${gems}.` : null;
+
+  return (
+    <Card className="mb-4">
+      <View className="flex-row items-center gap-3">
+        <View className="flex-1">
+          <Bold className="text-[0.9375rem]">Streak freezes</Bold>
+          <Txt className="mt-0.5 text-xs text-paper/55">
+            A freeze covers one missed day, so the streak survives it. It is used automatically.
+          </Txt>
+        </View>
+        <View className="flex-row gap-1.5" accessible accessibilityLabel={`${freezes} of ${FREEZE_MAX} streak freezes`}>
+          {Array.from({ length: FREEZE_MAX }, (_, i) => (
+            <View
+              key={i}
+              className="h-3.5 w-3.5 rounded-full"
+              style={{
+                backgroundColor: i < freezes ? palette.gold : 'transparent',
+                borderWidth: 1.5,
+                borderColor: i < freezes ? palette.gold : withAlpha(palette.white, 0.25),
+              }}
+            />
+          ))}
+        </View>
+      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Buy a streak freeze for ${FREEZE_COST} gems${why ? `. ${why}` : ''}`}
+        aria-disabled={!!why}
+        disabled={!!why}
+        onPress={() => {
+          if (buyFreeze()) feedback.tap();
+        }}
+        style={({ pressed }) => ({ transform: [{ scale: pressed && !why ? 0.98 : 1 }], opacity: why ? 0.55 : 1 })}
+      >
+        <View
+          className="mt-3 flex-row items-center justify-center gap-2 rounded-xl py-2.5"
+          style={{
+            borderWidth: 1.5,
+            borderColor: withAlpha(palette.gold, 0.6),
+            backgroundColor: withAlpha(palette.gold, 0.12),
+          }}
+        >
+          <Illustration name="gem" tile={false} size={16} />
+          <Bold className="text-sm" style={{ color: palette.gold }}>
+            Buy one · {FREEZE_COST} gems
+          </Bold>
+        </View>
+      </Pressable>
+      {why ? <Txt className="mt-2 text-center text-[0.6875rem] text-paper/55">{why}</Txt> : null}
+    </Card>
+  );
+}
+
 export function ProfileScreen() {
   const nav = useNavigation<Nav>();
   const s = useProgressStore();
@@ -125,6 +195,7 @@ export function ProfileScreen() {
             <StatBox icon="pen" value={`${s.learnedLetters.length}/${LETTERS.length}`} label="Letters" />
             <StatBox icon="book" value={`${s.learnedWords.length}/${WORDS.length}`} label="Words" />
           </View>
+          <FreezeCard />
         </Reveal>
 
         {/* weekly activity */}

@@ -114,6 +114,25 @@ export function LessonComplete({
               </Reveal>
             )}
 
+            {/* Once, on the lesson after a freeze is spent, whether it went at
+                launch or inside this lesson. Without it the streak simply
+                survived a missed day and the learner never learned why. */}
+            {result.freezeUsed && (
+              <Reveal delay={240} style={{ width: '100%' }}>
+                <View
+                  className="mb-3 items-center rounded-2xl border p-4"
+                  style={{ borderColor: withAlpha(palette.gold, 0.35), backgroundColor: withAlpha(palette.gold, 0.1) }}
+                >
+                  <Bold style={{ color: palette.goldLight }}>A streak freeze covered the day you missed</Bold>
+                  <Txt className="mt-1 text-center text-xs text-paper/70">
+                    {result.freezeUsed.left
+                      ? `You have ${count(result.freezeUsed.left, 'freeze')} left.`
+                      : 'That was your last one. You can buy another on your profile.'}
+                  </Txt>
+                </View>
+              </Reveal>
+            )}
+
             {result.leveledUp && (
               <Reveal delay={300} style={{ width: '100%' }}>
                 <View

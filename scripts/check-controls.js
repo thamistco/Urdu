@@ -108,8 +108,14 @@ async function tapByText(page, re) {
       if (!label && n.children.length) continue;
       const t = (label || n.textContent || '').trim();
       if (!r.test(t)) continue;
+      if (n.getBoundingClientRect().width < 8 || n.getBoundingClientRect().height < 8) continue;
+      // Scrolled into view first, as a learner would. This clicked wherever
+      // the element sat, so anything below the 900px window was a click on
+      // nothing: when a streak-freeze card made Profile taller, the league row
+      // and the Settings link fell below it and four assertions failed while
+      // reading a screen the check had never left.
+      n.scrollIntoView({ block: 'center' });
       const b = n.getBoundingClientRect();
-      if (b.width < 8 || b.height < 8) continue;
       return { x: b.left + b.width / 2, y: b.top + b.height / 2 };
     }
     return null;
