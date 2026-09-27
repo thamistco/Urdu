@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { streakStatus } from './streak';
+import { markActiveToday, rollStreak, streakStatus, type StreakState } from './streak';
 
 /**
  * Deliberately local-time throughout, matching `date.ts` — "today" for a
@@ -48,5 +48,85 @@ describe('streakStatus', () => {
     const night = at(2026, 6, 14, 23);
     expect(streakStatus(5, '2026-06-13', morning)).toBe('at-risk');
     expect(streakStatus(5, '2026-06-13', night)).toBe('at-risk');
+  });
+});
+
+describe('rollStreak and markActiveToday', () => {
+  const TODAY = '2026-03-30'; // the day after the UK clocks go forward, pinned in vitest.config
+  const daysAgo = (n: number) => {
+    const d = new Date(TODAY + 'T00:00:00');
+    d.setDate(d.getDate() - n);
+    return `${d.getFullYear()}-${`${d.getMonth() + 1}`.padStart(2, '0')}-${`${d.getDate()}`.padStart(2, '0')}`;
+  };
+  const at = (gap: number, freezes: number, streak = 12): StreakState => ({
+    streak,
+    freezes,
+    lastActiveDay: daysAgo(gap),
+  });
+
+  it('shows a lapsed streak as broken at launch, not only after the next lesson', () => {
+    expect(rollStreak(at(5, 0), TODAY).streak).toBe(0);
+    expect(rollStreak(at(3, 3), TODAY).streak).toBe(0); // a freeze covers one day, not two
+  });
+
+  it('spends a freeze on exactly one missed day and keeps the streak', () => {
+    const r = rollStreak(at(2, 1), TODAY);
+    expect(r).toMatchObject({ streak: 12, freezes: 0, lastActiveDay: daysAgo(1), froze: true });
+  });
+
+  it('leaves a streak alone when yesterday or today was played', () => {
+    for (const gap of [0, 1])
+      expect(rollStreak(at(gap, 1), TODAY)).toMatchObject({ streak: 12, freezes: 1, froze: false });
+  });
+
+  it('is safe to run twice in a day, and never burns a freeze on a broken streak', () => {
+    for (const s of [at(2, 2), at(4, 2), at(1, 1), at(2, 0)]) {
+      const once = rollStreak(s, TODAY);
+      const twice = rollStreak(once, TODAY);
+      expect(twice.streak).toBe(once.streak);
+      expect(twice.freezes).toBe(once.freezes);
+    }
+  });
+
+  /**
+   * The promise that makes a launch-time rollover safe to add: opening the app
+   * first must never change what the next lesson does to the streak. Asked of
+   * every gap from same-day to three weeks, with and without freezes.
+   */
+  it('gives the same streak whether or not the app rolled it over at launch', () => {
+    for (let gap = 0; gap <= 21; gap++) {
+      for (const freezes of [0, 1, 3]) {
+        const s = at(gap, freezes);
+        const lessonOnly = markActiveToday(rollStreak(s, TODAY), TODAY);
+        const launchFirst = markActiveToday(rollStreak(rollStreak(s, TODAY), TODAY), TODAY);
+        expect(launchFirst, `gap ${gap}, ${freezes} freezes`).toEqual(lessonOnly);
+      }
+    }
+  });
+
+  it('matches what finishLesson did before the rollover existed', () => {
+    const was = (gap: number, freezes: number) => {
+      // The inline rules finishLesson used to carry, verbatim in effect.
+      if (gap === 0) return { streak: 12, freezes };
+      if (gap === 1) return { streak: 13, freezes };
+      if (gap === 2 && freezes > 0) return { streak: 13, freezes: freezes - 1 };
+      return { streak: 1, freezes };
+    };
+    for (let gap = 0; gap <= 10; gap++) {
+      for (const freezes of [0, 1, 3]) {
+        const now = markActiveToday(rollStreak(at(gap, freezes), TODAY), TODAY);
+        expect({ streak: now.streak, freezes: now.freezes }, `gap ${gap}, ${freezes} freezes`).toEqual(
+          was(gap, freezes)
+        );
+      }
+    }
+  });
+
+  it('starts a first-ever streak at 1 and does not count a second lesson the same day', () => {
+    expect(markActiveToday({ streak: 0, freezes: 1, lastActiveDay: null }, TODAY)).toMatchObject({
+      streak: 1,
+      increased: true,
+    });
+    expect(markActiveToday(at(0, 1), TODAY)).toMatchObject({ streak: 12, increased: false });
   });
 });

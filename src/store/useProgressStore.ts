@@ -4,7 +4,8 @@ import { safeStorage } from './storage';
 
 import { SrsCard, SrsGrade, newCard, review, dueCount } from '../lib/srs';
 import { testerFlags } from './useTesterStore';
-import { dayKey, daysBetween } from '../lib/date';
+import { dayKey } from '../lib/date';
+import { rollStreak, markActiveToday } from '../lib/streak';
 import {
   HEARTS_MAX,
   HEART_REGEN_MINUTES,
@@ -39,7 +40,16 @@ export type FinishResult = {
   streakIncreased: boolean;
   perfect: boolean;
   newAchievements: { id: string; title: string; icon: string; tier: number }[];
+  /**
+   * Set when a streak freeze was spent since the learner was last told, with
+   * how many are left. Reported once: the lesson that reports it clears it.
+   */
+  freezeUsed: { left: number } | null;
 };
+
+/** What a streak freeze costs, and how many a learner can hold. */
+export const FREEZE_COST = 30;
+export const FREEZE_MAX = 3;
 
 const weekKeyOf = (d: Date = new Date()) => {
   const epochDays = Math.floor(d.getTime() / (24 * 60 * 60 * 1000));
@@ -84,6 +94,12 @@ type ProgressState = {
   longestStreak: number;
   lastActiveDay: string | null;
   freezes: number;
+  /**
+   * The day a freeze was last spent, until a lesson has told the learner.
+   * Persisted because the freeze can be spent when the app opens, before any
+   * lesson, and the notice is owed to whichever lesson comes next.
+   */
+  freezeNotice: string | null;
 
   // daily goal
   dailyGoalId: string;
@@ -139,7 +155,14 @@ type ProgressState = {
     isReview: boolean;
   }) => FinishResult;
   setDailyGoal: (id: string) => void;
-  useFreeze: () => void;
+  /** Buy one streak freeze. False, and nothing spent, when it cannot. */
+  buyFreeze: () => boolean;
+  /**
+   * Apply the days missed since the learner was last active: spend a freeze
+   * on a single missed day, or break the streak. Run once when the app opens,
+   * so Home and Profile never show a streak that has already lapsed.
+   */
+  rolloverStreak: () => void;
   /** Dismiss the path-moved notice and record the path it was about. */
   dismissPathNotice: (pathSize: number) => void;
   /** Record the path this learner has seen without showing them anything.
@@ -179,6 +202,7 @@ export const useProgressStore = create<ProgressState>()(
       longestStreak: 0,
       lastActiveDay: null,
       freezes: 1,
+      freezeNotice: null,
 
       dailyGoalId: 'steady',
       todayKey: dayKey(),
@@ -290,29 +314,16 @@ export const useProgressStore = create<ProgressState>()(
         });
 
         // --- streak ---
+        // The same two rules the app runs when it opens (`rolloverStreak`):
+        // account for any missed days, then count today. One implementation,
+        // in lib/streak.ts, so the launch path and this one cannot disagree.
         const today = dayKey();
-        let streak = s2.streak;
-        let freezes = s2.freezes;
-        let streakIncreased = false;
-        if (s2.lastActiveDay !== today) {
-          if (!s2.lastActiveDay) {
-            streak = 1;
-            streakIncreased = true;
-          } else {
-            const gap = daysBetween(s2.lastActiveDay, today);
-            if (gap === 1) {
-              streak += 1;
-              streakIncreased = true;
-            } else if (gap === 2 && freezes > 0) {
-              freezes -= 1; // a freeze covered the single missed day
-              streak += 1;
-              streakIncreased = true;
-            } else {
-              streak = 1;
-              streakIncreased = true;
-            }
-          }
-        }
+        const rolled = rollStreak(s2, today);
+        const active = markActiveToday(rolled, today);
+        const streak = active.streak;
+        const freezes = active.freezes;
+        const streakIncreased = active.increased;
+        const freezeUsed = rolled.froze || s2.freezeNotice ? { left: freezes } : null;
         const longestStreak = Math.max(s2.longestStreak, streak);
 
         // --- league week roll ---
@@ -358,6 +369,7 @@ export const useProgressStore = create<ProgressState>()(
           longestStreak,
           lastActiveDay: today,
           freezes,
+          freezeNotice: null,
           leagueId,
           weekKey,
           weeklyXp,
@@ -397,13 +409,27 @@ export const useProgressStore = create<ProgressState>()(
           streakIncreased,
           perfect,
           newAchievements,
+          freezeUsed,
         };
       },
 
       setDailyGoal: (id) => set({ dailyGoalId: id }),
-      useFreeze: () => {
+      buyFreeze: () => {
         const s = get();
-        if (s.gems >= 30 && s.freezes < 3) set({ gems: s.gems - 30, freezes: s.freezes + 1 });
+        if (s.gems < FREEZE_COST || s.freezes >= FREEZE_MAX) return false;
+        set({ gems: s.gems - FREEZE_COST, freezes: s.freezes + 1 });
+        return true;
+      },
+      rolloverStreak: () => {
+        const s = get();
+        const r = rollStreak(s);
+        if (r.streak === s.streak && r.freezes === s.freezes && r.lastActiveDay === s.lastActiveDay) return;
+        set({
+          streak: r.streak,
+          freezes: r.freezes,
+          lastActiveDay: r.lastActiveDay,
+          ...(r.froze ? { freezeNotice: dayKey() } : {}),
+        });
       },
       addGems: (n) => set((s) => ({ gems: s.gems + n })),
 
@@ -424,6 +450,7 @@ export const useProgressStore = create<ProgressState>()(
           longestStreak: 0,
           lastActiveDay: null,
           freezes: 1,
+          freezeNotice: null,
           dailyGoalId: 'steady',
           todayKey: dayKey(),
           todayXp: 0,
@@ -462,6 +489,12 @@ export const useProgressStore = create<ProgressState>()(
     {
       name: 'harf-progress',
       storage: createJSONStorage(() => safeStorage),
+      // Once per session, as soon as the saved progress is back: a learner
+      // returning after days away sees the streak as it now stands, not as it
+      // stood the last time a lesson was finished.
+      onRehydrateStorage: () => (state) => {
+        state?.rolloverStreak();
+      },
       /**
        * No `version`, and so no `migrate`. The app has not launched, so no
        * profile written by an older shape of this store exists anywhere to
