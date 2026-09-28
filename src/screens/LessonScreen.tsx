@@ -485,6 +485,7 @@ export function LessonScreen() {
         >
           <Pressable
             accessibilityRole="button"
+            accessibilityLabel="Close lesson"
             hitSlop={12}
             onPress={() => {
               feedback.tap();

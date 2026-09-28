@@ -69,6 +69,7 @@ export function Choice({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled: !!disabled, selected: state === 'selected' }}
       hitSlop={4}
       style={({ pressed }) => ({
         transform: [{ scale: pressed && !disabled ? 0.97 : 1 }],
@@ -88,10 +89,24 @@ export function Choice({
         }}
       >
         {children}
+        {/* What grading means, in words a screen reader reads as part of the
+            button's name. The borders say it only in colour, and the
+            accessibilityState above cannot: react-native-web drops `selected`,
+            and after grading the option a learner picked is 'wrong' or
+            'correct', never 'selected'. Clipped to one pixel so it is heard,
+            not seen. */}
+        {state === 'wrong' || state === 'correct' ? (
+          <Txt testID="choice-verdict" style={SPOKEN_ONLY}>
+            {state === 'wrong' ? ', your answer' : ', correct answer'}
+          </Txt>
+        ) : null}
       </View>
     </Pressable>
   );
 }
+
+/** On screen for a screen reader, invisible to everyone else. */
+const SPOKEN_ONLY = { position: 'absolute', width: 1, height: 1, overflow: 'hidden' } as const;
 
 /** The prompt "paper" — the warm surface the script/emoji lives on. */
 export function PromptCard({

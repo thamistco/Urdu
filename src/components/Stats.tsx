@@ -47,7 +47,15 @@ export function StatBar({ streak, gems, hearts }: { streak: number; gems: number
 /** Row of heart pips (used in the lesson player). */
 export function Hearts({ count }: { count: number }) {
   return (
-    <View className="flex-row items-center gap-1">
+    // An image role, because a label on an element with no role is ignored by
+    // screen readers on the web: without it "3 of 5 hearts" was in the page
+    // and announced nowhere.
+    <View
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={`${count} of ${HEARTS_MAX} hearts`}
+      className="flex-row items-center gap-1"
+    >
       {/* Drawn marks, not ❤️/🤍. System emoji render differently on every
           platform — which is the exact problem the icon set exists to solve —
           and next to the drawn flame and gem in the same bar they looked like
