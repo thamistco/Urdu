@@ -947,13 +947,32 @@ const ALPHABET: string[] = Array.from(
   new Set(WORDS.flatMap((w) => Array.from(w.urdu)).filter((c) => c.trim().length > 0))
 );
 
+// Tile-size visual-confusability denylist. At the rendered tile size these
+// pairs are near-identical in the Nastaliq font; pairing one with the other
+// as a decoy manufactures an undeserved wrong answer (a heart plus an 'again'
+// SRS grade on a known item). This is deliberately NOT done via
+// confusableWith: those links also drive letterContrast drills, which must
+// not see these pairs.
+const VISUALLY_CONFUSABLE_DECOY_PAIRS: Array<[string, string]> = [
+  ['\u06BA', '\u0688'], // noon-ghunna ں vs Daal ڈ — confused twice live 2026-09-29
+];
+
 function buildTilesFor(word: Word): string[] {
   // Split into visual character units (grapheme-ish). Urdu combining marks are
   // rare in this vocab, so a code-point split is fine and keeps tiles legible.
   const chars = Array.from(word.urdu).filter((c) => c.trim().length > 0);
   // Two letters that do NOT belong. Without them the tray is the answer with
   // its order removed, and the exercise can be solved without reading anything.
-  const decoys = shuffle(ALPHABET.filter((c) => !chars.includes(c))).slice(0, 2);
+  // Decoys that are visually confusable with a letter in the word are excluded.
+  const decoys = shuffle(
+    ALPHABET.filter(
+      (c) =>
+        !chars.includes(c) &&
+        !VISUALLY_CONFUSABLE_DECOY_PAIRS.some(
+          ([a, b]) => (chars.includes(a) && c === b) || (chars.includes(b) && c === a)
+        )
+    )
+  ).slice(0, 2);
   return shuffle([...chars, ...decoys]);
 }
 
