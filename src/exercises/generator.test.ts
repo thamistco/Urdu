@@ -2243,3 +2243,30 @@ describe('sentence climb ordering', () => {
     expect(repeats).toEqual([]);
   });
 });
+
+/**
+ * Seen live twice: a tray holding ں (noon-ghunna) as part of the answer also
+ * offered ڈ (Daal) as a decoy, two glyphs near-identical at the 26px tile
+ * size. Measured before the guard, 51 of 1,040 such trays over 20 passes of the
+ * course did it. Asked of the whole course, both directions, across several
+ * passes because decoys are drawn at random: at that rate five passes find it
+ * many times over.
+ */
+describe('wordBuild decoys', () => {
+  it('never offers a letter as a decoy against its tile-size lookalike in the word', () => {
+    const pairs: Array<[string, string]> = [['ں', 'ڈ']];
+    const bad: string[] = [];
+    for (let pass = 0; pass < 5; pass++) {
+      for (const l of ALL_LESSONS.filter((x) => x.kind === 'vocab' || x.kind === 'review')) {
+        for (const e of buildLessonExercises(l, [], 'both')) {
+          if (e.kind !== 'wordBuild') continue;
+          for (const [a, b] of [...pairs, ...pairs.map(([x, y]) => [y, x] as [string, string])]) {
+            if (e.word.urdu.includes(a) && !e.word.urdu.includes(b) && e.tiles.includes(b))
+              bad.push(`${l.id} ${e.word.id}`);
+          }
+        }
+      }
+    }
+    expect(bad).toEqual([]);
+  });
+});
