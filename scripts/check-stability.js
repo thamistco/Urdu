@@ -207,12 +207,13 @@ const checked = [];
   }
 
   /**
-   * The Practice tab, by position rather than by text: "Practice" also appears
+   * The Practice tab, by position rather than by text: its label also appears
    * in section headings on screens that stay mounted behind the current one,
-   * and clicking one of those does nothing.
+   * and clicking one of those does nothing. The tab is labelled "Review"; the
+   * route behind it is still Practice.
    */
   async function openPracticeTab() {
-    const items = page.locator('text=/^Practice$/');
+    const items = page.locator('text=/^Review$/');
     for (let k = 0; k < (await items.count()); k++) {
       const b = await items
         .nth(k)
