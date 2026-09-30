@@ -70,6 +70,11 @@ function TabBar({ state, navigation }: BottomTabBarProps) {
         >
           {state.routes.map((route, i) => {
             const focused = state.index === i;
+            // The Practice route shows as "Review": the screen calls itself the
+            // Daily Review and Home calls it review, so the tab was the one
+            // place with a third name. Only the label changes. The route keeps
+            // its name, so /practice, TabIcon and the navigation types hold.
+            const label = route.name === 'Practice' ? 'Review' : route.name;
             return (
               <Pressable
                 key={route.key}
@@ -80,14 +85,14 @@ function TabBar({ state, navigation }: BottomTabBarProps) {
                 className="flex-1 items-center py-2"
                 accessibilityRole="tab"
                 accessibilityState={{ selected: focused }}
-                accessibilityLabel={route.name}
+                accessibilityLabel={label}
               >
                 <TabIcon name={route.name} color={focused ? palette.gold : withAlpha(palette.cream, 0.45)} />
                 <Txt
                   className="mt-1 text-[0.6875rem]"
                   style={{ color: focused ? palette.gold : withAlpha(palette.cream, 0.5), fontWeight: '700' }}
                 >
-                  {route.name}
+                  {label}
                 </Txt>
               </Pressable>
             );
