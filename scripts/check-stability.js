@@ -320,7 +320,15 @@ const checked = [];
 
   // ---- practice lessons: the ones that were broken ------------------------
   await seed('both');
-  await openPracticeTab();
+  // A tab that cannot be found is a failure, not a skip. This used to ignore
+  // the result, so when the tab's label changed from "Practice" to "Review"
+  // the old matcher found nothing, the whole practice half was skipped, and
+  // the check still passed: 9 questions checked instead of 24.
+  if (!(await openPracticeTab())) {
+    problems.push(
+      'Could not find the Practice tab (labelled "Review") in the tab bar, so no practice lesson was checked.'
+    );
+  }
   await page.waitForTimeout(1600);
 
   const practiceEntries = ['Around the Home', 'Food & Drink', 'Family', 'Daily Review'];
