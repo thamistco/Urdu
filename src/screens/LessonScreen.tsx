@@ -125,6 +125,10 @@ export function LessonScreen() {
    * answer was graded against a question they had never seen.
    */
   const lesson = useMemo(() => resolveLesson(route.params.lessonId)!, [route.params.lessonId]);
+  // A unit review and the Daily Review both resolve to this kind. The header
+  // says so, because otherwise a review looked exactly like a lesson and a
+  // learner met old material with nothing saying why.
+  const isReview = lesson.kind === 'review';
 
   const showRoman = useSettingsStore((s) => s.showRoman);
   const track = useSettingsStore((s) => s.track);
@@ -393,7 +397,7 @@ export function LessonScreen() {
         correct: correctCount,
         total,
         xp: lesson.xp,
-        isReview: lesson.kind === 'review',
+        isReview,
       });
       feedback.levelUp();
       setResult(r);
@@ -499,6 +503,11 @@ export function LessonScreen() {
           </View>
           <Hearts count={hearts} />
         </View>
+        {isReview ? (
+          <View style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }} className="px-4">
+            <Eyebrow style={{ color: palette.gold }}>Review</Eyebrow>
+          </View>
+        ) : null}
 
         {/* exercise body */}
         {/* Sit the question in the middle of the space it has, not at the top
