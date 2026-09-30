@@ -417,6 +417,36 @@ export const soundsOverlap = (a: Letter, b: Letter): boolean => {
 };
 
 /**
+ * Letters that look alike at the size the app draws them as answer options,
+ * so offering one against the other manufactures an undeserved wrong answer:
+ * a heart, and an 'again' SRS grade on an item the learner knew.
+ *
+ * Deliberately NOT done via `confusableWith`. Those links also drive
+ * letterContrast drills, which must not see these pairs, and they record the
+ * distinctions reading Urdu consists of (ب/پ, ج/ح): a learner is supposed to
+ * tell those apart. These are accidents of a small glyph instead.
+ *
+ * Kept by observation, not measured. Scoring all 780 letter pairs in the
+ * shipped font by shared ink at 26px put ں/ڈ at 0.07, below 478 other pairs;
+ * the pairs that do score high are exactly the dot-differences the course
+ * teaches. Pixel overlap does not predict this confusion, so a pair is added
+ * when learners are seen confusing it, and each entry says when.
+ *
+ * Used wherever the app picks letters at random to sit beside the right one:
+ * word-build decoy tiles (`buildTilesFor`) and letter-pick options
+ * (`distractLetters`). Letter-spot needs nothing: its tiles are the word's
+ * own letters, not decoys.
+ */
+const VISUALLY_CONFUSABLE_DECOY_PAIRS: Array<[string, string]> = [
+  ['\u06BA', '\u0688'], // noon-ghunna ں vs Daal ڈ: confused twice live in word-build, 2026-09-29
+];
+
+/** Whether two letters (by their isolated glyph) are a known tile-size lookalike pair. */
+export function tileLookalikes(a: string, b: string): boolean {
+  return VISUALLY_CONFUSABLE_DECOY_PAIRS.some(([x, y]) => (a === x && b === y) || (a === y && b === x));
+}
+
+/**
  * URD-007: ذ ز ض ظ are four different letters for one sound — Urdu speakers
  * hear no difference between zaal, ze, zwaad and zoe, so `letterPick`
  * ("which letter makes this sound?") offering two of them has two right
@@ -477,6 +507,8 @@ export function distractLetters(letter: Letter, n: number, position?: PositionKe
     const tokens = soundTokens(candidate);
     if (tokens.some((t) => usedTokens.has(t))) continue;
     if (position && usedGlyphs.has(candidate.forms[position])) continue;
+    // A tile-size lookalike of the right answer; see VISUALLY_CONFUSABLE_DECOY_PAIRS.
+    if (tileLookalikes(candidate.forms.isolated, letter.forms.isolated)) continue;
     tokens.forEach((t) => usedTokens.add(t));
     if (position) usedGlyphs.add(candidate.forms[position]);
     picked.push(candidate);
@@ -947,32 +979,18 @@ const ALPHABET: string[] = Array.from(
   new Set(WORDS.flatMap((w) => Array.from(w.urdu)).filter((c) => c.trim().length > 0))
 );
 
-// Tile-size visual-confusability denylist. At the rendered tile size these
-// pairs are near-identical in the Nastaliq font; pairing one with the other
-// as a decoy manufactures an undeserved wrong answer (a heart plus an 'again'
-// SRS grade on a known item). This is deliberately NOT done via
-// confusableWith: those links also drive letterContrast drills, which must
-// not see these pairs.
-const VISUALLY_CONFUSABLE_DECOY_PAIRS: Array<[string, string]> = [
-  ['\u06BA', '\u0688'], // noon-ghunna ں vs Daal ڈ — confused twice live 2026-09-29
-];
-
 function buildTilesFor(word: Word): string[] {
   // Split into visual character units (grapheme-ish). Urdu combining marks are
   // rare in this vocab, so a code-point split is fine and keeps tiles legible.
   const chars = Array.from(word.urdu).filter((c) => c.trim().length > 0);
   // Two letters that do NOT belong. Without them the tray is the answer with
   // its order removed, and the exercise can be solved without reading anything.
-  // Decoys that are visually confusable with a letter in the word are excluded.
-  const decoys = shuffle(
-    ALPHABET.filter(
-      (c) =>
-        !chars.includes(c) &&
-        !VISUALLY_CONFUSABLE_DECOY_PAIRS.some(
-          ([a, b]) => (chars.includes(a) && c === b) || (chars.includes(b) && c === a)
-        )
-    )
-  ).slice(0, 2);
+  // Decoys that are tile-size lookalikes of a letter in the word are excluded;
+  // see VISUALLY_CONFUSABLE_DECOY_PAIRS.
+  const decoys = shuffle(ALPHABET.filter((c) => !chars.includes(c) && !chars.some((w) => tileLookalikes(w, c)))).slice(
+    0,
+    2
+  );
   return shuffle([...chars, ...decoys]);
 }
 
