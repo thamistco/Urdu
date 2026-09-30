@@ -63,6 +63,9 @@ export function LessonComplete({
               <Display className="mt-1 text-center text-4xl">
                 {correct} of {total}
               </Display>
+              {/* "36 of 43" alone could be words, points or anything; this says
+                  what it counts. */}
+              <Txt className="mt-1 text-center text-sm text-paper/60">exercises correct</Txt>
               <GeoDivider />
             </Reveal>
 
