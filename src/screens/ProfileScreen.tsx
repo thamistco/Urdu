@@ -183,9 +183,18 @@ export function ProfileScreen() {
           </SafeAreaView>
         </Reveal>
 
-        {/* stat grid */}
+        {/* weekly activity: first, as the one block here that says what to do
+            today. The stats below are the record. */}
         <Reveal delay={80}>
-          <View className="mb-3 mt-4 flex-row justify-between">
+          <Card className="mb-4 mt-4">
+            <Eyebrow className="mb-3 text-paper/55">This week</Eyebrow>
+            <WeekChart />
+          </Card>
+        </Reveal>
+
+        {/* stat grid */}
+        <Reveal delay={140}>
+          <View className="mb-3 flex-row justify-between">
             <StatBox icon="flame" value={s.streak} label="Day streak" />
             <StatBox icon="bolt" value={s.totalXp} label="Total XP" />
             <StatBox icon="gem" value={s.gems} label="Gems" />
@@ -196,14 +205,6 @@ export function ProfileScreen() {
             <StatBox icon="book" value={`${s.learnedWords.length}/${WORDS.length}`} label="Words" />
           </View>
           <FreezeCard />
-        </Reveal>
-
-        {/* weekly activity */}
-        <Reveal delay={140}>
-          <Card className="mb-4">
-            <Eyebrow className="mb-3 text-paper/55">This week</Eyebrow>
-            <WeekChart />
-          </Card>
         </Reveal>
 
         {/* league */}
