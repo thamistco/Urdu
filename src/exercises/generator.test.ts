@@ -2252,7 +2252,7 @@ describe('sentence climb ordering', () => {
  * passes because decoys are drawn at random: at that rate five passes find it
  * many times over.
  */
-describe('wordBuild decoys', () => {
+describe('tile-size lookalikes', () => {
   it('never offers a letter as a decoy against its tile-size lookalike in the word', () => {
     const pairs: Array<[string, string]> = [['ں', 'ڈ']];
     const bad: string[] = [];
@@ -2264,6 +2264,28 @@ describe('wordBuild decoys', () => {
             if (e.word.urdu.includes(a) && !e.word.urdu.includes(b) && e.tiles.includes(b))
               bad.push(`${l.id} ${e.word.id}`);
           }
+        }
+      }
+    }
+    expect(bad).toEqual([]);
+  });
+
+  /**
+   * The same pair in the other place the app picks letters at random to sit
+   * beside the right one: letter-pick options. Before the shared list, 1,282
+   * of 16,000 draws for ں or ڈ offered the other. Drawn directly rather than
+   * through lessons, because a lesson asks about these two letters rarely.
+   */
+  it('never offers a letter-pick option that is a tile-size lookalike of the answer', () => {
+    const byId = (id: string) => LETTERS.find((l) => l.id === id)!;
+    const bad: string[] = [];
+    for (const [target, other] of [
+      ['noon-ghunna', 'Daal'],
+      ['Daal', 'noon-ghunna'],
+    ]) {
+      for (const p of POSITIONS) {
+        for (let k = 0; k < 400; k++) {
+          if (distractLetters(byId(target), 3, p.key).some((d) => d.id === other)) bad.push(`${target} at ${p.key}`);
         }
       }
     }
