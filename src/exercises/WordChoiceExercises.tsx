@@ -1,11 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Choice, PromptCard, Question, SpeakerButton, palette, withAlpha } from './common';
 import { Txt, Bold } from '../components/Text';
 import { Lexeme } from '../components/Lexeme';
 import { WordArt, Illustration, pictureIdentifies } from '../components/Illustration';
 import { feedback } from '../lib/feedback';
-import { announce } from '../lib/speech';
+import { announce, isPlaying, onPlaybackChange } from '../lib/speech';
+import { useSettingsStore } from '../store/useSettingsStore';
+import Animated, {
+  Easing,
+  cancelAnimation,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import { romanRevealsMeaning } from '../lib/giveaway';
 import type { ExerciseProps, Exercise } from './types';
 import { glossOf } from '../data/words';
@@ -138,6 +147,25 @@ export function ListenTapExercise({ exercise, showRoman, locked, onGraded }: Exe
   const { word, options } = exercise;
   const [picked, setPicked] = useState<string | null>(null);
 
+  // Whether the word is being said right now. This exercise is nothing but
+  // listening, and its speaker looked the same silent or playing, so a tap
+  // that had not registered (or a first clip still loading) was
+  // indistinguishable from one that had. lib/speech.ts reports playback for
+  // exactly this; the effect returns its unsubscribe.
+  const [playing, setPlaying] = useState(isPlaying);
+  useEffect(() => onPlaybackChange(setPlaying), []);
+  const reduced = useSettingsStore((st) => st.reducedMotion);
+  const pulse = useSharedValue(1);
+  useEffect(() => {
+    if (playing && !reduced) {
+      pulse.value = withRepeat(withTiming(0.6, { duration: 600, easing: Easing.inOut(Easing.quad) }), -1, true);
+    } else {
+      cancelAnimation(pulse);
+      pulse.value = 1;
+    }
+  }, [playing, reduced, pulse]);
+  const pulsing = useAnimatedStyle(() => ({ opacity: pulse.value }));
+
   const choose = (id: string) => {
     if (picked || locked) return;
     setPicked(id);
@@ -154,15 +182,23 @@ export function ListenTapExercise({ exercise, showRoman, locked, onGraded }: Exe
         <Pressable
           onPress={() => announce(word.id, word.urdu, word.roman)}
           accessibilityRole="button"
-          accessibilityLabel="Play the word again"
+          accessibilityLabel={playing ? 'Playing…' : 'Play the word again'}
           style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.94 : 1 }] })}
         >
-          <View
+          <Animated.View
+            testID={playing ? 'listen-playing' : 'listen-idle'}
             className="h-20 w-20 items-center justify-center rounded-full"
-            style={{ backgroundColor: withAlpha(palette.gold, 0.2), borderWidth: 2, borderColor: palette.gold }}
+            style={[
+              {
+                backgroundColor: withAlpha(palette.gold, playing ? 0.55 : 0.2),
+                borderWidth: 2,
+                borderColor: playing ? palette.cream : palette.gold,
+              },
+              pulsing,
+            ]}
           >
             <Illustration name="speaker" tile={false} size={36} />
-          </View>
+          </Animated.View>
         </Pressable>
         <Txt style={{ color: palette.ink }} className="mt-3 text-xs opacity-65">
           {/* The transliteration is the answer written out, so it waits until
