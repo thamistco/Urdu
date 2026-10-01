@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { View, Pressable, ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../components/Screen';
 import { TopBar } from '../components/TopBar';
 import { Reveal } from '../components/Reveal';
@@ -9,13 +10,42 @@ import { TracePad, tracePadKey } from '../components/TracePad';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { speak } from '../lib/speech';
-import { LETTERS, POSITIONS, PositionKey, positionHint } from '../data/letters';
+import { LETTERS, POSITIONS, PositionKey, glyphName, positionHint } from '../data/letters';
 import { useProgressStore } from '../store/useProgressStore';
 import { Illustration } from '../components/Illustration';
+import type { RootStackParamList } from '../navigation/types';
+
+type Nav = NativeStackNavigationProp<RootStackParamList, 'LetterLab'>;
+type Rt = RouteProp<RootStackParamList, 'LetterLab'>;
+
+/** A rail tile's 56px plus its 4px margin either side. */
+const RAIL_STEP = 64;
+
+/** The letter /letters/:letterId names, or the first one for none or a typo. */
+function indexOf(letterId: string | undefined): number {
+  return Math.max(
+    0,
+    LETTERS.findIndex((l) => l.id === letterId)
+  );
+}
 
 export function LetterLabScreen() {
-  const nav = useNavigation();
-  const [idx, setIdx] = useState(0);
+  const nav = useNavigation<Nav>();
+  // The route has always been /letters/:letterId, but the screen ignored it
+  // and opened on alif whatever the address said, so a link to a letter was a
+  // link to the alphabet. The address is read once, and kept in step with the
+  // rail after that so it can be copied or reloaded.
+  const letterId = useRoute<Rt>().params?.letterId;
+  const [idx, setIdx] = useState(() => indexOf(letterId));
+  const rail = useRef<ScrollView>(null);
+  // Once, when the rail first has a width, so a link to a letter near the end
+  // opens with that letter in view; after that the learner scrolls it.
+  const railPlaced = useRef(false);
+  const placeRail = () => {
+    if (railPlaced.current) return;
+    railPlaced.current = true;
+    rail.current?.scrollTo({ x: Math.max(0, (idx - 1) * RAIL_STEP), animated: false });
+  };
   const [pos, setPos] = useState<PositionKey>('isolated');
   // The Lab is where you go to study a letter, so it is the right place to
   // practise writing one — same pad and same scoring as the lesson, without
@@ -27,6 +57,7 @@ export function LetterLabScreen() {
   const selectLetter = (i: number) => {
     feedback.tap();
     setIdx(i);
+    nav.setParams({ letterId: LETTERS[i].id });
     setPos('isolated');
     setTracing(false);
   };
@@ -37,37 +68,56 @@ export function LetterLabScreen() {
         <TopBar onBack={() => nav.goBack()} label={`${learned.length} / ${LETTERS.length} learned`} />
 
         {/* letter rail */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4 -mx-1">
-          {LETTERS.map((l, i) => {
-            const active = i === idx;
-            const known = learned.includes(l.id);
-            return (
-              <Pressable accessibilityRole="button" key={l.id} onPress={() => selectLetter(i)} className="mx-1">
-                <View
-                  className="h-14 w-14 items-center justify-center rounded-2xl border"
-                  style={{
-                    borderColor: active ? palette.gold : withAlpha(palette.white, 0.1),
-                    backgroundColor: active ? withAlpha(palette.gold, 0.15) : palette.ink700,
-                    borderWidth: 2,
-                  }}
+        <ScrollView
+          ref={rail}
+          onContentSizeChange={placeRail}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className="mb-4 -mx-1"
+        >
+          <View className="flex-row" accessibilityRole="radiogroup" aria-label="Letter">
+            {LETTERS.map((l, i) => {
+              const active = i === idx;
+              const known = learned.includes(l.id);
+              return (
+                <Pressable
+                  // Named, because the glyph was all a screen reader had: forty
+                  // buttons each called by one Arabic-script character, with
+                  // nothing to say which was showing. The tick is drawn, so
+                  // it is said here too.
+                  accessibilityRole="radio"
+                  aria-checked={active}
+                  accessibilityLabel={`${glyphName(l.forms.isolated) ?? l.name}${known ? ', learned' : ''}`}
+                  key={l.id}
+                  onPress={() => selectLetter(i)}
+                  className="mx-1"
                 >
-                  <Urdu style={{ color: active ? palette.gold : palette.paper, ...urduGlyph(20) }}>
-                    {l.forms.isolated}
-                  </Urdu>
-                  {known && (
-                    <View
-                      className="absolute -right-1 -top-1 h-4 w-4 items-center justify-center rounded-full"
-                      style={{ backgroundColor: palette.jade }}
-                    >
-                      <Txt className="text-[0.5625rem]" style={{ color: palette.white }}>
-                        ✓
-                      </Txt>
-                    </View>
-                  )}
-                </View>
-              </Pressable>
-            );
-          })}
+                  <View
+                    className="h-14 w-14 items-center justify-center rounded-2xl border"
+                    style={{
+                      borderColor: active ? palette.gold : withAlpha(palette.white, 0.1),
+                      backgroundColor: active ? withAlpha(palette.gold, 0.15) : palette.ink700,
+                      borderWidth: 2,
+                    }}
+                  >
+                    <Urdu style={{ color: active ? palette.gold : palette.paper, ...urduGlyph(20) }}>
+                      {l.forms.isolated}
+                    </Urdu>
+                    {known && (
+                      <View
+                        className="absolute -right-1 -top-1 h-4 w-4 items-center justify-center rounded-full"
+                        style={{ backgroundColor: palette.jade }}
+                      >
+                        <Txt className="text-[0.5625rem]" style={{ color: palette.white }}>
+                          ✓
+                        </Txt>
+                      </View>
+                    )}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
         </ScrollView>
 
         <Reveal key={letter.id}>
@@ -113,9 +163,11 @@ export function LetterLabScreen() {
                 feedback.tap();
                 setTracing((t) => !t);
               }}
-              accessibilityRole="button"
-              accessibilityState={{ selected: tracing }}
-              accessibilityLabel={tracing ? 'Stop tracing and read the letter' : 'Trace this letter'}
+              // A switch: it is on or off, and React Native has no
+              // aria-pressed to say so on a button.
+              accessibilityRole="switch"
+              aria-checked={tracing}
+              accessibilityLabel="Trace this letter"
               className="mt-3 self-center"
             >
               <View
