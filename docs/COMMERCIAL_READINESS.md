@@ -6,11 +6,11 @@ open. **This is not legal advice.** It is an engineering record of what the
 code and content actually contain, so that a lawyer's review starts from facts
 instead of from a search.
 
-Last reviewed 2026-09-23.
+Last reviewed 2026-10-01.
 
 ---
 
-## 1. The textbook the course was planned from: open
+## 1. The textbook the course was planned from: closed — replaced 2026-10-01
 
 **What it is.** _Basic Urdu_ by Rajiv Ranjan (Michigan State University
 Libraries, 2022), <https://openbooks.lib.msu.edu/urdu/>. Licensed **CC BY-NC
@@ -34,37 +34,47 @@ informed by … Basic Urdu; wording original". Checked since:
 - **Unit structure: not from the book.** 41 units against its 8 chapters.
 - **The 28 phrases:** stock phrasebook lines (hello, thank you, how much is
   this). Not protectable expression.
-- **Readings and conversations: unresolved.** The scenes parallel the book's:
+- **Readings and conversations:** the scenes paralleled the book's —
   "My family" (book 3.2, میرا خاندان), "My house" (4.2, عمران کا گھر), "At the
   fruit stall" (5.2, پھل اور سبزی کی دکان پر), "Asking the way" (6.3, راستہ
   بتانا), "A letter to a friend" (8.3, خط لکھنا), and a phone call to Imran,
-  the book's recurring character. A scene is an idea; the wording is what
-  matters, and it has not been compared.
-- **256 sentences and the grammar notes: not compared.** Four distinctive
-  lines were searched and matched nothing online. That is a sample, not a
-  comparison.
+  the book's recurring character. The wording was always original (verified by
+  the 2026-10-01 provenance audits: no copied expression in any of the 2,279
+  words, 256 sentences, 17 passages, 12 dialogues or 25 grammar notes), but
+  the situations mirrored the book's.
+- **Grammar notes:** all 25 compared against the book's live chapters
+  2026-10-01 — no copied wording; only two shared stock sequences, both
+  reworded the same day (see below).
 
-**Why it is unresolved.** The book cannot be fetched from the build sandbox:
-the network policy blocks `openbooks.lib.msu.edu`, `open.umn.edu` and the
-mirrors. Allowing `openbooks.lib.msu.edu` would let every sentence, reading,
-dialogue and grammar example in the app be diffed against the whole book,
-which turns "not compared" above into a number.
+**What was done 2026-10-01 (branch `moze/content-independence-2026-10-01`).**
+Every trace of the adaptation was replaced rather than permissioned:
 
-**Ways to close it, cheapest first.**
+- The six parallel scenes were rewritten with new situations and new names
+  (IDs kept, so lesson references are untouched):
+  - r-1 "My house" → "In the kitchen" (باورچی خانے میں)
+  - r-5 "My family" → "My best friend" (میرا بہترین دوست)
+  - d-4 "At the fruit stall" → "At the restaurant" (ریستوران میں)
+  - d-5 "Asking the way" → "At the railway station" (ریلوے اسٹیشن پر)
+  - d-6 "On the phone" (asking for Imran) → "Calling a friend" (calling Bilal)
+  - r-4 "A letter to a friend" → "A wedding invitation" (شادی کی دعوت)
+- The two stock phrases shared with the book were reworded: g-future's
+  "ہم بازار جائیں گے / We will go to the market" → "ہم پارک جائیں گے / We
+  will go to the park"; g-perfect's "the verb agrees with the object" →
+  "the verb matches the object".
+- The in-app Credits screen no longer attributes the book (`src/screens/
+  CreditsScreen.tsx`), and `CREDITS.md` records the replacement history
+  instead of an adaptation notice.
+- No new audio was needed: readings, dialogues and grammar notes have no
+  bundled TTS clips and already play through the device voice
+  (`announce` falls back to `deviceSpeak` when no clip exists); the bundled
+  clips cover words and sentences only, and none of those changed.
 
-1. **Ask the author.** A commercial permission for an app that credits him
-   costs him nothing and is often granted. Draft below.
-2. **Rewrite the parallel scenes from scratch** (new situations, new names, no
-   Imran), then diff against the book to prove nothing else overlaps. Every
-   changed Urdu line needs new audio in both voices, which needs a Google
-   Cloud TTS key. The previous key was exposed in chat and has to be replaced;
-   put the new one in the environment's secrets, never in a message.
-3. Both, which is the belt-and-braces answer.
+**Why no permission email is needed now.** Nothing adapted from the book
+remains in the app, so there is nothing left for the BY-NC licence to attach
+to. The draft permission request below is superseded and kept only as a
+record of the road not taken.
 
-Until one of these is done, keep the Credits attribution exactly as it is.
-
-**Draft request** (his contact is on the MSU directory,
-<https://lilac.msu.edu/rajiv-ranjan/>):
+**Draft request** (kept for the record; superseded 2026-10-01 — do not send):
 
 > Subject: Permission request: Basic Urdu in a paid Urdu-learning app
 >

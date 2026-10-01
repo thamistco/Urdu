@@ -711,7 +711,7 @@ export const GRAMMAR: GrammarConcept[] = [
     examples: [
       { urdu: 'میں کل آؤں گا', roman: 'main kal aaoon ga', meaning: 'I will come tomorrow' },
       { urdu: 'وہ خط لکھے گی', roman: 'wo khat likhe gi', meaning: 'She will write a letter' },
-      { urdu: 'ہم بازار جائیں گے', roman: 'hum bazaar jaayeñ ge', meaning: 'We will go to the market' },
+      { urdu: 'ہم پارک جائیں گے', roman: 'hum paark jaayeñ ge', meaning: 'We will go to the park' },
     ],
     drills: [
       {
@@ -974,7 +974,7 @@ export const GRAMMAR: GrammarConcept[] = [
     level: 'advanced',
     explain: [
       'Add the right form of “to be” to the past participle: وہ گیا ہے (wo gaya hai): “he has gone”; وہ گیا تھا (wo gaya tha): “he had gone”.',
-      'With transitive verbs in the past, Urdu marks the doer with نے (ne) and the verb agrees with the *object*, not the subject: اُس نے کتاب پڑھی (us ne kitaab paṛhi): “he read the book” (پڑھی/paṛhi is feminine to match کتاب/kitaab).',
+      'With transitive verbs in the past, Urdu marks the doer with نے (ne) and the verb matches the *object*, not the subject: اُس نے کتاب پڑھی (us ne kitaab paṛhi): “he read the book” (پڑھی/paṛhi is feminine to match کتاب/kitaab).',
       'This نے (ne) construction surprises most learners. Intransitive verbs like جانا (jaana) and آنا (aana) never use it.',
     ],
     examples: [

@@ -146,7 +146,7 @@ const CORE_TOPICS: Omit<Topic, 'category'>[] = [
   },
   { id: 'body', title: 'The Body', icon: '🖐️', blurb: 'Name yourself, head to toe.', level: 'beginner' },
   { id: 'animals', title: 'Animals', icon: '🐐', blurb: 'Creatures at home and in the wild.', level: 'beginner' },
-  { id: 'fruits', title: 'Fruits', icon: '🥭', blurb: 'Sweet words for the fruit stall.', level: 'elementary' },
+  { id: 'fruits', title: 'Fruits', icon: '🥭', blurb: 'Sweet words for the table.', level: 'elementary' },
   { id: 'vegetables', title: 'Vegetables', icon: '🥕', blurb: 'Everything at the sabzi shop.', level: 'elementary' },
   { id: 'clothing', title: 'Clothing', icon: '👕', blurb: 'What you wear each day.', level: 'elementary' },
   { id: 'school', title: 'School', icon: '🏫', blurb: 'Words for the classroom.', level: 'beginner' },
