@@ -8,7 +8,7 @@
  * and Talk lessons are a single exercise each — one passage, one screen — and
  * pay 25 XP, more than the 18.8 a forty-exercise vocabulary lesson pays.
  *
- * Driven against the built app, three taps finished "Reading: My family" and
+ * Driven against the built app, three taps finished "Reading: My best friend" and
  * banked 30 XP and 10 gems, repeatable without limit:
  *
  *     run 1: 3 taps · totalXp  0 -> 30 · weeklyXp  0 -> 30
