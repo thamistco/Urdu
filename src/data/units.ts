@@ -881,7 +881,7 @@ const PLANNED_UNITS: Unit[] = [
       V('history', 'History'),
       V('literature', 'Literature'),
       V('music-art', 'Music & art'),
-      R('r-4', 'A wedding invitation'),
+      R('r-4', 'Wedding invitation'),
       REV('culture-and-faith'),
     ],
   },

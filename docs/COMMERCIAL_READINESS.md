@@ -56,7 +56,7 @@ Every trace of the adaptation was replaced rather than permissioned:
   - d-4 "At the fruit stall" → "At the restaurant" (ریستوران میں)
   - d-5 "Asking the way" → "At the railway station" (ریلوے اسٹیشن پر)
   - d-6 "On the phone" (asking for Imran) → "Calling a friend" (calling Bilal)
-  - r-4 "A letter to a friend" → "A wedding invitation" (شادی کی دعوت)
+  - r-4 "A letter to a friend" → "Wedding invitation" (شادی کی دعوت)
 - The two stock phrases shared with the book were reworded: g-future's
   "ہم بازار جائیں گے / We will go to the market" → "ہم پارک جائیں گے / We
   will go to the park"; g-perfect's "the verb agrees with the object" →

@@ -2208,7 +2208,7 @@ export const PASSAGES: Passage[] = [
   },
   {
     id: 'r-4',
-    title: 'A wedding invitation',
+    title: 'Wedding invitation',
     level: 'advanced',
     lines: [
       {
