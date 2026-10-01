@@ -11,19 +11,17 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 /**
  * Who else's work is in the app, and on what terms.
  *
- * The course's letter order and the themes and grammar sequence of its early
- * units are adapted from "Basic Urdu" by Rajiv Ranjan. Its licence asks for
- * attribution wherever the adapted work goes, and until this screen existed
- * the only attribution was CREDITS.md in the repository, which no learner ever
- * sees. That file also called the licence CC BY. It is CC BY-NC 4.0, which
- * does not allow commercial use. Both were wrong for two months.
+ * The course content is written for Qaaf and is not adapted from any
+ * textbook. Early planning notes referenced "Basic Urdu" by Rajiv Ranjan;
+ * every trace of that adaptation was replaced in October 2026 (rewritten
+ * scenes, independently developed structure), so the CC BY-NC attribution
+ * that used to live here is gone. The full history is in
+ * docs/COMMERCIAL_READINESS.md.
  *
  * Reachable without an account, like Privacy and Terms, for the same reason:
  * someone deciding whether to use the app can read it first.
  */
 
-const BOOK_URL = 'https://openbooks.lib.msu.edu/urdu/';
-const LICENCE_URL = 'https://creativecommons.org/licenses/by-nc/4.0/';
 const OFL_URL = 'https://openfontlicense.org';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -59,18 +57,11 @@ export function CreditsScreen() {
         <TopBar onBack={nav.canGoBack() ? () => nav.goBack() : undefined} title="Credits" />
         <Heading className="mb-6 text-lg">Whose work is in Qaaf</Heading>
 
-        <Section title="Course structure">
+        <Section title="Course content">
           <Para>
-            The order the letters are introduced in, and the themes and grammar sequence of the early units, are adapted
-            from Basic Urdu by Rajiv Ranjan, Michigan State University Libraries. Copyright 2022 Rajiv Ranjan, licensed
-            under Creative Commons Attribution-NonCommercial 4.0 International.
+            Every lesson, sentence, reading and dialogue in Qaaf is written for this app. The course structure was
+            developed independently and is not adapted from any textbook.
           </Para>
-          <Para>
-            Qaaf has changed it: the material is reordered, rewritten and turned into exercises. The original author
-            does not endorse Qaaf.
-          </Para>
-          <Link label="Basic Urdu" url={BOOK_URL} />
-          <Link label="CC BY-NC 4.0 licence" url={LICENCE_URL} />
         </Section>
 
         <Section title="Typefaces">
