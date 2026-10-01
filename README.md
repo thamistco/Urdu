@@ -113,7 +113,7 @@ src/
   art/         the illustration set (SVG)
   exercises/   11 exercise types + generator
   screens/     onboarding · Home(path) · Lesson · LetterLab · Practice · Profile · …
-scripts/       generate-sounds.js · generate-icons.js · generate-voice.js
+scripts/       generate-sounds.js · generate-voice.js
 ```
 
 ## Running it
