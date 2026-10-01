@@ -1345,12 +1345,12 @@ async function handleOutOfHearts(page, text) {
  * final Finish tap (once `advance` recognised it) landed the driver back on
  * Home mid-loop with nothing in the completion regex able to see it, so it
  * kept trying to answer a screen with no question on it and failed loudly
- * instead of returning 'complete'. `Harf · حرف` is Home's own brand eyebrow
+ * instead of returning 'complete'. `Qaaf · قاف` is Home's own brand eyebrow
  * (`HomeScreen.tsx`) and, matched as a whole line, distinguishes it from
- * the same string's other appearance in the Settings footer ("Harf · حرف ·
+ * the same string's other appearance in the Settings footer ("Qaaf · قاف ·
  * v1.0") — the only two places it renders anywhere in the app. Matched
  * case-insensitively: the eyebrow is styled uppercase, so `innerText`
- * reports it as "HARF · حرف", not the mixed-case string the source
+ * reports it as "QAAF · قاف", not the mixed-case string the source
  * literally contains — confirmed by the first attempt at this fix still
  * failing on that exact text.
  */
@@ -1360,7 +1360,7 @@ async function playLesson(page, budget = 90) {
   for (let step = 0; step < budget; step++) {
     const text = await screenText(page);
 
-    if (/Lesson complete|Keep it warm|You're done/i.test(text) || /^Harf · حرف$/im.test(text)) return 'complete';
+    if (/Lesson complete|Keep it warm|You're done/i.test(text) || /^Qaaf · قاف$/im.test(text)) return 'complete';
 
     if (/Out of hearts/i.test(text)) {
       const outcome = await handleOutOfHearts(page, text);

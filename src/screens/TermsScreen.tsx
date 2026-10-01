@@ -29,13 +29,13 @@ export function TermsScreen() {
         <Heading className="mb-1 text-lg">The short version</Heading>
         <Txt className="mb-6 text-[0.75rem] text-paper/55">Last updated 2026-09-22</Txt>
 
-        <Section title="What Harf is">
-          Harf is a self-study Urdu course: lessons, vocabulary, grammar and spaced-repetition review. It is free, has
+        <Section title="What Qaaf is">
+          Qaaf is a self-study Urdu course: lessons, vocabulary, grammar and spaced-repetition review. It is free, has
           no advertisements, and does not require an account to use.
         </Section>
 
         <Section title="No certification">
-          The level labels in the app describe how difficult the content is, not an accredited qualification. Harf does
+          The level labels in the app describe how difficult the content is, not an accredited qualification. Qaaf does
           not certify fluency and nothing here should be presented as a formal language credential.
         </Section>
 
@@ -51,12 +51,12 @@ export function TermsScreen() {
         </Section>
 
         <Section title="No warranty">
-          Harf is provided as-is. We work hard to keep the content accurate and the app working, but we make no
+          Qaaf is provided as-is. We work hard to keep the content accurate and the app working, but we make no
           guarantee that it is error-free or that it will always be available.
         </Section>
 
         <Section title="Changes">
-          We may update the app and these terms over time. Continuing to use Harf after a change means you accept the
+          We may update the app and these terms over time. Continuing to use Qaaf after a change means you accept the
           updated terms.
         </Section>
 
