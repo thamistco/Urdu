@@ -1,6 +1,6 @@
 # Enabling sign-in & cloud save
 
-Harf runs fully in **guest mode** with no backend (progress saved on-device).
+Qaaf runs fully in **guest mode** with no backend (progress saved on-device).
 To turn on **Google / Apple sign-in** and **cloud save across devices**, connect
 a free Supabase project — no server code to write, just configuration.
 
