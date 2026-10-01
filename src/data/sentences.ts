@@ -2135,7 +2135,11 @@ export const PASSAGES: Passage[] = [
     level: 'elementary',
     lines: [
       { urdu: 'یہ ہمارا باورچی خانہ ہے۔', roman: 'ye hamaara baawarchi-khaana hai.', meaning: 'This is our kitchen.' },
-      { urdu: 'باورچی خانے میں ایک میز ہے۔', roman: 'baawarchi-khaane meñ ek mez hai.', meaning: 'There is a table in the kitchen.' },
+      {
+        urdu: 'باورچی خانے میں ایک میز ہے۔',
+        roman: 'baawarchi-khaane meñ ek mez hai.',
+        meaning: 'There is a table in the kitchen.',
+      },
       { urdu: 'میز پر کھانا ہے۔', roman: 'mez par khaana hai.', meaning: 'There is food on the table.' },
       { urdu: 'مجھے کھانا پسند ہے۔', roman: 'mujhe khaana pasand hai.', meaning: 'I like the food.' },
     ],
@@ -2932,12 +2936,7 @@ export const DIALOGUES: Dialogue[] = [
     followUp: {
       ask: 'What does the waiter ask?',
       answer: 'If they want anything else',
-      options: [
-        'If they want anything else',
-        'If the food is good',
-        'For the bill',
-        'Where they are from',
-      ],
+      options: ['If they want anything else', 'If the food is good', 'For the bill', 'Where they are from'],
     },
   },
   {
@@ -2961,7 +2960,13 @@ export const DIALOGUES: Dialogue[] = [
         roman: 'das baje.',
         meaning: 'At ten o’clock.',
       },
-      { speaker: 'A', name: 'Traveller', urdu: 'ٹکٹ کتنے کا ہے؟', roman: 'ṭikaṭ kitne ka hai?', meaning: 'How much is a ticket?' },
+      {
+        speaker: 'A',
+        name: 'Traveller',
+        urdu: 'ٹکٹ کتنے کا ہے؟',
+        roman: 'ṭikaṭ kitne ka hai?',
+        meaning: 'How much is a ticket?',
+      },
       {
         speaker: 'B',
         name: 'Clerk',
@@ -2969,7 +2974,13 @@ export const DIALOGUES: Dialogue[] = [
         roman: 'paañch sau rupay.',
         meaning: 'Five hundred rupees.',
       },
-      { speaker: 'A', name: 'Traveller', urdu: 'ایک ٹکٹ دیجیے۔', roman: 'ek ṭikaṭ deejiye.', meaning: 'One ticket, please.' },
+      {
+        speaker: 'A',
+        name: 'Traveller',
+        urdu: 'ایک ٹکٹ دیجیے۔',
+        roman: 'ek ṭikaṭ deejiye.',
+        meaning: 'One ticket, please.',
+      },
     ],
     question: {
       ask: 'Where is the traveller going?',
