@@ -91,7 +91,7 @@ export const useSettingsStore = create<SettingsState>()(
       },
     }),
     {
-      name: 'harf-settings',
+      name: 'qaaf-settings',
       storage: createJSONStorage(() => safeStorage),
       /**
        * No `version`, and so no `migrate`. Both migrations that used to live

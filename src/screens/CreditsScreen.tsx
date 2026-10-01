@@ -57,7 +57,7 @@ export function CreditsScreen() {
     <View className="flex-1 bg-ink">
       <Screen>
         <TopBar onBack={nav.canGoBack() ? () => nav.goBack() : undefined} title="Credits" />
-        <Heading className="mb-6 text-lg">Whose work is in Harf</Heading>
+        <Heading className="mb-6 text-lg">Whose work is in Qaaf</Heading>
 
         <Section title="Course structure">
           <Para>
@@ -66,8 +66,8 @@ export function CreditsScreen() {
             under Creative Commons Attribution-NonCommercial 4.0 International.
           </Para>
           <Para>
-            Harf has changed it: the material is reordered, rewritten and turned into exercises. The original author
-            does not endorse Harf.
+            Qaaf has changed it: the material is reordered, rewritten and turned into exercises. The original author
+            does not endorse Qaaf.
           </Para>
           <Link label="Basic Urdu" url={BOOK_URL} />
           <Link label="CC BY-NC 4.0 licence" url={LICENCE_URL} />
@@ -83,12 +83,12 @@ export function CreditsScreen() {
         </Section>
 
         <Section title="Sounds and pictures">
-          <Para>The feedback sounds, the drawn illustrations and the evening sky were made for Harf.</Para>
+          <Para>The feedback sounds, the drawn illustrations and the evening sky were made for Qaaf.</Para>
         </Section>
 
         <Section title="Software">
           <Para>
-            Harf is written with Expo and React, and runs in your browser through React Native for Web. It also uses
+            Qaaf is written with Expo and React, and runs in your browser through React Native for Web. It also uses
             other open-source libraries, each under its own licence.
           </Para>
           <Pressable accessibilityRole="link" onPress={() => nav.navigate('Licences')}>

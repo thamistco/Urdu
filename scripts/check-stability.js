@@ -129,7 +129,7 @@ const checked = [];
     await openTheDoor(page);
     await page.evaluate(
       ([t]) => {
-        const raw = JSON.parse(localStorage.getItem('harf-progress') || '{"state":{},"version":0}');
+        const raw = JSON.parse(localStorage.getItem('qaaf-progress') || '{"state":{},"version":0}');
         raw.state = {
           ...raw.state,
           onboarded: true,
@@ -145,9 +145,9 @@ const checked = [];
           dailyGoalId: 'steady',
           todayXp: 0,
         };
-        localStorage.setItem('harf-progress', JSON.stringify(raw));
+        localStorage.setItem('qaaf-progress', JSON.stringify(raw));
         localStorage.setItem(
-          'harf-settings',
+          'qaaf-settings',
           JSON.stringify({
             state: { soundEnabled: false, hapticsEnabled: false, showRoman: true, reducedMotion: true, track: t },
             version: 0,
@@ -394,7 +394,7 @@ const checked = [];
    * entirely inside the page, between the two `page.goto` calls around it.
    */
   function writeNoticeProfile(extra) {
-    const raw = JSON.parse(localStorage.getItem('harf-progress') || '{"state":{},"version":0}');
+    const raw = JSON.parse(localStorage.getItem('qaaf-progress') || '{"state":{},"version":0}');
     raw.state = {
       ...raw.state,
       onboarded: true,
@@ -430,9 +430,9 @@ const checked = [];
     // does not match, and a seed that is silently thrown away would make every
     // check below pass against a profile that never loaded.
     raw.version = 0;
-    localStorage.setItem('harf-progress', JSON.stringify(raw));
+    localStorage.setItem('qaaf-progress', JSON.stringify(raw));
     localStorage.setItem(
-      'harf-settings',
+      'qaaf-settings',
       JSON.stringify({
         state: { soundEnabled: false, hapticsEnabled: false, showRoman: true, reducedMotion: true, track: 'both' },
         version: 0,
@@ -441,7 +441,7 @@ const checked = [];
   }
 
   /**
-   * Signs in as a guest and seeds `harf-progress` straight into the state
+   * Signs in as a guest and seeds `qaaf-progress` straight into the state
    * that shows one specific notice, bypassing however many taps it would
    * otherwise take to get a real profile into that shape.
    */

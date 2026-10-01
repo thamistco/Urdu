@@ -1,4 +1,4 @@
-# Before Harf charges money
+# Before Qaaf charges money
 
 Everything that has to be true, legally, before the app is sold, subscribed to
 or shows ads. Each item says what was found, what was done, and what is still
@@ -70,14 +70,14 @@ Until one of these is done, keep the Credits attribution exactly as it is.
 >
 > Dear Dr Ranjan,
 >
-> I'm building Harf, an app that teaches Urdu script and language. In planning
+> I'm building Qaaf, an app that teaches Urdu script and language. In planning
 > its early lessons we consulted your open textbook _Basic Urdu_, and the app
 > credits you and the book, with its CC BY-NC 4.0 licence, on its Credits
 > screen.
 >
-> We plan to offer Harf as a paid app. Because the book is licensed for
+> We plan to offer Qaaf as a paid app. Because the book is licensed for
 > non-commercial use, I'd like to ask your permission to continue using any
-> material in Harf that is adapted from it in a commercial release, with the
+> material in Qaaf that is adapted from it in a commercial release, with the
 > same attribution. I'm happy to share exactly what the app contains, and to
 > change or remove anything you would prefer it didn't.
 >
@@ -118,7 +118,7 @@ someone else reusing it too.
 `src/art/` and the tab icons are hand-authored SVG paths, not an icon library.
 Feedback sounds are synthesised by `scripts/generate-sounds.js`.
 
-## 6. Pages and copy that change on the day Harf charges: open
+## 6. Pages and copy that change on the day Qaaf charges: open
 
 These are true today and become false the day the price changes, so they are
 changed then, not before:
@@ -128,7 +128,7 @@ changed then, not before:
   Google). Auto-renewal disclosures are required by both stores and by some
   jurisdictions' consumer law.
 - **Privacy Policy**: add that payments are processed by Apple / Google and
-  Harf never sees card details, plus whatever a receipt-validation backend
+  Qaaf never sees card details, plus whatever a receipt-validation backend
   stores.
 - **Store listing** (`docs/store-listing.md`) ends "Free. No advertisements."
 - **`{{SUPPORT_EMAIL}}`** in Privacy and Terms still needs a real address.
@@ -138,10 +138,13 @@ changed then, not before:
 
 ## 7. The name: open
 
-"Harf" (حرف, "letter") has one known app collision, a Turkish word game. No
-trademark search has been done. Run one in the countries you will sell in
-(UKIPO, USPTO, EUIPO) before spending on the brand. A common word used
-descriptively for a letters app may be hard to register.
+The app was called Harf (حرف, "letter") until 2026-10-01 and is now Qaaf
+(قاف, the name of the letter ق). The app-store collision check was done for
+Harf, which had one known collision, a Turkish word game. **It has not been
+redone for Qaaf.** No trademark search has been done for either name. Search
+both stores for Qaaf, and run a trademark search in the countries you will sell
+in (UKIPO, USPTO, EUIPO), before spending on the brand. A letter's name used
+for a letters app may be hard to register.
 
 ## 8. Things checked and found fine
 

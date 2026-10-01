@@ -235,7 +235,7 @@ export type Exercise =
        * whole 12,081-exercise course asks about a numeral glyph nine times,
        * always as one of the eleven-to-twenty vocabulary items, and Urdu digits
        * appear in exactly one source file — this map of pictures. A learner who
-       * finishes Harf has never been asked to read ۴۷.
+       * finishes Qaaf has never been asked to read ۴۷.
        *
        * That is a different skill from the vocabulary. Knowing چار and سات does
        * not tell you that ۴۷ is forty-seven rather than seventy-four, and the

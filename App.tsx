@@ -44,12 +44,12 @@ const navTheme = {
  *
  * The name leads, because that is what a person scans a tab strip for, and the
  * screen follows it only where it tells them something. Onboarding, sign-in and
- * the path are all just "Harf": they are the app opening, not a place inside it.
+ * the path are all just "Qaaf": they are the app opening, not a place inside it.
  */
 const HOME_ROUTES = new Set(['Onboarding', 'Login', 'Home', 'Main']);
 const DOCUMENT_TITLE = {
   formatter: (_options: unknown, route?: { name?: string }) =>
-    route?.name && !HOME_ROUTES.has(route.name) ? `Harf · ${route.name}` : 'Harf · Learn Urdu',
+    route?.name && !HOME_ROUTES.has(route.name) ? `Qaaf · ${route.name}` : 'Qaaf · Learn Urdu',
 };
 
 export default function App() {

@@ -2,7 +2,7 @@ import Svg, { Path, Circle, Rect, Line, Polygon, G, Ellipse } from 'react-native
 import { palette } from '../theme';
 
 /**
- * Harf's illustration set — flat, warm vector art in the app palette, drawn to
+ * Qaaf's illustration set — flat, warm vector art in the app palette, drawn to
  * read on a dark framed tile (see Illustration.tsx). One consistent visual
  * language replaces the inconsistent, sometimes-broken emoji across platforms.
  *

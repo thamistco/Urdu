@@ -177,7 +177,7 @@ async function main() {
         Array.from(document.querySelectorAll('div,span,p')).filter(
           (n) => !n.children.length && bare(n.textContent) === word && !n.closest('[aria-hidden="true"]')
         ).length;
-      return { latin: say('Harf'), urdu: say('حرف') };
+      return { latin: say('Qaaf'), urdu: say('قاف') };
     });
     for (const [which, n] of Object.entries(spoken)) {
       if (n > 1) problems.push(`The wordmark announces its ${which} name ${n} times — the glow copies are not hidden.`);
@@ -441,7 +441,7 @@ async function main() {
       const p = await browser.newPage({ viewport: { width: 412, height: 900 } });
       await enterAsGuest(p, `http://localhost:${PORT}/Urdu/`, seed);
       const body = await settledText(p);
-      const saved = await p.evaluate(() => JSON.parse(localStorage.getItem('harf-progress') || '{}').state || {});
+      const saved = await p.evaluate(() => JSON.parse(localStorage.getItem('qaaf-progress') || '{}').state || {});
       await p.close();
       return { body: body || '', saved };
     };

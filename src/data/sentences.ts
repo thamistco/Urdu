@@ -1,5 +1,5 @@
 /**
- * Sentences and short reading passages — original content written for Harf.
+ * Sentences and short reading passages — original content written for Qaaf.
  *
  * Two purposes:
  *  1. `SENTENCES` feed the sentence-building exercise: the learner assembles a

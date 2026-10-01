@@ -1,5 +1,5 @@
 /**
- * The Urdu letter set — taught by POSITION FORM, which is Harf's core thesis.
+ * The Urdu letter set — taught by POSITION FORM, which is Qaaf's core thesis.
  *
  * Every letter is shown in four "faces":
  *   alone (isolated) · start (initial) · middle (medial) · end (final)

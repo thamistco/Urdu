@@ -494,7 +494,7 @@ export function SettingsScreen() {
           </Reveal>
         )}
 
-        <Txt className="mb-8 mt-8 text-center text-xs text-paper/55">Harf · حرف · v1.0</Txt>
+        <Txt className="mb-8 mt-8 text-center text-xs text-paper/55">Qaaf · قاف · v1.0</Txt>
       </Screen>
     </View>
   );

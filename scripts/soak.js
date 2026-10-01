@@ -178,7 +178,7 @@ const MAX_LESSONS = Number(arg('lessons', Infinity));
  * (below) ever compared it against the app's own `LearnTrack` union
  * (`'script' | 'roman' | 'both'`, `useSettingsStore.ts`). A typo like
  * `--track roams` used to write `{track: 'roams'}` straight into
- * `harf-settings` and run the whole session anyway: `generator.ts`'s own
+ * `qaaf-settings` and run the whole session anyway: `generator.ts`'s own
  * `track !== 'roman'` checks treat anything that isn't literally
  * `'roman'` as script-teaching, so the run would silently behave like
  * `'both'` under a label nobody chose, with no error anywhere in the
@@ -1345,12 +1345,12 @@ async function handleOutOfHearts(page, text) {
  * final Finish tap (once `advance` recognised it) landed the driver back on
  * Home mid-loop with nothing in the completion regex able to see it, so it
  * kept trying to answer a screen with no question on it and failed loudly
- * instead of returning 'complete'. `Harf · حرف` is Home's own brand eyebrow
+ * instead of returning 'complete'. `Qaaf · قاف` is Home's own brand eyebrow
  * (`HomeScreen.tsx`) and, matched as a whole line, distinguishes it from
- * the same string's other appearance in the Settings footer ("Harf · حرف ·
+ * the same string's other appearance in the Settings footer ("Qaaf · قاف ·
  * v1.0") — the only two places it renders anywhere in the app. Matched
  * case-insensitively: the eyebrow is styled uppercase, so `innerText`
- * reports it as "HARF · حرف", not the mixed-case string the source
+ * reports it as "QAAF · قاف", not the mixed-case string the source
  * literally contains — confirmed by the first attempt at this fix still
  * failing on that exact text.
  */
@@ -1360,7 +1360,7 @@ async function playLesson(page, budget = 90) {
   for (let step = 0; step < budget; step++) {
     const text = await screenText(page);
 
-    if (/Lesson complete|Keep it warm|You're done/i.test(text) || /^Harf · حرف$/im.test(text)) return 'complete';
+    if (/Lesson complete|Keep it warm|You're done/i.test(text) || /^Qaaf · قاف$/im.test(text)) return 'complete';
 
     if (/Out of hearts/i.test(text)) {
       const outcome = await handleOutOfHearts(page, text);
@@ -1443,9 +1443,9 @@ function findRunner() {
 async function refillHearts(page) {
   await page
     .evaluate(() => {
-      const raw = JSON.parse(localStorage.getItem('harf-progress') || '{"state":{},"version":0}');
+      const raw = JSON.parse(localStorage.getItem('qaaf-progress') || '{"state":{},"version":0}');
       raw.state = { ...raw.state, hearts: 5 };
-      localStorage.setItem('harf-progress', JSON.stringify(raw));
+      localStorage.setItem('qaaf-progress', JSON.stringify(raw));
     })
     .catch(() => {});
   await page.reload();
@@ -1491,7 +1491,7 @@ async function settleAttempt(page, url, why) {
 
 /**
  * URD-051: the `settings` override `enterAsGuest` writes into
- * `harf-settings` for `--track` — pulled out to its own function rather
+ * `qaaf-settings` for `--track` — pulled out to its own function rather
  * than an inline ternary in the IIFE below, which was already at this
  * file's own complexity ceiling. Empty for the guest default (`'both'`) so
  * a plain `npm run soak` writes nothing new here.
@@ -1529,7 +1529,7 @@ function trackSettingsFor(track) {
       ...(START > 0 ? { completedLessons: START_COMPLETED } : {}),
     },
     // `--track` names the *app's* learn-track setting (`useSettingsStore.ts`),
-    // which lives in `harf-settings`, not `harf-progress` — `goal` above is a
+    // which lives in `qaaf-settings`, not `qaaf-progress` — `goal` above is a
     // separate, pre-existing onboarding field this file already set for
     // `roman` and does not replace.
     trackSettingsFor(TRACK)
