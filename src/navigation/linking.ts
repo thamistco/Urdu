@@ -7,7 +7,7 @@ import type { RootStackParamList } from './types';
  *
  * The web build lived at a single URL. Opening a lesson or switching tabs
  * pushed nothing onto history, so back — which is the hardware back button on
- * Android — exited Harf from wherever the learner had got to, and there was no
+ * Android — exited Qaaf from wherever the learner had got to, and there was no
  * way to send anybody a link to a lesson, the Letter Lab or the Practice tab.
  *
  * Paths are named for what a person would call the screen, not for the

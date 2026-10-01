@@ -25,7 +25,7 @@
  *             pieces for intermediate learners, which is the same instinct as
  *             splitting a topic, applied at a coarser grain.
  *
- * Both land in the same place: a session is about five minutes. Harf is at 1.3.
+ * Both land in the same place: a session is about five minutes. Qaaf is at 1.3.
  *
  * ## The dial that matters is not the one it looks like
  *
@@ -35,7 +35,7 @@
  * by *repetition*: each new word is met four to six times inside the session
  * that introduces it, in different shapes.
  *
- * A Harf word is currently seen about twice. So this check measures both dials
+ * A Qaaf word is currently seen about twice. So this check measures both dials
  * and holds both, because moving only the word count produces a longer lesson
  * that teaches worse.
  *
