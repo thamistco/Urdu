@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "Harf",
+    "name": "Qaaf",
     "description": "A complete Urdu course. All 40 letters in each of their four joining forms, 2,279 words spoken aloud, 25 grammar patterns in plain English, and 256 sentences you build yourself, across 350 lessons. Readings and conversations throughout, and spaced repetition that brings each word back when you are closest to forgetting it.",
-    "slug": "harf",
+    "slug": "qaaf",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "harf",
+    "scheme": "qaaf",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
@@ -17,10 +17,10 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.harf.urdu"
+      "bundleIdentifier": "com.qaaf.urdu"
     },
     "android": {
-      "package": "com.harf.urdu",
+      "package": "com.qaaf.urdu",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#3C292C"
@@ -46,7 +46,7 @@
       "typedRoutes": false
     },
     "extra": {
-      "storeName": "Harf: Learn Urdu"
+      "storeName": "Qaaf: Learn Urdu"
     }
   }
 }

@@ -39,7 +39,7 @@ app uses:
 
 - Web preview: `https://thamistco.github.io/Urdu/`
 - Local web: `http://localhost:8081/`
-- Native (Expo): `harf://auth` (the app's scheme is `harf`, set in `app.json`)
+- Native (Expo): `qaaf://auth` (the app's scheme is `qaaf`, set in `app.json`)
 
 Add the same authorized redirect URIs in the Google Cloud OAuth client.
 

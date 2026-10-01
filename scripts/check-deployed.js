@@ -50,7 +50,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** Pull the stamp out of the served HTML. Returns null if the tag is absent. */
 function shaFrom(html) {
-  const m = html.match(/<meta\s+name="harf:build"\s+content="([0-9a-f]+)"/i);
+  const m = html.match(/<meta\s+name="qaaf:build"\s+content="([0-9a-f]+)"/i);
   return m ? m[1] : null;
 }
 
@@ -83,7 +83,7 @@ async function probe() {
 
     const html = await res.text();
     const served = shaFrom(html);
-    if (served === null) return { kind: 'read', why: 'the page has no harf:build stamp' };
+    if (served === null) return { kind: 'read', why: 'the page has no qaaf:build stamp' };
     if (served === expected.slice(0, served.length)) return { ok: true, served };
     return { kind: 'read', why: `serving ${served}, expected ${expected.slice(0, served.length)}` };
   } catch (e) {

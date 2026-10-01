@@ -36,7 +36,7 @@ if (!fs.existsSync(path.join(DIST, 'index.html'))) {
 
 /** The subpath the deploy wrote into the page, '' when served from the root. */
 const html = fs.readFileSync(path.join(DIST, 'index.html'), 'utf8');
-const BASE = (/<meta name="harf:base" content="([^"]*)"/.exec(html)?.[1] ?? '').replace(/\/+$/, '');
+const BASE = (/<meta name="qaaf:base" content="([^"]*)"/.exec(html)?.[1] ?? '').replace(/\/+$/, '');
 
 /** Each linkable screen, and a phrase only that screen puts on the page. */
 const ROUTES = [

@@ -144,7 +144,7 @@ const tags = [
   // The commit this bundle was built from. Not decoration: `check:deployed`
   // fetches the live page and asserts this matches, which is the only way to
   // know a deploy actually published rather than merely reporting success.
-  buildSha && `<meta name="harf:build" content="${esc(buildSha)}" />`,
+  buildSha && `<meta name="qaaf:build" content="${esc(buildSha)}" />`,
   // The subpath the site is served from, for the router.
   //
   // Expo writes absolute asset URLs under this prefix but emits no <base> tag
@@ -153,17 +153,17 @@ const tags = [
   // at /Urdu/ would try to resolve "/Urdu/settings" against routes named
   // "settings" and find nothing. Absent means served from the root, which is
   // what a local `npm run build:web` produces.
-  baseUrl && `<meta name="harf:base" content="${esc(baseUrl)}" />`,
+  baseUrl && `<meta name="qaaf:base" content="${esc(baseUrl)}" />`,
 ].filter(Boolean);
 
 let html = fs.readFileSync(INDEX, 'utf8');
 
 // Running twice should not stack a second copy of everything.
-if (html.includes('<!-- harf:meta -->')) {
-  html = html.replace(/\n?\s*<!-- harf:meta -->[\s\S]*?<!-- \/harf:meta -->/, '');
+if (html.includes('<!-- qaaf:meta -->')) {
+  html = html.replace(/\n?\s*<!-- qaaf:meta -->[\s\S]*?<!-- \/qaaf:meta -->/, '');
 }
 
-const block = `\n    <!-- harf:meta -->\n    ${tags.join('\n    ')}\n    <!-- /harf:meta -->`;
+const block = `\n    <!-- qaaf:meta -->\n    ${tags.join('\n    ')}\n    <!-- /qaaf:meta -->`;
 html = html.replace('</title>', `</title>${block}`);
 fs.writeFileSync(INDEX, html);
 

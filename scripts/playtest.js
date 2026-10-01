@@ -2809,7 +2809,7 @@ const PRACTICE_SHELVES = ['topics', 'grammar', 'reading'];
 async function siteRoot(page) {
   const base = await page
     .evaluate(() =>
-      (document.querySelector('meta[name="harf:base"]')?.getAttribute('content') || '').replace(/^\/+|\/+$/g, '')
+      (document.querySelector('meta[name="qaaf:base"]')?.getAttribute('content') || '').replace(/^\/+|\/+$/g, '')
     )
     .catch(() => '');
   return `http://127.0.0.1:${PORT}/${base ? `${base}/` : ''}`;
