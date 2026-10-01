@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { LETTERS, POSITIONS, getLetter, positionHint } from './letters';
+import { LETTERS, POSITIONS, getLetter, glyphName, positionHint } from './letters';
+import { WORDS } from './words';
 import { LETTER_CONTEXT_WORD } from '../exercises/generator';
 import { contrastLine } from '../exercises/letterContrastNotes';
 
@@ -441,5 +442,29 @@ describe('positionHint', () => {
   it('leaves the other positions as they were', () => {
     const daal = getLetter('daal')!;
     for (const p of POSITIONS.filter((p) => p.key !== 'medial')) expect(positionHint(daal, p.key)).toBe(p.hint);
+  });
+});
+
+describe('glyphName', () => {
+  // Every character a word-build tile can show, because the tray is drawn from
+  // the words themselves. A new word that brings in an unnamed mark fails here
+  // instead of reaching a screen reader as a nameless tile.
+  it('names every character in the vocabulary', () => {
+    const unnamed = new Set<string>();
+    for (const w of WORDS) for (const c of Array.from(w.urdu)) if (c.trim() && !glyphName(c)) unnamed.add(c);
+    expect([...unnamed].map((c) => `U+${c.codePointAt(0)!.toString(16).toUpperCase()}`)).toEqual([]);
+  });
+
+  // Compared as a screen reader says them: case and underdots are not spoken,
+  // so "te" and "Ṭe" are one name to the ear even though they differ as text.
+  it('gives no two characters a name that sounds the same', () => {
+    const said = (n: string) => n.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+    const glyphs = new Set([...LETTERS.map((l) => l.forms.isolated), ...WORDS.flatMap((w) => Array.from(w.urdu))]);
+    const byName = new Map<string, string[]>();
+    for (const g of glyphs) {
+      const n = g.trim() && glyphName(g);
+      if (n) byName.set(said(n), [...(byName.get(said(n)) ?? []), g]);
+    }
+    expect([...byName].filter(([, gs]) => gs.length > 1)).toEqual([]);
   });
 });

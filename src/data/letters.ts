@@ -791,3 +791,37 @@ export function positionHint(letter: Pick<Letter, 'forms'>, key: PositionKey): s
 }
 
 export const getLetter = (id: string) => LETTERS.find((l) => l.id === id);
+
+/**
+ * Characters that appear in the vocabulary but are not one of the forty
+ * letters' own glyphs: hamza on a seat, two he variants, and the marks. They
+ * reach the word-build tray as tiles of their own, so they need names too.
+ */
+const MARK_NAMES: Record<string, string> = {
+  '\u0626': 'hamza on ye',
+  '\u0624': 'hamza on waaw',
+  '\u06C2': 'hamza on he',
+  '\u06C3': 'te marbūṭa',
+  '\u0650': 'zer',
+  '\u064F': 'pesh',
+  '\u0651': 'tashdīd',
+  '\u064B': 'do zabar',
+  '\u0670': 'khaṛā zabar',
+};
+
+/**
+ * The three retroflex letters, whose names differ from te, daal and re only by
+ * a capital and an underdot. Neither is spoken, so a screen reader reads ٹ and
+ * ت both as "te"; the course already calls these sounds "hard".
+ */
+const SAID_LIKE_ANOTHER = new Set(['\u0679', '\u0688', '\u0691']);
+
+/**
+ * What a single character is called, for a screen reader. A word-build tile
+ * shows one glyph and nothing else, so without this every tile was announced
+ * as "Letter tile" and the exercise could not be done by ear at all.
+ */
+export function glyphName(glyph: string): string | undefined {
+  const name = LETTERS.find((l) => l.forms.isolated === glyph)?.name ?? MARK_NAMES[glyph];
+  return name && SAID_LIKE_ANOTHER.has(glyph) ? `${name}, hard` : name;
+}
