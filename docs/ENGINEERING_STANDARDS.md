@@ -1,4 +1,4 @@
-# Harf Engineering Standards
+# Qaaf Engineering Standards
 
 The constitution for anyone — human or AI — writing code in this repository.
 

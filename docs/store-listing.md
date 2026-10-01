@@ -6,22 +6,25 @@ it. Every number here is counted from the data by `npm run audit`, not estimated
 
 ---
 
-## The name: Harf on the phone, `Harf: Learn Urdu` in the stores
+## The name: Qaaf on the phone, `Qaaf: Learn Urdu` in the stores
 
-**حرف means "letter".** The app's whole thesis is that Urdu is written in
-Nastaliq, that every letter changes shape depending on where it sits in a word,
-and that most courses skip this and leave people unable to read. A name that
-means "letter" is not decoration; it is the product. The icon is the letter ح.
+**قاف is the name of the letter ق.** The app's whole thesis is that Urdu is
+written in Nastaliq, that every letter changes shape depending on where it sits
+in a word, and that most courses skip this and leave people unable to read. A
+name that is a letter is not decoration; it is the product. The icon is the
+letter ق.
 
-Checked for collisions: the only app of that name is _Harf Avcısı_, a Turkish
-word puzzle — different language, different category, different market. Low risk.
+**Not yet checked for collisions.** The app was called Harf until 2026-10-01,
+and the collision check was done for that name (the only app called Harf was
+_Harf Avcısı_, a Turkish word puzzle). Search both stores for Qaaf before
+submitting.
 
 **These are two different names, and they should be.** The home-screen label is
-set by `expo.name` in `app.json` and stays **Harf**: a launcher truncates at
-about twelve characters, and the icon beside it is already the letter ح, so
+set by `expo.name` in `app.json` and stays **Qaaf**: a launcher truncates at
+about twelve characters, and the icon beside it is already the letter ق, so
 anything longer is a name nobody finishes reading. The store name is a separate
 field in App Store Connect and the Play Console, it is the single strongest
-ranking signal either store has, and there **Harf** alone is close to useless —
+ranking signal either store has, and there **Qaaf** alone is close to useless —
 nobody searches for it, while tens of thousands a month search for "learn Urdu".
 
 So the store name is brand-then-function, the format every large app in the
@@ -58,7 +61,7 @@ long description is for the human who has already arrived.
 
 | Field            | Limit | Copy                                                                                                                                                  |
 | ---------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Name             | 30    | `Harf: Learn Urdu`                                                                                                                                    |
+| Name             | 30    | `Qaaf: Learn Urdu`                                                                                                                                    |
 | Subtitle         | 30    | `The script and the language`                                                                                                                         |
 | Keywords         | 100   | `urdu,nastaliq,alphabet,script,read,write,pakistani,hindi,vocabulary,flashcards,tracing,phrases`                                                      |
 | Promotional text | 170   | `The alphabet in all four of its joining forms, 2,279 words spoken aloud, 25 grammar ideas and 256 sentences you build yourself. A full Urdu course.` |
@@ -71,7 +74,7 @@ it starts and where it gets you — which is also where the differentiator lives
 
 | Field             | Limit | Copy                                                                              |
 | ----------------- | ----- | --------------------------------------------------------------------------------- |
-| Title             | 30    | `Harf: Learn Urdu`                                                                |
+| Title             | 30    | `Qaaf: Learn Urdu`                                                                |
 | Short description | 80    | `The whole language: 40 letters, 2,279 spoken words, grammar and real sentences.` |
 
 Play has no subtitle, so the short description carries the breadth that Apple's
@@ -88,7 +91,7 @@ brand paying twice for one word.
 > Most courses teach you the isolated forms, hand you a transliteration, and
 > leave you unable to read a shop sign.
 >
-> Harf teaches the script the way it is actually written.
+> Qaaf teaches the script the way it is actually written.
 >
 > **The alphabet, properly.** All forty letters, each in all four positional
 > forms — 160 shapes in total — with tracing practice that checks whether you
