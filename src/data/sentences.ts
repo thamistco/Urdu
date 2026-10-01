@@ -3024,8 +3024,8 @@ export const DIALOGUES: Dialogue[] = [
       {
         speaker: 'B',
         name: 'Bilal',
-        urdu: 'ضرور! کہاں؟',
-        roman: 'zaroor! kahaañ?',
+        urdu: 'ضرور، کہاں؟',
+        roman: 'zaroor, kahaañ?',
         meaning: 'Definitely! Where?',
       },
       {
