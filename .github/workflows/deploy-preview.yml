@@ -1,7 +1,7 @@
 name: Deploy web preview
 
 # Builds the Expo web bundle and publishes it to GitHub Pages on every push,
-# so there's always a live, up-to-date URL to test Harf in a phone browser —
+# so there's always a live, up-to-date URL to test Qaaf in a phone browser —
 # no download required. URL: https://<owner>.github.io/Urdu/
 
 on:

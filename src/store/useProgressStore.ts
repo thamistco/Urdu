@@ -487,7 +487,7 @@ export const useProgressStore = create<ProgressState>()(
       reviewDueCount: () => dueCount(get().srs),
     }),
     {
-      name: 'harf-progress',
+      name: 'qaaf-progress',
       storage: createJSONStorage(() => safeStorage),
       // Once per session, as soon as the saved progress is back: a learner
       // returning after days away sees the streak as it now stands, not as it

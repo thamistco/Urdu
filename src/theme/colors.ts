@@ -1,5 +1,5 @@
 /**
- * Harf color system — "sunset".
+ * Qaaf color system — "sunset".
  *
  * The register of an indie game at golden hour: a dusky twilight sky, warm
  * horizon light, and a single glowing accent colour spent on reward. Replaces

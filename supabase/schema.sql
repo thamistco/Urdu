@@ -1,4 +1,4 @@
--- Harf cloud-save schema.
+-- Qaaf cloud-save schema.
 -- Run this in your Supabase project → SQL Editor.
 
 -- One row per user holding their progress + settings blob.

@@ -82,7 +82,7 @@ const STACKED = { position: 'absolute' as const, left: 0, right: 0, textAlign: '
  * Every layer is a real copy of the word — react-native allows one shadow per
  * Text, so the glow is built by stacking the name under itself. That is fine
  * to look at and wrong to listen to: nothing marked the copies as decoration,
- * so opening the app read "Harf" four times and "حرف" four times before
+ * so opening the app read the name four times in each script before
  * reaching the tagline. The filament carries the name; the bloom is light.
  *
  * Three ways of saying "decoration" because three platforms ask differently:
@@ -120,9 +120,15 @@ export function Wordmark({ size = 76 }: { size?: number }) {
   // is a cavern: it made the plate half again as tall as it needed to be and
   // stranded the glyph in dead space. So the line box is pulled in here and the
   // baseline nudged to match, which is a wordmark-only concern and stays local.
-  // 2.7 was a cavern and 1.5 was a collision — the tail of the ف landed on top
-  // of the H. This clears the descender and no more.
-  const glyph = { ...urduGlyph(size), lineHeight: Math.round(size * 1.85), transform: [{ translateY: 0 }] };
+  //
+  // The factor is set by the word's metrics, so a new name needs a new one.
+  // For حرف it was 1.85: at a 52px size the ر's tail hangs 24px below the
+  // baseline, and 1.85 was where it cleared the Latin and no more, with the
+  // body of the word 19px above the Latin's ink. قاف has no tail: it ends 2px
+  // below its baseline, so at 1.85 it floated 24px clear and the pair came
+  // apart. 1.65 puts the bowl of the ق 19px above the Latin, the gap the body
+  // of حرف had. Measured from screenshot pixels with the glow off.
+  const glyph = { ...urduGlyph(size), lineHeight: Math.round(size * 1.65), transform: [{ translateY: 0 }] };
   const latin = { fontSize: Math.round(size * 0.4), letterSpacing: 1 };
 
   return (
@@ -152,14 +158,14 @@ export function Wordmark({ size = 76 }: { size?: number }) {
       </View>
 
       <Tube style={glyph} urdu>
-        حرف
+        قاف
       </Tube>
       {/* The gap goes on the wrapper, never on `latin` itself: a margin in the
           text style would move the in-flow core and leave the absolutely
           positioned glow copies behind, and a bloom offset from its own letters
           is a double-exposure rather than a glow. */}
       <View style={{ marginTop: U * 1.5 }}>
-        <Tube style={latin}>Harf</Tube>
+        <Tube style={latin}>Qaaf</Tube>
       </View>
       <GeoDivider opacity={0.42} />
     </View>

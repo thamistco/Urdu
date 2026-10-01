@@ -1,6 +1,6 @@
 /* eslint-disable */
 /**
- * Generates Harf's UI feedback sounds — tuned to be PEACEFUL and NATURE-LIKE
+ * Generates Qaaf's UI feedback sounds — tuned to be PEACEFUL and NATURE-LIKE
  * rather than gamey.
  *
  *   Correct   → a soft, warm ocarina/koto-like bloom rising through a major

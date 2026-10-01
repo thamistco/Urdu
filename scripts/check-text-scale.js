@@ -104,7 +104,7 @@ async function main() {
       await page.goto(`http://localhost:${PORT}/`);
       const base = await page
         .evaluate(() =>
-          (document.querySelector('meta[name="harf:base"]')?.getAttribute('content') || '').replace(/^\/+|\/+$/g, '')
+          (document.querySelector('meta[name="qaaf:base"]')?.getAttribute('content') || '').replace(/^\/+|\/+$/g, '')
         )
         .catch(() => '');
       await enterAsGuest(page, `http://localhost:${PORT}/${base ? `${base}/` : ''}${where}`, seed);

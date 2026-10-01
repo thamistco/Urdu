@@ -4,7 +4,7 @@
  *
  * The web build lived at a single URL. Opening a lesson or switching tabs
  * pushed nothing onto history, so the browser's back button — which is the
- * hardware back button on Android — left Harf from wherever the learner had
+ * hardware back button on Android — left Qaaf from wherever the learner had
  * got to, and no link could point at a lesson, the Letter Lab or the Practice
  * tab.
  *
@@ -36,7 +36,7 @@ if (!fs.existsSync(path.join(DIST, 'index.html'))) {
 
 /** The subpath the deploy wrote into the page, '' when served from the root. */
 const html = fs.readFileSync(path.join(DIST, 'index.html'), 'utf8');
-const BASE = (/<meta name="harf:base" content="([^"]*)"/.exec(html)?.[1] ?? '').replace(/\/+$/, '');
+const BASE = (/<meta name="qaaf:base" content="([^"]*)"/.exec(html)?.[1] ?? '').replace(/\/+$/, '');
 
 /** Each linkable screen, and a phrase only that screen puts on the page. */
 const ROUTES = [
@@ -58,8 +58,8 @@ const ROUTES = [
   // check below, with no session seeded at all.
   { path: '/privacy', shows: /Privacy Policy/i },
   { path: '/terms', shows: /Terms of Service/i },
-  { path: '/credits', shows: /Whose work is in Harf/i },
-  { path: '/licences', shows: /Software Harf is built on/i },
+  { path: '/credits', shows: /Whose work is in Qaaf/i },
+  { path: '/licences', shows: /Software Qaaf is built on/i },
 ];
 
 /**
@@ -155,7 +155,7 @@ async function main() {
     await page.goBack();
     await settled(page);
     const afterTwo = await page.evaluate(() => location.pathname);
-    const stillInside = await page.evaluate(() => /HARF|Speak with them|Level/i.test(document.body.innerText));
+    const stillInside = await page.evaluate(() => /QAAF|Speak with them|Level/i.test(document.body.innerText));
 
     if (afterOne !== `${BASE}/profile`) {
       problems.push(`Back from Achievements went to ${afterOne}, not ${BASE}/profile.`);
@@ -171,7 +171,7 @@ async function main() {
      * The one property none of the above actually proves.
      *
      * Every route above ran against a page `enterAsGuest` had already seeded
-     * with `harf-progress`/`harf-settings` in localStorage — a returning
+     * with `qaaf-progress`/`qaaf-settings` in localStorage — a returning
      * learner, not the person this screen exists for. An app store reviewer,
      * or anyone else who lands on /privacy, /terms, /credits or /licences cold, has no local
      * storage at all, and RootNavigator's whole reason for registering these
@@ -182,8 +182,8 @@ async function main() {
     for (const route of [
       { path: '/privacy', shows: /Privacy Policy/i },
       { path: '/terms', shows: /Terms of Service/i },
-      { path: '/credits', shows: /Whose work is in Harf/i },
-      { path: '/licences', shows: /Software Harf is built on/i },
+      { path: '/credits', shows: /Whose work is in Qaaf/i },
+      { path: '/licences', shows: /Software Qaaf is built on/i },
     ]) {
       const url = `${BASE}${route.path}`;
       const cold = await browser.newPage({ viewport: { width: 412, height: 900 } });

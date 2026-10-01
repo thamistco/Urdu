@@ -30,7 +30,7 @@ export const isAuthed = (s: AuthState) => !!s.session || s.isGuest;
 
 async function nativeOAuth(provider: Provider): Promise<{ ok: boolean; message?: string }> {
   if (!supabase) return { ok: false, message: 'Backend not connected' };
-  const redirectTo = makeRedirectUri({ scheme: 'harf', path: 'auth' });
+  const redirectTo = makeRedirectUri({ scheme: 'qaaf', path: 'auth' });
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: { redirectTo, skipBrowserRedirect: true },
@@ -109,7 +109,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: 'harf-auth',
+      name: 'qaaf-auth',
       storage: createJSONStorage(() => safeStorage),
       // only persist the guest choice; the session is owned by supabase
       partialize: (s) => ({ isGuest: s.isGuest }),

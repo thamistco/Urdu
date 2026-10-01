@@ -1,7 +1,7 @@
 {
-  "name": "harf",
+  "name": "qaaf",
   "version": "1.0.0",
-  "description": "Harf \u2014 learn to read and speak Urdu, script first.",
+  "description": "Qaaf \u2014 learn to read and speak Urdu, script first.",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",

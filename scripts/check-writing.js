@@ -229,7 +229,7 @@ const SKIP_FILES = [path.join('src', 'lib', 'voiceManifest.ts'), path.join('src'
 /**
  * Directories where a `name:` is a key rather than a word.
  *
- * The stores each carry `name: 'harf-progress'` — the localStorage key their
+ * The stores each carry `name: 'qaaf-progress'` — the localStorage key their
  * persisted state lives under. Renaming one would sign every existing learner
  * out and wipe their streak, so it is the last string in the project that
  * should be edited for style. `name` stays in the list above because a letter's
