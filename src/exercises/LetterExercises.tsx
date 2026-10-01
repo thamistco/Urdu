@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { Choice, PromptCard, Question, palette, withAlpha } from './common';
 import { Urdu, Txt, Bold, Eyebrow, urduGlyph } from '../components/Text';
-import { POSITIONS, PositionKey } from '../data/letters';
+import { POSITIONS, PositionKey, positionHint } from '../data/letters';
 import { feedback } from '../lib/feedback';
 import { contrastNotesFor } from './letterContrastNotes';
 import { isCorrectPosition } from './letterFormGrading';
@@ -74,7 +74,7 @@ export function LetterFormExercise({ exercise, locked, onGraded }: ExerciseProps
               className="mb-3 w-[48%]"
             >
               <Bold className="text-base">{p.label}</Bold>
-              <Txt className="mt-1 text-xs text-paper/55">{p.hint}</Txt>
+              <Txt className="mt-1 text-xs text-paper/55">{positionHint(letter, p.key)}</Txt>
             </Choice>
           );
         })}

@@ -7,7 +7,7 @@ import { Button } from '../components/Button';
 import { SpeakerButton } from './common';
 import { feedback } from '../lib/feedback';
 import { announce } from '../lib/speech';
-import { POSITIONS } from '../data/letters';
+import { POSITIONS, positionHint } from '../data/letters';
 import type { ExerciseProps, Exercise } from './types';
 
 type TeachEx = Extract<Exercise, { kind: 'letterTeach' }>;
@@ -86,7 +86,7 @@ export function LetterTeachExercise({ exercise, onGraded }: ExerciseProps<TeachE
           >
             <Urdu style={{ ...urduGlyph(30) }}>{letter.forms[p.key]}</Urdu>
             <Bold className="mt-2 text-[0.6875rem] text-paper/75">{p.label}</Bold>
-            <Txt className="text-center text-[0.625rem] leading-3 text-paper/60">{p.hint}</Txt>
+            <Txt className="text-center text-[0.625rem] leading-3 text-paper/60">{positionHint(letter, p.key)}</Txt>
           </View>
         ))}
       </View>

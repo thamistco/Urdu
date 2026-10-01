@@ -771,12 +771,15 @@ export const POSITIONS = [
 export type PositionKey = (typeof POSITIONS)[number]['key'];
 
 /**
- * The line under a form in the Letter Lab.
+ * The line under a form: in the Letter Lab, on a new letter's introduction
+ * card, and under each option of the which-position question.
  *
  * `POSITIONS` says the middle form is "joined on both sides", which is false
  * for a letter that never joins forward: daal in the middle of a word is joined
  * from the right only and is drawn exactly as its end form. The Lab shows that
  * letter a "Never joins forward" badge directly above a hint contradicting it.
+ * The introduction card and the question read `POSITIONS` directly until
+ * 2026-10-01, so they still said it after the Lab was fixed.
  *
  * Keyed on the forms rather than on `connects`, because two letters with
  * `connects: false` do have a two-sided middle form: baṛī ye uses ـیـ, and
