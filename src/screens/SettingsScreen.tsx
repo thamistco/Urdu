@@ -38,6 +38,10 @@ function Row({
         {hint ? <Txt className="text-xs text-paper/55">{hint}</Txt> : null}
       </View>
       <Switch
+        // The visible label sits in a separate View, so the switch itself had
+        // no name and every one on this screen was announced as just
+        // "switch". react-native-web puts this on the switch's own input.
+        accessibilityLabel={label}
         value={value}
         onValueChange={(v) => {
           feedback.tap();
