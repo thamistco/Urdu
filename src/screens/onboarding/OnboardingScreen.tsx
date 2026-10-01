@@ -4,8 +4,6 @@ import { Screen } from '../../components/Screen';
 import { Button } from '../../components/Button';
 import { Reveal } from '../../components/Reveal';
 import { GeoDivider } from '../../components/GeoDivider';
-import { Wordmark } from '../../components/Wordmark';
-import { DuskScene } from '../../components/EveningScene';
 import { Display, Heading, Txt, Bold, Eyebrow, Urdu, urduGlyph } from '../../components/Text';
 import { GoalArt, Illustration } from '../../components/Illustration';
 import type { IconName } from '../../art/icons';
@@ -19,53 +17,6 @@ import { shuffle } from '../../lib/shuffle';
 import { MALE_VOICE_AVAILABLE } from '../../lib/voiceManifest';
 import { DAILY_GOALS } from '../../data/achievements';
 import { UNITS } from '../../data/units';
-import { WORDS } from '../../data/words';
-import { ALL_LESSONS } from '../../data/units';
-import { LETTERS } from '../../data/letters';
-
-/**
- * What the welcome screen promises, counted rather than typed.
- *
- * Every other place the course describes itself — the README, the store
- * listing, the app description — holds these numbers as literals, and all of
- * them had drifted from the content by the time anyone checked. Copy inside the
- * app cannot be allowed to do that: it is the one version a learner reads while
- * the real answer is one import away.
- */
-const n = (x: number) => x.toLocaleString('en-US');
-
-/**
- * Three numbers, because nobody reads a fourth.
- *
- * The version before this one was six bullets, a four-line paragraph and a
- * three-line footnote — everything true about the course, and a wall of text at
- * the one moment a person is deciding whether to bother. It listed features
- * where it needed to make a case.
- *
- * A number is the shortest possible argument, and these three are chosen to
- * trace the course rather than to boast: letters, then words, then grammar is
- * the shape of learning a language, and a person can see in one glance that
- * this goes all the way. An earlier version led with 160 — forty letters across
- * four joining forms — which is the better hook and the worse promise: it is
- * the first unit of the course standing in for the whole of it, and someone who
- * wants to *speak* Urdu reads that and correctly leaves.
- *
- * The third figure was "25 grammar" for one release, which is not a phrase in
- * English — a count of a mass noun, left over from shortening "grammar ideas"
- * to stop it wrapping. Fixing the wrap had broken the sense, which is the wrong
- * trade every time. Lessons reads cleanly at any width, is the plainest measure
- * of how much course there is, and leaves grammar to the line below where it
- * can be a sentence.
- *
- * Everything else sits under the button in two plain sentences rather than a
- * row of words separated by dots. Dots are a spec sheet; this screen is meeting
- * someone.
- */
-const STATS = [
-  { value: n(LETTERS.length), label: 'letters' },
-  { value: n(WORDS.length), label: 'spoken words' },
-  { value: n(ALL_LESSONS.length), label: 'lessons' },
-];
 
 /**
  * Lessons a learner who already speaks Urdu doesn't need to be *taught* —
@@ -230,12 +181,12 @@ const PLACEMENT = [
 const placementFor = (track: LearnTrack) =>
   (track === 'roman' ? PLACEMENT.filter((p) => p.kind === 'roman') : PLACEMENT).slice(0, 4);
 
-type Step = 'welcome' | 'goal' | 'track' | 'voice' | 'background' | 'placement' | 'daily' | 'ready';
+type Step = 'goal' | 'track' | 'voice' | 'background' | 'placement' | 'daily' | 'ready';
 
 /**
  * The steps that show progress, in order.
  *
- * `welcome` and `ready` are bookends and carry no dots. The voice step only
+ * `ready` is the closing bookend and carries no dots. The voice step only
  * exists when there is a second voice to choose, so the flow — and therefore
  * every dot count — is derived rather than written down. Six hardcoded numbers
  * lived here before, and adding one step silently made four of them wrong.
@@ -265,7 +216,12 @@ function Dots({ of }: { of: Step }) {
 }
 
 export function OnboardingScreen() {
-  const [step, setStep] = useState<Step>('welcome');
+  // Starts at the first question. There was a welcome step here, with the
+  // wordmark, a headline and three numbers, one tap after the sign-in screen
+  // had shown the wordmark and a tagline and asked the learner to start: two
+  // front doors in a row, and a learner asked why there were two start
+  // screens. The sign-in screen stays, as the door; this goes straight in.
+  const [step, setStep] = useState<Step>('goal');
   const [goal, setGoal] = useState<Goal | null>(null);
   const [track, setTrack] = useState<LearnTrack>('both');
   const [voice, setVoice] = useState<VoiceGender>('f');
@@ -360,87 +316,6 @@ export function OnboardingScreen() {
     feedback.levelUp();
     completeOnboarding(goal ?? 'curious', lvl, background ?? 'new', skipIds);
   };
-
-  // ---- welcome ----
-  if (step === 'welcome') {
-    // Scrolls, and centres itself when there is room to. `scroll={false}` held
-    // this screen while it was a headline and three numbers; two sentences of
-    // small print later it was cropping the wordmark off the top and the last
-    // line off the bottom of a 568pt phone. `grow` on the scroll content is
-    // what keeps it centred on a tall screen while still letting a short one
-    // move.
-    return (
-      <Screen backdrop={<DuskScene />} contentClassName="grow justify-center">
-        <Reveal>
-          <View className="items-center">
-            <Wordmark size={62} />
-
-            {/* The case, in eleven words. Everything this screen has said
-                across three rewrites was true and none of it was read: a
-                paragraph explaining Nastaliq, then six bullets, then a
-                footnote. A person on a welcome screen is deciding whether to
-                bother, and prose asks them to have decided already. */}
-            <Display accessibilityRole="header" className="mt-7 text-center text-[1.6875rem] leading-9">
-              Learn Urdu properly.
-            </Display>
-            <Txt className="mb-8 mt-2 max-w-[300px] text-center text-[0.875rem] leading-5 text-paper/85">
-              Start with the alphabet. Keep going until you can talk to people.
-            </Txt>
-
-            <View className="mb-9 w-full max-w-[330px] flex-row justify-between gap-2">
-              {STATS.map((s) => (
-                /* Grouped and labelled, so a screen reader says "40 letters"
-                   rather than reading a bare number and its caption as two
-                   unrelated things several stops apart. */
-                <View
-                  key={s.label}
-                  accessible
-                  accessibilityLabel={`${s.value} ${s.label}`}
-                  className="flex-1 items-center"
-                >
-                  <Display className="text-[1.625rem] leading-8" style={{ color: palette.gold }}>
-                    {s.value}
-                  </Display>
-                  {/* Not `Eyebrow`: its 2px tracking is right for a section
-                      label and wraps "spoken words" onto two lines in a column
-                      this narrow, leaving one stat sitting a line lower than
-                      the other two. */}
-                  <Txt
-                    className="mt-1.5 text-center text-[0.6875rem] uppercase text-paper/80"
-                    style={{ letterSpacing: 0.6 }}
-                  >
-                    {s.label}
-                  </Txt>
-                </View>
-              ))}
-            </View>
-
-            <Button className="w-full max-w-[300px]" onPress={() => setStep('goal')}>
-              Let’s start
-            </Button>
-            {/* One line under the button, not two. The other one listed
-                grammar, readings, conversations and review, which is what the
-                three figures above already stand for: a welcome screen that
-                says a thing twice is asking to be skipped twice.
-
-                This one stays because it is not a feature list. "Roman track"
-                is this project's own word for a setting, and a person who has
-                never opened the app cannot know it names the one thing that
-                decides whether the course is for them. Said plainly, it is the
-                answer to "so this is only for people learning the script".
-
-                Nothing here goes below 80% paper: on the dusk scene's horizon
-                glow, 75% is the WCAG AA floor, and the old value was 40%,
-                under AA even on flat ink at 3.51:1. */}
-            <Txt className="mt-6 max-w-[320px] text-center text-[0.78125rem] leading-5 text-paper/80">
-              New to the Urdu script? Learn the whole course in English letters instead, and switch over whenever you’re
-              ready.
-            </Txt>
-          </View>
-        </Reveal>
-      </Screen>
-    );
-  }
 
   // ---- goal ----
   if (step === 'goal') {
