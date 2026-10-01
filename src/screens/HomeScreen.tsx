@@ -562,7 +562,7 @@ export function HomeScreen() {
             <SafeAreaView edges={['top']}>
               <View className="mb-4 flex-row items-start justify-between">
                 <View className="flex-1 pe-3">
-                  <Eyebrow style={{ color: palette.gold }}>Harf · حرف</Eyebrow>
+                  <Eyebrow style={{ color: palette.gold }}>Qaaf · قاف</Eyebrow>
                   <Display className="mt-1 text-3xl leading-9">{GREETING[store.goal ?? 'curious']}</Display>
                 </View>
                 <View className="flex-row items-center gap-2">

@@ -38,7 +38,7 @@ export function PrivacyScreen() {
         <Txt className="mb-6 text-[0.75rem] text-paper/55">Last updated 2026-09-22</Txt>
 
         <Section title="No account is required">
-          Harf works fully as a guest. Your lesson progress, streak, hearts, gems and settings are stored only on this
+          Qaaf works fully as a guest. Your lesson progress, streak, hearts, gems and settings are stored only on this
           device, in its local app storage. We never see them, and nothing is sent anywhere unless you turn on sign-in
           below.
         </Section>
@@ -68,7 +68,7 @@ export function PrivacyScreen() {
         </Section>
 
         <Section title="Children">
-          Harf is a general-audience language course and is not directed at children under 13. We do not knowingly
+          Qaaf is a general-audience language course and is not directed at children under 13. We do not knowingly
           collect personal information from a child under that age.
         </Section>
 

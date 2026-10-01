@@ -50,9 +50,9 @@ export function LicencesScreen() {
     <View className="flex-1 bg-ink">
       <Screen>
         <TopBar onBack={nav.canGoBack() ? () => nav.goBack() : undefined} title="Open-source licences" />
-        <Heading className="mb-2 text-lg">Software Harf is built on</Heading>
+        <Heading className="mb-2 text-lg">Software Qaaf is built on</Heading>
         <Txt className="mb-4 text-[0.8125rem] leading-6 text-paper/80">
-          Harf includes the following open-source software and typefaces. Each is used under the licence shown, and each
+          Qaaf includes the following open-source software and typefaces. Each is used under the licence shown, and each
           licence asks that its notice be included here.
         </Txt>
         {LICENCES.packages.map((p) => (
