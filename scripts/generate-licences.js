@@ -52,7 +52,7 @@ const REPO_OWNERS = {
 
 /** Packages in the bundle, from the source maps of a real export. */
 function bundledPackages() {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'harf-licences-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qaaf-licences-'));
   try {
     execSync(`npx expo export --platform web --source-maps --output-dir ${dir}`, { cwd: ROOT, stdio: 'pipe' });
     const js = path.join(dir, '_expo/static/js/web');
