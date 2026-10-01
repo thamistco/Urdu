@@ -47,6 +47,11 @@ export function setVoiceSet(value: 'f' | 'm') {
 /** The clip table for the chosen voice. */
 const clipsFor = () => (voiceSet === 'm' ? VOICE_M : VOICE);
 
+/** Whether `id` has a recording in the learner's voice, so a caller can stay
+ *  silent rather than fall back to the device's voice, which is a different
+ *  speaker from the one the learner chose. */
+export const hasClip = (id: string) => !!clipsFor()[id];
+
 /**
  * Cached per voice, not per id — the same word id exists in both sets, and a
  * single cache would hand back whichever was loaded first and go on playing the
@@ -199,12 +204,6 @@ export async function announceWithMeaning(
       // ignore
     }
   }, ms + 220);
-}
-
-/** Direct device TTS (used where there is no id, e.g. free text). */
-export function speak(urdu: string, roman?: string) {
-  if (muted) return;
-  deviceSpeak(urdu, roman);
 }
 
 export function stopSpeaking() {
