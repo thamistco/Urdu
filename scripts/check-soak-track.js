@@ -6,8 +6,8 @@
  * URD-051: `npm run soak -- --track roman` looked like it drove the Roman
  * track — it named the flag, printed it in the run's own banner line, and
  * even set a real onboarding field (`goal: 'speak'`) — but `enterAsGuest`
- * only ever merged its `state` argument into `harf-progress`, never into
- * `harf-settings`, which is where `track` (`useSettingsStore.ts`) actually
+ * only ever merged its `state` argument into `qaaf-progress`, never into
+ * `qaaf-settings`, which is where `track` (`useSettingsStore.ts`) actually
  * lives. Every soak run that ever passed `--track roman` was silently
  * driving the guest default, `'both'`, under a label that said otherwise —
  * the exact "the workflow said success and it was wrong" shape CLAUDE.md's
@@ -49,7 +49,7 @@ try {
  *  persisted shape (`{state: {...}, version}`), not a guess at it. */
 async function readTrack(page) {
   return page.evaluate(() => {
-    const raw = JSON.parse(localStorage.getItem('harf-settings') || 'null');
+    const raw = JSON.parse(localStorage.getItem('qaaf-settings') || 'null');
     return raw?.state?.track;
   });
 }
@@ -101,7 +101,7 @@ async function readTrack(page) {
      * browser check's entry state, not only soak's. That is what this case is
      * for, and writing an unasked-for `'roman'` still fails it.
      *
-     * Absent counts as left alone, and used not to. `harf-settings` is written
+     * Absent counts as left alone, and used not to. `qaaf-settings` is written
      * when something calls a setter, and for a guest who has touched nothing,
      * nothing has. It read `'both'` only because the settings store carried a
      * persist migration: the seeded blob's version never matched, zustand ran
@@ -123,5 +123,5 @@ async function readTrack(page) {
     console.error(`\ncheck:soak-track — ${problems} problem${problems === 1 ? '' : 's'}.`);
     process.exit(1);
   }
-  console.log("\ncheck:soak-track — enterAsGuest's settings argument reaches harf-settings, and track with it.");
+  console.log("\ncheck:soak-track — enterAsGuest's settings argument reaches qaaf-settings, and track with it.");
 })();

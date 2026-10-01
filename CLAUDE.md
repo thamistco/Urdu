@@ -3,11 +3,12 @@
 Qaaf (formerly Harf) is an Urdu learning app: Expo SDK 52 / React Native,
 deployed to GitHub Pages at https://thamistco.github.io/Urdu/.
 
-The old name survives in a few places on purpose. The localStorage keys
-(`harf-progress`, `harf-settings`, `harf-auth`, `harf-tester`) must never be
-renamed: a new key is an empty store, and every learner would lose their
-progress. The `HARF_*` environment variables are shared by CI, the pre-push
-hook and `app.config.js`, and nobody sees them.
+The localStorage keys (`qaaf-progress`, `qaaf-settings`, `qaaf-auth`,
+`qaaf-tester`) were renamed from `harf-*` before launch, when no learner had
+anything saved. Once people do, never rename them again: a new key is an empty
+store, and every learner would lose their progress. The old name survives on
+purpose in the `HARF_*` environment variables, which CI, the pre-push hook and
+`app.config.js` share and nobody sees.
 
 **Read [`docs/ENGINEERING_STANDARDS.md`](docs/ENGINEERING_STANDARDS.md) before
 writing code here.** It is the constitution — ~170 rules across architecture,

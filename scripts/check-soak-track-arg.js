@@ -6,7 +6,7 @@
  * to `trackSettingsFor` with no validation against the app's own
  * `LearnTrack` union (`'script' | 'roman' | 'both'`, `useSettingsStore.ts`)
  * — a typo like `--track roams` wrote `{track: 'roams'}` into
- * `harf-settings` and ran the whole session anyway, silently behaving like
+ * `qaaf-settings` and ran the whole session anyway, silently behaving like
  * `'both'` under a label nobody chose (`generator.ts`'s own checks treat
  * anything that isn't literally `'roman'` as script-teaching).
  *
@@ -14,7 +14,7 @@
  * internals — the fix exits before `dist/` is even checked for, and this
  * checks a different mechanism from `check-soak-track.js` (which needs a
  * real build and browser to confirm `enterAsGuest`'s settings argument
- * reaches `harf-settings`, once a *valid* track is already in hand). This
+ * reaches `qaaf-settings`, once a *valid* track is already in hand). This
  * check only needs `soak.js`'s very first line of output — see
  * `runUntilOutput` below for why that changes how it drives the child.
  *

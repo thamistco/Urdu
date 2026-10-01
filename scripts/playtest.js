@@ -1516,9 +1516,9 @@ async function pressContinue(page) {
 async function topUpHearts(page) {
   await page
     .evaluate(() => {
-      const raw = JSON.parse(localStorage.getItem('harf-progress') || '{"state":{},"version":0}');
+      const raw = JSON.parse(localStorage.getItem('qaaf-progress') || '{"state":{},"version":0}');
       raw.state = { ...raw.state, hearts: 5 };
-      localStorage.setItem('harf-progress', JSON.stringify(raw));
+      localStorage.setItem('qaaf-progress', JSON.stringify(raw));
     })
     .catch(() => {});
 }
@@ -3240,7 +3240,7 @@ async function onboardingSession(page, ctx) {
 
   const state = await page
     .evaluate(() => {
-      const raw = JSON.parse(localStorage.getItem('harf-progress') || 'null');
+      const raw = JSON.parse(localStorage.getItem('qaaf-progress') || 'null');
       const s = raw && raw.state ? raw.state : {};
       return {
         onboarded: !!s.onboarded,
@@ -3309,7 +3309,7 @@ function windBackADay(state, now = Date.now()) {
  * Move the app's clock on by `ms`, and let the app rehydrate onto it.
  */
 async function advanceClock(page, ctx, ms, kind) {
-  const raw = await page.evaluate(() => localStorage.getItem('harf-progress')).catch(() => null);
+  const raw = await page.evaluate(() => localStorage.getItem('qaaf-progress')).catch(() => null);
   if (!raw) return null;
   let store;
   try {
@@ -3319,7 +3319,7 @@ async function advanceClock(page, ctx, ms, kind) {
   }
   const moved = windBack(store && store.state, ms, Date.now());
   if (!moved) return null;
-  await page.evaluate((text) => localStorage.setItem('harf-progress', text), JSON.stringify(store));
+  await page.evaluate((text) => localStorage.setItem('qaaf-progress', text), JSON.stringify(store));
   // The store in memory still holds the old timestamps and writes them back on
   // its next change, so the edit only counts once the page has rehydrated.
   await page.reload({ timeout: 30000 });
