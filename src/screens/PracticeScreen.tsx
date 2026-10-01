@@ -225,7 +225,7 @@ export function PracticeScreen() {
 
         {/* browse: one shelf at a time, with search across it */}
         <Reveal delay={165}>
-          <View className="mb-3 flex-row rounded-2xl border border-white/10 bg-ink-700 p-1">
+          <View className="mb-3 flex-row rounded-2xl border border-white/10 bg-ink-700 p-1" accessibilityRole="tablist">
             {(['topics', 'grammar', 'reading'] as const).map((k) => (
               <Pressable
                 key={k}
@@ -234,8 +234,8 @@ export function PracticeScreen() {
                   setTab(k);
                 }}
                 className="flex-1"
-                accessibilityRole="button"
-                accessibilityState={{ selected: tab === k }}
+                accessibilityRole="tab"
+                aria-selected={tab === k}
                 accessibilityLabel={`${k}: ${TAB_TOTAL[k]} items`}
               >
                 <View

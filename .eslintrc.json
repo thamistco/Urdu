@@ -40,6 +40,13 @@
       {
         "allowEmptyCatch": true
       }
+    ],
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "JSXAttribute[name.name='accessibilityState'] Property[key.name!='disabled']",
+        "message": "react-native-web 0.19 drops every accessibilityState key except `disabled`, so the web build never announces it. Use the aria-* prop instead (aria-checked, aria-selected, aria-expanded, aria-busy); React Native maps those to the native state too."
+      }
     ]
   },
   "overrides": [

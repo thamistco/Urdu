@@ -66,6 +66,7 @@ function TabBar({ state, navigation }: BottomTabBarProps) {
         {/* the bar spans the screen; the three tabs track the content column */}
         <View
           className="flex-row px-3 pt-2 pb-1"
+          accessibilityRole="tablist"
           style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }}
         >
           {state.routes.map((route, i) => {
@@ -84,7 +85,7 @@ function TabBar({ state, navigation }: BottomTabBarProps) {
                 }}
                 className="flex-1 items-center py-2"
                 accessibilityRole="tab"
-                accessibilityState={{ selected: focused }}
+                aria-selected={focused}
                 accessibilityLabel={label}
               >
                 <TabIcon name={route.name} color={focused ? palette.gold : withAlpha(palette.cream, 0.45)} />

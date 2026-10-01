@@ -27,7 +27,7 @@ function Row({ name, version, license, text }: { name: string; version: string; 
     <View className="border-b border-white/5 py-3">
       <Pressable
         accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
+        aria-expanded={open}
         accessibilityLabel={`${name}, ${license}. ${open ? 'Hide' : 'Show'} licence`}
         onPress={() => setOpen((o) => !o)}
       >

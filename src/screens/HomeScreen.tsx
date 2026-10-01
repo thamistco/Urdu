@@ -877,7 +877,7 @@ export function HomeScreen() {
                 <Pressable
                   onPress={() => toggleLevel(lvl)}
                   accessibilityRole="button"
-                  accessibilityState={{ expanded: isOpen(lvl) }}
+                  aria-expanded={isOpen(lvl)}
                   accessibilityLabel={`${meta.title}. ${done} of ${total} lessons done. ${
                     isOpen(lvl) ? 'Collapse' : 'Expand'
                   }`}

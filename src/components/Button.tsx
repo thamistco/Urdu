@@ -137,14 +137,17 @@ export function Button({
        * sign-in screen that is the entire screen: one control, read out as a
        * sentence, with nothing to say it can be pressed.
        *
-       * `accessibilityState` rather than leaving `disabled` implicit, because
-       * this button has two ways of being unavailable and they mean different
-       * things: `disabled` is "not yet", `loading` is "already, wait". A
-       * screen reader that says "dimmed" for the first and "busy" for the
-       * second is telling the truth about both.
+       * Stated rather than leaving `disabled` implicit, because this button
+       * has two ways of being unavailable and they mean different things:
+       * `disabled` is "not yet", `loading` is "already, wait". A screen reader
+       * that says "dimmed" for the first and "busy" for the second is telling
+       * the truth about both. Busy goes in `aria-busy`: react-native-web keeps
+       * only `disabled` from accessibilityState, so on the web "busy" was
+       * never said.
        */
       accessibilityRole="button"
-      accessibilityState={{ disabled: disabled || loading, busy: loading }}
+      accessibilityState={{ disabled: disabled || loading }}
+      aria-busy={loading}
       disabled={disabled || loading}
       onPress={() => {
         if (sound) feedback.tap();
