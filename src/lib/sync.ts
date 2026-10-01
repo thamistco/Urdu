@@ -13,8 +13,8 @@ import { useSettingsStore } from '../store/useSettingsStore';
  *  - Afterwards, local changes are pushed up (debounced).
  */
 
-const PROGRESS_KEY = 'harf-progress';
-const SETTINGS_KEY = 'harf-settings';
+const PROGRESS_KEY = 'qaaf-progress';
+const SETTINGS_KEY = 'qaaf-settings';
 
 let currentUserId: string | null = null;
 let pushTimer: ReturnType<typeof setTimeout> | null = null;

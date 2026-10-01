@@ -441,7 +441,7 @@ async function main() {
       const p = await browser.newPage({ viewport: { width: 412, height: 900 } });
       await enterAsGuest(p, `http://localhost:${PORT}/Urdu/`, seed);
       const body = await settledText(p);
-      const saved = await p.evaluate(() => JSON.parse(localStorage.getItem('harf-progress') || '{}').state || {});
+      const saved = await p.evaluate(() => JSON.parse(localStorage.getItem('qaaf-progress') || '{}').state || {});
       await p.close();
       return { body: body || '', saved };
     };

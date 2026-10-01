@@ -105,15 +105,15 @@ function findChromium() {
  * per-script copy is a per-script way to drift.
  *
  * URD-051: `state` (the third argument) only ever merged into
- * `harf-progress` — the SRS/hearts/completed-lessons store — never into
- * `harf-settings`, which is where `track` (`useSettingsStore.ts`) actually
+ * `qaaf-progress` — the SRS/hearts/completed-lessons store — never into
+ * `qaaf-settings`, which is where `track` (`useSettingsStore.ts`) actually
  * lives. A caller wanting the Roman track had nothing to pass that would
  * reach it: `soak.js` passed `goal: 'speak'` instead, which merges into
- * `harf-progress`'s own unrelated onboarding field and never touches
+ * `qaaf-progress`'s own unrelated onboarding field and never touches
  * `track` at all — so every `--track roman` run this project has ever done
  * was silently driving the guest default, `'both'`. `settings` is the new,
  * separate fourth argument for exactly this: it merges into the
- * `harf-settings` write the same way `state` merges into `harf-progress`'s,
+ * `qaaf-settings` write the same way `state` merges into `qaaf-progress`'s,
  * keeping the two stores' overrides from being confused for each other the
  * way `goal`/`track` just were.
  */
@@ -224,7 +224,7 @@ async function enterAsGuest(page, url, state = {}, settings = {}) {
   await openTheDoor(page);
   await page.evaluate(
     ({ extra, settingsExtra }) => {
-      const raw = JSON.parse(localStorage.getItem('harf-progress') || '{"state":{},"version":0}');
+      const raw = JSON.parse(localStorage.getItem('qaaf-progress') || '{"state":{},"version":0}');
       raw.state = {
         ...raw.state,
         onboarded: true,
@@ -235,9 +235,9 @@ async function enterAsGuest(page, url, state = {}, settings = {}) {
         completedLessons: {},
         ...extra,
       };
-      localStorage.setItem('harf-progress', JSON.stringify(raw));
+      localStorage.setItem('qaaf-progress', JSON.stringify(raw));
       localStorage.setItem(
-        'harf-settings',
+        'qaaf-settings',
         JSON.stringify({
           state: { soundEnabled: false, hapticsEnabled: false, reducedMotion: true, ...settingsExtra },
           version: 0,

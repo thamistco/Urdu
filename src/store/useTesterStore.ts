@@ -72,7 +72,7 @@ export const useTesterStore = create<TesterState>()(
       setInfiniteHearts: (v) => set({ infiniteHearts: v }),
       setUnlockAll: (v) => set({ unlockAll: v }),
     }),
-    { name: 'harf-tester', storage: createJSONStorage(() => safeStorage) }
+    { name: 'qaaf-tester', storage: createJSONStorage(() => safeStorage) }
   )
 );
 

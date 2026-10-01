@@ -109,7 +109,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: 'harf-auth',
+      name: 'qaaf-auth',
       storage: createJSONStorage(() => safeStorage),
       // only persist the guest choice; the session is owned by supabase
       partialize: (s) => ({ isGuest: s.isGuest }),

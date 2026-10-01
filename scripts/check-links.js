@@ -171,7 +171,7 @@ async function main() {
      * The one property none of the above actually proves.
      *
      * Every route above ran against a page `enterAsGuest` had already seeded
-     * with `harf-progress`/`harf-settings` in localStorage — a returning
+     * with `qaaf-progress`/`qaaf-settings` in localStorage — a returning
      * learner, not the person this screen exists for. An app store reviewer,
      * or anyone else who lands on /privacy, /terms, /credits or /licences cold, has no local
      * storage at all, and RootNavigator's whole reason for registering these
