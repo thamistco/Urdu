@@ -1,15 +1,15 @@
-# Harf · حرف
+# Qaaf · قاف
 
 **Learn Urdu properly — from the first letter to a real conversation.**
 
-حرف means "letter", and the letters are where this starts rather than where it
-stops. Urdu is written in Nastaliq, and every letter changes shape depending on
+قاف is the name of the letter ق, and the letters are where this starts rather
+than where it stops. Urdu is written in Nastaliq, and every letter changes shape depending on
 where it sits in a word — ب at the start of a word looks nothing like ب at the
 end. Most courses teach the isolated forms, hand you a transliteration, and
-leave you unable to read a shop sign. Harf teaches the script and then keeps
+leave you unable to read a shop sign. Qaaf teaches the script and then keeps
 going: vocabulary, grammar, sentences, reading and conversation.
 
-Harf teaches all forty letters in all four of their joining forms, then 2,279
+Qaaf teaches all forty letters in all four of their joining forms, then 2,279
 words spoken aloud, 256 sentences you assemble right-to-left yourself, 25 grammar
 ideas one at a time, and 17 readings. A four-stage course (Beginner →
 Elementary → Intermediate → Advanced) with spaced repetition underneath, so what
@@ -144,7 +144,7 @@ eas build -p android --profile preview
 
 Course _structure_ is informed by published Urdu curricula (see
 [`docs/CONTENT_NOTES.md`](docs/CONTENT_NOTES.md)); all vocabulary, sentences,
-explanations and exercises are **written originally** for Harf. Adapted material
+explanations and exercises are **written originally** for Qaaf. Adapted material
 from the CC-BY source is credited in [`CREDITS.md`](CREDITS.md).
 
 ## Verification

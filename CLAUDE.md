@@ -1,7 +1,13 @@
-# Harf — instructions for AI coding agents
+# Qaaf — instructions for AI coding agents
 
-Harf is an Urdu learning app: Expo SDK 52 / React Native, deployed to GitHub
-Pages at https://thamistco.github.io/Urdu/.
+Qaaf (formerly Harf) is an Urdu learning app: Expo SDK 52 / React Native,
+deployed to GitHub Pages at https://thamistco.github.io/Urdu/.
+
+The old name survives in a few places on purpose. The localStorage keys
+(`harf-progress`, `harf-settings`, `harf-auth`, `harf-tester`) must never be
+renamed: a new key is an empty store, and every learner would lose their
+progress. The `HARF_*` environment variables are shared by CI, the pre-push
+hook and `app.config.js`, and nobody sees them.
 
 **Read [`docs/ENGINEERING_STANDARDS.md`](docs/ENGINEERING_STANDARDS.md) before
 writing code here.** It is the constitution — ~170 rules across architecture,

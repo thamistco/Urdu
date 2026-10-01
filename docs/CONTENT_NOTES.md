@@ -1,6 +1,6 @@
 # Content & curriculum references
 
-Sources to align Harf's letters, joining forms, and vocabulary against as the
+Sources to align Qaaf's letters, joining forms, and vocabulary against as the
 content expands.
 
 ## Licensing rule (read first)
@@ -16,7 +16,7 @@ commercial release, get a proper IP review.
 
 - **"Basic Urdu"** by **Rajiv Ranjan**, Michigan State University Libraries
   (Pressbooks), licensed **CC BY-NC 4.0**, which this file called CC-BY until
-  2026-09-23. See `CREDITS.md` for what that means before Harf earns money.
+  2026-09-23. See `CREDITS.md` for what that means before Qaaf earns money.
   https://openbooks.lib.msu.edu/urdu/
   - Theme-based, novice → ACTFL intermediate-low/mid. Readable (provided as a
     local export), so this is the source we build from. **Attribution is
