@@ -27,7 +27,7 @@ import type { RootStackParamList } from './types';
  */
 function basePath(): string {
   if (typeof document === 'undefined') return '';
-  const tag = document.querySelector('meta[name="harf:base"]');
+  const tag = document.querySelector('meta[name="qaaf:base"]');
   return (tag?.getAttribute('content') ?? '').replace(/^\/+|\/+$/g, '');
 }
 
