@@ -114,15 +114,19 @@ export function TrackChooser({ value, onChange }: { value: LearnTrack; onChange:
         have learned is lost.
       </Txt>
 
-      <View className="gap-3">
+      <View className="gap-3" accessibilityRole="radiogroup" aria-label="Learning track">
         {TRACK_OPTIONS.map((t) => {
           const sel = value === t.key;
           return (
             <Pressable
               key={t.key}
               accessibilityRole="radio"
-              accessibilityState={{ selected: sel }}
-              accessibilityLabel={[t.label, t.summary, ...t.gains, ...t.costs, t.forWhom].join('. ')}
+              aria-checked={sel}
+              // Each part may already end in a full stop; joined as they were, the
+              // label read "written.. All 40 letters".
+              accessibilityLabel={[t.label, t.summary, ...t.gains, ...t.costs, t.forWhom]
+                .map((part) => part.replace(/\.$/, ''))
+                .join('. ')}
               onPress={() => {
                 feedback.tap();
                 onChange(t.key);
