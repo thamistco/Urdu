@@ -1473,7 +1473,7 @@ const TOPIC_CATEGORY: Record<string, TopicCategory> = {
   countries: 'travel',
 
   // the dealings of ordinary life. These were under travel, which is only true
-  // for a tourist; Harf's likelier learner lives there, and meets money at the
+  // for a tourist; Qaaf's likelier learner lives there, and meets money at the
   // shop rather than at an airport bureau de change. `emergency` is here for
   // the same reason it deserved its own heading in the first draft: it is the
   // most consequence-bearing vocabulary in the course and does not belong

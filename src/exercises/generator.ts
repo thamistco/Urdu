@@ -1038,7 +1038,7 @@ function sentenceExercise(sentence: Sentence, track: LearnTrack): Exercise | und
  * (`meet`/`recall`) both test whole-sentence recognition, never
  * segmentation. `sentences.ts`'s own header and gauntlet/BENCHMARKS.md both
  * name sentence-building as the exercise this app's word-order teaching
- * depends on — the reason to choose Harf over a recognition-only app — so a
+ * depends on — the reason to choose Qaaf over a recognition-only app — so a
  * climb giving it 1 of 3 reps per sentence handed the two recognition kinds,
  * combined, 2 of 3 (66.7%) against production's 33.3%.
  *
@@ -1455,7 +1455,7 @@ const NUMERALS_PER_LESSON = 2;
  * course, a numeral glyph is the subject of nine questions in 12,081
  * exercises, always as one of the eleven-to-twenty vocabulary items, and Urdu
  * digits appear in exactly one source file: the map of pictures. A learner who
- * finishes Harf has never been asked to read ۴۷.
+ * finishes Qaaf has never been asked to read ۴۷.
  *
  * Scoped by the digits rather than by the topic, which is what keeps this
  * honest without a list of lesson ids to maintain: a lesson that teaches no
