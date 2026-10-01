@@ -5,7 +5,7 @@ import { Urdu, Txt, Bold, urduGlyph, urduLine } from '../components/Text';
 import { WordArt } from '../components/Illustration';
 import { Button } from '../components/Button';
 import { feedback } from '../lib/feedback';
-import { LETTERS } from '../data/letters';
+import { LETTERS, glyphName } from '../data/letters';
 import type { ExerciseProps, Exercise } from './types';
 import { glossOf } from '../data/words';
 
@@ -129,7 +129,7 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
                   key={`${i}-${order}`}
                   onPress={() => unplace(i)}
                   accessibilityRole="button"
-                  accessibilityLabel={`Letter ${order + 1} of the word. Tap to take it back.`}
+                  accessibilityLabel={`${glyphName(tiles[i]) ?? 'Letter'}, letter ${order + 1} of the word. Tap to take it back.`}
                 >
                   <View
                     className="mx-1 my-1 rounded-xl px-3 py-1"
@@ -153,7 +153,7 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
             key={i}
             onPress={() => place(i)}
             accessibilityRole="button"
-            accessibilityLabel="Letter tile. Tap to add it to the word."
+            accessibilityLabel={`${glyphName(tiles[i]) ?? 'Letter tile'}. Tap to add it to the word.`}
           >
             <View className="m-1.5 rounded-xl border border-white/10 bg-ink-700 px-4 py-2">
               <Urdu style={{ ...urduGlyph(26) }}>{tiles[i]}</Urdu>
