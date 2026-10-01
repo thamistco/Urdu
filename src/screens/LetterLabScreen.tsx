@@ -9,7 +9,8 @@ import { Txt, Bold, Eyebrow, Urdu, urduLine, urduGlyph } from '../components/Tex
 import { TracePad, tracePadKey } from '../components/TracePad';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
-import { speak } from '../lib/speech';
+import { announce, hasClip } from '../lib/speech';
+import { WORDS } from '../data/words';
 import { LETTERS, POSITIONS, PositionKey, glyphName, positionHint } from '../data/letters';
 import { useProgressStore } from '../store/useProgressStore';
 import { Illustration } from '../components/Illustration';
@@ -17,6 +18,15 @@ import type { RootStackParamList } from '../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'LetterLab'>;
 type Rt = RouteProp<RootStackParamList, 'LetterLab'>;
+
+/** Each letter's example word, by the vocabulary id its recording is filed
+ *  under, for the letters whose word is in the vocabulary and recorded. */
+const EXAMPLE_WORD_ID = new Map(
+  LETTERS.flatMap((l) => {
+    const w = WORDS.find((x) => x.urdu === l.word);
+    return w && hasClip(w.id) ? [[l.id, w.id] as const] : [];
+  })
+);
 
 /** A rail tile's 56px plus its 4px margin either side. */
 const RAIL_STEP = 64;
@@ -53,6 +63,7 @@ export function LetterLabScreen() {
   const [tracing, setTracing] = useState(false);
   const learned = useProgressStore((s) => s.learnedLetters);
   const letter = LETTERS[idx];
+  const exampleClip = EXAMPLE_WORD_ID.get(letter.id);
 
   const selectLetter = (i: number) => {
     feedback.tap();
@@ -139,7 +150,16 @@ export function LetterLabScreen() {
             {tracing ? (
               <TracePad key={tracePadKey(letter.id, pos)} letter={letter} position={pos} />
             ) : (
-              <Pressable accessibilityRole="button" onPress={() => speak(letter.word, letter.roman)}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Hear ${glyphName(letter.forms.isolated) ?? letter.name}`}
+                // The letter's own recording, the one tracing and the lesson's
+                // new-letter card play. This used to read the example word
+                // through the device's text-to-speech instead: a different
+                // word in a different voice, so a learner who picked the man's
+                // voice heard a woman here and the man when tracing.
+                onPress={() => announce(letter.id, letter.forms.isolated, letter.name)}
+              >
                 <View
                   className="rounded-2xl bg-parchment px-6 pb-5 pt-3"
                   style={{ borderWidth: 2, borderColor: palette.ink }}
@@ -245,7 +265,16 @@ export function LetterLabScreen() {
           {/* living in a word */}
           <View className="mb-4 rounded-2xl border border-white/10 bg-ink-700 p-5">
             <Eyebrow className="mb-3 text-paper/55">Living in a word</Eyebrow>
-            <View className="flex-row items-center justify-between">
+            <Pressable
+              // Only where the word has a recording in the learner's voice.
+              // Eight example words are not in the vocabulary and have none;
+              // they stay silent rather than switch to the device's voice.
+              disabled={!exampleClip}
+              accessibilityRole={exampleClip ? 'button' : undefined}
+              accessibilityLabel={exampleClip ? `Hear ${letter.roman}, ${letter.meaning}` : undefined}
+              onPress={() => exampleClip && announce(exampleClip, letter.word, letter.roman)}
+              className="flex-row items-center justify-between"
+            >
               <View>
                 <Urdu style={{ fontSize: 32, lineHeight: urduLine(32) }}>{letter.word}</Urdu>
                 <Txt className="mt-1 text-sm text-paper/60">
@@ -257,7 +286,7 @@ export function LetterLabScreen() {
               ) : (
                 <Txt style={{ fontSize: 36 }}>{letter.emoji}</Txt>
               )}
-            </View>
+            </Pressable>
           </View>
 
           {/* the note */}
