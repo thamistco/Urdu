@@ -113,6 +113,8 @@ function corpusWants() {
   for (const p of PASSAGES) p.lines.forEach((l, i) => add(`${p.id}-${i}`, l.urdu));
   for (const d of DIALOGUES) d.lines.forEach((l, i) => add(`${d.id}-${i}`, l.urdu));
   for (const l of LETTERS) add(l.id, l.pronounce || l.forms?.isolated);
+  const inVocab = new Set(WORDS.map((w) => w.urdu));
+  for (const l of LETTERS) if (l.word && !inVocab.has(l.word)) add(`${l.id}-word`, l.word);
   return want;
 }
 

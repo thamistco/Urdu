@@ -253,6 +253,12 @@ function collectItems() {
   // read — see that field's own comment in `letters.ts`, and
   // `check:voice-fidelity`, which is what found the clips it produced.
   for (const l of LETTERS) add(l.id, l.pronounce || l.forms?.isolated || l.glyph || l.forms?.initial);
+  // Each letter's example word, which the Letter Lab plays. Most are
+  // vocabulary words already recorded under their own id; the rest are
+  // recorded here as `<letter>-word`, so the Lab never falls back to the
+  // device's voice, a different speaker from the one the learner chose.
+  const inVocab = new Set(WORDS.map((w) => w.urdu));
+  for (const l of LETTERS) if (l.word && !inVocab.has(l.word)) add(`${l.id}-word`, l.word);
   return items;
 }
 
