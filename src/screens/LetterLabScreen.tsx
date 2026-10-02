@@ -19,12 +19,14 @@ import type { RootStackParamList } from '../navigation/types';
 type Nav = NativeStackNavigationProp<RootStackParamList, 'LetterLab'>;
 type Rt = RouteProp<RootStackParamList, 'LetterLab'>;
 
-/** Each letter's example word, by the vocabulary id its recording is filed
- *  under, for the letters whose word is in the vocabulary and recorded. */
+/** Each letter's example word, by the id its recording is filed under. */
 const EXAMPLE_WORD_ID = new Map(
   LETTERS.flatMap((l) => {
     const w = WORDS.find((x) => x.urdu === l.word);
-    return w && hasClip(w.id) ? [[l.id, w.id] as const] : [];
+    // A vocabulary word's own recording, or the one generate-voice.js makes
+    // as `<letter>-word` for an example word that is not in the vocabulary.
+    const id = w && hasClip(w.id) ? w.id : hasClip(`${l.id}-word`) ? `${l.id}-word` : null;
+    return id ? [[l.id, id] as const] : [];
   })
 );
 
@@ -266,9 +268,9 @@ export function LetterLabScreen() {
           <View className="mb-4 rounded-2xl border border-white/10 bg-ink-700 p-5">
             <Eyebrow className="mb-3 text-paper/55">Living in a word</Eyebrow>
             <Pressable
-              // Only where the word has a recording in the learner's voice.
-              // Eight example words are not in the vocabulary and have none;
-              // they stay silent rather than switch to the device's voice.
+              // Every example word has a recording in both voices. Should one
+              // ever lack it, the card stays silent rather than switch to the
+              // device's voice, a different speaker from the learner's choice.
               disabled={!exampleClip}
               accessibilityRole={exampleClip ? 'button' : undefined}
               accessibilityLabel={exampleClip ? `Hear ${letter.roman}, ${letter.meaning}` : undefined}
