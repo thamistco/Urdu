@@ -217,7 +217,7 @@ export function ReadingExercise({ exercise, track, showRoman, locked, onGraded }
                 label="Hear this line"
                 onPress={() => announce(`${passage.id}-${i}`, l.urdu, l.roman)}
               />
-              <SayItBack clipId={`${passage.id}-${i}`} urdu={l.urdu} roman={l.roman} size={26} />
+              <SayItBack clipId={`${passage.id}-${i}`} urdu={l.urdu} roman={l.roman} size={26} stack />
             </View>
           </View>
         ))}
