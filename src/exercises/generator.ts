@@ -1,6 +1,6 @@
 import { LETTERS, getLetter, Letter, PositionKey, POSITIONS } from '../data/letters';
 import { WORDS, getWord, wordsByTopic, glossOf, levelOfWord, Word, PHRASES } from '../data/words';
-import { Lesson, ALL_LESSONS } from '../data/units';
+import { Lesson, ALL_LESSONS, findLesson, lessonOrderForTrack } from '../data/units';
 import { getGrammar, type GrammarConcept, type GrammarDrill } from '../data/grammar';
 import { romanAll } from '../lib/translit';
 import { romanRevealsMeaning } from '../lib/giveaway';
@@ -1398,6 +1398,63 @@ function sentencesForLesson(lesson: Lesson): Sentence[] {
  *  (a name, an inflection) is not mistaken for one the learner has not reached. */
 const TAUGHT_FORMS = new Set(WORDS.map((w) => w.urdu));
 
+/** Each letter's isolated form, as the one character a word spells it with. */
+const LETTER_OF_CHAR = new Map<string, string>();
+for (const l of LETTERS) {
+  const glyph = l.forms.isolated.replace(/[\u0640\u200C\u200D]/g, '');
+  if (Array.from(glyph).length === 1 && !LETTER_OF_CHAR.has(glyph)) LETTER_OF_CHAR.set(glyph, l.id);
+}
+
+/** A character that is a letter of the script, rather than a space or a mark. */
+const SCRIPT_LETTER = /[\u0621-\u064A\u0671-\u06D3]/;
+
+const lettersBeforeCache = new Map<string, ReadonlySet<string> | null>();
+
+/**
+ * The letters a learner on this track has been taught before this lesson, or
+ * null when the lesson is not on the track's path (nothing to go by, so
+ * nothing is withheld).
+ *
+ * Read off the path, not the learner's profile, for the reason given at the
+ * numerals below: the same lesson must generate the same way for everyone,
+ * and `check:order` enumerates it without a profile.
+ */
+function lettersTaughtBefore(lessonId: string, track: LearnTrack): ReadonlySet<string> | null {
+  const key = `${track}:${lessonId}`;
+  if (lettersBeforeCache.has(key)) return lettersBeforeCache.get(key)!;
+  const order = lessonOrderForTrack(track);
+  const at = order.indexOf(lessonId);
+  let taught: Set<string> | null = null;
+  if (at >= 0) {
+    taught = new Set();
+    for (const id of order.slice(0, at)) for (const letter of findLesson(id)?.letterIds ?? []) taught.add(letter);
+  }
+  lettersBeforeCache.set(key, taught);
+  return taught;
+}
+
+/**
+ * Whether every letter in a word has been taught by this point on the path.
+ *
+ * Building a word from letter tiles asks the learner to pick each letter out
+ * by its shape. In the second lesson of the course, that asked for زندگی after
+ * six letters, five of them never taught: 232 of 1,233 builds on the script
+ * tracks used letters the path had not reached (daily review 2026-10-07). A
+ * word that fails this is typed or recalled instead, the exercise
+ * `produceExercise` already falls back to.
+ *
+ * A letter with hamza or a final he form (ئ ؤ ۃ ۂ) is not one of the forty
+ * cards, so it counts as taught only once all forty are.
+ */
+function lettersAllTaught(w: Word, taught: ReadonlySet<string> | null): boolean {
+  if (!taught) return true;
+  return Array.from(w.urdu).every((c) => {
+    if (!SCRIPT_LETTER.test(c)) return true;
+    const id = LETTER_OF_CHAR.get(c);
+    return id ? taught.has(id) : taught.size >= LETTERS.length;
+  });
+}
+
 /**
  * The third sighting: supply the word with nothing to pick from.
  *
@@ -1406,8 +1463,15 @@ const TAUGHT_FORMS = new Set(WORDS.map((w) => w.urdu));
  * `wordFromMeaning` for anything untypeable — the same collision this function
  * exists to avoid, and it pushed four Roman review lessons past 40% one kind.
  */
-function produceExercise(w: Word, pool: Word[], track: LearnTrack, teachesScript: boolean, i: number): Exercise {
-  const canBuild = buildableLetters(w) <= MAX_BUILD_TILES && teachesScript;
+function produceExercise(
+  w: Word,
+  pool: Word[],
+  track: LearnTrack,
+  teachesScript: boolean,
+  i: number,
+  taught: ReadonlySet<string> | null = null
+): Exercise {
+  const canBuild = buildableLetters(w) <= MAX_BUILD_TILES && teachesScript && lettersAllTaught(w, taught);
   const canType = isTypeable(w);
   if (canBuild && (i % 2 === 0 || !canType)) {
     return { kind: 'wordBuild', word: w, tiles: buildTilesFor(w) };
@@ -1559,6 +1623,7 @@ export function buildLessonExercises(
   // surface a letter that was practised before the switch, and a vocabulary
   // lesson would otherwise close on a spell-it-in-Nastaliq exercise.
   const teachesScript = track !== 'roman';
+  const taught = teachesScript ? lettersTaughtBefore(lesson.id, track) : null;
 
   if (lesson.kind === 'letters' && lesson.letterIds && teachesScript) {
     // URD-022: reordered so visually confusable letters (daal/Daal/zaal,
@@ -2169,7 +2234,7 @@ export function buildLessonExercises(
         { kind: 'wordTeach', word: w },
       ],
       (w) => wordExercise(w, pool, track, 'recall'),
-      (w, i) => produceExercise(w, pool, track, teachesScript, i),
+      (w, i) => produceExercise(w, pool, track, teachesScript, i, taught),
     ];
 
     for (let cycle = 0; cycle < groups.length + passes.length - 1; cycle++) {
@@ -2653,7 +2718,8 @@ export function buildLessonExercises(
         // file already says a review should keep hard.
         const turn = wordTurn % 6;
         wordTurn++;
-        if (w && (turn === 2 || turn === 5)) exercises.push(produceExercise(w, poolFor(w), track, teachesScript, i));
+        if (w && (turn === 2 || turn === 5))
+          exercises.push(produceExercise(w, poolFor(w), track, teachesScript, i, taught));
         else if (w && turn === 4) exercises.push(wordExercise(w, poolFor(w), track, 'meet', 1));
         else if (w && turn === 1)
           // THE CRITIC, reviewing URD-050: `turn === 1` forces variant 2
