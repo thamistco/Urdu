@@ -1787,7 +1787,10 @@ function surfaceFindings(journal) {
   for (const e of journal.filter((x) => x.type === 'onboarded')) {
     if (!e.reachedHome) out.push(`Onboarding · finishing it did not land on the learn path.`);
     if (!e.onboarded) out.push(`Onboarding · it finished without recording that it had.`);
-    if (e.asked < 4) out.push(`Onboarding · the placement quiz asked ${e.asked} question(s), not 4.`);
+    // A speaker is asked four; a beginner none, because nothing the quiz
+    // could find out changes a beginner's path (P-005, 2026-10-07).
+    const quiz = e.speaker ? 4 : 0;
+    if (e.asked !== quiz) out.push(`Onboarding · the placement quiz asked ${e.asked} question(s), not ${quiz}.`);
     // The two things the flow exists to decide for a learner who already
     // speaks Urdu. Both are false for a beginner, correctly, so neither is
     // checked against one.
