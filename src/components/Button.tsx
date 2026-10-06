@@ -42,6 +42,7 @@ export function Button({
   className = '',
   sound = true,
   icon,
+  testID,
 }: {
   children: ReactNode;
   onPress?: () => void;
@@ -51,6 +52,8 @@ export function Button({
   className?: string;
   sound?: boolean;
   icon?: ReactNode;
+  /** For the checks that drive the built app; reaches the DOM as data-testid. */
+  testID?: string;
 }) {
   const isGhost = variant === 'ghost';
   /**
@@ -147,6 +150,7 @@ export function Button({
        */
       accessibilityRole="button"
       accessibilityState={{ disabled: disabled || loading }}
+      testID={testID}
       aria-busy={loading}
       disabled={disabled || loading}
       onPress={() => {

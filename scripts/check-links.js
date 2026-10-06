@@ -24,7 +24,7 @@
 
 const path = require('path');
 const fs = require('fs');
-const { serveDist, findChromium, enterAsGuest, renderedScreen, AT_THE_DOOR } = require('./lib/serve-dist');
+const { serveDist, findChromium, enterAsGuest, renderedScreen, atTheDoor } = require('./lib/serve-dist');
 
 const DIST = path.join(__dirname, '..', 'dist');
 const PORT = 8336;
@@ -83,7 +83,7 @@ async function arrived(page) {
   await renderedScreen(page);
   const until = Date.now() + 15000;
   while (Date.now() < until) {
-    if (!AT_THE_DOOR.test(await page.evaluate(() => document.body.innerText).catch(() => ''))) return;
+    if (!(await atTheDoor(page))) return;
     await page.waitForTimeout(100);
   }
 }

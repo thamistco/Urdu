@@ -190,12 +190,14 @@ export function LoginScreen() {
                   onPress={() => handle('apple')}
                   loading={busy === 'apple'}
                 />
-                <Button variant="ghost" onPress={continueAsGuest}>
+                <Button variant="ghost" onPress={continueAsGuest} testID="the-door">
                   Continue as a guest
                 </Button>
               </View>
             ) : (
-              <Button onPress={continueAsGuest}>Start learning</Button>
+              <Button onPress={continueAsGuest} testID="the-door">
+                Start learning
+              </Button>
             )}
           </Reveal>
 

@@ -194,24 +194,50 @@ async function renderedScreen(page, timeoutMs = 20000) {
   );
 }
 
+/**
+ * Whether the sign-in screen is up, read from two marks that must agree: the
+ * line only that screen says, and the `the-door` test id on its way-in button.
+ *
+ * One mark alone was the bug (BACKLOG Q-013). When the headline copy changed
+ * and this regex did not, the sign-in screen stopped matching, and "does not
+ * look like the door" was read as "already through it": `check:stability`
+ * then checked 0 questions on a signed-out app and passed. A test id alone has
+ * the same hole the day someone deletes it. So both are read in one pass, and
+ * when they disagree this throws and says which one moved, rather than picking
+ * the favourable answer.
+ */
+async function atTheDoor(page) {
+  const { text, button } = await page
+    .evaluate(() => ({
+      text: document.body.innerText,
+      // Visible, like the innerText it is compared with: a screen a navigator
+      // keeps mounted but hidden still has the button in its DOM.
+      button: [...document.querySelectorAll('[data-testid="the-door"]')].some((b) => b.getClientRects().length > 0),
+    }))
+    .catch(() => ({ text: '', button: false }));
+  const headline = AT_THE_DOOR.test(text);
+  if (headline === button) return headline;
+  throw new Error(
+    headline
+      ? 'the sign-in headline is showing but no button carries testID "the-door". ' +
+          'If LoginScreen.tsx changed its way in, give the new button that test id.'
+      : 'a button carries testID "the-door" but the sign-in headline does not match AT_THE_DOOR ' +
+          `(${AT_THE_DOOR}). If LoginScreen.tsx changed its copy, change the regex in scripts/lib/serve-dist.js too.`
+  );
+}
+
 async function openTheDoor(page) {
-  if (!AT_THE_DOOR.test(await renderedScreen(page))) {
+  await renderedScreen(page);
+  if (!(await atTheDoor(page))) {
     return false; // already through — a seeded session, or a later navigation
   }
-  const door = page.locator('text=/^(continue as a guest|start learning)$/i').first();
-  if (!(await door.count())) {
-    throw new Error(
-      'stuck on the sign-in screen: no "Continue as a guest" or "Start learning" button. ' +
-        'If LoginScreen.tsx renamed the way in, rename it here too.'
-    );
-  }
-  await door.click();
+  await page.locator('[data-testid="the-door"]').first().click();
   // Polled rather than slept off for the same reason as the read above: 1200ms
   // was enough on an idle machine and not on a loaded one, and the shortfall
   // was reported as the door refusing to open.
   const shut = Date.now() + 15000;
   while (Date.now() < shut) {
-    if (!AT_THE_DOOR.test(await page.evaluate(() => document.body.innerText).catch(() => ''))) return true;
+    if (!(await atTheDoor(page))) return true;
     await page.waitForTimeout(100);
   }
   throw new Error('tapped the way in and the sign-in screen is still showing 15s later');
@@ -256,6 +282,7 @@ module.exports = {
   findChromium,
   enterAsGuest,
   openTheDoor,
+  atTheDoor,
   renderedScreen,
   AT_THE_DOOR,
   MIME,
