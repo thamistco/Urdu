@@ -134,7 +134,9 @@ export function LessonComplete({
                   <Txt className="mt-1 text-center text-xs text-paper/70">
                     {result.freezeUsed.left
                       ? `You have ${count(result.freezeUsed.left, 'freeze')} left.`
-                      : 'That was your last one. You can buy another on your profile.'}
+                      : result.freezeUsed.days > 1
+                        ? 'Those were your last ones. You can buy more on your profile.'
+                        : 'That was your last one. You can buy another on your profile.'}
                   </Txt>
                 </View>
               </Reveal>
