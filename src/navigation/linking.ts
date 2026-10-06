@@ -68,6 +68,7 @@ export const linking: LinkingOptions<RootStackParamList> = {
       },
       Lesson: at('lesson/:lessonId'),
       LetterLab: at('letters/:letterId?'),
+      ReadFaster: at('read'),
       Leaderboard: at('league'),
       Achievements: at('achievements'),
       Settings: at('settings'),

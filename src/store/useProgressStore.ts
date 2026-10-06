@@ -127,6 +127,9 @@ type ProgressState = {
   // xp history for the weekly chart: dayKey -> xp
   xpHistory: Record<string, number>;
 
+  /** Best pace in Read faster, in words a minute; 0 before the first round. */
+  readingBestWpm: number;
+
   // achievement tiers already reached (for "new unlock" detection)
   achieved: Record<string, number>;
 
@@ -171,6 +174,8 @@ type ProgressState = {
   notePathSize: (pathSize: number) => void;
   addGems: (n: number) => void;
   resetAll: () => void;
+  /** Keeps a Read faster pace if it beats the best; true when it did. */
+  recordReadingPace: (wpm: number) => boolean;
 
   // selectors
   metrics: () => MetricSnapshot;
@@ -220,6 +225,7 @@ export const useProgressStore = create<ProgressState>()(
       srs: {},
       srsType: {},
       xpHistory: {},
+      readingBestWpm: 0,
       achieved: {},
       // A profile created now has nothing to be told: it starts on the path as
       // it is. `needsPathMoveNotice` reaches the same answer from the empty
@@ -436,6 +442,12 @@ export const useProgressStore = create<ProgressState>()(
       dismissPathNotice: (pathSize: number) => set({ pathNoticeSeen: true, pathSize }),
       notePathSize: (pathSize: number) => set({ pathSize }),
 
+      recordReadingPace: (wpm) => {
+        if (!(wpm > get().readingBestWpm)) return false;
+        set({ readingBestWpm: wpm });
+        return true;
+      },
+
       resetAll: () =>
         set({
           onboarded: false,
@@ -465,6 +477,7 @@ export const useProgressStore = create<ProgressState>()(
           srs: {},
           srsType: {},
           xpHistory: {},
+          readingBestWpm: 0,
           achieved: {},
           // Whatever this profile was owed, it no longer has the progress the
           // notice would be about.
