@@ -788,7 +788,8 @@ export function HomeScreen() {
           <Reveal delay={120}>
             <View className="mb-5 flex-row gap-3">
               <Card paper className="flex-1" style={{ paddingVertical: 14 }}>
-                <Eyebrow style={{ color: withAlpha(palette.ink, 0.5) }} className="mb-2">
+                {/* 0.65: at 0.5 this measured 3.15:1 on parchment; 0.65 is 4.88:1. */}
+                <Eyebrow style={{ color: withAlpha(palette.ink, 0.65) }} className="mb-2">
                   Today’s word
                 </Eyebrow>
                 <View className="flex-row items-center justify-between gap-2">

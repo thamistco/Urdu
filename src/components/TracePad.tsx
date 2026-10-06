@@ -193,7 +193,8 @@ export function TracePad({
           {strokes.length === 0 && result == null && (
             // sits at the foot of the card so it never covers the letter itself
             <View className="absolute inset-x-0 bottom-3 items-center" pointerEvents="none">
-              <Txt style={{ color: withAlpha(palette.ink, 0.4) }} className="text-xs">
+              {/* 0.65: at 0.4 this measured 2.41:1 on parchment; 0.65 is 4.88:1. */}
+              <Txt style={{ color: withAlpha(palette.ink, 0.65) }} className="text-xs">
                 Draw over the grey letter
               </Txt>
             </View>

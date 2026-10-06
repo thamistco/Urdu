@@ -60,7 +60,11 @@ export function Lexeme({
           style={{
             color,
             textAlign: align,
-            opacity: showScript ? 0.55 : 1,
+            // 0.65, not 0.55: at 0.55 ink on parchment measured 3.63:1 at 12px,
+            // under the 4.5 small text needs, on the line a learner leans on
+            // most. 0.65 is 4.88:1 there and 5.39:1 in paper on the feedback
+            // sheet (daily review 2026-10-07, composited and measured).
+            opacity: showScript ? 0.65 : 1,
             ...(showScript ? null : { fontSize: Math.round(size * 0.78) }),
           }}
         >
