@@ -95,7 +95,7 @@ export function DialogueExercise({ exercise, track, showRoman, locked, onGraded 
                     {withRegister(l.meaning, l.urdu)}
                   </Txt>
                 ) : null}
-                <View className={`mt-2 flex-row gap-2 ${isA ? 'justify-start' : 'justify-end'}`}>
+                <View className={`mt-2 flex-row gap-5 ${isA ? 'justify-start' : 'justify-end'}`}>
                   <SpeakerButton
                     size={24}
                     label="Hear this line"

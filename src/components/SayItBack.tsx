@@ -26,7 +26,10 @@ const HIT_SLOP = 10;
  * second start used to fail and say "Microphone not allowed", which was not the
  * problem. Starting a line now stops whichever line was recording.
  */
-let active: { owner: object; stop: () => Promise<void> } | null = null;
+let active: { owner: object; stop: (compareAfter: boolean) => Promise<void> } | null = null;
+
+/** The line whose turn it is to record, claimed the moment its microphone is tapped. */
+let claim: object | null = null;
 
 /**
  * Say it back: repeat a line aloud and hear yourself next to the recording.
@@ -69,7 +72,7 @@ export function SayItBack({
   // Stable for the life of this line, so the one-at-a-time lock can tell this
   // line from another across renders.
   const self = useRef({}).current;
-  const stopRef = useRef<() => Promise<void>>(async () => {});
+  const stopRef = useRef<(compareAfter: boolean) => Promise<void>>(async () => {});
 
   const release = async () => {
     if (autoStop.current) clearTimeout(autoStop.current);
@@ -89,6 +92,7 @@ export function SayItBack({
     return () => {
       mounted.current = false;
       if (active?.owner === self) active = null;
+      if (claim === self) claim = null;
       void release();
       yours.current?.unloadAsync().catch(() => {});
     };
@@ -121,11 +125,21 @@ export function SayItBack({
     }, NATIVE_START_GRACE_MS);
   };
 
-  async function stopThis() {
+  /** Still this line's turn: on screen, and not pre-empted by another line. */
+  const stillMine = () => mounted.current && claim === self;
+
+  /**
+   * Stop recording. After a learner's own tap (or the 10 s limit) the two
+   * clips play back to back; when another line pre-empts this one, it goes
+   * quiet instead, or this line's comparison would play into the new line's
+   * recording.
+   */
+  async function stopThis(compareAfter = true) {
     if (busy.current) return;
     busy.current = true;
     try {
       if (active?.owner === self) active = null;
+      if (claim === self) claim = null;
       const r = await release();
       if (!r || !mounted.current) return;
       const uri = r.getURI();
@@ -138,7 +152,7 @@ export function SayItBack({
       await yours.current?.unloadAsync().catch(() => {});
       yours.current = sound;
       setPhase('ready');
-      compare();
+      if (compareAfter) compare();
     } catch {
       if (mounted.current) setPhase('idle');
     } finally {
@@ -151,26 +165,31 @@ export function SayItBack({
   const start = async () => {
     if (busy.current) return;
     busy.current = true;
+    // Claimed before the first await, so a second line tapped while this one
+    // waits on the permission prompt takes the turn and this one backs out,
+    // rather than both opening a microphone.
+    claim = self;
     try {
-      if (active && active.owner !== self) await active.stop();
+      if (active && active.owner !== self) await active.stop(false);
       const permission = await Audio.requestPermissionsAsync();
-      if (!mounted.current) return;
+      if (!stillMine()) return;
       if (!permission.granted) return setPhase('blocked');
       await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
       const { recording: r } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-      if (!mounted.current) {
+      if (!stillMine()) {
         await r.stopAndUnloadAsync().catch(() => {});
         await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true }).catch(() => {});
         return;
       }
       recording.current = r;
-      active = { owner: self, stop: () => stopRef.current() };
+      active = { owner: self, stop: (compareAfter: boolean) => stopRef.current(compareAfter) };
       setPhase('recording');
       autoStop.current = setTimeout(() => void stopThis(), MAX_RECORDING_MS);
     } catch {
       // Permission was granted or never asked; something else failed (another
       // app holding the microphone, an unsupported browser). Not a permission
-      // problem, so it does not say so.
+      // problem, so it does not say so, and playback mode is restored.
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true }).catch(() => {});
       if (mounted.current) setPhase('idle');
     } finally {
       busy.current = false;
@@ -188,7 +207,9 @@ export function SayItBack({
 
   return (
     <View className="items-center">
-      <View className="flex-row items-center gap-2">
+      {/* 20pt apart: each button's 10pt hit slop reaches halfway, so a tap
+          for one can never land on the other. */}
+      <View className="flex-row items-center gap-5">
         <Pressable
           onPress={recordingNow ? () => void stopThis() : () => void start()}
           hitSlop={HIT_SLOP}
