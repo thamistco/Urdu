@@ -294,6 +294,22 @@ async function main() {
           );
         }
       }
+      /**
+       * Tap targets, measured as the browser lays them out. The close button
+       * was 20x32 and the play button 30x30, under hitSlops written to make
+       * them 44: react-native-web ignores hitSlop, so on the web it was never
+       * there (daily review 2026-10-07). src/lib/reach.ts is the fix.
+       */
+      const small = await page.evaluate(() =>
+        [...document.querySelectorAll('[aria-label="Close lesson"], [aria-label^="Play"], [aria-label^="Hear"]')]
+          .map((n) => ({ name: n.getAttribute('aria-label'), r: n.getBoundingClientRect() }))
+          .filter(({ r }) => r.width > 0 && (r.width < 43.5 || r.height < 43.5))
+          .map(({ name, r }) => `"${name}" ${Math.round(r.width)}x${Math.round(r.height)}`)
+      );
+      if (small.length) problems.push(`Lesson controls under the 44pt minimum: ${small.join(', ')}.`);
+      const named = await page.locator('[aria-label="Close lesson"]').count();
+      if (!named) problems.push('No "Close lesson" button found, so its tap target was never measured.');
+
       // Leave the lesson the way a learner would, so the checks below start
       // from Home rather than from wherever this ended up.
       await tapByText(page, /^✕$/);
@@ -495,6 +511,7 @@ async function main() {
   console.log('check:controls — the league table says on screen that its cohort is not real people.');
   console.log('check:controls — a teaching card ends on one tap, with no banner asking to be acknowledged twice.');
   console.log('check:controls — a lesson puts what a thumb has to reach in the lower half of the screen.');
+  console.log("check:controls — a lesson's close and play buttons are at least 44 by 44 on the web.");
   console.log(
     'check:controls — Settings offers a guest no sign-in it cannot honour, and still says where progress lives.'
   );

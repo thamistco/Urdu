@@ -1,3 +1,4 @@
+import { reach } from '../lib/reach';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Urdu, Txt, Eyebrow } from '../components/Text';
@@ -255,10 +256,9 @@ export function SpeakerButton({
         setMine(claimSpeaker());
         onPress();
       }}
-      hitSlop={8}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.92 : 1 }] })}
+      style={({ pressed }) => ({ ...reach(8), transform: [{ scale: pressed ? 0.92 : 1 }] })}
     >
       <Animated.View
         pointerEvents="none"

@@ -1,3 +1,4 @@
+import { reach } from '../lib/reach';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Audio } from 'expo-av';
@@ -19,7 +20,7 @@ const MAX_RECORDING_MS = 10_000;
  */
 const NATIVE_START_GRACE_MS = 1200;
 
-/** 24pt circles plus this on every side make the 44pt minimum touch target. */
+/** 24pt circles plus this on every side make the 44pt minimum touch target (see reach). */
 const HIT_SLOP = 10;
 
 /**
@@ -241,11 +242,10 @@ export function SayItBack({
       <View className={`${stack ? 'flex-col' : 'flex-row'} items-center gap-5`}>
         <Pressable
           onPress={recordingNow ? () => void stopThis() : () => void start()}
-          hitSlop={HIT_SLOP}
           accessibilityRole="button"
           accessibilityLabel={micLabel}
           testID={`say-it-back-${phase}`}
-          style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.92 : 1 }] })}
+          style={({ pressed }) => ({ ...reach(HIT_SLOP), transform: [{ scale: pressed ? 0.92 : 1 }] })}
         >
           <View
             className="items-center justify-center rounded-full"
@@ -266,11 +266,10 @@ export function SayItBack({
         {phase === 'ready' ? (
           <Pressable
             onPress={playYours}
-            hitSlop={HIT_SLOP}
             accessibilityRole="button"
             accessibilityLabel="Hear yourself again"
             testID="say-it-back-play-yours"
-            style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.92 : 1 }] })}
+            style={({ pressed }) => ({ ...reach(HIT_SLOP), transform: [{ scale: pressed ? 0.92 : 1 }] })}
           >
             <View
               className="items-center justify-center rounded-full"

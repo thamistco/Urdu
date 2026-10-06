@@ -1,3 +1,4 @@
+import { reach } from '../lib/reach';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Pressable, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -309,7 +310,7 @@ export function PracticeScreen() {
             {query.length > 0 && (
               <Pressable
                 onPress={() => setQuery('')}
-                hitSlop={10}
+                style={reach(12)}
                 accessibilityRole="button"
                 accessibilityLabel="Clear search"
               >

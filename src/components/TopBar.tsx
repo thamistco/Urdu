@@ -22,8 +22,9 @@ export function TopBar({
             feedback.tap();
             onBack();
           }}
-          hitSlop={12}
-          className="rounded-lg px-2 py-1"
+          className="rounded-lg px-2"
+          // 44 tall without moving: hitSlop does nothing on the web (see reach).
+          style={{ paddingVertical: 10, marginVertical: -6 }}
         >
           <Bold className="text-base text-paper/60">← Back</Bold>
         </Pressable>
