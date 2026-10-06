@@ -47,15 +47,37 @@ export function pickRound<W>(pool: readonly W[], size = ROUND_SIZE, random: () =
 export type Attempt = { ms: number; read: boolean };
 
 /**
- * Words read per minute: only the words the learner says they read, over only
- * the time spent on those words. A word they could not read is left out of
- * both, so skipping a hard one neither inflates nor drags the pace.
+ * Faster than this and the word was tapped through, not read: nobody reads a
+ * Nastaliq word in under 0.4 s. Without this floor a single curious tap-through
+ * set a best of about 240 a minute that no honest round could ever beat.
+ */
+export const MIN_READ_MS = 400;
+
+/** A round sets a best only if at least this many of its words were read. */
+export const MIN_READS_FOR_BEST = 8;
+
+/** The attempts that count as reading: marked read, and not tapped through. */
+const genuine = (attempts: readonly Attempt[]) => attempts.filter((a) => a.read && a.ms >= MIN_READ_MS);
+
+/** Whether a round is real enough to set a best. */
+export function countsTowardBest(attempts: readonly Attempt[]): boolean {
+  return genuine(attempts).length >= MIN_READS_FOR_BEST;
+}
+
+/**
+ * Words recognised per minute, one word at a time: only the words the learner
+ * says they read, over only the time spent on those words. A word they could
+ * not read is left out of both, so skipping a hard one neither inflates nor
+ * drags the pace, and so is one tapped through faster than MIN_READ_MS.
+ *
+ * This is a pace for single words including the tap, not prose reading speed,
+ * and the screen says so.
  *
  * Returns 0 when nothing was read, rather than NaN or Infinity, because the
  * result is shown and stored.
  */
 export function wordsPerMinute(attempts: readonly Attempt[]): number {
-  const read = attempts.filter((a) => a.read && a.ms > 0);
+  const read = genuine(attempts);
   const ms = read.reduce((sum, a) => sum + a.ms, 0);
   if (!read.length || ms <= 0) return 0;
   return Math.round((read.length / ms) * 60_000);
