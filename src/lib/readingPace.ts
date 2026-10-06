@@ -59,6 +59,11 @@ export const MIN_READS_FOR_BEST = 8;
 /** The attempts that count as reading: marked read, and not tapped through. */
 const genuine = (attempts: readonly Attempt[]) => attempts.filter((a) => a.read && a.ms >= MIN_READ_MS);
 
+/** How many words were genuinely read: the count the pace is made of. */
+export function wordsRead(attempts: readonly Attempt[]): number {
+  return genuine(attempts).length;
+}
+
 /** Whether a round is real enough to set a best. */
 export function countsTowardBest(attempts: readonly Attempt[]): boolean {
   return genuine(attempts).length >= MIN_READS_FOR_BEST;

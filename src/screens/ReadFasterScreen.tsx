@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Screen } from '../components/Screen';
@@ -15,6 +15,7 @@ import {
   readableWords,
   pickRound,
   wordsPerMinute,
+  wordsRead,
   countsTowardBest,
   MIN_WORDS_FOR_A_ROUND,
   type Attempt,
@@ -58,6 +59,23 @@ export function ReadFasterScreen() {
     guardUntil.current = Date.now() + TAP_GUARD_MS;
   };
   const guarded = () => Date.now() < guardUntil.current;
+
+  // The result is spoken through a live region that fills just after the
+  // result screen mounts: many screen readers announce a live region only when
+  // its content changes after it exists, not content it was born with.
+  const [spoken, setSpoken] = useState('');
+  useEffect(() => {
+    if (phase !== 'done') return setSpoken('');
+    const pace = wordsPerMinute(attempts);
+    const t = setTimeout(
+      () =>
+        setSpoken(
+          `${newBest ? 'New best. ' : 'Round done. '}${pace > 0 ? `${pace} a minute, one word at a time. ` : ''}You read ${wordsRead(attempts)} of ${attempts.length}.`
+        ),
+      60
+    );
+    return () => clearTimeout(t);
+  }, [phase, attempts, newBest]);
 
   const start = () => {
     setRound(pickRound(pool));
@@ -146,13 +164,16 @@ export function ReadFasterScreen() {
   }
 
   if (phase === 'done') {
-    const read = attempts.filter((a) => a.read).length;
+    const read = wordsRead(attempts);
     const pace = wordsPerMinute(attempts);
     return (
       <Shell onBack={back}>
-        {/* Announced when it appears: the button that led here is gone, so a
-            screen reader would otherwise say nothing about the result. */}
-        <View aria-live="polite">
+        {/* Spoken, because the button that led here is gone and a screen
+            reader would otherwise say nothing about the result. See `spoken`. */}
+        <View aria-live="polite" style={SPOKEN_ONLY}>
+          <Txt>{spoken}</Txt>
+        </View>
+        <View>
           <Eyebrow style={{ color: palette.gold }}>{newBest ? 'New best' : 'Round done'}</Eyebrow>
           {/* "A minute, one word at a time", not "words a minute": this is the
               pace of recognising single words, tap included, and set next to
@@ -182,6 +203,7 @@ export function ReadFasterScreen() {
         {/* Labelled so a screen reader does not read the word out, which would
             give the answer away and turn reading into listening. */}
         <Urdu
+          accessibilityRole="image"
           accessibilityLabel="An Urdu word to read. Read it, then choose Show me."
           style={{ color: palette.ink, ...urduGlyph(56) }}
         >
@@ -221,3 +243,6 @@ function Shell({ onBack, label, children }: { onBack: () => void; label?: string
     </View>
   );
 }
+
+/** On screen for a screen reader, invisible to everyone else. */
+const SPOKEN_ONLY = { position: 'absolute', width: 1, height: 1, overflow: 'hidden' } as const;
