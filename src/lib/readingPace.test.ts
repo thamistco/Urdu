@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readableWords, pickRound, wordsPerMinute, ROUND_SIZE } from './readingPace';
+import { readableWords, pickRound, wordsPerMinute, countsTowardBest, ROUND_SIZE, MIN_READ_MS } from './readingPace';
 import { WORDS } from '../data/words';
 
 describe('readableWords', () => {
@@ -51,10 +51,32 @@ describe('wordsPerMinute', () => {
     expect(wordsPerMinute(withMiss)).toBe(30);
   });
 
+  it('does not count a word tapped through faster than anyone can read it', () => {
+    // One curious tap-through used to set a best no honest round could beat.
+    const tappedThrough = Array.from({ length: 10 }, () => ({ ms: 250, read: true }));
+    expect(wordsPerMinute(tappedThrough)).toBe(0);
+    expect(MIN_READ_MS).toBeGreaterThan(250);
+  });
+
   it('is 0, not NaN or Infinity, when nothing was read', () => {
     expect(wordsPerMinute([])).toBe(0);
     expect(wordsPerMinute([{ ms: 1000, read: false }])).toBe(0);
     expect(wordsPerMinute([{ ms: 0, read: true }])).toBe(0);
+  });
+});
+
+describe('countsTowardBest', () => {
+  it('needs most of the round genuinely read', () => {
+    const read = (n: number) => [
+      ...Array.from({ length: n }, () => ({ ms: 1500, read: true })),
+      ...Array.from({ length: 10 - n }, () => ({ ms: 1500, read: false })),
+    ];
+    expect(countsTowardBest(read(8))).toBe(true);
+    expect(countsTowardBest(read(7))).toBe(false);
+  });
+
+  it('ignores tap-throughs when deciding', () => {
+    expect(countsTowardBest(Array.from({ length: 10 }, () => ({ ms: 200, read: true })))).toBe(false);
   });
 });
 
