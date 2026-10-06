@@ -10,6 +10,22 @@ store, and every learner would lose their progress. The old name survives on
 purpose in the `HARF_*` environment variables, which CI, the pre-push hook and
 `app.config.js` share and nobody sees.
 
+## How the owner wants to work (2026-10-06)
+
+- **Decide, do not ask.** Decisions on prices, wording, design and features are
+  delegated. Make them, ship them, and say so in the day's summary; the owner
+  reverts what they disagree with. Only money, accounts, keys and outside
+  dashboards need the owner.
+- **Research from several perspectives,** at least three and one of them the
+  case against.
+- **Two days before a research change ships:** propose it one day, check it
+  again with fresh eyes on a later day, then build it. Bug fixes ship the same
+  day.
+- **A plain-language summary of every change at the end of each day.**
+
+The nightly review in [`docs/daily-review/`](docs/daily-review/README.md) runs
+all of this.
+
 **Read [`docs/ENGINEERING_STANDARDS.md`](docs/ENGINEERING_STANDARDS.md) before
 writing code here.** It is the constitution — ~170 rules across architecture,
 TypeScript, React, testing, accessibility, performance, security, git, CI and
