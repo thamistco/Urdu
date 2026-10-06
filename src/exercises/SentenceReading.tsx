@@ -211,7 +211,7 @@ export function ReadingExercise({ exercise, track, showRoman, locked, onGraded }
                 </Txt>
               ) : null}
             </View>
-            <View className="ms-2 mt-0.5 items-center gap-2">
+            <View className="ms-2 mt-0.5 items-center gap-5">
               <SpeakerButton
                 size={26}
                 label="Hear this line"
