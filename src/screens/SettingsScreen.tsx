@@ -49,6 +49,10 @@ function Row({
         }}
         trackColor={{ true: palette.gold, false: withAlpha(palette.white, 0.15) }}
         thumbColor={palette.paper}
+        // react-native-web colours an on thumb with this, not thumbColor, and
+        // without it drew Material teal (#009688), the one colour on the
+        // screen not in the palette, at 1.59:1 on the gold track.
+        {...({ activeThumbColor: palette.paper } as object)}
       />
     </View>
   );
@@ -355,6 +359,9 @@ export function SettingsScreen() {
                         }}
                         accessibilityRole="button"
                         accessibilityLabel={`${o.label}’s voice. Tap to select and hear it.`}
+                        // The choice was shown by a border alone, so a screen
+                        // reader could not tell which voice was set.
+                        aria-pressed={active}
                       >
                         <View
                           className="items-center rounded-xl border py-3"
