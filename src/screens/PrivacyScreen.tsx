@@ -52,8 +52,10 @@ export function PrivacyScreen() {
 
         <Section title="What we do not do">
           No advertising and no ad network of any kind. No selling, renting or sharing your data with third parties for
-          marketing. No microphone access and no voice recording — the app plays recorded Urdu audio to you; it never
-          listens to you or scores your accent. No tracking across other apps or websites.
+          marketing. No tracking across other apps or websites. The microphone is used only when you tap Say it back on
+          a line, to record you saying it so you can hear yourself next to the native recording. That recording stays on
+          your device. It is never uploaded, never shared and never scored, and nothing else in the app ever listens to
+          you.
         </Section>
 
         <Section title="Audio and other assets">
