@@ -59,25 +59,35 @@ function dayBefore(key: string): string {
  * Account for the days missed since `lastActiveDay`, without counting today.
  *
  * - Played today or yesterday: nothing to do.
- * - Missed exactly one day, with a freeze and a streak to save: spend the
- *   freeze, and treat yesterday as covered by moving `lastActiveDay` to it.
- *   Today's lesson then extends the streak exactly as it would have.
- * - Anything longer, or one missed day with no freeze: the streak is broken
- *   and reads 0 until a lesson starts a new one.
+ * - Missed some days, holding a freeze for each, with a streak to save: spend
+ *   one freeze per missed day, and treat yesterday as covered by moving
+ *   `lastActiveDay` to it. Today's lesson then extends the streak exactly as
+ *   it would have.
+ * - More missed days than freezes held: the streak is broken and reads 0
+ *   until a lesson starts a new one, and the freezes are kept, since spending
+ *   them would save nothing.
+ *
+ * One freeze per day, up to all three a learner can hold (daily review
+ * 2026-10-07, P-008). It used to be one missed day only, so a learner who had
+ * bought three freezes and missed two days lost the streak anyway, which is
+ * not what "a freeze covers one missed day" leads anyone to expect. Slack
+ * framed as reserves brought people back after a miss 55% of the time
+ * against 37% for a hard goal (Sharif and Shu 2019).
  *
  * Safe to run any number of times in a day: after one run the gap is at most
  * one day, or the streak is 0, and neither changes again. The streak must be
  * above 0 to spend a freeze, so a run over an already-broken streak cannot
  * burn one on nothing.
  */
-export function rollStreak(s: StreakState, today: string = dayKey()): StreakState & { froze: boolean } {
-  if (!s.lastActiveDay || s.streak <= 0) return { ...s, froze: false };
+export function rollStreak(s: StreakState, today: string = dayKey()): StreakState & { froze: number } {
+  if (!s.lastActiveDay || s.streak <= 0) return { ...s, froze: 0 };
   const gap = daysBetween(s.lastActiveDay, today);
-  if (gap <= 1) return { ...s, froze: false };
-  if (gap === 2 && s.freezes > 0) {
-    return { streak: s.streak, freezes: s.freezes - 1, lastActiveDay: dayBefore(today), froze: true };
+  if (gap <= 1) return { ...s, froze: 0 };
+  const missed = gap - 1;
+  if (missed <= s.freezes) {
+    return { streak: s.streak, freezes: s.freezes - missed, lastActiveDay: dayBefore(today), froze: missed };
   }
-  return { ...s, streak: 0, froze: false };
+  return { ...s, streak: 0, froze: 0 };
 }
 
 /**
