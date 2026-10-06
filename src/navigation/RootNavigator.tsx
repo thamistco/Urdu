@@ -7,6 +7,7 @@ import { LoginScreen } from '../screens/LoginScreen';
 import { OnboardingScreen } from '../screens/onboarding/OnboardingScreen';
 import { LessonScreen } from '../screens/LessonScreen';
 import { LetterLabScreen } from '../screens/LetterLabScreen';
+import { ReadFasterScreen } from '../screens/ReadFasterScreen';
 import { LeaderboardScreen } from '../screens/LeaderboardScreen';
 import { AchievementsScreen } from '../screens/AchievementsScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
@@ -39,6 +40,7 @@ export function RootNavigator() {
             options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
           />
           <Stack.Screen name="LetterLab" component={LetterLabScreen} options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="ReadFaster" component={ReadFasterScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="Leaderboard" component={LeaderboardScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen
             name="Achievements"

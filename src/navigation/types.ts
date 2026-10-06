@@ -5,6 +5,7 @@ export type RootStackParamList = {
   Lesson: { lessonId: string };
   Review: undefined;
   LetterLab: { letterId?: string } | undefined;
+  ReadFaster: undefined;
   Leaderboard: undefined;
   Achievements: undefined;
   Settings: undefined;

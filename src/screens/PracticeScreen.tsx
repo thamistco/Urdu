@@ -17,7 +17,9 @@ import { feedback } from '../lib/feedback';
 import { dueCount } from '../lib/srs';
 import { strength } from '../lib/srs';
 import { useProgressStore } from '../store/useProgressStore';
-import { TOPICS, wordsByTopic, LEVEL_META, LEVEL_ORDER, type Level } from '../data/words';
+import { useSettingsStore } from '../store/useSettingsStore';
+import { readableWords, MIN_WORDS_FOR_A_ROUND } from '../lib/readingPace';
+import { TOPICS, WORDS, wordsByTopic, LEVEL_META, LEVEL_ORDER, type Level } from '../data/words';
 import { GRAMMAR } from '../data/grammar';
 import { PASSAGES, DIALOGUES } from '../data/sentences';
 import type { RootStackParamList } from '../navigation/types';
@@ -76,6 +78,15 @@ export function PracticeScreen() {
   const nav = useNavigation<Nav>();
   const srs = useProgressStore((s) => s.srs);
   const learnedWords = useProgressStore((s) => s.learnedWords);
+  const readingBest = useProgressStore((s) => s.readingBestWpm);
+  const track = useSettingsStore((s) => s.track);
+  // Only offered when a round can actually be played: on a track with script,
+  // and with enough taught words that a round does not repeat itself. A card
+  // that opened onto "learn more first" would be a dead end.
+  const canReadFaster = useMemo(
+    () => track !== 'roman' && readableWords(learnedWords, WORDS).length >= MIN_WORDS_FOR_A_ROUND,
+    [track, learnedWords]
+  );
   const regenHearts = useProgressStore((s) => s.regenHearts);
 
   useEffect(() => {
@@ -219,6 +230,20 @@ export function PracticeScreen() {
                 </Txt>
               </View>
               <ProgressBar progress={totalTracked ? mastered / totalTracked : 0} color={palette.gold} height={10} />
+            </Card>
+          </Reveal>
+        )}
+
+        {/* Read faster: building reading speed in the script (P-004). */}
+        {canReadFaster && (
+          <Reveal delay={150}>
+            <Card className="mb-6" accent={palette.gold} onPress={() => nav.navigate('ReadFaster')}>
+              <Bold className="text-[0.9375rem]">Read faster</Bold>
+              <Txt className="mt-1 text-sm text-paper/70">
+                {readingBest > 0
+                  ? `Words you know, read at a glance. Your best: ${readingBest} a minute.`
+                  : 'Words you know, read at a glance. Ten words, about a minute.'}
+              </Txt>
             </Card>
           </Reveal>
         )}
