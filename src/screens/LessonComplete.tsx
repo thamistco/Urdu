@@ -126,11 +126,17 @@ export function LessonComplete({
                   className="mb-3 items-center rounded-2xl border p-4"
                   style={{ borderColor: withAlpha(palette.gold, 0.35), backgroundColor: withAlpha(palette.gold, 0.1) }}
                 >
-                  <Bold style={{ color: palette.goldLight }}>A streak freeze covered the day you missed</Bold>
+                  <Bold style={{ color: palette.goldLight }}>
+                    {result.freezeUsed.days > 1
+                      ? `${result.freezeUsed.days} streak freezes covered the ${result.freezeUsed.days} days you missed`
+                      : 'A streak freeze covered the day you missed'}
+                  </Bold>
                   <Txt className="mt-1 text-center text-xs text-paper/70">
                     {result.freezeUsed.left
                       ? `You have ${count(result.freezeUsed.left, 'freeze')} left.`
-                      : 'That was your last one. You can buy another on your profile.'}
+                      : result.freezeUsed.days > 1
+                        ? 'Those were your last ones. You can buy more on your profile.'
+                        : 'That was your last one. You can buy another on your profile.'}
                   </Txt>
                 </View>
               </Reveal>

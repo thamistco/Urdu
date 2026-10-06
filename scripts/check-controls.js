@@ -460,6 +460,22 @@ async function main() {
           'yesterday: streak 12, no freezes left, last active yesterday.'
       );
     }
+    // Two missed days, three freezes held: one freeze each (P-008), and the
+    // count kept for the lesson to report.
+    const twoDays = await afterOpening({ streak: 12, freezes: 3, lastActiveDay: daysAgo(3) });
+    if (
+      twoDays.saved.streak !== 12 ||
+      twoDays.saved.freezes !== 1 ||
+      twoDays.saved.freezesOnHold !== 2 ||
+      twoDays.saved.lastActiveDay !== daysAgo(1)
+    ) {
+      problems.push(
+        `A learner who missed two days holding 3 freezes opened to streak ${twoDays.saved.streak}, ` +
+          `${twoDays.saved.freezes} freezes (${twoDays.saved.freezesOnHold} on hold), last active ` +
+          `${twoDays.saved.lastActiveDay}. Each missed day should spend one: streak 12, 1 left, 2 on hold, ` +
+          'last active yesterday.'
+      );
+    }
     if (!/keep your 12-day streak/i.test(frozen.body)) {
       problems.push('After a freeze covers yesterday, Home does not say today is still needed to keep the streak.');
     }
@@ -487,7 +503,7 @@ async function main() {
     'check:controls — a streak one day from breaking says so on Home, and stays silent once today is played.'
   );
   console.log(
-    'check:controls — opening the app applies missed days: a lapsed streak reads 0, one missed day spends a freeze.'
+    'check:controls — opening the app applies missed days: a lapsed streak reads 0, each missed day spends a freeze.'
   );
 }
 
