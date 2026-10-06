@@ -38,14 +38,11 @@ const SKIPPABLE_FOR_SPEAKERS = UNITS.filter((u) => u.level === 'beginner')
   .map((l) => l.id);
 
 /**
- * The placement quiz used to compute a `startLevel` that nothing ever read —
- * a learner who tested as "Emerging (B1)" landed at lesson one of the course
- * exactly like someone brand new to Urdu. It now actually places them: a
- * near-perfect score skips the entire Beginner stage (they just demonstrated
- * reading a word, sounding one out, and recognising the script), and a
- * middling score gets the same basic-vocab skip a heritage speaker gets.
- * Nothing above Beginner is ever skipped by placement — the quiz only tests
- * script and absolute-basics, not Elementary-and-up content.
+ * What the quick check decides, now: only whether a learner who already speaks
+ * Urdu is offered the alphabet skip, and whether their label says they read
+ * some. Everything else comes from the learner's own answer about speaking it
+ * (see `isSpeaker` below), and `startLevel` is saved but read by nothing. So
+ * only a speaker takes it (P-005, 2026-10-07).
  */
 /**
  * The nine alphabet lessons of the Beginner stage.
@@ -255,8 +252,8 @@ export function OnboardingScreen() {
    * and there are exactly four of them — so the top level needed a clean sweep
    * with no margin at all. Deleting one Roman question, or adding a third
    * track, would have capped that track at level 1 for everybody, silently:
-   * nothing reads `lvl` except the level a learner starts on and whether a
-   * speaker is offered the alphabet skip, and neither announces itself.
+   * nothing reads `lvl` except a speaker's label and whether they are offered
+   * the alphabet skip, and neither announces itself.
    *
    * Written as "all of them" and "half of them" so the thresholds move with
    * the quiz instead of being two numbers that happen to match today.
@@ -282,10 +279,11 @@ export function OnboardingScreen() {
   /**
    * Placement alone no longer skips anything.
    *
-   * The four questions are multiple choice over two or three options, so two
-   * correct — the old threshold for skipping the basic vocabulary — is roughly
-   * what pure guessing scores. That meant someone who had just told us, in
-   * their own words, that they are starting from scratch could be fast-tracked
+   * The four questions are multiple choice over four options, so two
+   * correct — the old threshold for skipping the basic vocabulary — is what
+   * pure guessing reaches about one time in four (26%, binomial at p = 0.25).
+   * That meant someone who had just told us, in their own words, that they
+   * are starting from scratch could be fast-tracked
    * past the beginning anyway, and land on a path that opens somewhere in the
    * middle of topics they have never seen.
    *
