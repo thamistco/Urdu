@@ -58,8 +58,8 @@ function ProviderButton({ label, onPress, loading }: { label: string; onPress: (
  * the picture spans the whole of it, while this content starts below the notch.
  *
  * The copy is short for the same reason. There is 28% of the screen below the
- * sunset and everything has to live in it, so the tagline is a line rather than
- * a paragraph. `check:scenery` measures what is actually behind each line of
+ * sunset and everything has to live in it, so the tagline is a headline and one
+ * sentence rather than a paragraph. `check:scenery` measures what is actually behind each line of
  * text on this screen, so a stack that grows back up into the sun fails there
  * rather than shipping.
  *
@@ -164,8 +164,17 @@ export function LoginScreen() {
                 providers and the guest button: a band this tight can afford
                 decoration or it can afford saying what the app is, and the
                 ghost button is already distinct enough to separate itself. */}
+            {/* The heritage speaker first: someone who grew up hearing Urdu and
+                cannot read it is the learner no other Urdu app is built for, and
+                the one this course fits best (daily review, 2026-10-06, P-002).
+                A question, not "You speak it.": the wordmark never names the
+                language, so "it" had no subject, and the line guessed about the
+                reader before onboarding asks. The second line is for everyone
+                else, so a complete beginner is welcomed rather than turned
+                away. */}
+            <Bold className="mb-1 text-center text-[0.9375rem] text-paper">Speak Urdu? Now read it.</Bold>
             <Txt className="mb-3 text-center text-[0.8125rem] leading-5 text-paper/70">
-              The alphabet, the words, the grammar and the sound of it. The whole language.
+              New to Urdu? Start at the first letter. The whole language is here.
             </Txt>
             {/* Two doors or one, depending on whether there is anything behind
                 them. See the note on `authConfigured` above. */}

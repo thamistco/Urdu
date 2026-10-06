@@ -59,12 +59,18 @@ long description is for the human who has already arrived.
 
 ### App Store
 
-| Field            | Limit | Copy                                                                                                                                                  |
-| ---------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Name             | 30    | `Qaaf: Learn Urdu`                                                                                                                                    |
-| Subtitle         | 30    | `The script and the language`                                                                                                                         |
-| Keywords         | 100   | `urdu,nastaliq,alphabet,script,read,write,pakistani,hindi,vocabulary,flashcards,tracing,phrases`                                                      |
-| Promotional text | 170   | `The alphabet in all four of its joining forms, 2,279 words spoken aloud, 25 grammar ideas and 256 sentences you build yourself. A full Urdu course.` |
+| Field            | Limit | Copy                                                                                                                                                        |
+| ---------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Name             | 30    | `Qaaf: Learn Urdu`                                                                                                                                          |
+| Subtitle         | 30    | `The script and the language`                                                                                                                               |
+| Keywords         | 100   | `urdu,nastaliq,alphabet,script,read,write,pakistani,hindi,vocabulary,flashcards,tracing,phrases`                                                            |
+| Promotional text | 170   | `Speak Urdu? Now read it. New to Urdu? Start at the first letter: 2,279 words spoken aloud, 25 grammar ideas, 256 sentences you build. A full Urdu course.` |
+
+The promotional text leads with the heritage speaker who can speak Urdu but
+not read it, the learner no other Urdu app is built for (daily review,
+2026-10-06, P-002), and then turns straight to the beginner: the store page is
+where a beginner decides, so it must not read as a course only for speakers.
+153 of 170 characters.
 
 The subtitle deliberately repeats nothing from the name. "Urdu" is in the name,
 so the subtitle spends its thirty characters on the shape of the course — where
