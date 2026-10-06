@@ -64,7 +64,11 @@ long description is for the human who has already arrived.
 | Name             | 30    | `Qaaf: Learn Urdu`                                                                                                                                    |
 | Subtitle         | 30    | `The script and the language`                                                                                                                         |
 | Keywords         | 100   | `urdu,nastaliq,alphabet,script,read,write,pakistani,hindi,vocabulary,flashcards,tracing,phrases`                                                      |
-| Promotional text | 170   | `The alphabet in all four of its joining forms, 2,279 words spoken aloud, 25 grammar ideas and 256 sentences you build yourself. A full Urdu course.` |
+| Promotional text | 170   | `You speak it. Now read it. Every letter in all four joining forms, 2,279 words spoken aloud, 25 grammar ideas and 256 sentences you build yourself.` |
+
+The promotional text leads with the heritage speaker who can speak Urdu but
+not read it, the learner no other Urdu app is built for (daily review,
+2026-10-06, P-002); the course's breadth follows for everyone else.
 
 The subtitle deliberately repeats nothing from the name. "Urdu" is in the name,
 so the subtitle spends its thirty characters on the shape of the course — where

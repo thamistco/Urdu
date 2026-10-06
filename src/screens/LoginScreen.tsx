@@ -164,8 +164,14 @@ export function LoginScreen() {
                 providers and the guest button: a band this tight can afford
                 decoration or it can afford saying what the app is, and the
                 ghost button is already distinct enough to separate itself. */}
+            {/* The heritage speaker first: someone who grew up hearing Urdu and
+                cannot read it is the learner no other Urdu app is built for, and
+                the one this course fits best (daily review, 2026-10-06, P-002).
+                The second line is for everyone else, so a complete beginner
+                does not read the first and decide the app is not for them. */}
+            <Bold className="mb-1 text-center text-[0.9375rem] text-paper">You speak it. Now read it.</Bold>
             <Txt className="mb-3 text-center text-[0.8125rem] leading-5 text-paper/70">
-              The alphabet, the words, the grammar and the sound of it. The whole language.
+              New to Urdu? Start at the first letter. The whole language is here.
             </Txt>
             {/* Two doors or one, depending on whether there is anything behind
                 them. See the note on `authConfigured` above. */}
