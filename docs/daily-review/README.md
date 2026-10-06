@@ -12,9 +12,10 @@ happen.
 
 ## The rotation
 
-One area a night. Take the area with the oldest "last reviewed" date; on a tie,
-the one higher in this list. Sixteen areas, so each comes round every sixteen
-nights.
+As many areas a night as the night allows: the owner asked (2026-10-06) for as
+much as possible every day. Take them in order of the oldest "last reviewed"
+date; on a tie, the one higher in this list. Each area finished gets its own
+report.
 
 | #   | Area                         | What it covers                                                                               | Last reviewed |
 | --- | ---------------------------- | -------------------------------------------------------------------------------------------- | ------------- |
@@ -54,10 +55,12 @@ nights.
    same night through the usual gate: `npm run check:all`, push to the deploy
    branch, confirm from the deploy job's `check:deployed` line that the site
    serves it. One logical change per commit.
-6. **Propose everything else.** A change that comes out of research (a new
-   feature, a redesign, a price, new wording) goes into "Checked once" with the
-   date and the perspectives weighed. It is built only after its second check
-   on a later day.
+6. **Propose everything else, and build it the same day.** A change that
+   comes out of research (a new feature, a redesign, a price, new wording)
+   goes into "Checked once" with the date and the perspectives weighed, and is
+   built that day on its own branch, `claude/proposal-<id>-<slug>`, through
+   `check:all` but not merged. It reaches the app only after its second check
+   on a later day passes, when the branch is merged and shipped.
 7. **Write** the night's report as `YYYY-MM-DD-<area>.md` and update the
    "last reviewed" date above.
 8. **Summarise the day** for the owner (see below).
@@ -86,9 +89,10 @@ checked on two different days before it is committed to the app:
 - **Day one** proposes it, with the evidence and the perspectives weighed, in
   "Checked once" in `BACKLOG.md`.
 - **A later day** looks again with fresh eyes: searches for evidence against
-  it, takes a perspective day one did not, and re-measures. If it holds, it is
-  built and shipped that night. If it does not, it is changed (and the changed
-  version starts again at day one) or dropped, with the reason written down.
+  it, takes a perspective day one did not, and re-measures, including looking
+  at the built branch in the app. If it holds, the branch is merged and shipped
+  that night. If it does not, it is changed (and the changed version starts
+  again at day one) or dropped, with the reason written down.
 
 Bug fixes are not research changes and ship the same day.
 
