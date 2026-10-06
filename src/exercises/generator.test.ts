@@ -12,7 +12,7 @@ import {
   soundTokens,
 } from './generator';
 import { getLetter, LETTERS, POSITIONS, type Letter } from '../data/letters';
-import { resolveLesson, UNITS, ALL_LESSONS, type Lesson } from '../data/units';
+import { resolveLesson, UNITS, ALL_LESSONS, lessonOrderForTrack, type Lesson } from '../data/units';
 import { WORDS, getWord } from '../data/words';
 import { VERDICT_CUES, cueOf, NUMERALS, COLOURS, WORD_ICON } from '../data/art';
 import { GRAMMAR } from '../data/grammar';
@@ -2290,5 +2290,33 @@ describe('tile-size lookalikes', () => {
       }
     }
     expect(bad).toEqual([]);
+  });
+});
+
+describe('building a word from letter tiles', () => {
+  /**
+   * Stated from the letter cards, not from the generator's own helper, so a
+   * bug in that helper cannot also pass its test. Daily review 2026-10-07:
+   * the second lesson of the course asked for زندگی from tiles after six
+   * letters, five of them never taught.
+   */
+  it('only ever asks for letters the path has already taught', () => {
+    const cardOf = new Map(LETTERS.map((l) => [l.forms.isolated.replace(/[ـ‌‍]/g, ''), l.id]));
+    for (const track of ['script', 'both'] as const) {
+      const taught = new Set<string>();
+      const bad: string[] = [];
+      for (const id of lessonOrderForTrack(track)) {
+        const lesson = ALL_LESSONS.find((l) => l.id === id)!;
+        for (const e of buildLessonExercises(lesson, [], track)) {
+          if (e.kind !== 'wordBuild') continue;
+          const missing = Array.from(e.word.urdu).filter(
+            (c) => /[ء-يٱ-ۓ]/.test(c) && !(cardOf.has(c) ? taught.has(cardOf.get(c)!) : taught.size >= LETTERS.length)
+          );
+          if (missing.length && bad.length < 5) bad.push(`${track} ${id}: ${e.word.urdu} needs ${missing.join(' ')}`);
+        }
+        for (const letter of lesson.letterIds ?? []) taught.add(letter);
+      }
+      expect(bad).toEqual([]);
+    }
   });
 });
