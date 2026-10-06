@@ -50,6 +50,9 @@ const ROUTES = [
   // A letter of its own, and not alif: the Lab opened on alif whatever the
   // address said until 2026-10-01, and alif is what the bare /letters shows.
   { path: '/letters/sheen', shows: /sheen\s*·\s*“sh”/i },
+  // A fresh guest has learned nothing yet, so Read faster opens on its
+  // not-yet state; either screen proves the address reaches it.
+  { path: '/read', shows: /Read faster|Learn a few more words first/i },
   { path: '/lesson/l-1', shows: /A NEW LETTER/i },
   // This loop runs against a seeded, already-guest session (see main()), so
   // this only proves Privacy/Terms still work once already past the door.
