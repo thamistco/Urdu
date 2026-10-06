@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Audio } from 'expo-av';
 import Svg, { Path, Rect } from 'react-native-svg';
-import { announce, onPlaybackChange, isPlaying } from '../lib/speech';
+import { announce, onPlaybackChange, isPlaying, isSpeechMuted } from '../lib/speech';
 import { palette, withAlpha } from '../theme';
 import { Txt } from './Text';
 
@@ -11,8 +11,22 @@ type Phase = 'idle' | 'recording' | 'ready' | 'blocked';
 /** Long enough for any line in the course read slowly; a forgotten tap stops itself. */
 const MAX_RECORDING_MS = 10_000;
 
-/** If the native clip has not started by now (sound off, no clip), play the learner's own straight away. */
-const NATIVE_START_GRACE_MS = 700;
+/**
+ * If the native clip has not started by now (no clip, a slow first load), play
+ * the learner's own anyway. Long enough that a slow first load does not have
+ * the two clips talking over each other.
+ */
+const NATIVE_START_GRACE_MS = 1200;
+
+/** 24pt circles plus this on every side make the 44pt minimum touch target. */
+const HIT_SLOP = 10;
+
+/**
+ * Only one line records at a time. expo-av allows a single recorder, so a
+ * second start used to fail and say "Microphone not allowed", which was not the
+ * problem. Starting a line now stops whichever line was recording.
+ */
+let active: { owner: object; stop: () => Promise<void> } | null = null;
 
 /**
  * Say it back: repeat a line aloud and hear yourself next to the recording.
@@ -21,14 +35,16 @@ const NATIVE_START_GRACE_MS = 700;
  * had none. Shadowing (repeating audio as you hear it) improved pronunciation
  * and listening in published studies. Daily review 2026-10-06, proposal P-003.
  *
- * What it deliberately does not do, each for a reason found in the research:
- * - It never scores the learner. Speech scoring is the feature other apps'
- *   reviews complain about most, failing even in a quiet room.
- * - It is never required. A lesson never waits on it, so a learner who cannot
- *   or would rather not speak loses nothing.
- * - The recording never leaves the device. It lives in memory while this line
- *   is on screen and is unloaded when it goes; nothing is saved or uploaded.
- *   The privacy policy says exactly this.
+ * What it deliberately does not do:
+ * - Score the learner. Speech scoring is what other apps' reviews complain
+ *   about most, failing even in a quiet room.
+ * - Hold up a lesson. Nothing here touches grading, so a learner who cannot or
+ *   would rather not speak loses nothing.
+ * - Send the recording anywhere. On the web it lives in browser memory and is
+ *   released when the line leaves the screen. On a phone, expo-av writes it to
+ *   the app's temporary storage, where it stays until the system clears it;
+ *   the privacy policy says exactly that.
+ * - Make a sound when the learner has turned sound off.
  */
 export function SayItBack({
   clipId,
@@ -45,108 +61,182 @@ export function SayItBack({
   const recording = useRef<Audio.Recording | null>(null);
   const yours = useRef<Audio.Sound | null>(null);
   const autoStop = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // A start or stop is mid-flight. Taps during it are ignored: a second start
+  // while the permission prompt was up used to open a second microphone
+  // stream on the web that nothing ever closed.
+  const busy = useRef(false);
+  const mounted = useRef(true);
+  // Stable for the life of this line, so the one-at-a-time lock can tell this
+  // line from another across renders.
+  const self = useRef({}).current;
+  const stopRef = useRef<() => Promise<void>>(async () => {});
 
-  // Whatever this line was holding goes when the line does.
-  useEffect(
-    () => () => {
-      if (autoStop.current) clearTimeout(autoStop.current);
-      recording.current?.stopAndUnloadAsync().catch(() => {});
+  const release = async () => {
+    if (autoStop.current) clearTimeout(autoStop.current);
+    autoStop.current = null;
+    const r = recording.current;
+    recording.current = null;
+    if (r) {
+      await r.stopAndUnloadAsync().catch(() => {});
+      // Back to playback mode, or iOS keeps routing later audio for recording.
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true }).catch(() => {});
+    }
+    return r;
+  };
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      if (active?.owner === self) active = null;
+      void release();
       yours.current?.unloadAsync().catch(() => {});
-    },
-    []
-  );
+    };
+    // Runs once: the line owns its recorder for as long as it is on screen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const playYours = () => {
+    if (isSpeechMuted()) return;
     yours.current?.replayAsync().catch(() => {});
   };
 
-  /** The recording first, then the learner, back to back. */
+  /** The native recording first, then the learner's, back to back. */
   const compare = () => {
+    if (isSpeechMuted()) return;
     let started = false;
     const off = onPlaybackChange((on) => {
       if (on) started = true;
       else if (started) {
         off();
-        playYours();
+        if (mounted.current) playYours();
       }
     });
     announce(clipId, urdu, roman);
     setTimeout(() => {
       if (!started && !isPlaying()) {
         off();
-        playYours();
+        if (mounted.current) playYours();
       }
     }, NATIVE_START_GRACE_MS);
   };
 
-  const stop = async () => {
-    if (autoStop.current) clearTimeout(autoStop.current);
-    const r = recording.current;
-    recording.current = null;
-    if (!r) return;
+  async function stopThis() {
+    if (busy.current) return;
+    busy.current = true;
     try {
-      await r.stopAndUnloadAsync();
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true });
+      if (active?.owner === self) active = null;
+      const r = await release();
+      if (!r || !mounted.current) return;
       const uri = r.getURI();
       if (!uri) return setPhase('idle');
       const { sound } = await Audio.Sound.createAsync({ uri });
+      if (!mounted.current) {
+        await sound.unloadAsync().catch(() => {});
+        return;
+      }
       await yours.current?.unloadAsync().catch(() => {});
       yours.current = sound;
       setPhase('ready');
       compare();
     } catch {
-      setPhase('idle');
+      if (mounted.current) setPhase('idle');
+    } finally {
+      busy.current = false;
     }
-  };
+  }
+
+  stopRef.current = stopThis;
 
   const start = async () => {
+    if (busy.current) return;
+    busy.current = true;
     try {
+      if (active && active.owner !== self) await active.stop();
       const permission = await Audio.requestPermissionsAsync();
+      if (!mounted.current) return;
       if (!permission.granted) return setPhase('blocked');
       await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
       const { recording: r } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      if (!mounted.current) {
+        await r.stopAndUnloadAsync().catch(() => {});
+        await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true }).catch(() => {});
+        return;
+      }
       recording.current = r;
+      active = { owner: self, stop: () => stopRef.current() };
       setPhase('recording');
-      autoStop.current = setTimeout(stop, MAX_RECORDING_MS);
+      autoStop.current = setTimeout(() => void stopThis(), MAX_RECORDING_MS);
     } catch {
-      setPhase('blocked');
+      // Permission was granted or never asked; something else failed (another
+      // app holding the microphone, an unsupported browser). Not a permission
+      // problem, so it does not say so.
+      if (mounted.current) setPhase('idle');
+    } finally {
+      busy.current = false;
     }
   };
 
   const recordingNow = phase === 'recording';
-  const label =
-    phase === 'recording'
-      ? 'Stop recording and compare'
-      : phase === 'ready'
-        ? 'Hear yourself again. Long press to record again'
-        : phase === 'blocked'
-          ? 'Microphone not allowed. Allow it in your settings to say this line back'
-          : 'Say it back: record yourself saying this line';
+  const micLabel = recordingNow
+    ? 'Stop recording and compare'
+    : phase === 'ready'
+      ? 'Record yourself saying this line again'
+      : phase === 'blocked'
+        ? 'Microphone not allowed. Allow it in your settings to say this line back'
+        : 'Say it back: record yourself saying this line, for up to 10 seconds';
 
   return (
     <View className="items-center">
-      <Pressable
-        onPress={recordingNow ? stop : phase === 'ready' ? playYours : start}
-        onLongPress={phase === 'ready' ? start : undefined}
-        hitSlop={8}
-        accessibilityRole="button"
-        accessibilityLabel={label}
-        testID={`say-it-back-${phase}`}
-        style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.92 : 1 }] })}
-      >
-        <View
-          className="items-center justify-center rounded-full"
-          style={{
-            width: size,
-            height: size,
-            backgroundColor: recordingNow ? palette.rose : withAlpha(palette.jade, phase === 'ready' ? 0.5 : 0.18),
-            borderWidth: 1.5,
-            borderColor: recordingNow ? palette.cream : palette.jade,
-          }}
+      <View className="flex-row items-center gap-2">
+        <Pressable
+          onPress={recordingNow ? () => void stopThis() : () => void start()}
+          hitSlop={HIT_SLOP}
+          accessibilityRole="button"
+          accessibilityLabel={micLabel}
+          testID={`say-it-back-${phase}`}
+          style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.92 : 1 }] })}
         >
-          <MicMark size={size * 0.56} color={recordingNow ? palette.cream : palette.ink} stop={recordingNow} />
-        </View>
-      </Pressable>
+          <View
+            className="items-center justify-center rounded-full"
+            style={{
+              width: size,
+              height: size,
+              backgroundColor: recordingNow ? palette.rose : withAlpha(palette.jade, 0.18),
+              borderWidth: 1.5,
+              borderColor: recordingNow ? palette.cream : palette.jade,
+            }}
+          >
+            <MicMark size={size * 0.56} color={recordingNow ? palette.cream : palette.ink} stop={recordingNow} />
+          </View>
+        </Pressable>
+        {/* Once there is a recording, hearing it again is its own button, not a
+            hidden long press on the microphone (which keyboard and switch
+            users could never reach) and not a colour change alone. */}
+        {phase === 'ready' ? (
+          <Pressable
+            onPress={playYours}
+            hitSlop={HIT_SLOP}
+            accessibilityRole="button"
+            accessibilityLabel="Hear yourself again"
+            testID="say-it-back-play-yours"
+            style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.92 : 1 }] })}
+          >
+            <View
+              className="items-center justify-center rounded-full"
+              style={{
+                width: size,
+                height: size,
+                backgroundColor: withAlpha(palette.jade, 0.5),
+                borderWidth: 1.5,
+                borderColor: palette.jade,
+              }}
+            >
+              <PlayMark size={size * 0.5} color={palette.ink} />
+            </View>
+          </Pressable>
+        ) : null}
+      </View>
       {phase === 'blocked' ? (
         <Txt style={{ color: palette.ink }} className="mt-1 text-[0.625rem] opacity-70">
           Microphone off
@@ -174,6 +264,15 @@ function MicMark({ size, color, stop }: { size: number; color: string; stop: boo
           />
         </>
       )}
+    </Svg>
+  );
+}
+
+/** A play triangle: your own recording, again. */
+function PlayMark({ size, color }: { size: number; color: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5Z" fill={color} />
     </Svg>
   );
 }
