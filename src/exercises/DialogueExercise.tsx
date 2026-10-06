@@ -5,6 +5,7 @@ import { Urdu, Txt, Bold, Eyebrow, urduLine } from '../components/Text';
 import { Button } from '../components/Button';
 import { feedback } from '../lib/feedback';
 import { announce } from '../lib/speech';
+import { SayItBack } from '../components/SayItBack';
 import { withRegister } from '../data/sentences';
 import type { ExerciseProps, Exercise } from './types';
 
@@ -94,12 +95,13 @@ export function DialogueExercise({ exercise, track, showRoman, locked, onGraded 
                     {withRegister(l.meaning, l.urdu)}
                   </Txt>
                 ) : null}
-                <View className={`mt-2 flex-row ${isA ? 'justify-start' : 'justify-end'}`}>
+                <View className={`mt-2 flex-row gap-5 ${isA ? 'justify-start' : 'justify-end'}`}>
                   <SpeakerButton
                     size={24}
                     label="Hear this line"
                     onPress={() => announce(`${dialogue.id}-${i}`, l.urdu, l.roman)}
                   />
+                  <SayItBack clipId={`${dialogue.id}-${i}`} urdu={l.urdu} roman={l.roman} size={24} />
                 </View>
               </View>
             </View>
