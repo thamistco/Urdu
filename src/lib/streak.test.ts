@@ -131,6 +131,36 @@ describe('rollStreak and markActiveToday', () => {
     }
   });
 
+  /**
+   * Found by the P-008 second check: a learner who opened the app on each
+   * missed day had the gap paid one freeze per launch, and then lost those
+   * freezes when a later day broke the streak, while one who stayed away kept
+   * theirs. Opening the app must change nothing about where a lesson lands,
+   * and the count the lesson reports must be every freeze the gap cost.
+   */
+  it('ends the same whether the app was opened on every missed day or not at all', () => {
+    const plusDays = (n: number) => {
+      const d = new Date(TODAY + 'T00:00:00');
+      d.setDate(d.getDate() + n);
+      return `${d.getFullYear()}-${`${d.getMonth() + 1}`.padStart(2, '0')}-${`${d.getDate()}`.padStart(2, '0')}`;
+    };
+    for (let missed = 1; missed <= 6; missed++) {
+      for (const freezes of [0, 1, 2, 3]) {
+        const start: StreakState = { streak: 12, freezes, lastActiveDay: TODAY, freezesOnHold: 0 };
+        const lessonDay = plusDays(missed + 1);
+        const away = rollStreak(start, lessonDay, 3);
+        let s: StreakState = start;
+        for (let d = 1; d <= missed + 1; d++) s = rollStreak(s, plusDays(d), 3);
+        const label = `${missed} missed, ${freezes} freezes`;
+        const pick = (r: StreakState) => ({ streak: r.streak, freezes: r.freezes, held: r.freezesOnHold });
+        expect(pick(s), label).toEqual(pick(away));
+        expect(markActiveToday(s, lessonDay), label).toEqual(markActiveToday(away, lessonDay));
+        // What the lesson reports: every freeze spent, or none over a break.
+        expect(s.freezesOnHold, label).toBe(missed <= freezes ? missed : 0);
+      }
+    }
+  });
+
   it('starts a first-ever streak at 1 and does not count a second lesson the same day', () => {
     expect(markActiveToday({ streak: 0, freezes: 1, lastActiveDay: null }, TODAY)).toMatchObject({
       streak: 1,

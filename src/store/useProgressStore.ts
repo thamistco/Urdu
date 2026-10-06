@@ -100,8 +100,8 @@ type ProgressState = {
    * lesson, and the notice is owed to whichever lesson comes next.
    */
   freezeNotice: string | null;
-  /** How many missed days the freeze spent at launch covered, for that notice. */
-  freezeNoticeDays: number;
+  /** Freezes spent on the current gap since the last lesson; see lib/streak.ts. */
+  freezesOnHold: number;
 
   // daily goal
   dailyGoalId: string;
@@ -210,7 +210,7 @@ export const useProgressStore = create<ProgressState>()(
       lastActiveDay: null,
       freezes: 1,
       freezeNotice: null,
-      freezeNoticeDays: 0,
+      freezesOnHold: 0,
 
       dailyGoalId: 'steady',
       todayKey: dayKey(),
@@ -327,12 +327,16 @@ export const useProgressStore = create<ProgressState>()(
         // account for any missed days, then count today. One implementation,
         // in lib/streak.ts, so the launch path and this one cannot disagree.
         const today = dayKey();
-        const rolled = rollStreak(s2, today);
+        const rolled = rollStreak(s2, today, FREEZE_MAX);
         const active = markActiveToday(rolled, today);
         const streak = active.streak;
         const freezes = active.freezes;
         const streakIncreased = active.increased;
-        const frozeDays = rolled.froze || (s2.freezeNotice ? s2.freezeNoticeDays || 1 : 0);
+        // Every freeze spent since the last lesson, at launch or just now. A
+        // notice left by a store saved before freezesOnHold existed counts as
+        // one, which is all the old rule ever spent. Nothing is reported over
+        // a streak that broke anyway: those freezes were handed back.
+        const frozeDays = rolled.streak > 0 ? rolled.freezesOnHold || (s2.freezeNotice ? 1 : 0) : 0;
         const freezeUsed = frozeDays ? { left: freezes, days: frozeDays } : null;
         const longestStreak = Math.max(s2.longestStreak, streak);
 
@@ -380,7 +384,7 @@ export const useProgressStore = create<ProgressState>()(
           lastActiveDay: today,
           freezes,
           freezeNotice: null,
-          freezeNoticeDays: 0,
+          freezesOnHold: active.freezesOnHold,
           leagueId,
           weekKey,
           weeklyXp,
@@ -433,13 +437,16 @@ export const useProgressStore = create<ProgressState>()(
       },
       rolloverStreak: () => {
         const s = get();
-        const r = rollStreak(s);
+        const r = rollStreak(s, dayKey(), FREEZE_MAX);
         if (r.streak === s.streak && r.freezes === s.freezes && r.lastActiveDay === s.lastActiveDay) return;
         set({
           streak: r.streak,
           freezes: r.freezes,
           lastActiveDay: r.lastActiveDay,
-          ...(r.froze ? { freezeNotice: dayKey(), freezeNoticeDays: r.froze } : {}),
+          freezesOnHold: r.freezesOnHold,
+          // A notice owed from an earlier launch is dropped when the streak
+          // breaks: it would say a freeze saved a streak that just ended.
+          ...(r.froze ? { freezeNotice: dayKey() } : r.streak === 0 ? { freezeNotice: null } : {}),
         });
       },
       addGems: (n) => set((s) => ({ gems: s.gems + n })),
@@ -468,7 +475,7 @@ export const useProgressStore = create<ProgressState>()(
           lastActiveDay: null,
           freezes: 1,
           freezeNotice: null,
-          freezeNoticeDays: 0,
+          freezesOnHold: 0,
           dailyGoalId: 'steady',
           todayKey: dayKey(),
           todayXp: 0,

@@ -100,7 +100,8 @@ function FreezeCard() {
         <View className="flex-1">
           <Bold className="text-[0.9375rem]">Streak freezes</Bold>
           <Txt className="mt-0.5 text-xs text-paper/55">
-            A freeze covers one missed day, so the streak survives it. It is used automatically.
+            Each freeze covers one missed day, used automatically. Miss more days than you hold and the streak ends, but
+            you keep them.
           </Txt>
         </View>
         <View className="flex-row gap-1.5" accessible accessibilityLabel={`${freezes} of ${FREEZE_MAX} streak freezes`}>
