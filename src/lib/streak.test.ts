@@ -66,17 +66,25 @@ describe('rollStreak and markActiveToday', () => {
 
   it('shows a lapsed streak as broken at launch, not only after the next lesson', () => {
     expect(rollStreak(at(5, 0), TODAY).streak).toBe(0);
-    expect(rollStreak(at(3, 3), TODAY).streak).toBe(0); // a freeze covers one day, not two
+    expect(rollStreak(at(4, 2), TODAY).streak).toBe(0); // three missed days, two freezes
   });
 
-  it('spends a freeze on exactly one missed day and keeps the streak', () => {
+  it('spends a freeze on one missed day and keeps the streak', () => {
     const r = rollStreak(at(2, 1), TODAY);
-    expect(r).toMatchObject({ streak: 12, freezes: 0, lastActiveDay: daysAgo(1), froze: true });
+    expect(r).toMatchObject({ streak: 12, freezes: 0, lastActiveDay: daysAgo(1), froze: 1 });
+  });
+
+  it('spends one freeze for each missed day while there are enough', () => {
+    expect(rollStreak(at(3, 3), TODAY)).toMatchObject({ streak: 12, freezes: 1, lastActiveDay: daysAgo(1), froze: 2 });
+    expect(rollStreak(at(4, 3), TODAY)).toMatchObject({ streak: 12, freezes: 0, froze: 3 });
+  });
+
+  it('keeps the freezes when there are too few to save the streak', () => {
+    expect(rollStreak(at(5, 3), TODAY)).toMatchObject({ streak: 0, freezes: 3, froze: 0 });
   });
 
   it('leaves a streak alone when yesterday or today was played', () => {
-    for (const gap of [0, 1])
-      expect(rollStreak(at(gap, 1), TODAY)).toMatchObject({ streak: 12, freezes: 1, froze: false });
+    for (const gap of [0, 1]) expect(rollStreak(at(gap, 1), TODAY)).toMatchObject({ streak: 12, freezes: 1, froze: 0 });
   });
 
   it('is safe to run twice in a day, and never burns a freeze on a broken streak', () => {
@@ -104,19 +112,20 @@ describe('rollStreak and markActiveToday', () => {
     }
   });
 
-  it('matches what finishLesson did before the rollover existed', () => {
-    const was = (gap: number, freezes: number) => {
-      // The inline rules finishLesson used to carry, verbatim in effect.
+  it('gives the streak the rules promise after a lesson today, for every gap', () => {
+    const promised = (gap: number, freezes: number) => {
+      // Stated from the rules, not the code: same day changes nothing,
+      // yesterday extends, and each missed day costs a freeze while they last.
       if (gap === 0) return { streak: 12, freezes };
       if (gap === 1) return { streak: 13, freezes };
-      if (gap === 2 && freezes > 0) return { streak: 13, freezes: freezes - 1 };
+      if (gap - 1 <= freezes) return { streak: 13, freezes: freezes - (gap - 1) };
       return { streak: 1, freezes };
     };
     for (let gap = 0; gap <= 10; gap++) {
-      for (const freezes of [0, 1, 3]) {
+      for (const freezes of [0, 1, 2, 3]) {
         const now = markActiveToday(rollStreak(at(gap, freezes), TODAY), TODAY);
         expect({ streak: now.streak, freezes: now.freezes }, `gap ${gap}, ${freezes} freezes`).toEqual(
-          was(gap, freezes)
+          promised(gap, freezes)
         );
       }
     }

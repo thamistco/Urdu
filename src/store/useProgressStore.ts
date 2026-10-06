@@ -44,7 +44,7 @@ export type FinishResult = {
    * Set when a streak freeze was spent since the learner was last told, with
    * how many are left. Reported once: the lesson that reports it clears it.
    */
-  freezeUsed: { left: number } | null;
+  freezeUsed: { left: number; days: number } | null;
 };
 
 /** What a streak freeze costs, and how many a learner can hold. */
@@ -100,6 +100,8 @@ type ProgressState = {
    * lesson, and the notice is owed to whichever lesson comes next.
    */
   freezeNotice: string | null;
+  /** How many missed days the freeze spent at launch covered, for that notice. */
+  freezeNoticeDays: number;
 
   // daily goal
   dailyGoalId: string;
@@ -208,6 +210,7 @@ export const useProgressStore = create<ProgressState>()(
       lastActiveDay: null,
       freezes: 1,
       freezeNotice: null,
+      freezeNoticeDays: 0,
 
       dailyGoalId: 'steady',
       todayKey: dayKey(),
@@ -329,7 +332,8 @@ export const useProgressStore = create<ProgressState>()(
         const streak = active.streak;
         const freezes = active.freezes;
         const streakIncreased = active.increased;
-        const freezeUsed = rolled.froze || s2.freezeNotice ? { left: freezes } : null;
+        const frozeDays = rolled.froze || (s2.freezeNotice ? s2.freezeNoticeDays || 1 : 0);
+        const freezeUsed = frozeDays ? { left: freezes, days: frozeDays } : null;
         const longestStreak = Math.max(s2.longestStreak, streak);
 
         // --- league week roll ---
@@ -376,6 +380,7 @@ export const useProgressStore = create<ProgressState>()(
           lastActiveDay: today,
           freezes,
           freezeNotice: null,
+          freezeNoticeDays: 0,
           leagueId,
           weekKey,
           weeklyXp,
@@ -434,7 +439,7 @@ export const useProgressStore = create<ProgressState>()(
           streak: r.streak,
           freezes: r.freezes,
           lastActiveDay: r.lastActiveDay,
-          ...(r.froze ? { freezeNotice: dayKey() } : {}),
+          ...(r.froze ? { freezeNotice: dayKey(), freezeNoticeDays: r.froze } : {}),
         });
       },
       addGems: (n) => set((s) => ({ gems: s.gems + n })),
@@ -463,6 +468,7 @@ export const useProgressStore = create<ProgressState>()(
           lastActiveDay: null,
           freezes: 1,
           freezeNotice: null,
+          freezeNoticeDays: 0,
           dailyGoalId: 'steady',
           todayKey: dayKey(),
           todayXp: 0,
