@@ -191,14 +191,7 @@ type Step = 'goal' | 'track' | 'voice' | 'background' | 'placement' | 'daily' | 
  * every dot count — is derived rather than written down. Six hardcoded numbers
  * lived here before, and adding one step silently made four of them wrong.
  */
-const FLOW: Step[] = [
-  'goal',
-  'track',
-  ...(MALE_VOICE_AVAILABLE ? (['voice'] as Step[]) : []),
-  'background',
-  'placement',
-  'daily',
-];
+const FLOW: Step[] = ['goal', 'track', ...(MALE_VOICE_AVAILABLE ? (['voice'] as Step[]) : []), 'background', 'daily'];
 
 function Dots({ of }: { of: Step }) {
   const at = FLOW.indexOf(of);
@@ -504,7 +497,11 @@ export function OnboardingScreen() {
             onPress={() => {
               setPIdx(0);
               setPCorrect(0);
-              setStep('placement');
+              // The quick check is only for someone who already speaks Urdu.
+              // For a beginner every answer led to the same path, so it was
+              // four questions that decided nothing, under a line saying they
+              // worked out where to start (daily review 2026-10-07, P-005).
+              setStep(background === 'speaker' ? 'placement' : 'daily');
             }}
           >
             Continue
@@ -539,7 +536,10 @@ export function OnboardingScreen() {
     return (
       <Screen>
         <Reveal key={pIdx}>
-          <Dots of="placement" />
+          {/* Part of the "do you know some Urdu" step, not a step of its own:
+              only a speaker is asked it, and a dot count that changed with
+              the answer would jump under the learner mid-flow. */}
+          <Dots of="background" />
           <Eyebrow style={{ color: palette.gold }} className="mb-3">
             Quick check · {pIdx + 1} of {questions.length}
           </Eyebrow>
