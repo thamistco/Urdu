@@ -148,8 +148,9 @@ wrong.
 
 Worth being explicit about, because the temptation in store copy is to imply it:
 
-- **No speech recognition.** The app plays Urdu and asks you to type or choose;
-  it never listens to you or scores your accent.
+- **No speech recognition.** The app never scores your accent. Say it back
+  records you only when you tap it, so you can hear yourself next to the native
+  recording, and the recording stays on your device.
 - **No live tutors, no community.** It is a solo course.
 - **No certification.** The A1–B2 labels describe the difficulty of the content,
   not an accredited assessment.
