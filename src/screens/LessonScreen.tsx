@@ -1,3 +1,4 @@
+import { reach } from '../lib/reach';
 import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { View, Pressable, ScrollView } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -490,7 +491,7 @@ export function LessonScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Close lesson"
-            hitSlop={12}
+            style={reach(12)}
             onPress={() => {
               feedback.tap();
               nav.navigate('Main');
