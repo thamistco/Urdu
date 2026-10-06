@@ -4,6 +4,7 @@ import { Audio } from 'expo-av';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { announce, onPlaybackChange, isPlaying, isSpeechMuted } from '../lib/speech';
 import { palette, withAlpha } from '../theme';
+import { useSettingsStore } from '../store/useSettingsStore';
 import { Txt } from './Text';
 
 type Phase = 'idle' | 'recording' | 'ready' | 'blocked';
@@ -30,6 +31,14 @@ let active: { owner: object; stop: (compareAfter: boolean) => Promise<void> } | 
 
 /** The line whose turn it is to record, claimed the moment its microphone is tapped. */
 let claim: object | null = null;
+
+/**
+ * The start in flight, so the next one waits for it. A second line tapped
+ * while the first was still opening its recorder used to ask expo-av for a
+ * second recorder, fail, and drop the tap (BACKLOG Q-012). Now it waits for
+ * the first to see it has been pre-empted and let go, then starts.
+ */
+let starting: Promise<void> = Promise.resolve();
 
 /**
  * Say it back: repeat a line aloud and hear yourself next to the recording.
@@ -66,6 +75,11 @@ export function SayItBack({
   stack?: boolean;
 }) {
   const [phase, setPhase] = useState<Phase>('idle');
+  const soundOn = useSettingsStore((s) => s.soundEnabled);
+  // What a screen reader hears when recording starts and stops. The
+  // microphone's label changes too, but a label changing under the focus is
+  // not announced, so a blind learner could not tell the recording had begun.
+  const [said, setSaid] = useState('');
   const recording = useRef<Audio.Recording | null>(null);
   const yours = useRef<Audio.Sound | null>(null);
   const autoStop = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -157,7 +171,10 @@ export function SayItBack({
       await yours.current?.unloadAsync().catch(() => {});
       yours.current = sound;
       setPhase('ready');
-      if (compareAfter) compare();
+      if (compareAfter) {
+        setSaid(isSpeechMuted() ? 'Recorded. Sound is off, so nothing plays.' : 'Recorded. The line, then you.');
+        compare();
+      }
     } catch {
       if (mounted.current) setPhase('idle');
     } finally {
@@ -174,7 +191,12 @@ export function SayItBack({
     // waits on the permission prompt takes the turn and this one backs out,
     // rather than both opening a microphone.
     claim = self;
+    const before = starting;
+    let done = () => {};
+    starting = new Promise<void>((resolve) => (done = resolve));
     try {
+      await before;
+      if (!stillMine()) return;
       if (active && active.owner !== self) await active.stop(false);
       const permission = await Audio.requestPermissionsAsync();
       if (!stillMine()) return;
@@ -189,6 +211,7 @@ export function SayItBack({
       recording.current = r;
       active = { owner: self, stop: (compareAfter: boolean) => stopRef.current(compareAfter) };
       setPhase('recording');
+      setSaid('Recording. Say the line, then tap stop.');
       autoStop.current = setTimeout(() => void stopThis(), MAX_RECORDING_MS);
     } catch {
       // Permission was granted or never asked; something else failed (another
@@ -198,6 +221,7 @@ export function SayItBack({
       if (mounted.current) setPhase('idle');
     } finally {
       busy.current = false;
+      done();
     }
   };
 
@@ -267,10 +291,22 @@ export function SayItBack({
         <Txt style={{ color: palette.ink }} className="mt-1 text-[0.625rem] opacity-70">
           Microphone off
         </Txt>
+      ) : phase === 'ready' && !soundOn ? (
+        // Said on screen, because with sound off "hear yourself" plays nothing
+        // and a silent button reads as a broken one.
+        <Txt style={{ color: palette.ink }} className="mt-1 text-[0.625rem] opacity-70">
+          Sound is off
+        </Txt>
       ) : null}
+      <View aria-live="polite" style={SPOKEN_ONLY}>
+        <Txt>{said}</Txt>
+      </View>
     </View>
   );
 }
+
+/** On screen for a screen reader, invisible to everyone else. */
+const SPOKEN_ONLY = { position: 'absolute', width: 1, height: 1, overflow: 'hidden' } as const;
 
 /** A microphone, or a stop square while recording. */
 function MicMark({ size, color, stop }: { size: number; color: string; stop: boolean }) {
