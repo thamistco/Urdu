@@ -41,8 +41,7 @@ report.
 1. **Pick** the area by the rule above. Read the last report for it, if any,
    and the open items for it in `BACKLOG.md`.
 2. **Second checks first.** Anything in `BACKLOG.md` under "Checked once"
-   whose first check was on an earlier day gets its second check now (see
-   below). Those that hold are implemented tonight.
+   gets its second check now (see below). Those that hold ship tonight.
 3. **Research** online: competitors, platform guidance, published benchmarks,
    and what learners themselves say about this area in other apps' reviews and
    in forums (the owner asked for this on 2026-10-06: what people like, what
@@ -55,12 +54,11 @@ report.
    same night through the usual gate: `npm run check:all`, push to the deploy
    branch, confirm from the deploy job's `check:deployed` line that the site
    serves it. One logical change per commit.
-6. **Propose everything else, and build it the same day.** A change that
+6. **Propose everything else, build it, and second-check it.** A change that
    comes out of research (a new feature, a redesign, a price, new wording)
-   goes into "Checked once" with the date and the perspectives weighed, and is
-   built that day on its own branch, `claude/proposal-<id>-<slug>`, through
-   `check:all` but not merged. It reaches the app only after its second check
-   on a later day passes, when the branch is merged and shipped.
+   goes into "Checked once" with the perspectives weighed, and is built on its
+   own branch, `claude/proposal-<id>-<slug>`, through `check:all`. It ships
+   once a second check from a different viewpoint says SHIP (see below).
 7. **Write** the night's report as `YYYY-MM-DD-<area>.md` and update the
    "last reviewed" date above.
 8. **Summarise the day** for the owner (see below).
@@ -81,20 +79,53 @@ them has to be the case against it:
 - the Urdu-speaking community: accuracy, culture, respect;
 - engineering: what it costs to build and to keep working.
 
-## Two days before a research change ships
+## A second check from a different viewpoint
 
-Also the owner's rule (2026-10-06). A change that comes from research is
-checked on two different days before it is committed to the app:
+The owner's rule, revised on 2026-10-06: a change that comes from research is
+checked twice before it ships, and the second check comes from a different
+viewpoint than the first. It no longer has to wait a day.
 
-- **Day one** proposes it, with the evidence and the perspectives weighed, in
-  "Checked once" in `BACKLOG.md`.
-- **A later day** looks again with fresh eyes: searches for evidence against
-  it, takes a perspective day one did not, and re-measures, including looking
-  at the built branch in the app. If it holds, the branch is merged and shipped
-  that night. If it does not, it is changed (and the changed version starts
-  again at day one) or dropped, with the reason written down.
+- **The first check** is the specialist that proposed it, with its evidence
+  and the perspectives it weighed, recorded in "Checked once" in `BACKLOG.md`.
+- **The second check** is a different agent (`qaaf-critic`, told which
+  viewpoint to take, never the proposer's): it looks for evidence against the
+  change, takes a perspective the first did not, and examines the built branch.
+  SHIP: the manager merges it and ships it that day. HOLD: it is changed (and
+  checked again) or dropped, with the reason written down.
 
-Bug fixes are not research changes and ship the same day.
+Bug fixes still ship the moment they are fixed.
+
+## Agents, and the manager
+
+The owner asked (2026-10-06) for specialist agents with one manager that takes
+their feedback and keeps checking on them so nobody gets stuck or wastes time.
+The specialists live in `.claude/agents/`:
+
+| Agent                | Covers                                                                   |
+| -------------------- | ------------------------------------------------------------------------ |
+| `qaaf-critic`        | The second check: harsh, finds what will embarrass the app, SHIP or HOLD |
+| `qaaf-learning`      | Curriculum and learning science                                          |
+| `qaaf-design`        | Visual design and accessibility, with screenshots and measurements       |
+| `qaaf-learner-voice` | What learners say about other apps, and what Urdu learners want          |
+| `qaaf-growth`        | Monetisation, launch, store presence, marketing, retention, referral     |
+| `qaaf-qa`            | Plays the built app hunting for bugs                                     |
+
+**The manager** is the session running the review. It alone builds, commits,
+merges and ships. Its duties:
+
+1. **Prepare.** Build `dist/` once before dispatching, so no agent builds; give
+   each agent that needs the app its own port; give each one task.
+2. **Dispatch in parallel, in the background,** each with its budget (30 to 40
+   tool calls, 15 to 20 minutes) and the report format in its file.
+3. **Check on them.** Every few minutes, read each running agent's progress.
+   An agent past its time budget, repeating itself, waiting on something, or
+   drifting from its task is stopped, and its partial report is used. The
+   measured reason this exists: one critic once spent 253,607 tokens over 70
+   minutes and never returned a verdict (gauntlet/ROLES.md, OVERSEER).
+4. **Weigh the feedback.** Turn findings into fixes, proposals and backlog
+   items. A specialist advises; the manager decides.
+5. **Second-check, build, ship,** and record what each agent cost in the
+   night's report, so the next night can be cheaper.
 
 ## Decisions
 
@@ -126,7 +157,8 @@ Plain language, no jargon:
 - Post, publish or contact anyone outside this repository and its site.
 - Generate new audio without a text-to-speech key in the environment's
   secrets. The key pasted in chat is exposed and is due to be replaced.
-- Ship a research change that has only been checked on one day.
+- Ship a research change that has had only one check, or whose second check
+  came from the same viewpoint as its first.
 - Weaken a check to go green, or report a deploy live without reading the
   deploy log.
 - Rename the `qaaf-*` localStorage keys. See CLAUDE.md.

@@ -18,9 +18,12 @@ purpose in the `HARF_*` environment variables, which CI, the pre-push hook and
   dashboards need the owner.
 - **Research from several perspectives,** at least three and one of them the
   case against.
-- **Two days before a research change ships:** propose it one day, check it
-  again with fresh eyes on a later day, then build it. Bug fixes ship the same
-  day.
+- **Two checks before a research change ships,** the second from a different
+  viewpoint (a different agent) than the first; it can be the same day. Bug
+  fixes ship at once.
+- **Specialist agents and one manager** (`.claude/agents/`): the manager
+  dispatches them with budgets, checks on them, stops any that stall, and alone
+  builds and ships.
 - **A plain-language summary of every change at the end of each day.**
 
 The nightly review in [`docs/daily-review/`](docs/daily-review/README.md) runs
