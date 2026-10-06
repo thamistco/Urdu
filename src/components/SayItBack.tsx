@@ -2,6 +2,7 @@ import { reach } from '../lib/reach';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Audio } from 'expo-av';
+import { useIsFocused } from '@react-navigation/native';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { announce, onPlaybackChange, isPlaying, isSpeechMuted } from '../lib/speech';
 import { palette, withAlpha } from '../theme';
@@ -92,6 +93,14 @@ export function SayItBack({
   // Stable for the life of this line, so the one-at-a-time lock can tell this
   // line from another across renders.
   const self = useRef({}).current;
+  // Leaving a lesson does not always unmount it: closing one navigates to
+  // Home, and the lesson screen can stay mounted behind it. So unmounting
+  // alone left a recording running on Home, and ten seconds later Home played
+  // the line and the learner's take (found by QA, 2026-10-07). Losing focus
+  // now stops it as well, quietly.
+  const focused = useIsFocused();
+  const focusedRef = useRef(focused);
+  focusedRef.current = focused;
   const stopRef = useRef<(compareAfter: boolean) => Promise<void>>(async () => {});
 
   const release = async () => {
@@ -133,20 +142,20 @@ export function SayItBack({
       if (on) started = true;
       else if (started) {
         off();
-        if (mounted.current) playYours();
+        if (mounted.current && focusedRef.current) playYours();
       }
     });
     announce(clipId, urdu, roman);
     setTimeout(() => {
       if (!started && !isPlaying()) {
         off();
-        if (mounted.current) playYours();
+        if (mounted.current && focusedRef.current) playYours();
       }
     }, NATIVE_START_GRACE_MS);
   };
 
   /** Still this line's turn: on screen, and not pre-empted by another line. */
-  const stillMine = () => mounted.current && claim === self;
+  const stillMine = () => mounted.current && focusedRef.current && claim === self;
 
   /**
    * Stop recording. After a learner's own tap (or the 10 s limit) the two
@@ -184,6 +193,14 @@ export function SayItBack({
   }
 
   stopRef.current = stopThis;
+
+  useEffect(() => {
+    if (focused) return;
+    if (claim === self) claim = null;
+    if (recording.current) void stopThis(false);
+    // Only on losing focus; stopThis is this render's and reads refs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focused]);
 
   const start = async () => {
     if (busy.current) return;
