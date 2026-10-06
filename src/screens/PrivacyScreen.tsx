@@ -35,7 +35,7 @@ export function PrivacyScreen() {
       <Screen>
         <TopBar onBack={nav.canGoBack() ? () => nav.goBack() : undefined} title="Privacy Policy" />
         <Heading className="mb-1 text-lg">Your data, plainly</Heading>
-        <Txt className="mb-6 text-[0.75rem] text-paper/55">Last updated 2026-09-22</Txt>
+        <Txt className="mb-6 text-[0.75rem] text-paper/55">Last updated 2026-10-06</Txt>
 
         <Section title="No account is required">
           Qaaf works fully as a guest. Your lesson progress, streak, hearts, gems and settings are stored only on this
@@ -52,8 +52,10 @@ export function PrivacyScreen() {
 
         <Section title="What we do not do">
           No advertising and no ad network of any kind. No selling, renting or sharing your data with third parties for
-          marketing. No microphone access and no voice recording — the app plays recorded Urdu audio to you; it never
-          listens to you or scores your accent. No tracking across other apps or websites.
+          marketing. No tracking across other apps or websites. The microphone is used only when you tap Say it back on
+          a line, to record you saying it so you can hear yourself next to the native recording. That recording stays on
+          your device. It is never uploaded, never shared and never scored, and nothing else in the app ever listens to
+          you.
         </Section>
 
         <Section title="Audio and other assets">
@@ -62,9 +64,10 @@ export function PrivacyScreen() {
         </Section>
 
         <Section title="Deleting your data">
-          Uninstalling the app removes everything stored on your device. If you have signed in, deleting your account
-          (Settings → Data) removes the copy of your progress stored with your account as well. Resetting your progress
-          from Settings clears it without needing to delete the app.
+          Uninstalling the app removes everything stored on your device, including any Say it back recording, which on a
+          phone sits in the app’s temporary storage until the system clears it. If you have signed in, deleting your
+          account (Settings → Data) removes the copy of your progress stored with your account as well. Resetting your
+          progress from Settings clears it without needing to delete the app.
         </Section>
 
         <Section title="Children">

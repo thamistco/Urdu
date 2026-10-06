@@ -12,6 +12,8 @@ let muted = false;
 export function setSpeechMuted(value: boolean) {
   muted = value;
 }
+/** Whether the learner has turned sound off; anything that plays audio of its own must respect it too. */
+export const isSpeechMuted = () => muted;
 
 /**
  * Correct feedback delays its pronunciation by a few hundred ms so the chime
