@@ -469,12 +469,20 @@ const ok = (name, cond) => {
   ok(
     'a beginner handed a skip is',
     /starting from scratch had 30 lesson/.test(
-      only(onboarded({ speaker: false, persona: 'beginner', background: 'new' }))[0] || ''
+      only(onboarded({ speaker: false, persona: 'beginner', background: 'new', asked: 0 }))[0] || ''
     )
   );
   ok(
     'and a beginner with nothing skipped is not',
-    only(onboarded({ speaker: false, persona: 'beginner', background: 'new', skipped: 0 })).length === 0
+    only(onboarded({ speaker: false, persona: 'beginner', background: 'new', skipped: 0, asked: 0 })).length === 0
+  );
+  // P-005: only a speaker takes the quick check, so a beginner shown it is a
+  // finding.
+  ok(
+    'a beginner shown the quick check is',
+    /asked 4 question\(s\), not 0/.test(
+      only(onboarded({ speaker: false, persona: 'beginner', background: 'new', skipped: 0, asked: 4 }))[0] || ''
+    )
   );
 
   const reset = (tapped, confirmed) => [{ type: 'resetOffered', tapped, confirmed, stillOnSettings: true }];
