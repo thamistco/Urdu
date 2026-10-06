@@ -37,29 +37,87 @@ weeks.
 
 1. **Pick** the area by the rule above. Read the last report for it, if any,
    and the open items for it in `BACKLOG.md`.
-2. **Research** online first: competitors, platform guidance, published
-   benchmarks. Cite every source in the report. A claim with no source is
-   labelled as judgement.
-3. **Measure** the built or live app for that area. Measure, do not estimate
+2. **Second checks first.** Anything in `BACKLOG.md` under "Checked once"
+   whose first check was on an earlier day gets its second check now (see
+   below). Those that hold are implemented tonight.
+3. **Research** online: competitors, platform guidance, published benchmarks.
+   Always from several perspectives (see below). Cite every source in the
+   report; a claim with no source is labelled as judgement.
+4. **Measure** the built or live app for that area. Measure, do not estimate
    (CLAUDE.md rule 4), and say what each number is not evidence for (rule 5).
-4. **Fix** what is small, safe and clearly right, through the usual gate:
-   `npm run check:all`, push to the deploy branch, confirm from the deploy
-   job's `check:deployed` line that the site serves it. One logical change per
-   commit.
-5. **Queue** everything bigger in `BACKLOG.md`, with the evidence and a size.
-6. **Write** the night's report as `YYYY-MM-DD-<area>.md` and update the
+5. **Fix bugs now.** Something broken, wrong or failing a check is fixed the
+   same night through the usual gate: `npm run check:all`, push to the deploy
+   branch, confirm from the deploy job's `check:deployed` line that the site
+   serves it. One logical change per commit.
+6. **Propose everything else.** A change that comes out of research (a new
+   feature, a redesign, a price, new wording) goes into "Checked once" with the
+   date and the perspectives weighed. It is built only after its second check
+   on a later day.
+7. **Write** the night's report as `YYYY-MM-DD-<area>.md` and update the
    "last reviewed" date above.
-7. **Tell** the owner, briefly: what was looked at, what changed and is live,
-   what was queued, and anything only they can decide.
+8. **Summarise the day** for the owner (see below).
+
+## Several perspectives, every time
+
+The owner asked (2026-10-06) that research always look at a question from
+several sides. Each proposal names at least three of these, and at least one of
+them has to be the case against it:
+
+- the learner: a beginner, a heritage speaker who cannot read, a Roman-track
+  learner;
+- a parent or family choosing for a child;
+- a disabled learner (screen reader, low vision, motor);
+- the business: revenue, cost, risk;
+- competitors, and what they learned the hard way;
+- the stores' rules (Apple, Google) and the law;
+- the Urdu-speaking community: accuracy, culture, respect;
+- engineering: what it costs to build and to keep working.
+
+## Two days before a research change ships
+
+Also the owner's rule (2026-10-06). A change that comes from research is
+checked on two different days before it is committed to the app:
+
+- **Day one** proposes it, with the evidence and the perspectives weighed, in
+  "Checked once" in `BACKLOG.md`.
+- **A later day** looks again with fresh eyes: searches for evidence against
+  it, takes a perspective day one did not, and re-measures. If it holds, it is
+  built and shipped that night. If it does not, it is changed (and the changed
+  version starts again at day one) or dropped, with the reason written down.
+
+Bug fixes are not research changes and ship the same day.
+
+## Decisions
+
+The owner has delegated decisions to the review (2026-10-06): prices, wording,
+design, features. The review decides, ships, and says so plainly in the day's
+summary, with what to revert if the owner disagrees. The owner reads the
+summary and asks for reverts.
+
+What still needs the owner is only what the review physically cannot do:
+spending money, creating accounts, keys, and settings in outside dashboards.
+These stay under "Needs the owner" in `BACKLOG.md`.
+
+## The end-of-day summary
+
+Every night's run ends with one message to the owner covering everything that
+changed in the app since the last summary, including work done during the day.
+Plain language, no jargon:
+
+- what changed, in the words a learner would use;
+- why, in a sentence;
+- whether it is live (only after reading the deploy log);
+- what was decided on the owner's behalf, and the commit to revert if wanted;
+- what was proposed tonight and will be checked again tomorrow;
+- anything only the owner can do.
 
 ## What a run must not do
 
 - Spend money, create accounts, sign up for services, or accept terms.
 - Post, publish or contact anyone outside this repository and its site.
-- Change prices, legal text, the brand or anything a learner pays for. These
-  go to "Needs the owner" in `BACKLOG.md` with a recommendation.
 - Generate new audio without a text-to-speech key in the environment's
   secrets. The key pasted in chat is exposed and is due to be replaced.
+- Ship a research change that has only been checked on one day.
 - Weaken a check to go green, or report a deploy live without reading the
   deploy log.
 - Rename the `qaaf-*` localStorage keys. See CLAUDE.md.
