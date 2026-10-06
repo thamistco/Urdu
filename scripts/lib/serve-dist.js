@@ -122,7 +122,7 @@ function findChromium() {
  * front door" from "we are already through it", which is the difference a
  * missing button has to be judged against.
  */
-const AT_THE_DOOR = /you speak it\. now read it\./i;
+const AT_THE_DOOR = /speak urdu\? now read it\./i;
 
 /**
  * Tap whatever opens the door, and fail loudly if nothing does.

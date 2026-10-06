@@ -58,8 +58,8 @@ function ProviderButton({ label, onPress, loading }: { label: string; onPress: (
  * the picture spans the whole of it, while this content starts below the notch.
  *
  * The copy is short for the same reason. There is 28% of the screen below the
- * sunset and everything has to live in it, so the tagline is a line rather than
- * a paragraph. `check:scenery` measures what is actually behind each line of
+ * sunset and everything has to live in it, so the tagline is a headline and one
+ * sentence rather than a paragraph. `check:scenery` measures what is actually behind each line of
  * text on this screen, so a stack that grows back up into the sun fails there
  * rather than shipping.
  *
@@ -167,9 +167,12 @@ export function LoginScreen() {
             {/* The heritage speaker first: someone who grew up hearing Urdu and
                 cannot read it is the learner no other Urdu app is built for, and
                 the one this course fits best (daily review, 2026-10-06, P-002).
-                The second line is for everyone else, so a complete beginner
-                does not read the first and decide the app is not for them. */}
-            <Bold className="mb-1 text-center text-[0.9375rem] text-paper">You speak it. Now read it.</Bold>
+                A question, not "You speak it.": the wordmark never names the
+                language, so "it" had no subject, and the line guessed about the
+                reader before onboarding asks. The second line is for everyone
+                else, so a complete beginner is welcomed rather than turned
+                away. */}
+            <Bold className="mb-1 text-center text-[0.9375rem] text-paper">Speak Urdu? Now read it.</Bold>
             <Txt className="mb-3 text-center text-[0.8125rem] leading-5 text-paper/70">
               New to Urdu? Start at the first letter. The whole language is here.
             </Txt>
