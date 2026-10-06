@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { readableWords, pickRound, wordsPerMinute, countsTowardBest, ROUND_SIZE, MIN_READ_MS } from './readingPace';
+import {
+  readableWords,
+  pickRound,
+  wordsPerMinute,
+  wordsRead,
+  countsTowardBest,
+  ROUND_SIZE,
+  MIN_READ_MS,
+} from './readingPace';
 import { WORDS } from '../data/words';
 
 describe('readableWords', () => {
@@ -62,6 +70,17 @@ describe('wordsPerMinute', () => {
     expect(wordsPerMinute([])).toBe(0);
     expect(wordsPerMinute([{ ms: 1000, read: false }])).toBe(0);
     expect(wordsPerMinute([{ ms: 0, read: true }])).toBe(0);
+  });
+});
+
+describe('wordsRead', () => {
+  it('counts what the pace counts, so the two never disagree on screen', () => {
+    const round = [
+      { ms: 1500, read: true },
+      { ms: 200, read: true },
+      { ms: 1500, read: false },
+    ];
+    expect(wordsRead(round)).toBe(1);
   });
 });
 
