@@ -20,12 +20,12 @@ report.
 | #   | Area                         | What it covers                                                                               | Last reviewed |
 | --- | ---------------------------- | -------------------------------------------------------------------------------------------- | ------------- |
 | 1   | Market and competitors       | Who else teaches Urdu, what they charge, where they are weak, who our learners are           | 2026-10-06    |
-| 2   | Accessibility                | Screen readers, contrast, text size, motor and colour-blind use                              | never         |
-| 3   | Visual design and aesthetics | Consistency, hierarchy, polish, the Moonrise brand across every screen                       | never         |
-| 4   | Learning effectiveness       | Does it teach? Curriculum order, spaced repetition, script mastery                           | never         |
-| 5   | Interaction and ease of use  | Friction, dead ends, confusing controls, error states, speed of a session                    | never         |
-| 6   | Onboarding and first session | The first five minutes: does a stranger reach a win and want a second day                    | never         |
-| 7   | Retention and habit          | Streaks, reminders, goals, comeback paths, what brings people back                           | never         |
+| 2   | Accessibility                | Screen readers, contrast, text size, motor and colour-blind use                              | 2026-10-07    |
+| 3   | Visual design and aesthetics | Consistency, hierarchy, polish, the Moonrise brand across every screen                       | 2026-10-07    |
+| 4   | Learning effectiveness       | Does it teach? Curriculum order, spaced repetition, script mastery                           | 2026-10-07    |
+| 5   | Interaction and ease of use  | Friction, dead ends, confusing controls, error states, speed of a session                    | 2026-10-07    |
+| 6   | Onboarding and first session | The first five minutes: does a stranger reach a win and want a second day                    | 2026-10-07    |
+| 7   | Retention and habit          | Streaks, reminders, goals, comeback paths, what brings people back                           | 2026-10-07    |
 | 8   | Content quality              | Urdu accuracy, translations, audio, cultural fit, originality                                | never         |
 | 9   | Performance and reliability  | Load time, bundle size, offline, crashes, low-end phones                                     | never         |
 | 10  | Monetisation and pricing     | What is free, what is paid, price, trial, paywall design, family plans                       | never         |
@@ -125,6 +125,10 @@ merges and ships. Its duties:
    drifting from its task is stopped, and its partial report is used. The
    measured reason this exists: one critic once spent 253,607 tokens over 70
    minutes and never returned a verdict (gauntlet/ROLES.md, OVERSEER).
+   While agents run, the manager edits nothing they run: on 2026-10-07 it
+   changed `scripts/lib/serve-dist.js` in the working tree mid-run, and the
+   design agent's door-opener then looked for a button the built app did not
+   have yet. Work on agents' tools goes in a worktree until they finish.
 4. **Weigh the feedback.** Turn findings into fixes, proposals and backlog
    items. A specialist advises; the manager decides.
 5. **Second-check, build, ship,** and record what each agent cost in the
