@@ -117,7 +117,10 @@ merges and ships. Its duties:
    each agent that needs the app its own port; give each one task.
 2. **Dispatch in parallel, in the background,** each with its budget (30 to 40
    tool calls, 15 to 20 minutes) and the report format in its file.
-3. **Check on them.** Every few minutes, read each running agent's progress.
+3. **Check on them.** Every few minutes, check each running agent's state. A
+   background agent's output file does not grow while it works, so its size
+   says nothing (learned 2026-10-06); track elapsed time against the budget
+   and the completion notice instead.
    An agent past its time budget, repeating itself, waiting on something, or
    drifting from its task is stopped, and its partial report is used. The
    measured reason this exists: one critic once spent 253,607 tokens over 70
