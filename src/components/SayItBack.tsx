@@ -54,11 +54,16 @@ export function SayItBack({
   urdu,
   roman,
   size = 24,
+  stack = false,
 }: {
   clipId: string;
   urdu: string;
   roman?: string;
   size?: number;
+  /** Put "hear yourself" under the microphone rather than beside it: a
+   *  reading line keeps its buttons in a narrow column beside the Urdu, and
+   *  side by side they squeezed the text into an extra line at 320px. */
+  stack?: boolean;
 }) {
   const [phase, setPhase] = useState<Phase>('idle');
   const recording = useRef<Audio.Recording | null>(null);
@@ -209,7 +214,7 @@ export function SayItBack({
     <View className="items-center">
       {/* 20pt apart: each button's 10pt hit slop reaches halfway, so a tap
           for one can never land on the other. */}
-      <View className="flex-row items-center gap-5">
+      <View className={`${stack ? 'flex-col' : 'flex-row'} items-center gap-5`}>
         <Pressable
           onPress={recordingNow ? () => void stopThis() : () => void start()}
           hitSlop={HIT_SLOP}
