@@ -13,25 +13,27 @@ happen.
 ## The rotation
 
 One area a night. Take the area with the oldest "last reviewed" date; on a tie,
-the one higher in this list. Fourteen areas, so each comes round every two
-weeks.
+the one higher in this list. Sixteen areas, so each comes round every sixteen
+nights.
 
-| #   | Area                         | What it covers                                                                     | Last reviewed |
-| --- | ---------------------------- | ---------------------------------------------------------------------------------- | ------------- |
-| 1   | Market and competitors       | Who else teaches Urdu, what they charge, where they are weak, who our learners are | 2026-10-06    |
-| 2   | Accessibility                | Screen readers, contrast, text size, motor and colour-blind use                    | never         |
-| 3   | Visual design and aesthetics | Consistency, hierarchy, polish, the Moonrise brand across every screen             | never         |
-| 4   | Learning effectiveness       | Does it teach? Curriculum order, spaced repetition, script mastery                 | never         |
-| 5   | Interaction and ease of use  | Friction, dead ends, confusing controls, error states, speed of a session          | never         |
-| 6   | Onboarding and first session | The first five minutes: does a stranger reach a win and want a second day          | never         |
-| 7   | Retention and habit          | Streaks, reminders, goals, comeback paths, what brings people back                 | never         |
-| 8   | Content quality              | Urdu accuracy, translations, audio, cultural fit, originality                      | never         |
-| 9   | Performance and reliability  | Load time, bundle size, offline, crashes, low-end phones                           | never         |
-| 10  | Monetisation and pricing     | What is free, what is paid, price, trial, paywall design, family plans             | never         |
-| 11  | Launch readiness             | Native builds, store accounts and listings, legal, support, payments               | never         |
-| 12  | Marketing and advertising    | Positioning, channels, creators, paid ads, budget, launch moments                  | never         |
-| 13  | Growth and referral          | Sharing, invites, family features, word of mouth, community                        | never         |
-| 14  | Analytics, feedback, privacy | What to measure, how to hear from learners, staying privacy-respecting             | never         |
+| #   | Area                         | What it covers                                                                               | Last reviewed |
+| --- | ---------------------------- | -------------------------------------------------------------------------------------------- | ------------- |
+| 1   | Market and competitors       | Who else teaches Urdu, what they charge, where they are weak, who our learners are           | 2026-10-06    |
+| 2   | Accessibility                | Screen readers, contrast, text size, motor and colour-blind use                              | never         |
+| 3   | Visual design and aesthetics | Consistency, hierarchy, polish, the Moonrise brand across every screen                       | never         |
+| 4   | Learning effectiveness       | Does it teach? Curriculum order, spaced repetition, script mastery                           | never         |
+| 5   | Interaction and ease of use  | Friction, dead ends, confusing controls, error states, speed of a session                    | never         |
+| 6   | Onboarding and first session | The first five minutes: does a stranger reach a win and want a second day                    | never         |
+| 7   | Retention and habit          | Streaks, reminders, goals, comeback paths, what brings people back                           | never         |
+| 8   | Content quality              | Urdu accuracy, translations, audio, cultural fit, originality                                | never         |
+| 9   | Performance and reliability  | Load time, bundle size, offline, crashes, low-end phones                                     | never         |
+| 10  | Monetisation and pricing     | What is free, what is paid, price, trial, paywall design, family plans                       | never         |
+| 11  | Launch readiness             | Native builds, store accounts and listings, legal, support, payments                         | never         |
+| 12  | Marketing and advertising    | Positioning, channels, creators, paid ads, budget, launch moments                            | never         |
+| 13  | Growth and referral          | Sharing, invites, family features, word of mouth, community                                  | never         |
+| 14  | Analytics, feedback, privacy | What to measure, how to hear from learners, staying privacy-respecting                       | never         |
+| 15  | What learners say            | Reviews of other apps, forums, what people love and wish existed, what Urdu learners ask for | 2026-10-06    |
+| 16  | Learning science             | What research shows works for learning a language and a script, and whether Qaaf does it     | 2026-10-06    |
 
 ## A night's work
 
@@ -40,9 +42,12 @@ weeks.
 2. **Second checks first.** Anything in `BACKLOG.md` under "Checked once"
    whose first check was on an earlier day gets its second check now (see
    below). Those that hold are implemented tonight.
-3. **Research** online: competitors, platform guidance, published benchmarks.
-   Always from several perspectives (see below). Cite every source in the
-   report; a claim with no source is labelled as judgement.
+3. **Research** online: competitors, platform guidance, published benchmarks,
+   and what learners themselves say about this area in other apps' reviews and
+   in forums (the owner asked for this on 2026-10-06: what people like, what
+   they wish existed, what Urdu learners want in particular, and what research
+   says works). Always from several perspectives (see below). Cite every source
+   in the report; a claim with no source is labelled as judgement.
 4. **Measure** the built or live app for that area. Measure, do not estimate
    (CLAUDE.md rule 4), and say what each number is not evidence for (rule 5).
 5. **Fix bugs now.** Something broken, wrong or failing a check is fixed the
