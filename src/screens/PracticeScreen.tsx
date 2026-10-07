@@ -24,6 +24,7 @@ import { TOPICS, WORDS, wordsByTopic, LEVEL_META, LEVEL_ORDER, type Level } from
 import { GRAMMAR } from '../data/grammar';
 import { PASSAGES, DIALOGUES } from '../data/sentences';
 import type { RootStackParamList } from '../navigation/types';
+import { wholeWords } from '../lib/wholeWords';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -186,8 +187,8 @@ export function PracticeScreen() {
                   : { backgroundColor: palette.ink700, borderWidth: 1, borderColor: withAlpha(palette.white, 0.1) }
               }
             >
-              <View className="flex-row items-center justify-between">
-                <View className="flex-1 pe-3">
+              <View className="flex-row flex-wrap items-center justify-between gap-y-3">
+                <View className="flex-1 pe-3" style={wholeWords}>
                   <Eyebrow style={{ color: started ? withAlpha(palette.ink, 0.7) : palette.gold }}>
                     Daily review
                   </Eyebrow>

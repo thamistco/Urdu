@@ -19,6 +19,7 @@ import { ACHIEVEMENTS } from '../data/achievements';
 import { LETTERS } from '../data/letters';
 import { WORDS } from '../data/words';
 import type { NoParamScreen, RootStackParamList } from '../navigation/types';
+import { wholeWords } from '../lib/wholeWords';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -96,8 +97,8 @@ function FreezeCard() {
 
   return (
     <Card className="mb-4">
-      <View className="flex-row items-center gap-3">
-        <View className="flex-1">
+      <View className="flex-row flex-wrap items-center gap-3">
+        <View className="flex-1" style={wholeWords}>
           <Bold className="text-[0.9375rem]">Streak freezes</Bold>
           <Txt className="mt-0.5 text-xs text-paper/55">
             Each freeze covers one missed day and is used automatically. Miss more days than you have freezes and the
@@ -215,9 +216,9 @@ export function ProfileScreen() {
             onPress={link('Leaderboard')}
             style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
           >
-            <View className="mb-3 flex-row items-center gap-3 rounded-2xl border border-white/10 bg-ink-700 p-4">
+            <View className="mb-3 flex-row flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-ink-700 p-4">
               <LeagueBadge color={league.color} size={30} />
-              <View className="flex-1">
+              <View className="flex-1" style={wholeWords}>
                 <Bold className="text-[0.9375rem]">{league.name} League</Bold>
                 <Txt className="text-xs text-paper/55">{s.weeklyXp} XP this week · tap to see standings</Txt>
               </View>
@@ -233,9 +234,9 @@ export function ProfileScreen() {
             onPress={link('Achievements')}
             style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
           >
-            <View className="mb-3 flex-row items-center gap-3 rounded-2xl border border-white/10 bg-ink-700 p-4">
+            <View className="mb-3 flex-row flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-ink-700 p-4">
               <Illustration name="medal" tile={false} size={30} />
-              <View className="flex-1">
+              <View className="flex-1" style={wholeWords}>
                 <Bold className="text-[0.9375rem]">Achievements</Bold>
                 <Txt className="text-xs text-paper/55">
                   {unlockedAch} of {ACHIEVEMENTS.length} unlocked

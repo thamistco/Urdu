@@ -19,6 +19,7 @@ import { DAILY_GOALS } from '../data/achievements';
 import { TrackChooser } from '../components/TrackChooser';
 import { MALE_VOICE_AVAILABLE } from '../lib/voiceManifest';
 import { announce } from '../lib/speech';
+import { wholeWords } from '../lib/wholeWords';
 
 function Row({
   label,
@@ -429,7 +430,9 @@ export function SettingsScreen() {
                       setDailyGoal(g.id);
                       force((n) => n + 1);
                     }}
-                    style={{ width: '48%' }}
+                    // Grows to share the row, and never narrower than its own
+                    // label: at 2x text "Serious" broke across two lines.
+                    style={{ width: '48%', flexGrow: 1, ...wholeWords }}
                   >
                     <View
                       className="rounded-xl border p-3"
