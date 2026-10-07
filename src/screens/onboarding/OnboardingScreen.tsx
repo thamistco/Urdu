@@ -331,12 +331,13 @@ export function OnboardingScreen() {
           <Dots of="goal" />
           <Heading className="mb-1 text-2xl">Why are you learning Urdu?</Heading>
           <Txt className="mb-6 text-sm text-paper/55">This shapes which words we teach first.</Txt>
-          <View className="gap-3">
+          <View className="gap-3" accessibilityRole="radiogroup" aria-label="Why are you learning Urdu?">
             {GOALS.map((g) => {
               const sel = goal === g.key;
               return (
                 <Pressable
-                  accessibilityRole="button"
+                  accessibilityRole="radio"
+                  aria-checked={sel}
                   key={g.key}
                   onPress={() => {
                     feedback.tap();
@@ -414,6 +415,8 @@ export function OnboardingScreen() {
             const active = voice === o.key;
             return (
               <Pressable
+                accessibilityRole="radio"
+                aria-checked={active}
                 key={o.key}
                 onPress={() => {
                   feedback.tap();
@@ -423,7 +426,6 @@ export function OnboardingScreen() {
                   setVoiceSet(o.key);
                   announce('w-salam', 'السلام علیکم', 'assalaam-o-alaikum');
                 }}
-                accessibilityRole="button"
                 accessibilityLabel={`${o.label}. ${o.desc}. Tap to hear it.`}
               >
                 <View
@@ -474,12 +476,13 @@ export function OnboardingScreen() {
           <Txt className="mb-6 text-sm text-paper/55">
             If you already understand it spoken, we’ll skip the basic words you know and get you to the script faster.
           </Txt>
-          <View className="gap-3">
+          <View className="gap-3" accessibilityRole="radiogroup" aria-label="Do you already know some Urdu?">
             {OPTIONS.map((o) => {
               const sel = background === o.key;
               return (
                 <Pressable
-                  accessibilityRole="button"
+                  accessibilityRole="radio"
+                  aria-checked={sel}
                   key={o.key}
                   onPress={() => {
                     feedback.tap();
@@ -603,12 +606,16 @@ export function OnboardingScreen() {
           <Txt className="mb-6 text-sm text-paper/55">
             Choose one you can keep. You can change it whenever you like.
           </Txt>
-          <View className="gap-3">
+          {/* Radios, as in Settings: the gold border was the only sign of
+              which goal was set, so a screen reader heard four buttons and
+              no choice (QA, 2026-10-08). The same for every choice below. */}
+          <View className="gap-3" accessibilityRole="radiogroup" aria-label="Daily goal">
             {DAILY_GOALS.map((g) => {
               const sel = daily === g.id;
               return (
                 <Pressable
-                  accessibilityRole="button"
+                  accessibilityRole="radio"
+                  aria-checked={sel}
                   key={g.id}
                   onPress={() => {
                     feedback.tap();
@@ -724,7 +731,8 @@ export function OnboardingScreen() {
                 const on = skipScript === o.v;
                 return (
                   <Pressable
-                    accessibilityRole="button"
+                    accessibilityRole="radio"
+                    aria-checked={on}
                     key={String(o.v)}
                     onPress={() => {
                       feedback.tap();
