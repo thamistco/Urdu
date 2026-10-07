@@ -72,17 +72,13 @@ const INTERIOR = 'img[src*="/evening-dusk."]';
  * How pass two finds the picture it is measuring against, per screen.
  *
  * The two front screens fail in different ways: sign-in keeps its text inside
- * two dark bands of a picture at full brightness, and onboarding's first
- * question puts text anywhere it likes on a darkened one. (That was a welcome
- * screen until 2026-10-01; it repeated sign-in and was removed.) Measuring what is behind each run
+ * two dark bands of a picture at full brightness, and the welcome screen puts
+ * text anywhere it likes on a darkened one. Measuring what is behind each run
  * of text covers both without either needing to know how the other is built.
  */
 const SCENES = [
   { name: 'sign-in', selector: 'img[src*="/evening."]', minRuns: 6 },
-  // 2, not the welcome screen's 8: its heading and subtitle are the only text
-  // on the photo. The four answers sit on cards with their own fill, which
-  // textBoxes rightly leaves out. Fewer than 2 means the screen did not render.
-  { name: 'onboarding', selector: 'img[src*="/evening-dusk."]', minRuns: 2 },
+  { name: 'welcome', selector: 'img[src*="/evening-dusk."]', minRuns: 8 },
 ];
 
 /**
@@ -250,8 +246,8 @@ async function textBoxes(page, sceneSelector) {
   for (const scene of SCENES) {
     await page.goto(url);
     await page.waitForTimeout(2500);
-    // Onboarding's first question is one tap past sign-in.
-    if (scene.name === 'onboarding') {
+    // The welcome screen is one tap past sign-in.
+    if (scene.name === 'welcome') {
       await openTheDoor(page);
       await page.waitForTimeout(300);
     }
