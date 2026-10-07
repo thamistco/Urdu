@@ -125,14 +125,33 @@ async function playClip(id: string): Promise<number | null> {
     sound.setOnPlaybackStatusUpdate((st) => {
       if (!st.isLoaded || st.didJustFinish) end();
     });
+    /**
+     * A clip that failed to load is let go, so the next tap fetches it again.
+     * It used to stay in the cache, broken, and every later tap replayed the
+     * dead copy without asking the network: one dropped request on a bad
+     * connection and that word's speaker button was silent until a reload
+     * (performance review, 2026-10-08, every mp3 blocked then tapped).
+     */
+    const forget = () => {
+      if (clipCache[cacheKey] === sound) delete clipCache[cacheKey];
+      if (lastSound === sound) lastSound = null;
+      sound.unloadAsync().catch(() => {});
+    };
     try {
       const status = await sound.replayAsync();
-      if (!status.isLoaded) end();
-      const ms = status.isLoaded && typeof status.durationMillis === 'number' ? status.durationMillis : 0;
+      if (!status.isLoaded) {
+        // Silent, as before (0, not null: no fall through to the device's
+        // voice); only now the next tap tries the network again.
+        end();
+        forget();
+        return 0;
+      }
+      const ms = typeof status.durationMillis === 'number' ? status.durationMillis : 0;
       setTimeout(end, (ms || 1500) + 400);
       return ms;
     } catch {
       end();
+      forget();
       return null;
     }
   } catch {
