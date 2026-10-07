@@ -777,9 +777,13 @@ export function OnboardingScreen() {
       ? 'You already read some Urdu'
       : 'You already speak some Urdu';
   return (
-    <Screen scroll={false}>
-      <Reveal style={{ flex: 1 }}>
-        <View className="flex-1 items-center justify-center">
+    // Scrolls, and centres itself when there is room, like the welcome. With
+    // `scroll={false}` a speaker's card, the moved-ahead card and the alphabet
+    // choice together pushed "Start learning" off the bottom of a phone, with
+    // no way to reach it (reported by the owner on 2026-10-07, screenshot).
+    <Screen contentClassName="grow justify-center">
+      <Reveal>
+        <View className="items-center">
           <Illustration name="crescent" tile={false} size={64} />
           <Display className="mb-2 mt-4 text-3xl">You’re all set</Display>
           <GeoDivider />
