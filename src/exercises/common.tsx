@@ -258,7 +258,13 @@ export function SpeakerButton({
       }}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={({ pressed }) => ({ ...reach(8), transform: [{ scale: pressed ? 0.92 : 1 }] })}
+      // The per-line speakers pass size 26 and 24; a fixed reach(8) measured
+      // 42 and 40pt on the web, under the 44pt minimum (nightly QA 2026-10-07).
+      // Size the reach so the laid-out target is always at least 44pt.
+      style={({ pressed }) => ({
+        ...reach(Math.max(8, (44 - size) / 2)),
+        transform: [{ scale: pressed ? 0.92 : 1 }],
+      })}
     >
       <Animated.View
         pointerEvents="none"

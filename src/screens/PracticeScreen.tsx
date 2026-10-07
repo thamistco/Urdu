@@ -310,7 +310,10 @@ export function PracticeScreen() {
             {query.length > 0 && (
               <Pressable
                 onPress={() => setQuery('')}
-                style={reach(12)}
+                // The ✕ glyph is ~12pt: reach(12) alone measured 36x40 on the
+                // web, under the 44pt minimum (nightly QA 2026-10-07). Pin the
+                // laid-out size; the negative margin still gives the space back.
+                style={{ ...reach(12), minWidth: 44, minHeight: 44 }}
                 accessibilityRole="button"
                 accessibilityLabel="Clear search"
               >
