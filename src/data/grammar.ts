@@ -422,7 +422,7 @@ export const GRAMMAR: GrammarConcept[] = [
     explain: [
       'نہیں (nahiñ) is the everyday “not”. It goes immediately before the verb: میں نہیں جاتا (main nahiñ jaata): “I do not go”.',
       'In a simple “X is Y” sentence, نہیں (nahiñ) usually swallows the ہے (hai): وہ ڈاکٹر نہیں (wo ḍākṭar nahiñ): “he is not a doctor”. Adding ہے (hai) is not wrong, just heavier.',
-      'مت (mat) is only for telling someone not to do something: مت جاؤ (mat jaao): “don’t go”. نہ (na) is the quiet one, used with the subjunctive and in pairs: نہ یہ نہ وہ (na ye na wo): “neither this nor that”.',
+      'مت (mat) is only for telling someone not to do something: مت جاؤ (mat jaao): “don’t go”. نہ (na) is the quiet one, used with the subjunctive and in pairs: نہ یہ نہ وہ (na ye na wo): “neither this nor that”. It can soften a command too: نہ جاؤ (na jaao).',
     ],
     table: {
       heading: ['Word', 'Use', 'Example'],
@@ -458,8 +458,10 @@ export const GRAMMAR: GrammarConcept[] = [
         promptRoman: 'darwaaza ___ kholo',
         meaning: 'Don’t open the door',
         answer: 'مت',
-        options: ['مت', 'نہیں', 'نہ', 'کبھی'],
-        because: 'A command told *not* to do something uses مت (mat).',
+        // Not نہ: نہ کھولو (na kholo) is just as correct, a gentler way to say
+        // it, and was marked wrong here (content review, 2026-10-08).
+        options: ['مت', 'نہیں', 'بھی', 'کبھی'],
+        because: 'A command told *not* to do something takes مت (mat), or more gently نہ (na), never نہیں (nahiñ).',
       },
     ],
   },
@@ -799,7 +801,10 @@ export const GRAMMAR: GrammarConcept[] = [
         id: 'g-abil-d1',
         prompt: 'میں یہ کام کر ___ ہوں',
         promptRoman: 'main ye kaam kar ___ hoon',
-        meaning: 'I can do this work',
+        // Said by a man, as the explanation assumes: "I" has no gender in
+        // English, so a woman's correct سکتی (sakti) was being marked wrong
+        // (content review, 2026-10-08).
+        meaning: 'I can do this work (said by a man)',
         answer: 'سکتا',
         options: ['سکتا', 'سکتی', 'سکتے', 'سکنا'],
         because: 'سکنا (sakna) takes the endings; a masculine “I” gives سکتا ہوں (sakta hoon).',
@@ -962,8 +967,10 @@ export const GRAMMAR: GrammarConcept[] = [
         promptRoman: 'shaayad wo kal ___',
         meaning: 'Perhaps he will come tomorrow',
         answer: 'آئے',
-        options: ['آئے', 'آیا', 'آتا ہے', 'آئے گا'],
-        because: 'شاید (shaayad, perhaps) takes the subjunctive.',
+        // Not آئے گا: شاید وہ کل آئے گا is natural Urdu too, just surer, and
+        // was marked wrong here (content review, 2026-10-08).
+        options: ['آئے', 'آیا', 'آتا ہے', 'آنا'],
+        because: 'شاید (shaayad, perhaps) usually takes the subjunctive, آئے (aaye).',
       },
     ],
   },
