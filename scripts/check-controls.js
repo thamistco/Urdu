@@ -587,6 +587,51 @@ async function main() {
         await p.close();
       }
     }
+
+    /**
+     * A word whose sound failed to load plays once the network is back.
+     *
+     * A clip that failed stayed cached, broken, and every later tap replayed
+     * the dead copy without asking the network, so one dropped request on a
+     * patchy connection silenced that word's speaker button until a reload
+     * (performance review, 2026-10-08). Every clip is blocked for the first
+     * tap and allowed for the second, which must start the clip playing.
+     */
+    {
+      const p = await browser.newPage({ viewport: { width: 390, height: 844 } });
+      await p.addInitScript(() => {
+        window.__playing = 0;
+        const play = HTMLMediaElement.prototype.play;
+        HTMLMediaElement.prototype.play = function () {
+          this.addEventListener('playing', () => (window.__playing += 1), { once: true });
+          return play.call(this);
+        };
+      });
+      let blocked = true;
+      await p.route(/\.mp3(\?|$)/, (r) => (blocked ? r.abort('failed') : r.continue()));
+      try {
+        await enterAsGuest(p, `http://localhost:${PORT}/Urdu/lesson/l-1`, {}, { soundEnabled: true });
+        await p.waitForTimeout(2500);
+        const hear = p.locator('[aria-label^="Hear"]').first();
+        if (!(await hear.count())) {
+          problems.push('The first lesson has no "Hear" button, so a sound that failed to load was never retried.');
+        } else {
+          await hear.click();
+          await p.waitForTimeout(1200);
+          blocked = false;
+          await hear.click();
+          await p.waitForTimeout(2500);
+          if (!(await p.evaluate(() => window.__playing))) {
+            problems.push(
+              'A word whose sound failed to load stays silent after the network comes back: the speaker ' +
+                'button replays the broken copy instead of fetching the clip again.'
+            );
+          }
+        }
+      } finally {
+        await p.close();
+      }
+    }
   } finally {
     if (browser) await browser.close();
     server.close();
@@ -617,6 +662,7 @@ async function main() {
   console.log(
     'check:controls — at 320x568 a speaker who aces the quick check can scroll to "Start learning" and finish onboarding.'
   );
+  console.log('check:controls — a sound that failed to load plays on the next tap once the network is back.');
 }
 
 main().catch((err) => {
