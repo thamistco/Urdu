@@ -409,7 +409,7 @@ export function OnboardingScreen() {
           <Dots of="voice" />
           <Heading className="mb-1 text-2xl">Whose voice would you like?</Heading>
           <Txt className="mb-4 text-sm text-paper/55">
-            Every word is read aloud by a real recorded voice. You can change this later in Settings.
+            Every word is read aloud, in the voice you choose. You can change it later in Settings.
           </Txt>
           {OPTIONS.map((o) => {
             const active = voice === o.key;

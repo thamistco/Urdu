@@ -44,7 +44,7 @@
       [
         "expo-av",
         {
-          "microphonePermission": "Qaaf uses the microphone only when you tap Say it back, so you can hear yourself next to the native recording. The recording stays on your device."
+          "microphonePermission": "Qaaf uses the microphone only when you tap Say it back, so you can hear yourself next to the course’s own recording. The recording stays on your device."
         }
       ]
     ],

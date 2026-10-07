@@ -35,7 +35,7 @@ export function PrivacyScreen() {
       <Screen>
         <TopBar onBack={nav.canGoBack() ? () => nav.goBack() : undefined} title="Privacy Policy" />
         <Heading className="mb-1 text-lg">Your data, plainly</Heading>
-        <Txt className="mb-6 text-[0.75rem] text-paper/55">Last updated 2026-10-06</Txt>
+        <Txt className="mb-6 text-[0.75rem] text-paper/55">Last updated 2026-10-08</Txt>
 
         <Section title="No account is required">
           Qaaf works fully as a guest. Your lesson progress, streak, hearts, gems and settings are stored only on this
@@ -53,9 +53,9 @@ export function PrivacyScreen() {
         <Section title="What we do not do">
           No advertising and no ad network of any kind. No selling, renting or sharing your data with third parties for
           marketing. No tracking across other apps or websites. The microphone is used only when you tap Say it back on
-          a line, to record you saying it so you can hear yourself next to the native recording. That recording stays on
-          your device. It is never uploaded, never shared and never scored, and nothing else in the app ever listens to
-          you.
+          a line, to record you saying it so you can hear yourself next to the course’s own recording. That recording
+          stays on your device. It is never uploaded, never shared and never scored, and nothing else in the app ever
+          listens to you.
         </Section>
 
         <Section title="Audio and other assets">

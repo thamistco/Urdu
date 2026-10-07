@@ -104,7 +104,7 @@ brand paying twice for one word.
 > actually drew the letter rather than just filled the space.
 >
 > **2,279 words across 124 topics**, from family and food to law and medicine,
-> each one recorded in a single consistent voice, with a second full recording
+> each one spoken aloud in a single consistent voice, with a second full set
 > in a man's voice if you prefer it. Every clip is bundled with the app, so
 > pronunciation works offline and sounds the same on every phone.
 >
@@ -155,8 +155,11 @@ wrong.
 Worth being explicit about, because the temptation in store copy is to imply it:
 
 - **No speech recognition.** The app never scores your accent. Say it back
-  records you only when you tap it, so you can hear yourself next to the native
-  recording, and the recording stays on your device.
+  records you only when you tap it, so you can hear yourself next to the
+  course's own recording, and the recording stays on your device.
+- **No native-speaker audio yet.** Both voices are synthesised speech, chosen
+  and checked for clarity, not a speaker in a studio. Never call them native or
+  human (store guideline 2.3, launch review 2026-10-08).
 - **No live tutors, no community.** It is a solo course.
 - **No certification.** The A1–B2 labels describe the difficulty of the content,
   not an accredited assessment.
