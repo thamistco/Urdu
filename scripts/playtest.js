@@ -3139,14 +3139,16 @@ async function onboardingSession(page, ctx) {
 
   await page.goto(`http://127.0.0.1:${PORT}/`);
   await page.waitForTimeout(3000);
-  // Onboarding opens on its first question; the welcome step it used to
-  // open on was removed on 2026-10-01 for repeating the sign-in screen.
   const opening = await readSurface(page);
-  if (!/Why are you learning Urdu/i.test(opening.text)) {
-    journal.push({ type: 'onboardingStuck', at: 'goal', saw: opening.lines.slice(0, 8) });
+  if (!/let.s start/i.test(opening.text)) {
+    journal.push({ type: 'onboardingStuck', at: 'welcome', saw: opening.lines.slice(0, 8) });
     await page.screenshot({ path: path.join(OUT, 'onboarding-stuck.png') }).catch(() => {});
     return { finished: false, steps };
   }
+
+  await tapControl(page, /^Let.s start$/i);
+  await page.waitForTimeout(900);
+  note('welcome', 'started');
 
   // Goal, track, voice: whatever is on offer. None of the three changes what
   // the learner is taught, and picking the first keeps the run replayable.
