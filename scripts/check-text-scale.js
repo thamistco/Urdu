@@ -71,6 +71,47 @@ function sample() {
   });
 }
 
+/**
+ * Words the layout has split across two lines.
+ *
+ * Growing is half of it; the other half is whether the screen still holds
+ * together once everything has grown. It did not: at 1.5x the Home headline
+ * read "Spea / k" and "Today's word" broke at its apostrophe, because the
+ * streak and gem chips squeezed the headline's column narrower than its own
+ * longest word, and react-native-web then breaks inside the word rather than
+ * letting it overflow (design review, 2026-10-07). This check measured sizes
+ * and never looked at the layout, so it passed.
+ *
+ * A word is split when its own glyphs land on more than one line, which a
+ * Range over the word reports directly. Text clipped into a one-pixel box for
+ * screen readers is skipped: it wraps every character by design.
+ */
+function brokenWords() {
+  const out = [];
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let t = walker.nextNode(); t; t = walker.nextNode()) {
+    const el = t.parentElement;
+    if (!el) continue;
+    const box = el.getBoundingClientRect();
+    if (box.width < 2 || box.height < 2) continue;
+    const words = /\S+/g;
+    let m;
+    while ((m = words.exec(t.data))) {
+      if (m[0].length < 2) continue;
+      const range = document.createRange();
+      range.setStart(t, m.index);
+      range.setEnd(t, m.index + m[0].length);
+      const lines = new Set(
+        Array.from(range.getClientRects())
+          .filter((r) => r.width > 0 && r.height > 0)
+          .map((r) => Math.round(r.top))
+      );
+      if (lines.size > 1) out.push(m[0]);
+    }
+  }
+  return out;
+}
+
 async function main() {
   const server = await serveDist(DIST, PORT);
   const { chromium } = require('playwright-core');
@@ -192,6 +233,7 @@ async function main() {
       }, root);
       await settle();
       const out = await page.evaluate(sample);
+      out.broken = root > 16 ? await page.evaluate(brokenWords) : [];
       await page.close();
       return out;
     };
@@ -232,6 +274,17 @@ async function main() {
         );
       }
       counts.push(`${screen} ${here}`);
+
+      if (large.broken.length) {
+        const seen = Array.from(new Set(large.broken));
+        problems.push(
+          `${screen}: at ${FACTOR}x text, ${large.broken.length} word${large.broken.length === 1 ? ' is' : 's are'} ` +
+            `split across two lines, for example ${seen
+              .slice(0, 5)
+              .map((w) => `"${w}"`)
+              .join(', ')}. A column narrower than its own longest word breaks inside the word.`
+        );
+      }
     }
   } finally {
     if (browser) await browser.close();
@@ -240,7 +293,7 @@ async function main() {
 
   if (problems.length) {
     console.error(
-      `check:text-scale — ${problems.length} label${problems.length === 1 ? '' : 's'} that will not grow:\n`
+      `check:text-scale — ${problems.length} problem${problems.length === 1 ? '' : 's'} at ${FACTOR}x text:\n`
     );
     for (const p of problems.slice(0, 12)) console.error(`  ✗ ${p}`);
     if (problems.length > 12) console.error(`  … and ${problems.length - 12} more`);
@@ -248,7 +301,7 @@ async function main() {
   }
   console.log(
     `check:text-scale — all ${checked} label-sized lines grow with the browser's text setting, ` +
-      `across ${SCREENS.length} screens (${counts.join(', ')}).`
+      `across ${SCREENS.length} screens (${counts.join(', ')}), and no word splits across two lines.`
   );
 }
 
