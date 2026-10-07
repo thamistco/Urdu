@@ -32,7 +32,7 @@
 
 const path = require('path');
 const fs = require('fs');
-const { serveDist, findChromium, enterAsGuest } = require('./lib/serve-dist');
+const { serveDist, findChromium, enterAsGuest, openTheDoor } = require('./lib/serve-dist');
 const { load } = require('./lib/load-ts');
 
 const DIST = path.join(__dirname, '..', 'dist');
@@ -495,6 +495,98 @@ async function main() {
     if (!/keep your 12-day streak/i.test(frozen.body)) {
       problems.push('After a freeze covers yesterday, Home does not say today is still needed to keep the streak.');
     }
+
+    /**
+     * Onboarding's main button stays within a thumb's reach.
+     *
+     * "You're all set" did not scroll, so for a speaker who read every script
+     * question (the level card, the moved-ahead card and the alphabet choice,
+     * all at once) "Start learning" sat below the bottom of the phone with no
+     * way to reach it. The owner found it on a real phone (2026-10-07).
+     *
+     * Driven from a cold start at the smallest screen the app supports, as
+     * that speaker, because theirs is the longest version of the screen. The
+     * button is brought up with the mouse wheel, the way a thumb scrolls, not
+     * with scrollIntoView: a script can scroll a container a person cannot,
+     * and that is exactly the bug. The right answers come from the quiz's own
+     * data, so a reworded question cannot quietly stop this reaching the end.
+     */
+    {
+      const { placementFor } = load('src/data/placement.ts');
+      const answers = placementFor('both').map((q) => q.options.find((o) => o.c).label);
+      const W = 320;
+      const H = 568;
+      const p = await browser.newPage({ viewport: { width: W, height: H } });
+      const exact = (t) => new RegExp(`^${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
+      const said = () => p.evaluate(() => document.body.innerText);
+      const reached = [];
+      try {
+        await p.goto(`http://localhost:${PORT}/Urdu/`);
+        await openTheDoor(p);
+        await p.waitForTimeout(1200);
+        const step = async (re, label) => {
+          const ok = await tapByText(p, re);
+          await p.waitForTimeout(700);
+          if (ok) reached.push(label);
+          return ok;
+        };
+        await step(/^Let’s start$/, 'welcome');
+        await step(/^Speak with family/, 'goal');
+        await step(/^Continue$/, 'goal continue');
+        for (let k = 0; k < 3 && !/already speak or understand/i.test(await said()); k++) {
+          await step(/^Continue$/, 'track or voice');
+        }
+        await step(/^I already speak or understand it$/, 'speaker');
+        await step(/^Continue$/, 'background continue');
+        for (const a of answers) {
+          await step(exact(a), `quiz: ${a}`);
+          await p.waitForTimeout(500);
+        }
+        await step(/^Continue$/, 'daily goal');
+        await p.waitForTimeout(1000);
+        const ready = await said();
+        if (!/you.re all set/i.test(ready) || !/skip the alphabet/i.test(ready)) {
+          problems.push(
+            'Onboarding did not reach "You’re all set" with the alphabet choice offered, so the reach of its ' +
+              `button went unmeasured. Got as far as: ${reached.join(' > ') || 'nothing'}.`
+          );
+        } else {
+          const buttonBox = () =>
+            p.evaluate(() => {
+              const n = [...document.querySelectorAll('[role="button"]')].find((b) =>
+                /^start learning$/i.test((b.textContent || '').trim())
+              );
+              if (!n) return null;
+              const r = n.getBoundingClientRect();
+              return { top: r.top, bottom: r.bottom, x: r.left + r.width / 2, y: r.top + r.height / 2 };
+            });
+          await p.mouse.move(W / 2, H / 2);
+          let box = await buttonBox();
+          for (let k = 0; k < 20 && box && box.bottom > H; k++) {
+            await p.mouse.wheel(0, 240);
+            await p.waitForTimeout(120);
+            box = await buttonBox();
+          }
+          if (!box) {
+            problems.push('"You’re all set" has no Start learning button.');
+          } else if (box.bottom > H || box.top < 0) {
+            problems.push(
+              `At ${W}x${H}, "Start learning" on "You’re all set" sits at ${Math.round(box.top)} to ` +
+                `${Math.round(box.bottom)} of a ${H}px screen and scrolling does not bring it up: a learner ` +
+                'who already speaks Urdu cannot finish onboarding.'
+            );
+          } else {
+            await p.mouse.click(box.x, box.y);
+            await p.waitForTimeout(2500);
+            if (!/start this lesson|tap any lesson/i.test(await said())) {
+              problems.push('Tapping "Start learning" on "You’re all set" did not land on the lesson path.');
+            }
+          }
+        }
+      } finally {
+        await p.close();
+      }
+    }
   } finally {
     if (browser) await browser.close();
     server.close();
@@ -521,6 +613,9 @@ async function main() {
   );
   console.log(
     'check:controls — opening the app applies missed days: a lapsed streak reads 0, each missed day spends a freeze.'
+  );
+  console.log(
+    'check:controls — at 320x568 a speaker who aces the quick check can scroll to "Start learning" and finish onboarding.'
   );
 }
 
