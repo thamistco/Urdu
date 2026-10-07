@@ -29,6 +29,7 @@ import { DAILY_GOALS } from '../data/achievements';
 import type { RootStackParamList } from '../navigation/types';
 import { dueCount } from '../lib/srs';
 import { testerFlags } from '../store/useTesterStore';
+import { wholeWords } from '../lib/wholeWords';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -560,12 +561,14 @@ export function HomeScreen() {
           {/* header */}
           <Reveal>
             <SafeAreaView edges={['top']}>
-              <View className="mb-4 flex-row items-start justify-between">
-                <View className="flex-1 pe-3">
+              {/* Wraps rather than squeezing: at large text the chips move under
+                  the headline instead of breaking its words (see wholeWords). */}
+              <View className="mb-4 flex-row flex-wrap items-start justify-between gap-y-2">
+                <View className="flex-1 pe-3" style={wholeWords}>
                   <Eyebrow style={{ color: palette.gold }}>Qaaf · قاف</Eyebrow>
                   <Display className="mt-1 text-3xl leading-9">{GREETING[store.goal ?? 'curious']}</Display>
                 </View>
-                <View className="flex-row items-center gap-2">
+                <View className="ms-auto flex-row items-center gap-2">
                   <StatChip
                     icon={<Illustration name="flame" tile={false} size={16} />}
                     value={store.streak}
@@ -786,8 +789,8 @@ export function HomeScreen() {
 
           {/* today's word + letter lab */}
           <Reveal delay={120}>
-            <View className="mb-5 flex-row gap-3">
-              <Card paper className="flex-1" style={{ paddingVertical: 14 }}>
+            <View className="mb-5 flex-row flex-wrap gap-3">
+              <Card paper className="flex-1" style={{ paddingVertical: 14, ...wholeWords }}>
                 {/* 0.65: at 0.5 this measured 3.15:1 on parchment; 0.65 is 4.88:1. */}
                 <Eyebrow style={{ color: withAlpha(palette.ink, 0.65) }} className="mb-2">
                   Today’s word
@@ -884,7 +887,7 @@ export function HomeScreen() {
                   }`}
                   style={({ pressed }) => ({ opacity: pressed ? 0.75 : 1 })}
                 >
-                  <View className="mb-1 mt-7 flex-row items-center gap-3">
+                  <View className="mb-1 mt-7 flex-row flex-wrap items-center gap-3">
                     <View
                       className="rounded-lg px-2.5 py-1"
                       style={{
@@ -897,7 +900,7 @@ export function HomeScreen() {
                         {meta.tag}
                       </Bold>
                     </View>
-                    <View className="flex-1">
+                    <View className="flex-1" style={wholeWords}>
                       <Heading className="text-lg">{meta.title}</Heading>
                       <Txt className="text-xs text-paper/55">
                         {(track === 'roman' && meta.romanBlurb) || meta.blurb}
