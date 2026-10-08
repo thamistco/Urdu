@@ -67,8 +67,8 @@ export function PrivacyScreen() {
           Uninstalling the app removes everything stored on your device, including any Say it back recording, which on a
           phone sits in the app’s temporary storage until the system clears it. If you are signed in, Delete account in
           Settings (under Data) deletes your account and the copy of your progress stored with it; if you have signed
-          out, sign in again to find it. Our database provider may keep backups and sign-in logs for a short time before
-          they expire. Resetting your progress from Settings clears it without needing to delete the app.
+          out, sign in again to find it. Our database provider may keep backups, and records of past sign-ins, after an
+          account is deleted. Resetting your progress from Settings clears it without needing to delete the app.
         </Section>
 
         <Section title="Children">
