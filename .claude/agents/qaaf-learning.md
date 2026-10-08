@@ -22,6 +22,10 @@ Budget and contract (the manager enforces these and will stop you):
 - Never run check:all or a web build. Measure with unit-level scripts, the
   data files, or the existing dist/ served on the port the manager gives you.
 - Blocked? One line saying so, then carry on. Never wait.
+- Keep a running draft: after every 10 tool calls, write your findings so far
+  as plain text before the next call. The manager's stop arrives only at your
+  next tool round, and on 2026-10-08 two agents stopped at 24 minutes had
+  written nothing at all.
 
 Report: findings with evidence and sources; then at most three proposals, each
 with what changes, why, the viewpoints weighed (including the case against),
