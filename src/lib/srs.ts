@@ -30,15 +30,39 @@ export function newCard(id: string, now = Date.now()): SrsCard {
 export function review(card: SrsCard, grade: SrsGrade, now = Date.now()): SrsCard {
   let { ease, interval, reps } = card;
 
+  // Right before it was due: the answer shows the word is still there, not
+  // that it survived the wait the schedule was testing. Without this, a word
+  // taught in the morning and met again in the afternoon's lesson went from
+  // 1 day to 3 before a single night had passed, and at ten lessons a day 38
+  // words reached 3 days or more on the day they were taught (P-009,
+  // 2026-10-07-learning.md). So the interval grows only by the time that
+  // really passed (Anki's rule for early reviews), and reps and ease stay.
+  //
+  // When that time has not earned a longer gap, the card is left exactly as
+  // it was, due date and all. Moving the due date on from now, as the first
+  // draft did, meant a word met in every short session was always due
+  // tomorrow and never came due at all: at three sessions a day it sat at
+  // 1 day for four weeks of right answers (second check, 2026-10-09).
+  //
+  // Not for a card relearning after a miss (reps 0): it has no interval to
+  // keep, and holding it at 0 would leave it due forever.
+  if (grade !== 'again' && reps > 0 && now < card.due) {
+    const earned = Math.round(((now - card.lastSeen) / DAY) * ease);
+    if (earned <= interval) return card;
+    return { ...card, interval: earned, due: now + earned * DAY, lastSeen: now };
+  }
+
   if (grade === 'again') {
     reps = 0;
     interval = 0; // due again this session / very soon
     ease = Math.max(1.3, ease - 0.2);
   } else {
     reps += 1;
-    if (reps === 1) interval = 1;
-    else if (reps === 2) interval = 3;
-    else interval = Math.round(interval * ease);
+    // The first two steps are floors, not fixed values: a card that early
+    // answers have already grown still grows from where it is, so answering
+    // on time never earns less than answering a little early would have.
+    const step = reps === 1 ? 1 : reps === 2 ? 3 : 0;
+    interval = Math.max(step, Math.round(interval * ease));
 
     if (grade === 'easy') {
       ease += 0.15;
