@@ -54,7 +54,7 @@ export function review(card: SrsCard, grade: SrsGrade, now = Date.now()): SrsCar
 
   if (grade === 'again') {
     reps = 0;
-    interval = 0; // due again this session / very soon
+    interval = 0;
     ease = Math.max(1.3, ease - 0.2);
   } else {
     reps += 1;
@@ -72,7 +72,11 @@ export function review(card: SrsCard, grade: SrsGrade, now = Date.now()): SrsCar
     }
   }
 
-  const due = grade === 'again' ? now + 60 * 1000 : now + interval * DAY;
+  // A miss is due at once. It used to be due a minute later, which served
+  // nothing, since grades are applied only when a lesson ends, and it made
+  // the lesson's "the ones that slipped are already queued" false for that
+  // minute: Review straight afterwards said "All caught up" (QA, 2026-10-09).
+  const due = grade === 'again' ? now : now + interval * DAY;
   return { ...card, ease, interval, reps, due, lastSeen: now };
 }
 

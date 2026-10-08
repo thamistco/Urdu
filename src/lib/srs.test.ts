@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { newCard, review } from './srs';
+import { isDue, newCard, review } from './srs';
 
 const DAY = 24 * 60 * 60 * 1000;
 const T0 = Date.UTC(2026, 9, 9, 8, 0);
@@ -63,6 +63,11 @@ describe('review', () => {
     const early = review(card, 'good', T0 + 2 * DAY);
     expect(early.interval).toBe(5);
     expect(early.reps).toBe(2);
+  });
+
+  it('a miss is due straight away, so Review after the lesson already has it', () => {
+    const missed = review(newCard('w', T0), 'again', T0);
+    expect(isDue(missed, T0)).toBe(true);
   });
 
   it('a miss before it was due still sends the word back', () => {
