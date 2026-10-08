@@ -134,7 +134,7 @@ export function SayItBack({
     yours.current?.replayAsync().catch(() => {});
   };
 
-  /** The native recording first, then the learner's, back to back. */
+  /** The course's own recording first, then the learner's, back to back. */
   const compare = () => {
     if (isSpeechMuted()) return;
     let started = false;

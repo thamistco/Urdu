@@ -411,6 +411,9 @@ export function OnboardingScreen() {
           <Txt className="mb-4 text-sm text-paper/55">
             Every word is read aloud, in the voice you choose. You can change it later in Settings.
           </Txt>
+          {/* Grouped, as the other choice steps: a screen reader hears the two
+              voices as one choice, with the chosen one marked. */}
+          <View accessibilityRole="radiogroup" aria-label="Whose voice would you like?">
           {OPTIONS.map((o) => {
             const active = voice === o.key;
             return (
@@ -446,6 +449,7 @@ export function OnboardingScreen() {
               </Pressable>
             );
           })}
+          </View>
           <Txt className="mb-2 text-center text-[0.6875rem] text-paper/55">Tap either one to hear it.</Txt>
           <Button className="mt-2" onPress={() => setStep('background')}>
             Continue
@@ -724,6 +728,9 @@ export function OnboardingScreen() {
                 You read every script question correctly. Do you want the nine alphabet lessons, or shall we mark them
                 done?
               </Txt>
+              {/* Grouped, as the other choice steps: the two alphabet options
+                  are one choice for a screen reader. */}
+              <View accessibilityRole="radiogroup" aria-label="The alphabet">
               {[
                 { v: false, t: 'Start from the alphabet', d: 'All 40 letters, in each of their four shapes' },
                 { v: true, t: 'Skip the alphabet', d: 'I can already read Urdu writing' },
@@ -754,6 +761,7 @@ export function OnboardingScreen() {
                   </Pressable>
                 );
               })}
+              </View>
               <Txt className="text-[0.6875rem] text-paper/55">Either way you can tap ahead to any lesson later.</Txt>
             </View>
           )}
