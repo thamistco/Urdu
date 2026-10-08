@@ -167,8 +167,10 @@ Plain language, no jargon:
 
 - Spend money, create accounts, sign up for services, or accept terms.
 - Post, publish or contact anyone outside this repository and its site.
-- Generate new audio without a text-to-speech key in the environment's
-  secrets. The key pasted in chat is exposed and is due to be replaced.
+- Generate audio except with the owner's text-to-speech key, passed as an
+  environment variable for that one command and never written to any file.
+  The owner confirmed on 2026-10-08 that the key given in chat is the one to
+  keep using.
 - Ship a research change that has had only one check, or whose second check
   came from the same viewpoint as its first.
 - Weaken a check to go green, or report a deploy live without reading the
