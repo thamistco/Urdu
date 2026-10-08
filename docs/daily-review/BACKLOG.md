@@ -26,7 +26,8 @@ dashboards and permissions.
 | O-9  | Choose a payment provider that acts as seller of record (Paddle was named) and web billing that can unlock the apps later | Selling on the web before the apps exist; accounts and fees. See `2026-10-08-monetisation.md`.                                                                                                                                                                                                                    | 2026-10-08 |
 | O-10 | Choose where waitlist emails are kept                                                                                     | A waitlist from Urdu Day, 9 November (Q-007), needs an outside service.                                                                                                                                                                                                                                           | 2026-10-08 |
 
-O-1 closed on 2026-10-08: the owner keeps the existing text-to-speech key.
+O-1 closed on 2026-10-08: the owner keeps the existing text-to-speech key
+until they say otherwise.
 Recordings use it only as an environment variable for that one command, never
 written to a file.
 

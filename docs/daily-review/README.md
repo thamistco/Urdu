@@ -169,8 +169,8 @@ Plain language, no jargon:
 - Post, publish or contact anyone outside this repository and its site.
 - Generate audio except with the owner's text-to-speech key, passed as an
   environment variable for that one command and never written to any file.
-  The owner confirmed on 2026-10-08 that the key given in chat is the one to
-  keep using.
+  The owner said on 2026-10-08 to keep using the key given in chat until they
+  say otherwise.
 - Ship a research change that has had only one check, or whose second check
   came from the same viewpoint as its first.
 - Weaken a check to go green, or report a deploy live without reading the
