@@ -10,7 +10,7 @@ import { Reveal } from '../components/Reveal';
 import { Txt, Bold, Eyebrow } from '../components/Text';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
-import { confirmAction } from '../lib/confirm';
+import { confirmAction, notify } from '../lib/confirm';
 import { useSettingsStore, type VoiceGender } from '../store/useSettingsStore';
 import { useProgressStore } from '../store/useProgressStore';
 import { useAuthStore } from '../store/useAuthStore';
@@ -223,6 +223,10 @@ export function SettingsScreen() {
   const setDailyGoal = useProgressStore((st) => st.setDailyGoal);
   const email = useAuthStore((st) => st.session?.user?.email ?? null);
   const signOut = useAuthStore((st) => st.signOut);
+  const deleteAccount = useAuthStore((st) => st.deleteAccount);
+  // The session, not the email: an account without an email still needs a way out.
+  const signedIn = useAuthStore((st) => !!st.session);
+  const [deleting, setDeleting] = useState(false);
   const authConfigured = useAuthStore((st) => st.authConfigured);
   const [, force] = useState(0);
 
@@ -248,6 +252,35 @@ export function SettingsScreen() {
    * same test; this is the other half of it.
    */
   const canSignIn = !!email || authConfigured;
+
+  /**
+   * Only a signed-in learner has an account to delete; a guest's progress
+   * lives on this device alone, and Reset all progress already clears it.
+   */
+  const confirmDeleteAccount = () => {
+    if (deleting) return;
+    confirmAction(
+      'Delete your account?',
+      'This deletes your account and the copy of your progress saved with it. Progress on this device stays until you reset it.',
+      'Delete account',
+      async () => {
+        // One request at a time: a second tap used to send a second delete
+        // and announce success twice.
+        setDeleting(true);
+        try {
+          const result = await deleteAccount();
+          if (result.ok) {
+            notify(
+              'Account deleted',
+              'Your account and the copy of your progress saved with it are deleted. Progress on this device is still here; reset it in Settings if you want it gone too.'
+            );
+          } else notify('Account not deleted', result.message ?? 'Please try again later.');
+        } finally {
+          setDeleting(false);
+        }
+      }
+    );
+  };
 
   const confirmReset = () => {
     confirmAction(
@@ -467,6 +500,27 @@ export function SettingsScreen() {
               <Txt className="mt-0.5 text-xs text-paper/55">Clears streak, XP, gems and memory. Cannot be undone.</Txt>
             </View>
           </Pressable>
+          {signedIn ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={confirmDeleteAccount}
+              disabled={deleting}
+              accessibilityState={{ disabled: deleting }}
+              className="mt-3"
+            >
+              <View
+                className="rounded-2xl border p-4"
+                style={{ borderColor: withAlpha(palette.rose, 0.3), backgroundColor: withAlpha(palette.rose, 0.08) }}
+              >
+                <Bold className="text-[0.9375rem]" style={{ color: palette.roseLight }}>
+                  {deleting ? 'Deleting your account…' : 'Delete account'}
+                </Bold>
+                <Txt className="mt-0.5 text-xs text-paper/55">
+                  Deletes your account and the copy of your progress saved with it. Cannot be undone.
+                </Txt>
+              </View>
+            </Pressable>
+          ) : null}
         </Reveal>
 
         <Reveal delay={190}>
