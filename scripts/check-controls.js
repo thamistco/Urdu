@@ -519,31 +519,44 @@ async function main() {
       const p = await browser.newPage({ viewport: { width: W, height: H } });
       const exact = (t) => new RegExp(`^${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
       const said = () => p.evaluate(() => document.body.innerText);
+      // Waits on what each tap is for, never on a number of milliseconds.
+      const until = (fn, arg, ms = 10000) =>
+        p.waitForFunction(fn, arg, { timeout: ms }).then(
+          () => true,
+          () => false
+        );
+      const shows = (src) => until((r) => new RegExp(r, 'i').test(document.body.innerText), src);
+      const chosen = (src) =>
+        until(
+          (r) =>
+            Array.from(document.querySelectorAll('[role="radio"][aria-checked="true"]')).some((n) =>
+              new RegExp(r, 'i').test(n.textContent || '')
+            ),
+          src
+        );
       const reached = [];
+      const step = async (re, label, then) => {
+        const before = await said();
+        if (!(await tapByText(p, re))) return false;
+        reached.push(label);
+        // Either the condition named, or for a plain advance, any change.
+        return then ? then() : until((b) => document.body.innerText !== b, before);
+      };
       try {
         await p.goto(`http://localhost:${PORT}/Urdu/`);
         await openTheDoor(p);
-        await p.waitForTimeout(1200);
-        const step = async (re, label) => {
-          const ok = await tapByText(p, re);
-          await p.waitForTimeout(700);
-          if (ok) reached.push(label);
-          return ok;
-        };
-        await step(/^Let’s start$/, 'welcome');
-        await step(/^Speak with family/, 'goal');
+        await shows('let.s start');
+        await step(/^Let’s start$/, 'welcome', () => shows('why are you learning urdu'));
+        await step(/^Speak with family/, 'goal', () => chosen('speak with family'));
         await step(/^Continue$/, 'goal continue');
         for (let k = 0; k < 3 && !/already speak or understand/i.test(await said()); k++) {
           await step(/^Continue$/, 'track or voice');
         }
-        await step(/^I already speak or understand it$/, 'speaker');
-        await step(/^Continue$/, 'background continue');
-        for (const a of answers) {
-          await step(exact(a), `quiz: ${a}`);
-          await p.waitForTimeout(500);
-        }
-        await step(/^Continue$/, 'daily goal');
-        await p.waitForTimeout(1000);
+        await step(/^I already speak or understand it$/, 'speaker', () => chosen('already speak or understand'));
+        await step(/^Continue$/, 'background continue', () => shows('quick check'));
+        for (const a of answers) await step(exact(a), `quiz: ${a}`);
+        await shows('set a daily goal');
+        await step(/^Continue$/, 'daily goal', () => shows('you.re all set'));
         const ready = await said();
         if (!/you.re all set/i.test(ready) || !/skip the alphabet/i.test(ready)) {
           problems.push(
@@ -577,8 +590,7 @@ async function main() {
             );
           } else {
             await p.mouse.click(box.x, box.y);
-            await p.waitForTimeout(2500);
-            if (!/start this lesson|tap any lesson/i.test(await said())) {
+            if (!(await shows('start this lesson|tap any lesson'))) {
               problems.push('Tapping "Start learning" on "You’re all set" did not land on the lesson path.');
             }
           }
@@ -608,20 +620,36 @@ async function main() {
         };
       });
       let blocked = true;
-      await p.route(/\.mp3(\?|$)/, (r) => (blocked ? r.abort('failed') : r.continue()));
+      let refused = 0;
+      await p.route(/\.mp3(\?|$)/, (r) => {
+        if (!blocked) return r.continue();
+        refused += 1;
+        return r.abort('failed');
+      });
+      // Polled, not slept: a short wait inside a loop, up to a ceiling.
+      const poll = async (ok, ms) => {
+        for (const end = Date.now() + ms; Date.now() < end;) {
+          if (await ok()) return true;
+          await p.waitForTimeout(100);
+        }
+        return ok();
+      };
       try {
         await enterAsGuest(p, `http://localhost:${PORT}/Urdu/lesson/l-1`, {}, { soundEnabled: true });
-        await p.waitForTimeout(2500);
         const hear = p.locator('[aria-label^="Hear"]').first();
+        await hear.waitFor({ timeout: 15000 }).catch(() => {});
         if (!(await hear.count())) {
           problems.push('The first lesson has no "Hear" button, so a sound that failed to load was never retried.');
         } else {
+          // The card's own first play is refused; then the learner's tap,
+          // which a fixed build answers with another (refused) request.
+          await poll(async () => refused > 0, 8000);
+          const before = refused;
           await hear.click();
-          await p.waitForTimeout(1200);
+          await poll(async () => refused > before, 3000);
           blocked = false;
           await hear.click();
-          await p.waitForTimeout(2500);
-          if (!(await p.evaluate(() => window.__playing))) {
+          if (!(await poll(() => p.evaluate(() => window.__playing > 0), 8000))) {
             problems.push(
               'A word whose sound failed to load stays silent after the network comes back: the speaker ' +
                 'button replays the broken copy instead of fetching the clip again.'
