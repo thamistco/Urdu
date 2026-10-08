@@ -2601,8 +2601,12 @@ export const PASSAGES: Passage[] = [
         meaning: 'He has books that are no longer found anywhere.',
       },
       {
-        urdu: 'جو بھی اُس سے بات کرتا ہے، وہ کوئی کہانی سناتا ہے۔',
-        roman: 'jo bhi us se baat karta hai, wo koi kahaani sunaata hai.',
+        // اُسے (use, "to them") is what makes وہ the bookseller. Without it,
+        // by the جو…وہ pattern the course teaches, وہ is the visitor, and the
+        // line said "whoever talks to him tells a story": the reverse of the
+        // English (content review, 2026-10-08).
+        urdu: 'جو بھی اُس سے بات کرتا ہے، وہ اُسے کوئی کہانی سناتا ہے۔',
+        roman: 'jo bhi us se baat karta hai, wo use koi kahaani sunaata hai.',
         meaning: 'Whoever speaks to him, he tells them a story.',
       },
       {
