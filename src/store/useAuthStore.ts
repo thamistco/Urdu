@@ -7,7 +7,7 @@ import type { Session } from '@supabase/supabase-js';
 
 import { supabase, isAuthConfigured } from '../lib/supabase';
 import { safeStorage } from './storage';
-import { pullThenMerge } from '../lib/sync';
+import { pullThenMerge, stopSync } from '../lib/sync';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -23,6 +23,11 @@ type AuthState = {
   continueAsGuest: () => void;
   signIn: (provider: Provider) => Promise<{ ok: boolean; message?: string }>;
   signOut: () => Promise<void>;
+  /**
+   * Delete the signed-in learner's account and the progress saved with it.
+   * Progress on this device is theirs and stays until they reset it.
+   */
+  deleteAccount: () => Promise<{ ok: boolean; message?: string }>;
 };
 
 /** True once the user is past the gate — either signed in or chose guest. */
@@ -106,6 +111,31 @@ export const useAuthStore = create<AuthState>()(
       signOut: async () => {
         if (supabase) await supabase.auth.signOut().catch(() => {});
         set({ session: null, isGuest: false });
+      },
+
+      /**
+       * The stores require it (Apple 5.1.1(v)), and the privacy policy has
+       * promised it since before it existed (launch review, 2026-10-08,
+       * proposal P-015). `delete_my_account` lives in supabase/schema.sql
+       * and deletes only the caller; the progress row goes with the account.
+       * Sync stops only once the delete has worked: stopped before, a failed
+       * delete would leave a signed-in learner quietly no longer saving. An
+       * upload already queued cannot bring the row back, because it
+       * references a user that no longer exists.
+       */
+      deleteAccount: async () => {
+        if (!supabase) return { ok: false, message: 'There is no account to delete on this device.' };
+        const { error } = await supabase.rpc('delete_my_account');
+        if (error) {
+          return {
+            ok: false,
+            message: 'Your account could not be deleted just now, and nothing was removed. Please try again later.',
+          };
+        }
+        stopSync();
+        await supabase.auth.signOut().catch(() => {});
+        set({ session: null, isGuest: false });
+        return { ok: true };
       },
     }),
     {
