@@ -323,14 +323,25 @@ async function main() {
        * lesson too, advancing to a line screen first.
        */
       await page.goto(`http://localhost:${PORT}/Urdu/lesson/r-1`);
-      await page.waitForTimeout(2500);
+      // Waits on what it is for, not a number (check:waits): the lesson has
+      // drawn when it offers a line speaker or a way on.
+      await page
+        .waitForFunction(
+          () =>
+            !!document.querySelector('[aria-label="Hear this line"]') ||
+            /^(got it|continue)$/im.test(document.body.innerText),
+          null,
+          { timeout: 15000 }
+        )
+        .catch(() => {});
       for (let i = 0; i < 10; i++) {
         if ((await page.locator('[aria-label="Hear this line"]').count()) > 0) break;
         try {
           const next = page.getByText(/^(Got it|Continue)$/).first();
           await next.waitFor({ state: 'visible', timeout: 1500 });
+          const before = await page.evaluate(() => document.body.innerText);
           await next.click();
-          await page.waitForTimeout(600);
+          await page.waitForFunction((b) => document.body.innerText !== b, before, { timeout: 5000 }).catch(() => {});
         } catch {
           break;
         }
@@ -343,8 +354,13 @@ async function main() {
       );
       if (smallLines.length)
         problems.push(`Reading/dialogue line speakers under the 44pt minimum: ${smallLines.join(', ')}.`);
+      if (!(await page.locator('[aria-label="Hear this line"]').count())) {
+        problems.push('The reading lesson never showed a "Hear this line" button, so its tap target went unmeasured.');
+      }
       await tapByText(page, /^✕$/);
-      await page.waitForTimeout(1200);
+      await page
+        .waitForFunction(() => /\bprofile\b/i.test(document.body.innerText), null, { timeout: 10000 })
+        .catch(() => {});
     }
 
     if (!(await tapByText(page, /^Profile$/))) {
