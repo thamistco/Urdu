@@ -16,7 +16,12 @@ create policy "own progress - select"
   on public.progress for select
   using (auth.uid() = user_id);
 
+-- Both names are dropped so this file can be run again on a project that
+-- already has the policy: the first version dropped only the old "upsert"
+-- name, and the re-run failed before reaching delete_my_account below
+-- (second check of P-015, 2026-10-08, measured on a scratch Postgres).
 drop policy if exists "own progress - upsert" on public.progress;
+drop policy if exists "own progress - insert" on public.progress;
 create policy "own progress - insert"
   on public.progress for insert
   with check (auth.uid() = user_id);

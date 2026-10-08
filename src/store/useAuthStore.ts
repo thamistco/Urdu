@@ -19,6 +19,13 @@ type AuthState = {
   isGuest: boolean;
   authConfigured: boolean;
   busy: null | Provider;
+  /**
+   * The account deleted on this device, so its session cannot come back:
+   * supabase-js keeps the stored session when the sign-out request fails on a
+   * bad network, and a reload would restore it, showing a deleted account's
+   * email until its token expired.
+   */
+  deletedUserId: string | null;
   init: () => Promise<void>;
   continueAsGuest: () => void;
   signIn: (provider: Provider) => Promise<{ ok: boolean; message?: string }>;
@@ -55,12 +62,13 @@ async function nativeOAuth(provider: Provider): Promise<{ ok: boolean; message?:
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       initialized: false,
       session: null,
       isGuest: false,
       authConfigured: isAuthConfigured,
       busy: null,
+      deletedUserId: null,
 
       init: async () => {
         if (!supabase) {
@@ -68,10 +76,14 @@ export const useAuthStore = create<AuthState>()(
           return;
         }
         const { data } = await supabase.auth.getSession();
-        set({ session: data.session ?? null, initialized: true, authConfigured: true });
-        if (data.session) pullThenMerge(data.session.user.id);
+        const deleted = (s: Session | null) => !!s && s.user.id === get().deletedUserId;
+        if (deleted(data.session)) await supabase.auth.signOut().catch(() => {});
+        const restored = deleted(data.session) ? null : (data.session ?? null);
+        set({ session: restored, initialized: true, authConfigured: true });
+        if (restored) pullThenMerge(restored.user.id);
 
         supabase.auth.onAuthStateChange((_event, session) => {
+          if (deleted(session)) return;
           set({ session: session ?? null });
           if (session) {
             set({ isGuest: false });
@@ -109,15 +121,20 @@ export const useAuthStore = create<AuthState>()(
       },
 
       signOut: async () => {
+        // Stop uploading under the account being left, as deleting one does.
+        stopSync();
         if (supabase) await supabase.auth.signOut().catch(() => {});
         set({ session: null, isGuest: false });
       },
 
       /**
-       * The stores require it (Apple 5.1.1(v)), and the privacy policy has
-       * promised it since before it existed (launch review, 2026-10-08,
-       * proposal P-015). `delete_my_account` lives in supabase/schema.sql
-       * and deletes only the caller; the progress row goes with the account.
+       * The stores require in-app deletion (Apple 5.1.1(v)), and the privacy
+       * policy promised it before it existed (launch review, 2026-10-08,
+       * proposal P-015). Not the whole of Apple's rule yet: a Sign in with
+       * Apple account's tokens must also be revoked with Apple (TN3194), which
+       * needs a server holding Apple's key (BACKLOG Q-024). `delete_my_account`
+       * lives in supabase/schema.sql and deletes only the caller; the progress
+       * row goes with the account.
        * Sync stops only once the delete has worked: stopped before, a failed
        * delete would leave a signed-in learner quietly no longer saving. An
        * upload already queued cannot bring the row back, because it
@@ -125,24 +142,31 @@ export const useAuthStore = create<AuthState>()(
        */
       deleteAccount: async () => {
         if (!supabase) return { ok: false, message: 'There is no account to delete on this device.' };
+        const userId = get().session?.user.id ?? null;
         const { error } = await supabase.rpc('delete_my_account');
         if (error) {
+          // A missing function (the owner has not yet re-run schema.sql) is
+          // the one failure known to have changed nothing; anything else may
+          // have reached the server, so it promises nothing about the account.
+          const missing = error.code === 'PGRST202' || error.code === '42883';
           return {
             ok: false,
-            message: 'Your account could not be deleted just now, and nothing was removed. Please try again later.',
+            message: missing
+              ? 'Deleting accounts is not switched on yet, so your account is unchanged. Please try again later.'
+              : 'Your account could not be deleted just now. Please try again later.',
           };
         }
         stopSync();
+        set({ session: null, isGuest: false, deletedUserId: userId });
         await supabase.auth.signOut().catch(() => {});
-        set({ session: null, isGuest: false });
         return { ok: true };
       },
     }),
     {
       name: 'qaaf-auth',
       storage: createJSONStorage(() => safeStorage),
-      // only persist the guest choice; the session is owned by supabase
-      partialize: (s) => ({ isGuest: s.isGuest }),
+      // the guest choice and a deleted account's id; the session is supabase's
+      partialize: (s) => ({ isGuest: s.isGuest, deletedUserId: s.deletedUserId }),
     }
   )
 );
