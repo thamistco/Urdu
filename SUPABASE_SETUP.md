@@ -10,7 +10,11 @@ a free Supabase project — no server code to write, just configuration.
    (creates the `progress` table + row-level security, and `delete_my_account`,
    which Settings → Delete account calls). It is safe to run again: a project
    set up before 2026-10-08 needs it re-run, or Delete account will report that
-   nothing was deleted.
+   it is not switched on yet.
+   Supabase also writes sign-in events (with email and IP address) to the
+   project database by default, with no documented expiry. To have a deleted
+   account leave no sign-in records behind, turn that off in the Authentication
+   settings, under Audit Logs, and clear the rows already written.
 3. In **Settings → API**, copy the **Project URL** and the **anon public key**.
 
 ## 2. Point the app at it
