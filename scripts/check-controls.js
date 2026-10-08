@@ -535,6 +535,19 @@ async function main() {
           src
         );
       const reached = [];
+      /**
+       * Every host the app talks to on the way, from a cold start to the
+       * lesson path. The privacy policy promises no ad network and no
+       * tracking; this is the part of that promise a build can break without
+       * anyone writing it down, by adding a font, an analytics snippet or a
+       * CDN. With no backend configured (the only case this check runs in),
+       * the app's own server is the only host it has any reason to reach.
+       */
+      const hosts = new Set();
+      p.on('request', (r) => {
+        const u = new URL(r.url());
+        if (u.protocol === 'http:' || u.protocol === 'https:') hosts.add(u.host);
+      });
       const step = async (re, label, then) => {
         const before = await said();
         if (!(await tapByText(p, re))) return false;
@@ -594,6 +607,13 @@ async function main() {
               problems.push('Tapping "Start learning" on "You’re all set" did not land on the lesson path.');
             }
           }
+        }
+        const elsewhere = [...hosts].filter((h) => h !== `localhost:${PORT}`);
+        if (elsewhere.length) {
+          problems.push(
+            `From a cold start to the lesson path the app contacted ${elsewhere.join(', ')}. The privacy ` +
+              'policy promises no tracking and no ad network; anything the app loads should come from its own site.'
+          );
         }
       } finally {
         await p.close();
@@ -691,6 +711,7 @@ async function main() {
     'check:controls — at 320x568 a speaker who aces the quick check can scroll to "Start learning" and finish onboarding.'
   );
   console.log('check:controls — a sound that failed to load plays on the next tap once the network is back.');
+  console.log('check:controls — from a cold start to the lesson path, the app contacts no host but its own.');
 }
 
 main().catch((err) => {
