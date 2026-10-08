@@ -314,6 +314,37 @@ async function main() {
       // from Home rather than from wherever this ended up.
       await tapByText(page, /^✕$/);
       await page.waitForTimeout(1200);
+
+      /**
+       * The first lesson from Home is a letters lesson, so the block above
+       * never meets the per-line speakers: reading passes SpeakerButton
+       * size 26 and dialogue size 24, which measured 42 and 40pt on the web
+       * under a fixed reach(8) (nightly QA 2026-10-07). Measure a reading
+       * lesson too, advancing to a line screen first.
+       */
+      await page.goto(`http://localhost:${PORT}/Urdu/lesson/r-1`);
+      await page.waitForTimeout(2500);
+      for (let i = 0; i < 10; i++) {
+        if ((await page.locator('[aria-label="Hear this line"]').count()) > 0) break;
+        try {
+          const next = page.getByText(/^(Got it|Continue)$/).first();
+          await next.waitFor({ state: 'visible', timeout: 1500 });
+          await next.click();
+          await page.waitForTimeout(600);
+        } catch {
+          break;
+        }
+      }
+      const smallLines = await page.evaluate(() =>
+        [...document.querySelectorAll('[aria-label="Hear this line"]')]
+          .map((n) => ({ name: n.getAttribute('aria-label'), r: n.getBoundingClientRect() }))
+          .filter(({ r }) => r.width > 0 && (r.width < 43.5 || r.height < 43.5))
+          .map(({ name, r }) => `"${name}" ${Math.round(r.width)}x${Math.round(r.height)}`)
+      );
+      if (smallLines.length)
+        problems.push(`Reading/dialogue line speakers under the 44pt minimum: ${smallLines.join(', ')}.`);
+      await tapByText(page, /^✕$/);
+      await page.waitForTimeout(1200);
     }
 
     if (!(await tapByText(page, /^Profile$/))) {
