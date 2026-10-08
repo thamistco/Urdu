@@ -411,41 +411,43 @@ export function OnboardingScreen() {
           <Txt className="mb-4 text-sm text-paper/55">
             Every word is read aloud, in the voice you choose. You can change it later in Settings.
           </Txt>
-          {OPTIONS.map((o) => {
-            const active = voice === o.key;
-            return (
-              <Pressable
-                accessibilityRole="radio"
-                aria-checked={active}
-                key={o.key}
-                onPress={() => {
-                  feedback.tap();
-                  setVoice(o.key);
-                  // Say something in it, so the choice is made by ear rather
-                  // than by label — which is the only way to choose a voice.
-                  setVoiceSet(o.key);
-                  announce('w-salam', 'السلام علیکم', 'assalaam-o-alaikum');
-                }}
-                accessibilityLabel={`${o.label}. ${o.desc}. Tap to hear it.`}
-              >
-                <View
-                  className="mb-3 flex-row items-center gap-3 rounded-2xl border p-4"
-                  style={{
-                    borderColor: active ? palette.gold : withAlpha(palette.white, 0.1),
-                    backgroundColor: active ? withAlpha(palette.gold, 0.12) : palette.ink800,
-                    borderWidth: 2,
+          <View accessibilityRole="radiogroup" aria-label="Whose voice would you like?">
+            {OPTIONS.map((o) => {
+              const active = voice === o.key;
+              return (
+                <Pressable
+                  accessibilityRole="radio"
+                  aria-checked={active}
+                  key={o.key}
+                  onPress={() => {
+                    feedback.tap();
+                    setVoice(o.key);
+                    // Say something in it, so the choice is made by ear rather
+                    // than by label — which is the only way to choose a voice.
+                    setVoiceSet(o.key);
+                    announce('w-salam', 'السلام علیکم', 'assalaam-o-alaikum');
                   }}
+                  accessibilityLabel={`${o.label}. ${o.desc}. Tap to hear it.`}
                 >
-                  <Illustration name={o.icon} size={44} />
-                  <View className="flex-1">
-                    <Bold className="text-[0.9375rem]">{o.label}</Bold>
-                    <Txt className="text-xs text-paper/55">{o.desc}</Txt>
+                  <View
+                    className="mb-3 flex-row items-center gap-3 rounded-2xl border p-4"
+                    style={{
+                      borderColor: active ? palette.gold : withAlpha(palette.white, 0.1),
+                      backgroundColor: active ? withAlpha(palette.gold, 0.12) : palette.ink800,
+                      borderWidth: 2,
+                    }}
+                  >
+                    <Illustration name={o.icon} size={44} />
+                    <View className="flex-1">
+                      <Bold className="text-[0.9375rem]">{o.label}</Bold>
+                      <Txt className="text-xs text-paper/55">{o.desc}</Txt>
+                    </View>
+                    <Illustration name="speaker" tile={false} size={20} />
                   </View>
-                  <Illustration name="speaker" tile={false} size={20} />
-                </View>
-              </Pressable>
-            );
-          })}
+                </Pressable>
+              );
+            })}
+          </View>
           <Txt className="mb-2 text-center text-[0.6875rem] text-paper/55">Tap either one to hear it.</Txt>
           <Button className="mt-2" onPress={() => setStep('background')}>
             Continue
@@ -724,36 +726,38 @@ export function OnboardingScreen() {
                 You read every script question correctly. Do you want the nine alphabet lessons, or shall we mark them
                 done?
               </Txt>
-              {[
-                { v: false, t: 'Start from the alphabet', d: 'All 40 letters, in each of their four shapes' },
-                { v: true, t: 'Skip the alphabet', d: 'I can already read Urdu writing' },
-              ].map((o) => {
-                const on = skipScript === o.v;
-                return (
-                  <Pressable
-                    accessibilityRole="radio"
-                    aria-checked={on}
-                    key={String(o.v)}
-                    onPress={() => {
-                      feedback.tap();
-                      setSkipScript(o.v);
-                    }}
-                    className="mb-2"
-                  >
-                    <View
-                      className="rounded-xl border p-3"
-                      style={{
-                        borderColor: on ? palette.gold : withAlpha(palette.white, 0.12),
-                        backgroundColor: on ? withAlpha(palette.gold, 0.14) : palette.ink800,
-                        borderWidth: on ? 2 : 1,
+              <View accessibilityRole="radiogroup" aria-label="The alphabet">
+                {[
+                  { v: false, t: 'Start from the alphabet', d: 'All 40 letters, in each of their four shapes' },
+                  { v: true, t: 'Skip the alphabet', d: 'I can already read Urdu writing' },
+                ].map((o) => {
+                  const on = skipScript === o.v;
+                  return (
+                    <Pressable
+                      accessibilityRole="radio"
+                      aria-checked={on}
+                      key={String(o.v)}
+                      onPress={() => {
+                        feedback.tap();
+                        setSkipScript(o.v);
                       }}
+                      className="mb-2"
                     >
-                      <Bold className="text-sm">{o.t}</Bold>
-                      <Txt className="text-xs text-paper/55">{o.d}</Txt>
-                    </View>
-                  </Pressable>
-                );
-              })}
+                      <View
+                        className="rounded-xl border p-3"
+                        style={{
+                          borderColor: on ? palette.gold : withAlpha(palette.white, 0.12),
+                          backgroundColor: on ? withAlpha(palette.gold, 0.14) : palette.ink800,
+                          borderWidth: on ? 2 : 1,
+                        }}
+                      >
+                        <Bold className="text-sm">{o.t}</Bold>
+                        <Txt className="text-xs text-paper/55">{o.d}</Txt>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
               <Txt className="text-[0.6875rem] text-paper/55">Either way you can tap ahead to any lesson later.</Txt>
             </View>
           )}
