@@ -348,12 +348,12 @@ export function SettingsScreen() {
             <View className="h-px bg-white/5" />
             {/* The hint says whose voice it is. "Hear the English as well as
                 the Urdu" did not, and the surprise was the whole problem: the
-                Urdu is a recorded voice, the English is whatever the phone or
+                Urdu is the course's own voice, the English is whatever the phone or
                 browser has, so a word arrived in two different voices with no
                 warning that the second one was coming. */}
             <Row
               label="Read the meaning in English"
-              hint="After a correct answer, your device’s English voice reads the translation. It is off by default, because the Urdu is a recorded voice and this one is not."
+              hint="After a correct answer, your device’s English voice reads the translation. It is off by default, because it is a different voice from the course’s Urdu."
               value={s.speakMeaning}
               onChange={s.setSpeakMeaning}
             />

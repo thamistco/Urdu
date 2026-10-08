@@ -400,8 +400,8 @@ export function OnboardingScreen() {
    */
   if (step === 'voice') {
     const OPTIONS: { key: VoiceGender; label: string; desc: string; icon: IconName }[] = [
-      { key: 'f', label: 'A woman’s voice', desc: 'The voice the course was recorded in', icon: 'woman' },
-      { key: 'm', label: 'A man’s voice', desc: 'The whole course, in a second recording', icon: 'man' },
+      { key: 'f', label: 'A woman’s voice', desc: 'The voice the course was made with', icon: 'woman' },
+      { key: 'm', label: 'A man’s voice', desc: 'The whole course, in a second voice', icon: 'man' },
     ];
     return (
       <Screen>
