@@ -28,3 +28,12 @@ export function confirmAction(
     { text: confirmLabel, style: destructive ? 'destructive' : 'default', onPress: onConfirm },
   ]);
 }
+
+/** A message with one button, for the same reason: Alert.alert is a no-op on the web. */
+export function notify(title: string, message: string) {
+  if (Platform.OS === 'web') {
+    window.alert(`${title}\n\n${message}`);
+    return;
+  }
+  Alert.alert(title, message);
+}
