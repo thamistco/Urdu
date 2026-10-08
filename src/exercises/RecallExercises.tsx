@@ -120,7 +120,7 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
           {/* A wrong answer always gets the transliteration, whatever the
               track: being told only the shape you failed to recall teaches
               nothing about how to say it. */}
-          <Lexeme urdu={word.urdu} roman={word.roman} track={graded ? track : 'both'} size={32} />
+          <Lexeme urdu={word.urdu} roman={word.roman} track={graded ? track : 'both'} forceRoman={!graded} size={32} />
         </View>
       )}
     </View>

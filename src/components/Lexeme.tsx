@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import { Urdu, Txt, urduLine } from './Text';
 import { palette } from '../theme';
-import type { LearnTrack } from '../store/useSettingsStore';
+import { useSettingsStore, type LearnTrack } from '../store/useSettingsStore';
 
 /**
  * A word, phrase or sentence, shown the way the learner's track asks for.
@@ -24,6 +24,7 @@ export function Lexeme({
   color = palette.paper,
   align = 'center',
   numberOfLines,
+  forceRoman = false,
 }: {
   urdu: string;
   /** `undefined` when the item has no transliteration — see lib/translit. */
@@ -34,12 +35,20 @@ export function Lexeme({
   color?: string;
   align?: 'center' | 'left' | 'right';
   numberOfLines?: number;
+  /** Show the Roman whatever the setting: a wrong answer is always told how
+   *  the word is said (RecallExercises). */
+  forceRoman?: boolean;
 }) {
+  // Settings → Show Roman Urdu. It used to be read by some exercises and not
+  // here, so on the "both" track switching it off left the Roman under every
+  // word in matching, the teaching card and the recall options (learning
+  // review, 2026-10-09). On the Roman track the Roman is the word, so it stays.
+  const romanOn = useSettingsStore((s) => s.showRoman);
   // A missing transliteration must never render as an empty card, so the script
   // stands in. The generator avoids offering such items on the Roman track;
   // this is the backstop for the ones it cannot filter, like a proper noun.
   const showScript = track !== 'roman' || !roman;
-  const showRoman = track !== 'script' && !!roman;
+  const showRoman = !!roman && (track === 'roman' || forceRoman || (track === 'both' && romanOn));
 
   return (
     <View style={{ alignItems: align === 'center' ? 'center' : align === 'left' ? 'flex-start' : 'flex-end' }}>
