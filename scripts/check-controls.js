@@ -770,6 +770,78 @@ async function main() {
         await p.close();
       }
     }
+
+    /**
+     * The Roman track shows no Urdu script, even when an answer is wrong.
+     *
+     * The track promises "No alphabet. Everything in Latin letters", and the
+     * wrong-answer banner set the word in large Nastaliq over a small Roman,
+     * while the typing hint named کتاب as an answer (QA, 2026-10-09: 36 times
+     * in one lesson). A lesson is played wrongly on purpose until five
+     * answers have been revealed; none may carry Arabic script, and seeing
+     * none at all is a failure, not a pass.
+     */
+    {
+      const p = await browser.newPage({ viewport: { width: 390, height: 844 } });
+      const ARABIC = /[\u0600-\u06FF]/;
+      try {
+        await enterAsGuest(p, `http://localhost:${PORT}/Urdu/lesson/v-first-words`, {}, { track: 'roman' });
+        let reveals = 0;
+        const leaks = [];
+        for (let step = 0; step < 60 && reveals < 5; step++) {
+          const seen = await p.evaluate(() => {
+            const leaf = (re) =>
+              [...document.querySelectorAll('div')].find(
+                (e) => e.childElementCount === 0 && re.test(e.textContent.trim())
+              );
+            const head = leaf(/^(the answer|the word is)$/i);
+            return {
+              banner: head ? head.parentElement.innerText : null,
+              hint: leaf(/^Spelling is forgiving/)?.textContent,
+            };
+          });
+          if (seen.hint && ARABIC.test(seen.hint)) leaks.push(seen.hint);
+          if (seen.banner) {
+            reveals += 1;
+            if (ARABIC.test(seen.banner)) leaks.push(seen.banner.replace(/\n/g, ' | '));
+          }
+          const next = p.getByText(/^(Continue|Finish|Got it)$/).last();
+          if (await next.isVisible().catch(() => false)) {
+            await next.click();
+          } else if (await p.locator('input:visible').count()) {
+            // Nothing a learner would type, so the answer is revealed.
+            await p.locator('input:visible').first().fill('zzzq');
+            await p
+              .getByText(/^Check$/)
+              .first()
+              .click()
+              .catch(() => {});
+          } else {
+            const options = p.locator('[role="button"]:visible');
+            const n = await options.count();
+            if (n > 2)
+              await options
+                .nth(n - 1)
+                .click()
+                .catch(() => {});
+          }
+          // A short settle between a tap and the next read.
+          await p.waitForTimeout(400);
+        }
+        if (!reveals) {
+          problems.push(
+            'A lesson on the Roman track never revealed an answer, so script in the reveal went unchecked.'
+          );
+        } else if (leaks.length) {
+          problems.push(
+            `The Roman track, which promises no alphabet, showed Urdu script ${leaks.length} times when an ` +
+              `answer was wrong, e.g. "${leaks[0]}".`
+          );
+        }
+      } finally {
+        await p.close();
+      }
+    }
   } finally {
     if (browser) await browser.close();
     server.close();
@@ -802,6 +874,7 @@ async function main() {
   );
   console.log('check:controls — a sound that failed to load plays on the next tap once the network is back.');
   console.log('check:controls — with "Sound effects" off, a speaker button still plays the Urdu.');
+  console.log('check:controls — on the Roman track a wrong answer is revealed with no Urdu script.');
   console.log('check:controls — from a cold start to the lesson path, the app contacts no host but its own.');
 }
 
