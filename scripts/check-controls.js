@@ -727,6 +727,49 @@ async function main() {
         await p.close();
       }
     }
+
+    /**
+     * Turning "Sound effects" off leaves the Urdu speaking.
+     *
+     * The setting is labelled "Chimes for correct, soft tones for misses", and
+     * it silenced every clip as well: a learner who turned the chimes off got
+     * speaker buttons that fetched nothing and said nothing (QA, 2026-10-09).
+     * With effects off, tapping a word's speaker must still start its clip.
+     */
+    {
+      const p = await browser.newPage({ viewport: { width: 390, height: 844 } });
+      await p.addInitScript(() => {
+        window.__playing = 0;
+        const play = HTMLMediaElement.prototype.play;
+        HTMLMediaElement.prototype.play = function () {
+          this.addEventListener('playing', () => (window.__playing += 1), { once: true });
+          return play.call(this);
+        };
+      });
+      try {
+        await enterAsGuest(p, `http://localhost:${PORT}/Urdu/lesson/l-1`, {}, { soundEnabled: false });
+        const hear = p.locator('[aria-label^="Hear"]').first();
+        await hear.waitFor({ timeout: 15000 }).catch(() => {});
+        if (!(await hear.count())) {
+          problems.push('The first lesson has no "Hear" button, so speech with sound effects off was never tried.');
+        } else {
+          await hear.click();
+          let played = false;
+          for (const end = Date.now() + 8000; !played && Date.now() < end;) {
+            played = await p.evaluate(() => window.__playing > 0);
+            if (!played) await p.waitForTimeout(100);
+          }
+          if (!played) {
+            problems.push(
+              'With "Sound effects" off, a word\'s speaker button plays nothing: the setting promises to ' +
+                'silence chimes and tones, and it silences the Urdu too.'
+            );
+          }
+        }
+      } finally {
+        await p.close();
+      }
+    }
   } finally {
     if (browser) await browser.close();
     server.close();
@@ -758,6 +801,7 @@ async function main() {
     'check:controls — at 320x568 a speaker who aces the quick check can scroll to "Start learning" and finish onboarding.'
   );
   console.log('check:controls — a sound that failed to load plays on the next tap once the network is back.');
+  console.log('check:controls — with "Sound effects" off, a speaker button still plays the Urdu.');
   console.log('check:controls — from a cold start to the lesson path, the app contacts no host but its own.');
 }
 
