@@ -96,7 +96,9 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
         />
       </View>
       <Txt className="mb-5 text-[0.6875rem] text-paper/60">
-        Spelling is forgiving: kitab, kitaab and کتاب all count.
+        {track === 'roman'
+          ? 'Spelling is forgiving: kitab and kitaab both count.'
+          : 'Spelling is forgiving: kitab, kitaab and کتاب all count.'}
       </Txt>
 
       {graded == null && (
@@ -119,8 +121,15 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
           )}
           {/* A wrong answer always gets the transliteration, whatever the
               track: being told only the shape you failed to recall teaches
-              nothing about how to say it. */}
-          <Lexeme urdu={word.urdu} roman={word.roman} track={graded ? track : 'both'} forceRoman={!graded} size={32} />
+              nothing about how to say it. Not the script on the Roman
+              track, which promises no alphabet. */}
+          <Lexeme
+            urdu={word.urdu}
+            roman={word.roman}
+            track={graded || track === 'roman' ? track : 'both'}
+            forceRoman={!graded}
+            size={32}
+          />
         </View>
       )}
     </View>
