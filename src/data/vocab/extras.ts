@@ -118,7 +118,10 @@ export const EXTRA_PACKS: TopicPack[] = [
       ['w-pahunch-jaoge', 'پہنچ جاؤ گے', 'pahuñch jaaoge', 'you will arrive', '🎯'],
       ['w-kho-jana', 'کھو جانا', 'kho jaana', 'to get lost', '❓'],
       ['w-pata2', 'پتہ', 'pata', 'address', '🏠'],
-      ['w-nishan-e-raah', 'سنگِ میل', 'sang-e-meel', 'landmark', '🗿'],
+      // سنگِ میل is a milestone, the stone that marks a mile, and figuratively
+      // a turning point; "landmark" was the gloss of the نشانِ راہ this id was
+      // named for (content review, 2026-10-08, Rekhta).
+      ['w-nishan-e-raah', 'سنگِ میل', 'sang-e-meel', 'milestone', '🗿'],
     ]
   ),
   pack(
