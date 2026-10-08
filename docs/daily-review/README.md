@@ -26,13 +26,13 @@ report.
 | 5   | Interaction and ease of use  | Friction, dead ends, confusing controls, error states, speed of a session                    | 2026-10-07    |
 | 6   | Onboarding and first session | The first five minutes: does a stranger reach a win and want a second day                    | 2026-10-07    |
 | 7   | Retention and habit          | Streaks, reminders, goals, comeback paths, what brings people back                           | 2026-10-07    |
-| 8   | Content quality              | Urdu accuracy, translations, audio, cultural fit, originality                                | never         |
-| 9   | Performance and reliability  | Load time, bundle size, offline, crashes, low-end phones                                     | never         |
-| 10  | Monetisation and pricing     | What is free, what is paid, price, trial, paywall design, family plans                       | never         |
-| 11  | Launch readiness             | Native builds, store accounts and listings, legal, support, payments                         | never         |
-| 12  | Marketing and advertising    | Positioning, channels, creators, paid ads, budget, launch moments                            | never         |
-| 13  | Growth and referral          | Sharing, invites, family features, word of mouth, community                                  | never         |
-| 14  | Analytics, feedback, privacy | What to measure, how to hear from learners, staying privacy-respecting                       | never         |
+| 8   | Content quality              | Urdu accuracy, translations, audio, cultural fit, originality                                | 2026-10-08    |
+| 9   | Performance and reliability  | Load time, bundle size, offline, crashes, low-end phones                                     | 2026-10-08    |
+| 10  | Monetisation and pricing     | What is free, what is paid, price, trial, paywall design, family plans                       | 2026-10-08    |
+| 11  | Launch readiness             | Native builds, store accounts and listings, legal, support, payments                         | 2026-10-08    |
+| 12  | Marketing and advertising    | Positioning, channels, creators, paid ads, budget, launch moments                            | 2026-10-08    |
+| 13  | Growth and referral          | Sharing, invites, family features, word of mouth, community                                  | 2026-10-08    |
+| 14  | Analytics, feedback, privacy | What to measure, how to hear from learners, staying privacy-respecting                       | 2026-10-08    |
 | 15  | What learners say            | Reviews of other apps, forums, what people love and wish existed, what Urdu learners ask for | 2026-10-06    |
 | 16  | Learning science             | What research shows works for learning a language and a script, and whether Qaaf does it     | 2026-10-06    |
 
@@ -125,6 +125,11 @@ merges and ships. Its duties:
    drifting from its task is stopped, and its partial report is used. The
    measured reason this exists: one critic once spent 253,607 tokens over 70
    minutes and never returned a verdict (gauntlet/ROLES.md, OVERSEER).
+   At the budget, tell the agent to report now; a few minutes later, stop it.
+   The message arrives only at its next tool round. If a stopped agent had
+   written nothing, resume it once, with no tools allowed, to write up what
+   it already found (2026-10-08: two agents stopped at 24 minutes had written
+   nothing, and their research was recovered this way).
    While agents run, the manager edits nothing they run: on 2026-10-07 it
    changed `scripts/lib/serve-dist.js` in the working tree mid-run, and the
    design agent's door-opener then looked for a button the built app did not

@@ -20,6 +20,10 @@ Budget and contract (the manager enforces these and will stop you):
 - At most 30 tool calls and 15 minutes. Near the limit, stop and report.
 - Read-only: never edit, commit or push.
 - Blocked? One line saying so, then carry on. Never wait.
+- Keep a running draft: after every 10 tool calls, write your findings so far
+  as plain text before the next call. The manager's stop arrives only at your
+  next tool round, and on 2026-10-08 two agents stopped at 24 minutes had
+  written nothing at all.
 
 Report: findings with sources; then at most three proposals with expected
 effect, cost, risk, viewpoints weighed and how to measure success. No more than
