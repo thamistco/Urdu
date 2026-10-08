@@ -337,7 +337,9 @@ const CORE_WORDS: Word[] = [
   { id: 'w-samundar', urdu: 'سمندر', roman: 'samundar', meaning: 'sea', emoji: '🌊', topic: 'nature' },
   { id: 'w-pahaar', urdu: 'پہاڑ', roman: 'pahaaṛ', meaning: 'mountain', emoji: '⛰️', topic: 'nature' },
   { id: 'w-patthar', urdu: 'پتھر', roman: 'patthar', meaning: 'stone / rock', emoji: '🪨', topic: 'nature' },
-  { id: 'w-reit', urdu: 'ریت', roman: 'reet', meaning: 'sand', emoji: '🏖️', topic: 'nature' },
+  // ret, not reet: sand has the long e of کھیت (khet). reet is رِیت, custom
+  // (content review, 2026-10-08).
+  { id: 'w-reit', urdu: 'ریت', roman: 'ret', meaning: 'sand', emoji: '🏖️', topic: 'nature' },
   { id: 'w-machhar2', urdu: 'مچھر', roman: 'machhar', meaning: 'mosquito', emoji: '🦟', topic: 'nature' },
   { id: 'w-chiti', urdu: 'چیونٹی', roman: 'cheeoñṭi', meaning: 'ant', emoji: '🐜', topic: 'nature' },
   { id: 'w-chattan', urdu: 'چٹان', roman: 'chaṭṭaan', meaning: 'cliff / rock', emoji: '🧗', topic: 'nature' },
