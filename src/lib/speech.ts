@@ -8,12 +8,10 @@ import { MALE_VOICE_AVAILABLE, VOICE, VOICE_M } from './voiceManifest';
  * item it falls back to the device's text-to-speech, and if that has no Urdu
  * voice it reads the Roman transliteration. Never throws into the UI.
  */
-let muted = false;
-export function setSpeechMuted(value: boolean) {
-  muted = value;
-}
-/** Whether the learner has turned sound off; anything that plays audio of its own must respect it too. */
-export const isSpeechMuted = () => muted;
+// Never muted by the "Sound effects" setting. It did mute it, and a learner
+// who turned the chimes off ("Chimes for correct, soft tones for misses") got
+// speaker buttons that did nothing and said nothing (QA, 2026-10-09). The
+// Urdu is the lesson, not an effect; the phone's own volume silences it.
 
 /**
  * Correct feedback delays its pronunciation by a few hundred ms so the chime
@@ -31,8 +29,8 @@ export function speechEpoch() {
 /**
  * Which recorded voice the learner chose.
  *
- * Held here rather than read from the store on every call, for the same reason
- * `muted` is: this module is framework-free and gets called from timers and
+ * Held here rather than read from the store on every call: this module is
+ * framework-free and gets called from timers and
  * callbacks where a hook cannot go. The settings store pushes the value in.
  *
  * `'m'` is honoured only when the second set was actually generated. Without
@@ -181,7 +179,6 @@ function deviceSpeak(urdu: string, roman?: string) {
 
 /** Pronounce an item, preferring its bundled clip. `id` is the word/letter id. */
 export async function announce(id: string | undefined, urdu: string, roman?: string) {
-  if (muted) return;
   if (id && (await playClip(id)) !== null) return;
   deviceSpeak(urdu, roman);
 }
@@ -209,7 +206,6 @@ export async function announceWithMeaning(
   roman: string | undefined,
   meaning: string
 ) {
-  if (muted) return;
   const epochAtCall = epoch;
   const ms = id ? await playClip(id) : null;
   if (ms === null) deviceSpeak(urdu, roman);
@@ -218,7 +214,7 @@ export async function announceWithMeaning(
   // the gloss is skipped rather than talked over.
   if (ms === null) return;
   setTimeout(() => {
-    if (epoch !== epochAtCall || muted || !glossEnabled) return;
+    if (epoch !== epochAtCall || !glossEnabled) return;
     try {
       Speech.speak(meaning, { language: 'en', rate: 0.95 });
     } catch {

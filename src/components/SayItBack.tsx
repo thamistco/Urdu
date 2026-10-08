@@ -4,9 +4,8 @@ import { Pressable, View } from 'react-native';
 import { Audio } from 'expo-av';
 import { useIsFocused } from '@react-navigation/native';
 import Svg, { Path, Rect } from 'react-native-svg';
-import { announce, onPlaybackChange, isPlaying, isSpeechMuted } from '../lib/speech';
+import { announce, onPlaybackChange, isPlaying } from '../lib/speech';
 import { palette, withAlpha } from '../theme';
-import { useSettingsStore } from '../store/useSettingsStore';
 import { Txt } from './Text';
 
 type Phase = 'idle' | 'recording' | 'ready' | 'blocked';
@@ -77,7 +76,6 @@ export function SayItBack({
   stack?: boolean;
 }) {
   const [phase, setPhase] = useState<Phase>('idle');
-  const soundOn = useSettingsStore((s) => s.soundEnabled);
   // What a screen reader hears when recording starts and stops. The
   // microphone's label changes too, but a label changing under the focus is
   // not announced, so a blind learner could not tell the recording had begun.
@@ -130,13 +128,11 @@ export function SayItBack({
   }, []);
 
   const playYours = () => {
-    if (isSpeechMuted()) return;
     yours.current?.replayAsync().catch(() => {});
   };
 
   /** The course's own recording first, then the learner's, back to back. */
   const compare = () => {
-    if (isSpeechMuted()) return;
     let started = false;
     const off = onPlaybackChange((on) => {
       if (on) started = true;
@@ -182,7 +178,7 @@ export function SayItBack({
       yours.current = sound;
       setPhase('ready');
       if (compareAfter) {
-        setSaid(isSpeechMuted() ? 'Recorded. Sound is off, so nothing plays.' : 'Recorded. The line, then you.');
+        setSaid('Recorded. The line, then you.');
         compare();
       }
     } catch {
@@ -306,12 +302,6 @@ export function SayItBack({
       {phase === 'blocked' ? (
         <Txt style={{ color: palette.ink }} className="mt-1 text-[0.625rem] opacity-70">
           Microphone off
-        </Txt>
-      ) : phase === 'ready' && !soundOn ? (
-        // Said on screen, because with sound off "hear yourself" plays nothing
-        // and a silent button reads as a broken one.
-        <Txt style={{ color: palette.ink }} className="mt-1 text-[0.625rem] opacity-70">
-          Sound is off
         </Txt>
       ) : null}
       <View aria-live="polite" style={SPOKEN_ONLY}>
