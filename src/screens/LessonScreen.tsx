@@ -593,7 +593,11 @@ export function LessonScreen() {
                     TrackChooser promises "No transliteration to fall back on"
                     as that track's stated cost. Breaking that promise at the
                     exact moment it is tempting is how a setting stops meaning
-                    anything. */}
+                    anything. The same goes the other way: the Roman track
+                    promises no alphabet, and this banner set the answer in
+                    large Nastaliq on it (QA, 2026-10-09), so it follows the
+                    track, and shows the Roman even when "Show Roman Urdu" is
+                    off, since a wrong answer is always told how it is said. */}
                 {reveal ? (
                   <View
                     className="mb-3 rounded-xl px-3.5 py-3"
@@ -612,7 +616,8 @@ export function LessonScreen() {
                         <Lexeme
                           urdu={reveal.script ?? ''}
                           roman={reveal.roman}
-                          track={track === 'script' ? 'script' : 'both'}
+                          track={track}
+                          forceRoman={track !== 'script'}
                           size={(reveal.script ?? '').length > 18 ? 20 : 26}
                           align="left"
                         />
