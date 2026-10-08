@@ -86,13 +86,14 @@ const NOW = Date.UTC(2026, 0, 1);
 {
   // Three correct answers each, one graded as the lesson grades a typed answer
   // and one as it grades a multiple choice.
+  // Each is answered when it falls due: an answer before then is an early
+  // review, which by design earns no step (P-009), so stepping both a day at
+  // a time compared the early-review rule rather than the two grades.
   let good = newCard('w-g', NOW);
   let easy = newCard('w-e', NOW);
-  let t = NOW;
   for (let i = 0; i < 3; i++) {
-    good = review(good, 'good', t);
-    easy = review(easy, 'easy', t);
-    t += DAY;
+    good = review(good, 'good', good.due);
+    easy = review(easy, 'easy', easy.due);
   }
   check(
     'producing a word from memory earns a longer interval than picking it',
