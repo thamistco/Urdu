@@ -526,7 +526,6 @@ const CORE_WORDS: Word[] = [
   { id: 'w-chooha2', urdu: 'چوہا', roman: 'chooha', meaning: 'mouse / rat', emoji: '🐭', topic: 'animals' },
   { id: 'w-gilehri2', urdu: 'گلہری', roman: 'gilehri', meaning: 'squirrel', emoji: '🐿️', topic: 'animals' },
   { id: 'w-bhains2', urdu: 'بھینس', roman: 'bhaiñs', meaning: 'buffalo', emoji: '🐃', topic: 'animals' },
-  { id: 'w-suar2', urdu: 'سور', roman: 'suar', meaning: 'pig', emoji: '🐖', topic: 'animals' },
 
   // fruits
   { id: 'w-kela', urdu: 'کیلا', roman: 'kela', meaning: 'banana', emoji: '🍌', topic: 'fruits' },
@@ -1001,7 +1000,6 @@ const CORE_WORDS: Word[] = [
   { id: 'w-markaz', urdu: 'مرکز', roman: 'markaz', meaning: 'centre / hub', emoji: '🎯', topic: 'city' },
   { id: 'w-nagar', urdu: 'نگر', roman: 'nagar', meaning: 'town', emoji: '🏘️', topic: 'city' },
   { id: 'w-mohalla', urdu: 'محلہ', roman: 'mohalla', meaning: 'neighbourhood', emoji: '🏘️', topic: 'city' },
-  { id: 'w-adda2', urdu: 'اڈا', roman: 'aḍḍa', meaning: 'terminal / stand', emoji: '🚉', topic: 'city' },
   { id: 'w-trafik2', urdu: 'ٹریفک', roman: 'ṭrafik', meaning: 'traffic', emoji: '🚦', topic: 'city' },
   { id: 'w-riyaasat2', urdu: 'ریاست', roman: 'riyaasat', meaning: 'state / province', emoji: '🗺️', topic: 'city' },
 
@@ -1194,7 +1192,6 @@ const CORE_WORDS: Word[] = [
   { id: 'w-raag', urdu: 'راگ', roman: 'raag', meaning: 'musical melody', emoji: '🎶', topic: 'culture' },
   { id: 'w-shaan', urdu: 'شان', roman: 'shaan', meaning: 'glory / grandeur', emoji: '👑', topic: 'culture' },
   { id: 'w-saaz2', urdu: 'ساز', roman: 'saaz', meaning: 'musical instrument', emoji: '🎻', topic: 'culture' },
-  { id: 'w-tabla2', urdu: 'تبلہ', roman: 'tabla', meaning: 'tabla drums', emoji: '🥁', topic: 'culture' },
   { id: 'w-baansuri2', urdu: 'بانسری', roman: 'baañsuri', meaning: 'flute', emoji: '🎼', topic: 'culture' },
   { id: 'w-sitaar2', urdu: 'ستار', roman: 'sitaar', meaning: 'sitar', emoji: '🎸', topic: 'culture' },
   { id: 'w-numaaish2', urdu: 'نمائش', roman: 'numaaish', meaning: 'exhibition', emoji: '🖼️', topic: 'culture' },

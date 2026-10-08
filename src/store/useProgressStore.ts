@@ -6,6 +6,7 @@ import { SrsCard, SrsGrade, newCard, review, dueCount } from '../lib/srs';
 import { testerFlags } from './useTesterStore';
 import { dayKey } from '../lib/date';
 import { rollStreak, markActiveToday } from '../lib/streak';
+import { retireWordIds } from '../lib/retiredIds';
 import {
   HEARTS_MAX,
   HEART_REGEN_MINUTES,
@@ -168,6 +169,8 @@ type ProgressState = {
    * so Home and Profile never show a streak that has already lapsed.
    */
   rolloverStreak: () => void;
+  /** Move progress off word ids the course retired (lib/retiredIds.ts). */
+  retireOldIds: () => void;
   /** Dismiss the path-moved notice and record the path it was about. */
   dismissPathNotice: (pathSize: number) => void;
   /** Record the path this learner has seen without showing them anything.
@@ -435,6 +438,10 @@ export const useProgressStore = create<ProgressState>()(
         set({ gems: s.gems - FREEZE_COST, freezes: s.freezes + 1 });
         return true;
       },
+      retireOldIds: () => {
+        const patch = retireWordIds(get());
+        if (patch) set(patch);
+      },
       rolloverStreak: () => {
         const s = get();
         const r = rollStreak(s, dayKey(), FREEZE_MAX);
@@ -519,6 +526,7 @@ export const useProgressStore = create<ProgressState>()(
       // returning after days away sees the streak as it now stands, not as it
       // stood the last time a lesson was finished.
       onRehydrateStorage: () => (state) => {
+        state?.retireOldIds();
         state?.rolloverStreak();
       },
       /**
