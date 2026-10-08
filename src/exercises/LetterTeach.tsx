@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View } from 'react-native';
+import { View, useWindowDimensions } from 'react-native';
 
 import { PromptCard, palette, withAlpha } from './common';
 import { Txt, Bold, Eyebrow, Urdu, urduGlyph } from '../components/Text';
@@ -30,6 +30,12 @@ type TeachEx = Extract<Exercise, { kind: 'letterTeach' }>;
 export function LetterTeachExercise({ exercise, onGraded }: ExerciseProps<TeachEx>) {
   const { letter } = exercise;
   const [done, setDone] = useState(false);
+  // On a short phone the card ran 815px tall and "Got it" sat 247px below
+  // the fold at 320x568 and 175px below at 360x640, with nothing to say the
+  // screen scrolled (design review, 2026-10-09, Q-016). Under 700px the same
+  // content packs tighter: a smaller letter, its name and speaker on one
+  // line, the example word on one row.
+  const short = useWindowDimensions().height < 700;
 
   // A non-connector: it joins only from the right, so its start form is its
   // alone form and its middle form is its end form.
@@ -58,16 +64,21 @@ export function LetterTeachExercise({ exercise, onGraded }: ExerciseProps<TeachE
       {/* 52 rather than 64: Nastaliq's line box grows faster than the glyph
           does, and at 64 the card opened a band of dead air between the letter
           and its name wider than the letter itself. */}
-      <PromptCard height={150}>
-        <Urdu style={{ ...urduGlyph(52), color: palette.ink }}>{letter.forms.isolated}</Urdu>
-        <Txt style={{ color: palette.ink }} className="mt-2 text-center text-base opacity-70">
-          {letter.name} · sounds like “{letter.sound}”
-        </Txt>
-        <View className="mt-2">
-          <SpeakerButton
-            onPress={() => announce(letter.id, letter.forms.isolated, letter.name)}
-            label={`Hear ${letter.name}`}
-          />
+      <PromptCard height={short ? 0 : 150}>
+        <Urdu style={{ ...urduGlyph(short ? 40 : 52), color: palette.ink }}>{letter.forms.isolated}</Urdu>
+        <View className={short ? 'flex-row items-center justify-center gap-3' : 'items-center'}>
+          <Txt
+            style={{ color: palette.ink }}
+            className={`${short ? '' : 'mt-2'} shrink text-center text-base opacity-70`}
+          >
+            {letter.name} · sounds like “{letter.sound}”
+          </Txt>
+          <View className={short ? '' : 'mt-2'}>
+            <SpeakerButton
+              onPress={() => announce(letter.id, letter.forms.isolated, letter.name)}
+              label={`Hear ${letter.name}`}
+            />
+          </View>
         </View>
       </PromptCard>
 
@@ -76,7 +87,9 @@ export function LetterTeachExercise({ exercise, onGraded }: ExerciseProps<TeachE
           in, and a screenshot showed the cost: four separate glyphs are a list
           rather than a word, so there is no word-order to respect, and the
           progression came out reading End, Middle, Start, Alone. */}
-      <Txt className="mb-2 mt-5 text-center text-xs text-paper/60">It changes shape depending on where it sits</Txt>
+      <Txt className={`mb-2 ${short ? 'mt-3' : 'mt-5'} text-center text-xs text-paper/60`}>
+        It changes shape depending on where it sits
+      </Txt>
       <View className="flex-row justify-center gap-2">
         {POSITIONS.map((p) => (
           <View
@@ -84,19 +97,25 @@ export function LetterTeachExercise({ exercise, onGraded }: ExerciseProps<TeachE
             className="min-w-[68px] flex-1 items-center rounded-2xl px-2 py-3"
             style={{ backgroundColor: withAlpha(palette.paper, 0.07) }}
           >
-            <Urdu style={{ ...urduGlyph(30) }}>{letter.forms[p.key]}</Urdu>
+            <Urdu style={{ ...urduGlyph(short ? 26 : 30) }}>{letter.forms[p.key]}</Urdu>
             <Bold className="mt-2 text-[0.6875rem] text-paper/75">{p.label}</Bold>
-            <Txt className="text-center text-[0.625rem] leading-3 text-paper/60">{positionHint(letter, p.key)}</Txt>
+            <Txt className="text-center text-[0.625rem] leading-3 text-paper/60">
+              {
+                // The note under the row says why, so a short screen keeps
+                // only the fact here, in two lines rather than four.
+                short && oneSided && p.key === 'medial' ? 'same as the end form' : positionHint(letter, p.key)
+              }
+            </Txt>
           </View>
         ))}
       </View>
 
       {/* One real word, so the letter is met inside something before it is
           asked about on its own. */}
-      <View className="mt-5 items-center">
-        <Txt className="mb-1 text-xs text-paper/55">As in</Txt>
-        <Urdu style={{ ...urduGlyph(30) }}>{letter.word}</Urdu>
-        <Txt className="mt-1 text-xs text-paper/70">
+      <View className={short ? 'mt-3 flex-row items-center justify-center gap-3' : 'mt-5 items-center'}>
+        <Txt className={`${short ? '' : 'mb-1'} text-xs text-paper/55`}>As in</Txt>
+        <Urdu style={{ ...urduGlyph(short ? 26 : 30) }}>{letter.word}</Urdu>
+        <Txt className={`${short ? 'shrink' : 'mt-1'} text-xs text-paper/70`}>
           {letter.roman} · {letter.meaning}
         </Txt>
       </View>
@@ -107,14 +126,14 @@ export function LetterTeachExercise({ exercise, onGraded }: ExerciseProps<TeachE
           middle and end, and a beginner has no way to know that is the point
           rather than an error. */}
       {oneSided ? (
-        <Txt className="mt-4 text-center text-xs text-paper/60">
+        <Txt className={`${short ? 'mt-3' : 'mt-4'} text-center text-xs text-paper/60`}>
           {letter.name} never joins to the letter after it, so two of those shapes are the same.
         </Txt>
       ) : null}
 
       {letter.functionNote ? <Txt className="mt-4 text-center text-xs text-paper/55">{letter.functionNote}</Txt> : null}
 
-      <View className="h-6" />
+      <View className={short ? 'h-4' : 'h-6'} />
       <Button onPress={go} disabled={done}>
         Got it
       </Button>
