@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { safeStorage } from './storage';
 
-import { SrsCard, SrsGrade, newCard, review, dueCount, capIntervals } from '../lib/srs';
+import { SrsCard, SrsGrade, newCard, review, capIntervals } from '../lib/srs';
 import { testerFlags } from './useTesterStore';
 import { dayKey } from '../lib/date';
 import { rollStreak, markActiveToday } from '../lib/streak';
@@ -186,7 +186,6 @@ type ProgressState = {
 
   // selectors
   metrics: () => MetricSnapshot;
-  reviewDueCount: () => number;
 };
 
 const rollDay = (state: ProgressState): Partial<ProgressState> => {
@@ -522,8 +521,6 @@ export const useProgressStore = create<ProgressState>()(
           perfectLessons: s.perfectLessons,
         };
       },
-
-      reviewDueCount: () => dueCount(get().srs),
     }),
     {
       name: 'qaaf-progress',
