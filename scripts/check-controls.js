@@ -357,10 +357,14 @@ async function main() {
       if (!(await page.locator('[aria-label="Hear this line"]').count())) {
         problems.push('The reading lesson never showed a "Hear this line" button, so its tap target went unmeasured.');
       }
+      // Leaving part way through now asks first; this pass means to leave.
+      const leave = (d) => d.accept();
+      page.on('dialog', leave);
       await tapByText(page, /^✕$/);
       await page
         .waitForFunction(() => /\bprofile\b/i.test(document.body.innerText), null, { timeout: 10000 })
         .catch(() => {});
+      page.off('dialog', leave);
     }
 
     if (!(await tapByText(page, /^Profile$/))) {
@@ -842,6 +846,59 @@ async function main() {
         await p.close();
       }
     }
+
+    /**
+     * Closing a lesson part way through asks first.
+     *
+     * The close button threw a lesson away with no warning, and coming back
+     * started it from nothing: one stray tap on that corner cost the lesson
+     * (design review, 2026-10-10). With nothing answered it still leaves at
+     * once; after an answer it asks, and saying no keeps the lesson.
+     */
+    {
+      const p = await browser.newPage({ viewport: { width: 390, height: 844 } });
+      const asked = [];
+      p.on('dialog', (d) => {
+        asked.push(d.message());
+        return d.dismiss();
+      });
+      // Visible, not present: a lesson opened by its URL stays mounted under
+      // Home once left, so its close button is still in the page, hidden.
+      const inLesson = () =>
+        p
+          .locator('[aria-label="Close lesson"]:visible')
+          .count()
+          .then((n) => n > 0);
+      try {
+        await enterAsGuest(p, `http://localhost:${PORT}/Urdu/lesson/l-1`, {}, {});
+        await p.locator('[aria-label="Close lesson"]:visible').waitFor({ timeout: 15000 });
+        await p.locator('[aria-label="Close lesson"]:visible').click();
+        await p
+          .locator('[aria-label="Close lesson"]:visible')
+          .waitFor({ state: 'detached', timeout: 5000 })
+          .catch(() => {});
+        if (asked.length || (await inLesson())) {
+          problems.push('Closing a lesson before answering anything did not simply leave.');
+        }
+        await p.goto(`http://localhost:${PORT}/Urdu/lesson/l-1`);
+        const gotIt = p.getByText(/^Got it$/).first();
+        await gotIt.waitFor({ timeout: 15000 });
+        await gotIt.click();
+        await p
+          .waitForFunction(() => !/^Got it$/m.test(document.body.innerText), null, { timeout: 5000 })
+          .catch(() => {});
+        await p.locator('[aria-label="Close lesson"]:visible').click();
+        if (!asked.length) {
+          problems.push(
+            'Closing a lesson after an answer left without asking, so one stray tap throws the lesson away.'
+          );
+        } else if (!(await inLesson())) {
+          problems.push('Saying no to "Leave this lesson?" left the lesson anyway.');
+        }
+      } finally {
+        await p.close();
+      }
+    }
   } finally {
     if (browser) await browser.close();
     server.close();
@@ -875,6 +932,7 @@ async function main() {
   console.log('check:controls — a sound that failed to load plays on the next tap once the network is back.');
   console.log('check:controls — with "Sound effects" off, a speaker button still plays the Urdu.');
   console.log('check:controls — on the Roman track a wrong answer is revealed with no Urdu script.');
+  console.log('check:controls — closing a lesson part way through asks first, and saying no keeps it.');
   console.log('check:controls — from a cold start to the lesson path, the app contacts no host but its own.');
 }
 

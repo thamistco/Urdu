@@ -338,8 +338,12 @@ const checked = [];
     if (!(await tapOnScreen(`text=/${name}/`))) continue;
     await page.waitForTimeout(2000);
     await walk(`practice · ${name}`, 8);
+    // Leaving part way through now asks first; this walk means to leave.
+    const leave = (d) => d.accept();
+    page.on('dialog', leave);
     await tapOnScreen('text=/✕/'); // leave the lesson
     await page.waitForTimeout(1400);
+    page.off('dialog', leave);
   }
 
   /**

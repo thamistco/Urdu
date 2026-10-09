@@ -30,6 +30,7 @@ import type { Exercise, GradedResult } from '../exercises/types';
 import type { FinishResult } from '../store/useProgressStore';
 import { LessonComplete } from './LessonComplete';
 import type { RootStackParamList } from '../navigation/types';
+import { confirmAction } from '../lib/confirm';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Rt = RouteProp<RootStackParamList, 'Lesson'>;
@@ -494,7 +495,18 @@ export function LessonScreen() {
             style={reach(12)}
             onPress={() => {
               feedback.tap();
-              nav.navigate('Main');
+              // Asks first once anything has been answered. A stray tap on
+              // this corner threw a lesson away with no warning, and coming
+              // back started it again from nothing (design review,
+              // 2026-10-10). Nothing answered yet, nothing to lose: it leaves.
+              const leave = () => nav.navigate('Main');
+              if (idx === 0 && graded == null) return leave();
+              confirmAction(
+                'Leave this lesson?',
+                'Your answers in this lesson will not be kept, and it starts again next time.',
+                'Leave',
+                leave
+              );
             }}
           >
             <Txt className="text-2xl text-paper/55">✕</Txt>
