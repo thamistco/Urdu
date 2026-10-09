@@ -19,6 +19,7 @@ import { feedback } from '../lib/feedback';
 import { levelProgress, levelTitle } from '../lib/gamification';
 import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
+import { comebackLine } from '../lib/streak';
 import { Lesson, unitsForTrack, findLesson, ALL_LESSONS } from '../data/units';
 import { needsPathMoveNotice } from '../lib/progress';
 import { streakStatus } from '../lib/streak';
@@ -415,8 +416,11 @@ export function HomeScreen() {
     didAutoScroll.current = false;
   }, [currentLevel]);
 
+  // A welcome back stays in view too, like the path notice: scrolled to the
+  // path, it was above the fold and a lapsed learner never saw it (P-011).
+  const comebackOwed = !!store.comeback;
   useEffect(() => {
-    if (didAutoScroll.current || showPathNotice) return;
+    if (didAutoScroll.current || showPathNotice || comebackOwed) return;
     const t = setTimeout(() => {
       // `measure` reports pageY — position on screen. The list has not been
       // scrolled yet at this point, so pageY is also the content offset we
@@ -469,7 +473,7 @@ export function HomeScreen() {
       });
     }, 500);
     return () => clearTimeout(t);
-  }, [currentId, showPathNotice, tabBarHeight]);
+  }, [currentId, showPathNotice, comebackOwed, tabBarHeight]);
 
   /**
    * Opening a stage below the fold used to leave the scroll position exactly
@@ -653,6 +657,24 @@ export function HomeScreen() {
                     Got it
                   </Button>
                 </View>
+              </Card>
+            </Reveal>
+          )}
+
+          {/* Welcome back, in place of a silent zero (P-011, lib/streak.ts).
+              It says what was built and what has been learned, never what was
+              missed. It has no button of its own: the Continue card further
+              down is the way in. It goes once a lesson is finished. */}
+          {store.comeback && (
+            <Reveal delay={50}>
+              <Card className="mb-4">
+                <Eyebrow style={{ color: palette.gold }} className="mb-1">
+                  Welcome back
+                </Eyebrow>
+                <Bold className="text-base">You’d built a {store.comeback.lost}-day streak.</Bold>
+                <Txt className="mt-1 text-sm leading-6 text-paper/75">
+                  {comebackLine(store.learnedWords.length, track === 'roman' ? 0 : store.learnedLetters.length)}
+                </Txt>
               </Card>
             </Reveal>
           )}

@@ -5,7 +5,7 @@ import { safeStorage } from './storage';
 import { SrsCard, SrsGrade, newCard, review, capIntervals } from '../lib/srs';
 import { testerFlags } from './useTesterStore';
 import { dayKey } from '../lib/date';
-import { rollStreak, markActiveToday } from '../lib/streak';
+import { rollStreak, markActiveToday, comebackFrom } from '../lib/streak';
 import { retireWordIds } from '../lib/retiredIds';
 import {
   HEARTS_MAX,
@@ -101,6 +101,8 @@ type ProgressState = {
    * lesson, and the notice is owed to whichever lesson comes next.
    */
   freezeNotice: string | null;
+  /** A streak that broke while the learner was away, until a lesson is finished (P-011, lib/streak.ts). */
+  comeback: { lost: number } | null;
   /** Freezes spent on the current gap since the last lesson; see lib/streak.ts. */
   freezesOnHold: number;
 
@@ -214,6 +216,7 @@ export const useProgressStore = create<ProgressState>()(
       lastActiveDay: null,
       freezes: 1,
       freezeNotice: null,
+      comeback: null,
       freezesOnHold: 0,
 
       dailyGoalId: 'steady',
@@ -388,6 +391,7 @@ export const useProgressStore = create<ProgressState>()(
           lastActiveDay: today,
           freezes,
           freezeNotice: null,
+          comeback: null,
           freezesOnHold: active.freezesOnHold,
           leagueId,
           weekKey,
@@ -459,6 +463,7 @@ export const useProgressStore = create<ProgressState>()(
           // A notice owed from an earlier launch is dropped when the streak
           // breaks: it would say a freeze saved a streak that just ended.
           ...(r.froze ? { freezeNotice: dayKey() } : r.streak === 0 ? { freezeNotice: null } : {}),
+          ...(comebackFrom(s, r) ? { comeback: comebackFrom(s, r) } : {}),
         });
       },
       addGems: (n) => set((s) => ({ gems: s.gems + n })),
@@ -487,6 +492,7 @@ export const useProgressStore = create<ProgressState>()(
           lastActiveDay: null,
           freezes: 1,
           freezeNotice: null,
+          comeback: null,
           freezesOnHold: 0,
           dailyGoalId: 'steady',
           todayKey: dayKey(),
