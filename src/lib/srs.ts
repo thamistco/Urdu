@@ -23,6 +23,14 @@ export type SrsCard = {
 
 const DAY = 24 * 60 * 60 * 1000;
 
+/**
+ * The longest gap the schedule sets: a year. SM-2 has no ceiling, and before
+ * P-009 a word graded in every session climbed to intervals of billions of
+ * days, so it would never come back (second check, 2026-10-09). A year still
+ * reads as full strength on every meter.
+ */
+export const MAX_INTERVAL = 365;
+
 export function newCard(id: string, now = Date.now()): SrsCard {
   return { id, ease: 2.5, interval: 0, reps: 0, due: now, lastSeen: now };
 }
@@ -49,7 +57,8 @@ export function review(card: SrsCard, grade: SrsGrade, now = Date.now()): SrsCar
   if (grade !== 'again' && reps > 0 && now < card.due) {
     const earned = Math.round(((now - card.lastSeen) / DAY) * ease);
     if (earned <= interval) return card;
-    return { ...card, interval: earned, due: now + earned * DAY, lastSeen: now };
+    const grown = Math.min(earned, MAX_INTERVAL);
+    return { ...card, interval: grown, due: now + grown * DAY, lastSeen: now };
   }
 
   if (grade === 'again') {
@@ -70,6 +79,7 @@ export function review(card: SrsCard, grade: SrsGrade, now = Date.now()): SrsCar
     } else {
       ease = Math.max(1.3, ease - 0.02);
     }
+    interval = Math.min(interval, MAX_INTERVAL);
   }
 
   // A miss is due at once. It used to be due a minute later, which served
@@ -78,6 +88,23 @@ export function review(card: SrsCard, grade: SrsGrade, now = Date.now()): SrsCar
   // minute: Review straight afterwards said "All caught up" (QA, 2026-10-09).
   const due = grade === 'again' ? now : now + interval * DAY;
   return { ...card, ease, interval, reps, due, lastSeen: now };
+}
+
+/**
+ * Bring saved cards back inside the year: cards the old schedule pushed out
+ * of reach, some so far that the number saved as null. Returns null when none
+ * needs it, so saved progress is not rewritten for nothing.
+ */
+export function capIntervals(cards: Record<string, SrsCard>): Record<string, SrsCard> | null {
+  let out: Record<string, SrsCard> | null = null;
+  for (const [id, c] of Object.entries(cards)) {
+    const interval = Number.isFinite(c.interval) ? Math.min(c.interval, MAX_INTERVAL) : MAX_INTERVAL;
+    const latest = c.lastSeen + interval * DAY;
+    if (interval === c.interval && Number.isFinite(c.due) && c.due <= latest) continue;
+    out ??= { ...cards };
+    out[id] = { ...c, interval, due: Number.isFinite(c.due) ? Math.min(c.due, latest) : latest };
+  }
+  return out;
 }
 
 export function isDue(card: SrsCard, now = Date.now()): boolean {
