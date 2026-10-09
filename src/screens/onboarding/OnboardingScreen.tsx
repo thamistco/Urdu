@@ -466,7 +466,13 @@ export function OnboardingScreen() {
       {
         key: 'speaker',
         label: 'I already speak or understand it',
-        desc: 'I grew up around it, but I can’t read the script',
+        // The Roman track teaches no script, so it is not offered as the gap
+        // (design review, 2026-10-10: "I can't read the script" just after
+        // choosing "No alphabet").
+        desc:
+          track === 'roman'
+            ? 'I grew up around it and understand it spoken'
+            : 'I grew up around it, but I can’t read the script',
         icon: 'speechBubble',
       },
     ];
@@ -476,7 +482,9 @@ export function OnboardingScreen() {
           <Dots of="background" />
           <Heading className="mb-1 text-2xl">Do you already know some Urdu?</Heading>
           <Txt className="mb-6 text-sm text-paper/55">
-            If you already understand it spoken, we’ll skip the basic words you know and get you to the script faster.
+            {track === 'roman'
+              ? 'If you already understand it spoken, we’ll skip the basic words you know.'
+              : 'If you already understand it spoken, we’ll skip the basic words you know and get you to the script faster.'}
           </Txt>
           <View className="gap-3" accessibilityRole="radiogroup" aria-label="Do you already know some Urdu?">
             {OPTIONS.map((o) => {
@@ -707,8 +715,13 @@ export function OnboardingScreen() {
                 Moved ahead
               </Eyebrow>
               <Txt className="mt-1 text-sm text-paper/60">
-                The basic words you showed you know are marked done, so you go straight to the script and reading. The
-                rest of the course is still there.
+                {/* What the learner said, not what they scored: the skips come
+                    from "I already speak or understand it", so after four
+                    wrong answers "you showed you know" was false (design
+                    review, 2026-10-10). */}
+                Because you understand Urdu spoken, the basic word lessons are marked done, so you go straight to{' '}
+                {track === 'roman' ? 'the rest of the course' : 'the script and reading'}. Each one is still open on the
+                path if you want it.
               </Txt>
             </View>
           )}
