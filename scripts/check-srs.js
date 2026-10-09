@@ -199,16 +199,19 @@ const NOW = Date.UTC(2026, 0, 1);
 
 {
   const vocab = ALL_LESSONS.find((l) => l.kind === 'vocab');
-  const due = [
-    { id: WORDS[0].id, type: 'word' },
-    { id: WORDS[1].id, type: 'word' },
-  ];
+  // As many as dueBudget gives an ordinary lesson. It took only two of the
+  // four, so half of what was due went unshown (learning review, 2026-10-10).
+  // Words the lesson does not teach anyway, or it would pass with no weave.
+  const own = new Set(buildLessonExercises(vocab, [], 'both').map((ex) => ex.word?.id));
+  const due = WORDS.filter((w) => !own.has(w.id))
+    .slice(0, dueBudget(vocab.kind, vocab.size))
+    .map((w) => ({ id: w.id, type: 'word' }));
   const withDue = buildLessonExercises(vocab, due, 'both');
   const ids = new Set(withDue.map((ex) => ex.word?.id).filter(Boolean));
   check(
-    'an ordinary lesson weaves in what is due',
+    'an ordinary lesson weaves in everything its due budget asks for',
     due.every((d) => ids.has(d.id)),
-    `${vocab.id}`
+    `${vocab.id}: ${due.filter((d) => ids.has(d.id)).length} of ${due.length}`
   );
 }
 

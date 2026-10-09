@@ -2796,11 +2796,15 @@ export function buildLessonExercises(
     }
   }
 
-  // Weave up to two due review items in near the front of a normal lesson.
+  // Weave the due review items in near the front of a normal lesson: as many
+  // as the caller asked for, which `dueBudget` (srs.ts) decides. This took at
+  // most two while the budget asked for four, so at three lessons a day 156
+  // of 553 due items asked for were never shown, and the backlog grew faster
+  // than the schedule meant it to (learning review, 2026-10-10).
   //
-  // Filtered to refs that will actually render before the `.slice(0, 2)`, the
+  // Filtered to refs that will actually render, the
   // same fix as the review branch above and for the same reason: an unfiltered
-  // `.slice(0, 2)` can spend both slots on a due letter the Roman track cannot
+  // cap can spend its slots on a due letter the Roman track cannot
   // show, weaving in nothing while the two real due items behind it are never
   // reached. Less severe here than in a review lesson — an ordinary lesson has
   // no floor keyed to this count — but it is the same unguarded assumption and
@@ -2809,7 +2813,7 @@ export function buildLessonExercises(
     const woven: Exercise[] = [];
     const weavable = (ref: ItemRef) =>
       ref.type === 'letter' ? teachesScript && !!getLetter(ref.id) : !!getAnyWord(ref.id);
-    for (const ref of reviewRefs.filter(weavable).slice(0, 2)) {
+    for (const ref of reviewRefs.filter(weavable)) {
       if (ref.type === 'letter') {
         const l = getLetter(ref.id) as Letter;
         woven.push(letterExercise(l));
