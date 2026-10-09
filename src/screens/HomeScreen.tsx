@@ -841,7 +841,10 @@ export function HomeScreen() {
                   <Bold style={{ color: palette.gold }} className="mt-2 text-center text-[0.8125rem]">
                     Letter Lab
                   </Bold>
-                  <Txt style={{ color: withAlpha(palette.gold, 0.75) }} className="text-center text-[0.625rem]">
+                  {/* 0.9, not 0.75: at 0.75 this 10px line measured 4.03:1 on
+                      the tile, under the 4.5 small text needs (design review,
+                      2026-10-09); 0.9 is 5.12:1 on the same measured ground. */}
+                  <Txt style={{ color: withAlpha(palette.gold, 0.9) }} className="text-center text-[0.625rem]">
                     all {LETTERS.length} letters
                   </Txt>
                 </View>
