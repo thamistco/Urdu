@@ -470,6 +470,7 @@ for (const l of LETTERS)
  */
 const identityIds = [
   'practice-review',
+  'practice-catchup',
   ...TOPICS.map((t) => `practice-topic-${t.id}`),
   ...GRAMMAR.map((g) => `practice-grammar-${g.id}`),
   ...PASSAGES.map((p) => `practice-reading-${p.id}`),
@@ -486,6 +487,7 @@ for (const g of GRAMMAR) if (!resolveLesson(`practice-grammar-${g.id}`)) bad(`pr
 for (const p of PASSAGES) if (!resolveLesson(`practice-reading-${p.id}`)) bad(`practice-reading-${p.id} unresolved`);
 for (const d of DIALOGUES) if (!resolveLesson(`practice-dialogue-${d.id}`)) bad(`practice-dialogue-${d.id} unresolved`);
 if (!resolveLesson('practice-review')) bad('practice-review unresolved');
+if (!resolveLesson('practice-catchup')) bad('practice-catchup unresolved');
 
 console.log('');
 if (problems.length) {

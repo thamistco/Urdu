@@ -42,10 +42,12 @@ function load(rel) {
   return mod.exports;
 }
 
-const { newCard, review, dueQueue, dueCount, isDue, strength, dueBudget } = load('src/lib/srs.ts');
-const { buildLessonExercises } = load('src/exercises/generator.ts');
-const { ALL_LESSONS } = load('src/data/units.ts');
+const { newCard, review, dueQueue, dueCount, isDue, strength, dueBudget, cardsOnTrack, reviewFirst, CATCH_UP_SIZE } =
+  load('src/lib/srs.ts');
+const { buildLessonExercises, itemsOf } = load('src/exercises/generator.ts');
+const { ALL_LESSONS, resolveLesson } = load('src/data/units.ts');
 const { WORDS, wordsByTopic } = load('src/data/words.ts');
+const { LETTERS } = load('src/data/letters.ts');
 
 const problems = [];
 const ok = [];
@@ -193,6 +195,45 @@ const NOW = Date.UTC(2026, 0, 1);
     untaught.length === 0,
     untaught.length ? `asked about ${untaught.join(', ')}, never graded` : `${asked.length} questions, all known`
   );
+}
+
+// ---- the catch-up review brings back what is due, on every track ----------
+
+{
+  // Home offers it in place of a new lesson while more than REVIEW_FIRST_AT
+  // items are due (P-026), and the lesson screen fills it with
+  // dueQueue(cardsOnTrack(...), size). On the Roman track a learner's old due
+  // letters, which it cannot show, once took every slot: with no words the
+  // screen was blank, with words the review fell back to other known words
+  // and asked none of the due ones. So this counts questions about the due
+  // items themselves, built the way the screen builds them.
+  const catchUp = resolveLesson('practice-catchup');
+  const srs = {};
+  const types = {};
+  for (const l of LETTERS.slice(0, 32)) {
+    srs[l.id] = { ...newCard(l.id, NOW - 2 * DAY), interval: 1, reps: 1, due: NOW - DAY };
+    types[l.id] = 'letter';
+  }
+  for (const w of WORDS.slice(0, 35)) {
+    srs[w.id] = { ...newCard(w.id, NOW - 3 * DAY), interval: 2, reps: 1, due: NOW - DAY };
+    types[w.id] = 'word';
+  }
+  for (const track of ['both', 'roman']) {
+    const shown = cardsOnTrack(srs, types, track);
+    const due = dueQueue(shown, dueBudget(catchUp.kind, catchUp.size), NOW).map((id) => ({ id, type: types[id] }));
+    const wanted = new Set(Object.keys(shown));
+    const asked = new Set(
+      buildLessonExercises(catchUp, due, track)
+        .flatMap(itemsOf)
+        .map((it) => it.id)
+        .filter((id) => wanted.has(id))
+    );
+    check(
+      `the catch-up review Home offers on the ${track} track asks ${CATCH_UP_SIZE} of the due items`,
+      reviewFirst(shown, NOW) && asked.size >= CATCH_UP_SIZE,
+      `${asked.size} due items asked, of ${dueCount(shown, NOW)} due on this track`
+    );
+  }
 }
 
 // ---- due items are woven into ordinary lessons too ------------------------
