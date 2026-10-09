@@ -649,8 +649,13 @@ export function HomeScreen() {
           {/* level + daily goal */}
           <Reveal delay={60}>
             <Card className="mb-4">
-              <View className="mb-2 flex-row items-center justify-between">
-                <View className="flex-row items-center gap-2">
+              {/* Both rows wrap at large text. At 2x "0 / 60 XP to level 2"
+                  was squeezed into a 53px column, one word a line, and the
+                  daily bar shrank to nothing between its labels (design
+                  review, 2026-10-09, Q-023). Now the count drops under the
+                  level, and the bar keeps a width or takes its own line. */}
+              <View className="mb-2 flex-row flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                <View className="flex-row items-center gap-2" style={wholeWords}>
                   <View className="rounded-lg px-2 py-1" style={{ backgroundColor: palette.gold }}>
                     <Bold style={{ color: palette.ink }} className="text-xs">
                       LVL {level}
@@ -666,16 +671,16 @@ export function HomeScreen() {
                     the screen, and the one label there was named the wrong one.
                     Profile already says "40 / 300 XP to level 6"; this now says
                     the same kind of thing, with each number over its own bar. */}
-                <Txt className="text-xs text-paper/55">
+                <Txt className="text-xs text-paper/55" style={{ flexShrink: 0, maxWidth: '100%' }}>
                   {into} / {span} XP to level {level + 1}
                 </Txt>
               </View>
               <ProgressBar progress={ratio} height={10} />
-              <View className="mt-3 flex-row items-center gap-2">
+              <View className="mt-3 flex-row flex-wrap items-center gap-x-2 gap-y-1">
                 {/* The goal's name, not just its number: "12/30 XP" says how far,
                     and only the name says which goal the 30 belongs to. */}
                 <Txt className="text-[0.6875rem] text-paper/55">Today · {goal.label}</Txt>
-                <View className="flex-1">
+                <View className="flex-1" style={{ minWidth: 96 }}>
                   <ProgressBar progress={dailyRatio} color={palette.jade} height={8} />
                 </View>
                 <Txt className="text-[0.6875rem] text-paper/55">
