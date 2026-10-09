@@ -120,6 +120,25 @@ export function dueQueue(cards: Record<string, SrsCard>, limit: number, now = Da
     .map((c) => c.id);
 }
 
+/**
+ * The cards a learner's track can show.
+ *
+ * The Roman track teaches no letters, so letters graded before a switch to it
+ * can never come back there. Counted anyway, they made Home offer a review of
+ * them, and that review had nothing it could show: a white screen, and a card
+ * that never cleared, since nothing could grade those letters (second check of
+ * P-026, 2026-10-10). Everything that counts or queues due items goes through
+ * here, so what Home promises is what a lesson can deliver.
+ */
+export function cardsOnTrack(
+  cards: Record<string, SrsCard>,
+  types: Record<string, string>,
+  track: string
+): Record<string, SrsCard> {
+  if (track !== 'roman') return cards;
+  return Object.fromEntries(Object.entries(cards).filter(([id]) => types[id] !== 'letter'));
+}
+
 export function dueCount(cards: Record<string, SrsCard>, now = Date.now()): number {
   return Object.values(cards).filter((c) => isDue(c, now)).length;
 }

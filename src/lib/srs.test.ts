@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { MAX_INTERVAL, capIntervals, isDue, newCard, review } from './srs';
+import { MAX_INTERVAL, capIntervals, cardsOnTrack, dueCount, isDue, newCard, review } from './srs';
 
 const DAY = 24 * 60 * 60 * 1000;
 const T0 = Date.UTC(2026, 9, 9, 8, 0);
@@ -112,5 +112,17 @@ describe('capIntervals', () => {
     expect(out.n.interval).toBe(MAX_INTERVAL);
     expect(out.n.due).toBe(T0 + MAX_INTERVAL * DAY);
     expect(capIntervals({ s: sane })).toBeNull();
+  });
+});
+
+describe('cardsOnTrack', () => {
+  it('leaves letters out on the Roman track, which cannot show them, and keeps them elsewhere', () => {
+    const letter = { ...newCard('alif', T0), due: T0 - DAY };
+    const word = { ...newCard('w-paani', T0), due: T0 - DAY };
+    const cards = { alif: letter, 'w-paani': word };
+    const types = { alif: 'letter', 'w-paani': 'word' };
+    expect(dueCount(cardsOnTrack(cards, types, 'roman'), T0)).toBe(1);
+    expect(dueCount(cardsOnTrack(cards, types, 'both'), T0)).toBe(2);
+    expect(dueCount(cardsOnTrack(cards, types, 'script'), T0)).toBe(2);
   });
 });

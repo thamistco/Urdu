@@ -17,7 +17,7 @@ import { SpeakerButton } from '../exercises/common';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { announce, invalidateSpeech } from '../lib/speech';
-import { dueQueue, dueBudget, type SrsGrade } from '../lib/srs';
+import { cardsOnTrack, dueQueue, dueBudget, type SrsGrade } from '../lib/srs';
 import { useSessionGradeFlush } from './useSessionGradeFlush';
 import { answerReveal } from './answerReveal';
 import { REFILL_COST, gemsShortOfRefill, minutesUntilNextHeart } from '../lib/gamification';
@@ -193,7 +193,12 @@ export function LessonScreen() {
     // decision — see `dueBudget`, which is where the old flat cap of four for
     // every kind of lesson was quietly defeating spaced repetition.
     const want = dueBudget(lesson.kind, lesson.size);
-    const due = dueQueue(srs, want).map((id) => ({ id, type: srsType[id] ?? ('word' as const) }));
+    // Only what this track can show: capped before the generator dropped the
+    // rest, a Roman learner's due letters filled every slot (cardsOnTrack).
+    const due = dueQueue(cardsOnTrack(srs, srsType, track), want).map((id) => ({
+      id,
+      type: srsType[id] ?? ('word' as const),
+    }));
     // Every id the learner has ever been graded on — see the doc comment on
     // `fallbackReviewRefs` for why a review with nothing due yet needs this
     // rather than trusting a topic's word list to mean "shown".
@@ -425,6 +430,26 @@ export function LessonScreen() {
 
   if (done && result) {
     return <LessonComplete result={result} correct={correctCount} total={total} onHome={() => nav.navigate('Main')} />;
+  }
+
+  // Nothing this lesson could ask. A white screen is what it used to be (an
+  // exercise read off an empty list); this says so and offers the way back.
+  if (!exercises.length) {
+    return (
+      <Screen scroll={false}>
+        <SafeAreaView className="flex-1">
+          <View className="flex-1 items-center justify-center px-2">
+            <Heading className="mb-2 text-2xl">Nothing to practise here yet</Heading>
+            <Txt className="mb-8 max-w-[280px] text-center text-sm text-paper/60">
+              Finish a lesson or two and the words you meet will come back here.
+            </Txt>
+            <Button variant="primary" onPress={() => nav.navigate('Main')}>
+              Back home
+            </Button>
+          </View>
+        </SafeAreaView>
+      </Screen>
+    );
   }
 
   if (outOfHearts) {

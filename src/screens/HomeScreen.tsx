@@ -27,7 +27,7 @@ import { LEVEL_META, LEVEL_ORDER, type Level, glossOf } from '../data/words';
 import { WORDS } from '../data/words';
 import { DAILY_GOALS } from '../data/achievements';
 import type { RootStackParamList } from '../navigation/types';
-import { dueCount } from '../lib/srs';
+import { cardsOnTrack, dueCount } from '../lib/srs';
 import { testerFlags } from '../store/useTesterStore';
 import { wholeWords } from '../lib/wholeWords';
 
@@ -215,7 +215,10 @@ export function HomeScreen() {
 
   // Recomputed from `store.srs` rather than called as an action, so the card
   // appears and clears as answers land instead of only on a remount.
-  const dueNow = useMemo(() => dueCount(store.srs), [store.srs]);
+  const dueNow = useMemo(
+    () => dueCount(cardsOnTrack(store.srs, store.srsType, track)),
+    [store.srs, store.srsType, track]
+  );
 
   /**
    * There is no push notification telling a learner their streak is about to
