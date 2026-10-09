@@ -19,9 +19,9 @@ report.
 
 | #   | Area                         | What it covers                                                                               | Last reviewed |
 | --- | ---------------------------- | -------------------------------------------------------------------------------------------- | ------------- |
-| 1   | Market and competitors       | Who else teaches Urdu, what they charge, where they are weak, who our learners are           | 2026-10-06    |
-| 2   | Accessibility                | Screen readers, contrast, text size, motor and colour-blind use                              | 2026-10-07    |
-| 3   | Visual design and aesthetics | Consistency, hierarchy, polish, the Moonrise brand across every screen                       | 2026-10-07    |
+| 1   | Market and competitors       | Who else teaches Urdu, what they charge, where they are weak, who our learners are           | 2026-10-09    |
+| 2   | Accessibility                | Screen readers, contrast, text size, motor and colour-blind use                              | 2026-10-09    |
+| 3   | Visual design and aesthetics | Consistency, hierarchy, polish, the Moonrise brand across every screen                       | 2026-10-09    |
 | 4   | Learning effectiveness       | Does it teach? Curriculum order, spaced repetition, script mastery                           | 2026-10-07    |
 | 5   | Interaction and ease of use  | Friction, dead ends, confusing controls, error states, speed of a session                    | 2026-10-07    |
 | 6   | Onboarding and first session | The first five minutes: does a stranger reach a win and want a second day                    | 2026-10-07    |
@@ -33,8 +33,8 @@ report.
 | 12  | Marketing and advertising    | Positioning, channels, creators, paid ads, budget, launch moments                            | 2026-10-08    |
 | 13  | Growth and referral          | Sharing, invites, family features, word of mouth, community                                  | 2026-10-08    |
 | 14  | Analytics, feedback, privacy | What to measure, how to hear from learners, staying privacy-respecting                       | 2026-10-08    |
-| 15  | What learners say            | Reviews of other apps, forums, what people love and wish existed, what Urdu learners ask for | 2026-10-06    |
-| 16  | Learning science             | What research shows works for learning a language and a script, and whether Qaaf does it     | 2026-10-06    |
+| 15  | What learners say            | Reviews of other apps, forums, what people love and wish existed, what Urdu learners ask for | 2026-10-09    |
+| 16  | Learning science             | What research shows works for learning a language and a script, and whether Qaaf does it     | 2026-10-09    |
 
 ## A night's work
 
