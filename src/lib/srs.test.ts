@@ -1,5 +1,16 @@
 import { describe, it, expect } from 'vitest';
-import { MAX_INTERVAL, capIntervals, cardsOnTrack, dueCount, isDue, newCard, review } from './srs';
+import {
+  MAX_INTERVAL,
+  REVIEW_FIRST_AT,
+  capIntervals,
+  cardsOnTrack,
+  dueCount,
+  dueQueue,
+  isDue,
+  newCard,
+  review,
+  reviewFirst,
+} from './srs';
 
 const DAY = 24 * 60 * 60 * 1000;
 const T0 = Date.UTC(2026, 9, 9, 8, 0);
@@ -124,5 +135,32 @@ describe('cardsOnTrack', () => {
     expect(dueCount(cardsOnTrack(cards, types, 'roman'), T0)).toBe(1);
     expect(dueCount(cardsOnTrack(cards, types, 'both'), T0)).toBe(2);
     expect(dueCount(cardsOnTrack(cards, types, 'script'), T0)).toBe(2);
+  });
+});
+
+describe('review first (P-026)', () => {
+  const dueCards = (n: number) =>
+    Object.fromEntries(
+      Array.from({ length: n }, (_, i) => [
+        `w${i}`,
+        { id: `w${i}`, ease: 2.5, interval: 1, reps: 1, due: T0 - DAY, lastSeen: T0 - 2 * DAY },
+      ])
+    );
+
+  it('offers a catch-up review only once more are due than the threshold', () => {
+    expect(reviewFirst(dueCards(REVIEW_FIRST_AT), T0)).toBe(false);
+    expect(reviewFirst(dueCards(REVIEW_FIRST_AT + 1), T0)).toBe(true);
+  });
+
+  it('brings back the most fragile word first, not the longest overdue', () => {
+    const fresh = { id: 'fresh', ease: 2.5, interval: 1, reps: 1, due: T0, lastSeen: T0 - DAY };
+    const old = { id: 'old', ease: 2.5, interval: 17, reps: 4, due: T0 - 5 * DAY, lastSeen: T0 - 22 * DAY };
+    expect(dueQueue({ old, fresh }, 2, T0)).toEqual(['fresh', 'old']);
+  });
+
+  it('among equally fragile words, the longest overdue comes first', () => {
+    const a = { id: 'a', ease: 2.5, interval: 3, reps: 2, due: T0 - DAY, lastSeen: T0 - 4 * DAY };
+    const b = { id: 'b', ease: 2.5, interval: 3, reps: 2, due: T0 - 2 * DAY, lastSeen: T0 - 5 * DAY };
+    expect(dueQueue({ a, b }, 2, T0)).toEqual(['b', 'a']);
   });
 });

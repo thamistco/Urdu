@@ -111,11 +111,20 @@ export function isDue(card: SrsCard, now = Date.now()): boolean {
   return card.due <= now;
 }
 
-/** Ids of due cards, soonest-overdue first, capped to `limit`. */
+/**
+ * Ids of due cards, the most fragile first, capped to `limit`.
+ *
+ * Shortest interval first, then longest overdue. Forgetting is steepest soon
+ * after learning, so a word met yesterday for the first time loses most by
+ * waiting, and a word last seen a month ago loses least. Sorting by how long
+ * overdue alone put the newest words last: at three lessons a day, 286 words
+ * taught by day 24 were never met again on a later day; fragile first cut
+ * that to 174 on its own (learning review, 2026-10-10, P-026).
+ */
 export function dueQueue(cards: Record<string, SrsCard>, limit: number, now = Date.now()): string[] {
   return Object.values(cards)
     .filter((c) => isDue(c, now))
-    .sort((a, b) => a.due - b.due)
+    .sort((a, b) => a.interval - b.interval || a.due - b.due)
     .slice(0, limit)
     .map((c) => c.id);
 }
@@ -137,6 +146,31 @@ export function cardsOnTrack(
 ): Record<string, SrsCard> {
   if (track !== 'roman') return cards;
   return Object.fromEntries(Object.entries(cards).filter(([id]) => types[id] !== 'letter'));
+}
+
+/**
+ * Past this many due items, the next thing Home offers is a catch-up review
+ * rather than a new lesson (P-026). New lessons stay open on the path.
+ *
+ * The backlog never cleared: woven into new lessons, four due items a lesson
+ * cannot keep up with the words each lesson adds, so at three lessons a day
+ * 580 items were overdue after 30 days and half the words taught were never
+ * met again on a later day. Offering a 20-item review first whenever more
+ * than 30 are due measured 26 overdue after 30 days, every word met again,
+ * most within a day, for about 40% fewer new words a day (simulated, every
+ * answer right; learning review, 2026-10-10).
+ *
+ * Only if learners take the review. The gate is soft, and the same simulation
+ * with the learner taking the catch-up half the time measured 53 overdue; a
+ * fifth of the time, 426; never, 607, as without it (second check, 2026-10-10).
+ * What it promises is the offer, not the result.
+ */
+export const REVIEW_FIRST_AT = 30;
+/** The catch-up review's length: what the measured policy used. */
+export const CATCH_UP_SIZE = 20;
+
+export function reviewFirst(cards: Record<string, SrsCard>, now = Date.now()): boolean {
+  return dueCount(cards, now) > REVIEW_FIRST_AT;
 }
 
 export function dueCount(cards: Record<string, SrsCard>, now = Date.now()): number {

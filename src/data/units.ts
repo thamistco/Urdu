@@ -16,6 +16,7 @@ import { wordsByTopic } from './words';
 import type { Level } from './words';
 import type { LearnTrack } from '../store/useSettingsStore';
 import { palette } from '../theme';
+import { CATCH_UP_SIZE } from '../lib/srs';
 
 export type LessonKind = 'letters' | 'vocab' | 'phrases' | 'grammar' | 'sentences' | 'reading' | 'dialogue' | 'review';
 
@@ -1297,6 +1298,20 @@ function buildLesson(id: string): Lesson | undefined {
       kind: 'review',
       xp: 20,
       size: 10,
+    };
+  }
+  // Offered by Home in place of a new lesson while more than REVIEW_FIRST_AT
+  // items are due (lib/srs.ts, P-026): the same review, long enough to bring
+  // the pile back down in a sitting or two.
+  if (id === 'practice-catchup') {
+    return {
+      id,
+      title: 'Catch-up review',
+      subtitle: 'The words slipping furthest',
+      icon: '🔁',
+      kind: 'review',
+      xp: 30,
+      size: CATCH_UP_SIZE,
     };
   }
   if (id.startsWith('practice-topic-')) {

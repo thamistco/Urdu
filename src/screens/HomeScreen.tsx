@@ -27,7 +27,7 @@ import { LEVEL_META, LEVEL_ORDER, type Level, glossOf } from '../data/words';
 import { WORDS } from '../data/words';
 import { DAILY_GOALS } from '../data/achievements';
 import type { RootStackParamList } from '../navigation/types';
-import { cardsOnTrack, dueCount } from '../lib/srs';
+import { cardsOnTrack, dueCount, reviewFirst, CATCH_UP_SIZE } from '../lib/srs';
 import { testerFlags } from '../store/useTesterStore';
 import { wholeWords } from '../lib/wholeWords';
 
@@ -217,6 +217,14 @@ export function HomeScreen() {
   // appears and clears as answers land instead of only on a remount.
   const dueNow = useMemo(
     () => dueCount(cardsOnTrack(store.srs, store.srsType, track)),
+    [store.srs, store.srsType, track]
+  );
+  // More due than new lessons can bring back: the main card offers a catch-up
+  // review before the next lesson (P-026, lib/srs.ts). A soft gate: the path
+  // below stays open, and so does the lesson, one tap further down. Counted on
+  // the learner's track, like dueNow, so it never offers what cannot be shown.
+  const catchUp = useMemo(
+    () => reviewFirst(cardsOnTrack(store.srs, store.srsType, track)),
     [store.srs, store.srsType, track]
   );
 
@@ -700,7 +708,7 @@ export function HomeScreen() {
             that should decide how a session starts was invisible on the screen
             the learner lands on. Shown only when something is actually due;
             an empty queue is not worth a card. */}
-          {dueNow > 0 && (
+          {dueNow > 0 && !catchUp && (
             <Reveal delay={75}>
               <Pressable
                 onPress={() => {
@@ -747,13 +755,17 @@ export function HomeScreen() {
                   feedback.tap();
                   // Once the path is finished there is no "next" lesson — the
                   // course becomes its review queue.
-                  nav.navigate('Lesson', { lessonId: finished ? 'practice-review' : currentLesson.id });
+                  nav.navigate('Lesson', {
+                    lessonId: catchUp ? 'practice-catchup' : finished ? 'practice-review' : currentLesson.id,
+                  });
                 }}
                 accessibilityRole="button"
                 accessibilityLabel={
-                  finished
-                    ? 'Course complete. Open your daily review.'
-                    : `Continue: ${currentLesson.title}. ${currentLesson.subtitle}`
+                  catchUp
+                    ? `Review first: ${dueNow} things are due. Review ${CATCH_UP_SIZE}, then carry on.`
+                    : finished
+                      ? 'Course complete. Open your daily review.'
+                      : `Continue: ${currentLesson.title}. ${currentLesson.subtitle}`
                 }
                 style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
               >
@@ -768,7 +780,9 @@ export function HomeScreen() {
                     className="h-12 w-12 items-center justify-center rounded-full"
                     style={{ backgroundColor: withAlpha(palette.gold, 0.22) }}
                   >
-                    {finished ? (
+                    {catchUp ? (
+                      <Illustration name="clock" tile={false} size={26} />
+                    ) : finished ? (
                       <Illustration name="medal" tile={false} size={26} />
                     ) : (
                       <LessonIcon kind={currentLesson.kind} topic={currentLesson.topic} size={26} />
@@ -776,17 +790,25 @@ export function HomeScreen() {
                   </View>
                   <View className="flex-1">
                     <Eyebrow style={{ color: palette.gold }}>
-                      {finished
-                        ? `All ${order.length} lessons done`
-                        : store.completedLessons[order[0]] || store.skippedLessons[order[0]]
-                          ? 'Continue'
-                          : 'Start here'}
+                      {catchUp
+                        ? 'Review first'
+                        : finished
+                          ? `All ${order.length} lessons done`
+                          : store.completedLessons[order[0]] || store.skippedLessons[order[0]]
+                            ? 'Continue'
+                            : 'Start here'}
                     </Eyebrow>
-                    <Bold className="mt-0.5 text-[0.9375rem]">{finished ? 'Keep it warm' : currentLesson.title}</Bold>
+                    <Bold className="mt-0.5 text-[0.9375rem]">
+                      {catchUp ? `${dueNow} things to bring back` : finished ? 'Keep it warm' : currentLesson.title}
+                    </Bold>
                     <Txt className="text-xs text-paper/55">
-                      {finished
-                        ? 'You’ve made it through the whole course. Daily review keeps it fresh.'
-                        : `${currentUnit ? currentUnit.title.replace(/ · .*/, '') : currentLesson.subtitle} · ${currentLesson.subtitle}`}
+                      {catchUp
+                        ? finished
+                          ? `More than a review can bring back at once. Start with ${CATCH_UP_SIZE}.`
+                          : `More than a lesson can bring back. Review ${CATCH_UP_SIZE}, then carry on with ${currentLesson.title}, or pick it on the path below.`
+                        : finished
+                          ? 'You’ve made it through the whole course. Daily review keeps it fresh.'
+                          : `${currentUnit ? currentUnit.title.replace(/ · .*/, '') : currentLesson.subtitle} · ${currentLesson.subtitle}`}
                     </Txt>
                   </View>
                   <Txt style={{ color: palette.gold, fontSize: 20 }}>›</Txt>
