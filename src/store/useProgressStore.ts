@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { safeStorage } from './storage';
 
-import { SrsCard, SrsGrade, newCard, review, dueCount } from '../lib/srs';
+import { SrsCard, SrsGrade, newCard, review, dueCount, capIntervals } from '../lib/srs';
 import { testerFlags } from './useTesterStore';
 import { dayKey } from '../lib/date';
 import { rollStreak, markActiveToday } from '../lib/streak';
@@ -171,6 +171,8 @@ type ProgressState = {
   rolloverStreak: () => void;
   /** Move progress off word ids the course retired (lib/retiredIds.ts). */
   retireOldIds: () => void;
+  /** Bring review gaps the old schedule ran away with back inside a year (lib/srs.ts). */
+  capOldIntervals: () => void;
   /** Dismiss the path-moved notice and record the path it was about. */
   dismissPathNotice: (pathSize: number) => void;
   /** Record the path this learner has seen without showing them anything.
@@ -442,6 +444,10 @@ export const useProgressStore = create<ProgressState>()(
         const patch = retireWordIds(get());
         if (patch) set(patch);
       },
+      capOldIntervals: () => {
+        const srs = capIntervals(get().srs);
+        if (srs) set({ srs });
+      },
       rolloverStreak: () => {
         const s = get();
         const r = rollStreak(s, dayKey(), FREEZE_MAX);
@@ -527,6 +533,7 @@ export const useProgressStore = create<ProgressState>()(
       // stood the last time a lesson was finished.
       onRehydrateStorage: () => (state) => {
         state?.retireOldIds();
+        state?.capOldIntervals();
         state?.rolloverStreak();
       },
       /**

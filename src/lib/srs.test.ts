@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isDue, newCard, review } from './srs';
+import { MAX_INTERVAL, capIntervals, isDue, newCard, review } from './srs';
 
 const DAY = 24 * 60 * 60 * 1000;
 const T0 = Date.UTC(2026, 9, 9, 8, 0);
@@ -82,5 +82,35 @@ describe('review', () => {
     const right = review(missed, 'good', T0 + DAY + 30 * 1000);
     expect(right.reps).toBe(1);
     expect(right.interval).toBe(1);
+  });
+
+  it('a word answered right every time it comes due never gets a gap beyond a year', () => {
+    let card = newCard('w', T0);
+    for (let day = 0; day < 400; day++) card = review(card, 'easy', card.due);
+    expect(card.interval).toBe(MAX_INTERVAL);
+    expect(card.due - card.lastSeen).toBe(MAX_INTERVAL * DAY);
+  });
+});
+
+describe('capIntervals', () => {
+  it('brings a runaway saved card back inside a year, and leaves sane ones alone', () => {
+    const sane = { id: 's', ease: 2.5, interval: 10, reps: 3, due: T0 + 10 * DAY, lastSeen: T0 };
+    const runaway = { id: 'r', ease: 1.3, interval: 6e18, reps: 84, due: T0 + 6e18 * DAY, lastSeen: T0 };
+    // Infinity does not survive JSON, so a far enough card was saved as null.
+    const lost = {
+      id: 'n',
+      ease: 1.3,
+      interval: null as unknown as number,
+      reps: 90,
+      due: null as unknown as number,
+      lastSeen: T0,
+    };
+    const out = capIntervals({ s: sane, r: runaway, n: lost })!;
+    expect(out.s).toBe(sane);
+    expect(out.r.interval).toBe(MAX_INTERVAL);
+    expect(out.r.due).toBe(T0 + MAX_INTERVAL * DAY);
+    expect(out.n.interval).toBe(MAX_INTERVAL);
+    expect(out.n.due).toBe(T0 + MAX_INTERVAL * DAY);
+    expect(capIntervals({ s: sane })).toBeNull();
   });
 });
