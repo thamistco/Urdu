@@ -15,7 +15,7 @@ import { TopicArt } from '../components/Illustration';
 import { CycleMark } from '../art/icons';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
-import { dueCount } from '../lib/srs';
+import { cardsOnTrack, dueCount } from '../lib/srs';
 import { strength } from '../lib/srs';
 import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -79,6 +79,7 @@ const TAB_NOUN = { topics: 'topics', grammar: 'grammar points', reading: 'readin
 export function PracticeScreen() {
   const nav = useNavigation<Nav>();
   const srs = useProgressStore((s) => s.srs);
+  const srsType = useProgressStore((s) => s.srsType);
   const learnedWords = useProgressStore((s) => s.learnedWords);
   const readingBest = useProgressStore((s) => s.readingBestWpm);
   const track = useSettingsStore((s) => s.track);
@@ -95,7 +96,7 @@ export function PracticeScreen() {
     regenHearts();
   }, [regenHearts]);
 
-  const due = dueCount(srs);
+  const due = dueCount(cardsOnTrack(srs, srsType, track));
   const totalTracked = Object.keys(srs).length;
   const mastered = Object.values(srs).filter((c) => strength(c) >= 0.8).length;
   /**
