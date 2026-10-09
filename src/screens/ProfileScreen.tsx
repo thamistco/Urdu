@@ -25,10 +25,17 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 function StatBox({ icon, value, label }: { icon: IconName; value: string | number; label: string }) {
   return (
-    <View className="w-[31%] items-center rounded-2xl border border-white/10 bg-ink-700 py-4">
+    // Grows from a third of the row, and never narrower than its own value
+    // and longest word: at large text "0/40" ran into "0/2279" and "DAY
+    // STREAK" spilled out of its tile (QA, 2026-10-09). Then the grid wraps
+    // to two tiles a row, or one, instead (see wholeWords).
+    <View
+      className="grow basis-[30%] items-center rounded-2xl border border-white/10 bg-ink-700 px-2 py-4"
+      style={wholeWords}
+    >
       <Illustration name={icon} tile={false} size={24} />
       <Display className="mt-1 text-xl">{value}</Display>
-      <Eyebrow className="mt-0.5 text-paper/55 text-[0.5625rem]">{label}</Eyebrow>
+      <Eyebrow className="mt-0.5 text-center text-paper/55 text-[0.5625rem]">{label}</Eyebrow>
     </View>
   );
 }
@@ -196,12 +203,10 @@ export function ProfileScreen() {
 
         {/* stat grid */}
         <Reveal delay={140}>
-          <View className="mb-3 flex-row justify-between">
+          <View className="mb-4 flex-row flex-wrap gap-3">
             <StatBox icon="flame" value={s.streak} label="Day streak" />
             <StatBox icon="bolt" value={s.totalXp} label="Total XP" />
             <StatBox icon="gem" value={s.gems} label="Gems" />
-          </View>
-          <View className="mb-4 flex-row justify-between">
             <StatBox icon="medal" value={s.longestStreak} label="Best streak" />
             <StatBox icon="pen" value={`${s.learnedLetters.length}/${LETTERS.length}`} label="Letters" />
             <StatBox icon="book" value={`${s.learnedWords.length}/${WORDS.length}`} label="Words" />

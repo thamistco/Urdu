@@ -252,7 +252,12 @@ export function PracticeScreen() {
 
         {/* browse: one shelf at a time, with search across it */}
         <Reveal delay={165}>
-          <View className="mb-3 flex-row rounded-2xl border border-white/10 bg-ink-700 p-1" accessibilityRole="tablist">
+          {/* Wraps rather than overlapping: at 2x text "Grammar" and
+              "Reading" ran into one word (QA, 2026-10-09). */}
+          <View
+            className="mb-3 flex-row flex-wrap rounded-2xl border border-white/10 bg-ink-700 p-1"
+            accessibilityRole="tablist"
+          >
             {(['topics', 'grammar', 'reading'] as const).map((k) => (
               <Pressable
                 key={k}
@@ -260,7 +265,8 @@ export function PracticeScreen() {
                   feedback.tap();
                   setTab(k);
                 }}
-                className="flex-1"
+                className="grow basis-0 px-1"
+                style={wholeWords}
                 accessibilityRole="tab"
                 aria-selected={tab === k}
                 accessibilityLabel={`${k}: ${TAB_TOTAL[k]} items`}
@@ -408,19 +414,23 @@ export function PracticeScreen() {
             const meta = LEVEL_META[lvl];
             return (
               <View key={lvl} className="mb-2">
-                <View className="mb-2 mt-3 flex-row items-center gap-2">
+                <View className="mb-2 mt-3 flex-row flex-wrap items-center gap-2">
                   <View className="h-2 w-2 rounded-full" style={{ backgroundColor: meta.color }} />
                   <Bold style={{ color: meta.color }} className="text-xs uppercase tracking-wider">
                     {meta.tag} · {meta.title}
                   </Bold>
                   <Txt className="text-[0.6875rem] text-paper/55">{levelTopics.length} sets</Txt>
                 </View>
+                {/* Two a row, until a title's longest word no longer fits
+                    beside its neighbour; then that card takes a row of its
+                    own. At 2x text the titles were cut to "Firs..." and
+                    "Fa..." (QA, 2026-10-09). */}
                 <View className="flex-row flex-wrap justify-between">
                   {levelTopics.map((t, i) => {
                     const words = wordsByTopic(t.id);
                     const known = words.filter((w) => learnedWords.includes(w.id)).length;
                     return (
-                      <Reveal key={t.id} delay={Math.min(i * 25, 250)} style={{ width: '48%' }}>
+                      <Reveal key={t.id} delay={Math.min(i * 25, 250)} style={{ width: '48%', ...wholeWords }}>
                         <Pressable
                           onPress={() => go(`practice-topic-${t.id}`)}
                           accessibilityRole="button"
@@ -429,7 +439,7 @@ export function PracticeScreen() {
                         >
                           <View className="mb-3 rounded-2xl border border-white/10 bg-ink-700 p-4">
                             <TopicArt topicId={t.id} size={44} />
-                            <Bold className="mt-2 text-sm" numberOfLines={1}>
+                            <Bold className="mt-2 text-sm" numberOfLines={2}>
                               {t.title}
                             </Bold>
                             <Txt className="mt-0.5 text-[0.6875rem] text-paper/55">

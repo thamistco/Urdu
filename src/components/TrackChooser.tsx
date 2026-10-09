@@ -1,9 +1,10 @@
 import { View, Pressable } from 'react-native';
-import { Txt, Bold, Eyebrow } from './Text';
+import { Txt, Bold } from './Text';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { SCRIPT_LESSON_COUNT, TOTAL_LESSON_COUNT } from '../data/units';
 import type { LearnTrack } from '../store/useSettingsStore';
+import { wholeWords } from '../lib/wholeWords';
 
 /**
  * Choosing how to learn.
@@ -140,8 +141,13 @@ export function TrackChooser({ value, onChange }: { value: LearnTrack; onChange:
                   borderWidth: 2,
                 }}
               >
-                <View className="mb-1 flex-row items-center justify-between">
-                  <Bold style={{ color: sel ? palette.gold : palette.cream }} className="text-[0.9375rem]">
+                {/* Wraps: at large text the badge ran off the screen and over
+                    "Both together" (QA, 2026-10-09); now it drops under it. */}
+                <View className="mb-1 flex-row flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                  <Bold
+                    style={{ color: sel ? palette.gold : palette.cream, ...wholeWords }}
+                    className="text-[0.9375rem]"
+                  >
                     {t.label}
                   </Bold>
                   {t.recommended ? (
@@ -149,9 +155,13 @@ export function TrackChooser({ value, onChange }: { value: LearnTrack; onChange:
                       className="rounded-full px-2 py-0.5"
                       style={{ backgroundColor: withAlpha(palette.jade, 0.2) }}
                     >
-                      <Eyebrow className="text-[0.5625rem]" style={{ color: palette.jadeLight }}>
+                      {/* Sentence case, not an eyebrow: tracked capitals made
+                          the one word 201px wide at 2x text, wider than the
+                          whole card on a 320 screen, and a single word cannot
+                          wrap. */}
+                      <Bold className="text-[0.6875rem]" style={{ color: palette.jadeLight }}>
                         Recommended
-                      </Eyebrow>
+                      </Bold>
                     </View>
                   ) : null}
                 </View>
