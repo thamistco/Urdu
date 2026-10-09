@@ -112,6 +112,23 @@ const VERDICT = { selected: ', selected', wrong: ', your answer', correct: ', co
 const SPOKEN_ONLY = { position: 'absolute', width: 1, height: 1, overflow: 'hidden' } as const;
 
 /** The prompt "paper" — the warm surface the script/emoji lives on. */
+/**
+ * The script size for a word or phrase on a prompt card, and whether it is
+ * set as a phrase.
+ *
+ * Counted in characters, which only stands in for width. At 9 characters
+ * خوش آمدید took the single-word 56px, needed 230px of a 228px column at
+ * 320 wide, wrapped to two lines, and pushed three of the four answers below
+ * the fold (design review, 2026-10-10, Q-016). A phrase, anything with a
+ * space, or 9 characters or more now takes 36px, where the same prompt is
+ * 148px wide on one line.
+ */
+export function promptSize(urdu: string): { size: number; phrase: boolean } {
+  const len = urdu.length;
+  const phrase = /\s/.test(urdu) || len >= 9;
+  return { size: len > 16 ? 26 : phrase ? 36 : 56, phrase };
+}
+
 export function PromptCard({
   children,
   label,
