@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View } from 'react-native';
 
-import { PromptCard, palette } from './common';
+import { PromptCard, palette, promptSize } from './common';
 import { Txt, Eyebrow } from '../components/Text';
 import { Lexeme } from '../components/Lexeme';
 import { WordArt } from '../components/Illustration';
@@ -46,9 +46,9 @@ export function WordTeachExercise({ exercise, track, onGraded }: ExerciseProps<T
   }, [word.id, word.urdu, word.roman]);
 
   // Long phrases need smaller type to stay on one line; the sizes match
-  // `meaningPick`, which shows the same strings in the same card.
-  const len = word.urdu.length;
-  const fs = len > 16 ? 26 : len > 9 ? 36 : 56;
+  // `meaningPick`, which shows the same strings in the same card, from the
+  // same rule.
+  const { size: fs, phrase } = promptSize(word.urdu);
 
   const go = () => {
     if (done) return;
@@ -66,7 +66,7 @@ export function WordTeachExercise({ exercise, track, onGraded }: ExerciseProps<T
         A new word
       </Eyebrow>
 
-      <PromptCard height={len > 9 ? 232 : 248}>
+      <PromptCard height={phrase ? 232 : 248}>
         <WordArt word={word} size={72} />
         <View className="mt-2">
           <Lexeme urdu={word.urdu} roman={word.roman} track={track} size={fs} color={palette.ink} />

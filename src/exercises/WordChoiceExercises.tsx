@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { View, Pressable } from 'react-native';
-import { Choice, PromptCard, Question, SpeakerButton, palette, withAlpha } from './common';
+import { Choice, PromptCard, Question, SpeakerButton, palette, promptSize, withAlpha } from './common';
 import { Txt, Bold } from '../components/Text';
 import { Lexeme } from '../components/Lexeme';
 import { WordArt, Illustration, pictureIdentifies } from '../components/Illustration';
@@ -103,8 +103,7 @@ export function MeaningPickExercise({ exercise, track, locked, onGraded }: Exerc
   };
 
   // adapt to length — single words render large, phrases scale down to fit
-  const len = word.urdu.length;
-  const fs = len > 16 ? 26 : len > 9 ? 36 : 56;
+  const { size: fs, phrase } = promptSize(word.urdu);
 
   // The transliteration is normally a decoding aid, but for a loanword it is
   // the answer: اردو set above "urdu" above an option reading "Urdu" is not a
@@ -117,7 +116,7 @@ export function MeaningPickExercise({ exercise, track, locked, onGraded }: Exerc
     <View>
       {/* The word was shown, not spoken — every other reading exercise offers
           a way to hear the thing on screen, and this was the one that did not. */}
-      <PromptCard height={len > 9 ? 170 : 150}>
+      <PromptCard height={phrase ? 170 : 150}>
         <Lexeme urdu={word.urdu} roman={gives ? undefined : word.roman} track={track} size={fs} color={palette.ink} />
         <View className="mt-3">
           <SpeakerButton onPress={() => announce(word.id, word.urdu, word.roman)} label={`Hear ${word.roman}`} />
