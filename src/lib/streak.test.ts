@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { markActiveToday, rollStreak, streakStatus, type StreakState } from './streak';
+import {
+  COMEBACK_MIN_STREAK,
+  comebackFrom,
+  comebackLine,
+  markActiveToday,
+  rollStreak,
+  streakStatus,
+  type StreakState,
+} from './streak';
 
 /**
  * Deliberately local-time throughout, matching `date.ts` — "today" for a
@@ -167,5 +175,38 @@ describe('rollStreak and markActiveToday', () => {
       increased: true,
     });
     expect(markActiveToday(at(0, 1), TODAY)).toMatchObject({ streak: 12, increased: false });
+  });
+});
+
+describe('welcome back (P-011)', () => {
+  it('is owed once when opening the app breaks a streak, and not again on the next open', () => {
+    const before: StreakState = { streak: 12, freezes: 0, lastActiveDay: '2026-10-01' };
+    const broken = rollStreak(before, '2026-10-05');
+    expect(broken.streak).toBe(0);
+    expect(comebackFrom(before, broken)).toEqual({ lost: 12 });
+    // Opening again later, over a streak already at 0, owes nothing new.
+    expect(comebackFrom(broken, rollStreak(broken, '2026-10-06'))).toBeNull();
+  });
+
+  it('is not owed when a freeze kept the streak, or the gap was one night', () => {
+    const covered: StreakState = { streak: 5, freezes: 2, lastActiveDay: '2026-10-01' };
+    expect(comebackFrom(covered, rollStreak(covered, '2026-10-03'))).toBeNull();
+    const yesterday: StreakState = { streak: 5, freezes: 0, lastActiveDay: '2026-10-01' };
+    expect(comebackFrom(yesterday, rollStreak(yesterday, '2026-10-02'))).toBeNull();
+  });
+
+  it('is not owed for a streak too short to praise', () => {
+    for (const streak of [1, COMEBACK_MIN_STREAK - 1]) {
+      const before: StreakState = { streak, freezes: 0, lastActiveDay: '2026-10-01' };
+      expect(comebackFrom(before, rollStreak(before, '2026-10-05'))).toBeNull();
+    }
+    const enough: StreakState = { streak: COMEBACK_MIN_STREAK, freezes: 0, lastActiveDay: '2026-10-01' };
+    expect(comebackFrom(enough, rollStreak(enough, '2026-10-05'))).toEqual({ lost: COMEBACK_MIN_STREAK });
+  });
+
+  it('says what has been learned, never what was missed', () => {
+    expect(comebackLine(28, 12)).toBe('You’ve learned 28 words and 12 letters. One lesson today starts a new streak.');
+    expect(comebackLine(1, 0)).toBe('You’ve learned 1 word. One lesson today starts a new streak.');
+    expect(comebackLine(0, 0)).toBe('One lesson today starts a new streak.');
   });
 });

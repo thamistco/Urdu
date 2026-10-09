@@ -120,6 +120,41 @@ export function rollStreak(
 }
 
 /**
+ * What a learner lost when opening the app broke their streak, for Home's
+ * welcome back (P-011); null when nothing broke on this roll.
+ *
+ * A broken streak shown as a bare 0 lowers later engagement more than one
+ * that holds, even with the same behaviour behind it, and most when people
+ * blame themselves (seven experiments; retention review, 2026-10-10), and
+ * heritage learners report shame about the language already. So Home says
+ * what was built and what has been learned, never what was missed, and it is
+ * set once: a second roll over a streak already at 0 changes nothing.
+ */
+export function comebackFrom(before: StreakState, after: StreakState): { lost: number } | null {
+  return before.streak >= COMEBACK_MIN_STREAK && after.streak === 0 ? { lost: before.streak } : null;
+}
+
+/**
+ * Below this, a broken streak is not worth a welcome back: "You'd built a
+ * 1-day streak" is praise that reads as hollow, to the learner most likely to
+ * lapse (second check, 2026-10-10). Home stays as it was for them.
+ */
+export const COMEBACK_MIN_STREAK = 3;
+
+/** Home's welcome back: what has been learned, then the way on. Letters are
+ *  left at 0 by the caller on the Roman track, which teaches none. "Learned",
+ *  not "still know": after weeks away many are due again, and the count is the
+ *  same one Profile shows. */
+export function comebackLine(words: number, letters: number): string {
+  const kept = [
+    words ? `${words} word${words === 1 ? '' : 's'}` : '',
+    letters ? `${letters} letter${letters === 1 ? '' : 's'}` : '',
+  ].filter(Boolean);
+  const learned = kept.length ? `You’ve learned ${kept.join(' and ')}. ` : '';
+  return `${learned}One lesson today starts a new streak.`;
+}
+
+/**
  * Count today, after `rollStreak` has accounted for any gap.
  *
  * A first lesson of the day extends a streak whose last day was yesterday and
