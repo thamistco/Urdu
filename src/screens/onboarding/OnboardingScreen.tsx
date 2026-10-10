@@ -466,13 +466,11 @@ export function OnboardingScreen() {
       {
         key: 'speaker',
         label: 'I already speak or understand it',
-        // The Roman track teaches no script, so it is not offered as the gap
-        // (design review, 2026-10-10: "I can't read the script" just after
-        // choosing "No alphabet").
-        desc:
-          track === 'roman'
-            ? 'I grew up around it and understand it spoken'
-            : 'I grew up around it, but I can’t read the script',
+        // Says nothing about reading. "I can't read the script" was followed
+        // straight away by a quick check asked in the script, which is there
+        // to find the speakers who can read some (design review, 2026-10-10,
+        // Q-032); and the Roman track teaches no script at all.
+        desc: 'I grew up around it and understand it spoken',
         icon: 'speechBubble',
       },
     ];
@@ -569,7 +567,15 @@ export function OnboardingScreen() {
           <Eyebrow style={{ color: palette.gold }} className="mb-3">
             Quick check · {pIdx + 1} of {questions.length}
           </Eyebrow>
-          <Heading className="mb-6 text-xl">{question.q}</Heading>
+          <Heading className={`${question.kind === 'script' ? 'mb-2' : 'mb-6'} text-xl`}>{question.q}</Heading>
+          {/* True to what the score does: it can only offer to skip the
+              alphabet (canSkipScript); the skipped basics come from the answer
+              before. A speaker who cannot read yet should not feel tested. */}
+          {question.kind === 'script' ? (
+            <Txt className="mb-5 text-sm text-paper/60">
+              In the script. If you can’t read it yet, guess: this only decides whether we offer to skip the alphabet.
+            </Txt>
+          ) : null}
           <View className="mb-8 h-28 items-center justify-center rounded-2xl bg-parchment">
             {question.kind === 'script' ? (
               <Urdu style={{ color: palette.ink, ...urduGlyph(52) }}>{question.sub}</Urdu>
