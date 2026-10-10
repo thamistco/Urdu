@@ -32,6 +32,17 @@ type ListenEx = Extract<Exercise, { kind: 'listenTap' }>;
  * under the picture — which turns the exercise into meaning → word, still a
  * real question, rather than a riddle with no fair answer.
  */
+/**
+ * Said under a first meeting's question. A lesson opened on "Which word means
+ * this?" over words never shown, and nothing said it was a guess, though it
+ * costs no heart and the word is taught straight after (design review,
+ * 2026-10-10, Q-031).
+ */
+function GuessNote({ pretest }: { pretest?: boolean }) {
+  if (!pretest) return null;
+  return <Txt className="-mt-3 mb-4 text-center text-xs text-paper/60">New word: take a guess, it costs nothing.</Txt>;
+}
+
 export function MultipleChoiceExercise({ exercise, track, locked, onGraded }: ExerciseProps<MCEx>) {
   const { word, options } = exercise;
   const [picked, setPicked] = useState<string | null>(null);
@@ -59,6 +70,7 @@ export function MultipleChoiceExercise({ exercise, track, locked, onGraded }: Ex
       </PromptCard>
       <View className="h-4" />
       <Question>{speaks ? 'Which word is this?' : 'Which word means this?'}</Question>
+      <GuessNote pretest={exercise.pretest} />
       <View className="flex-row flex-wrap justify-between">
         {options.map((o) => {
           const state = picked == null ? 'idle' : o.id === word.id ? 'correct' : o.id === picked ? 'wrong' : 'muted';
@@ -124,6 +136,7 @@ export function MeaningPickExercise({ exercise, track, locked, onGraded }: Exerc
       </PromptCard>
       <View className="h-4" />
       <Question>What does it mean?</Question>
+      <GuessNote pretest={exercise.pretest} />
       <View className="gap-3">
         {options.map((o) => {
           const state = picked == null ? 'idle' : o.id === word.id ? 'correct' : o.id === picked ? 'wrong' : 'muted';
@@ -208,6 +221,7 @@ export function ListenTapExercise({ exercise, showRoman, locked, onGraded }: Exe
       </PromptCard>
       <View className="h-4" />
       <Question>Which one did you hear?</Question>
+      <GuessNote pretest={exercise.pretest} />
       <View className="flex-row flex-wrap justify-between">
         {options.map((o) => {
           const state = picked == null ? 'idle' : o.id === word.id ? 'correct' : o.id === picked ? 'wrong' : 'muted';
