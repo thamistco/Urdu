@@ -55,7 +55,8 @@
       "typedRoutes": false
     },
     "extra": {
-      "storeName": "Qaaf: Learn Urdu"
+      "storeName": "Qaaf: Learn Urdu",
+      "shareLine": "Speak Urdu? Now read it. New to Urdu? Start at the first letter. A full Urdu course."
     }
   }
 }

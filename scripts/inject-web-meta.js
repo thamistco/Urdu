@@ -40,6 +40,14 @@ const name = expo.name || 'App';
 const description = expo.description || '';
 const baseUrl = (expo.experiments && expo.experiments.baseUrl) || '';
 const buildSha = (expo.extra && expo.extra.buildSha) || '';
+/**
+ * What a shared link shows: the store name and one line, not "Qaaf" and the
+ * 380-character course description, which chat previews cut off mid-sentence
+ * (marketing review, 2026-10-11, P-037). The description stays the page's own,
+ * for search, where its numbers are what check:claims audits.
+ */
+const shareTitle = (expo.extra && expo.extra.storeName) || name;
+const shareLine = (expo.extra && expo.extra.shareLine) || description;
 
 /**
  * The share picture is the app icon, which has to be reachable at a stable URL.
@@ -125,15 +133,15 @@ let manifestWritten = false;
 const tags = [
   description && `<meta name="description" content="${esc(description)}" />`,
   `<meta property="og:type" content="website" />`,
-  `<meta property="og:title" content="${esc(name)}" />`,
-  description && `<meta property="og:description" content="${esc(description)}" />`,
+  `<meta property="og:title" content="${esc(shareTitle)}" />`,
+  shareLine && `<meta property="og:description" content="${esc(shareLine)}" />`,
   origin && `<meta property="og:url" content="${esc(origin + baseUrl)}/" />`,
   iconUrl && `<meta property="og:image" content="${esc(iconUrl)}" />`,
   // summary_large_image needs a wide picture; a square app icon belongs in the
   // small card, which crops it to a square rather than letterboxing it.
   `<meta name="twitter:card" content="summary" />`,
-  `<meta name="twitter:title" content="${esc(name)}" />`,
-  description && `<meta name="twitter:description" content="${esc(description)}" />`,
+  `<meta name="twitter:title" content="${esc(shareTitle)}" />`,
+  shareLine && `<meta name="twitter:description" content="${esc(shareLine)}" />`,
   iconUrl && `<meta name="twitter:image" content="${esc(iconUrl)}" />`,
   `<meta name="theme-color" content="${esc((expo.splash && expo.splash.backgroundColor) || '#211712')}" />`,
   // Without this the manifest is a file nobody asks for. It is what stops an
