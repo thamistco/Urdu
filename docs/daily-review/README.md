@@ -22,10 +22,10 @@ report.
 | 1   | Market and competitors       | Who else teaches Urdu, what they charge, where they are weak, who our learners are           | 2026-10-09    |
 | 2   | Accessibility                | Screen readers, contrast, text size, motor and colour-blind use                              | 2026-10-09    |
 | 3   | Visual design and aesthetics | Consistency, hierarchy, polish, the Moonrise brand across every screen                       | 2026-10-09    |
-| 4   | Learning effectiveness       | Does it teach? Curriculum order, spaced repetition, script mastery                           | 2026-10-07    |
-| 5   | Interaction and ease of use  | Friction, dead ends, confusing controls, error states, speed of a session                    | 2026-10-07    |
-| 6   | Onboarding and first session | The first five minutes: does a stranger reach a win and want a second day                    | 2026-10-07    |
-| 7   | Retention and habit          | Streaks, reminders, goals, comeback paths, what brings people back                           | 2026-10-07    |
+| 4   | Learning effectiveness       | Does it teach? Curriculum order, spaced repetition, script mastery                           | 2026-10-10    |
+| 5   | Interaction and ease of use  | Friction, dead ends, confusing controls, error states, speed of a session                    | 2026-10-10    |
+| 6   | Onboarding and first session | The first five minutes: does a stranger reach a win and want a second day                    | 2026-10-10    |
+| 7   | Retention and habit          | Streaks, reminders, goals, comeback paths, what brings people back                           | 2026-10-10    |
 | 8   | Content quality              | Urdu accuracy, translations, audio, cultural fit, originality                                | 2026-10-08    |
 | 9   | Performance and reliability  | Load time, bundle size, offline, crashes, low-end phones                                     | 2026-10-08    |
 | 10  | Monetisation and pricing     | What is free, what is paid, price, trial, paywall design, family plans                       | 2026-10-08    |
