@@ -243,7 +243,7 @@ export const LETTERS: Letter[] = [
     connects: true,
     forms: connector('چ'),
     word: 'چاند',
-    roman: 'chaand',
+    roman: 'chaañd',
     meaning: 'moon',
     emoji: '🌙',
     group: 2,

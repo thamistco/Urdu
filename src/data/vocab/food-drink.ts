@@ -16,7 +16,7 @@ export const FOOD_PACKS: TopicPack[] = [
       ['w-nariyal-paani', 'ناریل پانی', 'naariyal paani', 'coconut water', '🥥'],
       ['w-ganne-ras', 'گنے کا رس', 'ganne ka ras', 'sugarcane juice', '🎋'],
       ['w-soda', 'سوڈا', 'soḍa', 'soda', '🫧'],
-      ['w-piyaala', 'پیالہ', 'piyaala', 'cup / bowl', '🍵'],
+      ['w-piyaala', 'پیالہ', 'pyaala', 'bowl', '🥣'],
       ['w-jag', 'جگ', 'jag', 'jug', '🏺'],
       ['w-chai-patti', 'چائے پتی', 'chai patti', 'tea leaves', '🍂'],
       ['w-shakar', 'شکر', 'shakar', 'sugar (coarse)', '🍬', 'شَکَر'],
