@@ -63,7 +63,7 @@ long description is for the human who has already arrived.
 | ---------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Name             | 30    | `Qaaf: Learn Urdu`                                                                                                                                          |
 | Subtitle         | 30    | `The script and the language`                                                                                                                               |
-| Keywords         | 100   | `urdu,nastaliq,alphabet,script,read,write,pakistani,hindi,vocabulary,flashcards,tracing,phrases`                                                            |
+| Keywords         | 100   | `nastaliq,alphabet,qaida,alif,read,write,pakistani,speak,vocabulary,flashcards,tracing,phrases`                                                             |
 | Promotional text | 170   | `Speak Urdu? Now read it. New to Urdu? Start at the first letter: 2,276 words spoken aloud, 25 grammar ideas, 256 sentences you build. A full Urdu course.` |
 
 The promotional text leads with the heritage speaker who can speak Urdu but
@@ -75,6 +75,25 @@ where a beginner decides, so it must not read as a course only for speakers.
 The subtitle deliberately repeats nothing from the name. "Urdu" is in the name,
 so the subtitle spends its thirty characters on the shape of the course — where
 it starts and where it gets you — which is also where the differentiator lives.
+
+The keywords repeat nothing from either, since name, subtitle and keywords
+are searched together: "speak" with "Urdu" from the name covers "speak urdu".
+They also name nothing the course does not teach. "hindi" invited guideline
+2.3.7 for an Urdu course (P-019), and "poetry" or "ghazal" would too while the
+course holds almost no poetry (P-025); "qaida" is the traditional alphabet
+primer, which the letter lessons are.
+
+### Store settings that carry a promise
+
+- `ios.config.usesNonExemptEncryption: false` (app.json). True while the only
+  cryptography is the system's TLS and the sign-in library's hashing (Supabase
+  PKCE; expo-crypto is installed but unused). Anything that encrypts data on
+  the device or end to end makes it false: change it, and the export answer,
+  in the same commit.
+- `ios.supportsTablet: false`. No 13-inch iPad screenshots are needed. iPads
+  still run it as an iPhone app, and App Review may test it there. It can be
+  turned on later; once a build with iPad support ships, it can never be
+  turned off again.
 
 ### Google Play
 
