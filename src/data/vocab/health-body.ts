@@ -79,7 +79,7 @@ export const HEALTH_PACKS: TopicPack[] = [
       ['w-hifaazat', 'حفاظت', 'hifaazat', 'protection', '🛡️'],
       ['w-nigraani', 'نگرانی', 'nigraani', 'supervision', '👁️'],
       ['w-ittila', 'اطلاع', 'ittilaa', 'notification', '📢'],
-      ['w-report2', 'رپورٹ درج', 'riporṭ darj', 'to file a report', '📝'],
+      ['w-report2', 'رپورٹ درج کروانا', 'riporṭ darj karwaana', 'to file a report', '📝'],
       ['w-gawah', 'گواہ', 'gawaah', 'witness', '👁️'],
       ['w-bachao-tadbeer', 'تدبیر', 'tadbeer', 'measure / remedy', '🧰'],
       ['w-nikaas', 'نکاس', 'nikaas', 'exit', '🚪'],

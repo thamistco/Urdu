@@ -79,7 +79,7 @@ export const CITY_PACKS: TopicPack[] = [
       ['w-madrasa', 'مدرسہ', 'madrasa', 'school (traditional)', '🕌'],
       ['w-bijli-ghar', 'بجلی گھر', 'bijli ghar', 'power station', '⚡'],
       ['w-fire-brigade', 'فائر بریگیڈ', 'faayar brigeḍ', 'fire brigade', '🚒'],
-      ['w-emergency', 'ہنگامی', 'hangaami', 'emergency', '🚨'],
+      ['w-emergency', 'ہنگامی', 'hangaami', 'urgent / emergency', '🚨'],
     ]
   ),
 ];

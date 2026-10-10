@@ -86,7 +86,7 @@ export const GRAMMAR: GrammarConcept[] = [
     },
     examples: [
       { urdu: 'میں طالبِ علم ہوں', roman: 'main taalib-e-ilm hoon', meaning: 'I am a student' },
-      { urdu: 'آپ ڈاکٹر ہیں', roman: 'aap ḍākṭar hain', meaning: 'You are a doctor' },
+      { urdu: 'آپ ڈاکٹر ہیں', roman: 'aap ḍaakṭar hain', meaning: 'You are a doctor' },
       { urdu: 'وہ میرا دوست ہے', roman: 'wo mera dost hai', meaning: 'He is my friend' },
     ],
     drills: [
@@ -119,7 +119,7 @@ export const GRAMMAR: GrammarConcept[] = [
     explain: [
       'Urdu sentences usually end with the verb. The commonest verb is ہونا (hona): “to be”.',
       'Pick the ending by who you are talking about: ہوں (hoon) after میں (main), ہے (hai) after a single person or thing, ہیں (hain) after آپ (aap), ہم (hum), and plurals.',
-      'There is no word for “a” or “an”, “I am a doctor” is simply میں ڈاکٹر ہوں (main ḍākṭar hoon).',
+      'There is no word for “a” or “an”, “I am a doctor” is simply میں ڈاکٹر ہوں (main ḍaakṭar hoon).',
     ],
     table: {
       heading: ['Pronoun', 'to be', 'Example'],
@@ -421,7 +421,7 @@ export const GRAMMAR: GrammarConcept[] = [
     level: 'elementary',
     explain: [
       'نہیں (nahiñ) is the everyday “not”. It goes immediately before the verb: میں نہیں جاتا (main nahiñ jaata): “I do not go”.',
-      'In a simple “X is Y” sentence, نہیں (nahiñ) usually swallows the ہے (hai): وہ ڈاکٹر نہیں (wo ḍākṭar nahiñ): “he is not a doctor”. Adding ہے (hai) is not wrong, just heavier.',
+      'In a simple “X is Y” sentence, نہیں (nahiñ) usually swallows the ہے (hai): وہ ڈاکٹر نہیں (wo ḍaakṭar nahiñ): “he is not a doctor”. Adding ہے (hai) is not wrong, just heavier.',
       'مت (mat) is only for telling someone not to do something: مت جاؤ (mat jaao): “don’t go”. نہ (na) is the quiet one, used with the subjunctive and in pairs: نہ یہ نہ وہ (na ye na wo): “neither this nor that”. It can soften a command too: نہ جاؤ (na jaao).',
     ],
     table: {
@@ -473,7 +473,7 @@ export const GRAMMAR: GrammarConcept[] = [
     explain: [
       'Almost every Urdu question word begins with k‑, which makes them easy to spot: کون (kaun, who), کیا (kya, what), کہاں (kahaañ, where), کب (kab, when), کیوں (kyoñ, why), کیسے (kaise, how), کتنا (kitna, how much), کون سا (kaun sa, which).',
       'The question word usually sits just before the verb, where the answer would go: آپ کہاں رہتے ہیں؟ (aap kahaañ rehte hain?): “Where do you live?”',
-      'For a yes/no question, put کیا (kya) at the front, or simply raise your voice at the end. کیا آپ ڈاکٹر ہیں؟ (kya aap ḍākṭar hain?): “Are you a doctor?”',
+      'For a yes/no question, put کیا (kya) at the front, or simply raise your voice at the end. کیا آپ ڈاکٹر ہیں؟ (kya aap ḍaakṭar hain?): “Are you a doctor?”',
     ],
     table: {
       heading: ['Question word', 'Meaning'],

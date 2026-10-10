@@ -169,7 +169,7 @@ export const EXTRA_PACKS: TopicPack[] = [
       ['w-mehndi2', 'مہندی کی رسم', 'mehndi ki rasm', 'henna ceremony', '🌿'],
       ['w-dholki', 'ڈھولکی', 'ḍholki', 'pre-wedding singing', '🥁'],
       ['w-shadi-hall', 'شادی ہال', 'shaadi haal', 'wedding hall', '🏛️'],
-      ['w-tasveer-khinchna', 'تصویر کھینچنا', 'tasweer khenchna', 'to take a photo', '📸'],
+      ['w-tasveer-khinchna', 'تصویر کھینچنا', 'tasweer kheñchna', 'to take a photo', '📸'],
       ['w-yaadgaar', 'یادگار', 'yaadgaar', 'memorable / memento', '🖼️'],
       ['w-khush-amdeed2', 'تشریف لائیے', 'tashreef laaiye', 'please come in', '🙏'],
     ]

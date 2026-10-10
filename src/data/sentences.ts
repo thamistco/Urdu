@@ -137,7 +137,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-30',
     words: ['میں', 'ڈاکٹر', 'ہوں'],
-    roman: 'main ḍākṭar hoon',
+    roman: 'main ḍaakṭar hoon',
     meaning: 'I am a doctor',
     level: 'beginner',
     concept: 'g-to-be',
@@ -538,7 +538,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-76',
     words: ['علی', 'کی', 'بہن', 'ڈاکٹر', 'ہے'],
-    roman: 'Ali ki behen ḍākṭar hai',
+    roman: 'Ali ki behen ḍaakṭar hai',
     meaning: 'Ali’s sister is a doctor',
     level: 'elementary',
     concept: 'g-possess',
@@ -694,7 +694,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-21',
     words: ['ڈاکٹر', 'نے', 'دوا', 'دی'],
-    roman: 'ḍākṭar ne dawa di',
+    roman: 'ḍaakṭar ne dawa di',
     meaning: 'The doctor gave medicine',
     level: 'intermediate',
     concept: 'g-perfect',
@@ -927,7 +927,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-114',
     words: ['میں', 'ڈاکٹر', 'سے', 'ملنے', 'گیا'],
-    roman: 'main ḍākṭar se milne gaya',
+    roman: 'main ḍaakṭar se milne gaya',
     meaning: 'I went to meet the doctor',
     level: 'intermediate',
   },
@@ -1216,7 +1216,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-156',
     words: ['میرا', 'بھائی', 'ڈاکٹر', 'ہے'],
-    roman: 'mera bhai ḍākṭar hai',
+    roman: 'mera bhai ḍaakṭar hai',
     meaning: 'My brother is a doctor',
     level: 'beginner',
     concept: 'g-to-be',
@@ -2218,7 +2218,7 @@ export const PASSAGES: Passage[] = [
       },
       {
         urdu: 'میری شادی اگلے مہینے ہے۔',
-        roman: 'meri shaadi aglay mahine hai.',
+        roman: 'meri shaadi agle maheene hai.',
         meaning: 'My wedding is next month.',
       },
       {
@@ -2518,12 +2518,12 @@ export const PASSAGES: Passage[] = [
       },
       {
         urdu: 'میں صبح ڈاکٹر کے پاس گیا۔',
-        roman: 'main subah ḍākṭar ke paas gaya.',
+        roman: 'main subah ḍaakṭar ke paas gaya.',
         meaning: 'In the morning I went to the doctor.',
       },
       {
         urdu: 'ڈاکٹر نے کہا کہ آرام کرو۔',
-        roman: 'ḍākṭar ne kaha ke aaraam karo.',
+        roman: 'ḍaakṭar ne kaha ke aaraam karo.',
         meaning: 'The doctor said to rest.',
       },
       {
@@ -2556,7 +2556,7 @@ export const PASSAGES: Passage[] = [
       },
       {
         urdu: 'ماں نے میٹھی سویاں بنائیں۔',
-        roman: 'maañ ne meeṭhi sewiyaañ banaayeeñ.',
+        roman: 'maañ ne meeṭhi siwaiyaañ banaayeeñ.',
         meaning: 'Mother made sweet vermicelli.',
       },
       { urdu: 'سب نے نئے کپڑے پہنے۔', roman: 'sab ne naye kapṛe pehne.', meaning: 'Everyone wore new clothes.' },
@@ -2921,7 +2921,7 @@ export const DIALOGUES: Dialogue[] = [
         speaker: 'B',
         name: 'Waiter',
         urdu: 'اور کچھ؟',
-        roman: 'aur kuch?',
+        roman: 'aur kuchh?',
         meaning: 'Anything else?',
       },
       {
@@ -3015,7 +3015,7 @@ export const DIALOGUES: Dialogue[] = [
         speaker: 'B',
         name: 'Bilal',
         urdu: 'جی، میں بلال ہوں۔',
-        roman: 'jee, main Bilal hoon.',
+        roman: 'ji, main Bilal hoon.',
         meaning: 'Yes, speaking.',
       },
       {
