@@ -68,8 +68,13 @@ const CLAIMS = {
 };
 
 /** Where the copy that ships lives. */
+const APP = JSON.parse(fs.readFileSync(path.join(ROOT, 'app.json'), 'utf8')).expo;
+// What a shared link previews (inject-web-meta.js, P-037): ships on every
+// share, so a number in it goes stale like any other.
+const SHARE_LINE = (APP.extra && APP.extra.shareLine) || '';
 const SOURCES = [
-  ['app.json', JSON.parse(fs.readFileSync(path.join(ROOT, 'app.json'), 'utf8')).expo.description || ''],
+  ['app.json', APP.description || ''],
+  ['app.json extra.shareLine', SHARE_LINE],
   ['docs/store-listing.md', fs.readFileSync(path.join(ROOT, 'docs', 'store-listing.md'), 'utf8')],
   ['docs/CONTENT_NOTES.md', fs.readFileSync(path.join(ROOT, 'docs', 'CONTENT_NOTES.md'), 'utf8')],
   // The README is the first thing anyone reads about the course, and it
@@ -94,6 +99,17 @@ for (const [where, text] of SOURCES) {
       findings.push({ where, line, said: m[0].trim(), noun, claimed, real });
     }
   }
+}
+
+// The share line is what keeps a preview short. Without it the 380-character
+// description comes back, and chat apps cut it off mid-sentence (P-037).
+const SHARE_MAX = 120;
+if (!SHARE_LINE || SHARE_LINE.length > SHARE_MAX) {
+  console.error(
+    `check:claims — app.json extra.shareLine is ${SHARE_LINE ? `${SHARE_LINE.length} characters` : 'missing'}; ` +
+      `a shared link needs one line of at most ${SHARE_MAX}, or previews fall back to the full description.`
+  );
+  process.exit(1);
 }
 
 if (!findings.length) {
