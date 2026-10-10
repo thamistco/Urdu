@@ -865,8 +865,9 @@ async function main() {
      *
      * The close button threw a lesson away with no warning, and coming back
      * started it from nothing: one stray tap on that corner cost the lesson
-     * (design review, 2026-10-10). With nothing answered it still leaves at
-     * once; after an answer it asks, and saying no keeps the lesson.
+     * (design review, 2026-10-10). With nothing answered, or only a teaching
+     * card read, it still leaves at once; after an answer it asks, and saying
+     * no keeps the lesson.
      */
     {
       const p = await browser.newPage({ viewport: { width: 390, height: 844 } });
@@ -893,12 +894,36 @@ async function main() {
         if (asked.length || (await inLesson())) {
           problems.push('Closing a lesson before answering anything did not simply leave.');
         }
+        // A teaching card read is not an answer: "Got it", then close, leaves.
         await p.goto(`http://localhost:${PORT}/Urdu/lesson/l-1`);
         const gotIt = p.getByText(/^Got it$/).first();
         await gotIt.waitFor({ timeout: 15000 });
         await gotIt.click();
         await p
           .waitForFunction(() => !/^Got it$/m.test(document.body.innerText), null, { timeout: 5000 })
+          .catch(() => {});
+        await p.locator('[aria-label="Close lesson"]:visible').click();
+        await p
+          .locator('[aria-label="Close lesson"]:visible')
+          .waitFor({ state: 'detached', timeout: 5000 })
+          .catch(() => {});
+        if (asked.length || (await inLesson())) {
+          problems.push(
+            'Closing a lesson after only reading a teaching card asked first, though nothing was answered.'
+          );
+        }
+        // A question answered: close asks, and saying no keeps the lesson.
+        await p.goto(`http://localhost:${PORT}/Urdu/lesson/v-first-words`);
+        // An answer tile: not the close button, not a speaker.
+        const option = p.locator(
+          '[role="button"]:visible:not([aria-label="Close lesson"]):not([aria-label^="Hear"]):not([aria-label^="Play"])'
+        );
+        await option.first().waitFor({ timeout: 15000 });
+        await option.first().click();
+        await p
+          .getByText(/^(Continue|Finish)$/)
+          .first()
+          .waitFor({ timeout: 5000 })
           .catch(() => {});
         await p.locator('[aria-label="Close lesson"]:visible').click();
         if (!asked.length) {
@@ -912,6 +937,7 @@ async function main() {
         await p.close();
       }
     }
+
     /**
      * Leaving a lesson lets it go.
      *

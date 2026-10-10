@@ -524,13 +524,16 @@ export function LessonScreen() {
               // this corner threw a lesson away with no warning, and coming
               // back started it again from nothing (design review,
               // 2026-10-10). Nothing answered yet, nothing to lose: it leaves.
+              // A teaching card read is not an answer, so "Got it" alone does
+              // not make it ask (QA, 2026-10-11).
               // popTo, not navigate, at every way out of a lesson: in React
               // Navigation 7 navigate pushed a new Home over the old one, so
               // every lesson ever opened stayed mounted underneath, about 6 MB
               // and 1,750 elements each, and lessons opened slower as they
               // piled up (performance review, 2026-10-11).
               const leave = () => nav.popTo('Main');
-              if (idx === 0 && graded == null) return leave();
+              const answered = exercises.slice(0, graded != null ? idx + 1 : idx).some((e) => !isTeaching(e));
+              if (!answered) return leave();
               confirmAction(
                 'Leave this lesson?',
                 'Your answers in this lesson will not be kept, and it starts again next time.',
