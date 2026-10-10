@@ -73,7 +73,10 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
       <View className="h-4" />
       <Question>Type this word</Question>
 
-      <View className="mb-2 rounded-2xl bg-ink-700 px-4 py-3" style={{ borderWidth: 1.5, borderColor: border }}>
+      {/* The padding is the input's own, not the box's: the box looked 280x54
+          and only a 246x29 strip inside it took a tap (design review,
+          2026-10-10, Q-031). Same look, and all of it is the input now. */}
+      <View className="mb-2 rounded-2xl bg-ink-700" style={{ borderWidth: 1.5, borderColor: border }}>
         <TextInput
           value={text}
           onChangeText={setText}
@@ -86,11 +89,17 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
           autoComplete="off"
           spellCheck={false}
           returnKeyType="done"
-          placeholder="type it in Roman or Urdu"
+          placeholder={track === 'roman' ? 'type it in Roman' : 'type it in Roman or Urdu'}
           placeholderTextColor={withAlpha(palette.cream, 0.3)}
           accessibilityLabel={`Type the Urdu for ${glossOf(word)}`}
           style={[
-            { color: palette.cream, fontFamily: 'PublicSans', fontSize: 18, paddingVertical: 4 },
+            {
+              color: palette.cream,
+              fontFamily: 'PublicSans',
+              fontSize: 18,
+              paddingVertical: 16,
+              paddingHorizontal: 16,
+            },
             { outlineStyle: 'none' } as object, // react-native-web only
           ]}
         />
