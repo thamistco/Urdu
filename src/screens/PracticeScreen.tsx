@@ -96,9 +96,13 @@ export function PracticeScreen() {
     regenHearts();
   }, [regenHearts]);
 
-  const due = dueCount(cardsOnTrack(srs, srsType, track));
-  const totalTracked = Object.keys(srs).length;
-  const mastered = Object.values(srs).filter((c) => strength(c) >= 0.8).length;
+  // Everything here is counted on the learner's track, like Home: the Roman
+  // track's meter read "0 of 10 mastered" over letters it can never show
+  // (QA, 2026-10-11).
+  const onTrack = cardsOnTrack(srs, srsType, track);
+  const due = dueCount(onTrack);
+  const totalTracked = Object.keys(onTrack).length;
+  const mastered = Object.values(onTrack).filter((c) => strength(c) >= 0.8).length;
   /**
    * Has this learner ever been graded on anything?
    *
