@@ -429,7 +429,7 @@ export function LessonScreen() {
   }, [lesson.id]);
 
   if (done && result) {
-    return <LessonComplete result={result} correct={correctCount} total={total} onHome={() => nav.navigate('Main')} />;
+    return <LessonComplete result={result} correct={correctCount} total={total} onHome={() => nav.popTo('Main')} />;
   }
 
   // Nothing this lesson could ask. A white screen is what it used to be (an
@@ -443,7 +443,7 @@ export function LessonScreen() {
             <Txt className="mb-8 max-w-[280px] text-center text-sm text-paper/60">
               Finish a lesson or two and the words you meet will come back here.
             </Txt>
-            <Button variant="primary" onPress={() => nav.navigate('Main')}>
+            <Button variant="primary" onPress={() => nav.popTo('Main')}>
               Back home
             </Button>
           </View>
@@ -495,7 +495,7 @@ export function LessonScreen() {
               >
                 Refill · {REFILL_COST} gems (you have {gems})
               </Button>
-              <Button variant="ghost" onPress={() => nav.navigate('Main')}>
+              <Button variant="ghost" onPress={() => nav.popTo('Main')}>
                 Leave for now
               </Button>
             </View>
@@ -524,7 +524,12 @@ export function LessonScreen() {
               // this corner threw a lesson away with no warning, and coming
               // back started it again from nothing (design review,
               // 2026-10-10). Nothing answered yet, nothing to lose: it leaves.
-              const leave = () => nav.navigate('Main');
+              // popTo, not navigate, at every way out of a lesson: in React
+              // Navigation 7 navigate pushed a new Home over the old one, so
+              // every lesson ever opened stayed mounted underneath, about 6 MB
+              // and 1,750 elements each, and lessons opened slower as they
+              // piled up (performance review, 2026-10-11).
+              const leave = () => nav.popTo('Main');
               if (idx === 0 && graded == null) return leave();
               confirmAction(
                 'Leave this lesson?',

@@ -912,6 +912,56 @@ async function main() {
         await p.close();
       }
     }
+    /**
+     * Leaving a lesson lets it go.
+     *
+     * Every way out of a lesson called navigate('Main'), which in React
+     * Navigation 7 pushed a new Home over the old one, so each lesson opened
+     * stayed mounted underneath: about 6 MB and 1,750 elements a lesson, with
+     * no ceiling, and lessons opening slower as they piled up (performance
+     * review, 2026-10-11). Three lessons are opened from Home and closed; no
+     * lesson may be left in the page.
+     */
+    {
+      const p = await browser.newPage({ viewport: { width: 390, height: 844 } });
+      try {
+        await enterAsGuest(p, `http://localhost:${PORT}/Urdu/`, {}, {});
+        let opened = 0;
+        for (let round = 0; round < 3; round++) {
+          const start = p.locator('text=/^(START|Continue)$/i').locator('visible=true').first();
+          if (
+            !(await start.waitFor({ timeout: 8000 }).then(
+              () => true,
+              () => false
+            ))
+          )
+            break;
+          await start.click();
+          const close = p.locator('[aria-label="Close lesson"]:visible');
+          if (
+            !(await close.waitFor({ timeout: 8000 }).then(
+              () => true,
+              () => false
+            ))
+          )
+            break;
+          opened += 1;
+          await close.click();
+          await close.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
+        }
+        const left = await p.locator('[aria-label="Close lesson"]').count();
+        if (opened < 3) {
+          problems.push(`Only ${opened} of 3 lessons could be opened from Home, so leaving them went unmeasured.`);
+        } else if (left) {
+          problems.push(
+            `After opening and closing 3 lessons, ${left} are still mounted in the page: leaving a lesson does ` +
+              'not let it go, and memory grows with every lesson.'
+          );
+        }
+      } finally {
+        await p.close();
+      }
+    }
   } finally {
     if (browser) await browser.close();
     server.close();
@@ -946,6 +996,7 @@ async function main() {
   console.log('check:controls — with "Sound effects" off, a speaker button still plays the Urdu.');
   console.log('check:controls — on the Roman track a wrong answer is revealed with no Urdu script.');
   console.log('check:controls — closing a lesson part way through asks first, and saying no keeps it.');
+  console.log('check:controls — a lesson left is a lesson let go: none stays mounted under Home.');
   console.log('check:controls — from a cold start to the lesson path, the app contacts no host but its own.');
 }
 
