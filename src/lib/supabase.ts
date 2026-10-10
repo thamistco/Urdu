@@ -23,6 +23,13 @@ export const supabase: SupabaseClient | null = isAuthConfigured
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: Platform.OS === 'web',
+        // Native sign-in exchanges a `code` from the redirect (nativeOAuth in
+        // useAuthStore.ts), which only the PKCE flow returns; this client's
+        // default is the implicit flow, which returns a token in the URL
+        // fragment and no code, so every native Google or Apple sign-in would
+        // have ended "No auth code returned" (second check of P-036,
+        // 2026-10-11). The web keeps the flow it has always used.
+        flowType: Platform.OS === 'web' ? 'implicit' : 'pkce',
       },
     })
   : null;
