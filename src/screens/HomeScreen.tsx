@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Pressable, ScrollView, Dimensions } from 'react-native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -419,8 +419,21 @@ export function HomeScreen() {
   // A welcome back stays in view too, like the path notice: scrolled to the
   // path, it was above the fold and a lapsed learner never saw it (P-011).
   const comebackOwed = !!store.comeback;
+  // Only while Home is on screen. Home now stays mounted under a lesson
+  // (leaving one pops back to it rather than pushing a fresh Home), so a
+  // stage finished in a lesson changes the current lesson while Home is
+  // hidden: measured then, nothing scrolled, and nothing tried again on
+  // return. Waiting for focus scrolls when the learner can see it.
+  const focused = useIsFocused();
   useEffect(() => {
-    if (didAutoScroll.current || showPathNotice || comebackOwed) return;
+    if (!focused || didAutoScroll.current || showPathNotice || comebackOwed) return;
+    // The measure below reads the node's position on screen as its place in
+    // the list, which holds only for a list at the top. A fresh Home always
+    // was; one returned to after a stage advance is wherever it was left
+    // (8,000px down in check:stage-advance-scroll), where the new lesson sits
+    // above the screen, reads as "on screen" and is never scrolled to. So
+    // start from the top, as a fresh Home did.
+    pathRef.current?.scrollTo({ y: 0, animated: false });
     const t = setTimeout(() => {
       // `measure` reports pageY — position on screen. The list has not been
       // scrolled yet at this point, so pageY is also the content offset we
@@ -473,7 +486,7 @@ export function HomeScreen() {
       });
     }, 500);
     return () => clearTimeout(t);
-  }, [currentId, showPathNotice, comebackOwed, tabBarHeight]);
+  }, [currentId, showPathNotice, comebackOwed, tabBarHeight, focused]);
 
   /**
    * Opening a stage below the fold used to leave the scroll position exactly
