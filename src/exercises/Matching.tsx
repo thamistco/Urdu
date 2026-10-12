@@ -22,6 +22,10 @@ export function MatchingExercise({ exercise, track, locked, onGraded }: Exercise
   const [matched, setMatched] = useState<Set<string>>(new Set());
   const [wrong, setWrong] = useState<string | null>(null);
   const [mistakes, setMistakes] = useState(0);
+  // The last wrong pair, said in words until the next match. A red flash of
+  // half a second (and a sound, silent with effects off) was all a slip got,
+  // and a tester read it as no feedback at all (2026-10-12).
+  const [slip, setSlip] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
   const finish = (misses: number) => {
@@ -35,6 +39,7 @@ export function MatchingExercise({ exercise, track, locked, onGraded }: Exercise
     if (!l || !r) return;
     if (l === r) {
       feedback.tap();
+      setSlip(null);
       const next = new Set(matched).add(l);
       setMatched(next);
       setSelLeft(null);
@@ -43,6 +48,7 @@ export function MatchingExercise({ exercise, track, locked, onGraded }: Exercise
     } else {
       feedback.incorrect();
       setWrong(`${l}|${r}`);
+      setSlip(l);
       const m = mistakes + 1;
       setMistakes(m);
       setTimeout(() => {
@@ -106,6 +112,19 @@ export function MatchingExercise({ exercise, track, locked, onGraded }: Exercise
           ))}
         </View>
       </View>
+      {!done && slip ? (
+        <View className="mt-4 flex-row flex-wrap items-center justify-center gap-x-2" aria-live="polite">
+          <Bold style={{ color: palette.roseLight }}>Not quite:</Bold>
+          {words
+            .filter((w) => w.id === slip)
+            .map((w) => (
+              <View key={w.id} className="flex-row flex-wrap items-center gap-x-2">
+                <Lexeme urdu={w.urdu} roman={w.roman} track={track} size={20} />
+                <Txt className="text-sm text-paper/80">means “{glossOf(w)}”</Txt>
+              </View>
+            ))}
+        </View>
+      ) : null}
       {done ? (
         <View className="mt-5 items-center">
           <Bold style={{ color: mistakes === 0 ? palette.jade : palette.gold }}>
