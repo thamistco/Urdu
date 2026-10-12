@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 import { Bold, Txt } from './Text';
 import { Illustration } from './Illustration';
@@ -52,27 +52,76 @@ export function StatBar({ streak, gems, hearts }: { streak: number; gems: number
   );
 }
 
-/** Row of heart pips (used in the lesson player). */
-export function Hearts({ count }: { count: number }) {
+/**
+ * Row of heart pips (used in the lesson player).
+ *
+ * `free` while hearts cost nothing (Unit 1, lib/hearts.ts). Five full pips
+ * there looked exactly like five hearts that happened not to have dropped, so
+ * the first wrong answer after Unit 1 was the first anyone learned that hearts
+ * could go, and a tester met "Out of hearts" having never seen one leave
+ * (2026-10-12). So the free stretch says it is free, and a lost heart says so:
+ * the pip that went is marked for a moment and a screen reader hears it.
+ */
+export function Hearts({ count, free = false }: { count: number; free?: boolean }) {
+  const prev = useRef(count);
+  const [lost, setLost] = useState(false);
+  useEffect(() => {
+    const dropped = count < prev.current;
+    prev.current = count;
+    if (!dropped) return;
+    setLost(true);
+    const t = setTimeout(() => setLost(false), 1600);
+    return () => clearTimeout(t);
+  }, [count]);
+
+  if (free) {
+    return (
+      <View
+        accessible
+        accessibilityRole="image"
+        accessibilityLabel="Hearts are free until you finish Unit 1"
+        className="flex-row items-center gap-1"
+      >
+        <Illustration name="heart" tile={false} size={16} />
+        <Bold style={{ color: palette.roseLight }} className="text-xs">
+          Free in Unit 1
+        </Bold>
+      </View>
+    );
+  }
+
   return (
-    // An image role, because a label on an element with no role is ignored by
-    // screen readers on the web: without it "3 of 5 hearts" was in the page
-    // and announced nowhere.
-    <View
-      accessible
-      accessibilityRole="image"
-      accessibilityLabel={`${count} of ${HEARTS_MAX} hearts`}
-      className="flex-row items-center gap-1"
-    >
-      {/* Drawn marks, not ❤️/🤍. System emoji render differently on every
-          platform — which is the exact problem the icon set exists to solve —
-          and next to the drawn flame and gem in the same bar they looked like
-          they belonged to a different app. */}
-      {Array.from({ length: HEARTS_MAX }).map((_, i) => (
-        <View key={i} style={{ opacity: i < count ? 1 : 0.22 }}>
-          <Illustration name="heart" tile={false} size={16} />
-        </View>
-      ))}
+    <View className="flex-row items-center gap-1.5">
+      {lost ? (
+        <Bold accessibilityLiveRegion="polite" style={{ color: palette.roseLight }} className="text-xs">
+          {`−1 heart`}
+        </Bold>
+      ) : null}
+      {/* An image role, because a label on an element with no role is ignored
+          by screen readers on the web: without it "3 of 5 hearts" was in the
+          page and announced nowhere. */}
+      <View
+        accessible
+        accessibilityRole="image"
+        accessibilityLabel={`${count} of ${HEARTS_MAX} hearts`}
+        className="flex-row items-center gap-1"
+      >
+        {/* Drawn marks, not ❤️/🤍. System emoji render differently on every
+            platform — which is the exact problem the icon set exists to solve —
+            and next to the drawn flame and gem in the same bar they looked like
+            they belonged to a different app. */}
+        {Array.from({ length: HEARTS_MAX }).map((_, i) => (
+          <View
+            key={i}
+            style={{
+              opacity: i < count ? 1 : lost && i === count ? 0.6 : 0.22,
+              transform: [{ scale: lost && i === count ? 1.25 : 1 }],
+            }}
+          >
+            <Illustration name="heart" tile={false} size={16} />
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
