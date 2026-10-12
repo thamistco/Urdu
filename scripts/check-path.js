@@ -87,7 +87,12 @@ const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
  *  button on the screen (level headers end in "Expand"/"Collapse", the
  *  continue card and letter lab have their own unrelated labels), so counting
  *  by suffix counts lesson rows specifically, not "buttons in general". */
-const LESSON_ROW_SUFFIXES = ['Completed', 'tap to try it anyway', 'Start this lesson', 'Locked, tap to jump ahead'];
+const LESSON_ROW_SUFFIXES = [
+  'Completed',
+  'tap to try it anyway',
+  'Start this lesson',
+  'Not reached yet, tap to jump ahead',
+];
 
 async function countLessonRows(page) {
   return page.evaluate((suffixes) => {
