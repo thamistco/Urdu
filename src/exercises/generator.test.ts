@@ -2320,3 +2320,18 @@ describe('building a word from letter tiles', () => {
     }
   });
 });
+
+/**
+ * A unit review opens on the unit, not on the alphabet. Letters keep a share
+ * of every review on the script tracks, and once that share is small it was
+ * still always first: both B2 reviews opened on a joining-form drill (tester
+ * report, 2026-10-12). Fails with the old front-loaded alternation.
+ */
+describe('review lessons past the alphabet', () => {
+  it('never open on a letter exercise', () => {
+    const openers = ALL_LESSONS.filter((l) => l.kind === 'review').map(
+      (l) => `${l.id}: ${buildLessonExercises(l, [], 'both', new Set())[0]?.kind}`
+    );
+    expect(openers.filter((o) => /: letter/.test(o))).toEqual([]);
+  });
+});

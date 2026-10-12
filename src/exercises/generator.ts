@@ -3029,10 +3029,27 @@ function fallbackReviewRefs(
   // consecutive letter exercises inside a mixed review — and did it differently
   // on every generation, so the review a learner reopened was a different
   // lesson and no measurement over review lessons held still.
-  const mixed: ItemRef[] = [];
-  for (let i = 0; i < Math.max(letters.length, words.length); i++) {
-    if (letters[i]) mixed.push(letters[i]);
-    if (words[i]) mixed.push(words[i]);
+  //
+  // Spread evenly, not alternated from the front. Alternating put the first
+  // letter at position 0 of every review, which was right while letters were
+  // half the pool and wrong once they were one in twenty: the B2 reviews,
+  // "State & Society" and the Grand review, opened on a beginner's
+  // joining-form drill before a single word of their own (tester report,
+  // 2026-10-12). Spaced evenly, a lone letter lands mid-review instead of first. Where letters are at least
+  // half, in the alphabet units, the old alternation stands.
+  if (letters.length >= words.length) {
+    const mixed: ItemRef[] = [];
+    for (let i = 0; i < letters.length; i++) {
+      mixed.push(letters[i]);
+      if (words[i]) mixed.push(words[i]);
+    }
+    return mixed;
+  }
+  const mixed: ItemRef[] = [...words];
+  // From the back, so each insert leaves the earlier slots where they were.
+  for (let i = letters.length - 1; i >= 0; i--) {
+    const at = Math.round(((i + 1) * words.length) / (letters.length + 1));
+    mixed.splice(Math.max(1, at), 0, letters[i]);
   }
   return mixed;
 }
