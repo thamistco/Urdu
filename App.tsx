@@ -12,6 +12,7 @@ import { PublicSans_400Regular, PublicSans_500Medium, PublicSans_700Bold } from 
 import { NotoNastaliqUrdu_400Regular, NotoNastaliqUrdu_700Bold } from '@expo-google-fonts/noto-nastaliq-urdu';
 
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { ConfirmHost } from './src/components/ConfirmHost';
 import { linking } from './src/navigation/linking';
 import { initSound } from './src/lib/sound';
 import { useSettingsStore } from './src/store/useSettingsStore';
@@ -95,6 +96,7 @@ export default function App() {
         <NavigationContainer linking={linking} theme={navTheme} onReady={onReady} documentTitle={DOCUMENT_TITLE}>
           <StatusBar style="light" />
           <RootNavigator />
+          <ConfirmHost />
         </NavigationContainer>
       </SafeAreaProvider>
     </GestureHandlerRootView>

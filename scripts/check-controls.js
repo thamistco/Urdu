@@ -357,14 +357,20 @@ async function main() {
       if (!(await page.locator('[aria-label="Hear this line"]').count())) {
         problems.push('The reading lesson never showed a "Hear this line" button, so its tap target went unmeasured.');
       }
-      // Leaving part way through now asks first; this pass means to leave.
-      const leave = (d) => d.accept();
-      page.on('dialog', leave);
+      // Leaving part way through asks first, in the app's own dialog; this
+      // pass means to leave.
       await tapByText(page, /^✕$/);
+      const leave = page.locator('[role="alertdialog"]').getByText(/^Leave$/);
+      if (
+        await leave.waitFor({ timeout: 3000 }).then(
+          () => true,
+          () => false
+        )
+      )
+        await leave.click();
       await page
         .waitForFunction(() => /\bprofile\b/i.test(document.body.innerText), null, { timeout: 10000 })
         .catch(() => {});
-      page.off('dialog', leave);
     }
 
     if (!(await tapByText(page, /^Profile$/))) {
@@ -871,11 +877,16 @@ async function main() {
      */
     {
       const p = await browser.newPage({ viewport: { width: 390, height: 844 } });
-      const asked = [];
+      // The question is asked in the app's own dialog. The browser's grey
+      // window.confirm box asked it until a tester took it for a page error
+      // (2026-10-12), so one appearing here is a failure in itself.
+      const browserDialogs = [];
       p.on('dialog', (d) => {
-        asked.push(d.message());
+        browserDialogs.push(d.message());
         return d.dismiss();
       });
+      const dialog = p.locator('[role="alertdialog"]');
+      const asked = () => dialog.count().then((n) => n > 0);
       // Visible, not present: a lesson opened by its URL stays mounted under
       // Home once left, so its close button is still in the page, hidden.
       const inLesson = () =>
@@ -891,7 +902,7 @@ async function main() {
           .locator('[aria-label="Close lesson"]:visible')
           .waitFor({ state: 'detached', timeout: 5000 })
           .catch(() => {});
-        if (asked.length || (await inLesson())) {
+        if ((await asked()) || (await inLesson())) {
           problems.push('Closing a lesson before answering anything did not simply leave.');
         }
         // A teaching card read is not an answer: "Got it", then close, leaves.
@@ -907,7 +918,7 @@ async function main() {
           .locator('[aria-label="Close lesson"]:visible')
           .waitFor({ state: 'detached', timeout: 5000 })
           .catch(() => {});
-        if (asked.length || (await inLesson())) {
+        if ((await asked()) || (await inLesson())) {
           problems.push(
             'Closing a lesson after only reading a teaching card asked first, though nothing was answered.'
           );
@@ -926,12 +937,21 @@ async function main() {
           .waitFor({ timeout: 5000 })
           .catch(() => {});
         await p.locator('[aria-label="Close lesson"]:visible').click();
-        if (!asked.length) {
+        await dialog.waitFor({ timeout: 3000 }).catch(() => {});
+        if (browserDialogs.length) {
+          problems.push(
+            `Closing a lesson asked in the browser's own dialog ("${browserDialogs[0].split('\n')[0]}") ` +
+              'rather than the app’s.'
+          );
+        } else if (!(await asked())) {
           problems.push(
             'Closing a lesson after an answer left without asking, so one stray tap throws the lesson away.'
           );
-        } else if (!(await inLesson())) {
-          problems.push('Saying no to "Leave this lesson?" left the lesson anyway.');
+        } else {
+          await dialog.getByText(/^Cancel$/).click();
+          await dialog.waitFor({ state: 'detached', timeout: 3000 }).catch(() => {});
+          if (await asked()) problems.push('"Cancel" on "Leave this lesson?" did not close the question.');
+          else if (!(await inLesson())) problems.push('Saying no to "Leave this lesson?" left the lesson anyway.');
         }
       } finally {
         await p.close();
