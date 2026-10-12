@@ -6,13 +6,31 @@ import { Lexeme } from '../components/Lexeme';
 import { WordArt } from '../components/Illustration';
 import { Button } from '../components/Button';
 import { feedback } from '../lib/feedback';
-import { matchesWord } from '../lib/roman';
-import { synonymsOf } from '../data/words';
+import { matchesWord, nearMiss, romanSkeleton } from '../lib/roman';
+import { WORDS, synonymsOf } from '../data/words';
 import type { ExerciseProps, Exercise } from './types';
 import type { Word } from '../data/words';
 import { glossOf } from '../data/words';
 
 type TypeEx = Extract<Exercise, { kind: 'typeWord' }>;
+
+/** Every spelling the course teaches, reduced: a near miss may not be one of them. Built on first use. */
+let takenSpellings: Map<string, Set<string>> | null = null;
+function takenBy(word: Word): Set<string> {
+  if (!takenSpellings) {
+    takenSpellings = new Map();
+    for (const w of WORDS)
+      for (const v of w.roman.split('/')) {
+        const k = romanSkeleton(v);
+        if (!takenSpellings.has(k)) takenSpellings.set(k, new Set());
+        takenSpellings.get(k)!.add(w.id);
+      }
+  }
+  // Taken by some *other* word: the word's own spellings are the target.
+  const out = new Set<string>();
+  for (const [k, ids] of takenSpellings) if ([...ids].some((id) => id !== word.id)) out.add(k);
+  return out;
+}
 type ReverseEx = Extract<Exercise, { kind: 'wordFromMeaning' }>;
 
 /**
@@ -32,6 +50,8 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
   const [graded, setGraded] = useState<boolean | null>(null);
   /** The synonym they typed, when it was not the word being asked for. */
   const [accepted, setAccepted] = useState<Word | null>(null);
+  /** A letter off, and accepted: the note then shows the spelling. */
+  const [close, setClose] = useState(false);
   const [focused, setFocused] = useState(false);
 
   const check = () => {
@@ -43,8 +63,10 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
     // of them quietly punished.
     const alt = synonymsOf(word).find((w) => matchesWord(text, w.urdu, w.roman));
     const exact = matchesWord(text, word.urdu, word.roman);
-    const correct = exact || !!alt;
+    const near = !exact && !alt && nearMiss(text, word.roman, takenBy(word));
+    const correct = exact || !!alt || near;
     setAccepted(!exact && alt ? alt : null);
+    setClose(near);
     setGraded(correct);
     correct
       ? feedback.correctAnnounceMeaning(word.id, word.urdu, word.roman, word.meaning)
@@ -119,8 +141,9 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
       {graded != null && (
         <View className="items-center">
           <Bold style={{ color: graded ? palette.jade : palette.rose }} className="mb-1">
-            {accepted ? 'That works too ✓' : graded ? 'From memory ✓' : 'The word is'}
+            {accepted ? 'That works too ✓' : close ? 'Close enough ✓' : graded ? 'From memory ✓' : 'The word is'}
           </Bold>
+          {close && <Txt className="mb-1 text-center text-xs text-paper/70">Watch the spelling: {word.roman}.</Txt>}
           {/* Naming the word that was asked for turns an accepted synonym into
               the moment the learner finds out there are two. */}
           {accepted && (

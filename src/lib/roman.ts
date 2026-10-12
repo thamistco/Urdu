@@ -38,7 +38,50 @@ function skeleton(s: string): string {
     .replace(/u/g, 'o') // hun / hoon, khush / khoosh
     .replace(/w/g, 'v') // wo / vo, waqt / vaqt
     .replace(/ck/g, 'k')
+    .replace(/q/g, 'k') // qalam / kalam: ق is written k as often as q
     .replace(/y$/, 'i'); // achhy / achhi
+}
+
+/** The skeleton a romanisation reduces to, for building `nearMiss`'s list of taken spellings. */
+export const romanSkeleton = (s: string) => skeleton(s);
+
+/** Edit distance, stopping early once it passes `max`. */
+function within(a: string, b: string, max: number): boolean {
+  if (Math.abs(a.length - b.length) > max) return false;
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i];
+    for (let j = 1; j <= b.length; j++) {
+      row[j] = Math.min(prev[j] + 1, row[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    if (Math.min(...row) > max) return false;
+    prev = row;
+  }
+  return prev[b.length] <= max;
+}
+
+/**
+ * A spelling one letter away from the word, and from no other word.
+ *
+ * The skeleton absorbs the disagreements romanisers have by convention, but
+ * not the ones learners make by ear, and QA testers had about twenty natural
+ * spellings refused (2026-10-12): garm for garam, chadhna for chaṛhna,
+ * pattar for patthar, kharach for kharch, kanstar for kanastar. Each is one
+ * letter off once the conventions are folded away.
+ *
+ * Accepted only where that cannot be a different word: the word's skeleton is
+ * at least four letters (three-letter words sit a letter apart from each other
+ * all over Urdu, ret and rat among them), and what was typed is not itself the
+ * skeleton of any other word the course teaches (`taken`). zehen for zaheen
+ * stays wrong: zehn is a word, and three letters away.
+ */
+export function nearMiss(input: string, roman: string, taken: ReadonlySet<string>): boolean {
+  const typed = skeleton(input.trim());
+  if (typed.length < 3 || taken.has(typed)) return false;
+  return roman.split('/').some((variant) => {
+    const target = skeleton(variant);
+    return target.length >= 4 && within(typed, target, 1);
+  });
 }
 
 /** Urdu text with the marks and spacing that don't change the reading removed. */
