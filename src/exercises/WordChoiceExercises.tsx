@@ -67,6 +67,16 @@ export function MultipleChoiceExercise({ exercise, track, locked, onGraded }: Ex
             {glossOf(word)}
           </Txt>
         )}
+        {/* On a first meeting only. It is a guess either way, and hearing the
+            word lets a learner sound out the script rather than guess blind;
+            every later card about the word has a speaker, and this one, the
+            first, had none (tester report, 2026-10-12). Later, the same button
+            would turn a reading question into matching a sound. */}
+        {exercise.pretest ? (
+          <View className="mt-2">
+            <SpeakerButton onPress={() => announce(word.id, word.urdu, word.roman)} label="Hear the word" />
+          </View>
+        ) : null}
       </PromptCard>
       <View className="h-4" />
       <Question>{speaks ? 'Which word is this?' : 'Which word means this?'}</Question>
