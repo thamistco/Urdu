@@ -444,7 +444,7 @@ export const LETTERS: Letter[] = [
     meaning: 'parrot',
     emoji: '🦜',
     group: 5,
-    note: 'A loop with an upright stroke, no dot above; zoe has one. It sounds like te, borrowed from Arabic; you meet it in خط (khat, “letter”).',
+    note: 'A loop with an upright stroke, no dot above; zo’e has one. It sounds like te, borrowed from Arabic; you meet it in خط (khat, “letter”).',
   },
   {
     id: 'zoe',

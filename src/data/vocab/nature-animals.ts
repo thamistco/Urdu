@@ -46,7 +46,7 @@ export const NATURE_PACKS: TopicPack[] = [
   pack(
     { id: 'sealife', title: 'Sea & Insects', icon: '🐟', blurb: 'Water creatures and small crawlers.', level: 'intermediate' },
     [
-      ['w-whale', 'وہیل', 'wheel', 'whale', '🐋'],
+      ['w-whale', 'وہیل', 'vhel', 'whale', '🐋'],
       ['w-shark', 'شارک', 'shaark', 'shark', '🦈'],
       ['w-kekra', 'کیکڑا', 'kekṛa', 'crab', '🦀'],
       ['w-jhinga', 'جھینگا', 'jheenga', 'prawn', '🦐'],

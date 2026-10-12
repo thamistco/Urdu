@@ -267,7 +267,11 @@ describe('URD-062: a base letter’s note names the mark that separates it from 
       // Word-boundary match, not a bare substring — `re` sits inside other
       // ids too, and this table's own ids are short enough that a loose
       // substring check would be almost as gameable as the regex it replaced.
-      expect(contrastLine(letter!), base).toMatch(new RegExp(`\\b${variantId}\\b`, 'i'));
+      // By id or by the name the cards print: the note said "zoe" while every
+      // card spelled the letter zo’e (QA report, 2026-10-12), so the name is
+      // the better of the two.
+      const name = (getLetter(variantId)?.name ?? variantId).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      expect(contrastLine(letter!), base).toMatch(new RegExp(`\\b(${variantId}|${name})\\b`, 'i'));
     }
   });
 
