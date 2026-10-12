@@ -40,7 +40,7 @@ const BASE = (/<meta name="qaaf:base" content="([^"]*)"/.exec(html)?.[1] ?? '').
 
 /** Each linkable screen, and a phrase only that screen puts on the page. */
 const ROUTES = [
-  { path: '/', shows: /Speak with them|Read the script|Come home to it|Explore Urdu/ },
+  { path: '/', shows: /Speak with your family|Read the script|Come home to it|Explore Urdu/ },
   { path: '/practice', shows: /brings back the words/i },
   { path: '/profile', shows: /Level \d+/i },
   { path: '/league', shows: /League/i },
@@ -163,7 +163,7 @@ async function main() {
     await page.goBack();
     await settled(page);
     const afterTwo = await page.evaluate(() => location.pathname);
-    const stillInside = await page.evaluate(() => /QAAF|Speak with them|Level/i.test(document.body.innerText));
+    const stillInside = await page.evaluate(() => /QAAF|Speak with your family|Level/i.test(document.body.innerText));
 
     if (afterOne !== `${BASE}/profile`) {
       problems.push(`Back from Achievements went to ${afterOne}, not ${BASE}/profile.`);
