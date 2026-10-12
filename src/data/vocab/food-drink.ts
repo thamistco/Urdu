@@ -87,7 +87,7 @@ export const FOOD_PACKS: TopicPack[] = [
     ]
   ),
   pack(
-    { id: 'grains', title: 'Grains & Staples', icon: '🌾', blurb: 'The basics of the pantry.', level: 'intermediate' },
+    { id: 'grains', title: 'Grains, Pulses & Spices', icon: '🌾', blurb: 'The pantry, and what goes into the pot.', level: 'intermediate' },
     [
       ['w-gandum', 'گندم', 'gandum', 'wheat', '🌾'],
       ['w-jau', 'جو', 'jau', 'barley', '🌾'],
