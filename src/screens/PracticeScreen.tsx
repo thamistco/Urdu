@@ -1,3 +1,4 @@
+import { withEmphasis, plainText } from '../components/Emphasis';
 import { reach } from '../lib/reach';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Pressable, TextInput } from 'react-native';
@@ -364,7 +365,7 @@ export function PracticeScreen() {
                 key={g.id}
                 onPress={() => go(`practice-grammar-${g.id}`)}
                 accessibilityRole="button"
-                accessibilityLabel={`Practise ${g.title}. ${g.summary}`}
+                accessibilityLabel={`Practise ${g.title}. ${plainText(g.summary)}`}
                 style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
               >
                 <View className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-ink-700 px-4 py-3.5">
@@ -381,7 +382,7 @@ export function PracticeScreen() {
                       {g.title}
                     </Bold>
                     <Txt className="text-xs text-paper/55" style={{ writingDirection: 'ltr', textAlign: 'left' }}>
-                      {g.summary}
+                      {withEmphasis(g.summary)}
                     </Txt>
                   </View>
                   <Txt className="text-base text-paper/55">›</Txt>

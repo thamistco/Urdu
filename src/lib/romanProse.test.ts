@@ -43,4 +43,12 @@ describe('grammar prose on the Roman track', () => {
     const left = GRAMMAR.flatMap((c) => c.explain.filter(scriptLeftIn).map((p) => `${c.id}: ${p}`));
     expect(left).toEqual([]);
   });
+
+  // The note under a drill answer, shown on the same track (2026-10-12).
+  it('leaves no script in any drill note', () => {
+    const left = GRAMMAR.flatMap((c) =>
+      c.drills.filter((d) => scriptLeftIn(d.because)).map((d) => `${c.id}: ${d.because}`)
+    );
+    expect(left).toEqual([]);
+  });
 });
