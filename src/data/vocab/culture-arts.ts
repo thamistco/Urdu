@@ -18,7 +18,7 @@ export const CULTURE_PACKS: TopicPack[] = [
       ['w-khattaati', 'خطاطی', 'khattaati', 'calligraphy', '🖋️'],
       ['w-mujassama', 'مجسمہ', 'mujassama', 'sculpture', '🗿'],
       ['w-fankaar', 'فنکار', 'fankaar', 'artist', '🎭'],
-      ['w-fun', 'فن', 'fun', 'art / skill', '✨'],
+      ['w-fun', 'فن', 'fann', 'art / skill', '✨'],
       ['w-tamasha', 'تماشا', 'tamaasha', 'spectacle / show', '🎪'],
       ['w-daad', 'داد', 'daad', 'applause / praise', '👏'],
     ]

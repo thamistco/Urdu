@@ -233,7 +233,7 @@ export const SOCIETY_PACKS: TopicPack[] = [
       ['w-infection', 'انفیکشن', 'infekshan', 'infection', '🤒'],
       ['w-hifaazati-teeka', 'حفاظتی ٹیکہ', 'hifaazati ṭeeka', 'vaccination', '💉'],
       ['w-khoon-test', 'خون کا ٹیسٹ', 'khoon ka ṭesṭ', 'blood test', '🩸'],
-      ['w-x-ray', 'ایکسرے', 'eksre', 'X-ray', '🦴'],
+      ['w-x-ray', 'ایکس رے', 'eks re', 'X-ray', '🦴'],
       ['w-bandobast', 'انتقالِ خون', 'intiqaal-e-khoon', 'blood transfusion', '🩸'],
       ['w-behoshi', 'بے ہوشی کی دوا', 'be-hoshi ki dawa', 'anaesthetic', '😴'],
       ['w-nafsiyat', 'نفسیات', 'nafsiyaat', 'psychology', '🧠'],
