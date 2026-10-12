@@ -60,6 +60,19 @@ function isPretest(ex: Exercise | undefined): boolean {
 }
 
 /**
+ * A trace costs no heart.
+ *
+ * It is the one exercise graded on the hand rather than on knowing, and on a
+ * mouse or trackpad the coverage check needs four to seven overlapping drags
+ * per letter: QA testers failed looped letters like ع and ط on every attempt,
+ * and with hearts charged that made letter lessons unplayable on a desktop
+ * (QA report, 2026-10-12). A failed trace still schedules the letter again.
+ */
+function isTrace(ex: Exercise | undefined): boolean {
+  return ex?.kind === 'letterTrace';
+}
+
+/**
  * How much the learner had to supply, which is how much a correct answer is
  * worth to the schedule.
  *
@@ -338,7 +351,7 @@ export function LessonScreen() {
       result.items.forEach((it) => recordItemGrade(it, grade));
       if (result.correct) {
         setCorrectCount((c) => c + 1);
-      } else if (!isTeaching(exercises[idx]) && !isPretest(exercises[idx])) {
+      } else if (!isTeaching(exercises[idx]) && !isPretest(exercises[idx]) && !isTrace(exercises[idx])) {
         // One heart per item per lesson — see `chargedRef`.
         const already = result.items.length > 0 && result.items.every((it) => chargedRef.current.has(it.id));
         result.items.forEach((it) => chargedRef.current.add(it.id));
