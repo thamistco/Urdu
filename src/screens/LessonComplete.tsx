@@ -92,7 +92,7 @@ export function LessonComplete({
                     backgroundColor: withAlpha(palette.gold, 0.08),
                   }}
                 >
-                  <Bold style={{ color: palette.goldLight }}>Plenty of new words in that one</Bold>
+                  <Bold style={{ color: palette.goldLight }}>A tough one</Bold>
                   <Txt className="mt-1 text-center text-xs text-paper/70">
                     The ones that slipped are already queued for your next practice.
                   </Txt>
