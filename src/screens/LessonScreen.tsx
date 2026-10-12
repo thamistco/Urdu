@@ -172,9 +172,9 @@ export function LessonScreen() {
    * lesson but only 6.5 *distinct* items wrong, or 1.99 hearts per item
    * missed. With five hearts that is 2.6 walls in every lesson — and the wall
    * is meant to be a choice between waiting and paying. It was neither: a
-   * lesson pays 5 gems and a refill costs 40, so a learner earning their way
-   * out needs eight clean lessons to buy back one wall they hit twice in the
-   * lesson they are standing in.
+   * lesson paid 5 gems and a refill cost 40 then, so a learner earning their
+   * way out needed eight clean lessons to buy back one wall they hit twice in
+   * the lesson they were standing in.
    *
    * Charging once per item takes those to 6.5 and 1.3. The mechanic is
    * untouched for a learner who genuinely does not know five different things;
@@ -471,8 +471,8 @@ export function LessonScreen() {
     // Either the button works, or the learner is told exactly what stands
     // between them and playing again — never a disabled button and a
     // sentence that only talks about the option they can't take yet.
-    // A fresh profile starts with 20 gems against a 40-gem refill and earns
-    // 5-8 a lesson, so the first lockout almost never affords the button;
+    // A fresh profile starts with 20 gems against a 25-gem refill and earns
+    // 5-8 a lesson, so the very first lockout may not afford the button;
     // the wait needs to be a real answer, not just implied by its absence.
     const canAfford = gems >= REFILL_COST;
     const short = gemsShortOfRefill(gems);

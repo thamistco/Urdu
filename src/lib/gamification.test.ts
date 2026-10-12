@@ -245,8 +245,8 @@ describe('the hearts economy', () => {
   // the lockout screen said nothing else — a learner who could not afford
   // it saw a button that did not work and no explanation of why or what to
   // do instead. A fresh profile starts at 20 gems (`useProgressStore.ts`)
-  // against a 40-gem refill, so this was not an edge case: it was close to
-  // every new learner's first lockout.
+  // against a 40-gem refill (25 since 2026-10-12), so this was not an edge
+  // case: it was close to every new learner's first lockout.
   it('a fresh profile is either able to refill, or told something real instead', () => {
     const freshGems = 20; // useProgressStore's starting balance
     const canAfford = freshGems >= REFILL_COST;

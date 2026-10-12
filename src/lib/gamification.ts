@@ -7,8 +7,18 @@
 export const HEARTS_MAX = 5;
 /** Minutes to regenerate one heart. */
 export const HEART_REGEN_MINUTES = 30;
-/** Gems to refill to full immediately, instead of waiting. */
-export const REFILL_COST = 40;
+/**
+ * Gems to refill to full immediately, instead of waiting.
+ *
+ * It was 40, against 5 to 8 a lesson: about six lessons of gems for one
+ * refill, which QA testers met as a wall they could not pay on a profile
+ * down to 14 gems (QA report, 2026-10-12, K1). At 25 a fresh profile still
+ * cannot pay its first wall (20 gems; see hearts.test.ts for why that has to
+ * stay true while the grace period exists), and one lesson more can.
+ * Gems are not sold, so the price is a pace, not revenue (P-001 keeps every
+ * review free and sells no gems).
+ */
+export const REFILL_COST = 25;
 
 /**
  * How many more gems a learner needs before a refill is affordable. Zero
