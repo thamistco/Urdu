@@ -22,6 +22,7 @@ import { useSessionGradeFlush } from './useSessionGradeFlush';
 import { answerReveal } from './answerReveal';
 import { REFILL_COST, gemsShortOfRefill, minutesUntilNextHeart } from '../lib/gamification';
 import { useProgressStore, type ItemType } from '../store/useProgressStore';
+import { heartsAreFree } from '../lib/hearts';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { resolveLesson } from '../data/units';
 import { ExerciseView } from '../exercises';
@@ -176,6 +177,7 @@ export function LessonScreen() {
   const hearts = useProgressStore((s) => s.hearts);
   const gems = useProgressStore((s) => s.gems);
   const heartsUpdatedAt = useProgressStore((s) => s.heartsUpdatedAt);
+  const heartsFree = useProgressStore((s) => heartsAreFree(s.completedLessons, s.skippedLessons));
 
   /**
    * Build the exercise set once, weaving in whatever SRS items are due.
@@ -474,6 +476,9 @@ export function LessonScreen() {
                   learner had just run out. A playtester read it 67 times and
                   named it the least calm part of the hour. What they need here
                   is what happens next, said plainly. */}
+              {/* The rule, said once at the moment it bites: nothing else
+                  in the app had stated it (tester report, 2026-10-12). */}
+              {'Each wrong answer costs a heart once Unit 1 is behind you. '}
               {canAfford
                 ? 'Hearts come back on their own after a while. You can also spend gems to carry on now.'
                 : `You’re ${short} gem${short === 1 ? '' : 's'} short for a refill. The next heart arrives ${
@@ -547,7 +552,7 @@ export function LessonScreen() {
           <View className="flex-1">
             <ProgressBar progress={(idx + (graded != null ? 1 : 0)) / total} color={palette.jade} height={12} />
           </View>
-          <Hearts count={hearts} />
+          <Hearts count={hearts} free={heartsFree} />
         </View>
         {isReview ? (
           <View style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }} className="px-4">
