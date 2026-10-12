@@ -75,6 +75,17 @@ export const PLACEMENT: {
   },
   {
     q: 'What does this word mean?',
+    sub: 'گھر',
+    kind: 'script',
+    options: [
+      { label: 'Tea', c: false },
+      { label: 'Moon', c: false },
+      { label: 'House', c: true },
+      { label: 'Friend', c: false },
+    ],
+  },
+  {
+    q: 'What does this word mean?',
     sub: 'ghar',
     kind: 'roman',
     options: [
@@ -119,6 +130,12 @@ export const PLACEMENT: {
   },
 ];
 
-/** The four questions a given track asks. */
+/**
+ * The four questions a given track asks, all in that track's writing system.
+ *
+ * Script and Both used to take the first four of the whole list, which made
+ * their fourth question the Roman "ghar": a learner who had just chosen the
+ * script was asked a question without it (tester report, 2026-10-12).
+ */
 export const placementFor = (track: LearnTrack) =>
-  (track === 'roman' ? PLACEMENT.filter((p) => p.kind === 'roman') : PLACEMENT).slice(0, 4);
+  PLACEMENT.filter((p) => p.kind === (track === 'roman' ? 'roman' : 'script')).slice(0, 4);

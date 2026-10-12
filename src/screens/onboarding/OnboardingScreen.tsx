@@ -560,10 +560,19 @@ export function OnboardingScreen() {
     return (
       <Screen>
         <Reveal key={pIdx}>
-          {/* Part of the "do you know some Urdu" step, not a step of its own:
-              only a speaker is asked it, and a dot count that changed with
-              the answer would jump under the learner mid-flow. */}
-          <Dots of="background" />
+          {/* One segment per question, so the bar and "2 of 4" beneath it
+              say the same thing. It showed the five onboarding steps here
+              before, and a tester read five segments over "4 of 4" as a
+              question gone missing (2026-10-12). */}
+          <View className="mb-6 flex-row gap-1.5">
+            {questions.map((_, i) => (
+              <View
+                key={i}
+                className="h-1 flex-1 rounded-full"
+                style={{ backgroundColor: i <= pIdx ? palette.gold : withAlpha(palette.white, 0.12) }}
+              />
+            ))}
+          </View>
           <Eyebrow style={{ color: palette.gold }} className="mb-3">
             Quick check · {pIdx + 1} of {questions.length}
           </Eyebrow>
