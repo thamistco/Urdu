@@ -2,7 +2,7 @@ import { LETTERS, getLetter, Letter, PositionKey, POSITIONS } from '../data/lett
 import { WORDS, getWord, wordsByTopic, glossOf, levelOfWord, Word, PHRASES } from '../data/words';
 import { Lesson, ALL_LESSONS, findLesson, lessonOrderForTrack } from '../data/units';
 import { getGrammar, type GrammarConcept, type GrammarDrill } from '../data/grammar';
-import { romanAll } from '../lib/translit';
+import { romanAll, romanOf } from '../lib/translit';
 import { romanRevealsMeaning } from '../lib/giveaway';
 import type { LearnTrack } from '../store/useSettingsStore';
 import {
@@ -1017,12 +1017,20 @@ function sentenceTilesFor(sentence: Sentence): string[] {
  * (Every sentence in the course currently resolves; this is what keeps that
  * true as sentences are added.)
  */
-function sentenceExercise(sentence: Sentence, track: LearnTrack): Exercise | undefined {
+export function sentenceExercise(sentence: Sentence, track: LearnTrack): Exercise | undefined {
   const tiles = sentenceTilesFor(sentence);
   if (track !== 'roman') return { kind: 'sentenceBuild', sentence, tiles };
-  const romanTiles = romanAll(tiles);
-  if (!romanTiles || !romanAll(sentence.words)) return undefined;
-  return { kind: 'sentenceBuild', sentence, tiles, romanTiles };
+  if (!romanAll(sentence.words)) return undefined;
+  // The sentence's own words take their romanisation from the sentence, by
+  // position: the word table reads ہوا as hawa (air), and in "main thaka hua
+  // hoon" it is hua, so the Roman tray offered a tile the answer did not
+  // contain. Only the decoys, which belong to no reading here, use the table.
+  const own = new Map<string, string>();
+  const said = sentence.roman.split(/\s+/).map((w) => w.replace(/[.?!,؟۔]+$/, ''));
+  if (said.length === sentence.words.length) sentence.words.forEach((w, i) => own.has(w) || own.set(w, said[i]));
+  const romanTiles = tiles.map((t) => own.get(t) ?? romanOf(t));
+  if (romanTiles.some((r) => !r)) return undefined;
+  return { kind: 'sentenceBuild', sentence, tiles, romanTiles: romanTiles as string[] };
 }
 
 /**

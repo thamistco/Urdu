@@ -8,6 +8,7 @@ import {
   LETTER_CONTEXT_WORD,
   letterSpotTiles,
   OPTIONS_PER_QUESTION,
+  sentenceExercise,
   soundsOverlap,
   soundTokens,
 } from './generator';
@@ -2333,5 +2334,28 @@ describe('review lessons past the alphabet', () => {
       (l) => `${l.id}: ${buildLessonExercises(l, [], 'both', new Set())[0]?.kind}`
     );
     expect(openers.filter((o) => /: letter/.test(o))).toEqual([]);
+  });
+});
+
+/**
+ * A Roman tray reads the sentence's own words the way the sentence does. The
+ * word table romanises ہوا as hawa (air); in s-194, "main thaka hua hoon", it
+ * is hua, and the tray offered "hawa" (QA report, 2026-10-12).
+ */
+describe('sentence builds on the Roman track', () => {
+  it('romanise every own word as the sentence does', () => {
+    const wrong: string[] = [];
+    for (const s of SENTENCES) {
+      const said = s.roman.split(/\s+/).map((w) => w.replace(/[.?!,؟۔]+$/, ''));
+      if (said.length !== s.words.length) continue;
+      const ex = sentenceExercise(s, 'roman');
+      if (ex?.kind !== 'sentenceBuild' || !ex.romanTiles) continue;
+      s.words.forEach((w, i) => {
+        if (s.words.indexOf(w) !== i) return; // a repeated word reads as its first
+        const r = ex.romanTiles![ex.tiles.indexOf(w)];
+        if (r !== said[i]) wrong.push(`${s.id}: ${w} reads ${r}, not ${said[i]}`);
+      });
+    }
+    expect(wrong).toEqual([]);
   });
 });
