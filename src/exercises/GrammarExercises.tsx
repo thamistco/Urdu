@@ -5,6 +5,7 @@ import { Urdu, Txt, Bold, Eyebrow, Heading, urduLine } from '../components/Text'
 import { Button } from '../components/Button';
 import { feedback } from '../lib/feedback';
 import { romanOf } from '../lib/translit';
+import { romanProse } from '../lib/romanProse';
 import type { ExerciseProps, Exercise } from './types';
 
 type TeachEx = Extract<Exercise, { kind: 'grammarTeach' }>;
@@ -94,7 +95,7 @@ export function GrammarTeachExercise({ exercise, track, onGraded, onExpand }: Ex
       >
         {concept.explain.map((para, i) => (
           <Txt key={i} className={`text-[0.9375rem] leading-7 text-paper/85 ${i > 0 ? 'mt-3' : ''}`}>
-            {para}
+            {track === 'roman' ? romanProse(para) : para}
           </Txt>
         ))}
       </View>

@@ -638,7 +638,7 @@ export const GRAMMAR: GrammarConcept[] = [
     level: 'intermediate',
     explain: [
       'For an action happening at this moment, use the stem + رہا / رہی / رہے (raha / rahi / rahe) + “to be”.',
-      'میں جا رہا ہوں (main ja raha hoon): “I am going”. The رہا (raha) part agrees with the speaker, just like ‑تا did.',
+      'میں جا رہا ہوں (main ja raha hoon): “I am going”. The رہا (raha) part agrees with the speaker, just like ‑تا (‑ta) did.',
       'Compare: میں کھاتا ہوں (main khaata hoon, “I eat”, generally) vs میں کھا رہا ہوں (main kha raha hoon, “I am eating”, now).',
     ],
     examples: [
