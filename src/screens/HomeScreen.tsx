@@ -589,27 +589,32 @@ export function HomeScreen() {
           {/* header */}
           <Reveal>
             <SafeAreaView edges={['top']}>
-              {/* Wraps rather than squeezing: at large text the chips move under
-                  the headline instead of breaking its words (see wholeWords). */}
-              <View className="mb-4 flex-row flex-wrap items-start justify-between gap-y-2">
-                <View className="flex-1 pe-3" style={wholeWords}>
+              {/* The chips share the eyebrow's line, so the greeting gets the
+                  full width under them. Beside the greeting, once the chips
+                  said "0 days" and "20 gems", they squeezed "Speak with them"
+                  onto three lines and pushed a new learner's first lesson
+                  below the fold, so Home opened scrolled past all of this.
+                  The line wraps rather than squeezing: at large text the chips
+                  drop under the eyebrow (see wholeWords). */}
+              <View className="mb-4" style={wholeWords}>
+                <View className="flex-row flex-wrap items-center justify-between gap-y-2">
                   <Eyebrow style={{ color: palette.gold }}>Qaaf · قاف</Eyebrow>
-                  <Display className="mt-1 text-3xl leading-9">{GREETING[store.goal ?? 'curious']}</Display>
+                  <View className="ms-auto flex-row items-center gap-2">
+                    <StatChip
+                      icon={<Illustration name="flame" tile={false} size={16} />}
+                      value={store.streak}
+                      unit={store.streak === 1 ? 'day' : 'days'}
+                      color={atRiskStreak ? palette.rose : palette.flame}
+                    />
+                    <StatChip
+                      icon={<Illustration name="gem" tile={false} size={16} />}
+                      value={store.gems}
+                      unit={store.gems === 1 ? 'gem' : 'gems'}
+                      color={palette.jadeLight}
+                    />
+                  </View>
                 </View>
-                <View className="ms-auto flex-row items-center gap-2">
-                  <StatChip
-                    icon={<Illustration name="flame" tile={false} size={16} />}
-                    value={store.streak}
-                    unit={store.streak === 1 ? 'day' : 'days'}
-                    color={atRiskStreak ? palette.rose : palette.flame}
-                  />
-                  <StatChip
-                    icon={<Illustration name="gem" tile={false} size={16} />}
-                    value={store.gems}
-                    unit={store.gems === 1 ? 'gem' : 'gems'}
-                    color={palette.jadeLight}
-                  />
-                </View>
+                <Display className="mt-1 text-3xl leading-9">{GREETING[store.goal ?? 'curious']}</Display>
               </View>
               {/*
                * Colour alone never carries this — the flame above tints rose
