@@ -254,6 +254,21 @@ export function PracticeScreen() {
             </Card>
           </Reveal>
         )}
+        {/* Not yet open, and said so rather than hidden: a learner with fewer
+            than ten words never learned Read faster existed (tester report,
+            2026-10-12). Not tappable, so it is not the dead end the card above
+            is careful never to be. */}
+        {!canReadFaster && track !== 'roman' && (
+          <Reveal delay={150}>
+            <Card className="mb-6">
+              <Bold className="text-[0.9375rem] text-paper/80">Read faster</Bold>
+              <Txt className="mt-1 text-sm text-paper/60">
+                Words you know, read at a glance. Opens once you know {MIN_WORDS_FOR_A_ROUND} words; you know{' '}
+                {readableWords(learnedWords, WORDS).length}.
+              </Txt>
+            </Card>
+          </Reveal>
+        )}
 
         {/* browse: one shelf at a time, with search across it */}
         <Reveal delay={165}>
