@@ -142,6 +142,11 @@ async function main() {
       if (!route.shows.test(body)) {
         problems.push(`${url} did not open the screen it names: ${body.replace(/\n/g, ' / ').slice(0, 90)}`);
       }
+      // An unfilled template on screen: the Privacy Policy and the Terms both
+      // showed "{{SUPPORT_EMAIL}}" to everyone who read them (tester report,
+      // 2026-10-12).
+      const unfilled = body.match(/\{\{[^}]*\}\}/);
+      if (unfilled) problems.push(`${url} shows the unfilled placeholder ${unfilled[0]}.`);
     }
 
     // Back has to move inside the app. Three screens deep, then back twice.
