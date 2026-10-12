@@ -3090,6 +3090,8 @@ async function settingsSession(page, ctx) {
    * dismissed, never accepted — a run that wiped its own progress would report
    * the rest of the course as never taught.
    */
+  // Asked in the app's own dialog since 2026-10-12, and the browser's still
+  // counts, so a regression to window.confirm reads as asked, not as a wipe.
   let asked = false;
   const watch = (d) => {
     asked = true;
@@ -3099,6 +3101,12 @@ async function settingsSession(page, ctx) {
   const tapped = await tapControl(page, /^Reset all progress/i);
   await page.waitForTimeout(1200);
   page.off('dialog', watch);
+  const inApp = page.locator('[role="alertdialog"]');
+  if (await inApp.count()) {
+    asked = true;
+    await inApp.getByText(/^Cancel$/).click();
+    await page.waitForTimeout(600);
+  }
   const afterReset = await readSurface(page);
   journal.push({
     type: 'resetOffered',

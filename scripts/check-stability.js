@@ -338,12 +338,18 @@ const checked = [];
     if (!(await tapOnScreen(`text=/${name}/`))) continue;
     await page.waitForTimeout(2000);
     await walk(`practice · ${name}`, 8);
-    // Leaving part way through now asks first; this walk means to leave.
-    const leave = (d) => d.accept();
-    page.on('dialog', leave);
+    // Leaving part way through asks first, in the app's own dialog; this
+    // walk means to leave.
     await tapOnScreen('text=/✕/'); // leave the lesson
+    const leave = page.locator('[role="alertdialog"]').getByText(/^Leave$/);
+    if (
+      await leave.waitFor({ timeout: 2000 }).then(
+        () => true,
+        () => false
+      )
+    )
+      await leave.click();
     await page.waitForTimeout(1400);
-    page.off('dialog', leave);
   }
 
   /**
