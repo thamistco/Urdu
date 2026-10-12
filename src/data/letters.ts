@@ -771,6 +771,28 @@ export const POSITIONS = [
 export type PositionKey = (typeof POSITIONS)[number]['key'];
 
 /**
+ * The positions a letter has distinct shapes for, each with the names it
+ * answers to. Four for most letters; two for one that never joins to the
+ * letter after it (alif, daal, re, zhe and the rest), whose start shape is its
+ * alone shape and whose middle shape is its end shape.
+ *
+ * Shown as four, a question about such a letter had two right answers among
+ * four, and the Letter Lab offered four "forms" of which only two differed
+ * (tester report, 2026-10-12). Grouped, each shape is one choice.
+ */
+export function shapeGroups(letter: Pick<Letter, 'forms'>): { keys: PositionKey[]; label: string }[] {
+  const groups: { keys: PositionKey[]; label: string }[] = [];
+  for (const p of POSITIONS) {
+    const same = groups.find((g) => letter.forms[g.keys[0]] === letter.forms[p.key]);
+    if (same) {
+      same.keys.push(p.key);
+      same.label = `${same.label} or ${p.label.toLowerCase()}`;
+    } else groups.push({ keys: [p.key], label: p.label });
+  }
+  return groups;
+}
+
+/**
  * The line under a form: in the Letter Lab, on a new letter's introduction
  * card, and under each option of the which-position question.
  *
