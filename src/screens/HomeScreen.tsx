@@ -50,8 +50,11 @@ const NOTICE_BODY =
 
 const GREETING: Record<string, string> = {
   // "Speak with them" for the goal "Speak with family" read as cut off (QA
-  // report, 2026-10-12).
-  family: 'Speak with your family',
+  // report, 2026-10-12). Not "Speak with your family": at two lines it
+  // pushed a new learner's first lesson under the fold on an iPhone 14 and
+  // Home opened scrolled past itself (check:home-scroll). The goal's own
+  // words fit on one line from 320px up, with 2px to spare.
+  family: 'Speak with family',
   read: 'Read the script',
   heritage: 'Come home to it',
   curious: 'Explore Urdu',
