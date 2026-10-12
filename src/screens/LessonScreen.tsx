@@ -564,6 +564,12 @@ export function LessonScreen() {
           </Pressable>
           <View className="flex-1">
             <ProgressBar progress={(idx + (graded != null ? 1 : 0)) / total} color={palette.jade} height={12} />
+            {/* How far, in steps. The bar alone gave no sense of a 43-step
+                lesson's length, and testers concluded the sentence lessons
+                never ended (QA report, 2026-10-12). */}
+            <Txt className="mt-0.5 text-right text-[0.625rem] text-paper/55" style={{ fontVariant: ['tabular-nums'] }}>
+              {Math.min(idx + 1, total)} of {total}
+            </Txt>
           </View>
           <Hearts count={hearts} free={heartsFree} />
         </View>
