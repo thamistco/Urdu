@@ -81,7 +81,7 @@ export const ESSENTIAL_PACKS: TopicPack[] = [
     [
       ['w-shuru', 'شروع', 'shuroo', 'beginning', '▶️'],
       ['w-khatam', 'ختم', 'khatam', 'end / finished', '⏹️'],
-      ['w-andar2', 'داخل', 'daakhil', 'entering', '📥'],
+      ['w-andar2', 'داخل', 'daakhil', 'entered / admitted', '📥'],
       ['w-khaarij', 'خارج', 'khaarij', 'excluded / out', '📤'],
       ['w-asaan', 'آسان', 'aasaan', 'easy', '😌'],
       ['w-mushkil', 'مشکل', 'mushkil', 'difficult', '😤'],

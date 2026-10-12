@@ -12,7 +12,7 @@ export const HEALTH_PACKS: TopicPack[] = [
       ['w-kamar', 'کمر', 'kamar', 'back / waist', '🧍'],
       ['w-ghutna', 'گھٹنا', 'ghuṭna', 'knee', '🦵'],
       ['w-aidi', 'ایڑی', 'eeṛi', 'heel', '🦶'],
-      ['w-galla', 'گلا', 'galla', 'throat', '🗣️'],
+      ['w-galla', 'گلا', 'gala', 'throat', '🗣️'],
       ['w-maatha', 'ماتھا', 'maatha', 'forehead', '😐'],
       ['w-bhoon', 'بھنویں', 'bhaweñ', 'eyebrows', '👁️'],
       ['w-haddi', 'ہڈی', 'haḍḍi', 'bone', '🦴'],
@@ -82,7 +82,7 @@ export const HEALTH_PACKS: TopicPack[] = [
       ['w-report2', 'رپورٹ درج کروانا', 'riporṭ darj karwaana', 'to file a report', '📝'],
       ['w-gawah', 'گواہ', 'gawaah', 'witness', '👁️'],
       ['w-bachao-tadbeer', 'تدبیر', 'tadbeer', 'measure / remedy', '🧰'],
-      ['w-nikaas', 'نکاس', 'nikaas', 'exit', '🚪'],
+      ['w-nikaas', 'نکاس', 'nikaas', 'outlet / drainage', '🕳️'],
       ['w-alarm', 'الارم', 'alaarm', 'alarm', '🔔'],
     ]
   ),

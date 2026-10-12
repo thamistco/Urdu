@@ -109,7 +109,7 @@ export const SOCIETY_PACKS: TopicPack[] = [
       ['w-katai-jangal', 'جنگلات کی کٹائی', 'jangalaat ki kaṭaai', 'deforestation', '🪓'],
       ['w-tabdeeli-mausam', 'موسمیاتی تبدیلی', 'mausamiyaati tabdeeli', 'climate change', '🌡️'],
       ['w-kachra2', 'فضلہ', 'fazla', 'waste', '🗑️'],
-      ['w-recycle', 'ری سائیکل', 'ri-saaikal', 'recycling', '♻️'],
+      ['w-recycle', 'ری سائیکل', 'ri-saaikal', 'recycle', '♻️'],
       ['w-tawanai-saaf', 'صاف توانائی', 'saaf tawaanaai', 'clean energy', '☀️'],
       ['w-shamsi', 'شمسی', 'shamsi', 'solar', '🌞'],
       ['w-hawai-tawanai', 'ہوائی توانائی', 'hawaai tawaanaai', 'wind power', '🌬️'],
