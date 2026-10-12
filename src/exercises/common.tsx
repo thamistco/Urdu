@@ -166,14 +166,18 @@ export function Question({ children }: { children: ReactNode }) {
  * used works will place every letter in a word backwards, be told they are
  * wrong, and have no idea why. One line fixes that.
  */
-export function BuildDirection({ roman }: { roman?: boolean }) {
+export function BuildDirection({ roman, of = 'letter' }: { roman?: boolean; of?: 'letter' | 'word' }) {
+  // "builds right to left, like Urdu" was read by more than ten testers as
+  // "tap the last letter first", across a dozen lessons (QA report,
+  // 2026-10-12): it described the tray, and they took it as an instruction.
+  // So it says what to do, in the order they do it.
   return (
     <View className="mb-4 flex-row items-center justify-center gap-1.5">
       <Txt style={{ color: palette.gold }} className="text-xs">
         {roman ? '→' : '←'}
       </Txt>
       <Txt className="text-[0.6875rem] text-paper/55">
-        {roman ? 'builds left to right' : 'builds right to left, like Urdu'}
+        {roman ? `Tap in reading order, left to right` : `Tap in reading order: the first ${of} goes on the right`}
       </Txt>
     </View>
   );
