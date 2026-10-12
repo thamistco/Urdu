@@ -49,7 +49,9 @@ const NOTICE_BODY =
   'The course was reorganised since you were last here, so your units hold a different number of lessons. Nothing you learned was lost: your streak, your level and everything the app remembers about your words are untouched.';
 
 const GREETING: Record<string, string> = {
-  family: 'Speak with them',
+  // "Speak with them" for the goal "Speak with family" read as cut off (QA
+  // report, 2026-10-12).
+  family: 'Speak with your family',
   read: 'Read the script',
   heritage: 'Come home to it',
   curious: 'Explore Urdu',

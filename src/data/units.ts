@@ -330,7 +330,9 @@ const PLANNED_UNITS: Unit[] = [
       // See the note on the `courtesy` topic in words.ts.
       V('courtesy', 'Yes, no and thank you'),
       V('voices', 'Voices & stories'),
-      P('Everyday phrases', 'Speak, don’t just read'),
+      // Not "Speak, don't just read": nothing in it asks the learner to speak
+      // (QA report, 2026-10-12).
+      P('Everyday phrases', 'Whole phrases, ready to use'),
       REV('first-faces'),
     ],
   },

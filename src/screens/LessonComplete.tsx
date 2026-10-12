@@ -174,7 +174,10 @@ export function LessonComplete({
 
           <Reveal delay={420}>
             <Txt className="mb-4 text-center text-xs text-paper/55">
-              Come back tomorrow. We’ll bring back what you missed first.
+              {/* It said "Come back tomorrow", over a Continue button that
+                  opens the next lesson at once, and testers read it as a
+                  daily limit (QA report, 2026-10-12). */}
+              Whatever slipped comes back first in your next practice.
             </Txt>
             <Button onPress={onHome}>Continue</Button>
           </Reveal>
