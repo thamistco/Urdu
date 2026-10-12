@@ -17,8 +17,9 @@
  *
  * League promotion needs 150 weekly XP, so fifteen taps won a week in a table
  * the app presents as competition. The whole course pays 7,290 XP and level 16
- * needs 7,200, so 729 taps matched a complete playthrough. A heart refill costs
- * 40 gems, so twelve taps bought one, which undoes the hearts economy.
+ * needs 7,200, so 729 taps matched a complete playthrough. A heart refill cost
+ * 40 gems then (25 since 2026-10-12), so twelve taps bought one, which undoes
+ * the hearts economy.
  *
  * ## The rule
  *

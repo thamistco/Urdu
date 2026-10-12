@@ -4,15 +4,15 @@ import { UNITS } from '../data/units';
  * The first unit costs no hearts.
  *
  * The hearts economy is built for a learner who has some gems: five hearts, a
- * heart back every thirty minutes, and a full refill for forty gems. A new
- * profile starts with twenty, and a lesson pays five at a beginner's accuracy.
- * So the first time anybody runs out — most likely in the alphabet, the
- * hardest content in the course, with almost nothing learned yet — the refill
- * costs twice what they hold, and the only remaining option is to put the
+ * heart back every thirty minutes, and a full refill for twenty-five gems
+ * (forty until 2026-10-12). A new profile starts with twenty, and a lesson
+ * pays five at a beginner's accuracy. So the first time anybody runs out —
+ * most likely in the alphabet, the hardest content in the course, with almost
+ * nothing learned yet — the refill costs more than they hold, and the only remaining option is to put the
  * phone down for half an hour. That is not a difficulty curve, it is a new
  * learner's first session ending on the app's terms rather than theirs.
  *
- * A strong learner is past the price after two flawless lessons, so this is
+ * A learner is past the price after one lesson, so this is
  * not a claim about the whole unit — the test in hearts.test.ts says so, and
  * caught the first version of this comment claiming otherwise. It is a claim
  * about the lessons where the wall actually arrives.

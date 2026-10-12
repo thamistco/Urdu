@@ -51,7 +51,10 @@ describe('the first unit costs no hearts', () => {
     const START_GEMS = 20;
     const perLesson = gemsForLesson(0.39, false);
     expect(START_GEMS, 'a fresh profile cannot afford a refill').toBeLessThan(REFILL_COST);
-    expect(START_GEMS + perLesson * 2, 'nor after two lessons at a beginner score').toBeLessThan(REFILL_COST);
+    // With the refill at 40 this also held after two lessons at a beginner
+    // score. At 25 (2026-10-12) it holds for the first wall only, and that is
+    // the stretch the grace has to cover: the first lessons, in the alphabet.
+    expect(START_GEMS + perLesson, 'one beginner lesson later, it can').toBeGreaterThanOrEqual(REFILL_COST);
     // And the grace period is long enough to reach the other side of that.
     expect(UNITS[0].lessons.length, 'Unit 1 should outlast the unaffordable stretch').toBeGreaterThan(4);
   });
