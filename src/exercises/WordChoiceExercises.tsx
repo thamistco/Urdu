@@ -95,10 +95,13 @@ export function MultipleChoiceExercise({ exercise, track, locked, onGraded }: Ex
               <Lexeme
                 urdu={o.urdu}
                 roman={o.roman}
-                // Before answering, the transliteration would give the game
-                // away on the Script and Both tracks; on the Roman track it is
-                // the only thing there is to read, so it always shows.
-                track={picked || track === 'roman' ? track : 'script'}
+                // The track as chosen. This was the one exercise that hid the
+                // Roman on Both until an answer was picked, to keep it a
+                // reading test; every other Both exercise shows it, so to a
+                // learner it read as the setting failing on the first question
+                // of the second lesson (tester report, 2026-10-12). Reading
+                // without the Roman is what the Script track is for.
+                track={track}
                 size={28}
               />
             </Choice>
