@@ -86,7 +86,10 @@ export function Hearts({ count, free = false }: { count: number; free?: boolean 
       >
         <Illustration name="heart" tile={false} size={16} />
         <Bold style={{ color: palette.roseLight }} className="text-xs">
-          Free in Unit 1
+          {/* Not "in Unit 1": a learner who jumps ahead keeps free hearts
+              until Unit 1 is finished, and read "Free in Unit 1" over a
+              Unit 36 lesson as a mistake (QA report, 2026-10-12). */}
+          Free until Unit 1 is done
         </Bold>
       </View>
     );
