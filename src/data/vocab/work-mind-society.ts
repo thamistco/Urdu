@@ -79,7 +79,7 @@ export const WORK_MIND_SOCIETY_PACKS: TopicPack[] = [
     [
       ['w-kehna', 'کہنا', 'kehna', 'to say', '💬'],
       ['w-pukarna', 'پکارنا', 'pukaarna', 'to call out', '📣'],
-      ['w-chillana', 'چلانا', 'chillaana', 'to shout', '📢', 'چِلّانا'],
+      ['w-chillana', 'چلّانا', 'chillaana', 'to shout', '📢', 'چِلّانا'],
       ['w-fusfusana', 'سرگوشی کرنا', 'sargoshi karna', 'to whisper', '🤫'],
       ['w-bahas-karna', 'بحث کرنا', 'bahas karna', 'to argue', '⚔️'],
       ['w-ittefaq', 'اتفاق کرنا', 'ittefaaq karna', 'to agree', '🤝'],

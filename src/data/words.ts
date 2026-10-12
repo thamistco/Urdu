@@ -366,7 +366,7 @@ const CORE_WORDS: Word[] = [
   { id: 'w-sunehra', urdu: 'سنہرا', roman: 'sunehra', meaning: 'golden', emoji: '✨', topic: 'colours' },
   { id: 'w-chandi-clr', urdu: 'چاندی', roman: 'chaañdi', meaning: 'silver', emoji: '🥈', topic: 'colours' },
   { id: 'w-aasmani', urdu: 'آسمانی', roman: 'aasmaani', meaning: 'sky blue', emoji: '🔵', topic: 'colours' },
-  { id: 'w-surkh', urdu: 'سرخ', roman: 'surkh', meaning: 'crimson red', emoji: '🔴', topic: 'colours' },
+  { id: 'w-surkh', urdu: 'سرخ', roman: 'surkh', meaning: 'red', register: 'formal', emoji: '🔴', topic: 'colours' },
   { id: 'w-qirmizi', urdu: 'قرمزی', roman: 'qirmizi', meaning: 'crimson / scarlet', emoji: '🩷', topic: 'colours' },
   { id: 'w-zeetooni', urdu: 'زیتونی', roman: 'zeetooni', meaning: 'olive', emoji: '🫒', topic: 'colours' },
   { id: 'w-syaah', urdu: 'سیاہ', roman: 'syaah', meaning: 'jet black', emoji: '⬛', topic: 'colours' },

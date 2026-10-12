@@ -1189,9 +1189,9 @@ export const SENTENCES: Sentence[] = [
   // ---- a second pass: daily life, family, time, and place ----
   {
     id: 's-141',
-    words: ['میری', 'بہن', 'استاد', 'ہے'],
-    roman: 'meri behen ustaad hai',
-    meaning: 'My sister is a teacher',
+    words: ['میرا', 'بھائی', 'استاد', 'ہے'],
+    roman: 'mera bhai ustaad hai',
+    meaning: 'My brother is a teacher',
     level: 'beginner',
     concept: 'g-to-be',
   },
@@ -2899,16 +2899,16 @@ export const DIALOGUES: Dialogue[] = [
       {
         speaker: 'A',
         name: 'Guest',
-        urdu: 'کھانا کیسا ہے؟',
-        roman: 'khaana kaisa hai?',
-        meaning: 'How is the food?',
+        urdu: 'آج کیا اچھا ہے؟',
+        roman: 'aaj kya achha hai?',
+        meaning: 'What is good today?',
       },
       {
         speaker: 'B',
         name: 'Waiter',
-        urdu: 'بہت اچھا ہے۔',
-        roman: 'bahut achha hai.',
-        meaning: 'It is very good.',
+        urdu: 'بریانی بہت اچھی ہے۔',
+        roman: 'biryaani bahut achhi hai.',
+        meaning: 'The biryani is very good.',
       },
       {
         speaker: 'A',
