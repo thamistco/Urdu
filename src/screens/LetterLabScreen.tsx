@@ -11,7 +11,7 @@ import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { announce, hasClip } from '../lib/speech';
 import { WORDS } from '../data/words';
-import { LETTERS, POSITIONS, PositionKey, glyphName, positionHint } from '../data/letters';
+import { LETTERS, PositionKey, glyphName, positionHint, shapeGroups } from '../data/letters';
 import { useProgressStore } from '../store/useProgressStore';
 import { Illustration } from '../components/Illustration';
 import type { RootStackParamList } from '../navigation/types';
@@ -223,9 +223,13 @@ export function LetterLabScreen() {
           </View>
 
           {/* position dial */}
+          {/* One choice per distinct shape: a letter that never joins forward
+              has two, and the dial showed four of which only two differed
+              (tester report, 2026-10-12). */}
           <View className="mb-5 flex-row gap-2" accessibilityRole="radiogroup" aria-label="Letter position">
-            {POSITIONS.map((p) => {
-              const active = pos === p.key;
+            {shapeGroups(letter).map((g) => {
+              const p = { key: g.keys[0], label: g.label };
+              const active = g.keys.includes(pos);
               return (
                 <Pressable
                   // A radio with aria-checked, as the daily goal in Settings
@@ -263,6 +267,12 @@ export function LetterLabScreen() {
               );
             })}
           </View>
+
+          {shapeGroups(letter).length < 4 ? (
+            <Txt className="-mt-3 mb-5 text-center text-xs text-paper/60">
+              {letter.name} never joins to the letter after it, so it has two shapes, not four.
+            </Txt>
+          ) : null}
 
           {/* living in a word */}
           <View className="mb-4 rounded-2xl border border-white/10 bg-ink-700 p-5">

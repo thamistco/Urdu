@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { Choice, PromptCard, Question, palette, withAlpha } from './common';
 import { Urdu, Txt, Bold, Eyebrow, urduGlyph } from '../components/Text';
-import { POSITIONS, PositionKey, positionHint } from '../data/letters';
+import { POSITIONS, PositionKey, positionHint, shapeGroups } from '../data/letters';
 import { feedback } from '../lib/feedback';
 import { contrastNotesFor } from './letterContrastNotes';
 import { isCorrectPosition } from './letterFormGrading';
@@ -39,12 +39,18 @@ export function LetterFormExercise({ exercise, locked, onGraded }: ExerciseProps
     onGraded({ items: [{ id: letter.id, type: 'letter' }], correct });
   };
 
-  // A non-connector's two shapes each answer to two names — true only when
-  // `picked` is the *other* name for the same shape `position` already has,
-  // never for `connects: true` letters (whose four shapes are always
-  // distinct) and never when `picked === position` itself (nothing to
-  // explain there).
-  const pickedATwin = picked != null && picked !== position && sameShape(picked);
+  // One choice per distinct shape: four for most letters, two for a letter
+  // that never joins forward ("Alone or start", "Middle or end"). Offered as
+  // four, such a letter had two right answers in every question (tester
+  // report, 2026-10-12).
+  const groups = shapeGroups(letter);
+  const twoShapes = groups.length < POSITIONS.length;
+  const groupHint = (keys: PositionKey[]) =>
+    keys.length === 1
+      ? positionHint(letter, keys[0])
+      : keys.includes('medial')
+        ? 'joined only from the right'
+        : 'on its own, or first in a word';
 
   return (
     <View>
@@ -63,26 +69,27 @@ export function LetterFormExercise({ exercise, locked, onGraded }: ExerciseProps
       <View className="h-4" />
       <Question>Which position is this letter showing?</Question>
       <View className="flex-row flex-wrap justify-between">
-        {POSITIONS.map((p) => {
-          const state = picked == null ? 'idle' : sameShape(p.key) ? 'correct' : p.key === picked ? 'wrong' : 'muted';
+        {groups.map((g) => {
+          const key = g.keys[0];
+          const state =
+            picked == null ? 'idle' : sameShape(key) ? 'correct' : g.keys.includes(picked) ? 'wrong' : 'muted';
           return (
             <Choice
-              key={p.key}
+              key={key}
               state={state}
               disabled={picked != null || locked}
-              onPress={() => choose(p.key)}
+              onPress={() => choose(key)}
               className="mb-3 w-[48%]"
             >
-              <Bold className="text-base">{p.label}</Bold>
-              <Txt className="mt-1 text-xs text-paper/55">{positionHint(letter, p.key)}</Txt>
+              <Bold className="text-base">{g.label}</Bold>
+              <Txt className="mt-1 text-xs text-paper/55">{groupHint(g.keys)}</Txt>
             </Choice>
           );
         })}
       </View>
-      {pickedATwin && (
+      {twoShapes && picked != null && (
         <Txt className="mt-1 text-center text-xs text-paper/55">
-          {letter.name} never joins forward, so “{POSITIONS.find((p) => p.key === position)!.label}” and “
-          {POSITIONS.find((p) => p.key === picked)!.label}” look the same here — both are right.
+          {letter.name} never joins to the letter after it, so it has two shapes, not four.
         </Txt>
       )}
       {/* URD-071: `letter.sound`'s bracketed tag ("aspirate", "nasal") is the
