@@ -54,13 +54,29 @@ function diagnoseBuild(assembled: string[], target: string[]): string | null {
 export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: ExerciseProps<BuildEx>) {
   const { word, tiles } = exercise;
   const target = useMemo(() => Array.from(word.urdu).filter((c) => c.trim().length > 0), [word]);
+  /**
+   * How many letters each word of the answer has: [5] for one word, [4, 5]
+   * for گرم پانی. The tray shows that many empty slots, the next one marked,
+   * with a gap between words. Testers had no way to see where a tile would
+   * land, how long the word was, or that a two-word answer was two words: a
+   * multi-word build read as one run of letters (QA report, 2026-10-12).
+   */
+  const groups = useMemo(
+    () =>
+      word.urdu
+        .split(/\s+/)
+        .map((w) => Array.from(w).filter((c) => c.trim().length > 0).length)
+        .filter((n) => n > 0),
+    [word]
+  );
   const [placed, setPlaced] = useState<number[]>([]); // indices into tiles
   const [graded, setGraded] = useState<boolean | null>(null);
 
   const available = tiles.map((_, i) => i).filter((i) => !placed.includes(i));
 
+  const full = placed.length >= target.length;
   const place = (i: number) => {
-    if (graded != null || locked) return;
+    if (graded != null || locked || full) return;
     feedback.tap();
     setPlaced((p) => [...p, i]);
   };
@@ -80,7 +96,25 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
     onGraded({ items: [{ id: word.id, type: 'word' }], correct });
   };
 
-  const assembled = placed.map((i) => tiles[i]).join('');
+  // The tiles placed so far, with a space where one word of the answer ends,
+  // so the script joins within a word and not across two.
+  const assembled = (() => {
+    let at = 0;
+    const words: string[] = [];
+    for (const n of groups) {
+      words.push(
+        placed
+          .slice(at, at + n)
+          .map((i) => tiles[i])
+          .join('')
+      );
+      at += n;
+    }
+    return words.filter(Boolean).join(' ');
+  })();
+  // Slot k of the answer, word by word: what is in it, or null if empty.
+  let slotAt = 0;
+  const slotGroups = groups.map((n) => Array.from({ length: n }, () => slotAt++));
   const diagnosis =
     graded === false
       ? diagnoseBuild(
@@ -109,49 +143,81 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
           borderColor: graded == null ? withAlpha(palette.paper, 0.25) : graded ? palette.jade : palette.rose,
         }}
       >
-        {placed.length === 0 ? (
-          <View className="flex-1 items-center justify-center">
+        {/* Tapped tiles show their isolated glyph — correct in isolation, but
+            Urdu letters change shape to join their neighbours, so a row of
+            isolated forms never actually looks like the word being spelled.
+            This reads the same tiles as one continuous run of text instead,
+            which lets the script's own shaping join them for real. */}
+        <View className="mb-2 items-center justify-center" style={{ minHeight: 40 }}>
+          {placed.length === 0 ? (
             <Txt className="text-sm text-paper/55">Tap the letters below</Txt>
-          </View>
-        ) : (
-          <>
-            {/* Tapped tiles show their isolated glyph — correct in isolation, but
-                Urdu letters change shape to join their neighbours, so a row of
-                isolated forms never actually looks like the word being spelled.
-                This reads the same tiles as one continuous run of text instead,
-                which lets the script's own shaping join them for real. */}
-            <View className="mb-2 items-center justify-center" style={{ minHeight: 40 }}>
-              <Urdu style={{ fontSize: 30, lineHeight: urduLine(30) }}>{assembled}</Urdu>
-            </View>
-            <View className="flex-row-reverse flex-wrap items-center justify-center">
-              {placed.map((i, order) => (
-                <Pressable
-                  key={`${i}-${order}`}
-                  onPress={() => unplace(i)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${glyphName(tiles[i]) ?? 'Letter'}, letter ${order + 1} of the word. Tap to take it back.`}
-                >
-                  <View
-                    className="mx-1 my-1 rounded-xl px-3 py-1"
-                    style={{ backgroundColor: withAlpha(palette.gold, 0.18) }}
+          ) : (
+            <Urdu style={{ fontSize: 30, lineHeight: urduLine(30) }}>{assembled}</Urdu>
+          )}
+        </View>
+        <View className="flex-row-reverse flex-wrap items-center justify-center gap-x-4">
+          {slotGroups.map((slots, g) => (
+            <View key={g} className="flex-row-reverse flex-wrap items-center justify-center">
+              {slots.map((k) => {
+                const i = placed[k];
+                if (i == null) {
+                  // The next empty slot is marked: the answer to "where does
+                  // this tile go?" before it is tapped.
+                  const next = k === placed.length && graded == null;
+                  return (
+                    <View
+                      key={`slot-${k}`}
+                      accessible={false}
+                      className="mx-1 my-1 rounded-xl"
+                      style={{
+                        width: 40,
+                        height: 44,
+                        borderWidth: next ? 2 : 1,
+                        borderStyle: next ? 'solid' : 'dashed',
+                        borderColor: next ? palette.gold : withAlpha(palette.paper, 0.25),
+                      }}
+                    />
+                  );
+                }
+                // Once checked, a tile can no longer be taken back, so it no
+                // longer says it can (QA report, 2026-10-12).
+                const open = graded == null && !locked;
+                return (
+                  <Pressable
+                    key={`${i}-${k}`}
+                    onPress={() => unplace(i)}
+                    disabled={!open}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${glyphName(tiles[i]) ?? 'Letter'}, letter ${k + 1} of the word.${
+                      open ? ' Tap to take it back.' : ''
+                    }`}
                   >
-                    <Urdu style={{ ...urduGlyph(26) }}>{tiles[i]}</Urdu>
-                  </View>
-                </Pressable>
-              ))}
+                    <View
+                      className="mx-1 my-1 items-center justify-center rounded-xl px-2"
+                      style={{ minWidth: 40, height: 44, backgroundColor: withAlpha(palette.gold, 0.18) }}
+                    >
+                      <Urdu style={{ ...urduGlyph(26) }}>{tiles[i]}</Urdu>
+                    </View>
+                  </Pressable>
+                );
+              })}
             </View>
-          </>
-        )}
+          ))}
+        </View>
       </View>
 
-      <BuildDirection />
+      <BuildDirection of="letter" />
 
       {/* tile tray */}
-      <View className="mb-5 flex-row flex-wrap justify-center">
+      <View
+        className="mb-5 flex-row-reverse flex-wrap justify-center"
+        style={{ opacity: full && graded == null ? 0.5 : 1 }}
+      >
         {available.map((i) => (
           <Pressable
             key={i}
             onPress={() => place(i)}
+            disabled={full || graded != null}
             accessibilityRole="button"
             accessibilityLabel={`${glyphName(tiles[i]) ?? 'Letter tile'}. Tap to add it to the word.`}
           >

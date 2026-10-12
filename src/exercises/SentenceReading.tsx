@@ -97,9 +97,15 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
             <Pressable
               key={`${i}-${order}`}
               onPress={() => unplace(i)}
+              disabled={graded != null || locked}
               hitSlop={4}
               accessibilityRole="button"
-              accessibilityLabel={`Word ${order + 1} of the sentence. Tap to take it back.`}
+              // The word itself, which a screen reader had no way to hear: every
+              // tile was just "Word tile" (QA report, 2026-10-12). And once
+              // checked, a tile can no longer be taken back, so it stops saying so.
+              accessibilityLabel={`${label(i)}, word ${order + 1} of the sentence.${
+                graded == null && !locked ? ' Tap to take it back.' : ''
+              }`}
             >
               <View
                 className="mx-1 my-1 rounded-xl px-3 py-1.5"
@@ -115,7 +121,7 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
           ))
         )}
       </View>
-      <BuildDirection roman={roman} />
+      <BuildDirection roman={roman} of="word" />
 
       <View className="mb-5 flex-row flex-wrap justify-center">
         {available.map((i) => (
@@ -124,7 +130,7 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
             onPress={() => place(i)}
             hitSlop={4}
             accessibilityRole="button"
-            accessibilityLabel="Word tile. Tap to add it to the sentence."
+            accessibilityLabel={`Word tile: ${label(i)}. Tap to add it to the sentence.`}
           >
             <View className="m-1.5 rounded-xl border border-white/10 bg-ink-700 px-4 py-2">
               {roman ? (
