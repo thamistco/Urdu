@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
-import { Bold } from './Text';
+import { Bold, Txt } from './Text';
 import { Illustration } from './Illustration';
 import { palette, withAlpha } from '../theme';
 import { HEARTS_MAX } from '../lib/gamification';
@@ -9,11 +9,18 @@ import { HEARTS_MAX } from '../lib/gamification';
 export function StatChip({
   icon,
   value,
+  unit,
   color = palette.gold,
 }: {
   /** A drawn mark from the icon set — see `Illustration`. */
   icon: ReactNode;
   value: string | number;
+  /**
+   * What the number counts, shown beside it. A tester read the Home header as
+   * "1 · 32" — a flame and a gem are not self-explanatory to somebody on day
+   * one, and a bare number next to each said nothing about either.
+   */
+  unit?: string;
   color?: string;
 }) {
   return (
@@ -24,6 +31,7 @@ export function StatChip({
       {icon}
       <Bold style={{ color }} className="text-sm">
         {value}
+        {unit ? <Txt style={{ color }} className="text-xs">{` ${unit}`}</Txt> : null}
       </Bold>
     </View>
   );

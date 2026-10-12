@@ -600,11 +600,13 @@ export function HomeScreen() {
                   <StatChip
                     icon={<Illustration name="flame" tile={false} size={16} />}
                     value={store.streak}
+                    unit={store.streak === 1 ? 'day' : 'days'}
                     color={atRiskStreak ? palette.rose : palette.flame}
                   />
                   <StatChip
                     icon={<Illustration name="gem" tile={false} size={16} />}
                     value={store.gems}
+                    unit={store.gems === 1 ? 'gem' : 'gems'}
                     color={palette.jadeLight}
                   />
                 </View>
