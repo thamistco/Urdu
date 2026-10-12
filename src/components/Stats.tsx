@@ -79,7 +79,9 @@ export function Hearts({ count, free = false }: { count: number; free?: boolean 
       <View
         accessible
         accessibilityRole="image"
-        accessibilityLabel="Hearts are free until you finish Unit 1"
+        // Not "Hearts are…": the checks find speaker buttons by a label that
+        // starts "Hear", and this one was taken for one.
+        accessibilityLabel="Unit 1 is free: wrong answers cost no hearts until you finish it"
         className="flex-row items-center gap-1"
       >
         <Illustration name="heart" tile={false} size={16} />
