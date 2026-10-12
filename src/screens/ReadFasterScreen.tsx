@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../components/Screen';
 import { TopBar } from '../components/TopBar';
 import { Reveal } from '../components/Reveal';
@@ -11,6 +12,7 @@ import { announce } from '../lib/speech';
 import { WORDS, glossOf, type Word } from '../data/words';
 import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
+import type { RootStackParamList } from '../navigation/types';
 import {
   readableWords,
   pickRound,
@@ -40,7 +42,7 @@ type Phase = 'intro' | 'reading' | 'revealed' | 'done';
  * mark. The clock only describes, after the round, and only beats a best.
  */
 export function ReadFasterScreen() {
-  const nav = useNavigation();
+  const nav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const learnedWords = useProgressStore((s) => s.learnedWords);
   const best = useProgressStore((s) => s.readingBestWpm);
   const recordReadingPace = useProgressStore((s) => s.recordReadingPace);
@@ -114,7 +116,9 @@ export function ReadFasterScreen() {
     setPhase('done');
   };
 
-  const back = () => nav.goBack();
+  // Opened from its own address there is nothing to go back to, and Back did
+  // nothing at all (tester report, 2026-10-12); then it goes Home.
+  const back = () => (nav.canGoBack() ? nav.goBack() : nav.popTo('Main'));
 
   if (track === 'roman') {
     return (
