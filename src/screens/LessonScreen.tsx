@@ -248,7 +248,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
     // How many due items to ask for is scheduling policy, not a screen
     // decision — see `dueBudget`, which is where the old flat cap of four for
     // every kind of lesson was quietly defeating spaced repetition.
-    const want = dueBudget(lesson.kind, lesson.size);
+    const want = dueBudget(lesson.kind, lesson.size, lesson.id);
     // Only what this track can show: capped before the generator dropped the
     // rest, a Roman learner's due letters filled every slot (cardsOnTrack).
     const due = dueQueue(cardsOnTrack(srs, srsType, track), want).map((id) => ({

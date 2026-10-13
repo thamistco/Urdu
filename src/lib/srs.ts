@@ -177,6 +177,9 @@ export function dueCount(cards: Record<string, SrsCard>, now = Date.now()): numb
   return Object.values(cards).filter((c) => isDue(c, now)).length;
 }
 
+/** The share of a unit review that due items may take (QA, 2026-10-13, H8). */
+export const UNIT_REVIEW_DUE_SHARE = 0.3;
+
 /**
  * How many due items a lesson should ask for.
  *
@@ -188,11 +191,18 @@ export function dueCount(cards: Record<string, SrsCard>, now = Date.now()): numb
  * being forgotten — the only ones the schedule cares about — were mostly left
  * out.
  *
- * A review lesson is *for* this, so it takes as many as it has room for.
- * Anything else is teaching something new and takes a handful alongside.
+ * The Daily Review and the catch-up review are *for* this, so they take as
+ * many as they have room for. A unit review is a review of its unit: filled
+ * from the due queue first, the B2 reviews opened on beginner letter drills
+ * and rev-land-and-sky on other units' words (QA, 2026-10-13, H8). It takes
+ * due items for at most 30% of its slots, and fills the rest from its own
+ * unit (`reviewWordPool` puts the unit's words first). Anything else is
+ * teaching something new and takes a handful alongside.
  */
-export function dueBudget(kind: string, size: number): number {
-  return kind === 'review' ? size : 4;
+export function dueBudget(kind: string, size: number, lessonId?: string): number {
+  if (kind !== 'review') return 4;
+  const unitReview = !!lessonId && !lessonId.startsWith('practice-');
+  return unitReview ? Math.round(size * UNIT_REVIEW_DUE_SHARE) : size;
 }
 
 /** A cheap 0..1 "strength" for UI meters. */
