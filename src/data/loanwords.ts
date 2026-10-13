@@ -11,12 +11,22 @@ export const LOANWORD_SPELLINGS: Record<string, string[]> = {
   'w-x-ray': ['x-ray', 'xray'],
   'w-doctor': ['doctor'],
   'w-motor': ['motor'],
+  'w-wifi': ['wifi', 'wi-fi'],
+};
+
+/**
+ * Common Roman spellings the skeleton in roman.ts cannot reach, accepted as
+ * exact. چیونٹی is cheenti in much Roman Urdu, as in Hindi; it passed as a
+ * near miss until the stored spelling became chyoonṭi (QA round 5, M28).
+ */
+export const OTHER_SPELLINGS: Record<string, string[]> = {
+  'w-chiti': ['cheenti', 'cheeonti', 'chiunti'],
 };
 
 const flat = (s: string) => s.toLowerCase().replace(/[^a-z]/g, '');
 
-/** Whether `typed` is an accepted English spelling of this word. */
+/** Whether `typed` is an accepted English spelling, or a listed other spelling, of this word. */
 export function isLoanSpelling(wordId: string, typed: string): boolean {
   const t = flat(typed);
-  return !!t && (LOANWORD_SPELLINGS[wordId] ?? []).some((s) => flat(s) === t);
+  return !!t && [...(LOANWORD_SPELLINGS[wordId] ?? []), ...(OTHER_SPELLINGS[wordId] ?? [])].some((s) => flat(s) === t);
 }

@@ -35,6 +35,10 @@ function skeleton(s: string): string {
       .replace(/ee/g, 'i') // peeta / pita
       .replace(/oo/g, 'o') // hoon / hon
       .replace(/ei/g, 'ai') // mein / main
+      // Long vowels collapse before the ai fold below, not after: folded
+      // first, gaay became gae while gay became ge, and waai-faai and wai-fai
+      // parted the same way (QA round 5, M28).
+      .replace(/(.)\1+/g, '$1')
       // ai and e: Roman Urdu writes them interchangeably, and a final ay too:
       // hai / he, kaise / kaisay, joote / jootay, jahez / jehaiz (QA, 2026-10-13,
       // H3). ka / ke / ki stay apart: none of them is an ai.

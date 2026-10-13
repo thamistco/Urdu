@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { matchesWord, nearMiss, romanSkeleton } from './roman';
-import { isLoanSpelling, LOANWORD_SPELLINGS } from '../data/loanwords';
+import { isLoanSpelling, LOANWORD_SPELLINGS, OTHER_SPELLINGS } from '../data/loanwords';
 import { getWord } from '../data/words';
 
 describe('matchesWord', () => {
@@ -65,12 +65,30 @@ describe('nearMiss', () => {
   });
 });
 
+describe('long vowels', () => {
+  // QA round 5, M28: the ai fold ran before doubled letters collapsed, so
+  // gaay and gay reduced to different skeletons and gay was refused.
+  it.each([
+    ['gay', 'gaay'],
+    ['tai', 'ṭaai'],
+    ['wai-fai', 'waai-faai'],
+    ['wai fai', 'waai-faai'],
+    ['aeen', 'aaeen'],
+    ['kitab', 'kitaab'],
+  ])('accepts %s, written with a single vowel, as exactly %s', (typed, stored) => {
+    expect(matchesWord(typed, '', stored)).toBe(true);
+  });
+});
+
 describe('loanword spellings', () => {
   it('accept the English spelling of a word Urdu took from English, and only those', () => {
     expect(isLoanSpelling('w-whale', 'Whale')).toBe(true);
     expect(isLoanSpelling('w-x-ray', 'x-ray')).toBe(true);
     expect(isLoanSpelling('w-doctor', 'doctor')).toBe(true);
     expect(isLoanSpelling('w-paani', 'water')).toBe(false);
-    for (const id of Object.keys(LOANWORD_SPELLINGS)) expect(getWord(id), id).toBeDefined();
+    expect(isLoanSpelling('w-wifi', 'wifi')).toBe(true);
+    expect(isLoanSpelling('w-chiti', 'cheenti')).toBe(true);
+    for (const id of [...Object.keys(LOANWORD_SPELLINGS), ...Object.keys(OTHER_SPELLINGS)])
+      expect(getWord(id), id).toBeDefined();
   });
 });
