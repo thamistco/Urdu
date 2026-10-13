@@ -126,6 +126,9 @@ type ProgressState = {
   learnedLetters: string[];
   learnedWords: string[];
   perfectLessons: number;
+  /** The one-time note that hearts are on has been shown (LessonComplete). */
+  heartsIntroSeen: boolean;
+  seeHeartsIntro: () => void;
   srs: Record<string, SrsCard>;
   srsType: Record<string, ItemType>;
 
@@ -232,6 +235,8 @@ export const useProgressStore = create<ProgressState>()(
       learnedLetters: [],
       learnedWords: [],
       perfectLessons: 0,
+      heartsIntroSeen: false,
+      seeHeartsIntro: () => set({ heartsIntroSeen: true }),
       srs: {},
       srsType: {},
       xpHistory: {},

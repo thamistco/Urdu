@@ -72,6 +72,13 @@ function isTrace(ex: Exercise | undefined): boolean {
   return ex?.kind === 'letterTrace';
 }
 
+/** A listening card on a word this lesson has only met as a guess so far. */
+function isFirstListen(ex: Exercise | undefined, pretested: Set<string>): boolean {
+  if (ex?.kind !== 'listenTap' || ex.pretest || !pretested.has(ex.word.id)) return false;
+  pretested.delete(ex.word.id); // the first one only
+  return true;
+}
+
 /**
  * How much the learner had to supply, which is how much a correct answer is
  * worth to the schedule.
@@ -266,7 +273,25 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   const [correctCount, setCorrectCount] = useState(0);
   const [done, setDone] = useState(false);
   const [result, setResult] = useState<FinishResult | null>(null);
-  const [outOfHearts, setOutOfHearts] = useState(false);
+  /**
+   * Out of hearts before the first question, not at the first mistake.
+   *
+   * At 0 hearts any lesson still opened, and the wall appeared at the first
+   * wrong answer, mid-lesson (QA, 2026-10-13, C1). It now meets the learner at
+   * the door, with the same refill and the same time to the next heart, so a
+   * lesson is never started that cannot be finished.
+   */
+  const [outOfHearts, setOutOfHearts] = useState(() => {
+    useProgressStore.getState().regenHearts();
+    const s = useProgressStore.getState();
+    return !heartsAreFree(s.completedLessons, s.skippedLessons) && s.hearts <= 0;
+  });
+  /**
+   * Words met in this lesson's guess-first questions. A listening card on one
+   * of them is the first time the learner hears it asked for, with no text on
+   * screen: it costs no heart, like the guess before it (QA, M15).
+   */
+  const pretestedRef = useRef(new Set<string>());
   /** Last heart gone, but the learner is still reading why. */
   const [heartsSpent, setHeartsSpent] = useState(false);
   /**
@@ -383,9 +408,17 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
       // correct answer on an exercise that supplied no options counts as easy.
       const grade = !result.correct ? 'again' : demandOf(exercises[idx]) === 'produce' ? 'easy' : 'good';
       result.items.forEach((it) => recordItemGrade(it, grade));
+      const answered = exercises[idx];
+      const freeListen = isFirstListen(answered, pretestedRef.current);
+      if (isPretest(answered) && 'word' in answered) pretestedRef.current.add(answered.word.id);
       if (result.correct) {
         setCorrectCount((c) => c + 1);
-      } else if (!isTeaching(exercises[idx]) && !isPretest(exercises[idx]) && !isTrace(exercises[idx])) {
+      } else if (
+        !isTeaching(exercises[idx]) &&
+        !isPretest(exercises[idx]) &&
+        !isTrace(exercises[idx]) &&
+        !freeListen
+      ) {
         // One heart per item per lesson — see `chargedRef`.
         const already = result.items.length > 0 && result.items.every((it) => chargedRef.current.has(it.id));
         result.items.forEach((it) => chargedRef.current.add(it.id));
@@ -505,9 +538,9 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
     // Either the button works, or the learner is told exactly what stands
     // between them and playing again — never a disabled button and a
     // sentence that only talks about the option they can't take yet.
-    // A fresh profile starts with 20 gems against a 25-gem refill and earns
-    // 5-8 a lesson, so the very first lockout may not afford the button;
-    // the wait needs to be a real answer, not just implied by its absence.
+    // A refill is 10 gems and a lesson pays 5 to 10, but a learner who has
+    // spent theirs still needs the wait as a real answer, not just implied by
+    // a disabled button.
     const canAfford = gems >= REFILL_COST;
     const short = gemsShortOfRefill(gems);
     const waitMin = minutesUntilNextHeart(heartsUpdatedAt);
