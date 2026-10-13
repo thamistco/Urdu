@@ -35,9 +35,14 @@ export function LetterTeachExercise({ exercise, onGraded }: ExerciseProps<TeachE
   // screen scrolled (design review, 2026-10-09, Q-016). Under 700px the same
   // content packs tighter: a smaller letter, its name and speaker on one
   // line, the example word on one row.
-  const { height, width } = useWindowDimensions();
+  const { height } = useWindowDimensions();
   const short = height < 700;
-  const narrow = width < 380;
+  // Two by two only when four tiles cannot fit: 4 × 68 plus three 8px gaps.
+  // Measured on the row itself rather than guessed from the window, which
+  // put a 2×2 grid on every 360px phone at normal text size and pushed
+  // "Got it" a further 150px down (QA round 4, 2026-10-13).
+  const [rowWidth, setRowWidth] = useState(0);
+  const narrow = rowWidth > 0 && rowWidth < 4 * 68 + 3 * 8;
 
   // A non-connector: it joins only from the right, so its start form is its
   // alone form and its middle form is its end form.
@@ -94,7 +99,10 @@ export function LetterTeachExercise({ exercise, onGraded }: ExerciseProps<TeachE
       </Txt>
       {/* Two by two when narrow: four 68px tiles overflowed at 360px with
           the text zoomed to 130% (QA, 2026-10-13, M27). */}
-      <View className="flex-row flex-wrap justify-center gap-2">
+      <View
+        className="flex-row flex-wrap justify-center gap-2"
+        onLayout={(e) => setRowWidth(e.nativeEvent.layout.width)}
+      >
         {POSITIONS.map((p) => (
           <View
             key={p.key}
