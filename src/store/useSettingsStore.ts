@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { guardedStorage, keepSavedFields } from './storage';
+import { guardedStorage, keepSavedFields, keepWellTypedFields } from './storage';
 import { setMuted } from '../lib/sound';
 import { setHapticsEnabled } from '../lib/haptics';
 import { setGlossEnabled, setVoiceSet } from '../lib/speech';
@@ -97,6 +97,7 @@ export const useSettingsStore = create<SettingsState>()(
       // bumps the version and translates here.
       version: 0,
       migrate: (persisted) => keepSavedFields<SettingsState>(persisted),
+      merge: keepWellTypedFields<SettingsState>('qaaf-settings'),
       onRehydrateStorage: () => (state) => state?.syncEffects(),
     }
   )

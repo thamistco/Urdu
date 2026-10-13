@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { guardedStorage, keepSavedFields } from './storage';
+import { guardedStorage, keepSavedFields, keepWellTypedFields } from './storage';
 
 /**
  * Tester mode: unlimited hearts and an unlocked path, for looking at the app
@@ -77,6 +77,7 @@ export const useTesterStore = create<TesterState>()(
       storage: createJSONStorage(() => guardedStorage(0)),
       version: 0,
       migrate: (persisted) => keepSavedFields<TesterState>(persisted),
+      merge: keepWellTypedFields<TesterState>('qaaf-tester'),
     }
   )
 );

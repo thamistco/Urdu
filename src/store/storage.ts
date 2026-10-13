@@ -106,3 +106,36 @@ export function guardedStorage(version: number): StateStorage {
 export function keepSavedFields<T>(persisted: unknown): T {
   return (persisted && typeof persisted === 'object' ? persisted : {}) as T;
 }
+
+const kind = (v: unknown) => (v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v);
+
+/**
+ * The `merge` for every persisted store: saved fields over the defaults, but
+ * only where a field still has the type its default has.
+ *
+ * One wrong-typed field was enough to stop the app: `learnedWords: 5` left
+ * Profile and every lesson blank, `srs: null` crashed Home on every load, and
+ * nothing was backed up, because the save as a whole looked fine (QA round 5,
+ * M29). Such a field now falls back to its default, and the save as read is
+ * first copied to `<name>-backup-<time>` with the names of the fields that
+ * were replaced. A field whose default is null has no type to check, and a
+ * field the defaults do not have is kept, as `keepSavedFields` promises.
+ * One level deep: what is inside a list or a record is not checked.
+ */
+export function keepWellTypedFields<T extends object>(name: string) {
+  return (persisted: unknown, current: T): T => {
+    if (!persisted || typeof persisted !== 'object' || Array.isArray(persisted)) return current;
+    const defaults = current as Record<string, unknown>;
+    const kept: Record<string, unknown> = {};
+    const replaced: string[] = [];
+    for (const [key, value] of Object.entries(persisted)) {
+      const fallback = defaults[key];
+      if (fallback === undefined || fallback === null || kind(fallback) === kind(value)) kept[key] = value;
+      else replaced.push(key);
+    }
+    if (replaced.length) {
+      void safeStorage.setItem(`${name}-backup-${Date.now()}`, JSON.stringify({ state: persisted, replaced }));
+    }
+    return { ...current, ...kept };
+  };
+}

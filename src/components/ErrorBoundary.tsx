@@ -13,6 +13,21 @@ import { palette } from '../theme';
  * way back: on the web a reload of the app's front page, which keeps saved
  * progress, since that lives in storage and not in the screen that broke.
  */
+/** When "Go to your lessons" last reloaded the app, kept for this tab only. */
+const RECOVERED_AT = 'qaaf-recovered-at';
+
+const webOnly = () => Platform.OS === 'web' && typeof window !== 'undefined';
+
+/** Whether the app failed again within a minute of reloading to recover. */
+function failedAgain(): boolean {
+  if (!webOnly()) return false;
+  try {
+    return Date.now() - Number(window.sessionStorage.getItem(RECOVERED_AT) ?? 0) < 60_000;
+  } catch {
+    return false;
+  }
+}
+
 export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
 
@@ -25,13 +40,42 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: 
     console.error('Qaaf caught a render error', error);
   }
 
+  private home = () => {
+    const base = document.querySelector('meta[name="qaaf:base"]')?.getAttribute('content') ?? '';
+    window.location.assign(`${base.replace(/\/+$/, '')}/`);
+  };
+
   private recover = () => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      const base = document.querySelector('meta[name="qaaf:base"]')?.getAttribute('content') ?? '';
-      window.location.assign(`${base.replace(/\/+$/, '')}/`);
+    if (webOnly()) {
+      try {
+        window.sessionStorage.setItem(RECOVERED_AT, String(Date.now()));
+      } catch {
+        // Storage refused: the reload still happens, without the second offer.
+      }
+      this.home();
       return;
     }
     this.setState({ failed: false });
+  };
+
+  /**
+   * When the front page itself breaks, reloading it breaks it again: a save
+   * holding something no screen can draw crashed Home on every load, and the
+   * button above looped (QA round 5, M29). The way out is to start again, but
+   * never by losing the save: each one is copied to a backup first.
+   */
+  private startAgain = () => {
+    try {
+      for (const name of ['qaaf-progress', 'qaaf-settings']) {
+        const raw = window.localStorage.getItem(name);
+        if (raw != null) window.localStorage.setItem(`${name}-backup-${Date.now()}`, raw);
+        window.localStorage.removeItem(name);
+      }
+      window.sessionStorage.removeItem(RECOVERED_AT);
+    } catch {
+      // Storage refused: nothing was saved to clear, and the reload starts clean.
+    }
+    this.home();
   };
 
   render() {
@@ -45,8 +89,19 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: 
         <Txt className="mb-8 max-w-[300px] text-center text-sm text-paper/60">
           This screen hit a problem. Your progress is saved; going back to your lessons usually fixes it.
         </Txt>
-        <View style={{ width: '100%', maxWidth: 360 }}>
+        <View style={{ width: '100%', maxWidth: 360, gap: 12 }}>
           <Button onPress={this.recover}>Go to your lessons</Button>
+          {failedAgain() ? (
+            <>
+              <Txt className="text-center text-sm text-paper/60">
+                It happened again. Starting again on this device copies your saved progress to a backup first, then
+                clears it from this browser.
+              </Txt>
+              <Button variant="ghost" onPress={this.startAgain}>
+                Start again on this device
+              </Button>
+            </>
+          ) : null}
         </View>
       </View>
     );

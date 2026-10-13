@@ -6,7 +6,7 @@ import { makeRedirectUri } from 'expo-auth-session';
 import type { Session } from '@supabase/supabase-js';
 
 import { supabase, isAuthConfigured } from '../lib/supabase';
-import { guardedStorage, keepSavedFields } from './storage';
+import { guardedStorage, keepSavedFields, keepWellTypedFields } from './storage';
 import { pullThenMerge, stopSync } from '../lib/sync';
 
 // It reads session storage at load, and a browser that refuses storage threw
@@ -174,6 +174,7 @@ export const useAuthStore = create<AuthState>()(
       storage: createJSONStorage(() => guardedStorage(0)),
       version: 0,
       migrate: (persisted) => keepSavedFields<AuthState>(persisted),
+      merge: keepWellTypedFields<AuthState>('qaaf-auth'),
       // the guest choice and a deleted account's id; the session is supabase's
       partialize: (s) => ({ isGuest: s.isGuest, deletedUserId: s.deletedUserId }),
     }
