@@ -239,18 +239,17 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
         </View>
       )}
       {graded === false && (
-        // The answer used to be a bare label and a glyph at the very bottom of
-        // the exercise, which the feedback banner — appearing at the same
-        // moment — covered, so a wrong build showed the word "Correct:" and
-        // nothing else. Boxing it makes it a thing on the page rather than a
-        // trailing line, and the lesson now scrolls clear of the banner.
+        // What the learner built, beside what went wrong with it. This box
+        // used to repeat the answer, which the lesson's "The answer" card
+        // below already shows, so a wrong build printed the word twice and
+        // never the attempt: a learner whose letters did not follow the
+        // Roman could not see where theirs went astray (QA report v3, L24).
         <View
           className="items-center rounded-2xl px-4 py-3"
           style={{ backgroundColor: withAlpha(palette.rose, 0.14), borderWidth: 2, borderColor: palette.rose }}
         >
-          <Txt className="text-xs text-paper/60">The word is</Txt>
-          <Urdu style={{ fontSize: 34, lineHeight: urduLine(34) }}>{word.urdu}</Urdu>
-          <Txt className="text-xs text-paper/60">{word.roman}</Txt>
+          <Txt className="text-xs text-paper/60">You built</Txt>
+          <Urdu style={{ fontSize: 34, lineHeight: urduLine(34) }}>{assembled}</Urdu>
           {diagnosis && <Txt className="mt-2 text-center text-xs text-paper/70">{diagnosis}</Txt>}
         </View>
       )}
