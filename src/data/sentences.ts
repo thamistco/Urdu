@@ -2760,6 +2760,21 @@ export type Dialogue = {
   voices: { A: 'f' | 'm'; B: 'f' | 'm' };
 };
 
+/**
+ * A sentence as it is read whole: its words, and the full stop or question
+ * mark Urdu ends it with.
+ *
+ * Every one of the 256 sentences was shown without one (QA, 2026-10-13, L8).
+ * Added where a sentence is displayed whole, not stored in `words`: there each
+ * word is a tile, a key in the transliteration table and part of the text the
+ * clip was recorded from, and a mark there would have changed all three, and
+ * marked every sentence's audio out of date. Questions are told by their
+ * English, which every one of them ends with a question mark.
+ */
+export function sentenceText(s: Pick<Sentence, 'words' | 'meaning'>): string {
+  return `${s.words.join(' ')}${/\?\s*$/.test(s.meaning) ? '؟' : '۔'}`;
+}
+
 export const DIALOGUES: Dialogue[] = [
   {
     id: 'd-1',

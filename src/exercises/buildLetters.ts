@@ -11,5 +11,6 @@
 export const VOWEL_MARKS = /[ً-ٰٟ]/;
 
 export function buildLetters(urdu: string): string[] {
-  return Array.from(urdu).filter((c) => c.trim().length > 0 && !VOWEL_MARKS.test(c));
+  // Nor the full stop, question mark and comma a whole sentence ends with.
+  return Array.from(urdu).filter((c) => c.trim().length > 0 && !VOWEL_MARKS.test(c) && !/[۔؟،]/.test(c));
 }

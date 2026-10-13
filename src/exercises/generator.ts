@@ -14,6 +14,7 @@ import {
   getDialogue,
   registerOf as pronounRegisterOf,
   type Sentence,
+  sentenceText,
 } from '../data/sentences';
 import { cueOf, VERDICT_CUES, NUMERALS } from '../data/art';
 import { toUrduDigits, reversedOf } from '../lib/numerals';
@@ -68,7 +69,7 @@ const PHRASE_WORDS: Word[] = PHRASES.map((p) => ({
  */
 const SENTENCE_WORDS: Word[] = SENTENCES.map((s) => ({
   id: s.id,
-  urdu: s.words.join(' '),
+  urdu: sentenceText(s),
   roman: s.roman,
   meaning: s.meaning,
   emoji: '📝', // audit:emoji-ok — a sentence has no picture of its own
