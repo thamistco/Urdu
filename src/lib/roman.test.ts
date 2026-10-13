@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { matchesWord, nearMiss, romanSkeleton } from './roman';
+import { isLoanSpelling, LOANWORD_SPELLINGS } from '../data/loanwords';
+import { getWord } from '../data/words';
 
 describe('matchesWord', () => {
   it('folds the conventions romanisers disagree about', () => {
@@ -46,13 +48,29 @@ describe('nearMiss', () => {
     expect(nearMiss('pal', 'phal', new Set([romanSkeleton('pal')]))).toBe(false);
   });
 
-  it('refuses near misses on short words', () => {
-    expect(nearMiss('reet', 'ret', new Set())).toBe(false);
-    expect(nearMiss('saf', 'saaf', new Set())).toBe(false);
+  // The QA list of 2026-10-13 (H3) asked for these to pass.
+  it.each([
+    ['reet', 'ret'],
+    ['jehaiz', 'jahez'],
+    ['kaisay', 'kaise'],
+    ['jootay', 'joote'],
+    ['kurra-e-ardh', 'kurra-e-arz'],
+  ])('accepts %s for %s', (typed, stored) => {
+    expect(matchesWord(typed, '', stored) || nearMiss(typed, stored, taken)).toBe(true);
   });
 
-  it('refuses two letters off', () => {
-    expect(nearMiss('jehaiz', 'jahez', new Set())).toBe(false);
+  it('still refuses a short word that is another word, and three letters off', () => {
+    expect(nearMiss('rat', 'ret', taken)).toBe(false);
     expect(nearMiss('dozain', 'darjan', new Set())).toBe(false);
+  });
+});
+
+describe('loanword spellings', () => {
+  it('accept the English spelling of a word Urdu took from English, and only those', () => {
+    expect(isLoanSpelling('w-whale', 'Whale')).toBe(true);
+    expect(isLoanSpelling('w-x-ray', 'x-ray')).toBe(true);
+    expect(isLoanSpelling('w-doctor', 'doctor')).toBe(true);
+    expect(isLoanSpelling('w-paani', 'water')).toBe(false);
+    for (const id of Object.keys(LOANWORD_SPELLINGS)) expect(getWord(id), id).toBeDefined();
   });
 });

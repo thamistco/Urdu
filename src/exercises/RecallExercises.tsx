@@ -8,6 +8,7 @@ import { Button } from '../components/Button';
 import { feedback } from '../lib/feedback';
 import { matchesWord, nearMiss, romanSkeleton } from '../lib/roman';
 import { WORDS, synonymsOf } from '../data/words';
+import { isLoanSpelling } from '../data/loanwords';
 import type { ExerciseProps, Exercise } from './types';
 import type { Word } from '../data/words';
 import { glossOf } from '../data/words';
@@ -62,7 +63,7 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
     // word that was actually asked for so the pair is learned rather than one
     // of them quietly punished.
     const alt = synonymsOf(word).find((w) => matchesWord(text, w.urdu, w.roman));
-    const exact = matchesWord(text, word.urdu, word.roman);
+    const exact = matchesWord(text, word.urdu, word.roman) || isLoanSpelling(word.id, text);
     const near = !exact && !alt && nearMiss(text, word.roman, takenBy(word));
     const correct = exact || !!alt || near;
     setAccepted(!exact && alt ? alt : null);
