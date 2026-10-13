@@ -9,6 +9,8 @@ import {
   letterSpotTiles,
   OPTIONS_PER_QUESTION,
   sentenceExercise,
+  buildTilesFor,
+  tileLookalikes,
   soundsOverlap,
   soundTokens,
 } from './generator';
@@ -2359,3 +2361,27 @@ describe('sentence builds on the Roman track', () => {
     expect(wrong).toEqual([]);
   });
 });
+
+/**
+ * A decoy tile is a whole letter, never a bare vowel mark, and never a
+ * hamza-or-tie variant of a letter the word already has (QA report v3, L17:
+ * تکیہ offered both ہ and ۂ; round 2, B5: a zer tile on words without one).
+ */
+describe('word-build decoys', () => {
+  it('are whole letters, and never a near-twin of one in the word', () => {
+    const bad = new Set<string>();
+    for (let round = 0; round < 20; round++) {
+      for (const w of WORDS) {
+        const chars = Array.from(w.urdu).filter((c) => c.trim().length > 0);
+        const extra = [...buildTilesFor(w)];
+        for (const c of chars) extra.splice(extra.indexOf(c), 1);
+        for (const d of extra) {
+          if (/[\u064B-\u065F\u0670]/.test(d)) bad.add(`${w.id}: the mark ${d} as a decoy`);
+          if (chars.some((c) => tileLookalikes(c, d))) bad.add(`${w.id}: ${d} beside its twin`);
+        }
+      }
+    }
+    expect([...bad]).toEqual([]);
+  });
+});
+
