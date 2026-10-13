@@ -13,6 +13,7 @@ import { NotoNastaliqUrdu_400Regular, NotoNastaliqUrdu_700Bold } from '@expo-goo
 
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { ConfirmHost } from './src/components/ConfirmHost';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { linking } from './src/navigation/linking';
 import { initSound } from './src/lib/sound';
 import { useSettingsStore } from './src/store/useSettingsStore';
@@ -123,7 +124,9 @@ export default function App() {
       <SafeAreaProvider>
         <NavigationContainer linking={linking} theme={navTheme} onReady={onReady} documentTitle={DOCUMENT_TITLE}>
           <StatusBar style="light" />
-          <RootNavigator />
+          <ErrorBoundary>
+            <RootNavigator />
+          </ErrorBoundary>
           <ConfirmHost />
         </NavigationContainer>
       </SafeAreaProvider>
