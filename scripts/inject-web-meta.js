@@ -162,7 +162,44 @@ const tags = [
   // "settings" and find nothing. Absent means served from the root, which is
   // what a local `npm run build:web` produces.
   baseUrl && `<meta name="qaaf:base" content="${esc(baseUrl)}" />`,
+  ...fontPreloads(),
 ].filter(Boolean);
+
+/**
+ * Start the fonts the first screen waits for as the page loads, not after the
+ * bundle has run.
+ *
+ * App.tsx holds the first screen until the fonts in its `useFonts` have
+ * loaded (or 2.5s pass), and those requests began only once the 900 KB bundle
+ * had downloaded and run: at 6.9s on slow 4G with a 4x slower CPU (QA round
+ * 5, M24). Preloaded, they download alongside the bundle. Measured locally,
+ * gzip served, three cold runs each: usable at 10.3s before, 9.2s after.
+ *
+ * The list is read from App.tsx's `useFonts` call, so the two cannot drift;
+ * a name there with no file in the export stops the build rather than
+ * preloading nothing.
+ */
+function fontPreloads() {
+  const app = fs.readFileSync(path.join(ROOT, 'App.tsx'), 'utf8');
+  const call = app.match(/useFonts\(\{([\s\S]*?)\}\)/);
+  if (!call) throw new Error('inject-web-meta: no useFonts({...}) call found in App.tsx');
+  const names = [...call[1].matchAll(/:\s*([A-Za-z]+_\d{3}[A-Za-z_]*)/g)].map((m) => m[1]);
+  const files = [];
+  const walk = (dir) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const f = path.join(dir, e.name);
+      if (e.isDirectory()) walk(f);
+      else if (f.endsWith('.ttf')) files.push(f);
+    }
+  };
+  walk(path.join(DIST, 'assets'));
+  return names.map((n) => {
+    const file = files.find((f) => path.basename(f).startsWith(`${n}.`));
+    if (!file) throw new Error(`inject-web-meta: ${n} is in useFonts but no ${n}.*.ttf is in the export`);
+    const href = `${baseUrl}/${path.relative(DIST, file).split(path.sep).join('/')}`;
+    return `<link rel="preload" href="${esc(href)}" as="font" type="font/ttf" crossorigin />`;
+  });
+}
 
 let html = fs.readFileSync(INDEX, 'utf8');
 
