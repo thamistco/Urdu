@@ -233,7 +233,13 @@ async function main() {
         }, version);
         await p.goto(`${origin}${BASE}/`);
         await arrived(p);
-        await p.waitForTimeout(1500);
+        // Until the store has read the save back and written it under its own
+        // version, or 10s: whatever is there then is the answer.
+        await p
+          .waitForFunction(() => JSON.parse(localStorage.getItem('qaaf-progress') || '{}').version === 0, null, {
+            timeout: 10000,
+          })
+          .catch(() => {});
         const kept = await p.evaluate(() => JSON.parse(localStorage.getItem('qaaf-progress') || 'null'));
         const backups = await p.evaluate(
           () => Object.keys(localStorage).filter((k) => k.startsWith('qaaf-progress-backup-')).length
@@ -262,7 +268,9 @@ async function main() {
             });
         });
         await p.goto(`${origin}${BASE}/`);
-        await p.waitForTimeout(5000);
+        await p
+          .waitForFunction(() => document.body.innerText.trim().length > 40, null, { timeout: 10000 })
+          .catch(() => {});
         const body = await p.evaluate(() => document.body.innerText);
         if (!/progress won.t be kept/i.test(body)) {
           problems.push(
