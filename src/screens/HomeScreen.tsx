@@ -1,3 +1,4 @@
+import { dayKey } from '../lib/date';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Pressable, ScrollView, Dimensions } from 'react-native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
@@ -248,7 +249,11 @@ export function HomeScreen() {
 
   const { level, ratio, into, span } = levelProgress(store.totalXp);
   const goal = DAILY_GOALS.find((g) => g.id === store.dailyGoalId) ?? DAILY_GOALS[1];
-  const dailyRatio = Math.min(1, store.todayXp / goal.xp);
+  // Today's XP only if it was earned today: the counter resets at the first
+  // lesson of a new day, so until then Home showed yesterday's total as
+  // today's progress (QA, 2026-10-13, L26).
+  const todayXp = store.todayKey === dayKey() ? store.todayXp : 0;
+  const dailyRatio = Math.min(1, todayXp / goal.xp);
   const word = WORDS[new Date().getDate() % WORDS.length];
 
   // The path as this learner's track sees it: someone who chose Roman is not
@@ -742,7 +747,7 @@ export function HomeScreen() {
                   <ProgressBar progress={dailyRatio} color={palette.jade} height={8} />
                 </View>
                 <Txt className="text-[0.6875rem] text-paper/55">
-                  {dailyRatio >= 1 ? 'Goal met ✓' : `${store.todayXp}/${goal.xp} XP`}
+                  {dailyRatio >= 1 ? 'Goal met ✓' : `${todayXp}/${goal.xp} XP`}
                 </Txt>
               </View>
             </Card>
