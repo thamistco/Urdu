@@ -18,6 +18,7 @@ import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { announce, invalidateSpeech } from '../lib/speech';
 import { cardsOnTrack, dueQueue, dueBudget, type SrsGrade } from '../lib/srs';
+import { srsGradeFor } from '../lib/sessionGrading';
 import { useSessionGradeFlush } from './useSessionGradeFlush';
 import { answerReveal } from './answerReveal';
 import { REFILL_COST, gemsShortOfRefill, minutesUntilNextHeart } from '../lib/gamification';
@@ -379,7 +380,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   const onGraded = useCallback(
     (result: GradedResult) => {
       if (isTeaching(exercises[idx])) {
-        const seen = !result.correct ? 'again' : demandOf(exercises[idx]) === 'produce' ? 'easy' : 'good';
+        const seen = srsGradeFor(result.correct, !!result.retried, demandOf(exercises[idx]));
         result.items.forEach((it) => recordItemGrade(it, seen));
         if (result.correct) setCorrectCount((c) => c + 1);
         advanceRef.current();
@@ -408,7 +409,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
       // English and recognising it among four pictures pushed the next review
       // out by exactly the same amount. They are not the same evidence, so a
       // correct answer on an exercise that supplied no options counts as easy.
-      const grade = !result.correct ? 'again' : demandOf(exercises[idx]) === 'produce' ? 'easy' : 'good';
+      const grade = srsGradeFor(result.correct, !!result.retried, demandOf(exercises[idx]));
       result.items.forEach((it) => recordItemGrade(it, grade));
       const answered = exercises[idx];
       const freeListen = isFirstListen(answered, pretestedRef.current);

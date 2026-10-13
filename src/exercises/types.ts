@@ -7,7 +7,12 @@ import type { LearnTrack } from '../store/useSettingsStore';
 export type ItemRef = { id: string; type: 'letter' | 'word' };
 
 /** Result of a single graded exercise, fed back into SRS + stats. */
-export type GradedResult = { items: ItemRef[]; correct: boolean };
+export type GradedResult = {
+  items: ItemRef[];
+  correct: boolean;
+  /** Right, but only on the retry after a wrong first try: see `srsGradeFor`. */
+  retried?: boolean;
+};
 
 export type Exercise =
   | {

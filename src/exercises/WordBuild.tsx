@@ -114,7 +114,7 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
     correct
       ? feedback.correctAnnounceMeaning(word.id, word.urdu, word.roman, word.meaning)
       : feedback.incorrectAnnounce(word.id, word.urdu, word.roman);
-    onGraded({ items: [{ id: word.id, type: 'word' }], correct });
+    onGraded({ items: [{ id: word.id, type: 'word' }], correct, retried: lastTry != null });
   };
 
   // The tiles placed so far, with a space where one word of the answer ends,
