@@ -310,7 +310,7 @@ const CORE_WORDS: Word[] = [
     emoji: '🧱',
     topic: 'home',
   },
-  { id: 'w-kunji', urdu: 'کنجی', roman: 'kunji', meaning: 'key (literary)', emoji: '🗝️', topic: 'home' },
+  { id: 'w-kunji', urdu: 'کنجی', roman: 'kunji', meaning: 'key', register: 'literary', emoji: '🗝️', topic: 'home' },
   {
     id: 'w-bartan',
     urdu: 'برتن',
@@ -341,7 +341,7 @@ const CORE_WORDS: Word[] = [
   // (content review, 2026-10-08).
   { id: 'w-reit', urdu: 'ریت', roman: 'ret', meaning: 'sand', emoji: '🏖️', topic: 'nature' },
   { id: 'w-machhar2', urdu: 'مچھر', roman: 'machhar', meaning: 'mosquito', emoji: '🦟', topic: 'nature' },
-  { id: 'w-chiti', urdu: 'چیونٹی', roman: 'cheeoñṭi', meaning: 'ant', emoji: '🐜', topic: 'nature' },
+  { id: 'w-chiti', urdu: 'چیونٹی', roman: 'chyoonṭi', meaning: 'ant', emoji: '🐜', topic: 'nature' },
   { id: 'w-chattan', urdu: 'چٹان', roman: 'chaṭṭaan', meaning: 'cliff / rock', emoji: '🧗', topic: 'nature' },
   { id: 'w-ghaati', urdu: 'گھاٹی', roman: 'ghaaṭi', meaning: 'valley', emoji: '🏞️', topic: 'nature' },
   { id: 'w-lehr', urdu: 'لہر', roman: 'lehar', meaning: 'wave', emoji: '🌊', topic: 'nature' },
