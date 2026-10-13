@@ -211,7 +211,12 @@ export function LessonComplete({
               {/* It said "Come back tomorrow", over a Continue button that
                   opens the next lesson at once, and testers read it as a
                   daily limit (QA report, 2026-10-12). */}
-              Whatever slipped comes back first in your next practice.
+              {/* Only when something did: under "Flawless session · 22 of 22"
+                  it promised to bring back mistakes there were none of (QA
+                  round 5, L28). */}
+              {correct < total
+                ? 'Whatever slipped comes back first in your next practice.'
+                : 'Nothing slipped. The words come back when they are due.'}
             </Txt>
             <Button onPress={onHome}>Continue</Button>
           </Reveal>
