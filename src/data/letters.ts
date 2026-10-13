@@ -216,10 +216,12 @@ export const LETTERS: Letter[] = [
     sound: 's',
     connects: true,
     forms: connector('ث'),
-    word: 'ثمر',
-    roman: 'samar',
-    meaning: 'fruit',
-    emoji: '🍇',
+    // Not ثمر (samar, fruit): a literary word few learners will meet. ثابت is
+    // everyday (QA, 2026-10-13, L12).
+    word: 'ثابت',
+    roman: 'saabit',
+    meaning: 'whole / proven',
+    emoji: '✅',
     group: 2,
     note: 'Three dots above. One of three letters spelling the same “s”, borrowed from Arabic; you meet it in متاثر (mutaassir, “impressed”).',
   },
@@ -367,10 +369,12 @@ export const LETTERS: Letter[] = [
     sound: 'zh',
     connects: false,
     forms: nonConnector('ژ'),
-    word: 'ژالہ',
-    roman: 'zhaala',
-    meaning: 'hail',
-    emoji: '🧊',
+    // Not ژالہ (zhaala, hail), which is rare: ژ is met in loans like this one
+    // (QA, 2026-10-13, L12). Romanised as the course's own word w-tv is.
+    word: 'ٹیلی ویژن',
+    roman: 'ṭeleewizhan',
+    meaning: 'television',
+    emoji: '📺',
     group: 3,
     note: 'Re with three dots, a rare “zh” sound, like the s in “measure”.',
     confusableWith: 're',

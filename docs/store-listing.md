@@ -163,7 +163,7 @@ wrong.
 | 256 sentences, 17 passages, 12 dialogues   | `SENTENCES`, `PASSAGES`, `DIALOGUES`                      |
 | 25 grammar concepts                        | `GRAMMAR`                                                 |
 | 350 lessons, 41 units                      | `ALL_LESSONS`, `UNITS`                                    |
-| 2,751 clips per voice, two voices, offline | `assets/voice/`, `assets/voice-m/`, `npm run check:voice` |
+| 2,750 clips per voice, two voices, offline | `assets/voice/`, `assets/voice-m/`, `npm run check:voice` |
 | Two voices in dialogues                    | `Dialogue.voices`, `scripts/generate-voice.js`            |
 | Spaced repetition                          | `src/lib/srs.ts`, `npm run check:srs`                     |
 | Roman track                                | `unitsForTrack`, `npm run check:answerable`               |
