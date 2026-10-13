@@ -83,9 +83,12 @@ export function Hearts({ count, free = false }: { count: number; free?: boolean 
         // starts "Hear", and this one was taken for one.
         accessibilityLabel="Unit 1 is free: wrong answers cost no hearts until you finish it"
         className="flex-row items-center gap-1"
+        // Shrinks rather than pushing the header wider than the screen at
+        // large text sizes (QA, 2026-10-13, M27).
+        style={{ flexShrink: 1, minWidth: 0 }}
       >
         <Illustration name="heart" tile={false} size={16} />
-        <Bold style={{ color: palette.roseLight }} className="text-xs">
+        <Bold numberOfLines={1} style={{ color: palette.roseLight, flexShrink: 1 }} className="text-xs">
           {/* Not "in Unit 1": a learner who jumps ahead keeps free hearts
               until Unit 1 is finished, and read "Free in Unit 1" over a
               Unit 36 lesson as a mistake (QA report, 2026-10-12). */}
