@@ -20,6 +20,7 @@ import {
 import { ACHIEVEMENTS } from '../data/achievements';
 import { heartsAreFree } from '../lib/hearts';
 import { UNITS } from '../data/units';
+import { lessonsToSkip, type UnitEvidence } from '../lib/unitSkip';
 import { repeatReward } from '../lib/repeatReward';
 
 export type Goal = 'family' | 'read' | 'heritage' | 'curious';
@@ -47,6 +48,8 @@ export type FinishResult = {
    * how many are left. Reported once: the lesson that reports it clears it.
    */
   freezeUsed: { left: number; days: number } | null;
+  /** How many of the unit's lessons a passed unit review marked as known. */
+  lessonsSkipped: number;
 };
 
 /** What a streak freeze costs, and how many a learner can hold. */
@@ -165,6 +168,9 @@ type ProgressState = {
     total: number;
     xp: number;
     isReview: boolean;
+    /** A unit review's answers on the unit's own items: see `lessonsToSkip`. */
+    unitEvidence?: UnitEvidence;
+    romanTrack?: boolean;
   }) => FinishResult;
   setDailyGoal: (id: string) => void;
   /** Buy one streak freeze. False, and nothing spent, when it cannot. */
@@ -318,7 +324,7 @@ export const useProgressStore = create<ProgressState>()(
         });
       },
 
-      finishLesson: ({ lessonId, correct, total, xp, isReview }) => {
+      finishLesson: ({ lessonId, correct, total, xp, isReview, unitEvidence, romanTrack = false }) => {
         const s = get();
         set(rollDay(s));
         const s2 = get();
@@ -394,20 +400,21 @@ export const useProgressStore = create<ProgressState>()(
          * when they test out at onboarding. They stay open to try, and nothing
          * is counted as completed that was not. Before, a learner who jumped
          * ahead and passed the review still saw every lesson of the unit as
-         * not reached (QA, 2026-10-13, M2). 80%, the bar the lesson-complete
-         * screen already treats as a good result.
+         * not reached (QA, 2026-10-13, M2). Only on the review's answers about
+         * the unit's own items, never its whole score: see `lessonsToSkip`.
          */
-        const unit =
-          isReview && accuracy >= 0.8 ? UNITS.find((u) => u.lessons.some((l) => l.id === lessonId)) : undefined;
-        const skippedLessons = unit
-          ? {
-              ...s2.skippedLessons,
-              ...Object.fromEntries(
-                unit.lessons
-                  .filter((l) => l.id !== lessonId && !completedLessons[l.id] && !s2.skippedLessons[l.id])
-                  .map((l) => [l.id, true])
-              ),
-            }
+        const unit = isReview ? UNITS.find((u) => u.lessons.some((l) => l.id === lessonId)) : undefined;
+        const toSkip = unit
+          ? lessonsToSkip(
+              unit.lessons,
+              lessonId,
+              unitEvidence,
+              (id) => !!completedLessons[id] || !!s2.skippedLessons[id],
+              romanTrack
+            )
+          : [];
+        const skippedLessons = toSkip.length
+          ? { ...s2.skippedLessons, ...Object.fromEntries(toSkip.map((id) => [id, true])) }
           : s2.skippedLessons;
 
         // commit
@@ -462,6 +469,7 @@ export const useProgressStore = create<ProgressState>()(
           perfect,
           newAchievements,
           freezeUsed,
+          lessonsSkipped: toSkip.length,
         };
       },
 

@@ -141,6 +141,24 @@ export function LessonComplete({
               </Reveal>
             )}
 
+            {/* Said, never done silently: a passed unit review marks the
+                unit's other lessons as known (second check, 2026-10-13). */}
+            {result.lessonsSkipped > 0 && (
+              <Reveal delay={200} style={{ width: '100%' }}>
+                <View
+                  className="mb-3 items-center rounded-2xl border p-4"
+                  style={{ borderColor: withAlpha(palette.jade, 0.35), backgroundColor: withAlpha(palette.jade, 0.1) }}
+                >
+                  <Bold className="text-center text-[0.9375rem]">
+                    {count(result.lessonsSkipped, 'lesson')} marked as known
+                  </Bold>
+                  <Txt className="mt-1 text-center text-xs text-paper/70">
+                    You knew this unit’s words. Those lessons stay on your path if you want them.
+                  </Txt>
+                </View>
+              </Reveal>
+            )}
+
             {result.streakIncreased && (
               <Reveal delay={220} style={{ width: '100%' }}>
                 <View
