@@ -67,8 +67,14 @@ export function Illustration({
 }) {
   const Icon = ICONS[name];
   const body = Icon ? <Icon size={size * (tile ? 0.56 : 0.9)} /> : null;
-  if (!tile) return body;
-  return <Medallion size={size}>{body}</Medallion>;
+  // Decoration: every illustration sits beside the words that say what it
+  // means, and an unnamed picture was announced as a bare "image" on the
+  // out-of-hearts and lesson-complete screens (design review, 2026-10-13).
+  return (
+    <View aria-hidden importantForAccessibility="no-hide-descendants">
+      {tile ? <Medallion size={size}>{body}</Medallion> : body}
+    </View>
+  );
 }
 
 function NumeralTile({ numeral, size }: { numeral: string; size: number }) {
