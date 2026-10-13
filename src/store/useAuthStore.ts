@@ -6,10 +6,17 @@ import { makeRedirectUri } from 'expo-auth-session';
 import type { Session } from '@supabase/supabase-js';
 
 import { supabase, isAuthConfigured } from '../lib/supabase';
-import { safeStorage } from './storage';
+import { guardedStorage, keepSavedFields } from './storage';
 import { pullThenMerge, stopSync } from '../lib/sync';
 
-WebBrowser.maybeCompleteAuthSession();
+// It reads session storage at load, and a browser that refuses storage threw
+// here, before anything rendered: a blank page (QA, 2026-10-13, M21). There is
+// no sign-in to complete in that case anyway.
+try {
+  WebBrowser.maybeCompleteAuthSession();
+} catch {
+  // storage blocked; nothing to complete
+}
 
 type Provider = 'google' | 'apple';
 
@@ -164,7 +171,9 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'qaaf-auth',
-      storage: createJSONStorage(() => safeStorage),
+      storage: createJSONStorage(() => guardedStorage(0)),
+      version: 0,
+      migrate: (persisted) => keepSavedFields<AuthState>(persisted),
       // the guest choice and a deleted account's id; the session is supabase's
       partialize: (s) => ({ isGuest: s.isGuest, deletedUserId: s.deletedUserId }),
     }

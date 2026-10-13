@@ -20,6 +20,8 @@ import { useSettingsStore } from './src/store/useSettingsStore';
 import { useProgressStore } from './src/store/useProgressStore';
 import { useAuthStore } from './src/store/useAuthStore';
 import { palette } from './src/theme';
+import { storageRefused, onStorageRefused } from './src/store/storage';
+import { Txt } from './src/components/Text';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -117,11 +119,26 @@ export default function App() {
     if (ready) await SplashScreen.hideAsync().catch(() => {});
   }, [ready]);
 
+  // Said once, at the top, when this browser refuses storage: the app still
+  // runs, but nothing it learns survives closing the page (QA, M21).
+  const [refused, setRefused] = useState(storageRefused);
+  useEffect(() => onStorageRefused(() => setRefused(true)), []);
+
   if (!ready) return <View style={{ flex: 1, backgroundColor: palette.ink }} />;
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.ink }}>
       <SafeAreaProvider>
+        {refused ? (
+          <View
+            accessibilityRole="alert"
+            style={{ backgroundColor: palette.ink700, paddingHorizontal: 16, paddingVertical: 8 }}
+          >
+            <Txt className="text-center text-xs text-paper/80">
+              This browser is blocking storage, so your progress won’t be kept after you close the page.
+            </Txt>
+          </View>
+        ) : null}
         <NavigationContainer linking={linking} theme={navTheme} onReady={onReady} documentTitle={DOCUMENT_TITLE}>
           <StatusBar style="light" />
           <ErrorBoundary>

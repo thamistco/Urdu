@@ -212,6 +212,68 @@ async function main() {
         problems.push(`${url} with no session seeded redirected to ${landed} instead of staying put.`);
       }
     }
+
+    /**
+     * A save is never lost to a version it does not know, and a browser that
+     * refuses storage still gets the app.
+     *
+     * A save marked with another version was discarded and overwritten with a
+     * fresh profile, and a browser that threw on storage access drew nothing
+     * at all (QA, 2026-10-13, H12 and M21). Each case gets its own context so
+     * no storage leaks between them.
+     */
+    for (const version of [99, -1]) {
+      const ctx = await browser.newContext({ viewport: { width: 412, height: 900 } });
+      const p = await ctx.newPage();
+      try {
+        await enterAsGuest(p, `${origin}${BASE}/`, { gems: 77 });
+        await p.evaluate((v) => {
+          const raw = JSON.parse(localStorage.getItem('qaaf-progress'));
+          localStorage.setItem('qaaf-progress', JSON.stringify({ state: raw.state, version: v }));
+        }, version);
+        await p.goto(`${origin}${BASE}/`);
+        await arrived(p);
+        await p.waitForTimeout(1500);
+        const kept = await p.evaluate(() => JSON.parse(localStorage.getItem('qaaf-progress') || 'null'));
+        const backups = await p.evaluate(
+          () => Object.keys(localStorage).filter((k) => k.startsWith('qaaf-progress-backup-')).length
+        );
+        if (!kept?.state?.onboarded || kept.state.gems !== 77) {
+          problems.push(
+            `A save marked version ${version} was not kept: it came back as ${JSON.stringify(kept?.state ?? null).slice(0, 80)}.`
+          );
+        }
+        if (!backups)
+          problems.push(`A save marked version ${version} was read without a backup copy being made first.`);
+      } finally {
+        await ctx.close();
+      }
+    }
+    {
+      const ctx = await browser.newContext({ viewport: { width: 412, height: 900 } });
+      const p = await ctx.newPage();
+      try {
+        await p.addInitScript(() => {
+          for (const name of ['localStorage', 'sessionStorage'])
+            Object.defineProperty(window, name, {
+              get() {
+                throw new DOMException('The operation is insecure.', 'SecurityError');
+              },
+            });
+        });
+        await p.goto(`${origin}${BASE}/`);
+        await p.waitForTimeout(5000);
+        const body = await p.evaluate(() => document.body.innerText);
+        if (!/progress won.t be kept/i.test(body)) {
+          problems.push(
+            `With storage refused, the app did not say progress won't be kept: "${body.replace(/\n/g, ' / ').slice(0, 90)}"`
+          );
+        }
+        if (body.trim().length < 40) problems.push('With storage refused, the app drew a blank page.');
+      } finally {
+        await ctx.close();
+      }
+    }
   } finally {
     if (browser) await browser.close();
     server.close();

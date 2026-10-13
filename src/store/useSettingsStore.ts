@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { safeStorage } from './storage';
+import { guardedStorage, keepSavedFields } from './storage';
 import { setMuted } from '../lib/sound';
 import { setHapticsEnabled } from '../lib/haptics';
 import { setGlossEnabled, setVoiceSet } from '../lib/speech';
@@ -90,19 +90,13 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'qaaf-settings',
-      storage: createJSONStorage(() => safeStorage),
-      /**
-       * No `version`, and so no `migrate`. Both migrations that used to live
-       * here — v1 turning the English gloss off for installs that had it on by
-       * default, v2 pinning the voice an install had been hearing before there
-       * was a choice — existed for installs made before the app launched, which
-       * is to say none. Zustand defaults the version to 0 and discards a blob
-       * that does not match, which is what a pre-launch shape change should do.
-       *
-       * A default changed after launch still reaches nobody who already has the
-       * old value written to storage, so that release adds `version: 1` and a
-       * `migrate` back.
-       */
+      storage: createJSONStorage(() => guardedStorage(0)),
+      // A save from another version is backed up and kept: see guardedStorage
+      // and keepSavedFields (store/storage.ts). A default changed after launch
+      // still reaches nobody who has the old value saved, so that release
+      // bumps the version and translates here.
+      version: 0,
+      migrate: (persisted) => keepSavedFields<SettingsState>(persisted),
       onRehydrateStorage: () => (state) => state?.syncEffects(),
     }
   )

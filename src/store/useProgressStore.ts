@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { safeStorage } from './storage';
+import { guardedStorage, keepSavedFields } from './storage';
 
 import { SrsCard, SrsGrade, newCard, review, capIntervals } from '../lib/srs';
 import { testerFlags } from './useTesterStore';
@@ -530,7 +530,11 @@ export const useProgressStore = create<ProgressState>()(
     }),
     {
       name: 'qaaf-progress',
-      storage: createJSONStorage(() => safeStorage),
+      storage: createJSONStorage(() => guardedStorage(0)),
+      // See guardedStorage and keepSavedFields (store/storage.ts): a save from
+      // another version is backed up and kept, never discarded (QA, H12).
+      version: 0,
+      migrate: (persisted) => keepSavedFields<ProgressState>(persisted),
       // Once per session, as soon as the saved progress is back: a learner
       // returning after days away sees the streak as it now stands, not as it
       // stood the last time a lesson was finished.
@@ -539,21 +543,12 @@ export const useProgressStore = create<ProgressState>()(
         state?.capOldIntervals();
         state?.rolloverStreak();
       },
-      /**
-       * No `version`, and so no `migrate`. The app has not launched, so no
-       * profile written by an older shape of this store exists anywhere to
-       * migrate from, and both the v1 → v2 lesson-id wipe and the v2 → v3
-       * path-notice reset were code with no population. Zustand defaults the
-       * version to 0; a stored blob whose version does not match is discarded,
-       * which is the right answer for a shape change before launch and needs
-       * nothing written.
-       *
-       * The first release after launch that changes the persisted shape adds
-       * both back: `version: 1`, and a `migrate` that either translates the old
-       * shape or records what it could not. The path-moved notice is
-       * deliberately not one of those changes — it re-arms off the recorded
-       * path size (`lib/progress.ts`), so regrouping the course never needs a
-       * version bump.
+      /*
+       * The version stays 0 until the persisted shape changes. When it does,
+       * bump it and translate in `migrate`; until then any other version is a
+       * save from another build, kept by keepSavedFields with its original in
+       * a backup. Regrouping the course needs no bump: the path-moved notice
+       * re-arms off the recorded path size (`lib/progress.ts`).
        */
     }
   )
