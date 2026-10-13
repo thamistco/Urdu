@@ -651,7 +651,9 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
           >
             <Txt className="text-2xl text-paper/55">✕</Txt>
           </Pressable>
-          <View className="flex-1">
+          {/* A floor, so the hearts badge cannot squeeze the bar and the step
+              count out of sight at 200% text (QA round 5, M27). */}
+          <View className="flex-1" style={{ minWidth: 72 }}>
             <ProgressBar progress={(idx + (graded != null ? 1 : 0)) / total} color={palette.jade} height={12} />
             {/* How far, in steps. The bar alone gave no sense of a 43-step
                 lesson's length, and testers concluded the sentence lessons

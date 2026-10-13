@@ -73,11 +73,11 @@ export function LetterTeachExercise({ exercise, onGraded }: ExerciseProps<TeachE
           and its name wider than the letter itself. */}
       <PromptCard height={short ? 0 : 150}>
         <Urdu style={{ ...urduGlyph(short ? 40 : 52), color: palette.ink }}>{letter.forms.isolated}</Urdu>
-        <View className={short ? 'flex-row items-center justify-center gap-3' : 'items-center'}>
-          <Txt
-            style={{ color: palette.ink }}
-            className={`${short ? '' : 'mt-2'} shrink text-center text-base opacity-70`}
-          >
+        {/* Wraps rather than squeezes: at 200% text on a 360px phone the name
+            line was squeezed beside the speaker until it broke inside a word,
+            "sound / s like" (QA round 5, M27). */}
+        <View className={short ? 'flex-row flex-wrap items-center justify-center gap-3' : 'items-center'}>
+          <Txt style={{ color: palette.ink }} className={`${short ? '' : 'mt-2'} text-center text-base opacity-70`}>
             {letter.name} · sounds like “{letter.sound}”
           </Txt>
           <View className={short ? '' : 'mt-2'}>
