@@ -7,6 +7,7 @@ import { Button } from '../components/Button';
 import { feedback } from '../lib/feedback';
 import { LETTERS, glyphName } from '../data/letters';
 import type { ExerciseProps, Exercise } from './types';
+import { buildLetters } from './buildLetters';
 import { glossOf } from '../data/words';
 
 type BuildEx = Extract<Exercise, { kind: 'wordBuild' }>;
@@ -53,7 +54,7 @@ function diagnoseBuild(assembled: string[], target: string[]): string | null {
  */
 export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: ExerciseProps<BuildEx>) {
   const { word, tiles } = exercise;
-  const target = useMemo(() => Array.from(word.urdu).filter((c) => c.trim().length > 0), [word]);
+  const target = useMemo(() => buildLetters(word.urdu), [word]);
   /**
    * How many letters each word of the answer has: [5] for one word, [4, 5]
    * for گرم پانی. The tray shows that many empty slots, the next one marked,
@@ -65,7 +66,7 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
     () =>
       word.urdu
         .split(/\s+/)
-        .map((w) => Array.from(w).filter((c) => c.trim().length > 0).length)
+        .map((w) => buildLetters(w).length)
         .filter((n) => n > 0),
     [word]
   );
