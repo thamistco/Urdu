@@ -796,7 +796,7 @@ async function answer(page, text, wrongOnPurpose) {
   if (/Build the word/i.test(text)) {
     return (await solveTileBuild(page, 'Letter tile', wrongOnPurpose)) ? 'wordBuild' : null;
   }
-  if (/Match each word to its picture/i.test(text)) {
+  if (/Match each word to its (picture|meaning)/i.test(text)) {
     return (await solveMatching(page)) ? 'matching' : null;
   }
   const buttonOnly = await answerButtonOnlyScreen(page, text);
