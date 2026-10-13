@@ -447,11 +447,25 @@ const VISUALLY_CONFUSABLE_DECOY_PAIRS: Array<[string, string]> = [
   ['\u06CC', '\u0626'], // ی / ئ
   ['\u0648', '\u0624'], // و / ؤ
   ['\u0627', '\u0622'], // ا / آ
+  // Letters that sound alike, kept apart in a build for the same reason: a
+  // tray offering both س and ص for سفید asks which spelling, not whether the
+  // learner can read the word (QA, 2026-10-13, L17).
+  ...soundAlikePairs([
+    ['\u0633', '\u062B', '\u0635'], // س ث ص
+    ['\u0632', '\u0630', '\u0638', '\u0636'], // ز ذ ظ ض
+    ['\u062A', '\u0637'], // ت ط
+    ['\u062D', '\u06C1'], // ح ہ
+  ]),
 ];
 
+function soundAlikePairs(groups: string[][]): Array<[string, string]> {
+  return groups.flatMap((g) => g.flatMap((a, i) => g.slice(i + 1).map((b): [string, string] => [a, b])));
+}
+
 /** Whether two letters (by their isolated glyph) are a known tile-size lookalike pair. */
+const LOOKALIKE_KEYS = new Set(VISUALLY_CONFUSABLE_DECOY_PAIRS.flatMap(([x, y]) => [`${x}|${y}`, `${y}|${x}`]));
 export function tileLookalikes(a: string, b: string): boolean {
-  return VISUALLY_CONFUSABLE_DECOY_PAIRS.some(([x, y]) => (a === x && b === y) || (a === y && b === x));
+  return LOOKALIKE_KEYS.has(`${a}|${b}`);
 }
 
 /**
@@ -1020,15 +1034,32 @@ export function buildTilesFor(word: Word): string[] {
 }
 
 /**
+ * A word with its vowel marks and its agreeing ending taken off: تھا, تھی and
+ * تھے are all تھ; گیا and گئی are both گ; اس and اُس are both اس. Used only to
+ * keep a sentence's decoys from being a form of one of its own words.
+ */
+export function inflectionStem(word: string): string {
+  const bare = word.replace(VOWEL_MARKS_G, '');
+  const stem = bare.replace(/[\u0627\u06CC\u06D2\u0626\u064A]+$/, '');
+  return stem || bare;
+}
+const VOWEL_MARKS_G = new RegExp(VOWEL_MARKS.source, 'g');
+
+/**
  * Tiles for a sentence: its own words plus a word or two that don't belong, for
  * the same reason. Decoys are drawn from other sentences at the same level so
  * they are plausible rather than obviously foreign.
  */
 function sentenceTilesFor(sentence: Sentence): string[] {
   const own = new Set(sentence.words);
+  const ownStems = new Set(sentence.words.map(inflectionStem));
   const pool = SENTENCES.filter((s) => s.level === sentence.level && s.id !== sentence.id)
     .flatMap((s) => s.words)
-    .filter((w) => !own.has(w));
+    // Not a decoy that is a form of one of the sentence's own words: تھی
+    // offered beside تھا turned s-134 into an equally correct sentence that was
+    // then marked wrong, and اُس beside اس is near-invisible (QA, 2026-10-13,
+    // M12).
+    .filter((w) => !own.has(w) && !ownStems.has(inflectionStem(w)));
   const decoys = shuffle(Array.from(new Set(pool))).slice(0, sentence.words.length > 5 ? 2 : 1);
   return shuffle([...sentence.words, ...decoys]);
 }

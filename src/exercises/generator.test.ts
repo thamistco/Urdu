@@ -9,6 +9,7 @@ import {
   letterSpotTiles,
   OPTIONS_PER_QUESTION,
   sentenceExercise,
+  inflectionStem,
   isWovenReview,
   buildTilesFor,
   tileLookalikes,
@@ -2418,5 +2419,31 @@ describe('word-build tiles', () => {
         if (!tiles.includes(c)) bad.push(`${w.id}: ${c} missing`);
     }
     expect(bad).toEqual([]);
+  });
+});
+
+/**
+ * A sentence's decoy tiles are never a form of one of its own words: تھی
+ * beside تھا made s-134 buildable two right ways, one marked wrong (QA,
+ * 2026-10-13, M12).
+ */
+describe('sentence-build decoys', () => {
+  it('reads the agreeing forms of a word as one', () => {
+    expect(inflectionStem('تھا')).toBe(inflectionStem('تھی'));
+    expect(inflectionStem('گیا')).toBe(inflectionStem('گئی'));
+    expect(inflectionStem('اُس')).toBe(inflectionStem('اس'));
+    expect(inflectionStem('کتاب')).not.toBe(inflectionStem('کتابیں'));
+  });
+
+  it('are never a form of a word in the sentence', () => {
+    const bad = new Set<string>();
+    for (let round = 0; round < 10; round++)
+      for (const s of SENTENCES) {
+        const ex = sentenceExercise(s, 'both');
+        if (ex?.kind !== 'sentenceBuild') continue;
+        const stems = new Set(s.words.map(inflectionStem));
+        for (const t of ex.tiles) if (!s.words.includes(t) && stems.has(inflectionStem(t))) bad.add(`${s.id}: ${t}`);
+      }
+    expect([...bad]).toEqual([]);
   });
 });
