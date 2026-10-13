@@ -210,3 +210,17 @@ describe('welcome back (P-011)', () => {
     expect(comebackLine(0, 0)).toBe('One lesson today starts a new streak.');
   });
 });
+
+describe('markActiveToday when the date goes backwards', () => {
+  // Karachi 01:00 on the 16th, then Los Angeles 14:00 on the 15th (QA, L25).
+  it('keeps the streak and the later date', () => {
+    const r = markActiveToday({ streak: 3, freezes: 0, lastActiveDay: '2026-10-16' }, '2026-10-15');
+    expect(r.streak).toBe(3);
+    expect(r.lastActiveDay).toBe('2026-10-16');
+    expect(r.increased).toBe(false);
+  });
+
+  it('still extends it the day after', () => {
+    expect(markActiveToday({ streak: 3, freezes: 0, lastActiveDay: '2026-10-16' }, '2026-10-17').streak).toBe(4);
+  });
+});
