@@ -137,8 +137,10 @@ export function EveningScene({ safeBottom = SAFE_BOTTOM }: { safeBottom?: number
         source={require('../../assets/images/evening.jpg')}
         style={{ width, height }}
         resizeMode="cover"
-        accessibilityRole="image"
-        accessibilityLabel=""
+        // Decorative. An image role with an empty name is what axe reports
+        // as role-img-alt (QA, 2026-10-13, L27): hidden from assistive
+        // technology instead, which is what the empty label meant.
+        aria-hidden
       />
       <Svg
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
@@ -197,8 +199,10 @@ export function DuskScene({ dim = 0 }: { dim?: number }) {
         source={require('../../assets/images/evening-dusk.jpg')}
         style={{ width: '100%', height: '100%' }}
         resizeMode="cover"
-        accessibilityRole="image"
-        accessibilityLabel=""
+        // Decorative. An image role with an empty name is what axe reports
+        // as role-img-alt (QA, 2026-10-13, L27): hidden from assistive
+        // technology instead, which is what the empty label meant.
+        aria-hidden
       />
       {dim > 0 && (
         <View
