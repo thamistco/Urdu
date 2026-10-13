@@ -7,6 +7,7 @@ import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
+import * as Font from 'expo-font';
 import { Fraunces_600SemiBold, Fraunces_900Black } from '@expo-google-fonts/fraunces';
 import { PublicSans_400Regular, PublicSans_500Medium, PublicSans_700Bold } from '@expo-google-fonts/public-sans';
 import { NotoNastaliqUrdu_400Regular, NotoNastaliqUrdu_700Bold } from '@expo-google-fonts/noto-nastaliq-urdu';
@@ -65,8 +66,18 @@ export default function App() {
     'PublicSans-Med': PublicSans_500Medium,
     'PublicSans-Bold': PublicSans_700Bold,
     NotoNastaliq: NotoNastaliqUrdu_400Regular,
-    'NotoNastaliq-Bold': NotoNastaliqUrdu_700Bold,
   });
+
+  /**
+   * The bold Nastaliq after the first paint, not before it. It sets only the
+   * numerals on a few cards, and as a second 530 KB file on the critical path
+   * it held the first screen back on a slow phone (QA, 2026-10-13, M24). Until
+   * it arrives those numerals show in the regular weight.
+   */
+  useEffect(() => {
+    if (!fontsLoaded) return;
+    Font.loadAsync({ 'NotoNastaliq-Bold': NotoNastaliqUrdu_700Bold }).catch(() => {});
+  }, [fontsLoaded]);
 
   // Never let a slow/blocked font load brick the app — proceed after a short
   // grace period regardless (fonts pop in when ready). Keeps hosted previews
