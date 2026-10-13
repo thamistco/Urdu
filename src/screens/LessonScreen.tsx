@@ -1,6 +1,6 @@
 import { reach } from '../lib/reach';
 import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
-import { View, Pressable, ScrollView } from 'react-native';
+import { View, Pressable, ScrollView, useWindowDimensions } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -193,6 +193,10 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   const showRoman = useSettingsStore((s) => s.showRoman);
   const track = useSettingsStore((s) => s.track);
   const setTrack = useSettingsStore((s) => s.setTrack);
+  // Under 300px (a 360px phone at 200% text) the header wraps, so the hearts
+  // badge takes a line of its own rather than being squeezed to "F…" (QA,
+  // 2026-10-13).
+  const narrowHeader = useWindowDimensions().width < 300;
   const gradeItem = useProgressStore((s) => s.gradeItem);
   // `flushSessionGrades` (`lib/sessionGrading.ts`) keeps its item type as a
   // loose `string`, like the rest of `lib/`, rather than depending on
@@ -633,7 +637,12 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
             contents track the content column so they line up with the exercise */}
         <View
           className="flex-row items-center gap-3 px-4 pb-3 pt-1"
-          style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }}
+          style={{
+            width: '100%',
+            maxWidth: CONTENT_MAX_WIDTH,
+            alignSelf: 'center',
+            flexWrap: narrowHeader ? 'wrap' : 'nowrap',
+          }}
         >
           <Pressable
             accessibilityRole="button"
