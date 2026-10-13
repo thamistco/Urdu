@@ -1222,6 +1222,23 @@ async function buildWord(page, memory, promptLine) {
   }
 
   await clickByText(page, /^Check$/i);
+  // A first wrong build is held for one retry (2026-10-13). The learner this
+  // models builds it again the same way: from what they know if they knew it,
+  // by guessing if not. Only the second Check is graded.
+  await page.waitForTimeout(250);
+  if (await clickByText(page, /^Try again$/i)) {
+    await page.waitForTimeout(250);
+    for (let i = 0; i < taps; i++) {
+      const rest = await readTray();
+      if (!rest.length) break;
+      let pick = null;
+      if (wanted && i < wanted.length) pick = rest.find((t) => holds(t.t, wanted[i]));
+      if (!pick) pick = rest[Math.floor(rand() * rest.length)];
+      await page.mouse.click(pick.x, pick.y).catch(() => {});
+      await page.waitForTimeout(140);
+    }
+    await clickByText(page, /^Check$/i);
+  }
   return { tapped, taught, knew, mode };
 }
 
