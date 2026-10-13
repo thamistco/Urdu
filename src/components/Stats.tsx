@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { View } from 'react-native';
+import { View, useWindowDimensions } from 'react-native';
 import { Bold, Txt } from './Text';
 import { Illustration } from './Illustration';
 import { palette, withAlpha } from '../theme';
@@ -63,6 +63,9 @@ export function StatBar({ streak, gems, hearts }: { streak: number; gems: number
  * the pip that went is marked for a moment and a screen reader hears it.
  */
 export function Hearts({ count, free = false }: { count: number; free?: boolean }) {
+  // Under 300px (a 360px phone at 200% text) the badge says only "Free"; the
+  // label read aloud keeps the whole rule (QA round 5, M27).
+  const tight = useWindowDimensions().width < 300;
   const prev = useRef(count);
   const [lost, setLost] = useState(false);
   useEffect(() => {
@@ -92,7 +95,7 @@ export function Hearts({ count, free = false }: { count: number; free?: boolean 
           {/* Not "in Unit 1": a learner who jumps ahead keeps free hearts
               until Unit 1 is finished, and read "Free in Unit 1" over a
               Unit 36 lesson as a mistake (QA report, 2026-10-12). */}
-          Free until Unit 1 is done
+          {tight ? 'Free' : 'Free until Unit 1 is done'}
         </Bold>
       </View>
     );
