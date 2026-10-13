@@ -2401,3 +2401,22 @@ describe('review items woven into a lesson', () => {
     expect(buildLessonExercises(lesson, [], 'both').filter(isWovenReview)).toEqual([]);
   });
 });
+
+/**
+ * A word build never asks for a vowel mark: the shadda of چلّانا, the pesh of
+ * اُفق and the tanween of فوراً were required tiles (QA, 2026-10-13, M9).
+ */
+describe('word-build tiles', () => {
+  it('hold every letter of the word and no vowel mark', () => {
+    const marked = WORDS.filter((w) => /[ً-ٰٟ]/.test(w.urdu));
+    expect(marked.length).toBeGreaterThan(5);
+    const bad: string[] = [];
+    for (const w of marked) {
+      const tiles = buildTilesFor(w);
+      if (tiles.some((t) => /[ً-ٰٟ]/.test(t))) bad.push(`${w.id}: a mark among the tiles`);
+      for (const c of Array.from(w.urdu).filter((c) => c.trim() && !/[ً-ٰٟ]/.test(c)))
+        if (!tiles.includes(c)) bad.push(`${w.id}: ${c} missing`);
+    }
+    expect(bad).toEqual([]);
+  });
+});

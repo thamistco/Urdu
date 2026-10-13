@@ -1,3 +1,4 @@
+import { buildLetters, VOWEL_MARKS } from './buildLetters';
 import { LETTERS, getLetter, Letter, PositionKey, POSITIONS } from '../data/letters';
 import { WORDS, getWord, wordsByTopic, glossOf, levelOfWord, Word, PHRASES } from '../data/words';
 import { Lesson, ALL_LESSONS, findLesson, lessonOrderForTrack } from '../data/units';
@@ -1000,15 +1001,14 @@ const ALPHABET: string[] = Array.from(
  * Decoy tiles are whole letters. A vowel mark (zer, pesh, shadda, tanween,
  * the standing alif) on a tile of its own is a near-empty square, and as a
  * decoy it is a trap no reading can avoid: testers met a zer tile in words
- * with no zer (QA report, 2026-10-12, B5/M9). A word that spells a mark still
- * gets it as a tile; whether it should is P-065.
+ * with no zer (QA report, 2026-10-12, B5/M9). Since 2026-10-13 the answer's
+ * own marks are not tiles either (buildLetters).
  */
-const DECOY_LETTERS: string[] = ALPHABET.filter((c) => !/[\u064B-\u065F\u0670]/.test(c));
+const DECOY_LETTERS: string[] = ALPHABET.filter((c) => !VOWEL_MARKS.test(c));
 
 export function buildTilesFor(word: Word): string[] {
-  // Split into visual character units (grapheme-ish). Urdu combining marks are
-  // rare in this vocab, so a code-point split is fine and keeps tiles legible.
-  const chars = Array.from(word.urdu).filter((c) => c.trim().length > 0);
+  // Letters only: see buildLetters for why the vowel marks are left out.
+  const chars = buildLetters(word.urdu);
   // Two letters that do NOT belong. Without them the tray is the answer with
   // its order removed, and the exercise can be solved without reading anything.
   // Decoys that are tile-size lookalikes of a letter in the word are excluded;

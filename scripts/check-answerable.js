@@ -295,7 +295,8 @@ function check(ex, track) {
     case 'wordBuild':
       if (roman) fail('letter tiles on the Roman track', ex.word.id);
       // The tray must contain every letter of the answer.
-      for (const ch of Array.from(ex.word.urdu).filter((c) => c.trim())) {
+      // Vowel marks are not tiles (src/exercises/buildLetters.ts).
+      for (const ch of Array.from(ex.word.urdu).filter((c) => c.trim() && !/[\u064B-\u065F\u0670]/.test(c))) {
         if (!ex.tiles.includes(ch)) fail('a letter of the answer is missing from the tray', `${ex.word.id} — ${ch}`);
       }
       break;
