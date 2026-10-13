@@ -1035,14 +1035,33 @@ export function buildTilesFor(word: Word): string[] {
 }
 
 /**
+ * Forms no ending rule can join: the irregular کرنا, and the pronouns, whose
+ * forms share no ending (QA round 5, M12: کیجیے offered beside کیا, میری
+ * beside میں). Each word maps to the first form in its group. کی is left out:
+ * it is also "of", and must stay with کا and کے.
+ */
+const FORM_GROUPS: string[][] = [
+  ['کر', 'کیا', 'کیے', 'کئے', 'کیجیے', 'کیجئے', 'کرو', 'کریں', 'کرے', 'کرتا', 'کرتی', 'کرتے'],
+  ['میں', 'میرا', 'میری', 'میرے', 'مجھ', 'مجھے'],
+  ['ہم', 'ہمارا', 'ہماری', 'ہمارے', 'ہمیں'],
+  ['تم', 'تمہارا', 'تمہاری', 'تمہارے', 'تمہیں', 'تجھ', 'تجھے', 'تیرا', 'تیری', 'تیرے'],
+  ['وہ', 'اس', 'اسے', 'ان', 'انہیں', 'انھیں'],
+];
+const FORM_GROUP_OF = new Map(FORM_GROUPS.flatMap((g) => g.map((w) => [w, g[0]] as const)));
+
+/**
  * A word with its vowel marks and its agreeing ending taken off: تھا, تھی and
- * تھے are all تھ; گیا and گئی are both گ; اس and اُس are both اس. Used only to
- * keep a sentence's decoys from being a form of one of its own words.
+ * تھے are all تھ; گیا and گئی are both گ; اس and اُس are both اس; and the
+ * habitual تا/تی/تے goes first, so لگتا meets لگی and رہتا meets رہا. Used
+ * only to keep a sentence's decoys from being a form of one of its own words.
  */
 export function inflectionStem(word: string): string {
   const bare = word.replace(VOWEL_MARKS_G, '');
-  const stem = bare.replace(/[\u0627\u06CC\u06D2\u0626\u064A]+$/, '');
-  return stem || bare;
+  const grouped = FORM_GROUP_OF.get(bare);
+  if (grouped) return grouped;
+  const habitual = bare.length > 3 ? bare.replace(/ت[اےی]$/, '') : bare;
+  const stem = habitual.replace(/[\u0627\u06CC\u06D2\u0626\u064A]+$/, '');
+  return stem || habitual;
 }
 const VOWEL_MARKS_G = new RegExp(VOWEL_MARKS.source, 'g');
 

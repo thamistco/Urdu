@@ -2433,6 +2433,11 @@ describe('sentence-build decoys', () => {
     expect(inflectionStem('گیا')).toBe(inflectionStem('گئی'));
     expect(inflectionStem('اُس')).toBe(inflectionStem('اس'));
     expect(inflectionStem('کتاب')).not.toBe(inflectionStem('کتابیں'));
+    // QA round 5, M12: the three builds that still showed a form of their own verb, and a pronoun.
+    expect(inflectionStem('لگتا')).toBe(inflectionStem('لگی'));
+    expect(inflectionStem('رہتا')).toBe(inflectionStem('رہا'));
+    expect(inflectionStem('کیجیے')).toBe(inflectionStem('کیا'));
+    expect(inflectionStem('میری')).toBe(inflectionStem('میں'));
   });
 
   it('are never a form of a word in the sentence', () => {
