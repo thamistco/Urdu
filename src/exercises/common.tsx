@@ -116,7 +116,9 @@ const VERDICT = { selected: ', selected', wrong: ', your answer', correct: ', co
  * 1.08:1 apart, two beige outlines: the feedback sheet still said right or
  * wrong, but not which tile had been the learner's (design review,
  * 2026-10-09; P-013). Hidden from screen readers, which already hear it in
- * VERDICT.
+ * VERDICT. Inside the corner, not over it: hung 9px outside, it hid under
+ * the lesson header once the board scrolled, and at 200% text touched the
+ * next tile in a two-column grid (second check, 2026-10-13).
  */
 function VerdictMark({ correct }: { correct: boolean }) {
   return (
@@ -124,9 +126,9 @@ function VerdictMark({ correct }: { correct: boolean }) {
       aria-hidden
       importantForAccessibility="no-hide-descendants"
       pointerEvents="none"
-      style={{ position: 'absolute', top: -9, right: -9 }}
+      style={{ position: 'absolute', top: 4, right: 4 }}
     >
-      <Svg width={22} height={22} viewBox="0 0 22 22">
+      <Svg width={18} height={18} viewBox="0 0 22 22">
         <Circle
           cx={11}
           cy={11}
