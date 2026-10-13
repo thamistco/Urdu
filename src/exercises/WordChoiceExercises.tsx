@@ -38,6 +38,26 @@ type ListenEx = Extract<Exercise, { kind: 'listenTap' }>;
  * costs no heart and the word is taught straight after (design review,
  * 2026-10-10, Q-031).
  */
+/**
+ * An option's picture, held back until the question is answered.
+ *
+ * On "What does it mean?" and listening cards the picture beside each English
+ * option did the reading for the learner: a sleepy face on "Tired", a pin on
+ * "Where" (QA, 2026-10-13, M6). It keeps its space while hidden, so nothing
+ * moves when it appears, and a screen reader does not hear it early.
+ */
+function HiddenUntil({ shown, children }: { shown: boolean; children: React.ReactNode }) {
+  return (
+    <View
+      style={{ opacity: shown ? 1 : 0 }}
+      aria-hidden={!shown}
+      importantForAccessibility={shown ? 'auto' : 'no-hide-descendants'}
+    >
+      {children}
+    </View>
+  );
+}
+
 function GuessNote({ pretest }: { pretest?: boolean }) {
   if (!pretest) return null;
   return <Txt className="-mt-3 mb-4 text-center text-xs text-paper/60">New word: take a guess, it costs nothing.</Txt>;
@@ -156,7 +176,9 @@ export function MeaningPickExercise({ exercise, track, locked, onGraded }: Exerc
           return (
             <Choice key={o.id} state={state} disabled={picked != null || locked} onPress={() => choose(o.id)}>
               <View className="flex-row items-center gap-3">
-                <WordArt word={o} size={38} />
+                <HiddenUntil shown={picked != null}>
+                  <WordArt word={o} size={38} />
+                </HiddenUntil>
                 <Bold className="text-base">{glossOf(o)}</Bold>
               </View>
             </Choice>
@@ -246,7 +268,9 @@ export function ListenTapExercise({ exercise, showRoman, locked, onGraded }: Exe
               onPress={() => choose(o.id)}
               className="mb-3 w-[48%]"
             >
-              <WordArt word={o} size={52} />
+              <HiddenUntil shown={picked != null}>
+                <WordArt word={o} size={52} />
+              </HiddenUntil>
               <Bold className="mt-1 text-sm">{glossOf(o)}</Bold>
             </Choice>
           );
