@@ -618,12 +618,38 @@ async function main() {
         const u = new URL(r.url());
         if (u.protocol === 'http:' || u.protocol === 'https:') hosts.add(u.host);
       });
+      /**
+       * Until the page text reads the same on two polls in a row. A screen
+       * sliding in shows both screens' text for a moment, so "any change" was
+       * met mid-transition, the loop below read the old screen, and pressed
+       * Continue once more than there were screens: past the "I already speak
+       * it" choice and the whole quick check. Failed once in CI and once
+       * locally on 13 October; passed alone every time.
+       */
+      const settled = () =>
+        p
+          .waitForFunction(
+            () => {
+              const t = document.body.innerText;
+              const same = t === window.__qaafSettle;
+              window.__qaafSettle = t;
+              return same;
+            },
+            null,
+            { timeout: 10000, polling: 250 }
+          )
+          .then(
+            () => true,
+            () => false
+          );
       const step = async (re, label, then) => {
         const before = await said();
         if (!(await tapByText(p, re))) return false;
         reached.push(label);
-        // Either the condition named, or for a plain advance, any change.
-        return then ? then() : until((b) => document.body.innerText !== b, before);
+        // Either the condition named, or for a plain advance, a change that
+        // has finished.
+        if (then) return then();
+        return (await until((b) => document.body.innerText !== b, before)) && settled();
       };
       try {
         await p.goto(`http://localhost:${PORT}/Urdu/`);
