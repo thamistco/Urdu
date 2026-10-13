@@ -282,7 +282,15 @@ export function GrammarDrillExercise({ exercise, track, showRoman, locked, onGra
               {roman ? (
                 <Bold style={{ fontSize: 20 }}>{romanFor(o)}</Bold>
               ) : (
-                <Urdu style={{ fontSize: 24, color: palette.paper, lineHeight: urduLine(24) }}>{o}</Urdu>
+                <>
+                  <Urdu style={{ fontSize: 24, color: palette.paper, lineHeight: urduLine(24) }}>{o}</Urdu>
+                  {/* Both together means both, on a drill as on every other
+                      card: the options were script-only, the same as the
+                      Script track (QA, 2026-10-13, H9). */}
+                  {track === 'both' && showRoman && romanFor(o) ? (
+                    <Txt className="mt-0.5 text-xs text-paper/60">{romanFor(o)}</Txt>
+                  ) : null}
+                </>
               )}
             </Choice>
           );
