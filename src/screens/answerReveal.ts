@@ -1,6 +1,7 @@
 import type { Exercise } from '../exercises/types';
 import { POSITIONS } from '../data/letters';
 import { glossOf } from '../data/words';
+import { sentenceText } from '../data/sentences';
 
 /**
  * What to show a learner who just got it wrong.
@@ -62,7 +63,7 @@ export function answerReveal(ex: Exercise): AnswerReveal | null {
       // script track not even the transliteration, since that is held back
       // behind `showRoman`. The English is already the prompt, so repeating it
       // here would only push the part that was actually missing further down.
-      return { script: ex.sentence.words.join(' '), roman: ex.sentence.roman };
+      return { script: sentenceText(ex.sentence), roman: ex.sentence.roman };
     default:
       // Everything left grades in place: matching swaps the pair in the tray,
       // and the grammar drill, reading and dialogue questions all light up the

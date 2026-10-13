@@ -91,7 +91,8 @@ describe('answerReveal', () => {
     const r = answerReveal({ kind: 'sentenceBuild', sentence, tiles: [] } as unknown as Exercise);
     // The order is the whole answer — the learner's own wrong order is the only
     // thing otherwise on screen.
-    expect(r?.script).toBe(sentence.words.join(' '));
+    // In order, and ended the way Urdu ends it (2026-10-13, L8).
+    expect(r?.script).toMatch(new RegExp(`^${sentence.words.join(' ')}[۔؟]$`));
     expect(r?.roman).toBe(sentence.roman);
   });
 
