@@ -111,10 +111,18 @@ export function nearMiss(input: string, roman: string, taken: ReadonlySet<string
 
 /** Urdu text with the marks and spacing that don't change the reading removed. */
 function urduSkeleton(s: string): string {
-  return s
-    .replace(/[‎‏؜]/g, '') // bidi marks
-    .replace(/[ً-ْٰ]/g, '') // harakat, if anyone types them
-    .replace(/\s+/g, '');
+  return (
+    s
+      .replace(/[‎‏؜]/g, '') // bidi marks
+      // An Arabic keyboard types these letters as their Arabic twins, which
+      // look the same and are different characters: كتاب was refused for
+      // کتاب (learner voice, 2026-10-13). Folded to the Urdu ones.
+      .replace(/[\u064A\u0649]/g, '\u06CC') // ي ى → ی
+      .replace(/\u0643/g, '\u06A9') // ك → ک
+      .replace(/\u0647/g, '\u06C1') // ه → ہ
+      .replace(/[ً-ْٰ]/g, '') // harakat, if anyone types them
+      .replace(/\s+/g, '')
+  );
 }
 
 /**

@@ -92,3 +92,14 @@ describe('loanword spellings', () => {
       expect(getWord(id), id).toBeDefined();
   });
 });
+
+describe('Urdu typed on an Arabic keyboard', () => {
+  // Learner voice, 2026-10-13: ي ك ه look like ی ک ہ and are other characters.
+  it.each([
+    ['\u0643\u062A\u0627\u0628', 'کتاب'], // كتاب
+    ['\u0643\u0645\u0631\u0647', 'کمرہ'], // كمره
+    ['\u0645\u064A\u0632', 'میز'], // ميز
+  ])('accepts %s for %s', (typed, urdu) => {
+    expect(matchesWord(typed, urdu, 'x')).toBe(true);
+  });
+});
