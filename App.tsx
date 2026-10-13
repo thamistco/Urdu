@@ -22,6 +22,7 @@ import { useAuthStore } from './src/store/useAuthStore';
 import { palette } from './src/theme';
 import { storageRefused, onStorageRefused } from './src/store/storage';
 import { Txt } from './src/components/Text';
+import { Platform } from 'react-native';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -123,6 +124,25 @@ export default function App() {
   // runs, but nothing it learns survives closing the page (QA, M21).
   const [refused, setRefused] = useState(storageRefused);
   useEffect(() => onStorageRefused(() => setRefused(true)), []);
+
+  /**
+   * Two tabs, one profile. Each tab held its own copy of the progress and
+   * wrote it whole, so a lesson finished in one tab was overwritten by the
+   * next save from the other: finish v-first-words in tab A, v-greetings in
+   * tab B, then Continue in A, and v-greetings was gone (QA, 2026-10-13,
+   * M26). The browser tells every other tab when a key changes, so each tab
+   * now reloads the saved progress the moment another tab writes it, before
+   * it can write its stale copy over the top.
+   */
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'qaaf-progress') void useProgressStore.persist.rehydrate();
+      else if (e.key === 'qaaf-settings') void useSettingsStore.persist.rehydrate();
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   if (!ready) return <View style={{ flex: 1, backgroundColor: palette.ink }} />;
 
