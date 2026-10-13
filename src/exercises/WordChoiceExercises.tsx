@@ -18,6 +18,7 @@ import Animated, {
 import { romanRevealsMeaning } from '../lib/giveaway';
 import type { ExerciseProps, Exercise } from './types';
 import { glossOf } from '../data/words';
+import { plainRoman } from '../lib/roman';
 
 type MCEx = Extract<Exercise, { kind: 'multipleChoice' }>;
 type MeaningEx = Extract<Exercise, { kind: 'meaningPick' }>;
@@ -164,7 +165,12 @@ export function MeaningPickExercise({ exercise, track, locked, onGraded }: Exerc
       <PromptCard height={phrase ? 170 : 150}>
         <Lexeme urdu={word.urdu} roman={gives ? undefined : word.roman} track={track} size={fs} color={palette.ink} />
         <View className="mt-3">
-          <SpeakerButton onPress={() => announce(word.id, word.urdu, word.roman)} label={`Hear ${word.roman}`} />
+          <SpeakerButton
+            onPress={() => announce(word.id, word.urdu, word.roman)}
+            // Not the Roman when the card hides it for giving the meaning away
+            // (ḍaakṭar for "doctor"): read aloud, it gave it away just the same.
+            label={gives ? 'Hear the word' : `Hear ${plainRoman(word.roman)}`}
+          />
         </View>
       </PromptCard>
       <View className="h-4" />
@@ -229,7 +235,7 @@ export function ListenTapExercise({ exercise, showRoman, locked, onGraded }: Exe
         <Pressable
           onPress={() => announce(word.id, word.urdu, word.roman)}
           accessibilityRole="button"
-          accessibilityLabel={playing ? 'Playing…' : 'Play the word again'}
+          accessibilityLabel={playing ? 'Playing…' : 'Hear the word'}
           style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.94 : 1 }] })}
         >
           <Animated.View

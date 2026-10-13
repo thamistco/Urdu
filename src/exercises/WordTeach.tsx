@@ -11,6 +11,7 @@ import { feedback } from '../lib/feedback';
 import { announce } from '../lib/speech';
 import { glossOf } from '../data/words';
 import type { ExerciseProps, Exercise } from './types';
+import { plainRoman } from '../lib/roman';
 
 type TeachEx = Extract<Exercise, { kind: 'wordTeach' }>;
 
@@ -75,7 +76,10 @@ export function WordTeachExercise({ exercise, track, onGraded }: ExerciseProps<T
           {glossOf(word)}
         </Txt>
         <View className="mt-3">
-          <SpeakerButton onPress={() => announce(word.id, word.urdu, word.roman)} label={`Hear ${word.roman}`} />
+          <SpeakerButton
+            onPress={() => announce(word.id, word.urdu, word.roman)}
+            label={`Hear ${plainRoman(word.roman)}`}
+          />
         </View>
       </PromptCard>
 

@@ -32,6 +32,7 @@ import type { FinishResult } from '../store/useProgressStore';
 import { LessonComplete } from './LessonComplete';
 import type { RootStackParamList } from '../navigation/types';
 import { confirmAction } from '../lib/confirm';
+import { plainRoman } from '../lib/roman';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Rt = RouteProp<RootStackParamList, 'Lesson'>;
@@ -742,7 +743,9 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
                   {!graded && current && !isTeaching(current) && replay ? (
                     <SpeakerButton
                       size={38}
-                      label={`Hear ${replay.roman ?? replay.urdu} again`}
+                      // One wording for every speaker: "Hear" and the word, its
+                      // marks dropped for the screen reader (QA, L15).
+                      label={`Hear ${replay.roman ? plainRoman(replay.roman) : replay.urdu}`}
                       onPress={() => announce(replay.id, replay.urdu, replay.roman)}
                     />
                   ) : null}
