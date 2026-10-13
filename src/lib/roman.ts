@@ -78,7 +78,7 @@ function within(a: string, b: string, max: number): boolean {
 export function nearMiss(input: string, roman: string, taken: ReadonlySet<string>): boolean {
   const typed = skeleton(input.trim());
   if (typed.length < 3 || taken.has(typed)) return false;
-  return roman.split('/').some((variant) => {
+  return spellings(roman).some((variant) => {
     const target = skeleton(variant);
     return target.length >= 4 && within(typed, target, 1);
   });
@@ -104,7 +104,17 @@ export function matchesWord(input: string, urdu: string, roman: string): boolean
 
   const target = skeleton(typed);
   if (!target) return false;
-  return roman.split('/').some((variant) => skeleton(variant) === target);
+  return spellings(roman).some((variant) => skeleton(variant) === target);
+}
+
+/**
+ * The stored spellings, plus each with ṛ written d. The flap ڑ is written d
+ * as often as r (laṛka, ladka; chaṛhna, chadhna), and the skeleton only knew
+ * it as r, so ladka was a near miss at best and chadhna for chaṛhna was the
+ * report's first example (QA report v3, H3).
+ */
+function spellings(roman: string): string[] {
+  return roman.split('/').flatMap((v) => (/ṛ/i.test(v) ? [v, v.replace(/ṛ/g, 'd').replace(/Ṛ/g, 'D')] : [v]));
 }
 
 /** True when the learner typed Urdu letters rather than the Latin alphabet. */
