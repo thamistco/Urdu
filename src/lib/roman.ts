@@ -58,6 +58,12 @@ function skeleton(s: string): string {
   ); // achhy / achhi
 }
 
+/**
+ * A romanisation without its marks, for labels read aloud: a screen reader
+ * spells ṭ and ñ out or stumbles on them (QA, L15). ṭamaaṭar → tamaatar.
+ */
+export const plainRoman = (s: string) => stripDiacritics(s);
+
 /** The skeleton a romanisation reduces to, for building `nearMiss`'s list of taken spellings. */
 export const romanSkeleton = (s: string) => skeleton(s);
 

@@ -9,6 +9,7 @@ import { feedback } from '../lib/feedback';
 import { announce } from '../lib/speech';
 import { POSITIONS, positionHint } from '../data/letters';
 import type { ExerciseProps, Exercise } from './types';
+import { plainRoman } from '../lib/roman';
 
 type TeachEx = Extract<Exercise, { kind: 'letterTeach' }>;
 
@@ -83,7 +84,7 @@ export function LetterTeachExercise({ exercise, onGraded }: ExerciseProps<TeachE
           <View className={short ? '' : 'mt-2'}>
             <SpeakerButton
               onPress={() => announce(letter.id, letter.forms.isolated, letter.name)}
-              label={`Hear ${letter.name}`}
+              label={`Hear ${plainRoman(letter.name)}`}
             />
           </View>
         </View>
