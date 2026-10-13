@@ -54,6 +54,8 @@ const ROUTES = [
   // not-yet state; either screen proves the address reaches it.
   { path: '/read', shows: /Read faster|Learn a few more words first/i },
   { path: '/lesson/l-1', shows: /A NEW LETTER/i },
+  // A lesson id that names nothing: a blank page until 2026-10-13 (QA, H11).
+  { path: '/lesson/does-not-exist', shows: /That lesson isn.t here/i },
   // This loop runs against a seeded, already-guest session (see main()), so
   // this only proves Privacy/Terms still work once already past the door.
   // The property that actually matters for them -- a cold, unauthenticated

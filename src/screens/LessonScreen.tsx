@@ -24,7 +24,7 @@ import { REFILL_COST, gemsShortOfRefill, minutesUntilNextHeart } from '../lib/ga
 import { useProgressStore, type ItemType } from '../store/useProgressStore';
 import { heartsAreFree } from '../lib/hearts';
 import { useSettingsStore } from '../store/useSettingsStore';
-import { resolveLesson } from '../data/units';
+import { resolveLesson, type Lesson } from '../data/units';
 import { ExerciseView } from '../exercises';
 import { buildLessonExercises, isWovenReview } from '../exercises/generator';
 import type { Exercise, GradedResult } from '../exercises/types';
@@ -125,9 +125,44 @@ function audioOf(ex: Exercise): { id: string; urdu: string; roman?: string } | n
   }
 }
 
+/**
+ * The route, and what to show when its lesson id names nothing.
+ *
+ * /lesson/does-not-exist went straight into the session with an undefined
+ * lesson, and the first `lesson.kind` threw: a blank page on an onboarded
+ * profile (QA, 2026-10-13, H11). A typo in a shared link, or a lesson renamed
+ * since the link was made, now gets a sentence and a way home.
+ */
 export function LessonScreen() {
-  const nav = useNavigation<Nav>();
   const route = useRoute<Rt>();
+  const id = route.params?.lessonId;
+  // Resolved once per id: see the note in LessonSession on why identity matters.
+  const lesson = useMemo(() => (id ? resolveLesson(id) : undefined), [id]);
+  if (!lesson) return <LessonNotFound />;
+  return <LessonSession lesson={lesson} />;
+}
+
+function LessonNotFound() {
+  const nav = useNavigation<Nav>();
+  return (
+    <Screen scroll={false}>
+      <SafeAreaView className="flex-1">
+        <View className="flex-1 items-center justify-center px-2">
+          <Heading className="mb-2 text-center text-2xl">That lesson isn’t here</Heading>
+          <Txt className="mb-8 max-w-[300px] text-center text-sm text-paper/60">
+            The link may have a typo, or the lesson may have moved. Everything you have learned is still saved.
+          </Txt>
+          <View className="w-full">
+            <Button onPress={() => nav.reset({ index: 0, routes: [{ name: 'Main' }] })}>Go to your lessons</Button>
+          </View>
+        </View>
+      </SafeAreaView>
+    </Screen>
+  );
+}
+
+function LessonSession({ lesson }: { lesson: Lesson }) {
+  const nav = useNavigation<Nav>();
   /**
    * Resolved once per lesson id, not once per render.
    *
@@ -140,7 +175,6 @@ export function LessonScreen() {
    * changed under the learner's finger at the moment they answered, so the
    * answer was graded against a question they had never seen.
    */
-  const lesson = useMemo(() => resolveLesson(route.params.lessonId)!, [route.params.lessonId]);
   // A unit review and the Daily Review both resolve to this kind. The header
   // says so, because otherwise a review looked exactly like a lesson and a
   // learner met old material with nothing saying why.
