@@ -413,12 +413,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
       if (isPretest(answered) && 'word' in answered) pretestedRef.current.add(answered.word.id);
       if (result.correct) {
         setCorrectCount((c) => c + 1);
-      } else if (
-        !isTeaching(exercises[idx]) &&
-        !isPretest(exercises[idx]) &&
-        !isTrace(exercises[idx]) &&
-        !freeListen
-      ) {
+      } else if (!isTeaching(exercises[idx]) && !isPretest(exercises[idx]) && !isTrace(exercises[idx]) && !freeListen) {
         // One heart per item per lesson — see `chargedRef`.
         const already = result.items.length > 0 && result.items.every((it) => chargedRef.current.has(it.id));
         result.items.forEach((it) => chargedRef.current.add(it.id));
@@ -751,8 +746,9 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
                             small screen. */}
                         {/* Clear of the eyebrow: Nastaliq rises well above its
                             line, and جیکٹ touched "THE ANSWER" (QA report v3,
-                            L22). */}
-                        <View style={{ paddingTop: 6 }}>
+                            L22). 6px was not enough for بیگم, whose گ
+                            rises above the 2.3x line box (2026-10-13). */}
+                        <View style={{ paddingTop: 12 }}>
                           <Lexeme
                             urdu={reveal.script ?? ''}
                             roman={reveal.roman}
