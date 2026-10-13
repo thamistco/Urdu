@@ -104,8 +104,10 @@ describe('LessonScreen wiring (URD-055)', () => {
     // well over 30,000 characters, so anything in this range is unambiguously
     // one function body. Raised from 2,500 when `onGraded` gained its
     // teaching-card branch — real code, not a longer comment, which is why
-    // this moved rather than the code being squeezed to fit it.
-    expect(onGradedBody.length).toBeLessThan(3200);
+    // this moved rather than the code being squeezed to fit it. Raised again
+    // to 4,000 on 2026-10-13 for the same reason: the first-listen exemption
+    // from hearts (QA, M15) is code in this function.
+    expect(onGradedBody.length).toBeLessThan(4000);
     expect(onGradedBody).toContain('recordItemGrade(');
   });
 
