@@ -189,6 +189,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
 
   const showRoman = useSettingsStore((s) => s.showRoman);
   const track = useSettingsStore((s) => s.track);
+  const setTrack = useSettingsStore((s) => s.setTrack);
   const gradeItem = useProgressStore((s) => s.gradeItem);
   // `flushSessionGrades` (`lib/sessionGrading.ts`) keeps its item type as a
   // loose `string`, like the rest of `lib/`, rather than depending on
@@ -512,6 +513,32 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   // Nothing this lesson could ask. A white screen is what it used to be (an
   // exercise read off an empty list); this says so and offers the way back.
   if (!exercises.length) {
+    // A letter lesson opened by its link on the Roman track, which teaches no
+    // script: it said "Nothing to practise here yet", as if the course were
+    // empty (QA round 5, L29). Say why, and offer the track that teaches it.
+    if (lesson.kind === 'letters' && track === 'roman') {
+      return (
+        <Screen scroll={false}>
+          <SafeAreaView className="flex-1">
+            <View className="flex-1 items-center justify-center px-2">
+              <Heading className="mb-2 text-center text-2xl">This lesson teaches the script</Heading>
+              <Txt className="mb-8 max-w-[300px] text-center text-sm text-paper/60">
+                You are learning with Roman letters only, so letter lessons are left out. Switch to Both together to
+                learn the Urdu script as well.
+              </Txt>
+              <View style={{ width: '100%', maxWidth: 360, gap: 12 }}>
+                <Button variant="primary" onPress={() => setTrack('both')}>
+                  Learn the script too
+                </Button>
+                <Button variant="ghost" onPress={() => nav.popTo('Main')}>
+                  Back home
+                </Button>
+              </View>
+            </View>
+          </SafeAreaView>
+        </Screen>
+      );
+    }
     return (
       <Screen scroll={false}>
         <SafeAreaView className="flex-1">
