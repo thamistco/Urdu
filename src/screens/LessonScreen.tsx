@@ -629,7 +629,11 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
             {/* How far, in steps. The bar alone gave no sense of a 43-step
                 lesson's length, and testers concluded the sentence lessons
                 never ended (QA report, 2026-10-12). */}
-            <Txt className="mt-0.5 text-right text-[0.625rem] text-paper/55" style={{ fontVariant: ['tabular-nums'] }}>
+            <Txt
+              numberOfLines={1}
+              className="mt-0.5 text-right text-[0.625rem] text-paper/55"
+              style={{ fontVariant: ['tabular-nums'] }}
+            >
               {Math.min(idx + 1, total)} of {total}
             </Txt>
           </View>

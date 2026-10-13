@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { View, TextInput } from 'react-native';
+import { useRef, useState } from 'react';
+import { View, TextInput, Platform } from 'react-native';
 import { Choice, PromptCard, Question, palette, withAlpha } from './common';
 import { Txt, Bold } from '../components/Text';
 import { Lexeme } from '../components/Lexeme';
@@ -54,6 +54,20 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
   /** A letter off, and accepted: the note then shows the spelling. */
   const [close, setClose] = useState(false);
   const [focused, setFocused] = useState(false);
+  /**
+   * Check stays in view above the on-screen keyboard. At 320px with the
+   * keyboard open it was hidden under it, with nothing to say it was there
+   * (QA, 2026-10-13, M27). On the web the keyboard shrinks the visual
+   * viewport, so once it has opened the button is scrolled to its nearest
+   * visible place; native screens scroll the focused input themselves.
+   */
+  const checkRef = useRef<View>(null);
+  const keepCheckInView = () => {
+    if (Platform.OS !== 'web') return;
+    setTimeout(() => {
+      (checkRef.current as unknown as HTMLElement | null)?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+    }, 350);
+  };
 
   const check = () => {
     if (graded != null || locked || !text.trim()) return;
@@ -103,7 +117,10 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
         <TextInput
           value={text}
           onChangeText={setText}
-          onFocus={() => setFocused(true)}
+          onFocus={() => {
+            setFocused(true);
+            keepCheckInView();
+          }}
           onBlur={() => setFocused(false)}
           onSubmitEditing={check}
           editable={graded == null && !locked}
@@ -134,9 +151,11 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
       </Txt>
 
       {graded == null && (
-        <Button variant={text.trim() ? 'primary' : 'ghost'} disabled={!text.trim()} onPress={check}>
-          Check
-        </Button>
+        <View ref={checkRef}>
+          <Button variant={text.trim() ? 'primary' : 'ghost'} disabled={!text.trim()} onPress={check}>
+            Check
+          </Button>
+        </View>
       )}
 
       {graded != null && (

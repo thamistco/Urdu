@@ -35,7 +35,9 @@ export function LetterTeachExercise({ exercise, onGraded }: ExerciseProps<TeachE
   // screen scrolled (design review, 2026-10-09, Q-016). Under 700px the same
   // content packs tighter: a smaller letter, its name and speaker on one
   // line, the example word on one row.
-  const short = useWindowDimensions().height < 700;
+  const { height, width } = useWindowDimensions();
+  const short = height < 700;
+  const narrow = width < 380;
 
   // A non-connector: it joins only from the right, so its start form is its
   // alone form and its middle form is its end form.
@@ -90,12 +92,14 @@ export function LetterTeachExercise({ exercise, onGraded }: ExerciseProps<TeachE
       <Txt className={`mb-2 ${short ? 'mt-3' : 'mt-5'} text-center text-xs text-paper/60`}>
         It changes shape depending on where it sits
       </Txt>
-      <View className="flex-row justify-center gap-2">
+      {/* Two by two when narrow: four 68px tiles overflowed at 360px with
+          the text zoomed to 130% (QA, 2026-10-13, M27). */}
+      <View className="flex-row flex-wrap justify-center gap-2">
         {POSITIONS.map((p) => (
           <View
             key={p.key}
-            className="min-w-[68px] flex-1 items-center rounded-2xl px-2 py-3"
-            style={{ backgroundColor: withAlpha(palette.paper, 0.07) }}
+            className={`items-center rounded-2xl px-2 py-3 ${narrow ? '' : 'min-w-[68px] flex-1'}`}
+            style={{ backgroundColor: withAlpha(palette.paper, 0.07), ...(narrow ? { width: '47%' } : null) }}
           >
             <Urdu style={{ ...urduGlyph(short ? 26 : 30) }}>{letter.forms[p.key]}</Urdu>
             <Bold className="mt-2 text-[0.6875rem] text-paper/75">{p.label}</Bold>
