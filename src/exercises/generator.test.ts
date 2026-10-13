@@ -9,6 +9,7 @@ import {
   letterSpotTiles,
   OPTIONS_PER_QUESTION,
   sentenceExercise,
+  isWovenReview,
   buildTilesFor,
   tileLookalikes,
   soundsOverlap,
@@ -2385,3 +2386,18 @@ describe('word-build decoys', () => {
   });
 });
 
+/** Woven review items are told apart from the lesson's own (QA report v3, M19). */
+describe('review items woven into a lesson', () => {
+  it('are marked, and the lesson’s own exercises are not', () => {
+    const lesson = ALL_LESSONS.find((l) => l.kind === 'vocab' && l.id === 'v-first-words-p2')!;
+    const due = [
+      { id: 'w-paani', type: 'word' as const },
+      { id: 'w-kitaab', type: 'word' as const },
+    ];
+    const ex = buildLessonExercises(lesson, due, 'both');
+    const marked = ex.filter(isWovenReview);
+    expect(marked.length).toBe(2);
+    expect(marked.every((e) => 'word' in e && ['w-paani', 'w-kitaab'].includes(e.word.id))).toBe(true);
+    expect(buildLessonExercises(lesson, [], 'both').filter(isWovenReview)).toEqual([]);
+  });
+});
