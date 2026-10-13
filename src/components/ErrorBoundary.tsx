@@ -1,5 +1,5 @@
 import { Component, type ReactNode } from 'react';
-import { Platform, View } from 'react-native';
+import { Platform, ScrollView, View } from 'react-native';
 import { Heading, Txt } from './Text';
 import { Button } from './Button';
 import { palette } from '../theme';
@@ -81,29 +81,34 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: 
   render() {
     if (!this.state.failed) return this.props.children;
     return (
-      <View
-        accessibilityRole="alert"
-        style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: palette.ink }}
+      // Scrolls, centred when it fits: at 200% text the second button, the
+      // one way out of a crash loop, sat below the window (design review,
+      // 2026-10-13).
+      <ScrollView
+        style={{ flex: 1, backgroundColor: palette.ink }}
+        contentContainerStyle={{ flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}
       >
-        <Heading className="mb-2 text-center text-2xl">Something went wrong</Heading>
-        <Txt className="mb-8 max-w-[300px] text-center text-sm text-paper/60">
-          This screen hit a problem. Your progress is saved; going back to your lessons usually fixes it.
-        </Txt>
-        <View style={{ width: '100%', maxWidth: 360, gap: 12 }}>
-          <Button onPress={this.recover}>Go to your lessons</Button>
-          {failedAgain() ? (
-            <>
-              <Txt className="text-center text-sm text-paper/60">
-                It happened again. Starting again on this device copies your saved progress to a backup first, then
-                clears it from this browser.
-              </Txt>
-              <Button variant="ghost" onPress={this.startAgain}>
-                Start again on this device
-              </Button>
-            </>
-          ) : null}
+        <View accessibilityRole="alert" style={{ width: '100%', alignItems: 'center' }}>
+          <Heading className="mb-2 text-center text-2xl">Something went wrong</Heading>
+          <Txt className="mb-8 max-w-[300px] text-center text-sm text-paper/60">
+            This screen hit a problem. Your progress is saved; going back to your lessons usually fixes it.
+          </Txt>
+          <View style={{ width: '100%', maxWidth: 360, gap: 12 }}>
+            <Button onPress={this.recover}>Go to your lessons</Button>
+            {failedAgain() ? (
+              <>
+                <Txt className="text-center text-sm text-paper/60">
+                  It happened again. Starting again on this device copies your saved progress to a backup first, then
+                  clears it from this browser.
+                </Txt>
+                <Button variant="ghost" onPress={this.startAgain}>
+                  Start again on this device
+                </Button>
+              </>
+            ) : null}
+          </View>
         </View>
-      </View>
+      </ScrollView>
     );
   }
 }
