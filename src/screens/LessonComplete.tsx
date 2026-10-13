@@ -11,7 +11,10 @@ import type { IconName } from '../art/icons';
 import { palette, withAlpha } from '../theme';
 import { levelTitle } from '../lib/gamification';
 import { count } from '../lib/plural';
-import type { FinishResult } from '../store/useProgressStore';
+import { useEffect, useState } from 'react';
+import { useProgressStore, type FinishResult } from '../store/useProgressStore';
+import { heartsAreFree } from '../lib/hearts';
+import { HEARTS_MAX, HEART_REGEN_MINUTES, REFILL_COST } from '../lib/gamification';
 
 function RewardTile({ icon, value, label, color }: { icon: IconName; value: string; label: string; color: string }) {
   return (
@@ -42,6 +45,20 @@ export function LessonComplete({
   onHome: () => void;
 }) {
   const accuracy = total > 0 ? Math.round((correct / total) * 100) : 100;
+
+  /**
+   * Said once, the first time a lesson ends with hearts switched on: when Unit
+   * 1 is finished or skipped. Until now the rule was first met as a wall in the
+   * middle of a lesson (QA, 2026-10-13, C1). Fixed at mount, so the screen
+   * does not change under the learner when the flag is saved.
+   */
+  const [heartsNote] = useState(() => {
+    const s = useProgressStore.getState();
+    return !s.heartsIntroSeen && !heartsAreFree(s.completedLessons, s.skippedLessons);
+  });
+  useEffect(() => {
+    if (heartsNote) useProgressStore.getState().seeHeartsIntro();
+  }, [heartsNote]);
 
   return (
     <View className="flex-1 bg-ink">
@@ -83,6 +100,23 @@ export function LessonComplete({
                 the words that went wrong are already in the schedule, so this
                 only says so, at the one moment the learner is deciding
                 whether to carry on or stop. */}
+            {heartsNote && (
+              <Reveal delay={160} style={{ width: '100%' }}>
+                <View
+                  accessibilityRole="summary"
+                  className="mb-3 flex-row items-start gap-3 rounded-2xl border p-4"
+                  style={{ borderColor: withAlpha(palette.rose, 0.35), backgroundColor: withAlpha(palette.rose, 0.1) }}
+                >
+                  <Illustration name="heart" tile={false} size={26} />
+                  <View className="flex-1">
+                    <Bold className="text-[0.9375rem]">Hearts are on from here</Bold>
+                    <Txt className="mt-1 text-xs leading-5 text-paper/75">
+                      {`You have ${HEARTS_MAX}. A wrong answer costs one, one comes back every ${HEART_REGEN_MINUTES} minutes, and a refill costs ${REFILL_COST} gems. Guess-first questions and tracing stay free.`}
+                    </Txt>
+                  </View>
+                </View>
+              </Reveal>
+            )}
             {accuracy < 60 && (
               <Reveal delay={180} style={{ width: '100%' }}>
                 <View

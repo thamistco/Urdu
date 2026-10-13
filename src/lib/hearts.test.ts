@@ -34,29 +34,23 @@ describe('the first unit costs no hearts', () => {
   });
 
   /**
-   * The reason the grace period exists, taken from the economy rather than
-   * asserted in prose.
+   * The owner's rule for the economy (2026-10-13, QA C1): a refill costs no
+   * more than one lesson pays, so a wall is never more than a lesson's worth
+   * of gems away.
    *
-   * The first draft of this test claimed a refill is unreachable for the whole
-   * of Unit 1, and the test said otherwise: a flawless learner is past the
-   * price after two lessons. The true claim is narrower and is the one that
-   * matters — at the moment the wall is actually most likely to arrive, in the
-   * alphabet, with almost nothing learned, a learner cannot pay it.
-   *
-   * 0.39 is not a guess: it is what the project's own playtester scores over
-   * eighteen lessons knowing nothing at the start, and a beginner meeting the
-   * alphabet is not doing better than their own average.
+   * This test used to hold the opposite, the reason the grace period first
+   * existed: with refills at 40, and then 25, a fresh profile could not pay
+   * its first wall. At 10 it can, from its starting 20, so the grace no longer
+   * rests on price. It stays for the other reason the QA reports gave: the
+   * alphabet is where mistakes are densest, and a learner should know the
+   * rule before it bites (the one-time note when hearts switch on).
    */
-  it('covers the lessons where the wall arrives and cannot be paid', () => {
-    const START_GEMS = 20;
-    const perLesson = gemsForLesson(0.39, false);
-    expect(START_GEMS, 'a fresh profile cannot afford a refill').toBeLessThan(REFILL_COST);
-    // With the refill at 40 this also held after two lessons at a beginner
-    // score. At 25 (2026-10-12) it holds for the first wall only, and that is
-    // the stretch the grace has to cover: the first lessons, in the alphabet.
-    expect(START_GEMS + perLesson, 'one beginner lesson later, it can').toBeGreaterThanOrEqual(REFILL_COST);
-    // And the grace period is long enough to reach the other side of that.
-    expect(UNITS[0].lessons.length, 'Unit 1 should outlast the unaffordable stretch').toBeGreaterThan(4);
+  it('prices a refill at no more than one lesson pays', () => {
+    expect(REFILL_COST).toBeLessThanOrEqual(gemsForLesson(1, false));
+    // The very first wall is affordable from the starting balance.
+    expect(20).toBeGreaterThanOrEqual(REFILL_COST);
+    // And the grace still covers the alphabet unit.
+    expect(UNITS[0].lessons.length).toBeGreaterThan(4);
   });
 
   /**

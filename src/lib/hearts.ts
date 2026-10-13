@@ -3,23 +3,17 @@ import { UNITS } from '../data/units';
 /**
  * The first unit costs no hearts.
  *
- * The hearts economy is built for a learner who has some gems: five hearts, a
- * heart back every thirty minutes, and a full refill for twenty-five gems
- * (forty until 2026-10-12). A new profile starts with twenty, and a lesson
- * pays five at a beginner's accuracy. So the first time anybody runs out —
- * most likely in the alphabet, the hardest content in the course, with almost
- * nothing learned yet — the refill costs more than they hold, and the only remaining option is to put the
- * phone down for half an hour. That is not a difficulty curve, it is a new
- * learner's first session ending on the app's terms rather than theirs.
+ * Five hearts, a heart back every thirty minutes, and a full refill for ten
+ * gems: no more than one lesson pays (the owner's rule, 2026-10-13; it was
+ * forty, then twenty-five). When the refill cost forty, the first wall,
+ * most likely in the alphabet, cost twice what a new profile held, and the
+ * only option was to put the phone down for half an hour. That was the first
+ * reason for this grace.
  *
- * A learner is past the price after one lesson, so this is
- * not a claim about the whole unit — the test in hearts.test.ts says so, and
- * caught the first version of this comment claiming otherwise. It is a claim
- * about the lessons where the wall actually arrives.
- *
- * So hearts do not deplete until the learner is through Unit 1. By then the
- * gems are there and the wall is a real choice — wait, or pay — which is what
- * it was always supposed to be.
+ * At ten gems the price no longer needs it. The grace stays because the
+ * alphabet is where mistakes are densest and nothing has explained hearts
+ * yet: a learner finishes Unit 1, is told once that hearts are on
+ * (LessonComplete), and only then can lose one.
  *
  * Keyed on the unit's last lesson rather than a lesson count, so regrouping
  * the course cannot silently move the line. Skipped counts as done: a heritage
