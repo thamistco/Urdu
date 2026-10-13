@@ -18,7 +18,7 @@ export type Level = 'beginner' | 'elementary' | 'intermediate' | 'advanced';
  * children, and `intimate` is the small set of words that are warm with family
  * and insulting with a stranger.
  */
-export type Register = 'formal' | 'polite' | 'casual' | 'intimate';
+export type Register = 'formal' | 'polite' | 'casual' | 'intimate' | 'literary';
 
 export type Word = {
   id: string;

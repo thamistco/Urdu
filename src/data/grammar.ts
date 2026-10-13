@@ -923,9 +923,9 @@ export const GRAMMAR: GrammarConcept[] = [
         ['very polite', '‑یے گا', 'کیجیے گا'],
       ],
       rowsRoman: [
-        ['aap (polite)', '‑iye', 'kijiye (please do it)'],
+        ['aap (polite)', '‑iye', 'keejiye (please do it)'],
         ['tum (casual)', '‑o', 'karo (do it)'],
-        ['very polite', '‑iye ga', 'kijiye ga (do it, please)'],
+        ['very polite', '‑iye ga', 'keejiye ga (do it, please)'],
       ],
     },
     examples: [
