@@ -19,8 +19,23 @@ import { WORDS, PHRASES } from '../data/words';
 import { SENTENCES } from '../data/sentences';
 import { GRAMMAR_TRANSLIT } from '../data/translit';
 
+/**
+ * Spellings where a vocabulary word shares its letters with a much commoner
+ * grammatical word, and the table would otherwise give the vocabulary
+ * reading to every context-free use. These reach a learner where no sentence
+ * says which is meant: a grammar drill's options and a tray's decoy tiles.
+ * The g-relative drill offered جو as "jau" (barley) for the relative "jo"
+ * (QA report v3, M20). The word cards keep their own Roman: barley is still
+ * jau and the garment still kurta. سو (sau, a hundred / so, sleep) and ہوا
+ * (hawa, air / hua, became) are left to the table: both readings are common.
+ */
+const READ_AS: Record<string, string> = {
+  جو: 'jo',
+  کرتا: 'karta',
+};
+
 const TABLE: Map<string, string> = (() => {
-  const m = new Map<string, string>();
+  const m = new Map<string, string>(Object.entries(READ_AS));
   for (const w of WORDS) if (!m.has(w.urdu)) m.set(w.urdu, w.roman);
   for (const p of PHRASES) if (!m.has(p.urdu)) m.set(p.urdu, p.roman);
   for (const [urdu, roman] of Object.entries(GRAMMAR_TRANSLIT)) if (!m.has(urdu)) m.set(urdu, roman);
