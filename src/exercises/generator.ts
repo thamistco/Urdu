@@ -439,6 +439,13 @@ export const soundsOverlap = (a: Letter, b: Letter): boolean => {
  */
 const VISUALLY_CONFUSABLE_DECOY_PAIRS: Array<[string, string]> = [
   ['\u06BA', '\u0688'], // noon-ghunna ں vs Daal ڈ: confused twice live in word-build, 2026-09-29
+  // A hamza or a tied form is a small mark on a letter that is otherwise the
+  // same shape: تکیہ's build offered both ہ and ۂ (QA report v3, L17).
+  ['\u06C1', '\u06C2'], // ہ / ۂ
+  ['\u06C1', '\u06C3'], // ہ / ۃ
+  ['\u06CC', '\u0626'], // ی / ئ
+  ['\u0648', '\u0624'], // و / ؤ
+  ['\u0627', '\u0622'], // ا / آ
 ];
 
 /** Whether two letters (by their isolated glyph) are a known tile-size lookalike pair. */
@@ -979,7 +986,16 @@ const ALPHABET: string[] = Array.from(
   new Set(WORDS.flatMap((w) => Array.from(w.urdu)).filter((c) => c.trim().length > 0))
 );
 
-function buildTilesFor(word: Word): string[] {
+/**
+ * Decoy tiles are whole letters. A vowel mark (zer, pesh, shadda, tanween,
+ * the standing alif) on a tile of its own is a near-empty square, and as a
+ * decoy it is a trap no reading can avoid: testers met a zer tile in words
+ * with no zer (QA report, 2026-10-12, B5/M9). A word that spells a mark still
+ * gets it as a tile; whether it should is P-065.
+ */
+const DECOY_LETTERS: string[] = ALPHABET.filter((c) => !/[\u064B-\u065F\u0670]/.test(c));
+
+export function buildTilesFor(word: Word): string[] {
   // Split into visual character units (grapheme-ish). Urdu combining marks are
   // rare in this vocab, so a code-point split is fine and keeps tiles legible.
   const chars = Array.from(word.urdu).filter((c) => c.trim().length > 0);
@@ -987,10 +1003,9 @@ function buildTilesFor(word: Word): string[] {
   // its order removed, and the exercise can be solved without reading anything.
   // Decoys that are tile-size lookalikes of a letter in the word are excluded;
   // see VISUALLY_CONFUSABLE_DECOY_PAIRS.
-  const decoys = shuffle(ALPHABET.filter((c) => !chars.includes(c) && !chars.some((w) => tileLookalikes(w, c)))).slice(
-    0,
-    2
-  );
+  const decoys = shuffle(
+    DECOY_LETTERS.filter((c) => !chars.includes(c) && !chars.some((w) => tileLookalikes(w, c)))
+  ).slice(0, 2);
   return shuffle([...chars, ...decoys]);
 }
 
