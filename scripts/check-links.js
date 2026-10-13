@@ -255,6 +255,51 @@ async function main() {
         await ctx.close();
       }
     }
+    /**
+     * One field of the save holding the wrong type does not stop the app.
+     *
+     * `learnedWords: 5` left Profile and every lesson blank, `srs: null`
+     * crashed Home on every load and `achieved: null` crashed Profile, with no
+     * backup, since the save as a whole looked fine (QA round 5, M29). The
+     * field now falls back to its default; the rest of the save is kept.
+     */
+    for (const [field, value, path, shows] of [
+      ['learnedWords', 5, '/profile', /Level \d+/i],
+      ['learnedWords', 5, '/lesson/l-1', /A NEW LETTER/i],
+      ['srs', null, '/', /Speak with family|Read the script|Come home to it|Explore Urdu/],
+      ['achieved', null, '/profile', /Level \d+/i],
+    ]) {
+      const ctx = await browser.newContext({ viewport: { width: 412, height: 900 } });
+      const p = await ctx.newPage();
+      try {
+        await enterAsGuest(p, `${origin}${BASE}/`, { gems: 77 });
+        await p.evaluate(
+          ([f, v]) => {
+            const raw = JSON.parse(localStorage.getItem('qaaf-progress'));
+            raw.state[f] = v;
+            localStorage.setItem('qaaf-progress', JSON.stringify(raw));
+          },
+          [field, value]
+        );
+        await p.goto(`${origin}${BASE}${path}`);
+        await arrived(p);
+        await p
+          .waitForFunction((re) => new RegExp(re, 'i').test(document.body.innerText), shows.source, { timeout: 10000 })
+          .catch(() => {});
+        const body = await p.evaluate(() => document.body.innerText);
+        const what = `A save with ${field}: ${JSON.stringify(value)}`;
+        if (!shows.test(body))
+          problems.push(`${what} did not open ${path}: "${body.replace(/\n/g, ' / ').slice(0, 90)}"`);
+        const state = await p.evaluate(() => JSON.parse(localStorage.getItem('qaaf-progress') || 'null')?.state);
+        if (state?.gems !== 77) problems.push(`${what} lost the rest of the save: gems came back ${state?.gems}.`);
+        const backups = await p.evaluate(() =>
+          Object.keys(localStorage).filter((k) => k.startsWith('qaaf-progress-backup-'))
+        );
+        if (!backups.length) problems.push(`${what} was repaired without a backup copy being made first.`);
+      } finally {
+        await ctx.close();
+      }
+    }
     {
       const ctx = await browser.newContext({ viewport: { width: 412, height: 900 } });
       const p = await ctx.newPage();

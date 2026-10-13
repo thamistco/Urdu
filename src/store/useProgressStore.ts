@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { guardedStorage, keepSavedFields } from './storage';
+import { guardedStorage, keepSavedFields, keepWellTypedFields } from './storage';
 
 import { SrsCard, SrsGrade, newCard, review, capIntervals } from '../lib/srs';
 import { testerFlags } from './useTesterStore';
@@ -564,6 +564,7 @@ export const useProgressStore = create<ProgressState>()(
       // another version is backed up and kept, never discarded (QA, H12).
       version: 0,
       migrate: (persisted) => keepSavedFields<ProgressState>(persisted),
+      merge: keepWellTypedFields<ProgressState>('qaaf-progress'),
       // Once per session, as soon as the saved progress is back: a learner
       // returning after days away sees the streak as it now stands, not as it
       // stood the last time a lesson was finished.
