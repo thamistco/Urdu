@@ -19,6 +19,7 @@ import { feedback } from '../lib/feedback';
 import { announce, invalidateSpeech } from '../lib/speech';
 import { cardsOnTrack, dueQueue, dueBudget, type SrsGrade } from '../lib/srs';
 import { srsGradeFor } from '../lib/sessionGrading';
+import { unitEvidenceFrom } from '../lib/unitSkip';
 import { useSessionGradeFlush } from './useSessionGradeFlush';
 import { answerReveal } from './answerReveal';
 import { REFILL_COST, gemsShortOfRefill, minutesUntilNextHeart } from '../lib/gamification';
@@ -228,6 +229,8 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
    * only spares the ones already paid for.
    */
   const chargedRef = useRef<Set<string>>(new Set());
+  /** Per item: right on every sighting this lesson, first time. See `lessonsToSkip`. */
+  const firstTryRef = useRef<Map<string, boolean>>(new Map());
   const loseHeart = useProgressStore((s) => s.loseHeart);
   const finishLesson = useProgressStore((s) => s.finishLesson);
   const refillHearts = useProgressStore((s) => s.refillHearts);
@@ -411,6 +414,12 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
       // correct answer on an exercise that supplied no options counts as easy.
       const grade = srsGradeFor(result.correct, !!result.retried, demandOf(exercises[idx]));
       result.items.forEach((it) => recordItemGrade(it, grade));
+      // Right first time on every sighting this lesson: the evidence a unit
+      // review's pass rests on (`lessonsToSkip`).
+      const firstTime = result.correct && !result.retried;
+      result.items.forEach((it) =>
+        firstTryRef.current.set(it.id, (firstTryRef.current.get(it.id) ?? true) && firstTime)
+      );
       const answered = exercises[idx];
       const freeListen = isFirstListen(answered, pretestedRef.current);
       if (isPretest(answered) && 'word' in answered) pretestedRef.current.add(answered.word.id);
@@ -485,6 +494,8 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
         total,
         xp: lesson.xp,
         isReview,
+        unitEvidence: isReview ? unitEvidenceFrom(lesson.id, firstTryRef.current) : undefined,
+        romanTrack: track === 'roman',
       });
       feedback.levelUp();
       setResult(r);
@@ -506,6 +517,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
    */
   useEffect(() => {
     chargedRef.current = new Set();
+    firstTryRef.current = new Map();
   }, [lesson.id]);
 
   if (done && result) {
