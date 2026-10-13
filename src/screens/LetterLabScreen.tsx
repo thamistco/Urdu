@@ -15,6 +15,7 @@ import { LETTERS, PositionKey, glyphName, positionHint, shapeGroups } from '../d
 import { useProgressStore } from '../store/useProgressStore';
 import { Illustration } from '../components/Illustration';
 import type { RootStackParamList } from '../navigation/types';
+import { plainRoman } from '../lib/roman';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'LetterLab'>;
 type Rt = RouteProp<RootStackParamList, 'LetterLab'>;
@@ -100,7 +101,7 @@ export function LetterLabScreen() {
                   // it is said here too.
                   accessibilityRole="radio"
                   aria-checked={active}
-                  accessibilityLabel={`${glyphName(l.forms.isolated) ?? l.name}${known ? ', learned' : ''}`}
+                  accessibilityLabel={`${plainRoman(glyphName(l.forms.isolated) ?? l.name)}${known ? ', learned' : ''}`}
                   key={l.id}
                   onPress={() => selectLetter(i)}
                   className="mx-1"
@@ -154,7 +155,7 @@ export function LetterLabScreen() {
             ) : (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`Hear ${glyphName(letter.forms.isolated) ?? letter.name}`}
+                accessibilityLabel={`Hear ${plainRoman(glyphName(letter.forms.isolated) ?? letter.name)}`}
                 // The letter's own recording, the one tracing and the lesson's
                 // new-letter card play. This used to read the example word
                 // through the device's text-to-speech instead: a different
@@ -283,7 +284,9 @@ export function LetterLabScreen() {
               // device's voice, a different speaker from the learner's choice.
               disabled={!exampleClip}
               accessibilityRole={exampleClip ? 'button' : undefined}
-              accessibilityLabel={exampleClip ? `Hear ${letter.roman}, ${letter.meaning}` : undefined}
+              // Marks dropped for the screen reader, as on every other speaker (QA,
+              // 2026-10-13: "Hear ṭamaaṭar").
+              accessibilityLabel={exampleClip ? `Hear ${plainRoman(letter.roman)}, ${letter.meaning}` : undefined}
               onPress={() => exampleClip && announce(exampleClip, letter.word, letter.roman)}
               className="flex-row items-center justify-between"
             >
