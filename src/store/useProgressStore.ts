@@ -19,6 +19,7 @@ import {
 } from '../lib/gamification';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { heartsAreFree } from '../lib/hearts';
+import { UNITS } from '../data/units';
 import { repeatReward } from '../lib/repeatReward';
 
 export type Goal = 'family' | 'read' | 'heritage' | 'curious';
@@ -387,6 +388,28 @@ export const useProgressStore = create<ProgressState>()(
         const lessonsCompleted = Object.keys(completedLessons).length;
         const perfectLessons = s2.perfectLessons + (perfect ? 1 : 0);
 
+        /**
+         * Passing a unit's review counts as having learned the unit: its
+         * lessons not yet done are marked skipped, as a heritage learner's are
+         * when they test out at onboarding. They stay open to try, and nothing
+         * is counted as completed that was not. Before, a learner who jumped
+         * ahead and passed the review still saw every lesson of the unit as
+         * not reached (QA, 2026-10-13, M2). 80%, the bar the lesson-complete
+         * screen already treats as a good result.
+         */
+        const unit =
+          isReview && accuracy >= 0.8 ? UNITS.find((u) => u.lessons.some((l) => l.id === lessonId)) : undefined;
+        const skippedLessons = unit
+          ? {
+              ...s2.skippedLessons,
+              ...Object.fromEntries(
+                unit.lessons
+                  .filter((l) => l.id !== lessonId && !completedLessons[l.id] && !s2.skippedLessons[l.id])
+                  .map((l) => [l.id, true])
+              ),
+            }
+          : s2.skippedLessons;
+
         // commit
         set({
           totalXp,
@@ -397,6 +420,7 @@ export const useProgressStore = create<ProgressState>()(
           freezes,
           freezeNotice: null,
           comeback: null,
+          skippedLessons,
           freezesOnHold: active.freezesOnHold,
           leagueId,
           weekKey,
