@@ -1020,17 +1020,27 @@ async function tapNamedKind(page, text, wrongOnPurpose) {
  * incorrect-answer explanation, not just the correct-answer path.
  */
 async function solveTileBuild(page, tileLabelPrefix, wrongOnPurpose) {
-  const available = () => page.locator(`[role="button"][aria-label^="${tileLabelPrefix}"]`);
+  const available = () => page.locator(`[role="button"][aria-label^="${tileLabelPrefix}"]:not([aria-disabled="true"])`);
   if ((await available().count()) === 0) return false;
-  for (let guard = 0; guard < 20; guard++) {
-    const tiles = available();
-    const n = await tiles.count();
-    if (n === 0) break;
-    const el = wrongOnPurpose ? tiles.last() : tiles.first();
-    await clickAt(page, el);
-    await page.waitForTimeout(150);
+  const fill = async () => {
+    for (let guard = 0; guard < 20; guard++) {
+      const tiles = available();
+      const n = await tiles.count();
+      if (n === 0) break;
+      const el = wrongOnPurpose ? tiles.last() : tiles.first();
+      await clickAt(page, el);
+      await page.waitForTimeout(150);
+    }
+  };
+  await fill();
+  if (!(await tap(page.locator('text=/^Check$/i'), 0, 900))) return false;
+  // A first wrong build is held for one retry (2026-10-13); the second Check
+  // is the graded one, and it is built the same way as the first.
+  if (await tap(page.locator('text=/^Try again$/i'), 0, 700)) {
+    await fill();
+    return tap(page.locator('text=/^Check$/i'), 0, 900);
   }
-  return tap(page.locator('text=/^Check$/i'), 0, 900);
+  return true;
 }
 
 /**

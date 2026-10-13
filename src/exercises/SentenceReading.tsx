@@ -21,6 +21,10 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
   const { sentence, tiles, romanTiles } = exercise;
   const [placed, setPlaced] = useState<number[]>([]);
   const [graded, setGraded] = useState<boolean | null>(null);
+  // One retry before the answer is shown, as in WordBuild (QA, 2026-10-13, C2).
+  const [held, setHeld] = useState<string | null>(null);
+  const [lastTry, setLastTry] = useState<string | null>(null);
+  const frozen = graded != null || held != null;
 
   // What the voice should say, which is not always what is written: اس is
   // spelled the same whether it is read `us` or `is`, so the sentences that
@@ -38,12 +42,12 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
   const available = tiles.map((_, i) => i).filter((i) => !placed.includes(i));
 
   const place = (i: number) => {
-    if (graded != null || locked) return;
+    if (frozen || locked) return;
     feedback.tap();
     setPlaced((p) => [...p, i]);
   };
   const unplace = (i: number) => {
-    if (graded != null || locked) return;
+    if (frozen || locked) return;
     feedback.tap();
     setPlaced((p) => p.filter((x) => x !== i));
   };
@@ -51,6 +55,11 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
   const check = () => {
     const built = placed.map((i) => tiles[i]);
     const correct = built.join(' ') === sentence.words.join(' ');
+    if (!correct && lastTry == null) {
+      feedback.incorrect();
+      setHeld(placed.map((i) => label(i)).join(' '));
+      return;
+    }
     setGraded(correct);
     correct
       ? feedback.correctAnnounce(sentence.id, spoken, sentence.roman)
@@ -97,14 +106,14 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
             <Pressable
               key={`${i}-${order}`}
               onPress={() => unplace(i)}
-              disabled={graded != null || locked}
+              disabled={frozen || locked}
               hitSlop={4}
               accessibilityRole="button"
               // The word itself, which a screen reader had no way to hear: every
               // tile was just "Word tile" (QA report, 2026-10-12). And once
               // checked, a tile can no longer be taken back, so it stops saying so.
               accessibilityLabel={`${label(i)}, word ${order + 1} of the sentence.${
-                graded == null && !locked ? ' Tap to take it back.' : ''
+                !frozen && !locked ? ' Tap to take it back.' : ''
               }`}
             >
               <View
@@ -128,6 +137,7 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
           <Pressable
             key={i}
             onPress={() => place(i)}
+            disabled={frozen || locked}
             hitSlop={4}
             accessibilityRole="button"
             accessibilityLabel={`Word tile: ${label(i)}. Tap to add it to the sentence.`}
@@ -143,10 +153,34 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
         ))}
       </View>
 
-      {graded == null && (
-        <Button variant={placed.length ? 'primary' : 'ghost'} disabled={placed.length === 0} onPress={check}>
-          Check
+      {held != null && (
+        <View
+          className="mb-4 items-center rounded-2xl px-4 py-3"
+          style={{ backgroundColor: withAlpha(palette.gold, 0.1) }}
+        >
+          <Bold style={{ color: palette.goldLight }}>Not quite. One more try.</Bold>
+          <Txt className="mt-1 text-center text-xs text-paper/60">You built: {held}</Txt>
+        </View>
+      )}
+      {held != null && (
+        <Button
+          onPress={() => {
+            feedback.tap();
+            setLastTry(held);
+            setHeld(null);
+            setPlaced([]);
+          }}
+        >
+          Try again
         </Button>
+      )}
+      {graded == null && held == null && (
+        <>
+          {lastTry ? <Txt className="mb-2 text-center text-xs text-paper/55">Last try: {lastTry}</Txt> : null}
+          <Button variant={placed.length ? 'primary' : 'ghost'} disabled={placed.length === 0} onPress={check}>
+            Check
+          </Button>
+        </>
       )}
       {/* No reveal here. `answerReveal` (screens/answerReveal.ts) names
           `sentenceBuild` and the lesson footer draws it, so a second copy up

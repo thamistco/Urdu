@@ -72,17 +72,26 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
   );
   const [placed, setPlaced] = useState<number[]>([]); // indices into tiles
   const [graded, setGraded] = useState<boolean | null>(null);
+  /**
+   * One retry before the answer is shown (QA, 2026-10-13, C2). A first wrong
+   * Check holds the attempt on screen with what went wrong and a "Try again";
+   * only a second Check is graded. The first attempt stays readable under the
+   * tray while the second is built.
+   */
+  const [held, setHeld] = useState<{ built: string; why: string | null } | null>(null);
+  const [lastTry, setLastTry] = useState<string | null>(null);
 
   const available = tiles.map((_, i) => i).filter((i) => !placed.includes(i));
 
   const full = placed.length >= target.length;
+  const frozen = graded != null || held != null;
   const place = (i: number) => {
-    if (graded != null || locked || full) return;
+    if (frozen || locked || full) return;
     feedback.tap();
     setPlaced((p) => [...p, i]);
   };
   const unplace = (i: number) => {
-    if (graded != null || locked) return;
+    if (frozen || locked) return;
     feedback.tap();
     setPlaced((p) => p.filter((x) => x !== i));
   };
@@ -90,6 +99,17 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
   const check = () => {
     const built = placed.map((i) => tiles[i]).join('');
     const correct = built === target.join('');
+    if (!correct && lastTry == null) {
+      feedback.incorrect();
+      setHeld({
+        built: assembled,
+        why: diagnoseBuild(
+          placed.map((i) => tiles[i]),
+          target
+        ),
+      });
+      return;
+    }
     setGraded(correct);
     correct
       ? feedback.correctAnnounceMeaning(word.id, word.urdu, word.roman, word.meaning)
@@ -182,7 +202,7 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
                 }
                 // Once checked, a tile can no longer be taken back, so it no
                 // longer says it can (QA report, 2026-10-12).
-                const open = graded == null && !locked;
+                const open = !frozen && !locked;
                 return (
                   <Pressable
                     key={`${i}-${k}`}
@@ -210,15 +230,12 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
       <BuildDirection of="letter" />
 
       {/* tile tray */}
-      <View
-        className="mb-5 flex-row-reverse flex-wrap justify-center"
-        style={{ opacity: full && graded == null ? 0.5 : 1 }}
-      >
+      <View className="mb-5 flex-row-reverse flex-wrap justify-center" style={{ opacity: full && !frozen ? 0.5 : 1 }}>
         {available.map((i) => (
           <Pressable
             key={i}
             onPress={() => place(i)}
-            disabled={full || graded != null}
+            disabled={full || frozen}
             accessibilityRole="button"
             accessibilityLabel={`${glyphName(tiles[i]) ?? 'Letter tile'}. Tap to add it to the word.`}
           >
@@ -229,10 +246,36 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
         ))}
       </View>
 
-      {graded == null && (
-        <Button variant={placed.length ? 'primary' : 'ghost'} disabled={placed.length === 0} onPress={check}>
-          Check
+      {held != null && (
+        <View
+          className="mb-4 items-center rounded-2xl px-4 py-3"
+          style={{ backgroundColor: withAlpha(palette.gold, 0.1) }}
+        >
+          <Bold style={{ color: palette.goldLight }}>Not quite. One more try.</Bold>
+          <Txt className="mt-1 text-xs text-paper/60">You built</Txt>
+          <Urdu style={{ fontSize: 30, lineHeight: urduLine(30) }}>{held.built}</Urdu>
+          {held.why && <Txt className="mt-1 text-center text-xs text-paper/70">{held.why}</Txt>}
+        </View>
+      )}
+      {held != null && (
+        <Button
+          onPress={() => {
+            feedback.tap();
+            setLastTry(held.built);
+            setHeld(null);
+            setPlaced([]);
+          }}
+        >
+          Try again
         </Button>
+      )}
+      {graded == null && held == null && (
+        <>
+          {lastTry ? <Txt className="mb-2 text-center text-xs text-paper/55">Last try: {lastTry}</Txt> : null}
+          <Button variant={placed.length ? 'primary' : 'ghost'} disabled={placed.length === 0} onPress={check}>
+            Check
+          </Button>
+        </>
       )}
       {graded === true && (
         <View className="items-center">
