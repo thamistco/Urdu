@@ -27,12 +27,19 @@ export function MatchingExercise({ exercise, track, locked, onGraded }: Exercise
   // and a tester read it as no feedback at all (2026-10-12).
   const [slip, setSlip] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  /** Every word that was part of a wrong pair. They, and only they, go back
+   *  into review as missed (QA, 2026-10-13, H4). */
+  const [slipped, setSlipped] = useState<Set<string>>(new Set());
 
   const finish = (misses: number) => {
     setDone(true);
     const correct = misses === 0;
     correct ? feedback.correct() : feedback.incorrect();
-    onGraded({ items: words.map((w) => ({ id: w.id, type: 'word' as const })), correct });
+    // A clean board credits every word on it. One with slips grades only the
+    // words that slipped, as missed: the ones matched first time were known,
+    // and grading the whole board wrong scheduled them as if they were not.
+    const ids = correct ? words.map((w) => w.id) : [...slipped];
+    onGraded({ items: ids.map((id) => ({ id, type: 'word' as const })), correct });
   };
 
   const tryPair = (l: string | null, r: string | null) => {
@@ -49,24 +56,30 @@ export function MatchingExercise({ exercise, track, locked, onGraded }: Exercise
       feedback.incorrect();
       setWrong(`${l}|${r}`);
       setSlip(l);
+      setSlipped((prev) => new Set(prev).add(l).add(r));
       const m = mistakes + 1;
       setMistakes(m);
+      // Long enough to see which two were wrong and where each belonged: the
+      // pair stays red and each one's real partner is outlined. A 0.55s flash
+      // read as no feedback at all (QA, 2026-10-13, H4).
       setTimeout(() => {
         setWrong(null);
         setSelLeft(null);
         setSelRight(null);
-      }, 550);
+      }, 1500);
     }
   };
 
+  // While a wrong pair is being shown, taps wait: the board resets when it
+  // clears, and a tap in that window was silently thrown away.
   const pickLeft = (id: string) => {
-    if (locked || done || matched.has(id)) return;
+    if (locked || done || wrong || matched.has(id)) return;
     const next = selLeft === id ? null : id;
     setSelLeft(next);
     tryPair(next, selRight);
   };
   const pickRight = (id: string) => {
-    if (locked || done || matched.has(id)) return;
+    if (locked || done || wrong || matched.has(id)) return;
     const next = selRight === id ? null : id;
     setSelRight(next);
     tryPair(selLeft, next);
@@ -76,6 +89,12 @@ export function MatchingExercise({ exercise, track, locked, onGraded }: Exercise
     if (matched.has(id)) return 'correct';
     const sel = side === 'l' ? selLeft : selRight;
     if (wrong && wrong.includes(id) && sel === id) return 'wrong';
+    // The real partner of either tile in a wrong pair, outlined while the
+    // pair is shown wrong.
+    if (wrong) {
+      const [wl, wr] = wrong.split('|');
+      if ((side === 'r' && id === wl) || (side === 'l' && id === wr)) return 'selected';
+    }
     // A tile you have tapped but not yet paired had no state of its own, so
     // the board looked identical before and after the first tap.
     if (sel === id) return 'selected';

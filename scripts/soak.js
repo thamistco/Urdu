@@ -1100,7 +1100,9 @@ async function solveMatching(page) {
     await page.waitForTimeout(120);
     const r = right[Math.floor(rnd() * right.length)];
     await page.mouse.click(r.x + r.width / 2, r.y + r.height / 2);
-    await page.waitForTimeout(650);
+    // A wrong pair is shown for 1.5s, and the board takes no taps until it
+    // clears (Matching.tsx, 2026-10-13).
+    await page.waitForTimeout(1650);
   }
   return true;
 }
