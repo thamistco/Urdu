@@ -14,7 +14,7 @@ import { count } from '../lib/plural';
 import { useEffect, useState } from 'react';
 import { useProgressStore, type FinishResult } from '../store/useProgressStore';
 import { heartsAreFree } from '../lib/hearts';
-import { HEARTS_MAX, HEART_REGEN_MINUTES, REFILL_COST } from '../lib/gamification';
+import { HEART_REGEN_MINUTES, REFILL_COST } from '../lib/gamification';
 
 function RewardTile({ icon, value, label, color }: { icon: IconName; value: string; label: string; color: string }) {
   return (
@@ -45,6 +45,10 @@ export function LessonComplete({
   onHome: () => void;
 }) {
   const accuracy = total > 0 ? Math.round((correct / total) * 100) : 100;
+  // The hearts held now, not the most there can be: a learner who skipped
+  // Unit 1 can finish a first hearts-on lesson with fewer (design review,
+  // 2026-10-13).
+  const heartsNow = useProgressStore((s) => s.hearts);
 
   /**
    * Said once, the first time a lesson ends with hearts switched on: when Unit
@@ -114,7 +118,7 @@ export function LessonComplete({
                   <View className="flex-1">
                     <Bold className="text-[0.9375rem]">Hearts are on from here</Bold>
                     <Txt className="mt-1 text-xs leading-5 text-paper/75">
-                      {`You have ${HEARTS_MAX}. A wrong answer costs one, one comes back every ${HEART_REGEN_MINUTES} minutes, and a refill costs ${REFILL_COST} gems. Guess-first questions and tracing stay free.`}
+                      {`You have ${heartsNow}. A wrong answer costs one, one comes back every ${HEART_REGEN_MINUTES} minutes, and a refill costs ${REFILL_COST} gems. Guess-first questions and tracing stay free.`}
                     </Txt>
                   </View>
                 </View>
