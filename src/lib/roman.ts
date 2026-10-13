@@ -28,28 +28,30 @@ const stripDiacritics = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, ''
  * telling those apart is a whole grammar lesson.
  */
 function skeleton(s: string): string {
-  return stripDiacritics(s)
-    .toLowerCase()
-    .replace(/[^a-z]/g, '') // ezafe hyphens, spaces, apostrophes
-    .replace(/ee/g, 'i') // peeta / pita
-    .replace(/oo/g, 'o') // hoon / hon
-    .replace(/ei/g, 'ai') // mein / main
-    // ai and e: Roman Urdu writes them interchangeably, and a final ay too:
-    // hai / he, kaise / kaisay, joote / jootay, jahez / jehaiz (QA, 2026-10-13,
-    // H3). ka / ke / ki stay apart: none of them is an ai.
-    .replace(/ay$/, 'e')
-    .replace(/ai/g, 'e')
-    // ژ is zh, and ض is written dh by Arabic convention (kurra-e-ardh for
-    // kurra-e-arz). Only a final dh: inside a word it is the aspirated د of
-    // dhoop and dhobi.
-    .replace(/zh/g, 'z')
-    .replace(/dh$/, 'z')
-    .replace(/(.)\1+/g, '$1') // kitaab → kitab
-    .replace(/u/g, 'o') // hun / hoon, khush / khoosh
-    .replace(/w/g, 'v') // wo / vo, waqt / vaqt
-    .replace(/ck/g, 'k')
-    .replace(/q/g, 'k') // qalam / kalam: ق is written k as often as q
-    .replace(/y$/, 'i'); // achhy / achhi
+  return (
+    stripDiacritics(s)
+      .toLowerCase()
+      .replace(/[^a-z]/g, '') // ezafe hyphens, spaces, apostrophes
+      .replace(/ee/g, 'i') // peeta / pita
+      .replace(/oo/g, 'o') // hoon / hon
+      .replace(/ei/g, 'ai') // mein / main
+      // ai and e: Roman Urdu writes them interchangeably, and a final ay too:
+      // hai / he, kaise / kaisay, joote / jootay, jahez / jehaiz (QA, 2026-10-13,
+      // H3). ka / ke / ki stay apart: none of them is an ai.
+      .replace(/ay$/, 'e')
+      .replace(/ai/g, 'e')
+      // ژ is zh, and ض is written dh by Arabic convention (kurra-e-ardh for
+      // kurra-e-arz). Only a final dh: inside a word it is the aspirated د of
+      // dhoop and dhobi.
+      .replace(/zh/g, 'z')
+      .replace(/dh$/, 'z')
+      .replace(/(.)\1+/g, '$1') // kitaab → kitab
+      .replace(/u/g, 'o') // hun / hoon, khush / khoosh
+      .replace(/w/g, 'v') // wo / vo, waqt / vaqt
+      .replace(/ck/g, 'k')
+      .replace(/q/g, 'k') // qalam / kalam: ق is written k as often as q
+      .replace(/y$/, 'i')
+  ); // achhy / achhi
 }
 
 /** The skeleton a romanisation reduces to, for building `nearMiss`'s list of taken spellings. */
