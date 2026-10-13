@@ -106,28 +106,42 @@ export function capIntervals(cards: Record<string, SrsCard>, now = Date.now()): 
   let out: Record<string, SrsCard> | null = null;
   for (const [id, raw] of Object.entries(cards)) {
     const c = raw as Partial<SrsCard> | null;
-    if (!c || typeof c !== 'object' || Array.isArray(c) || (!Number.isFinite(c.due) && !Number.isFinite(c.lastSeen))) {
+    if (!isCardLike(c)) {
       out ??= { ...cards };
       delete out[id];
       continue;
     }
-    const lastSeen = Number.isFinite(c.lastSeen) ? (c.lastSeen as number) : now;
-    const interval = Number.isFinite(c.interval) ? Math.min(c.interval as number, MAX_INTERVAL) : MAX_INTERVAL;
-    const latest = lastSeen + interval * DAY;
-    const whole = Number.isFinite(c.ease) && Number.isFinite(c.reps) && lastSeen === c.lastSeen && c.id === id;
-    if (whole && interval === c.interval && Number.isFinite(c.due) && (c.due as number) <= latest) continue;
+    const fixed = repairCard(id, c, now);
+    if (fixed === c) continue;
     out ??= { ...cards };
-    out[id] = {
-      ...(c as SrsCard),
-      id,
-      ease: Number.isFinite(c.ease) ? (c.ease as number) : 2.5,
-      reps: Number.isFinite(c.reps) ? (c.reps as number) : 0,
-      lastSeen,
-      interval,
-      due: Number.isFinite(c.due) ? Math.min(c.due as number, latest) : latest,
-    };
+    out[id] = fixed;
   }
   return out;
+}
+
+const finite = (n: unknown): n is number => Number.isFinite(n);
+
+/** An object with at least a due time or a last-seen time to schedule from. */
+function isCardLike(c: Partial<SrsCard> | null): c is Partial<SrsCard> {
+  return !!c && typeof c === 'object' && !Array.isArray(c) && (finite(c.due) || finite(c.lastSeen));
+}
+
+/** The card brought inside the year with its gaps filled, or the same object when nothing needed it. */
+function repairCard(id: string, c: Partial<SrsCard>, now: number): SrsCard {
+  const lastSeen = finite(c.lastSeen) ? c.lastSeen : now;
+  const interval = finite(c.interval) ? Math.min(c.interval, MAX_INTERVAL) : MAX_INTERVAL;
+  const latest = lastSeen + interval * DAY;
+  const whole = finite(c.ease) && finite(c.reps) && lastSeen === c.lastSeen && c.id === id;
+  if (whole && interval === c.interval && finite(c.due) && c.due <= latest) return c as SrsCard;
+  return {
+    ...(c as SrsCard),
+    id,
+    ease: finite(c.ease) ? c.ease : 2.5,
+    reps: finite(c.reps) ? c.reps : 0,
+    lastSeen,
+    interval,
+    due: finite(c.due) ? Math.min(c.due, latest) : latest,
+  };
 }
 
 export function isDue(card: SrsCard, now = Date.now()): boolean {
