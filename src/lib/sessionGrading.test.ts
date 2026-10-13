@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { recordSighting, flushSessionGrades, type PendingGrades } from './sessionGrading';
+import { recordSighting, flushSessionGrades, srsGradeFor, type PendingGrades } from './sessionGrading';
 import type { SrsGrade } from './srs';
 
 /** A `gradeItem` double that just records what it was called with, in order. */
@@ -132,5 +132,19 @@ describe('recordSighting / flushSessionGrades', () => {
     const second = fakeGradeItem();
     flushSessionGrades(pending, second.gradeItem);
     expect(second.calls).toHaveLength(0);
+  });
+});
+
+describe('srsGradeFor', () => {
+  it('grades a wrong answer, and a build right only on its retry, as a lapse', () => {
+    expect(srsGradeFor(false, false, 'produce')).toBe('again');
+    // Learning review, 2026-10-13: wrong then right reached the schedule as
+    // easy, and the failed recall pushed the next review out.
+    expect(srsGradeFor(true, true, 'produce')).toBe('again');
+    expect(srsGradeFor(true, true, 'recognise')).toBe('again');
+  });
+  it('keeps right-first-time as easy when nothing was offered, good when options were', () => {
+    expect(srsGradeFor(true, false, 'produce')).toBe('easy');
+    expect(srsGradeFor(true, false, 'recognise')).toBe('good');
   });
 });

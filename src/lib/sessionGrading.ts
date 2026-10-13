@@ -10,6 +10,22 @@ type PendingGrade = ItemRef & { grade: SrsGrade; priorGrade?: SrsGrade };
 export type PendingGrades = Map<string, PendingGrade>;
 
 /**
+ * The scheduler's grade for one answer.
+ *
+ * Wrong is `again`. Right with no options to choose from (`produce`) is
+ * `easy`, right among options is `good`. A build that was wrong first and
+ * right on its one retry is `again` too: the lesson counts it right and it
+ * costs no heart, but the first recall failed, and the scheduler has to
+ * hear that or the word's next review moves out on a lapse. It used to
+ * reach the schedule as `easy`, the best grade there is (learning review,
+ * 2026-10-13). Anki and FSRS rate the first attempt the same way.
+ */
+export function srsGradeFor(correct: boolean, retried: boolean, demand: 'produce' | 'recognise'): SrsGrade {
+  if (!correct || retried) return 'again';
+  return demand === 'produce' ? 'easy' : 'good';
+}
+
+/**
  * Which items this lesson visit has sighted, and enough of each one's recent
  * grades to decide what to apply — not yet applied to SRS. Call
  * `recordSighting` on every graded exercise, `flushSessionGrades` once the
