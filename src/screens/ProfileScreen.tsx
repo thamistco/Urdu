@@ -12,7 +12,7 @@ import { Illustration, LeagueBadge } from '../components/Illustration';
 import type { IconName } from '../art/icons';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
-import { levelProgress, levelTitle, getLeague } from '../lib/gamification';
+import { levelProgress, levelTitle, getLeague, gemsForLesson } from '../lib/gamification';
 import { useProgressStore, FREEZE_COST, FREEZE_MAX } from '../store/useProgressStore';
 import { lastSevenDayKeys } from '../lib/date';
 import { ACHIEVEMENTS } from '../data/achievements';
@@ -110,6 +110,12 @@ function FreezeCard() {
           <Txt className="mt-0.5 text-xs text-paper/55">
             Each freeze covers one missed day and is used automatically. Miss more days than you have freezes and the
             streak ends, but you keep your freezes.
+          </Txt>
+          {/* Where gems come from, said where they are spent: 20 at the start
+              sat beside a disabled button with nothing to say why (QA,
+              2026-10-13, L1). */}
+          <Txt className="mt-1 text-xs text-paper/55">
+            {`Gems: you start with 20 and earn ${gemsForLesson(0, false)} to ${gemsForLesson(1, false)} for each lesson you finish, more for reviews. They buy freezes and heart refills.`}
           </Txt>
         </View>
         <View className="flex-row gap-1.5" accessible accessibilityLabel={`${freezes} of ${FREEZE_MAX} streak freezes`}>
