@@ -6,6 +6,9 @@ describe('matchesWord', () => {
     expect(matchesWord('kitab', 'کتاب', 'kitaab')).toBe(true);
     expect(matchesWord('chay', 'چائے', 'chai')).toBe(true);
     expect(matchesWord('kalam', 'قلم', 'qalam')).toBe(true);
+    expect(matchesWord('ladka', 'لڑکا', 'laṛka')).toBe(true);
+    expect(matchesWord('chadhna', 'چڑھنا', 'chaṛhna')).toBe(true);
+    expect(matchesWord('larka', 'لڑکا', 'laṛka')).toBe(true);
   });
 
   it('keeps the vowel that is grammar', () => {
