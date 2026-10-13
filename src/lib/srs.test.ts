@@ -10,6 +10,7 @@ import {
   newCard,
   review,
   reviewFirst,
+  type SrsCard,
 } from './srs';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -162,5 +163,23 @@ describe('review first (P-026)', () => {
     const a = { id: 'a', ease: 2.5, interval: 3, reps: 2, due: T0 - DAY, lastSeen: T0 - 4 * DAY };
     const b = { id: 'b', ease: 2.5, interval: 3, reps: 2, due: T0 - 2 * DAY, lastSeen: T0 - 5 * DAY };
     expect(dueQueue({ a, b }, 2, T0)).toEqual(['b', 'a']);
+  });
+});
+
+describe('capIntervals on entries that are not cards', () => {
+  // QA, 2026-10-13: {"w-gaay": 3} was kept as a card that could never come due.
+  const now = Date.UTC(2026, 9, 13);
+  it('drops what is not a card and keeps what is', () => {
+    const good = review(newCard('w-paani'), 'good', now);
+    const out = capIntervals(
+      { 'w-gaay': 3, 'w-x': [1, 2], 'w-y': { due: 'x' }, 'w-paani': good } as unknown as Record<string, SrsCard>,
+      now
+    )!;
+    expect(Object.keys(out)).toEqual(['w-paani']);
+    expect(out['w-paani']).toEqual(good);
+  });
+  it('fills a missing ease, step count and last-seen time rather than letting NaN through', () => {
+    const out = capIntervals({ 'w-z': { due: now } } as unknown as Record<string, SrsCard>, now)!;
+    expect(out['w-z']).toMatchObject({ id: 'w-z', ease: 2.5, reps: 0, lastSeen: now, due: now });
   });
 });
