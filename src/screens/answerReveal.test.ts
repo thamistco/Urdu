@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 
 import { answerReveal } from './answerReveal';
 import type { Exercise } from '../exercises/types';
-import { WORDS } from '../data/words';
+import { WORDS, glossOf } from '../data/words';
 import { LETTERS } from '../data/letters';
 import { SENTENCES } from '../data/sentences';
 
@@ -38,7 +38,7 @@ const sentence = SENTENCES.find((s) => s.words.length >= 3)!;
 describe('answerReveal', () => {
   it('gives a word its script, its reading and its meaning', () => {
     const r = answerReveal({ kind: 'typeWord', word } as Exercise);
-    expect(r).toEqual({ script: word.urdu, roman: word.roman, meaning: word.meaning });
+    expect(r).toEqual({ script: word.urdu, roman: word.roman, meaning: glossOf(word) });
   });
 
   it('puts a letter’s name where the reading goes', () => {
