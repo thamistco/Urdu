@@ -12,6 +12,7 @@ import { Txt, Bold } from '../components/Text';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { useAuthStore } from '../store/useAuthStore';
+import { storageRefused } from '../store/storage';
 import type { RootStackParamList } from '../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -220,7 +221,12 @@ export function LoginScreen() {
                   is left is the one fact a learner actually needs, which is
                   where their progress lives. */}
               <Txt className="mt-3 text-center text-[0.6875rem] leading-4 text-paper/70">
-                Your progress is saved on this device.
+                {/* Not when the browser refuses storage: the banner above says
+                    nothing will be kept, and this said the opposite (design
+                    review, 2026-10-13). */}
+                {storageRefused()
+                  ? 'This browser is not keeping anything, so progress lasts until you close the page.'
+                  : 'Your progress is saved on this device.'}
               </Txt>
             </Reveal>
           )}
