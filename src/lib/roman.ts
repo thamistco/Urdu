@@ -34,6 +34,16 @@ function skeleton(s: string): string {
     .replace(/ee/g, 'i') // peeta / pita
     .replace(/oo/g, 'o') // hoon / hon
     .replace(/ei/g, 'ai') // mein / main
+    // ai and e: Roman Urdu writes them interchangeably, and a final ay too:
+    // hai / he, kaise / kaisay, joote / jootay, jahez / jehaiz (QA, 2026-10-13,
+    // H3). ka / ke / ki stay apart: none of them is an ai.
+    .replace(/ay$/, 'e')
+    .replace(/ai/g, 'e')
+    // ژ is zh, and ض is written dh by Arabic convention (kurra-e-ardh for
+    // kurra-e-arz). Only a final dh: inside a word it is the aspirated د of
+    // dhoop and dhobi.
+    .replace(/zh/g, 'z')
+    .replace(/dh$/, 'z')
     .replace(/(.)\1+/g, '$1') // kitaab → kitab
     .replace(/u/g, 'o') // hun / hoon, khush / khoosh
     .replace(/w/g, 'v') // wo / vo, waqt / vaqt
@@ -80,7 +90,10 @@ export function nearMiss(input: string, roman: string, taken: ReadonlySet<string
   if (typed.length < 3 || taken.has(typed)) return false;
   return spellings(roman).some((variant) => {
     const target = skeleton(variant);
-    return target.length >= 4 && within(typed, target, 1);
+    // Two slips allowed in a long word, one in a shorter one. A word of three
+    // letters is in reach too now (reet for ret): what keeps rat from
+    // passing for ret is that rat is itself a word, which `taken` knows.
+    return target.length >= 3 && within(typed, target, target.length >= 8 ? 2 : 1);
   });
 }
 
