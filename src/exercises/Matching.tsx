@@ -84,7 +84,9 @@ export function MatchingExercise({ exercise, track, locked, onGraded }: Exercise
 
   return (
     <View>
-      <Question>Match each word to its picture</Question>
+      {/* "its picture" over a board whose right side is mostly English, with
+          a keycap 1 beside "Monday" (QA report v3, L20). */}
+      <Question>Match each word to its meaning</Question>
       <View className="flex-row justify-between">
         <View className="w-[48%] gap-3">
           {left.map((w) => (
