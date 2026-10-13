@@ -94,15 +94,38 @@ export function review(card: SrsCard, grade: SrsGrade, now = Date.now()): SrsCar
  * Bring saved cards back inside the year: cards the old schedule pushed out
  * of reach, some so far that the number saved as null. Returns null when none
  * needs it, so saved progress is not rewritten for nothing.
+ *
+ * Also drops an entry that is not a card at all (`3`, `[1, 2]`, or one with
+ * neither a due time nor a last-seen time) and fills a missing ease, step
+ * count or last-seen time. Such an entry was counted as a card that could
+ * never come due, so Practice said "All caught up" over an empty queue (QA,
+ * 2026-10-13); the save's other fields are already checked one level deep
+ * (`keepWellTypedFields`).
  */
-export function capIntervals(cards: Record<string, SrsCard>): Record<string, SrsCard> | null {
+export function capIntervals(cards: Record<string, SrsCard>, now = Date.now()): Record<string, SrsCard> | null {
   let out: Record<string, SrsCard> | null = null;
-  for (const [id, c] of Object.entries(cards)) {
-    const interval = Number.isFinite(c.interval) ? Math.min(c.interval, MAX_INTERVAL) : MAX_INTERVAL;
-    const latest = c.lastSeen + interval * DAY;
-    if (interval === c.interval && Number.isFinite(c.due) && c.due <= latest) continue;
+  for (const [id, raw] of Object.entries(cards)) {
+    const c = raw as Partial<SrsCard> | null;
+    if (!c || typeof c !== 'object' || Array.isArray(c) || (!Number.isFinite(c.due) && !Number.isFinite(c.lastSeen))) {
+      out ??= { ...cards };
+      delete out[id];
+      continue;
+    }
+    const lastSeen = Number.isFinite(c.lastSeen) ? (c.lastSeen as number) : now;
+    const interval = Number.isFinite(c.interval) ? Math.min(c.interval as number, MAX_INTERVAL) : MAX_INTERVAL;
+    const latest = lastSeen + interval * DAY;
+    const whole = Number.isFinite(c.ease) && Number.isFinite(c.reps) && lastSeen === c.lastSeen && c.id === id;
+    if (whole && interval === c.interval && Number.isFinite(c.due) && (c.due as number) <= latest) continue;
     out ??= { ...cards };
-    out[id] = { ...c, interval, due: Number.isFinite(c.due) ? Math.min(c.due, latest) : latest };
+    out[id] = {
+      ...(c as SrsCard),
+      id,
+      ease: Number.isFinite(c.ease) ? (c.ease as number) : 2.5,
+      reps: Number.isFinite(c.reps) ? (c.reps as number) : 0,
+      lastSeen,
+      interval,
+      due: Number.isFinite(c.due) ? Math.min(c.due as number, latest) : latest,
+    };
   }
   return out;
 }
