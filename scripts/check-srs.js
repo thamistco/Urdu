@@ -133,14 +133,26 @@ const NOW = Date.UTC(2026, 0, 1);
  * of everything taught so far.
  */
 {
-  const reviewLesson = ALL_LESSONS.filter((l) => l.kind === 'review').pop();
+  // The Daily Review (practice-review) exists to work through the queue, so it
+  // asks for a full lesson of due items. A unit review keeps 70% of itself for
+  // its own unit since 2026-10-13 (QA, H8), and is checked for that below.
+  const reviewLesson = resolveLesson('practice-review');
 
   // The budget itself, which is where the bug lived.
   check(
-    'a review lesson asks for a full lesson of due items, not a fixed handful',
-    dueBudget(reviewLesson.kind, reviewLesson.size) === reviewLesson.size,
-    `asked for ${dueBudget(reviewLesson.kind, reviewLesson.size)} of ${reviewLesson.size} slots`
+    'the Daily Review asks for a full lesson of due items, not a fixed handful',
+    dueBudget(reviewLesson.kind, reviewLesson.size, reviewLesson.id) === reviewLesson.size,
+    `asked for ${dueBudget(reviewLesson.kind, reviewLesson.size, reviewLesson.id)} of ${reviewLesson.size} slots`
   );
+  {
+    const unitReview = ALL_LESSONS.filter((l) => l.kind === 'review').pop();
+    const share = dueBudget(unitReview.kind, unitReview.size, unitReview.id) / unitReview.size;
+    check(
+      'a unit review keeps most of itself for its own unit',
+      share > 0 && share <= 0.35,
+      `${unitReview.id} gives ${Math.round(share * 100)}% of its slots to due items`
+    );
+  }
   const vocabBudget = dueBudget('vocab', 12);
   check('a lesson teaching new material takes only a few', vocabBudget > 0 && vocabBudget < 12, `${vocabBudget}`);
 
