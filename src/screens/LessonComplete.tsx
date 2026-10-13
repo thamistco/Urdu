@@ -63,9 +63,12 @@ export function LessonComplete({
   return (
     <View className="flex-1 bg-ink">
       <Confetti show />
-      <Screen scroll={false}>
-        <SafeAreaView className="flex-1">
-          <View className="flex-1 items-center justify-center">
+      {/* Scrolls once it outgrows the screen. Fixed-height, its cards slid
+          under the footnote and Continue at 320px and at large text (design
+          review, 2026-10-13). */}
+      <Screen fill>
+        <SafeAreaView className="flex-grow">
+          <View className="flex-grow items-center justify-center">
             <Reveal>
               <View className="items-center">
                 <Illustration
@@ -207,17 +210,19 @@ export function LessonComplete({
           </View>
 
           <Reveal delay={420}>
-            <Txt className="mb-4 text-center text-xs text-paper/55">
-              {/* It said "Come back tomorrow", over a Continue button that
+            {accuracy < 60 ? null : (
+              <Txt className="mb-4 text-center text-xs text-paper/55">
+                {/* It said "Come back tomorrow", over a Continue button that
                   opens the next lesson at once, and testers read it as a
                   daily limit (QA report, 2026-10-12). */}
-              {/* Only when something did: under "Flawless session · 22 of 22"
+                {/* Only when something did: under "Flawless session · 22 of 22"
                   it promised to bring back mistakes there were none of (QA
                   round 5, L28). */}
-              {correct < total
-                ? 'Whatever slipped comes back first in your next practice.'
-                : 'Nothing slipped. The words come back when they are due.'}
-            </Txt>
+                {correct < total
+                  ? 'Whatever slipped comes back first in your next practice.'
+                  : 'Nothing slipped. The words come back when they are due.'}
+              </Txt>
+            )}
             <Button onPress={onHome}>Continue</Button>
           </Reveal>
         </SafeAreaView>
