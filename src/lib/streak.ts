@@ -167,7 +167,13 @@ export function markActiveToday(
   // Only the streak's own fields go through, so a caller passing rollStreak's
   // result (with its `froze`) gets back a plain state, not a stale flag. A
   // lesson settles the gap, so nothing is on hold after one.
-  if (lastActiveDay === today) return { streak, freezes, lastActiveDay, freezesOnHold: 0, increased: false };
+  // A day already played, or one *before* it: the local date goes backwards
+  // when a learner flies west, and a lesson at 14:00 on the 15th in Los
+  // Angeles after one at 01:00 on the 16th in Karachi reset a 3-day streak to
+  // 1 (QA, 2026-10-13, L25). It counts as the day already played, which keeps
+  // the later date too.
+  if (lastActiveDay === today || (!!lastActiveDay && daysBetween(lastActiveDay, today) < 0))
+    return { streak, freezes, lastActiveDay, freezesOnHold: 0, increased: false };
   const extends_ = streak > 0 && !!lastActiveDay && daysBetween(lastActiveDay, today) === 1;
   return { streak: extends_ ? streak + 1 : 1, freezes, lastActiveDay: today, freezesOnHold: 0, increased: true };
 }
