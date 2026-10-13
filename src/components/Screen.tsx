@@ -30,6 +30,7 @@ export function Screen({
   padded = true,
   contentClassName = '',
   scrollRef,
+  fill = false,
 }: {
   children: ReactNode;
   scroll?: boolean;
@@ -44,6 +45,12 @@ export function Screen({
   /** For callers that need to move the view themselves — the lesson scrolls to
    *  the answer when a wrong attempt reveals one below the fold. */
   scrollRef?: Ref<ScrollView>;
+  /** Scrolling content that also fills the screen when it is short, so a
+   *  centred message stays centred and still scrolls at large text. The gate
+   *  screens were `scroll={false}`, and at 200% text the crash screen's way
+   *  out sat below the window with nothing to scroll (design review,
+   *  2026-10-13). */
+  fill?: boolean;
 }) {
   const pad = padded ? 'px-5 pb-10 pt-2' : '';
   const column = { width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' } as const;
@@ -63,10 +70,11 @@ export function Screen({
             ref={scrollRef}
             className="flex-1"
             contentContainerClassName={`${pad} ${contentClassName}`}
+            contentContainerStyle={fill ? { flexGrow: 1 } : undefined}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <View style={column}>{children}</View>
+            <View style={fill ? [column, { flexGrow: 1 }] : column}>{children}</View>
           </ScrollView>
         ) : (
           <View className={`flex-1 ${pad} ${contentClassName}`}>

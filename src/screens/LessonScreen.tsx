@@ -154,9 +154,9 @@ export function LessonScreen() {
 function LessonNotFound() {
   const nav = useNavigation<Nav>();
   return (
-    <Screen scroll={false}>
-      <SafeAreaView className="flex-1">
-        <View className="flex-1 items-center justify-center px-2">
+    <Screen fill>
+      <SafeAreaView className="flex-grow">
+        <View className="flex-grow items-center justify-center px-2">
           <Heading className="mb-2 text-center text-2xl">That lesson isn’t here</Heading>
           <Txt className="mb-8 max-w-[300px] text-center text-sm text-paper/60">
             The link may have a typo, or the lesson may have moved. Everything you have learned is still saved.
@@ -520,9 +520,9 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
     // empty (QA round 5, L29). Say why, and offer the track that teaches it.
     if (lesson.kind === 'letters' && track === 'roman') {
       return (
-        <Screen scroll={false}>
-          <SafeAreaView className="flex-1">
-            <View className="flex-1 items-center justify-center px-2">
+        <Screen fill>
+          <SafeAreaView className="flex-grow">
+            <View className="flex-grow items-center justify-center px-2">
               <Heading className="mb-2 text-center text-2xl">This lesson teaches the script</Heading>
               <Txt className="mb-8 max-w-[300px] text-center text-sm text-paper/60">
                 You are learning with Roman letters only, so letter lessons are left out. Switch to Both together to
@@ -542,9 +542,9 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
       );
     }
     return (
-      <Screen scroll={false}>
-        <SafeAreaView className="flex-1">
-          <View className="flex-1 items-center justify-center px-2">
+      <Screen fill>
+        <SafeAreaView className="flex-grow">
+          <View className="flex-grow items-center justify-center px-2">
             <Heading className="mb-2 text-2xl">Nothing to practise here yet</Heading>
             <Txt className="mb-8 max-w-[280px] text-center text-sm text-paper/60">
               Finish a lesson or two and the words you meet will come back here.
@@ -569,9 +569,9 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
     const short = gemsShortOfRefill(gems);
     const waitMin = minutesUntilNextHeart(heartsUpdatedAt);
     return (
-      <Screen scroll={false}>
-        <SafeAreaView className="flex-1">
-          <View className="flex-1 items-center justify-center px-2">
+      <Screen fill>
+        <SafeAreaView className="flex-grow">
+          <View className="flex-grow items-center justify-center px-2">
             <Illustration name="heart" tile={false} size={60} />
             <Heading className="mb-2 mt-4 text-2xl">Out of hearts</Heading>
             <Txt className="mb-8 max-w-[280px] text-center text-sm text-paper/60">
