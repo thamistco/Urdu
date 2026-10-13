@@ -73,7 +73,35 @@ export default function App() {
     return () => clearTimeout(t);
   }, []);
 
-  const ready = fontsLoaded || !!fontError || graceElapsed;
+  /**
+   * Saved progress and sign-in are read from storage asynchronously, and the
+   * navigator picks its screens from them: no sign-in shows Login, not
+   * onboarded shows Onboarding, and only after that does a Lesson route
+   * exist. Drawn before they load, a returning learner's lesson link
+   * resolves against an empty profile and lands on setup, which QA testers
+   * reported on the live site (QA report v3, L23; inferred from code, not
+   * reproduced locally, where storage always wins the race). So the screens
+   * wait for both. The fallback keeps a storage that never answers from
+   * leaving the app blank.
+   */
+  const [hydrated, setHydrated] = useState(
+    () => useProgressStore.persist.hasHydrated() && useAuthStore.persist.hasHydrated()
+  );
+  useEffect(() => {
+    if (hydrated) return;
+    const check = () => {
+      if (useProgressStore.persist.hasHydrated() && useAuthStore.persist.hasHydrated()) setHydrated(true);
+    };
+    const offs = [useProgressStore.persist.onFinishHydration(check), useAuthStore.persist.onFinishHydration(check)];
+    check();
+    const t = setTimeout(() => setHydrated(true), 5000);
+    return () => {
+      offs.forEach((off) => off());
+      clearTimeout(t);
+    };
+  }, [hydrated]);
+
+  const ready = (fontsLoaded || !!fontError || graceElapsed) && hydrated;
 
   useEffect(() => {
     initSound();
