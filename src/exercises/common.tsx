@@ -1,6 +1,7 @@
 import { reach } from '../lib/reach';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
+import Svg, { Circle, Path } from 'react-native-svg';
 import { Urdu, Txt, Eyebrow } from '../components/Text';
 import { Illustration } from '../components/Illustration';
 import { palette, withAlpha } from '../theme';
@@ -90,6 +91,7 @@ export function Choice({
         }}
       >
         {children}
+        {state === 'correct' || state === 'wrong' ? <VerdictMark correct={state === 'correct'} /> : null}
         {/* What the border means, in words a screen reader reads as part of
             the button's name. The borders say it only in colour, and no state
             prop can: react-native-web drops `selected` from
@@ -107,6 +109,44 @@ export function Choice({
 }
 
 const VERDICT = { selected: ', selected', wrong: ', your answer', correct: ', correct answer' } as const;
+
+/**
+ * A tick or a cross on a marked tile's corner, so right and wrong differ in
+ * shape and not only in colour. Under deuteranopia the two borders measured
+ * 1.08:1 apart, two beige outlines: the feedback sheet still said right or
+ * wrong, but not which tile had been the learner's (design review,
+ * 2026-10-09; P-013). Hidden from screen readers, which already hear it in
+ * VERDICT.
+ */
+function VerdictMark({ correct }: { correct: boolean }) {
+  return (
+    <View
+      aria-hidden
+      importantForAccessibility="no-hide-descendants"
+      pointerEvents="none"
+      style={{ position: 'absolute', top: -9, right: -9 }}
+    >
+      <Svg width={22} height={22} viewBox="0 0 22 22">
+        <Circle
+          cx={11}
+          cy={11}
+          r={10}
+          fill={correct ? palette.jade : palette.rose}
+          stroke={palette.ink}
+          strokeWidth={2}
+        />
+        <Path
+          d={correct ? 'M6.5 11.5 L9.5 14.5 L15.5 8' : 'M7.5 7.5 L14.5 14.5 M14.5 7.5 L7.5 14.5'}
+          stroke={palette.ink}
+          strokeWidth={2.6}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+      </Svg>
+    </View>
+  );
+}
 
 /** On screen for a screen reader, invisible to everyone else. */
 const SPOKEN_ONLY = { position: 'absolute', width: 1, height: 1, overflow: 'hidden' } as const;
