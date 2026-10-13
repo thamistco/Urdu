@@ -1,5 +1,6 @@
 import type { Exercise } from '../exercises/types';
 import { POSITIONS } from '../data/letters';
+import { glossOf } from '../data/words';
 
 /**
  * What to show a learner who just got it wrong.
@@ -51,7 +52,10 @@ export function answerReveal(ex: Exercise): AnswerReveal | null {
     case 'wordBuild':
     case 'wordFromMeaning':
     case 'typeWord':
-      return { script: ex.word.urdu, roman: ex.word.roman, meaning: ex.word.meaning };
+      // glossOf, as every other screen shows it: the raw field is lower case
+      // and drops the register, so "Wife (polite)" was revealed as "wife"
+      // (QA report v3, L18).
+      return { script: ex.word.urdu, roman: ex.word.roman, meaning: glossOf(ex.word) };
     case 'sentenceBuild':
       // A wrong sentence left the learner looking at their own word order,
       // outlined in red, with the correct order nowhere on screen — and on the

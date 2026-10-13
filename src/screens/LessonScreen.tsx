@@ -682,14 +682,19 @@ export function LessonScreen() {
                         {/* A word can afford 26; a six-word sentence at that
                             size wraps to three lines and pushes Continue off a
                             small screen. */}
-                        <Lexeme
-                          urdu={reveal.script ?? ''}
-                          roman={reveal.roman}
-                          track={track}
-                          forceRoman={track !== 'script'}
-                          size={(reveal.script ?? '').length > 18 ? 20 : 26}
-                          align="left"
-                        />
+                        {/* Clear of the eyebrow: Nastaliq rises well above its
+                            line, and جیکٹ touched "THE ANSWER" (QA report v3,
+                            L22). */}
+                        <View style={{ paddingTop: 6 }}>
+                          <Lexeme
+                            urdu={reveal.script ?? ''}
+                            roman={reveal.roman}
+                            track={track}
+                            forceRoman={track !== 'script'}
+                            size={(reveal.script ?? '').length > 18 ? 20 : 26}
+                            align="left"
+                          />
+                        </View>
                         {reveal.meaning ? <Txt className="mt-1.5 text-sm text-paper/85">{reveal.meaning}</Txt> : null}
                       </>
                     )}
