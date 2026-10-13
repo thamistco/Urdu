@@ -300,6 +300,37 @@ async function main() {
         await ctx.close();
       }
     }
+    /**
+     * A save that cannot be read at all is set aside, and the learner is told.
+     * It restarted the app at the welcome screen without a word, so the
+     * learner could only think the progress was gone (QA, 2026-10-13).
+     */
+    {
+      const ctx = await browser.newContext({ viewport: { width: 412, height: 900 } });
+      const p = await ctx.newPage();
+      try {
+        await enterAsGuest(p, `${origin}${BASE}/`, { gems: 77 });
+        await p.evaluate(() => localStorage.setItem('qaaf-progress', '{not json'));
+        await p.goto(`${origin}${BASE}/`);
+        await arrived(p);
+        await p
+          .waitForFunction(() => /could not be read/i.test(document.body.innerText), null, { timeout: 10000 })
+          .catch(() => {});
+        const body = await p.evaluate(() => document.body.innerText);
+        if (!/could not be read/i.test(body))
+          problems.push(
+            `An unreadable save restarted the app without saying so: "${body.replace(/\n/g, ' / ').slice(0, 90)}"`
+          );
+        const kept = await p.evaluate(() =>
+          Object.keys(localStorage).some(
+            (k) => k.startsWith('qaaf-progress-backup-') && localStorage.getItem(k) === '{not json'
+          )
+        );
+        if (!kept) problems.push('An unreadable save was not kept in a backup as it was.');
+      } finally {
+        await ctx.close();
+      }
+    }
     {
       const ctx = await browser.newContext({ viewport: { width: 412, height: 900 } });
       const p = await ctx.newPage();

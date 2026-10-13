@@ -28,6 +28,20 @@ export function onStorageRefused(fn: () => void): () => void {
   return () => listeners.delete(fn);
 }
 
+/**
+ * Whether the saved progress could not be read this session and was set aside
+ * in a backup. The app then starts fresh, which it did without a word: a
+ * learner met the welcome screen and could only think their progress was gone
+ * (QA, 2026-10-13). Read by the notice in App.tsx.
+ */
+let setAside = false;
+const setAsideListeners = new Set<() => void>();
+export const progressSetAside = () => setAside;
+export function onProgressSetAside(fn: () => void): () => void {
+  setAsideListeners.add(fn);
+  return () => setAsideListeners.delete(fn);
+}
+
 export const safeStorage: StateStorage = {
   async getItem(name) {
     try {
@@ -85,6 +99,10 @@ export function guardedStorage(version: number): StateStorage {
       const readable = !!saved && typeof saved === 'object' && !!saved.state && typeof saved.state === 'object';
       if (!readable || (saved!.version ?? 0) !== version) {
         await safeStorage.setItem(`${name}-backup-${Date.now()}`, raw);
+      }
+      if (!readable && name === 'qaaf-progress' && !setAside) {
+        setAside = true;
+        setAsideListeners.forEach((l) => l());
       }
       return readable ? raw : null;
     },

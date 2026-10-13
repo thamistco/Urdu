@@ -1,6 +1,6 @@
 import './global.css';
 import { useCallback, useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
@@ -21,7 +21,7 @@ import { useSettingsStore } from './src/store/useSettingsStore';
 import { useProgressStore } from './src/store/useProgressStore';
 import { useAuthStore } from './src/store/useAuthStore';
 import { palette } from './src/theme';
-import { storageRefused, onStorageRefused } from './src/store/storage';
+import { storageRefused, onStorageRefused, progressSetAside, onProgressSetAside } from './src/store/storage';
 import { Txt } from './src/components/Text';
 import { Platform } from 'react-native';
 
@@ -135,6 +135,8 @@ export default function App() {
   // runs, but nothing it learns survives closing the page (QA, M21).
   const [refused, setRefused] = useState(storageRefused);
   useEffect(() => onStorageRefused(() => setRefused(true)), []);
+  const [setAside, setSetAside] = useState(progressSetAside);
+  useEffect(() => onProgressSetAside(() => setSetAside(true)), []);
 
   /**
    * Two tabs, one profile. Each tab held its own copy of the progress and
@@ -168,6 +170,31 @@ export default function App() {
             <Txt className="text-center text-xs text-paper/80">
               This browser is blocking storage, so your progress won’t be kept after you close the page.
             </Txt>
+          </View>
+        ) : null}
+        {setAside ? (
+          <View
+            accessibilityRole="alert"
+            style={{
+              backgroundColor: palette.ink700,
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
+            <Txt className="flex-1 text-xs text-paper/80">
+              Your saved progress could not be read, so Qaaf has started fresh. A copy is kept on this device.
+            </Txt>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Dismiss"
+              onPress={() => setSetAside(false)}
+              style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Txt className="text-xs text-paper">OK</Txt>
+            </Pressable>
           </View>
         ) : null}
         <NavigationContainer linking={linking} theme={navTheme} onReady={onReady} documentTitle={DOCUMENT_TITLE}>
