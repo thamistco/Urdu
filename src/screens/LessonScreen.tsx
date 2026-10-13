@@ -26,7 +26,7 @@ import { heartsAreFree } from '../lib/hearts';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { resolveLesson } from '../data/units';
 import { ExerciseView } from '../exercises';
-import { buildLessonExercises } from '../exercises/generator';
+import { buildLessonExercises, isWovenReview } from '../exercises/generator';
 import type { Exercise, GradedResult } from '../exercises/types';
 import type { FinishResult } from '../store/useProgressStore';
 import { LessonComplete } from './LessonComplete';
@@ -573,9 +573,9 @@ export function LessonScreen() {
           </View>
           <Hearts count={hearts} free={heartsFree} />
         </View>
-        {isReview ? (
+        {isReview || isWovenReview(current) ? (
           <View style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }} className="px-4">
-            <Eyebrow style={{ color: palette.gold }}>Review</Eyebrow>
+            <Eyebrow style={{ color: palette.gold }}>{isReview ? 'Review' : 'Review · from an earlier lesson'}</Eyebrow>
           </View>
         ) : null}
 

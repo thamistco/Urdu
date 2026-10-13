@@ -761,6 +761,16 @@ function separateConfusables(letters: Letter[], rotation = 0): Letter[] {
  * fewer, which is what caught the placement test's coin flips.
  */
 export const OPTIONS_PER_QUESTION = 4;
+
+/**
+ * The due items woven into an ordinary lesson. Unmarked, they read as the
+ * wrong question bank: testers met health words in v-road-p2 and sky words in
+ * v-opposites and reported the lessons as mis-wired (QA report v3, M19). The
+ * lesson labels them "Review" from this. A WeakSet, so a lesson's exercises
+ * carry no new field and nothing outlives the lesson.
+ */
+const WOVEN = new WeakSet<Exercise>();
+export const isWovenReview = (ex: Exercise | undefined) => !!ex && WOVEN.has(ex);
 const DISTRACTORS = OPTIONS_PER_QUESTION - 1;
 
 export function distractorsFor(
@@ -2873,6 +2883,7 @@ export function buildLessonExercises(
       !!ex && (ex.kind === 'multipleChoice' || ex.kind === 'meaningPick' || ex.kind === 'listenTap') && !!ex.pretest;
     const splitsAPair = opensOnAPretest(exercises[0]) && exercises[1]?.kind === 'wordTeach';
     exercises.splice(splitsAPair ? 2 : 1, 0, ...woven);
+    woven.forEach((ex) => WOVEN.add(ex));
   }
 
   // A vocabulary lesson is composed to an exact shape — meet, recall, type,
