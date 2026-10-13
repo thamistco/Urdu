@@ -1434,7 +1434,9 @@ async function matchPairs(page, memory) {
       .nth(gloss.i)
       .click()
       .catch(() => {});
-    await page.waitForTimeout(600);
+    // A wrong pair stays on screen for 1.5s and the board takes no taps until
+    // it clears (Matching.tsx, 2026-10-13).
+    await page.waitForTimeout(1650);
     pairs++;
 
     // Read the result rather than assume it. A matched tile is not removed, it
