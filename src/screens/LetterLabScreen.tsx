@@ -135,7 +135,10 @@ export function LetterLabScreen() {
         </ScrollView>
 
         <Reveal key={letter.id}>
-          <View className="mb-1 flex-row items-center justify-center gap-2">
+          {/* Wraps: at 200% text (180 CSS px) the name and the "Never joins
+              forward" pill on one row ran 23px off the left edge and 15px
+              off the right, leaving "F" of alif's name (QA, 2026-10-13). */}
+          <View className="mb-1 flex-row flex-wrap items-center justify-center gap-2">
             <Eyebrow style={{ color: palette.gold }}>
               {letter.name} · “{letter.sound}”
             </Eyebrow>
