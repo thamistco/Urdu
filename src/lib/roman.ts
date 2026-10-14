@@ -119,10 +119,31 @@ function urduSkeleton(s: string): string {
       // کتاب (learner voice, 2026-10-13). Folded to the Urdu ones.
       .replace(/[\u064A\u0649]/g, '\u06CC') // ي ى → ی
       .replace(/\u0643/g, '\u06A9') // ك → ک
-      .replace(/\u0647/g, '\u06C1') // ه → ہ
       .replace(/[ً-ْٰ]/g, '') // harakat, if anyone types them
       .replace(/\s+/g, '')
   );
+}
+
+/**
+ * Equal, with an Arabic-keyboard ه matching either Urdu letter it stands for.
+ *
+ * Arabic and Persian keyboards have one ه where Urdu has two: ہ (the round he)
+ * and ھ (the aspirating do-chashmi he). Folding ه to ہ refused گهر for گھر
+ * (QA, 2026-10-14); folding both Urdu letters together would accept کہا
+ * ("said") for کھا ("eat"). So a typed ه matches whichever of the two the
+ * word has in that place, and nothing else changes.
+ */
+function sameUrdu(typed: string, word: string): boolean {
+  if (typed === word) return true;
+  if (typed.length !== word.length) return false;
+  for (let i = 0; i < typed.length; i++) {
+    const t = typed[i];
+    const w = word[i];
+    if (t === w) continue;
+    if (t === '\u0647' && (w === '\u06C1' || w === '\u06BE')) continue;
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -133,7 +154,7 @@ export function matchesWord(input: string, urdu: string, roman: string): boolean
   const typed = input.trim();
   if (!typed) return false;
 
-  if (urduSkeleton(typed) === urduSkeleton(urdu)) return true;
+  if (sameUrdu(urduSkeleton(typed), urduSkeleton(urdu))) return true;
 
   const target = skeleton(typed);
   if (!target) return false;
