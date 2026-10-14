@@ -1874,7 +1874,7 @@ export const SENTENCES: Sentence[] = [
     roman: 'main ne aaj akhbaar nahiñ paṛha',
     meaning: 'I did not read the newspaper today',
     level: 'intermediate',
-    concept: 'g-past',
+    concept: 'g-perfect',
   },
   {
     id: 's-228',
