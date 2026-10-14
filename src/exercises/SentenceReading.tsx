@@ -17,7 +17,14 @@ type ReadEx = Extract<Exercise, { kind: 'reading' }>;
  * right-to-left and puts the verb last, physically ordering the words teaches
  * word order far better than a rule ever could.
  */
-export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGraded }: ExerciseProps<BuildEx>) {
+export function SentenceBuildExercise({
+  exercise,
+  track,
+  showRoman,
+  locked,
+  onGraded,
+  onExpand,
+}: ExerciseProps<BuildEx>) {
   const { sentence, tiles, romanTiles } = exercise;
   const [placed, setPlaced] = useState<number[]>([]);
   const [graded, setGraded] = useState<boolean | null>(null);
@@ -58,6 +65,8 @@ export function SentenceBuildExercise({ exercise, track, showRoman, locked, onGr
     if (!correct && lastTry == null) {
       feedback.incorrect();
       setHeld(placed.map((i) => label(i)).join(' '));
+      // Bring "Try again" into view, as the word build does.
+      setTimeout(() => onExpand?.(), 120);
       return;
     }
     setGraded(correct);
