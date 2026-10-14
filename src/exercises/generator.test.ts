@@ -2452,3 +2452,24 @@ describe('sentence-build decoys', () => {
     expect([...bad]).toEqual([]);
   });
 });
+
+describe('Daily Review word builds', () => {
+  // QA, 2026-10-14: a learner who had met no letter lesson was asked to build
+  // گھر from tiles, because a practice review sits nowhere on the path.
+  const review = resolveLesson('practice-review')!;
+  const due = ['w-paani', 'w-kitaab', 'w-ghar', 'w-dil', 'w-naam'].map((id) => ({ id, type: 'word' as const }));
+  const wordsOnly = new Set(due.map((d) => d.id));
+  it('asks no word build of a learner who has learned no letters', () => {
+    for (let visit = 0; visit < 20; visit++) {
+      const kinds = buildLessonExercises(review, due, 'script', wordsOnly, visit).map((e) => e.kind);
+      expect(kinds).not.toContain('wordBuild');
+    }
+  });
+  it('still builds once the letters are learned', () => {
+    const withLetters = new Set([...wordsOnly, ...LETTERS.map((l) => l.id)]);
+    const kinds = Array.from({ length: 20 }, (_, v) =>
+      buildLessonExercises(review, due, 'script', withLetters, v).map((e) => e.kind)
+    ).flat();
+    expect(kinds).toContain('wordBuild');
+  });
+});
