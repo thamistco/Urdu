@@ -986,7 +986,10 @@ export function HomeScreen() {
                       </Bold>
                     </View>
                     <View className="flex-1" style={wholeWords}>
-                      <Heading className="text-lg">{meta.title}</Heading>
+                      {/* Inside the level's button: a heading cannot sit in one. */}
+                      <Heading heading={false} className="text-lg">
+                        {meta.title}
+                      </Heading>
                       <Txt className="text-xs text-paper/55">
                         {(track === 'roman' && meta.romanBlurb) || meta.blurb}
                       </Txt>

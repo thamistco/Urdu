@@ -589,7 +589,7 @@ export function OnboardingScreen() {
             {question.kind === 'script' ? (
               <Urdu style={{ color: palette.ink, ...urduGlyph(52) }}>{question.sub}</Urdu>
             ) : (
-              <Heading style={{ color: palette.ink }} className="text-2xl">
+              <Heading heading={false} style={{ color: palette.ink }} className="text-2xl">
                 {question.sub}
               </Heading>
             )}

@@ -1476,7 +1476,7 @@ async function clickByText(page, re) {
     .evaluate((src) => {
       const rx = new RegExp(src, 'i');
       let best = null;
-      for (const n of document.querySelectorAll('div, span, p')) {
+      for (const n of document.querySelectorAll('div, span, p, h1, h2, h3')) {
         if (n.children.length) continue; // leaf nodes only: the label itself
         if (getComputedStyle(n).pointerEvents === 'none') continue; // see readScreen
         const t = (n.textContent || '').trim();
@@ -1507,7 +1507,7 @@ async function clickByText(page, re) {
     .evaluate((src) => {
       const rx = new RegExp(src, 'i');
       let best = null;
-      for (const n of document.querySelectorAll('div, span, p')) {
+      for (const n of document.querySelectorAll('div, span, p, h1, h2, h3')) {
         if (n.children.length) continue;
         if (getComputedStyle(n).pointerEvents === 'none') continue; // see readScreen
         const t = (n.textContent || '').trim();
@@ -2871,7 +2871,7 @@ async function readSurface(page) {
         label: clean((n.closest('div')?.parentElement?.innerText || '').split('\n')[0]),
         on: n.checked,
       }));
-    const lines = Array.from(document.querySelectorAll('div,span,p'))
+    const lines = Array.from(document.querySelectorAll('div,span,p,h1,h2,h3'))
       .filter((n) => live(n) && !n.firstElementChild && clean(n.textContent))
       .map((n) => clean(n.textContent));
     return { controls, switches, lines, text: lines.join('\n') };

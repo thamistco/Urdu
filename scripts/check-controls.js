@@ -103,7 +103,7 @@ function rolelessControls() {
 async function tapByText(page, re) {
   const box = await page.evaluate((src) => {
     const r = new RegExp(src, 'i');
-    for (const n of document.querySelectorAll('div,span,p,[role="button"]')) {
+    for (const n of document.querySelectorAll('div,span,p,h1,h2,h3,[role="button"]')) {
       const label = n.getAttribute('aria-label');
       if (!label && n.children.length) continue;
       const t = (label || n.textContent || '').trim();
@@ -149,6 +149,18 @@ async function main() {
             `a screen reader announces ${silent.length === 1 ? 'it' : 'them'} as text: ${silent.slice(0, 4).join(' · ')}`
         );
       }
+      // A heading cannot sit inside a button, link or radio: their content is
+      // read as one name, and the heading is lost or doubled. Titles are
+      // headings since P-072, so a title put inside a card's button needs
+      // heading={false} (second check, 2026-10-14).
+      const nested = await page.evaluate(() =>
+        [
+          ...document.querySelectorAll(
+            ':is([role="button"], a, [role="link"], [role="radio"]) :is(h1, h2, h3, h4, h5, h6, [role="heading"])'
+          ),
+        ].map((h) => (h.textContent || '').trim().slice(0, 30))
+      );
+      if (nested.length) problems.push(`${where}: a heading inside a control: ${nested.slice(0, 4).join(' · ')}`);
     };
 
     // The sign-in screen first, before guest mode skips it. It is one control
@@ -174,7 +186,7 @@ async function main() {
       // exact match silently count zero, which reads as "fixed".
       const bare = (s) => (s || '').replace(/[‎‏؜]/g, '').trim();
       const say = (word) =>
-        Array.from(document.querySelectorAll('div,span,p')).filter(
+        Array.from(document.querySelectorAll('div,span,p,h1,h2,h3')).filter(
           (n) => !n.children.length && bare(n.textContent) === word && !n.closest('[aria-hidden="true"]')
         ).length;
       return { latin: say('Qaaf'), urdu: say('قاف') };
@@ -218,7 +230,7 @@ async function main() {
       );
       if (!el) return null;
       const box = el.getBoundingClientRect();
-      const lines = [...el.querySelectorAll('div,span,p')]
+      const lines = [...el.querySelectorAll('div,span,p,h1,h2,h3')]
         .filter((n) => !n.children.length && (n.textContent || '').trim())
         .map((n) => {
           const r = n.getBoundingClientRect();
