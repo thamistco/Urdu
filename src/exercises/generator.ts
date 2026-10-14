@@ -1483,6 +1483,7 @@ function sentencesForLesson(lesson: Lesson): Sentence[] {
 const TAUGHT_FORMS = new Set(WORDS.map((w) => w.urdu));
 
 /** Each letter's isolated form, as the one character a word spells it with. */
+const LETTER_IDS: ReadonlySet<string> = new Set(LETTERS.map((l) => l.id));
 const LETTER_OF_CHAR = new Map<string, string>();
 for (const l of LETTERS) {
   const glyph = l.forms.isolated.replace(/[\u0640\u200C\u200D]/g, '');
@@ -1707,7 +1708,16 @@ export function buildLessonExercises(
   // surface a letter that was practised before the switch, and a vocabulary
   // lesson would otherwise close on a spell-it-in-Nastaliq exercise.
   const teachesScript = track !== 'roman';
-  const taught = teachesScript ? lettersTaughtBefore(lesson.id, track) : null;
+  // A practice review (Daily Review, catch-up, topic practice) sits nowhere on
+  // the path, so the path could not say which letters had been taught and
+  // every word counted as buildable: the Daily Review asked a learner who had
+  // met no letter lesson to build گھر from tiles (QA, 2026-10-14). There the
+  // letters this learner has been graded on stand in for the path.
+  const onPath = teachesScript ? lettersTaughtBefore(lesson.id, track) : null;
+  const taught =
+    teachesScript && !onPath && lesson.id.startsWith('practice-')
+      ? new Set([...known].filter((id) => LETTER_IDS.has(id)))
+      : onPath;
 
   if (lesson.kind === 'letters' && lesson.letterIds && teachesScript) {
     // URD-022: reordered so visually confusable letters (daal/Daal/zaal,
