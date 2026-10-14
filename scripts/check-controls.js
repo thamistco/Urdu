@@ -669,9 +669,17 @@ async function main() {
         await shows('let.s start');
         await step(/^Let’s start$/, 'welcome', () => shows('why are you learning urdu'));
         await step(/^Speak with family/, 'goal', () => chosen('speak with family'));
-        await step(/^Continue$/, 'goal continue');
-        for (let k = 0; k < 3 && !/already speak or understand/i.test(await said()); k++) {
-          await step(/^Continue$/, 'track or voice');
+        // Each screen by name, never "press Continue until it looks right":
+        // that loop read the page between screens and pressed once too often,
+        // past the speaker choice and the quick check. It failed three times
+        // on 13 and 14 October, once even after waiting for the text to
+        // settle, and passed alone every time.
+        await step(/^Continue$/, 'goal continue', () => shows('how do you want to learn'));
+        await step(/^Continue$/, 'track', () =>
+          until(() => /whose voice|already speak or understand/i.test(document.body.innerText))
+        );
+        if (/whose voice/i.test(await said())) {
+          await step(/^Continue$/, 'voice', () => shows('already speak or understand'));
         }
         await step(/^I already speak or understand it$/, 'speaker', () => chosen('already speak or understand'));
         await step(/^Continue$/, 'background continue', () => shows('quick check'));
