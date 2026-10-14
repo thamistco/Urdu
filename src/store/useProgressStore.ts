@@ -149,8 +149,10 @@ type ProgressState = {
    *  Set on dismissal rather than on render, so a notice that was drawn and
    *  never read is still owed. See lib/progress.ts for who is owed one. */
   pathNoticeSeen: boolean;
-  /** How many lessons the path held when this learner last opened the app,
-   *  `null` until a Home render records one. Re-recorded on dismissal, so the
+  /** The path as it was when this learner last opened the app: its lessons and
+   *  their order as one number (`pathSignature`, 2026-10-14; it was the lesson
+   *  count, which a move that kept the count could not change). The name is
+   *  kept so no save moves. `null` until a Home render records one. Re-recorded on dismissal, so the
    *  next regroup announces itself without anyone bumping the persist version:
    *  detecting the move by which lesson ids died could not see the learner it
    *  mattered to, because a topic's first part keeps the topic's own id. */
