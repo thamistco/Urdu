@@ -682,6 +682,11 @@ const PLANNED_UNITS: Unit[] = [
     lessons: [
       V('restaurant', 'At a restaurant'),
       G('g-past', 'Past tense', 'تھا، تھی, was and were'),
+      // Taught here, beside تھا, rather than in Unit 37: the simple past
+      // (آیا، گیا) is used from Unit 12 and نے from Unit 15, and g-past drew
+      // simple-past sentences it never explains (learning review, 2026-10-14;
+      // P-062).
+      G('g-perfect', 'Completed actions', 'The نے construction'),
       V('grains', 'Grains & staples'),
       REV('eating-out'),
     ],
@@ -915,7 +920,6 @@ const PLANNED_UNITS: Unit[] = [
       V('business', 'Business & trade'),
       V('science', 'Science'),
       D('d-12', 'Leaving a job'),
-      G('g-perfect', 'Completed actions', 'The نے construction'),
       REV('the-modern-world'),
     ],
   },
