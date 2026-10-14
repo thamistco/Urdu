@@ -105,6 +105,16 @@ describe('telling a learner their place on the path moved', () => {
     expect(needsPathMoveNotice({ ...dismissed, seen: false, pathSize: PATH + 60 })).toBe(true);
   });
 
+  it('re-arms for a real profile, whose seen flag is always set, when the recorded path differs', () => {
+    // Second check of P-062: the store creates every profile with seen: true and
+    // dismissal sets it again, so seen must not decide this once a path is recorded.
+    const real = { completed: survivor, skipped: {}, seen: true };
+    expect(needsPathMoveNotice({ ...real, pathSize: PATH, lastPathSize: PATH })).toBe(false);
+    expect(needsPathMoveNotice({ ...real, pathSize: PATH + 1, lastPathSize: PATH })).toBe(true);
+    // Nothing finished, nothing to tell, whatever was recorded.
+    expect(needsPathMoveNotice({ ...real, completed: {}, pathSize: PATH + 1, lastPathSize: PATH })).toBe(false);
+  });
+
   it('says nothing when handed an empty path rather than claiming it all changed', () => {
     expect(
       needsPathMoveNotice({ completed: survivor, skipped: {}, pathSize: 0, seen: false, lastPathSize: null })
