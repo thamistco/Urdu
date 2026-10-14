@@ -44,9 +44,10 @@ const PATH_SIZE = pathSignature(ALL_LESSONS.map((l) => l.id));
 /** Said once, so it lives once. Also read aloud by the notice's own
  *  accessibility label, which is why it is a string rather than JSX.
  *
- *  Names no particular change on purpose: this fires whenever the path is a
- *  different size than it was when the learner last opened the app, and which
- *  reshuffle that was is not something the app knows by then. */
+ *  Names no particular change on purpose: this fires whenever the path's
+ *  lessons or their order differ from when the learner last opened the app
+ *  (`pathSignature`), and which reshuffle that was is not something the app
+ *  knows by then. */
 const NOTICE_BODY =
   'The course was reorganised since you were last here, so your units hold a different number of lessons. Nothing you learned was lost: your streak, your level and everything the app remembers about your words are untouched.';
 
