@@ -84,9 +84,14 @@ export type PathNoticeInput = {
  *                     the bug behind a plausible screen.
  */
 export function needsPathMoveNotice({ completed, skipped, pathSize, seen, lastPathSize }: PathNoticeInput): boolean {
-  if (seen) return false;
   if (pathSize === 0) return false;
   if (lastPathSize === pathSize) return false;
+  // `seen` only answers for a profile told before any path was recorded. It
+  // used to come first and answer for everyone: every profile is created with
+  // it set, so a recorded path that differed from today's never re-armed the
+  // notice (second check of P-062, 2026-10-14). The recorded path is what
+  // says whether this learner has been here since the move.
+  if (seen && lastPathSize === null) return false;
 
   return Object.keys(completed).length > 0 || Object.keys(skipped).length > 0;
 }

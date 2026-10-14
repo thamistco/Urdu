@@ -667,7 +667,7 @@ export const GRAMMAR: GrammarConcept[] = [
       'The past of “to be” is تھا (tha). It agrees with the subject: تھا (tha, m. sing.), تھی (thi, f.), تھے (the, m. pl.), تھیں (thiñ, f. pl.).',
       'میں خوش تھا (main khush tha): “I was happy” (man speaking); میں خوش تھی (main khush thi) (woman speaking).',
       'Add تھا (tha) to the habitual form to get “used to”: میں جاتا تھا (main jaata tha): “I used to go”.',
-      'The simple past is the verb’s past form on its own, agreeing with the subject like تھا (tha): وہ آیا (wo aaya): “he came”; ہم گئے (hum gaye): “we went”. A verb that can take an object, like کھانا (khaana) or پڑھنا (paṛhna), works differently, with نے (ne), even when the object is left out: that is the next lesson.',
+      'The simple past is the verb’s past form on its own, agreeing with the subject like تھا (tha): وہ آیا (wo aaya): “he came”; ہم گئے (hum gaye): “we went”. A verb that can take an object, like کھانا (khaana, to eat) or پڑھنا (paṛhna, to read), works differently, with نے (ne), even when the object is left out: that is the next lesson.',
     ],
     table: {
       heading: ['Subject', 'was/were'],
