@@ -61,7 +61,7 @@ if (!fs.existsSync(path.join(DIST, 'index.html'))) {
 
 /** Every visible run of text, with its computed size and what it says. */
 function sample() {
-  return Array.from(document.querySelectorAll('div,span,p')).flatMap((n) => {
+  return Array.from(document.querySelectorAll('div,span,p,h1,h2,h3')).flatMap((n) => {
     if (n.children.length) return [];
     const text = (n.textContent || '').trim();
     if (!text) return [];
