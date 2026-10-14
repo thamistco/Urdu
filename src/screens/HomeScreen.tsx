@@ -22,7 +22,7 @@ import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { comebackLine } from '../lib/streak';
 import { Lesson, unitsForTrack, findLesson, ALL_LESSONS } from '../data/units';
-import { needsPathMoveNotice } from '../lib/progress';
+import { needsPathMoveNotice, pathSignature } from '../lib/progress';
 import { streakStatus } from '../lib/streak';
 import { LETTERS } from '../data/letters';
 import { LEVEL_META, LEVEL_ORDER, type Level, glossOf } from '../data/words';
@@ -35,10 +35,11 @@ import { wholeWords } from '../lib/wholeWords';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-/** How many lessons the course holds, across both tracks. Module scope: it is a
- *  constant of the build, and rebuilding a 350-entry structure on the screen
+/** The course's lessons and their order, as one number (`pathSignature`); it
+ *  was the lesson count, which a move that kept the count could not change.
+ *  Module scope: it is a constant of the build, and rebuilding a 350-entry structure on the screen
  *  URD-002 exists to make lighter is the wrong place to put it. */
-const PATH_SIZE = ALL_LESSONS.length;
+const PATH_SIZE = pathSignature(ALL_LESSONS.map((l) => l.id));
 
 /** Said once, so it lives once. Also read aloud by the notice's own
  *  accessibility label, which is why it is a string rather than JSX.

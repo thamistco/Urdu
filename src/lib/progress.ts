@@ -84,9 +84,32 @@ export type PathNoticeInput = {
  *                     the bug behind a plausible screen.
  */
 export function needsPathMoveNotice({ completed, skipped, pathSize, seen, lastPathSize }: PathNoticeInput): boolean {
-  if (seen) return false;
   if (pathSize === 0) return false;
   if (lastPathSize === pathSize) return false;
+  // `seen` only answers for a profile told before any path was recorded. It
+  // used to come first and answer for everyone: every profile is created with
+  // it set, so a recorded path that differed from today's never re-armed the
+  // notice (second check of P-062, 2026-10-14). The recorded path is what
+  // says whether this learner has been here since the move.
+  if (seen && lastPathSize === null) return false;
 
   return Object.keys(completed).length > 0 || Object.keys(skipped).length > 0;
+}
+
+/**
+ * A number standing for the path's lessons and their order, stored where the
+ * path's size used to be (`pathSize` in the store, name kept so no save moves).
+ *
+ * The size alone missed a move: taking g-perfect from Unit 37 to Unit 22 kept
+ * 350 lessons, sent learners past Unit 22 back to it, and said nothing (second
+ * check of P-062, 2026-10-14). Any regroup, reorder or resize now changes this,
+ * and the notice fires once. FNV-1a over the ids, kept positive and nonzero.
+ */
+export function pathSignature(ids: readonly string[]): number {
+  let h = 0x811c9dc5;
+  for (const ch of ids.join('|')) {
+    h ^= ch.codePointAt(0)!;
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h || 1;
 }

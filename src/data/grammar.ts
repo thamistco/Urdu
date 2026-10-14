@@ -667,6 +667,7 @@ export const GRAMMAR: GrammarConcept[] = [
       'The past of “to be” is تھا (tha). It agrees with the subject: تھا (tha, m. sing.), تھی (thi, f.), تھے (the, m. pl.), تھیں (thiñ, f. pl.).',
       'میں خوش تھا (main khush tha): “I was happy” (man speaking); میں خوش تھی (main khush thi) (woman speaking).',
       'Add تھا (tha) to the habitual form to get “used to”: میں جاتا تھا (main jaata tha): “I used to go”.',
+      'The simple past is the verb’s past form on its own, agreeing with the subject like تھا (tha): وہ آیا (wo aaya): “he came”; ہم گئے (hum gaye): “we went”. A verb that can take an object, like کھانا (khaana, to eat) or پڑھنا (paṛhna, to read), works differently, with نے (ne), even when the object is left out: that is the next lesson.',
     ],
     table: {
       heading: ['Subject', 'was/were'],
@@ -978,7 +979,7 @@ export const GRAMMAR: GrammarConcept[] = [
     id: 'g-perfect',
     title: 'Completed actions',
     summary: 'Perfect & pluperfect: has done, had done',
-    level: 'advanced',
+    level: 'intermediate',
     explain: [
       'Add the right form of “to be” to the past participle: وہ گیا ہے (wo gaya hai): “he has gone”; وہ گیا تھا (wo gaya tha): “he had gone”.',
       'With transitive verbs in the past, Urdu marks the doer with نے (ne) and the verb matches the *object*, not the subject: اُس نے کتاب پڑھی (us ne kitaab paṛhi): “he read the book” (پڑھی/paṛhi is feminine to match کتاب/kitaab).',
