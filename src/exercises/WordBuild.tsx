@@ -52,7 +52,7 @@ function diagnoseBuild(assembled: string[], target: string[]): string | null {
  * Note: tiles show isolated glyphs; the target is a left-to-right code-point
  * match of the assembled string against the word.
  */
-export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: ExerciseProps<BuildEx>) {
+export function WordBuildExercise({ exercise, showRoman, locked, onGraded, onExpand }: ExerciseProps<BuildEx>) {
   const { word, tiles } = exercise;
   const target = useMemo(() => buildLetters(word.urdu), [word]);
   /**
@@ -108,6 +108,10 @@ export function WordBuildExercise({ exercise, showRoman, locked, onGraded }: Exe
           target
         ),
       });
+      // The note and Try again open below the tiles; at 320x568 the button
+      // sat 149px under the screen with nothing scrolled to it (design
+      // review, 2026-10-14).
+      setTimeout(() => onExpand?.(), 120);
       return;
     }
     setGraded(correct);
