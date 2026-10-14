@@ -48,11 +48,15 @@ export function ConfirmHost() {
             <View
               accessibilityRole={'alertdialog' as never}
               aria-modal
-              aria-label={req.title}
+              // Named by its heading, not a copy of it: with the title a
+              // heading too, aria-label read it twice (P-072 second check).
+              aria-labelledby="confirm-title"
               className="rounded-3xl p-6"
               style={{ backgroundColor: palette.ink700, borderWidth: 1, borderColor: withAlpha(palette.gold, 0.25) }}
             >
-              <Heading className="mb-2 text-xl">{req.title}</Heading>
+              <Heading nativeID="confirm-title" className="mb-2 text-xl">
+                {req.title}
+              </Heading>
               <Txt className="mb-6 text-sm leading-6 text-paper/75">{req.message}</Txt>
               <View className="gap-3">
                 {req.confirmLabel ? (
