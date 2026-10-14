@@ -94,10 +94,14 @@ describe('loanword spellings', () => {
 });
 
 describe('Urdu typed on an Arabic keyboard', () => {
+  it('does not let ہ and ھ stand in for each other: کہا is not کھا', () => {
+    expect(matchesWord('\u06A9\u06C1\u0627', 'کھا', 'x')).toBe(false);
+  });
   // Learner voice, 2026-10-13: ي ك ه look like ی ک ہ and are other characters.
   it.each([
     ['\u0643\u062A\u0627\u0628', 'کتاب'], // كتاب
     ['\u0643\u0645\u0631\u0647', 'کمرہ'], // كمره
+    ['\u06AF\u0647\u0631', 'گھر'], // گهر: Arabic ه for do-chashmi ھ (QA, 2026-10-14)
     ['\u0645\u064A\u0632', 'میز'], // ميز
   ])('accepts %s for %s', (typed, urdu) => {
     expect(matchesWord(typed, urdu, 'x')).toBe(true);
