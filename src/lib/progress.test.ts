@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { ALL_LESSONS } from '../data/units';
-import { needsPathMoveNotice } from './progress';
+import { needsPathMoveNotice, pathSignature } from './progress';
 
 /**
  * The rule is "once per move, and never to somebody it is not true of".
@@ -109,5 +109,18 @@ describe('telling a learner their place on the path moved', () => {
     expect(
       needsPathMoveNotice({ completed: survivor, skipped: {}, pathSize: 0, seen: false, lastPathSize: null })
     ).toBe(false);
+  });
+});
+
+describe('pathSignature', () => {
+  it('changes when a lesson moves, even though the count does not', () => {
+    // Second check of P-062: g-perfect moved from Unit 37 to Unit 22, 350 lessons either way.
+    const before = ['g-past', 'v-grains', 'v-tech', 'g-perfect'];
+    const after = ['g-past', 'g-perfect', 'v-grains', 'v-tech'];
+    expect(pathSignature(after)).not.toBe(pathSignature(before));
+    expect(pathSignature(before)).toBe(pathSignature([...before]));
+  });
+  it('is never 0, which the notice treats as no path at all', () => {
+    expect(pathSignature([])).toBeGreaterThan(0);
   });
 });

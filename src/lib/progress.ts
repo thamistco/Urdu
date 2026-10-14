@@ -90,3 +90,21 @@ export function needsPathMoveNotice({ completed, skipped, pathSize, seen, lastPa
 
   return Object.keys(completed).length > 0 || Object.keys(skipped).length > 0;
 }
+
+/**
+ * A number standing for the path's lessons and their order, stored where the
+ * path's size used to be (`pathSize` in the store, name kept so no save moves).
+ *
+ * The size alone missed a move: taking g-perfect from Unit 37 to Unit 22 kept
+ * 350 lessons, sent learners past Unit 22 back to it, and said nothing (second
+ * check of P-062, 2026-10-14). Any regroup, reorder or resize now changes this,
+ * and the notice fires once. FNV-1a over the ids, kept positive and nonzero.
+ */
+export function pathSignature(ids: readonly string[]): number {
+  let h = 0x811c9dc5;
+  for (const ch of ids.join('|')) {
+    h ^= ch.codePointAt(0)!;
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h || 1;
+}
