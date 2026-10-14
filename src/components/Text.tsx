@@ -24,8 +24,22 @@ export function Display({ className = '', style, ...p }: Props) {
   return <RNText {...p} style={[LTR, style]} className={`font-display-black text-paper ${className}`} />;
 }
 
-export function Heading({ className = '', style, ...p }: Props) {
-  return <RNText {...p} style={[LTR, style]} className={`font-display text-paper ${className}`} />;
+/**
+ * A title, announced as one: a screen reader can jump from heading to heading,
+ * the fastest way to learn where you are, and "Out of hearts", "That lesson
+ * isn't here" and "Something went wrong" were read as plain text (design
+ * review, 2026-10-13; P-072). `heading={false}` for display type that is not a
+ * title: inside a button, where a heading cannot sit, or a prompt word.
+ */
+export function Heading({ className = '', style, heading = true, ...p }: Props & { heading?: boolean }) {
+  return (
+    <RNText
+      accessibilityRole={heading ? 'header' : undefined}
+      {...p}
+      style={[LTR, style]}
+      className={`font-display text-paper ${className}`}
+    />
+  );
 }
 
 export function Txt({ className = '', style, ...p }: Props) {

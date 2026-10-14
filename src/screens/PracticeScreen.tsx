@@ -198,7 +198,11 @@ export function PracticeScreen() {
                   <Eyebrow style={{ color: started ? withAlpha(palette.ink, 0.7) : palette.gold }}>
                     Daily review
                   </Eyebrow>
-                  <Heading style={{ color: started ? palette.ink : palette.cream }} className="mt-1 text-2xl">
+                  <Heading
+                    heading={false}
+                    style={{ color: started ? palette.ink : palette.cream }}
+                    className="mt-1 text-2xl"
+                  >
                     {due > 0
                       ? `${due} item${due > 1 ? 's' : ''} due`
                       : started
