@@ -96,9 +96,9 @@ export const GRAMMAR: GrammarConcept[] = [
         promptRoman: '___ ustaad hain',
         meaning: 'You (polite) are a teacher',
         answer: 'آپ',
-        options: ['آپ', 'میں', 'وہ', 'ہم'],
+        options: ['آپ', 'تم', 'تو', 'میں'],
         because:
-          'ہیں (hain) fits آپ (aap), ہم (hum) and a plural وہ (wo) alike, so the English tells you which one is wanted here. Only میں (main) is ruled out: it takes ہوں (hoon).',
+          'ہیں (hain) goes with آپ (aap). تم (tum) takes ہو (ho), تو (tu) takes ہے (hai), and میں (main) takes ہوں (hoon).',
       },
       {
         id: 'g-pronouns-d2',
@@ -118,7 +118,7 @@ export const GRAMMAR: GrammarConcept[] = [
     level: 'beginner',
     explain: [
       'Urdu sentences usually end with the verb. The commonest verb is ہونا (hona): “to be”.',
-      'Pick the ending by who you are talking about: ہوں (hoon) after میں (main), ہے (hai) after a single person or thing, ہیں (hain) after آپ (aap), ہم (hum), and plurals.',
+      'Pick the ending by who you are talking about: ہوں (hoon) after میں (main), ہے (hai) after a single person or thing, ہیں (hain) after آپ (aap), ہم (hum), and plurals, and ہو (ho) after تم (tum).',
       'There is no word for “a” or “an”, “I am a doctor” is simply میں ڈاکٹر ہوں (main ḍaakṭar hoon).',
     ],
     table: {
@@ -227,7 +227,7 @@ export const GRAMMAR: GrammarConcept[] = [
     explain: [
       'Masculine nouns ending in ‑ا (‑a) swap it for ‑ے (‑e): لڑکا → لڑکے (laṛka → laṛke), کمرہ → کمرے (kamra → kamre).',
       'Every other masculine noun looks the same in the plural. گھر (ghar) is “house” and “houses”; the number or the verb tells you which.',
-      'Feminine nouns ending in ‑ی (‑i) add ‑اں (‑aañ): لڑکی → لڑکیاں (laṛki → laṛkiyaañ). Feminine nouns ending in a consonant add ‑یں (‑eñ): کتاب → کتابیں (kitaab → kitaabeñ), رات → راتیں (raat → raateñ).',
+      'Feminine nouns ending in ‑ی (‑i) add ‑اں (‑aañ), said ‑yaañ after the ‑i: لڑکی → لڑکیاں (laṛki → laṛkiyaañ). Feminine nouns ending in a consonant add ‑یں (‑eñ): کتاب → کتابیں (kitaab → kitaabeñ), رات → راتیں (raat → raateñ).',
     ],
     table: {
       heading: ['Type', 'Singular', 'Plural'],
@@ -238,10 +238,10 @@ export const GRAMMAR: GrammarConcept[] = [
         ['Other fem.', 'کتاب', 'کتابیں'],
       ],
       rowsRoman: [
-        ['', 'laṛka (boy)', 'laṛke (boys)'],
-        ['', 'ghar (house)', 'ghar (houses)'],
-        ['', 'laṛki (girl)', 'laṛkiyaañ (girls)'],
-        ['', 'kitaab (book)', 'kitaabeñ (books)'],
+        ['Masc. in ‑a', 'laṛka (boy)', 'laṛke (boys)'],
+        ['Other masc.', 'ghar (house)', 'ghar (houses)'],
+        ['Fem. in ‑i', 'laṛki (girl)', 'laṛkiyaañ (girls)'],
+        ['Other fem.', 'kitaab (book)', 'kitaabeñ (books)'],
       ],
     },
     examples: [
@@ -422,14 +422,14 @@ export const GRAMMAR: GrammarConcept[] = [
     explain: [
       'نہیں (nahiñ) is the everyday “not”. It goes immediately before the verb: میں نہیں جاتا (main nahiñ jaata): “I do not go”.',
       'In a simple “X is Y” sentence, نہیں (nahiñ) usually swallows the ہے (hai): وہ ڈاکٹر نہیں (wo ḍaakṭar nahiñ): “he is not a doctor”. Adding ہے (hai) is not wrong, just heavier.',
-      'مت (mat) is only for telling someone not to do something: مت جاؤ (mat jaao): “don’t go”. نہ (na) is the quiet one, used with the subjunctive and in pairs: نہ یہ نہ وہ (na ye na wo): “neither this nor that”. It can soften a command too: نہ جاؤ (na jaao).',
+      'مت (mat) is only for telling someone not to do something: مت جاؤ (mat jaao): “don’t go”. نہ (na) is the quiet one, used with “might” and “may” (شاید وہ نہ آئے, shaayad wo na aaye: “perhaps he won’t come”) and in pairs: نہ یہ نہ وہ (na ye na wo): “neither this nor that”. It can soften a command too: نہ جاؤ (na jaao).',
     ],
     table: {
       heading: ['Word', 'Use', 'Example'],
       rows: [
         ['نہیں', 'ordinary "not"', 'میں نہیں جاؤں گا'],
         ['مت', 'negative command', 'مت بولو'],
-        ['نہ', 'subjunctive, "neither…nor"', 'شاید وہ نہ آئے'],
+        ['نہ', '"might not", "neither…nor"', 'شاید وہ نہ آئے'],
       ],
       rowsRoman: [
         ['nahiñ', '', 'main nahiñ jaaoon ga (I will not go)'],
@@ -596,6 +596,7 @@ export const GRAMMAR: GrammarConcept[] = [
         ['وہ (m.)', 'جاتا ہے', 'he goes'],
         ['وہ (f.)', 'جاتی ہے', 'she goes'],
         ['ہم / وہ (pl.)', 'جاتے ہیں', 'we / they go'],
+        ['وہ (f. pl.)', 'جاتی ہیں', 'they (women) go'],
       ],
       rowsRoman: [
         ['main (m.)', 'jaata hoon', ''],
@@ -603,6 +604,7 @@ export const GRAMMAR: GrammarConcept[] = [
         ['wo (m.)', 'jaata hai', ''],
         ['wo (f.)', 'jaati hai', ''],
         ['hum / wo (pl.)', 'jaate hain', ''],
+        ['wo (f. pl.)', 'jaati hain', ''],
       ],
     },
     examples: [
@@ -622,12 +624,12 @@ export const GRAMMAR: GrammarConcept[] = [
       },
       {
         id: 'g-pres-d2',
-        prompt: 'ہم اردو بول___ ہیں',
-        promptRoman: 'hum urdu bol___ hain',
-        meaning: 'We speak Urdu',
+        prompt: 'بچے اردو بول___ ہیں',
+        promptRoman: 'bachche urdu bol___ hain',
+        meaning: 'The children speak Urdu',
         answer: 'تے',
         options: ['تے', 'تا', 'تی', 'تیں'],
-        because: 'Plural subjects take تے (te) with ہیں (hain).',
+        because: 'بچے (bachche) is masculine plural, so the verb ends in تے (te), with ہیں (hain).',
       },
     ],
   },
@@ -638,7 +640,7 @@ export const GRAMMAR: GrammarConcept[] = [
     level: 'intermediate',
     explain: [
       'For an action happening at this moment, use the stem + رہا / رہی / رہے (raha / rahi / rahe) + “to be”.',
-      'میں جا رہا ہوں (main ja raha hoon): “I am going”. The رہا (raha) part agrees with the speaker, just like ‑تا (‑ta) did.',
+      'میں جا رہا ہوں (main ja raha hoon): “I am going”. The رہا (raha) part agrees with the subject, just like ‑تا (‑ta) did.',
       'Compare: میں کھاتا ہوں (main khaata hoon, “I eat”, generally) vs میں کھا رہا ہوں (main kha raha hoon, “I am eating”, now).',
     ],
     examples: [
@@ -707,7 +709,7 @@ export const GRAMMAR: GrammarConcept[] = [
     summary: 'What you will do',
     level: 'intermediate',
     explain: [
-      'The future adds ‑گا / ‑گی / ‑گے (‑ga / ‑gi / ‑ge) to the subjunctive stem: میں جاؤں گا (main jaaoon ga): “I will go”.',
+      'The future adds ‑گا / ‑گی / ‑گے (‑ga / ‑gi / ‑ge) to a short form of the verb, جاؤں، جائے، جائیں (jaaoon, jaaye, jaayeñ): میں جاؤں گا (main jaaoon ga): “I will go”.',
       'The گا (ga) part agrees with the subject, exactly like the other verb endings you have met.',
       'Common forms: میں کروں گا (main karoon ga, I will do), وہ کرے گا (wo kare ga, he will do), ہم کریں گے (hum kareñ ge, we will do).',
     ],
@@ -820,7 +822,7 @@ export const GRAMMAR: GrammarConcept[] = [
     explain: [
       'All three use the infinitive (the ‑نا, ‑na form) with the person in the کو (ko) form: مجھے (mujhe), آپ کو (aap ko), اُسے (use).',
       'مجھے جانا ہے (mujhe jaana hai) is a plan: “I have to go”. مجھے جانا چاہیے (mujhe jaana chaahiye) is advice: “I should go”. مجھے جانا پڑا (mujhe jaana paṛa) is pressure from outside: “I had to go”.',
-      'One quirk: with the ہے (hai) version the infinitive agrees with the object. مجھے کتاب خریدنی ہے (mujhe kitaab khareedni hai), because کتاب (kitaab) is feminine.',
+      'One quirk: in all three, the infinitive agrees with a plain object. مجھے کتاب خریدنی ہے (mujhe kitaab khareedni hai), because کتاب (kitaab) is feminine; the same goes for خریدنی چاہیے (khareedni chaahiye) and خریدنی پڑی (khareedni paṛi).',
     ],
     table: {
       heading: ['Pattern', 'Strength', 'Example'],
@@ -982,7 +984,7 @@ export const GRAMMAR: GrammarConcept[] = [
     level: 'intermediate',
     explain: [
       'Add the right form of “to be” to the past participle: وہ گیا ہے (wo gaya hai): “he has gone”; وہ گیا تھا (wo gaya tha): “he had gone”.',
-      'With transitive verbs in the past, Urdu marks the doer with نے (ne) and the verb matches the *object*, not the subject: اُس نے کتاب پڑھی (us ne kitaab paṛhi): “he read the book” (پڑھی/paṛhi is feminine to match کتاب/kitaab).',
+      'With transitive verbs in the completed tenses (the simple past, “has done” and “had done”), Urdu marks the doer with نے (ne) and the verb matches the *object*, not the subject: اُس نے کتاب پڑھی (us ne kitaab paṛhi): “he read the book” (پڑھی/paṛhi is feminine to match کتاب/kitaab).',
       'This نے (ne) construction surprises most learners. Intransitive verbs like جانا (jaana) and آنا (aana) never use it.',
     ],
     examples: [
@@ -998,7 +1000,8 @@ export const GRAMMAR: GrammarConcept[] = [
         meaning: 'I ate the food',
         answer: 'نے',
         options: ['نے', 'کو', 'سے', 'میں'],
-        because: 'Transitive verbs in the past take نے (ne) after the subject.',
+        because:
+          'In the simple past a transitive verb takes نے (ne) after the subject; the habitual past, کھاتا تھا (khaata tha), does not.',
       },
     ],
   },
@@ -1117,7 +1120,7 @@ export const GRAMMAR: GrammarConcept[] = [
     explain: [
       'To say a thing was done without naming who did it, use the past participle plus جانا (jaana): خط لکھا گیا (khat likha gaya): “the letter was written”.',
       'The participle agrees with the thing it happened to: کتاب پڑھی گئی (kitaab paṛhi gayi, feminine), خط لکھے گئے (khat likhe gaye, masculine plural).',
-      'If you do want to name the agent, mark them with سے (se): یہ کام مجھ سے نہیں ہوا (ye kaam mujh se nahiñ hua): “this work could not be done by me”. Urdu also uses the passive to soften a refusal.',
+      'Naming the doer is less common. سے (se) names them mainly in “could not”: مجھ سے یہ کام نہیں کیا جاتا (mujh se ye kaam nahiñ kiya jaata): “I can’t bring myself to do this”, which is also how Urdu softens a refusal. Otherwise the doer is left out, or named with کے ذریعے (ke zariye).',
     ],
     examples: [
       { urdu: 'دروازہ کھولا گیا', roman: 'darwaaza khola gaya', meaning: 'The door was opened' },
@@ -1152,7 +1155,7 @@ export const GRAMMAR: GrammarConcept[] = [
     explain: [
       'Urdu grows new verbs out of old ones. From one root you get three: doing it yourself, making someone do it, and having it done through a third person.',
       'The pattern is regular. کرنا (karna, to do) → کرانا (karaana, to make someone do) → کروانا (karwaana, to get it done). بننا (banna, to be made) → بنانا (banaana, to make) → بنوانا (banwaana, to have made).',
-      'میں نے کھانا بنایا (main ne khaana banaaya) means “I cooked”. میں نے کھانا بنوایا (main ne khaana banwaaya) means “I had the food cooked”, by someone else. One extra syllable changes who did the work.',
+      'میں نے کھانا بنایا (main ne khaana banaaya) means “I cooked”. میں نے کھانا بنوایا (main ne khaana banwaaya) means “I had the food cooked”, by someone else. One added و (w) changes who did the work.',
     ],
     table: {
       heading: ['Base', 'Causative', 'Double causative'],
