@@ -310,7 +310,9 @@ export function HomeScreen() {
     () => order.find((id) => !store.completedLessons[id] && !store.skippedLessons[id]) ?? order[order.length - 1],
     [store.completedLessons, store.skippedLessons, order]
   );
-  const currentLesson = findLesson(currentId);
+  // From this track's units, so its title and subtitle are the track's: the
+  // course's own carries script that the Roman track must not show.
+  const currentLesson = units.flatMap((u) => u.lessons).find((l) => l.id === currentId) ?? findLesson(currentId);
   const currentUnit = units.find((u) => u.lessons.some((l) => l.id === currentId));
   const currentLevel: Level = currentUnit?.level ?? 'beginner';
   const finished = order.every((id) => store.completedLessons[id] || store.skippedLessons[id]);
