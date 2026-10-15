@@ -26,12 +26,12 @@ report.
 | 5   | Interaction and ease of use  | Friction, dead ends, confusing controls, error states, speed of a session                    | 2026-10-14    |
 | 6   | Onboarding and first session | The first five minutes: does a stranger reach a win and want a second day                    | 2026-10-14    |
 | 7   | Retention and habit          | Streaks, reminders, goals, comeback paths, what brings people back                           | 2026-10-14    |
-| 8   | Content quality              | Urdu accuracy, translations, audio, cultural fit, originality                                | 2026-10-11    |
-| 9   | Performance and reliability  | Load time, bundle size, offline, crashes, low-end phones                                     | 2026-10-11    |
-| 10  | Monetisation and pricing     | What is free, what is paid, price, trial, paywall design, family plans                       | 2026-10-11    |
-| 11  | Launch readiness             | Native builds, store accounts and listings, legal, support, payments                         | 2026-10-11    |
+| 8   | Content quality              | Urdu accuracy, translations, audio, cultural fit, originality                                | 2026-10-15    |
+| 9   | Performance and reliability  | Load time, bundle size, offline, crashes, low-end phones                                     | 2026-10-15    |
+| 10  | Monetisation and pricing     | What is free, what is paid, price, trial, paywall design, family plans                       | 2026-10-15    |
+| 11  | Launch readiness             | Native builds, store accounts and listings, legal, support, payments                         | 2026-10-15    |
 | 12  | Marketing and advertising    | Positioning, channels, creators, paid ads, budget, launch moments                            | 2026-10-11    |
-| 13  | Growth and referral          | Sharing, invites, family features, word of mouth, community                                  | 2026-10-11    |
+| 13  | Growth and referral          | Sharing, invites, family features, word of mouth, community                                  | 2026-10-15    |
 | 14  | Analytics, feedback, privacy | What to measure, how to hear from learners, staying privacy-respecting                       | 2026-10-11    |
 | 15  | What learners say            | Reviews of other apps, forums, what people love and wish existed, what Urdu learners ask for | 2026-10-13    |
 | 16  | Learning science             | What research shows works for learning a language and a script, and whether Qaaf does it     | 2026-10-13    |

@@ -57,7 +57,7 @@ Found on 2026-10-08:
 - **P-018** The welcome screen's "learn it in English letters" line looks tappable and is not (QA). Against making it a button: it would offer a way out of the script on the first screen of an app whose case is reading.
 - **P-019** Store listing: "hindi" dropped with P-036 (2026-10-11); rewrite "Free" when P-001 ships. `2026-10-08-launch-and-marketing.md`
 - **P-020** "Report this item" on the answer banner; where reports go is the owner's choice. `2026-10-08-growth-and-privacy.md`
-- **P-021** Share a word, not a streak: one line through the phone's share menu. `2026-10-08-growth-and-privacy.md`
+- **P-021** Sharpened 2026-10-15: a word the learner can now read, once at a reading milestone, never a pop-up (`2026-10-15-growth-and-referral.md`). Share a word, not a streak: one line through the phone's share menu. `2026-10-08-growth-and-privacy.md`
 - **P-022** "No ads. No trackers." where parents see it, now that a check enforces it; first settle the under-13 line. `2026-10-08-growth-and-privacy.md`
 
 Found on 2026-10-09:
@@ -122,9 +122,15 @@ From QA report v3 on 2026-10-13, `2026-10-13-qa-report-v3.md`:
 - **P-073** At 0 hearts with too few gems, text and one "Leave for now" instead of a disabled refill. `2026-10-13-accessibility-and-design.md`
 - **P-074** A tomorrow plan at the end of the day's first lesson ("When will you practise tomorrow?"), kept on the device. `2026-10-14-retention.md`
 - **P-075** An add-to-home-screen hint after the third finished lesson. `2026-10-14-retention.md`
-- **P-076** Pin the main button of teaching cards to the bottom (Q-063). `2026-10-14-interaction-and-onboarding.md`
+- **P-076** Held 2026-10-15 and dropped as built: a pinned "Got it" let a learner leave the letter card without seeing its four forms (`2026-10-15-agents.md`). Re-proposed: keep the button in place and show a "more below" cue while the card overflows. Q-063 stays open.
 - **P-077** Pin Continue on the goal and track onboarding screens under 600 px tall. `2026-10-14-interaction-and-onboarding.md`
 - **P-078** Teach a word before the first guess on the Roman track's first lesson. `2026-10-14-interaction-and-onboarding.md`
+- **P-079** RevenueCat for payments, after Q-019. `2026-10-15-launch-and-pricing.md`
+- **P-080** Subscription and refund clauses, processors named, a 3.1.2 paywall spec; legal wording waits for the owner. `2026-10-15-launch-and-pricing.md`
+- **P-081** Sell on the web first (RevenueCat Web Billing, Paddle). `2026-10-15-launch-and-pricing.md`
+- **P-082** A written rule: no invite prompts, sharing rewards, friend streaks or comparing learners. `2026-10-15-growth-and-referral.md`
+- **P-083** "Read it to someone" after the alphabet unit. `2026-10-15-growth-and-referral.md`
+- **P-084** A content test: no grammar drill answered by the English alone. `2026-10-15-content.md`
 - **P-070** Keep most of each unit review for its own unit. Today due items fill it first, so rev-land-and-sky opened on environment words; that trades against slipping words coming back first (`check:srs`). Shipped 2026-10-13 as QA H8 (5c4928e): at most 30% due.
 
 | ID    | Proposal                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | First checked | Perspectives weighed on day one                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
