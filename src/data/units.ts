@@ -14,7 +14,6 @@ import { GRAMMAR } from './grammar';
 import { PASSAGES, DIALOGUES } from './sentences';
 import { wordsByTopic } from './words';
 import type { Level } from './words';
-import { romanProse } from '../lib/romanProse';
 import type { LearnTrack } from '../store/useSettingsStore';
 import { palette } from '../theme';
 import { CATCH_UP_SIZE } from '../lib/srs';
@@ -561,7 +560,7 @@ const PLANNED_UNITS: Unit[] = [
     subtitle: 'More body parts, and how to say what is yours',
     lessons: [
       V('body-more', 'More body parts'),
-      G('g-possess', 'Possession', 'کا، کی، کے (ka, ki, ke): my, your, his'),
+      G('g-possess', 'Possession', 'کا، کی، کے, my, your, his'),
       S('elementary', 'Sentence building', 'Say where things are'),
       REV('you-and-your-body'),
     ],
@@ -590,7 +589,7 @@ const PLANNED_UNITS: Unit[] = [
     lessons: [
       V('clothing', 'Clothing'),
       V('shapes', 'Shapes & sizes'),
-      G('g-negation', 'Saying no', 'نہیں (nahiñ) · نہ (na) · مت (mat)'),
+      G('g-negation', 'Saying no', 'نہیں · نہ · مت'),
       D('d-3', 'Where do you live?'),
       R('r-8', 'At school'),
       REV('what-you-wear'),
@@ -667,7 +666,7 @@ const PLANNED_UNITS: Unit[] = [
     lessons: [
       V('directions-more', 'Asking the way'),
       V('phone', 'On the phone'),
-      G('g-dative', 'The مجھے (mujhe) feeling', 'Liking, knowing, being hungry'),
+      G('g-dative', 'The مجھے feeling', 'Liking, knowing, being hungry'),
       V('expressions', 'Useful expressions'),
       D('d-6', 'Calling a friend'),
       R('r-11', 'A trip to Lahore'),
@@ -682,12 +681,12 @@ const PLANNED_UNITS: Unit[] = [
     subtitle: 'A restaurant, grains and staples, and talking about what already happened',
     lessons: [
       V('restaurant', 'At a restaurant'),
-      G('g-past', 'Past tense', 'تھا، تھی (tha, thi): was and were'),
+      G('g-past', 'Past tense', 'تھا، تھی, was and were'),
       // Taught here, beside تھا, rather than in Unit 37: the simple past
       // (آیا، گیا) is used from Unit 12 and نے from Unit 15, and g-past drew
       // simple-past sentences it never explains (learning review, 2026-10-14;
       // P-062).
-      G('g-perfect', 'Completed actions', 'The نے (ne) construction'),
+      G('g-perfect', 'Completed actions', 'The نے construction'),
       V('grains', 'Grains & staples'),
       REV('eating-out'),
     ],
@@ -737,7 +736,7 @@ const PLANNED_UNITS: Unit[] = [
       V('office', 'The office'),
       V('jobs-more', 'More professions'),
       V('education', 'Education'),
-      G('g-obligation', 'Have to & should', 'چاہیے (chaahiye) · ہے (hai) · پڑنا (paṛna)'),
+      G('g-obligation', 'Have to & should', 'چاہیے · ہے · پڑنا'),
       R('r-13', 'At the doctor'),
       REV('working-life'),
     ],
@@ -754,7 +753,7 @@ const PLANNED_UNITS: Unit[] = [
       V('hotel', 'At a hotel'),
       V('countries', 'Countries & peoples'),
       V('timewords', 'Time words'),
-      G('g-ability', 'Can & could', 'سکنا (sakna): being able to'),
+      G('g-ability', 'Can & could', 'سکنا, being able to'),
       D('d-8', 'Booking a room'),
       REV('travel-and-time'),
     ],
@@ -873,7 +872,7 @@ const PLANNED_UNITS: Unit[] = [
       V('philosophy', 'Thought & philosophy'),
       V('faith', 'Faith & worship'),
       V('subjects', 'Fields of study'),
-      G('g-relative', 'Relative clauses', 'جو … وہ (jo … wo): matched pairs'),
+      G('g-relative', 'Relative clauses', 'جو … وہ, matched pairs'),
       R('r-16', 'Work and rest'),
       REV('thought-belief-and-study'),
     ],
@@ -1248,6 +1247,23 @@ export const isScriptLesson = (l: Lesson) => l.kind === 'letters';
 export const TOTAL_LESSON_COUNT = UNITS.reduce((n, u) => n + u.lessons.length, 0);
 export const SCRIPT_LESSON_COUNT = UNITS.reduce((n, u) => n + u.lessons.filter(isScriptLesson).length, 0);
 
+/**
+ * What the Roman track calls the grammar lessons whose titles carry script.
+ * "The نے construction" showed the script on the Roman track's Home (QA,
+ * 2026-10-15). Kept apart from the script titles rather than bracketed into
+ * them: with the Roman added, four no longer fit a 320px row (check:row-fit).
+ */
+const ROMAN_LABELS: Record<string, { title?: string; subtitle?: string }> = {
+  'g-possess': { subtitle: 'ka, ki, ke: my, your, his' },
+  'g-negation': { subtitle: 'nahiñ · na · mat' },
+  'g-dative': { title: 'The mujhe feeling' },
+  'g-past': { subtitle: 'tha, thi: was and were' },
+  'g-perfect': { subtitle: 'The ne construction' },
+  'g-obligation': { subtitle: 'chaahiye · hai · paṛna' },
+  'g-ability': { subtitle: 'sakna: being able to' },
+  'g-relative': { subtitle: 'jo … wo: matched pairs' },
+};
+
 export function unitsForTrack(track: LearnTrack): Unit[] {
   if (track !== 'roman') return UNITS;
   return UNITS.map((u) => ({
@@ -1256,13 +1272,10 @@ export function unitsForTrack(track: LearnTrack): Unit[] {
     subtitle: u.romanSubtitle ?? u.subtitle,
     lessons: u.lessons
       .filter((l) => !isScriptLesson(l))
-      // Script in a grammar lesson's title or subtitle carries its Roman in
-      // brackets, which romanProse keeps: "The نے (ne) construction" showed
-      // the script on the Roman track's Home (QA, 2026-10-15).
       .map((l) => ({
         ...l,
-        title: l.romanTitle ?? romanProse(l.title),
-        subtitle: l.romanSubtitle ?? romanProse(l.subtitle),
+        title: l.romanTitle ?? ROMAN_LABELS[l.id]?.title ?? l.title,
+        subtitle: l.romanSubtitle ?? ROMAN_LABELS[l.id]?.subtitle ?? l.subtitle,
       })),
   })).filter((u) => u.lessons.length > 0);
 }
