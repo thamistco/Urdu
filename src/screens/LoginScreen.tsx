@@ -151,12 +151,17 @@ export function LoginScreen() {
         <View className="flex-1" />
 
         <View
-          onLayout={onStack}
           style={{ minHeight: bottomBand, paddingBottom: Math.max(insets.bottom, 8) }}
           className="justify-center px-5"
         >
-          <Reveal delay={80}>
-            {/* Two lines, where there was one that assumed its own point.
+          {/* Measured here, inside the band, never the band itself: the band's
+              minHeight comes from this height, so measuring the band grew it
+              24px a pass until it hit its limit, sliding the controls 270px up
+              the first screen anyone sees (CLS 0.145; performance review,
+              2026-10-15). */}
+          <View onLayout={onStack}>
+            <Reveal delay={80}>
+              {/* Two lines, where there was one that assumed its own point.
                 "Every letter, in all four of its faces" means nothing to
                 someone who has not yet seen that a letter has faces, and this
                 is the screen where nobody has. The fact comes first now.
@@ -165,7 +170,7 @@ export function LoginScreen() {
                 providers and the guest button: a band this tight can afford
                 decoration or it can afford saying what the app is, and the
                 ghost button is already distinct enough to separate itself. */}
-            {/* The heritage speaker first: someone who grew up hearing Urdu and
+              {/* The heritage speaker first: someone who grew up hearing Urdu and
                 cannot read it is the learner no other Urdu app is built for, and
                 the one this course fits best (daily review, 2026-10-06, P-002).
                 A question, not "You speak it.": the wordmark never names the
@@ -173,78 +178,79 @@ export function LoginScreen() {
                 reader before onboarding asks. The second line is for everyone
                 else, so a complete beginner is welcomed rather than turned
                 away. */}
-            <Bold className="mb-1 text-center text-[0.9375rem] text-paper">Speak Urdu? Now read it.</Bold>
-            <Txt className="mb-3 text-center text-[0.8125rem] leading-5 text-paper/70">
-              New to Urdu? Start at the first letter. The whole language is here.
-            </Txt>
-            {/* Two doors or one, depending on whether there is anything behind
+              <Bold className="mb-1 text-center text-[0.9375rem] text-paper">Speak Urdu? Now read it.</Bold>
+              <Txt className="mb-3 text-center text-[0.8125rem] leading-5 text-paper/70">
+                New to Urdu? Start at the first letter. The whole language is here.
+              </Txt>
+              {/* Two doors or one, depending on whether there is anything behind
                 them. See the note on `authConfigured` above. */}
-            {authConfigured ? (
-              <View className="gap-2.5">
-                <ProviderButton
-                  label="Continue with Google"
-                  onPress={() => handle('google')}
-                  loading={busy === 'google'}
-                />
-                <ProviderButton
-                  label="Continue with Apple"
-                  onPress={() => handle('apple')}
-                  loading={busy === 'apple'}
-                />
-                <Button variant="ghost" onPress={continueAsGuest} testID="the-door">
-                  Continue as a guest
+              {authConfigured ? (
+                <View className="gap-2.5">
+                  <ProviderButton
+                    label="Continue with Google"
+                    onPress={() => handle('google')}
+                    loading={busy === 'google'}
+                  />
+                  <ProviderButton
+                    label="Continue with Apple"
+                    onPress={() => handle('apple')}
+                    loading={busy === 'apple'}
+                  />
+                  <Button variant="ghost" onPress={continueAsGuest} testID="the-door">
+                    Continue as a guest
+                  </Button>
+                </View>
+              ) : (
+                <Button onPress={continueAsGuest} testID="the-door">
+                  Start learning
                 </Button>
-              </View>
-            ) : (
-              <Button onPress={continueAsGuest} testID="the-door">
-                Start learning
-              </Button>
-            )}
-          </Reveal>
-
-          {note && (
-            <Reveal>
-              <View
-                className="mt-3 rounded-xl border-s-2 p-2.5"
-                style={{ borderStartColor: palette.gold, backgroundColor: withAlpha(palette.gold, 0.08) }}
-              >
-                <Txt className="text-[0.6875rem] leading-4 text-paper/75">{note}</Txt>
-              </View>
+              )}
             </Reveal>
-          )}
 
-          {!authConfigured && !note && (
-            <Reveal delay={160}>
-              {/* A statement, not an apology. The old line — "Signing in isn't
+            {note && (
+              <Reveal>
+                <View
+                  className="mt-3 rounded-xl border-s-2 p-2.5"
+                  style={{ borderStartColor: palette.gold, backgroundColor: withAlpha(palette.gold, 0.08) }}
+                >
+                  <Txt className="text-[0.6875rem] leading-4 text-paper/75">{note}</Txt>
+                </View>
+              </Reveal>
+            )}
+
+            {!authConfigured && !note && (
+              <Reveal delay={160}>
+                {/* A statement, not an apology. The old line — "Signing in isn't
                   ready yet" — was there to explain the two buttons that did
                   nothing; with those gone there is nothing to excuse, and what
                   is left is the one fact a learner actually needs, which is
                   where their progress lives. */}
-              <Txt className="mt-3 text-center text-[0.6875rem] leading-4 text-paper/70">
-                {/* Not when the browser refuses storage: the banner above says
+                <Txt className="mt-3 text-center text-[0.6875rem] leading-4 text-paper/70">
+                  {/* Not when the browser refuses storage: the banner above says
                     nothing will be kept, and this said the opposite (design
                     review, 2026-10-13). */}
-                {storageRefused()
-                  ? 'This browser is not keeping anything, so progress lasts until you close the page.'
-                  : 'Your progress is saved on this device.'}
-              </Txt>
-            </Reveal>
-          )}
+                  {storageRefused()
+                    ? 'This browser is not keeping anything, so progress lasts until you close the page.'
+                    : 'Your progress is saved on this device.'}
+                </Txt>
+              </Reveal>
+            )}
 
-          {/*
-           * Reachable before any guest/sign-in choice, on purpose — a
-           * reviewer or a learner should be able to read either without first
-           * agreeing to use the app. Privacy and Terms are registered outside
-           * RootNavigator's auth gate for exactly this (see RootNavigator.tsx).
-           */}
-          <View className="mt-4 flex-row items-center justify-center gap-3">
-            <Pressable accessibilityRole="link" onPress={() => nav.navigate('Privacy')} hitSlop={8}>
-              <Txt className="text-[0.6875rem] text-paper/55 underline">Privacy Policy</Txt>
-            </Pressable>
-            <Txt className="text-[0.6875rem] text-paper/55">·</Txt>
-            <Pressable accessibilityRole="link" onPress={() => nav.navigate('Terms')} hitSlop={8}>
-              <Txt className="text-[0.6875rem] text-paper/55 underline">Terms of Service</Txt>
-            </Pressable>
+            {/*
+             * Reachable before any guest/sign-in choice, on purpose — a
+             * reviewer or a learner should be able to read either without first
+             * agreeing to use the app. Privacy and Terms are registered outside
+             * RootNavigator's auth gate for exactly this (see RootNavigator.tsx).
+             */}
+            <View className="mt-4 flex-row items-center justify-center gap-3">
+              <Pressable accessibilityRole="link" onPress={() => nav.navigate('Privacy')} hitSlop={8}>
+                <Txt className="text-[0.6875rem] text-paper/55 underline">Privacy Policy</Txt>
+              </Pressable>
+              <Txt className="text-[0.6875rem] text-paper/55">·</Txt>
+              <Pressable accessibilityRole="link" onPress={() => nav.navigate('Terms')} hitSlop={8}>
+                <Txt className="text-[0.6875rem] text-paper/55 underline">Terms of Service</Txt>
+              </Pressable>
+            </View>
           </View>
         </View>
       </View>
