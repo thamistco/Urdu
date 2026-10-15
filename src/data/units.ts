@@ -14,6 +14,7 @@ import { GRAMMAR } from './grammar';
 import { PASSAGES, DIALOGUES } from './sentences';
 import { wordsByTopic } from './words';
 import type { Level } from './words';
+import { romanProse } from '../lib/romanProse';
 import type { LearnTrack } from '../store/useSettingsStore';
 import { palette } from '../theme';
 import { CATCH_UP_SIZE } from '../lib/srs';
@@ -560,7 +561,7 @@ const PLANNED_UNITS: Unit[] = [
     subtitle: 'More body parts, and how to say what is yours',
     lessons: [
       V('body-more', 'More body parts'),
-      G('g-possess', 'Possession', 'کا، کی، کے, my, your, his'),
+      G('g-possess', 'Possession', 'کا، کی، کے (ka, ki, ke): my, your, his'),
       S('elementary', 'Sentence building', 'Say where things are'),
       REV('you-and-your-body'),
     ],
@@ -589,7 +590,7 @@ const PLANNED_UNITS: Unit[] = [
     lessons: [
       V('clothing', 'Clothing'),
       V('shapes', 'Shapes & sizes'),
-      G('g-negation', 'Saying no', 'نہیں · نہ · مت'),
+      G('g-negation', 'Saying no', 'نہیں (nahiñ) · نہ (na) · مت (mat)'),
       D('d-3', 'Where do you live?'),
       R('r-8', 'At school'),
       REV('what-you-wear'),
@@ -666,7 +667,7 @@ const PLANNED_UNITS: Unit[] = [
     lessons: [
       V('directions-more', 'Asking the way'),
       V('phone', 'On the phone'),
-      G('g-dative', 'The مجھے feeling', 'Liking, knowing, being hungry'),
+      G('g-dative', 'The مجھے (mujhe) feeling', 'Liking, knowing, being hungry'),
       V('expressions', 'Useful expressions'),
       D('d-6', 'Calling a friend'),
       R('r-11', 'A trip to Lahore'),
@@ -681,12 +682,12 @@ const PLANNED_UNITS: Unit[] = [
     subtitle: 'A restaurant, grains and staples, and talking about what already happened',
     lessons: [
       V('restaurant', 'At a restaurant'),
-      G('g-past', 'Past tense', 'تھا، تھی, was and were'),
+      G('g-past', 'Past tense', 'تھا، تھی (tha, thi): was and were'),
       // Taught here, beside تھا, rather than in Unit 37: the simple past
       // (آیا، گیا) is used from Unit 12 and نے from Unit 15, and g-past drew
       // simple-past sentences it never explains (learning review, 2026-10-14;
       // P-062).
-      G('g-perfect', 'Completed actions', 'The نے construction'),
+      G('g-perfect', 'Completed actions', 'The نے (ne) construction'),
       V('grains', 'Grains & staples'),
       REV('eating-out'),
     ],
@@ -736,7 +737,7 @@ const PLANNED_UNITS: Unit[] = [
       V('office', 'The office'),
       V('jobs-more', 'More professions'),
       V('education', 'Education'),
-      G('g-obligation', 'Have to & should', 'چاہیے · ہے · پڑنا'),
+      G('g-obligation', 'Have to & should', 'چاہیے (chaahiye) · ہے (hai) · پڑنا (paṛna)'),
       R('r-13', 'At the doctor'),
       REV('working-life'),
     ],
@@ -753,7 +754,7 @@ const PLANNED_UNITS: Unit[] = [
       V('hotel', 'At a hotel'),
       V('countries', 'Countries & peoples'),
       V('timewords', 'Time words'),
-      G('g-ability', 'Can & could', 'سکنا, being able to'),
+      G('g-ability', 'Can & could', 'سکنا (sakna): being able to'),
       D('d-8', 'Booking a room'),
       REV('travel-and-time'),
     ],
@@ -872,7 +873,7 @@ const PLANNED_UNITS: Unit[] = [
       V('philosophy', 'Thought & philosophy'),
       V('faith', 'Faith & worship'),
       V('subjects', 'Fields of study'),
-      G('g-relative', 'Relative clauses', 'جو … وہ, matched pairs'),
+      G('g-relative', 'Relative clauses', 'جو … وہ (jo … wo): matched pairs'),
       R('r-16', 'Work and rest'),
       REV('thought-belief-and-study'),
     ],
@@ -1255,7 +1256,14 @@ export function unitsForTrack(track: LearnTrack): Unit[] {
     subtitle: u.romanSubtitle ?? u.subtitle,
     lessons: u.lessons
       .filter((l) => !isScriptLesson(l))
-      .map((l) => ({ ...l, title: l.romanTitle ?? l.title, subtitle: l.romanSubtitle ?? l.subtitle })),
+      // Script in a grammar lesson's title or subtitle carries its Roman in
+      // brackets, which romanProse keeps: "The نے (ne) construction" showed
+      // the script on the Roman track's Home (QA, 2026-10-15).
+      .map((l) => ({
+        ...l,
+        title: l.romanTitle ?? romanProse(l.title),
+        subtitle: l.romanSubtitle ?? romanProse(l.subtitle),
+      })),
   })).filter((u) => u.lessons.length > 0);
 }
 
