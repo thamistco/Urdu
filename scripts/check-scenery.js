@@ -79,6 +79,26 @@ const INTERIOR = 'img[src*="/evening-dusk."]';
 const SCENES = [
   { name: 'sign-in', selector: 'img[src*="/evening."]', minRuns: 6 },
   { name: 'welcome', selector: 'img[src*="/evening-dusk."]', minRuns: 8 },
+  // The week of World Urdu Day adds a line above the headline (P-040), which
+  // pushes the stack up towards the sun, so sign-in is measured on that day
+  // too, the line in its own colour (`own`). It shows from 580px tall, and is
+  // required at 412x900 and at 375x580, the shortest window that shows it.
+  // At 375x553 it must not show: between 520 and 565px it sat on the glow of
+  // the sunset at 4.31:1 (second check, 2026-10-16), so if a change brings it
+  // back there, it is measured there and fails.
+  ...[
+    { width: 412, height: 900, says: true },
+    { width: 375, height: 580, says: true },
+    { width: 375, height: 553, says: false },
+  ].map(({ says, ...viewport }) => ({
+    name: `sign-in on World Urdu Day at ${viewport.width}x${viewport.height}`,
+    selector: 'img[src*="/evening."]',
+    minRuns: says ? 7 : 6,
+    at: new Date(2026, 10, 9, 12),
+    viewport,
+    own: 'World Urdu Day',
+    mustSay: says ? 'World Urdu Day' : undefined,
+  })),
 ];
 
 /**
@@ -136,6 +156,7 @@ async function worstPixel(page, shot, text, regions) {
       let worst = Infinity;
       let at = null;
       for (const a of areas) {
+        const La = a.rgb && a.rgb.length === 3 ? L(a.rgb[0], a.rgb[1], a.rgb[2]) : Lt;
         const x0 = Math.max(0, Math.floor(a.x * scale));
         const y0 = Math.max(0, Math.floor(a.y * scale));
         const x1 = Math.min(c.width, Math.ceil((a.x + a.w) * scale));
@@ -143,7 +164,7 @@ async function worstPixel(page, shot, text, regions) {
         for (let y = y0; y < y1; y++) {
           for (let x = x0; x < x1; x++) {
             const i = (y * c.width + x) * 4;
-            const ratio = (Lt + 0.05) / (L(d[i], d[i + 1], d[i + 2]) + 0.05);
+            const ratio = (La + 0.05) / (L(d[i], d[i + 1], d[i + 2]) + 0.05);
             if (ratio < worst) {
               worst = ratio;
               at = {
@@ -210,7 +231,8 @@ async function textBoxes(page, sceneSelector) {
         n = n.parentElement;
       }
       if (covered) continue;
-      found.push({ x: r.x, y: r.y, w: r.width, h: r.height, label: el.textContent.trim().slice(0, 44) });
+      const rgb = (s.color.match(/\d+(\.\d+)?/g) || []).slice(0, 3).map(Number);
+      found.push({ x: r.x, y: r.y, w: r.width, h: r.height, rgb, label: el.textContent.trim().slice(0, 44) });
       el.style.visibility = 'hidden';
     }
     return found;
@@ -223,7 +245,7 @@ async function textBoxes(page, sceneSelector) {
 
   const server = await serveDist(DIST, PORT);
   const browser = await chromium.launch({ executablePath: exe });
-  const page = await browser.newPage({ viewport: { width: 412, height: 900 } });
+  const mainPage = await browser.newPage({ viewport: { width: 412, height: 900 } });
   const url = `http://localhost:${PORT}/`;
 
   const fail = async (msg) => {
@@ -236,7 +258,7 @@ async function textBoxes(page, sceneSelector) {
   // A bundle that did not load is the failure this check has actually hit, so
   // say so in those words rather than reporting a missing element downstream.
   const errors = [];
-  page.on('pageerror', (e) => errors.push(e.message));
+  mainPage.on('pageerror', (e) => errors.push(e.message));
 
   // ── Pass two, first, because sign-in is where the app opens ──────────────
   //
@@ -244,6 +266,12 @@ async function textBoxes(page, sceneSelector) {
   // that no line of text sits on the part of either that does.
   const photo = [];
   for (const scene of SCENES) {
+    // A dated scene gets a page of its own, so the frozen clock goes no further.
+    const page = scene.at ? await browser.newPage({ viewport: scene.viewport }) : mainPage;
+    if (scene.at) {
+      page.on('pageerror', (e) => errors.push(e.message));
+      await page.clock.setFixedTime(scene.at);
+    }
     await page.goto(url);
     await page.waitForTimeout(2500);
     // The welcome screen is one tap past sign-in.
@@ -266,6 +294,14 @@ async function textBoxes(page, sceneSelector) {
           (errors.length ? `\n  page errors: ${errors.slice(0, 3).join(' | ')}` : '')
       );
     }
+    if (scene.mustSay && !boxes.some((b) => (b.label || '').includes(scene.mustSay))) {
+      await fail(`the ${scene.name} screen does not say "${scene.mustSay}", so its line was not measured.`);
+    }
+    // The line a dated scene adds is measured in its own colour: it is gold,
+    // about half as bright as the cream every other run is measured as, and
+    // as cream it passed at 10.91:1 where it was 5.35:1 (second check of
+    // P-040, 2026-10-16). Every other run keeps the cream it always had.
+    for (const b of boxes) if (!scene.own || !(b.label || '').includes(scene.own)) delete b.rgb;
     const r = await worstPixel(page, await page.screenshot(), TEXT, boxes);
     const worst = Math.round(r.worst * 100) / 100;
     if (worst < FLOOR) {
@@ -279,7 +315,9 @@ async function textBoxes(page, sceneSelector) {
       );
     }
     photo.push({ name: scene.name, worst, runs: boxes.length });
+    if (scene.at) await page.close();
   }
+  const page = mainPage;
 
   // ── Pass one: the scenery every other screen stands on ──────────────────
   await enterAsGuest(page, url);
