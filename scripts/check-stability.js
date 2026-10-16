@@ -114,6 +114,131 @@ function isSubsequence(before, after) {
 const problems = [];
 const checked = [];
 
+/**
+ * Each exercise opens at its top. The lesson body is one scroll view for
+ * the whole lesson, and every answer scrolls it to the end to show the
+ * banner, so on a short phone the next exercise opened where the last one
+ * finished: a letter card at 320x568 opened 261px down, with the letter it
+ * teaches above the screen (design review, 2026-10-16). On the tall page
+ * above nothing overflows, so this walks g-past at 320x568, answering
+ * anything, and reads the scroll view each time the step counter moves.
+ * Without the fix, steps 3, 4 and 5 opened 106, 116 and 32px down.
+ */
+async function checkExerciseOpensAtTop(browser, url) {
+  const short = await browser.newPage({ viewport: { width: 320, height: 568 }, deviceScaleFactor: 1 });
+  await short.goto(url);
+  await openTheDoor(short);
+  await short.evaluate(() => {
+    const raw = JSON.parse(localStorage.getItem('qaaf-progress') || '{"state":{},"version":0}');
+    raw.state = { ...raw.state, onboarded: true, goal: 'family', level: 0, hearts: 99, completedLessons: {} };
+    localStorage.setItem('qaaf-progress', JSON.stringify(raw));
+    localStorage.setItem(
+      'qaaf-settings',
+      JSON.stringify({ state: { soundEnabled: false, reducedMotion: true, track: 'both' }, version: 0 })
+    );
+  });
+  await short.goto(await lessonUrl(short, 'g-past'));
+  await short.waitForFunction(() => /\d+ of \d+/.test(document.body.innerText), null, { timeout: 20000 });
+  let last = null;
+  let measured = 0;
+  for (let i = 0; i < 14 && measured < 3; i++) {
+    const w = await whereInLesson(short);
+    if (!w.step) break;
+    if (last != null && w.step !== last && w.top != null) {
+      measured++;
+      if (w.top > 4) {
+        problems.push(
+          `At 320x568, step ${w.step} of g-past opened scrolled ${Math.round(w.top)}px down: ` +
+            `the top of the exercise, its question, was above the screen.`
+        );
+        break;
+      }
+    }
+    last = w.step;
+    await stepAnyhow(short);
+  }
+  if (measured < 2) {
+    problems.push(
+      `Only ${measured} of g-past's exercises overflowed at 320x568 and were measured, so where an exercise opens was not tested.`
+    );
+  }
+  await short.close();
+}
+
+/** The step counter, and the lesson body's scroll position if it overflows. */
+function whereInLesson(page) {
+  // Two frames first: the app puts a new exercise at its top on the frame
+  // after it opens, to beat a glide still running from the answer before.
+  return page.evaluate(async () => {
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const step = (document.body.innerText.match(/(\d+) of \d+/) || [])[1];
+    const body = [...document.querySelectorAll('*')].find((n) => {
+      const r = n.getBoundingClientRect();
+      return (
+        n.scrollHeight > n.clientHeight + 4 &&
+        /auto|scroll/.test(getComputedStyle(n).overflowY) &&
+        r.width > 200 &&
+        r.height > 200
+      );
+    });
+    return { step, top: body ? body.scrollTop : null };
+  });
+}
+
+/** Get past one step any way at all: "Got it", or the first answer and Continue. */
+async function stepAnyhow(page) {
+  const got = page.getByText(/^Got it$/);
+  if (await got.count()) {
+    await got.first().evaluate((el) => el.scrollIntoView({ block: 'end' }));
+    const before = await page.evaluate(() => document.body.innerText);
+    await got.first().click({ force: true });
+    await changed(page, before);
+    return;
+  }
+  const before = await page.evaluate(() => document.body.innerText);
+  await page.evaluate(() => {
+    const b = [...document.querySelectorAll('[role="button"]')].find((n) => {
+      const r = n.getBoundingClientRect();
+      return r.width > 100 && r.height > 40 && r.y > 80;
+    });
+    if (b) {
+      b.scrollIntoView({ block: 'center' });
+      b.click();
+    }
+  });
+  await changed(page, before);
+  for (const label of [/^(Continue|Check)$/i, /^Continue$/i]) {
+    const c = page.getByText(label);
+    if (await c.count()) {
+      const was = await page.evaluate(() => document.body.innerText);
+      await c
+        .last()
+        .click({ force: true })
+        .catch(() => {});
+      await changed(page, was);
+    }
+  }
+}
+
+/**
+ * A lesson's own address on the page's server, under the base path the build
+ * was made for: a deploy-shaped build lives at /Urdu/, and a link without it
+ * lands on Home.
+ */
+function lessonUrl(page, id) {
+  return page.evaluate((lesson) => {
+    const base = document.querySelector('meta[name="qaaf:base"]')?.getAttribute('content') || '';
+    return `${location.origin}${base}/lesson/${lesson}`;
+  }, id);
+}
+
+/** Until the screen's text differs from `before`, or three seconds pass: some taps change nothing. */
+function changed(page, before) {
+  return page
+    .waitForFunction((b) => document.body.innerText !== b, before, { timeout: 3000, polling: 100 })
+    .catch(() => {});
+}
+
 (async () => {
   const server = await serveDist(DIST, PORT);
   const browser = await chromium.launch({ executablePath: findChromium() || undefined });
@@ -351,6 +476,8 @@ const checked = [];
       await leave.click();
     await page.waitForTimeout(1400);
   }
+
+  await checkExerciseOpensAtTop(browser, url);
 
   /**
    * Screens outside the lesson flow don't get walked above, but a bad

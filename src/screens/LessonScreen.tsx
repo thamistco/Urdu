@@ -318,6 +318,23 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
    */
   const [attempt, setAttempt] = useState(0);
   const bodyRef = useRef<ScrollView>(null);
+  // Each exercise opens at its top. The body is one scroll view for the whole
+  // lesson and every answer scrolls it to the end, so the next exercise
+  // opened where the last one finished: a letter card at 320x568 opened 261px
+  // down, with the letter it teaches, its name and its sound above the screen
+  // (design review, 2026-10-16). The answer's own scroll to the end waits
+  // 120ms for the banner and then glides, so a quick Continue let it land on
+  // the next exercise instead: its timer is cancelled here, and the top is
+  // set again a frame later, after a glide already under way has had its
+  // last say (measured: 5 to 34px left over without it, at a fast tap).
+  const toEndRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => {
+    clearTimeout(toEndRef.current);
+    const top = () => bodyRef.current?.scrollTo({ y: 0, animated: false });
+    top();
+    const frame = requestAnimationFrame(top);
+    return () => cancelAnimationFrame(frame);
+  }, [idx, attempt]);
 
   /**
    * Which items this lesson visit has sighted, and each one's most recent
@@ -403,7 +420,8 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
       // footer landing directly on top of the bottom two cards' Urdu text on
       // a *correct* answer at a stock 375x812 viewport — the same off-screen
       // problem, just from a tall question instead of a tall explanation.
-      setTimeout(() => bodyRef.current?.scrollToEnd({ animated: true }), 120);
+      clearTimeout(toEndRef.current);
+      toEndRef.current = setTimeout(() => bodyRef.current?.scrollToEnd({ animated: true }), 120);
       // Record this sighting's grade for each item touched — overwriting
       // whatever an earlier sighting this lesson visit recorded, rather than
       // applying it to SRS immediately. See the doc comment on
