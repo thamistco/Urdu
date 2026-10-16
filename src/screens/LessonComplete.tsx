@@ -19,7 +19,7 @@ import { HEART_REGEN_MINUTES, REFILL_COST } from '../lib/gamification';
 function RewardTile({ icon, value, label, color }: { icon: IconName; value: string; label: string; color: string }) {
   return (
     <View
-      className="flex-1 items-center rounded-2xl border p-4"
+      className="min-w-[5rem] flex-1 items-center rounded-2xl border p-4"
       style={{ borderColor: withAlpha(color, 0.3), backgroundColor: withAlpha(color, 0.1) }}
     >
       <Illustration name={icon} tile={false} size={26} />
@@ -94,7 +94,11 @@ export function LessonComplete({
             </Reveal>
 
             <Reveal delay={120} style={{ width: '100%' }}>
-              <View className="mb-4 mt-2 flex-row gap-3">
+              {/* Wraps at large text: in one row at 200% "ACCURACY" and "+60"
+                  ran out of 87px tiles (design review, 2026-10-16). Each tile
+                  is at least 5rem, so it wraps only when text has grown; three
+                  fit on a 320px phone at normal size. */}
+              <View className="mb-4 mt-2 flex-row flex-wrap gap-3">
                 <RewardTile icon="bolt" value={`+${result.xpGained}`} label="XP" color={palette.gold} />
                 <RewardTile icon="gem" value={`+${result.gemsGained}`} label="Gems" color={palette.jadeLight} />
                 <RewardTile icon="crescent" value={`${accuracy}%`} label="Accuracy" color={palette.roseLight} />
