@@ -1,12 +1,18 @@
-import type { Lesson } from '../data/units';
-import { taughtInUnit } from './review';
+import { UNITS, type Lesson } from '../data/units';
+import { taughtByLesson } from './review';
 
 /** How many of a unit's own words and letters a review must have asked. */
 export const UNIT_SKIP_MIN_ASKED = 10;
 /** And how many of those it must have had right first time. */
 export const UNIT_SKIP_MIN_SHARE = 0.8;
+/** How many of a lesson's own words or letters must have been asked to mark that lesson known. */
+export const UNIT_SKIP_MIN_PER_LESSON = 3;
 
-export type UnitEvidence = { asked: number; right: number };
+export type Tally = { asked: number; right: number };
+/** The unit as a whole, and each of its lessons on the items that lesson introduces. */
+export type UnitEvidence = Tally & { byLesson: Readonly<Record<string, Tally>> };
+
+const passes = (t: Tally | undefined, min: number) => !!t && t.asked >= min && t.right / t.asked >= UNIT_SKIP_MIN_SHARE;
 
 /**
  * Which of a unit's lessons a passed unit review marks as already known.
@@ -18,10 +24,17 @@ export type UnitEvidence = { asked: number; right: number };
  * 41. The pass then marked a unit "already known" on no evidence, and its
  * words never reached the review queue (second check, 2026-10-13: HOLD).
  *
- * Now only the review's answers on the unit's own items count: at least
- * `UNIT_SKIP_MIN_ASKED` of them asked, and `UNIT_SKIP_MIN_SHARE` right first
- * time. Letter lessons are left alone on the Roman track, which never shows
- * them.
+ * Counting only the unit's own items was not enough either. A learner who had
+ * finished half a unit was asked about that half and nothing else, and a pass
+ * marked the other half known: measured on every unit, 865 own items asked and
+ * none from the unfinished lessons, whose 797 items were then never asked
+ * (learning review, 2026-10-16). A mastery test certifies only what it
+ * sampled, so each lesson now needs its own evidence: at least
+ * `UNIT_SKIP_MIN_PER_LESSON` of the words or letters it introduces asked, and
+ * `UNIT_SKIP_MIN_SHARE` of them right first time, on top of the unit's floor.
+ * A lesson that introduces none (grammar, sentences, readings) is never
+ * marked known by a review. Letter lessons are left alone on the Roman track,
+ * which never shows them.
  */
 export function lessonsToSkip(
   unitLessons: readonly Lesson[],
@@ -30,22 +43,34 @@ export function lessonsToSkip(
   done: (id: string) => boolean,
   romanTrack: boolean
 ): string[] {
-  if (!evidence || evidence.asked < UNIT_SKIP_MIN_ASKED) return [];
-  if (evidence.right / evidence.asked < UNIT_SKIP_MIN_SHARE) return [];
+  if (!evidence || !passes(evidence, UNIT_SKIP_MIN_ASKED)) return [];
   return unitLessons
     .filter((l) => l.id !== reviewId && !done(l.id) && !(romanTrack && l.kind === 'letters'))
+    .filter((l) => passes(evidence.byLesson[l.id], UNIT_SKIP_MIN_PER_LESSON))
     .map((l) => l.id);
 }
 
+const tally = (ids: Iterable<string>, firstTry: ReadonlyMap<string, boolean>): Tally => {
+  const own = new Set(ids);
+  const asked = [...firstTry].filter(([id]) => own.has(id));
+  return { asked: asked.length, right: asked.filter(([, ok]) => ok).length };
+};
+
 /**
  * A unit review's answers on its own unit's words and letters, from each
- * item's right-first-time-on-every-sighting record. Undefined for a review
- * placed in no unit (the Daily Review and Catch-up).
+ * item's right-first-time-on-every-sighting record, as a whole and lesson by
+ * lesson. Undefined for a review placed in no unit (the Daily Review and
+ * Catch-up).
  */
 export function unitEvidenceFrom(lessonId: string, firstTry: ReadonlyMap<string, boolean>): UnitEvidence | undefined {
-  const own = taughtInUnit(lessonId);
-  if (!own) return undefined;
-  const ids = new Set([...own.words, ...own.letters]);
-  const asked = [...firstTry].filter(([id]) => ids.has(id));
-  return { asked: asked.length, right: asked.filter(([, ok]) => ok).length };
+  const unit = UNITS.find((u) => u.lessons.some((l) => l.id === lessonId));
+  if (!unit) return undefined;
+  const byLesson: Record<string, Tally> = {};
+  const all: string[] = [];
+  for (const l of unit.lessons) {
+    const { words, letters } = taughtByLesson(l);
+    byLesson[l.id] = tally([...words, ...letters], firstTry);
+    all.push(...words, ...letters);
+  }
+  return { ...tally(all, firstTry), byLesson };
 }
