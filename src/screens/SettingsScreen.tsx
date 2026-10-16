@@ -330,7 +330,9 @@ export function SettingsScreen() {
         </Reveal>
 
         <Reveal delay={40}>
-          <Eyebrow className="mb-2 text-paper/55">Feedback</Eyebrow>
+          {/* Not "Feedback": a learner looking for a way to tell us something
+              landed on chimes and vibration (learner-voice review, 2026-10-16). */}
+          <Eyebrow className="mb-2 text-paper/55">Sound and touch</Eyebrow>
           <Card className="mb-5">
             <Row
               label="Sound effects"
