@@ -8,11 +8,12 @@ import { Button } from '../components/Button';
 import { Reveal } from '../components/Reveal';
 import { Wordmark } from '../components/Wordmark';
 import { EveningScene, SAFE_TOP, SAFE_TOP_LIMIT, SAFE_BOTTOM } from '../components/EveningScene';
-import { Txt, Bold } from '../components/Text';
+import { Txt, Bold, Eyebrow } from '../components/Text';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { useAuthStore } from '../store/useAuthStore';
 import { storageRefused } from '../store/storage';
+import { urduDayLine } from '../lib/urduDay';
 import type { RootStackParamList } from '../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -89,6 +90,13 @@ export function LoginScreen() {
   const [note, setNote] = useState<string | null>(null);
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  // Not on a short window. At 200% zoom on a small phone the line pushed the
+  // way in half off a screen that cannot scroll, and in windows 520 to 565px
+  // tall (a small phone's browser with its bars showing) it sat on the glow
+  // of the sunset at 4.31:1; from 570 it measures 6.86:1 or more (second
+  // check, 2026-10-16). It is a reason to start today, never something a
+  // learner needs, so it goes rather than the layout bending round it.
+  const urduDay = height >= 580 ? urduDayLine() : null;
 
   const handle = async (provider: 'google' | 'apple') => {
     setNote(null);
@@ -178,6 +186,15 @@ export function LoginScreen() {
                 reader before onboarding asks. The second line is for everyone
                 else, so a complete beginner is welcomed rather than turned
                 away. */}
+              {/* Above the headline, which stays: a reason to start today, for
+                  the week around 9 November only (P-040). goldLight, not gold,
+                  which measured 5.35:1 here, under the scenery's 6:1 floor;
+                  `urduDay` above says why it needs 580px. */}
+              {urduDay ? (
+                <Eyebrow style={{ color: palette.goldLight }} className="mb-1.5 text-center">
+                  {urduDay}
+                </Eyebrow>
+              ) : null}
               <Bold className="mb-1 text-center text-[0.9375rem] text-paper">Speak Urdu? Now read it.</Bold>
               <Txt className="mb-3 text-center text-[0.8125rem] leading-5 text-paper/70">
                 New to Urdu? Start at the first letter. The whole language is here.
