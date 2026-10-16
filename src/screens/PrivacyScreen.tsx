@@ -35,7 +35,7 @@ export function PrivacyScreen() {
       <Screen>
         <TopBar onBack={nav.canGoBack() ? () => nav.goBack() : undefined} title="Privacy Policy" />
         <Heading className="mb-1 text-lg">Your data, plainly</Heading>
-        <Txt className="mb-6 text-[0.75rem] text-paper/55">Last updated 2026-10-08</Txt>
+        <Txt className="mb-6 text-[0.75rem] text-paper/55">Last updated 2026-10-16</Txt>
 
         <Section title="No account is required">
           Qaaf works fully as a guest. Your lesson progress, streak, hearts, gems and settings are stored only on this
@@ -59,16 +59,19 @@ export function PrivacyScreen() {
         </Section>
 
         <Section title="Audio and other assets">
-          The Urdu voice recordings are bundled with the app and played from your device. Loading them does not send any
-          information about you anywhere.
+          The Urdu voice recordings and the fonts are part of Qaaf itself, never fetched from another service. In the
+          phone app they play from your device. On the website they come from the same site as everything else, which
+          GitHub Pages hosts: like any web host, GitHub receives your IP address and browser details with each request
+          and keeps them for security, under GitHub’s own privacy statement. We cannot see those records.
         </Section>
 
         <Section title="Deleting your data">
-          Uninstalling the app removes everything stored on your device, including any Say it back recording, which on a
-          phone sits in the app’s temporary storage until the system clears it. If you are signed in, Delete account in
-          Settings (under Data) deletes your account and the copy of your progress stored with it; if you have signed
-          out, sign in again to find it. Our database provider may keep backups, and records of past sign-ins, after an
-          account is deleted. Resetting your progress from Settings clears it without needing to delete the app.
+          Uninstalling the app, or on the website clearing this site’s data in your browser, removes everything stored
+          on your device, including any Say it back recording, which on a phone sits in the app’s temporary storage
+          until the system clears it. If you are signed in, Delete account in Settings (under Data) deletes your account
+          and the copy of your progress stored with it; if you have signed out, sign in again to find it. Our database
+          provider may keep backups, and records of past sign-ins, after an account is deleted. Resetting your progress
+          from Settings clears it without needing to delete the app.
         </Section>
 
         <Section title="Children">
