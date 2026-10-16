@@ -50,7 +50,10 @@ const shareTitle = (expo.extra && expo.extra.storeName) || name;
 const shareLine = (expo.extra && expo.extra.shareLine) || description;
 
 /**
- * The share picture is the app icon, which has to be reachable at a stable URL.
+ * The share picture is `share-card.jpg`, 1200x630, drawn by
+ * `scripts/make-share-card.js` from the evening scene with the name and the
+ * headline (P-040). Before it existed this was the square app icon, and the
+ * icon is still the fallback. Either has to be reachable at a stable URL.
  *
  * Two things make that awkward. Open Graph needs an absolute URL — a relative
  * path renders as a broken image in every chat client — so the deployed origin
@@ -63,10 +66,13 @@ const shareLine = (expo.extra && expo.extra.shareLine) || description;
  * is only written once that copy is on disk.
  */
 const origin = process.env.SITE_ORIGIN || '';
-const SHARE_NAME = 'share-card.png';
+const CARD = path.join(ROOT, 'assets', 'images', 'share-card.jpg');
+const wide = fs.existsSync(CARD);
+const SHARE_NAME = wide ? 'share-card.jpg' : 'share-card.png';
+const CARD_ALT = 'Qaaf (قاف): Speak Urdu? Now read it.';
 let iconUrl = '';
 if (origin) {
-  const src = path.join(ROOT, 'assets', 'images', 'icon.png');
+  const src = wide ? CARD : path.join(ROOT, 'assets', 'images', 'icon.png');
   if (fs.existsSync(src)) {
     fs.copyFileSync(src, path.join(DIST, SHARE_NAME));
     iconUrl = `${origin}${baseUrl}/${SHARE_NAME}`;
@@ -137,12 +143,19 @@ const tags = [
   shareLine && `<meta property="og:description" content="${esc(shareLine)}" />`,
   origin && `<meta property="og:url" content="${esc(origin + baseUrl)}/" />`,
   iconUrl && `<meta property="og:image" content="${esc(iconUrl)}" />`,
+  iconUrl && wide && `<meta property="og:image:width" content="1200" />`,
+  iconUrl && wide && `<meta property="og:image:height" content="630" />`,
+  iconUrl && wide && `<meta property="og:image:type" content="image/jpeg" />`,
+  // Latin first: a string that opens in Urdu script is laid out right to left
+  // by any client that picks direction from the first letter.
+  iconUrl && wide && `<meta property="og:image:alt" content="${CARD_ALT}" />`,
   // summary_large_image needs a wide picture; a square app icon belongs in the
   // small card, which crops it to a square rather than letterboxing it.
-  `<meta name="twitter:card" content="summary" />`,
+  `<meta name="twitter:card" content="${wide ? 'summary_large_image' : 'summary'}" />`,
   `<meta name="twitter:title" content="${esc(shareTitle)}" />`,
   shareLine && `<meta name="twitter:description" content="${esc(shareLine)}" />`,
   iconUrl && `<meta name="twitter:image" content="${esc(iconUrl)}" />`,
+  iconUrl && wide && `<meta name="twitter:image:alt" content="${CARD_ALT}" />`,
   `<meta name="theme-color" content="${esc((expo.splash && expo.splash.backgroundColor) || '#211712')}" />`,
   // Without this the manifest is a file nobody asks for. It is what stops an
   // installed shortcut being named after whichever route was open at the time.
