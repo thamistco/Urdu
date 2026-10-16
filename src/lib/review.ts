@@ -39,6 +39,11 @@ function taughtByLessons(lessons: readonly Lesson[]): TaughtPool {
   return { letters, words };
 }
 
+/** The words and letters one lesson introduces: none for grammar, sentences or readings. */
+export function taughtByLesson(lesson: Lesson): TaughtPool {
+  return taughtByLessons([lesson]);
+}
+
 /**
  * Words/letters taught by lessons in the same unit as `lessonId` — not the
  * whole course up to that point.
