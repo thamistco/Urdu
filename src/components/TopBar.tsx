@@ -32,7 +32,10 @@ export function TopBar({
         <View style={{ width: 60 }} />
       )}
       {title ? (
-        <Bold className="text-base">{title}</Bold>
+        // The screen's name, so jumping by heading lands here first.
+        <Bold accessibilityRole="header" className="text-base">
+          {title}
+        </Bold>
       ) : label ? (
         <Eyebrow className="text-paper/55">{label}</Eyebrow>
       ) : (

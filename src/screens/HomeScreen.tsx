@@ -628,7 +628,9 @@ export function HomeScreen() {
                     />
                   </View>
                 </View>
-                <Display className="mt-1 text-3xl leading-9">{GREETING[store.goal ?? 'curious']}</Display>
+                <Display accessibilityRole="header" className="mt-1 text-3xl leading-9">
+                  {GREETING[store.goal ?? 'curious']}
+                </Display>
               </View>
               {/*
                * Colour alone never carries this — the flame above tints rose
