@@ -707,7 +707,9 @@ export function OnboardingScreen() {
       <Reveal>
         <View className="items-center">
           <Illustration name="crescent" tile={false} size={64} />
-          <Display className="mb-2 mt-4 text-3xl">You’re all set</Display>
+          <Display accessibilityRole="header" className="mb-2 mt-4 text-3xl">
+            You’re all set
+          </Display>
           <GeoDivider />
           <View
             className="my-4 w-full rounded-2xl border p-5"

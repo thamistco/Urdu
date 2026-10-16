@@ -155,7 +155,9 @@ export function PracticeScreen() {
         <Reveal>
           <SafeAreaView edges={['top']}>
             <Eyebrow style={{ color: palette.gold }}>Practice</Eyebrow>
-            <Display className="mt-1 text-3xl">Keep it warm</Display>
+            <Display accessibilityRole="header" className="mt-1 text-3xl">
+              Keep it warm
+            </Display>
             <Txt className="mt-1 text-sm text-paper/55">This brings back the words you are closest to forgetting.</Txt>
           </SafeAreaView>
         </Reveal>

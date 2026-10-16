@@ -141,7 +141,7 @@ async function main() {
     const page = await browser.newPage({ viewport: { width: 412, height: 900 } });
 
     /** Nothing focusable anywhere may be silent about what it is. */
-    const auditRoles = async (where) => {
+    const auditRoles = async (where, { titled = false } = {}) => {
       const silent = await page.evaluate(rolelessControls);
       if (silent.length) {
         problems.push(
@@ -161,6 +161,15 @@ async function main() {
         ].map((h) => (h.textContent || '').trim().slice(0, 30))
       );
       if (nested.length) problems.push(`${where}: a heading inside a control: ${nested.slice(0, 4).join(' · ')}`);
+      // A screen with a title says so: Home and Settings had none, so jumping
+      // by heading, the fastest way to learn where you are, found nothing on
+      // the two screens used most (Q-066).
+      if (titled) {
+        const headings = await page.evaluate(
+          () => document.querySelectorAll('h1, h2, h3, h4, h5, h6, [role="heading"]').length
+        );
+        if (headings === 0) problems.push(`${where}: no heading at all — its title is announced as plain text.`);
+      }
     };
 
     // The sign-in screen first, before guest mode skips it. It is one control
@@ -198,7 +207,7 @@ async function main() {
 
     await enterAsGuest(page, `http://localhost:${PORT}/Urdu/`, { xp: 640, streak: 3 });
     await page.waitForTimeout(1200);
-    await auditRoles('home');
+    await auditRoles('home', { titled: true });
 
     /**
      * The level card stacks two bars measuring different things. Its only
@@ -418,7 +427,7 @@ async function main() {
         problems.push('Could not open Settings from Profile — this check proves nothing.');
       } else {
         await page.waitForTimeout(1000);
-        await auditRoles('settings');
+        await auditRoles('settings', { titled: true });
         const controls = await page.evaluate(controlsOnScreen);
         const body = await page.evaluate(() => document.body.innerText);
         // The Account card is the part under test, so prove we are looking at

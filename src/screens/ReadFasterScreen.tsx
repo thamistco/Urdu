@@ -148,7 +148,9 @@ export function ReadFasterScreen() {
     return (
       <Shell onBack={back}>
         <Eyebrow style={{ color: palette.gold }}>Practice</Eyebrow>
-        <Display className="mt-1 text-3xl">Read faster</Display>
+        <Display accessibilityRole="header" className="mt-1 text-3xl">
+          Read faster
+        </Display>
         <Txt className="mb-6 mt-2 text-sm leading-6 text-paper/75">
           Knowing the letters is the start. Reading is seeing a word and knowing it without spelling it out. Ten words
           you already know, one at a time: read each one, then tap to check yourself.
