@@ -316,10 +316,13 @@ export function LetterLabScreen() {
           </View>
 
           <View className="mb-8 flex-row items-center justify-between">
+            {/* 44 tall: as bare text they were 20px to tap (QA, 2026-10-16). */}
             <Pressable
               accessibilityRole="button"
               disabled={idx === 0}
               onPress={() => selectLetter(Math.max(0, idx - 1))}
+              className="justify-center pe-3"
+              style={{ minHeight: 44 }}
             >
               <Bold className="text-sm text-paper/60" style={{ opacity: idx === 0 ? 0.3 : 1 }}>
                 ← Previous
@@ -332,6 +335,8 @@ export function LetterLabScreen() {
               accessibilityRole="button"
               disabled={idx === LETTERS.length - 1}
               onPress={() => selectLetter(Math.min(LETTERS.length - 1, idx + 1))}
+              className="justify-center ps-3"
+              style={{ minHeight: 44 }}
             >
               <Bold className="text-sm" style={{ color: palette.gold, opacity: idx === LETTERS.length - 1 ? 0.3 : 1 }}>
                 Next →
