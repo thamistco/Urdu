@@ -34,10 +34,26 @@ function Row({
 }) {
   return (
     <View className="flex-row items-center justify-between py-3">
-      <View className="flex-1 pe-4">
+      {/* The words toggle the switch too, as a <label> does on the web: the
+          switch alone is 40x20 to tap (QA, 2026-10-16). Presentational and out
+          of the tab order, so a screen reader or the keyboard meets one
+          control, the switch, named by its label, and not a second one. */}
+      <Pressable
+        className="flex-1 pe-4"
+        accessibilityRole="none"
+        accessible={false}
+        focusable={false}
+        // react-native-web leaves a Pressable at tabindex 0 whatever
+        // `focusable` says; measured, so it is set outright.
+        tabIndex={-1}
+        onPress={() => {
+          feedback.tap();
+          onChange(!value);
+        }}
+      >
         <Bold className="text-[0.9375rem]">{label}</Bold>
         {hint ? <Txt className="text-xs text-paper/55">{hint}</Txt> : null}
-      </View>
+      </Pressable>
       <Switch
         // The visible label sits in a separate View, so the switch itself had
         // no name and every one on this screen was announced as just
