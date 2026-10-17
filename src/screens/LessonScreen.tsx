@@ -35,9 +35,13 @@ import { LessonComplete } from './LessonComplete';
 import type { RootStackParamList } from '../navigation/types';
 import { confirmAction } from '../lib/confirm';
 import { plainRoman } from '../lib/roman';
+import { useMoreBelow, MoreBelowCue } from '../components/MoreBelow';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Rt = RouteProp<RootStackParamList, 'Lesson'>;
+
+/** Space under each exercise, which "More below" does not count as more. */
+const BODY_PAD_BOTTOM = 32;
 
 /** Teaching cards are informational — no hearts, no pass/fail styling. */
 function isTeaching(ex: Exercise | undefined): boolean {
@@ -348,6 +352,8 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   const { record: recordItemGrade, flushNow: flushPendingGrades } = useSessionGradeFlush(exercises, applyGrade);
 
   const current = exercises[idx];
+  /** "More below" on a teaching card that runs past the screen (P-076). */
+  const more = useMoreBelow(isTeaching(current) && graded == null, `${idx}-${attempt}`, BODY_PAD_BOTTOM);
   /** The clip the feedback banner offers to replay, when there is one. */
   const replay = current ? audioOf(current) : null;
   /**
@@ -727,19 +733,29 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
             `grow justify-center` is the same pair the onboarding screen
             already uses for the same reason; a body taller than the screen
             fills the container and scrolls as before. */}
-        <Screen scroll padded={false} lattice={false} scrollRef={bodyRef} contentClassName="grow justify-center">
-          <View className="px-5 pb-8 pt-4">
-            <ExerciseView
-              key={`${idx}-${attempt}`}
-              exercise={retried}
-              track={track}
-              showRoman={showRoman}
-              locked={graded != null}
-              onGraded={onGraded}
-              onExpand={() => bodyRef.current?.scrollToEnd({ animated: true })}
-            />
-          </View>
-        </Screen>
+        <View className="flex-1">
+          <Screen
+            scroll
+            padded={false}
+            lattice={false}
+            scrollRef={bodyRef}
+            contentClassName="grow justify-center"
+            scrollProps={more.scrollProps}
+          >
+            <View className="px-5 pt-4" style={{ paddingBottom: BODY_PAD_BOTTOM }}>
+              <ExerciseView
+                key={`${idx}-${attempt}`}
+                exercise={retried}
+                track={track}
+                showRoman={showRoman}
+                locked={graded != null}
+                onGraded={onGraded}
+                onExpand={() => bodyRef.current?.scrollToEnd({ animated: true })}
+              />
+            </View>
+          </Screen>
+          {more.show ? <MoreBelowCue scrollRef={bodyRef} view={more.view} y={more.y} /> : null}
+        </View>
 
         {/* feedback footer */}
         {graded != null && (
