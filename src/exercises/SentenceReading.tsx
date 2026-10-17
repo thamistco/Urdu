@@ -125,9 +125,12 @@ export function SentenceBuildExercise({
                 !frozen && !locked ? ' Tap to take it back.' : ''
               }`}
             >
+              {/* At least 40 tall, so with its margin the tap is 48: a Roman
+                  word placed here was 41px to tap, where a script one was 71
+                  (QA, 2026-10-16). */}
               <View
-                className="mx-1 my-1 rounded-xl px-3 py-1.5"
-                style={{ backgroundColor: withAlpha(palette.gold, 0.18) }}
+                className="mx-1 my-1 justify-center rounded-xl px-3 py-1.5"
+                style={{ backgroundColor: withAlpha(palette.gold, 0.18), minHeight: 40 }}
               >
                 {roman ? (
                   <Bold style={{ fontSize: 18 }}>{label(i)}</Bold>
