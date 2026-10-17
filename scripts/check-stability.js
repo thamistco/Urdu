@@ -239,6 +239,124 @@ function changed(page, before) {
     .catch(() => {});
 }
 
+/** A fresh learner's first lesson, opened on its first letter card at `w`x`h`. */
+async function firstLetterCard(browser, url, w, h) {
+  const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
+  await page.goto(url);
+  await openTheDoor(page);
+  await page.evaluate(() => {
+    const raw = JSON.parse(localStorage.getItem('qaaf-progress') || '{"state":{},"version":0}');
+    raw.state = { ...raw.state, onboarded: true, goal: 'family', level: 0, hearts: 99, completedLessons: {} };
+    localStorage.setItem('qaaf-progress', JSON.stringify(raw));
+  });
+  await page.goto(await lessonUrl(page, 'l-1'));
+  await page.waitForFunction(() => /A new letter/i.test(document.body.innerText), null, { timeout: 20000 });
+  return page;
+}
+
+const CUE = 'More below, show the rest of the card';
+
+/** Whether the cue comes up within three seconds. */
+function cueShown(page) {
+  return page
+    .getByLabel(CUE)
+    .waitFor({ timeout: 3000 })
+    .then(
+      () => true,
+      () => false
+    );
+}
+
+/** Tap the cue: it must go, with the end of the card in view. */
+async function cueTakesYouDown(page, where) {
+  await page.getByLabel(CUE).click();
+  const gone = await page
+    .getByLabel(CUE)
+    .waitFor({ state: 'detached', timeout: 3000 })
+    .then(
+      () => true,
+      () => false
+    );
+  const left = await page.evaluate(() => {
+    const b = [...document.querySelectorAll('*')].find(
+      (n) => n.scrollHeight > n.clientHeight + 4 && /auto|scroll/.test(getComputedStyle(n).overflowY)
+    );
+    return b ? b.scrollHeight - b.clientHeight - b.scrollTop : 0;
+  });
+  if (!gone || left > 24) {
+    problems.push(
+      `${where}, "More below" ${gone ? '' : 'stayed after it was tapped and '}left ${Math.round(left)}px unseen.`
+    );
+  }
+}
+
+/**
+ * From l-1's first card to its third: "Got it", then alif traced as the one
+ * stroke it is, Check and Continue. Whether the trace is accepted does not
+ * matter; reaching the next card does.
+ */
+async function toThirdCard(page) {
+  const got = page.getByText(/^Got it$/).first();
+  await got.evaluate((el) => el.scrollIntoView({ block: 'end' }));
+  await got.click({ force: true });
+  const pad = page.locator('[aria-label^="Drawing area"]').first();
+  await pad.waitFor({ timeout: 5000 });
+  const b = await pad.boundingBox();
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height * 0.2);
+  await page.mouse.down();
+  for (let k = 1; k <= 12; k++) await page.mouse.move(b.x + b.width / 2, b.y + b.height * (0.2 + (0.6 * k) / 12));
+  await page.mouse.up();
+  for (const label of [/^Check$/i, /^Continue$/i, /^Continue$/i]) {
+    const c = page.getByText(label);
+    if (await c.count())
+      await c
+        .last()
+        .click({ force: true })
+        .catch(() => {});
+    if (await page.getByText(/^3 of \d+$/).count()) break;
+  }
+  return page
+    .getByText(/^3 of \d+$/)
+    .waitFor({ timeout: 5000 })
+    .then(
+      () => true,
+      () => false
+    );
+}
+
+/**
+ * "More below" on a teaching card that runs past the screen (P-076). At
+ * 320x568 l-1's first letter card runs 225px past the fold: the cue must be
+ * there when it opens, take the learner to the end, and then stay gone. Its
+ * third card runs past too, and is checked as well: the first version
+ * measured each card against the exercise before it and never showed the
+ * cue after a lesson's first, and a check that opened only the first card
+ * passed it (second check, 2026-10-16). At 412x900 the card fits and there
+ * must be no cue at all.
+ */
+async function checkMoreBelow(browser, url) {
+  const tall = await firstLetterCard(browser, url, 412, 900);
+  if (await cueShown(tall)) problems.push('At 412x900 the first letter card fits, yet shows "More below".');
+  await tall.close();
+
+  const page = await firstLetterCard(browser, url, 320, 568);
+  if (!(await cueShown(page))) {
+    problems.push('At 320x568 the first letter card runs past the screen with no "More below".');
+  } else {
+    await cueTakesYouDown(page, 'At 320x568 on the first letter card');
+  }
+  if (!(await toThirdCard(page))) {
+    problems.push(
+      "Could not reach l-1's third card at 320x568, so the cue after a lesson's first card was not checked."
+    );
+  } else if (!(await cueShown(page))) {
+    problems.push('At 320x568 the third letter card of l-1 runs past the screen with no "More below".');
+  } else {
+    await cueTakesYouDown(page, 'At 320x568 on the third letter card');
+  }
+  await page.close();
+}
+
 (async () => {
   const server = await serveDist(DIST, PORT);
   const browser = await chromium.launch({ executablePath: findChromium() || undefined });
@@ -478,6 +596,8 @@ function changed(page, before) {
   }
 
   await checkExerciseOpensAtTop(browser, url);
+  await checkMoreBelow(browser, url);
+  await checkMoreBelow(browser, url);
 
   /**
    * Screens outside the lesson flow don't get walked above, but a bad

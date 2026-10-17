@@ -1,5 +1,5 @@
 import { ReactNode, Ref } from 'react';
-import { View, ScrollView, StatusBar } from 'react-native';
+import { View, ScrollView, StatusBar, type ScrollViewProps } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DuskScene, INTERIOR_DIM } from './EveningScene';
 
@@ -31,6 +31,7 @@ export function Screen({
   contentClassName = '',
   scrollRef,
   fill = false,
+  scrollProps,
 }: {
   children: ReactNode;
   scroll?: boolean;
@@ -51,6 +52,8 @@ export function Screen({
    *  out sat below the window with nothing to scroll (design review,
    *  2026-10-13). */
   fill?: boolean;
+  /** Passed to the scroll view, for a caller that needs to know where it is: see `MoreBelow`. */
+  scrollProps?: Pick<ScrollViewProps, 'onScroll' | 'onContentSizeChange' | 'onLayout' | 'scrollEventThrottle'>;
 }) {
   const pad = padded ? 'px-5 pb-10 pt-2' : '';
   const column = { width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' } as const;
@@ -73,6 +76,7 @@ export function Screen({
             contentContainerStyle={fill ? { flexGrow: 1 } : undefined}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            {...scrollProps}
           >
             <View style={fill ? [column, { flexGrow: 1 }] : column}>{children}</View>
           </ScrollView>
