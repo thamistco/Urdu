@@ -64,7 +64,7 @@ export const OBJECT_PACKS: TopicPack[] = [
       ['w-rassi2', 'ڈوری', 'ḍori', 'cord / string', '🪢'],
       ['w-taar', 'تار', 'taar', 'wire', '🔌'],
       ['w-gond', 'گوند', 'goñd', 'glue', '🩹'],
-      ['w-paint', 'رنگ روغن', 'rang-rogan', 'paint', '🎨'],
+      ['w-paint', 'رنگ روغن', 'rang-roghan', 'paint', '🎨'],
       ['w-brush2', 'کوچی', 'koochi', 'paintbrush', '🖌️'],
       ['w-mistri', 'مستری', 'mistri', 'mason / mechanic', '👷'],
       ['w-marammat', 'مرمت', 'marammat', 'repair', '🔧'],

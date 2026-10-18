@@ -1091,7 +1091,6 @@ const CORE_WORDS: Word[] = [
   { id: 'w-maghrib2', urdu: 'مغرب', roman: 'maghrib', meaning: 'west', emoji: '🌇', topic: 'directions' },
   { id: 'w-shumaal2', urdu: 'شمال', roman: 'shumaal', meaning: 'north', emoji: '⬆️', topic: 'directions' },
   { id: 'w-junoob2', urdu: 'جنوب', roman: 'junoob', meaning: 'south', emoji: '⬇️', topic: 'directions' },
-  { id: 'w-ufuq2', urdu: 'اُفق', roman: 'ufuq', meaning: 'horizon', emoji: '🌄', topic: 'directions' },
   { id: 'w-paidal', urdu: 'پیدل', roman: 'paidal', meaning: 'on foot', emoji: '🚶', topic: 'directions' },
   { id: 'w-peeche', urdu: 'پیچھے', roman: 'peechhe', meaning: 'behind', emoji: '⬅️', topic: 'directions' },
 
