@@ -47,9 +47,14 @@ export function useMoreBelow(active: boolean, key: string, padding = 0) {
   // over a "Got it" already mostly in view at 360x740 (second check).
   const left = measured ? leftBelow(content.h, view, y) - padding : 0;
 
+  // Gone for good only once the learner has scrolled to the end. Latched on
+  // any reading under the slack, a screen measured before its content had
+  // settled was marked done while still short, and never cued once it grew:
+  // at 320 wide the goal screen hid its whole Continue with no cue (second
+  // check, 2026-10-18).
   useEffect(() => {
-    if (active && measured && left < MORE_BELOW_SLACK) setDoneFor(key);
-  }, [active, measured, left, key]);
+    if (active && measured && y > 0 && left < MORE_BELOW_SLACK) setDoneFor(key);
+  }, [active, measured, y, left, key]);
 
   return {
     show: active && measured && doneFor !== key && left >= MORE_BELOW_SLACK,
@@ -74,10 +79,13 @@ export function MoreBelowCue({
   scrollRef,
   view,
   y,
+  of = 'card',
 }: {
   scrollRef: RefObject<ScrollView | null>;
   view: number;
   y: number;
+  /** What the rest belongs to, for the spoken name: a lesson's card, or a screen. */
+  of?: 'card' | 'screen';
 }) {
   const reduced = useSettingsStore((s) => s.reducedMotion);
   return (
@@ -104,7 +112,7 @@ export function MoreBelowCue({
         <Pressable
           accessibilityRole="button"
           // Starts with the words on it, so "tap More below" works by voice.
-          accessibilityLabel="More below, show the rest of the card"
+          accessibilityLabel={`More below, show the rest of the ${of}`}
           onPress={() => scrollRef.current?.scrollTo({ y: y + view * 0.8, animated: !reduced })}
           className="flex-row items-center gap-1.5 rounded-full px-4"
           style={{
