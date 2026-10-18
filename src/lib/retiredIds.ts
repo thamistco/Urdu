@@ -14,6 +14,8 @@ export const RETIRED_WORD_IDS: Readonly<Record<string, string>> = {
   'w-tabla2': 'w-tabla',
   'w-adda2': 'w-adda',
   'w-suar2': 'w-suar',
+  // افق, "horizon", in directions as well as nature (content review, 2026-10-17).
+  'w-ufuq2': 'w-ufuq',
 };
 
 type Ids = { srs: Record<string, SrsCard>; srsType: Record<string, string>; learnedWords: string[] };

@@ -1248,7 +1248,7 @@ export const SENTENCES: Sentence[] = [
     id: 's-147',
     words: ['کتاب', 'میز', 'کے', 'اوپر', 'ہے'],
     roman: 'kitaab mez ke oopar hai',
-    meaning: 'The book is on the table',
+    meaning: 'The book is on top of the table',
     level: 'elementary',
     concept: 'g-postpositions',
   },
