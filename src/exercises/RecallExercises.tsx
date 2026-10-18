@@ -145,9 +145,12 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
         />
       </View>
       <Txt className="mb-5 text-[0.6875rem] text-paper/60">
+        {/* Not an example word: "kitab and kitaab both count" sat under every
+            typing question, ghar and dil included, and read as a hint about
+            the word being asked (QA, 2026-10-18). */}
         {track === 'roman'
-          ? 'Spelling is forgiving: kitab and kitaab both count.'
-          : 'Spelling is forgiving: kitab, kitaab and کتاب all count.'}
+          ? 'Spelling is forgiving: any usual Roman spelling of the word counts.'
+          : 'Spelling is forgiving: any usual Roman spelling counts, or type it in Urdu.'}
       </Txt>
 
       {graded == null && (
