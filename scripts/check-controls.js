@@ -125,6 +125,115 @@ async function tapByText(page, re) {
   return true;
 }
 
+/**
+ * The track screen runs 151px past a 320x568 window, with every scrollbar
+ * hidden (design review, 2026-10-17). It has to say so, and one tap on what
+ * it says has to bring Continue within reach (P-077). Tapped where it is, as
+ * a finger would: Playwright's own click scrolls its target into view first.
+ * Returns what is wrong, or null.
+ */
+async function trackScreenSaysMoreBelow(p, until) {
+  // The last: for a moment the goal screen's cue is still fading out
+  // beside the new one, and two matches would read as none.
+  const cue = p.getByRole('button', { name: /^More below, show the rest of the screen$/ }).last();
+  const shown = await cue.waitFor({ timeout: 3000 }).then(
+    () => true,
+    () => false
+  );
+  if (!shown) return 'At 320x568 the track screen runs past the window with no "More below" (P-077).';
+  const b = await cue.boundingBox();
+  await p.mouse.click(b.x + b.width / 2, b.y + b.height / 2);
+  const reached = await until(
+    () => {
+      const n = [...document.querySelectorAll('[role="button"]')]
+        .filter((x) => /^continue$/i.test((x.textContent || '').trim()))
+        .pop();
+      return !!n && n.getBoundingClientRect().bottom <= innerHeight;
+    },
+    null,
+    3000
+  );
+  return reached ? null : 'At 320x568, "More below" on the track screen did not bring Continue within reach.';
+}
+
+/**
+ * Onboarding's two cued screens, driven as a person does: the wheel to
+ * scroll, a tap where Continue is. The walk above taps through Playwright,
+ * which scrolls targets into view itself, and so missed two faults (second
+ * check, 2026-10-18): one scroll view shared by goal and track carried the
+ * goal screen's scroll onto the track screen (in landscape the cue then sat
+ * over a Continue in full view), and at 320 wide the goal cue latched off
+ * before the screen had settled. Returns what is wrong.
+ */
+async function onboardingScrollsLikeAPerson(browser, url) {
+  const misses = [];
+  const cue = /^More below, show the rest of the screen$/;
+  const continueBox = (p) =>
+    p.evaluate(() => {
+      const n = [...document.querySelectorAll('[role="button"]')]
+        .filter((x) => /^continue$/i.test((x.textContent || '').trim()))
+        .pop();
+      const r = n && n.getBoundingClientRect();
+      return r ? { top: r.top, bottom: r.bottom, x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+    });
+  const toGoal = async (p) => {
+    await p.goto(url);
+    await openTheDoor(p);
+    await p.getByText(/^Let’s start$/).click();
+    await p.getByText(/^Why are you learning Urdu\?$/).waitFor({ timeout: 8000 });
+    await p.getByRole('radio').first().click();
+  };
+  // At 320x540 the goal screen hides its whole Continue: it has to say so.
+  const narrow = await browser.newPage({ viewport: { width: 320, height: 540 } });
+  await toGoal(narrow);
+  const said = await narrow
+    .getByRole('button', { name: cue })
+    .last()
+    .waitFor({ timeout: 3000 })
+    .then(
+      () => true,
+      () => false
+    );
+  const nb = await continueBox(narrow);
+  if (!said && nb && nb.top >= 540) misses.push('At 320x540 the goal screen hides Continue with no "More below".');
+  await narrow.close();
+  // Landscape: scroll the goal screen to its end, tap Continue where it is,
+  // and the track screen must open at its top.
+  const wide = await browser.newPage({ viewport: { width: 844, height: 390 } });
+  await toGoal(wide);
+  await wide.mouse.move(422, 200);
+  let b = await continueBox(wide);
+  for (let k = 0; k < 20 && b && b.bottom > 390; k++) {
+    await wide.mouse.wheel(0, 200);
+    await wide.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+    b = await continueBox(wide);
+  }
+  if (b) await wide.mouse.click(b.x, b.y);
+  await wide.getByText(/^How do you want to learn\?$/).waitFor({ timeout: 8000 });
+  const top = await wide.evaluate(() => {
+    const h = [...document.querySelectorAll('[role="heading"], h1, h2')].find((n) =>
+      /How do you want to learn/.test(n.textContent || '')
+    );
+    return h ? h.getBoundingClientRect().top : null;
+  });
+  if (top == null || top < 0) {
+    misses.push(`In landscape the track screen opened scrolled, its heading at ${Math.round(top)}px, not at its top.`);
+  }
+  // A cue that comes a few frames late, once the scroll view has measured,
+  // still counts (second check, 2026-10-18).
+  await wide
+    .getByRole('button', { name: cue })
+    .last()
+    .waitFor({ timeout: 1500 })
+    .catch(() => {});
+  const tb = await continueBox(wide);
+  if (tb && tb.bottom <= 390 && (await wide.getByRole('button', { name: cue }).count())) {
+    misses.push('In landscape "More below" shows over a Continue already in full view.');
+  }
+  await wide.close();
+  return misses;
+}
+
 async function main() {
   if (AUTH_CONFIGURED) {
     console.log('check:controls — Supabase keys are configured, so Settings offering sign-in is correct. Skipping.');
@@ -684,6 +793,8 @@ async function main() {
         // on 13 and 14 October, once even after waiting for the text to
         // settle, and passed alone every time.
         await step(/^Continue$/, 'goal continue', () => shows('how do you want to learn'));
+        const unsaid = await trackScreenSaysMoreBelow(p, until);
+        if (unsaid) problems.push(unsaid);
         await step(/^Continue$/, 'track', () =>
           until(() => /whose voice|already speak or understand/i.test(document.body.innerText))
         );
@@ -744,6 +855,8 @@ async function main() {
         await p.close();
       }
     }
+    for (const miss of await onboardingScrollsLikeAPerson(browser, `http://localhost:${PORT}/Urdu/`))
+      problems.push(miss);
 
     /**
      * A word whose sound failed to load plays once the network is back.

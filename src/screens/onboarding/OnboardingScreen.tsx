@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { useMemo, useRef, useState } from 'react';
+import { View, Pressable, type ScrollView } from 'react-native';
+import { useMoreBelow, MoreBelowCue } from '../../components/MoreBelow';
 import { Screen } from '../../components/Screen';
 import { Button } from '../../components/Button';
 import { Reveal } from '../../components/Reveal';
@@ -149,6 +150,29 @@ export function OnboardingScreen() {
   const [goal, setGoal] = useState<Goal | null>(null);
   const [track, setTrack] = useState<LearnTrack>('both');
   const [voice, setVoice] = useState<VoiceGender>('f');
+  /**
+   * "More below" on the two choices that run past a small phone: at 320x568
+   * the track screen's Continue sat 151px under the fold, and the goal
+   * screen's 31px, with every scrollbar hidden and nothing to say the screen
+   * scrolls (design review, 2026-10-17, P-077). The cue from teaching cards
+   * (P-076), not a pinned button: a footer would take 13% of a 568px screen
+   * and an open track card's text would scroll under it.
+   */
+  const scrollRef = useRef<ScrollView>(null);
+  // 40: the screen's own bottom padding (pb-10), not more of it.
+  const more = useMoreBelow(step === 'goal' || step === 'track', step, 40);
+  const cued = (body: React.ReactNode) => (
+    <View className="flex-1 bg-ink">
+      {/* Keyed by step: one scroll view shared by both screens carried the
+          goal screen's scroll onto the track screen, which then opened with
+          its heading off the top and the cue over a Continue already in view
+          (second check, 2026-10-18). */}
+      <Screen key={step} scrollRef={scrollRef} scrollProps={more.scrollProps}>
+        {body}
+      </Screen>
+      {more.show ? <MoreBelowCue scrollRef={scrollRef} view={more.view} y={more.y} of="screen" /> : null}
+    </View>
+  );
 
   /**
    * The placement questions with their options shuffled.
@@ -325,66 +349,62 @@ export function OnboardingScreen() {
 
   // ---- goal ----
   if (step === 'goal') {
-    return (
-      <Screen>
-        <Reveal>
-          <Dots of="goal" />
-          <Heading className="mb-1 text-2xl">Why are you learning Urdu?</Heading>
-          <Txt className="mb-6 text-sm text-paper/55">This shapes which words we teach first.</Txt>
-          <View className="gap-3" accessibilityRole="radiogroup" aria-label="Why are you learning Urdu?">
-            {GOALS.map((g) => {
-              const sel = goal === g.key;
-              return (
-                <Pressable
-                  accessibilityRole="radio"
-                  aria-checked={sel}
-                  key={g.key}
-                  onPress={() => {
-                    feedback.tap();
-                    setGoal(g.key);
+    return cued(
+      <Reveal>
+        <Dots of="goal" />
+        <Heading className="mb-1 text-2xl">Why are you learning Urdu?</Heading>
+        <Txt className="mb-6 text-sm text-paper/55">This shapes which words we teach first.</Txt>
+        <View className="gap-3" accessibilityRole="radiogroup" aria-label="Why are you learning Urdu?">
+          {GOALS.map((g) => {
+            const sel = goal === g.key;
+            return (
+              <Pressable
+                accessibilityRole="radio"
+                aria-checked={sel}
+                key={g.key}
+                onPress={() => {
+                  feedback.tap();
+                  setGoal(g.key);
+                }}
+              >
+                <View
+                  className="flex-row items-center gap-4 rounded-2xl border p-4"
+                  style={{
+                    borderColor: sel ? palette.gold : withAlpha(palette.white, 0.1),
+                    backgroundColor: sel ? withAlpha(palette.gold, 0.1) : palette.ink700,
+                    borderWidth: 2,
                   }}
                 >
-                  <View
-                    className="flex-row items-center gap-4 rounded-2xl border p-4"
-                    style={{
-                      borderColor: sel ? palette.gold : withAlpha(palette.white, 0.1),
-                      backgroundColor: sel ? withAlpha(palette.gold, 0.1) : palette.ink700,
-                      borderWidth: 2,
-                    }}
-                  >
-                    <GoalArt goalKey={g.key} size={46} />
-                    <View className="flex-1">
-                      <Bold className="text-[0.9375rem]">{g.label}</Bold>
-                      <Txt className="text-xs text-paper/60">{g.desc}</Txt>
-                    </View>
+                  <GoalArt goalKey={g.key} size={46} />
+                  <View className="flex-1">
+                    <Bold className="text-[0.9375rem]">{g.label}</Bold>
+                    <Txt className="text-xs text-paper/60">{g.desc}</Txt>
                   </View>
-                </Pressable>
-              );
-            })}
-          </View>
-          <Button className="mt-6" disabled={!goal} onPress={() => setStep('track')}>
-            Continue
-          </Button>
-        </Reveal>
-      </Screen>
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Button className="mt-6" disabled={!goal} onPress={() => setStep('track')}>
+          Continue
+        </Button>
+      </Reveal>
     );
   }
 
   // ---- track ----
   if (step === 'track') {
-    return (
-      <Screen>
-        <Reveal>
-          <Dots of="track" />
-          {/* No subtitle: TrackChooser's own opening line says the same thing
+    return cued(
+      <Reveal>
+        <Dots of="track" />
+        {/* No subtitle: TrackChooser's own opening line says the same thing
               concretely, with a real lesson count, two lines further down. */}
-          <Heading className="mb-4 text-2xl">How do you want to learn?</Heading>
-          <TrackChooser value={track} onChange={setTrack} />
-          <Button className="mt-6" onPress={() => setStep(MALE_VOICE_AVAILABLE ? 'voice' : 'background')}>
-            Continue
-          </Button>
-        </Reveal>
-      </Screen>
+        <Heading className="mb-4 text-2xl">How do you want to learn?</Heading>
+        <TrackChooser value={track} onChange={setTrack} />
+        <Button className="mt-6" onPress={() => setStep(MALE_VOICE_AVAILABLE ? 'voice' : 'background')}>
+          Continue
+        </Button>
+      </Reveal>
     );
   }
 
