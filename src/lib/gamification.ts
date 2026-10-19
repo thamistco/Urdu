@@ -187,8 +187,11 @@ export function leagueMovementLine(current: LeagueId): string {
 }
 
 /**
- * Below this share right, a review was not really attempted: four options
- * tapped at random land a quarter of them.
+ * Below this share right, a review was not really attempted. Tapping at
+ * random lands about a sixth of a word review: two turns in three have four
+ * options and the third is typed or built, where a guess almost never lands
+ * (second check, 2026-10-19). In whole answers the line is 3 right of 10, or
+ * of 9.
  */
 export const REVIEW_ATTEMPTED = 0.25;
 
