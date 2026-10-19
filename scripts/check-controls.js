@@ -183,6 +183,28 @@ async function onboardingScrollsLikeAPerson(browser, url) {
     await p.getByText(/^Why are you learning Urdu\?$/).waitFor({ timeout: 8000 });
     await p.getByRole('radio').first().click();
   };
+  // In landscape the welcome hid "Let’s start" under the fold with no cue
+  // (QA, 2026-10-19): where it runs past, it has to say so.
+  const door = await browser.newPage({ viewport: { width: 844, height: 390 } });
+  await door.goto(url);
+  await openTheDoor(door);
+  const start = door.getByText(/^Let’s start$/);
+  await start.waitFor({ timeout: 8000 });
+  const cued = await door
+    .getByRole('button', { name: cue })
+    .last()
+    .waitFor({ timeout: 3000 })
+    .then(
+      () => true,
+      () => false
+    );
+  const startBox = await start.boundingBox();
+  if (!cued && startBox && startBox.y + startBox.height > 390) {
+    misses.push(
+      `In landscape the welcome hides "Let’s start" (bottom ${Math.round(startBox.y + startBox.height)}px of 390) with no "More below".`
+    );
+  }
+  await door.close();
   // At 320x540 the goal screen hides its whole Continue: it has to say so.
   const narrow = await browser.newPage({ viewport: { width: 320, height: 540 } });
   await toGoal(narrow);
