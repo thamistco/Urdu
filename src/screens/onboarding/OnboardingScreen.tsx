@@ -160,14 +160,19 @@ export function OnboardingScreen() {
    */
   const scrollRef = useRef<ScrollView>(null);
   // 40: the screen's own bottom padding (pb-10), not more of it.
-  const more = useMoreBelow(step === 'goal' || step === 'track', step, 40);
-  const cued = (body: React.ReactNode) => (
+  // The welcome too: in landscape its "Let’s start" sat 22px under a 390px
+  // fold with nothing to say so (QA, 2026-10-19).
+  const more = useMoreBelow(step === 'welcome' || step === 'goal' || step === 'track', step, 40);
+  const cued = (
+    body: React.ReactNode,
+    screen: Pick<React.ComponentProps<typeof Screen>, 'backdrop' | 'contentClassName'> = {}
+  ) => (
     <View className="flex-1 bg-ink">
       {/* Keyed by step: one scroll view shared by both screens carried the
           goal screen's scroll onto the track screen, which then opened with
           its heading off the top and the cue over a Continue already in view
           (second check, 2026-10-18). */}
-      <Screen key={step} scrollRef={scrollRef} scrollProps={more.scrollProps}>
+      <Screen key={step} scrollRef={scrollRef} scrollProps={more.scrollProps} {...screen}>
         {body}
       </Screen>
       {more.show ? <MoreBelowCue scrollRef={scrollRef} view={more.view} y={more.y} of="screen" /> : null}
@@ -274,56 +279,55 @@ export function OnboardingScreen() {
     // line off the bottom of a 568pt phone. `grow` on the scroll content is
     // what keeps it centred on a tall screen while still letting a short one
     // move.
-    return (
-      <Screen backdrop={<DuskScene />} contentClassName="grow justify-center">
-        <Reveal>
-          <View className="items-center">
-            <Wordmark size={62} />
+    return cued(
+      <Reveal>
+        <View className="items-center">
+          <Wordmark size={62} />
 
-            {/* The case, in eleven words. Everything this screen has said
+          {/* The case, in eleven words. Everything this screen has said
                 across three rewrites was true and none of it was read: a
                 paragraph explaining Nastaliq, then six bullets, then a
                 footnote. A person on a welcome screen is deciding whether to
                 bother, and prose asks them to have decided already. */}
-            <Display accessibilityRole="header" className="mt-7 text-center text-[1.6875rem] leading-9">
-              Learn Urdu properly.
-            </Display>
-            <Txt className="mb-8 mt-2 max-w-[300px] text-center text-[0.875rem] leading-5 text-paper/85">
-              Start with the alphabet. Keep going until you can talk to people.
-            </Txt>
+          <Display accessibilityRole="header" className="mt-7 text-center text-[1.6875rem] leading-9">
+            Learn Urdu properly.
+          </Display>
+          <Txt className="mb-8 mt-2 max-w-[300px] text-center text-[0.875rem] leading-5 text-paper/85">
+            Start with the alphabet. Keep going until you can talk to people.
+          </Txt>
 
-            <View className="mb-9 w-full max-w-[330px] flex-row justify-between gap-2">
-              {STATS.map((s) => (
-                /* Grouped and labelled, so a screen reader says "40 letters"
+          <View className="mb-9 w-full max-w-[330px] flex-row justify-between gap-2">
+            {STATS.map((s) => (
+              /* Grouped and labelled, so a screen reader says "40 letters"
                    rather than reading a bare number and its caption as two
                    unrelated things several stops apart. */
-                <View
-                  key={s.label}
-                  accessible
-                  accessibilityLabel={`${s.value} ${s.label}`}
-                  className="flex-1 items-center"
-                >
-                  <Display className="text-[1.625rem] leading-8" style={{ color: palette.gold }}>
-                    {s.value}
-                  </Display>
-                  {/* Not `Eyebrow`: its 2px tracking is right for a section
+              <View
+                key={s.label}
+                accessible
+                accessibilityLabel={`${s.value} ${s.label}`}
+                className="flex-1 items-center"
+              >
+                <Display className="text-[1.625rem] leading-8" style={{ color: palette.gold }}>
+                  {s.value}
+                </Display>
+                {/* Not `Eyebrow`: its 2px tracking is right for a section
                       label and wraps "spoken words" onto two lines in a column
                       this narrow, leaving one stat sitting a line lower than
                       the other two. */}
-                  <Txt
-                    className="mt-1.5 text-center text-[0.6875rem] uppercase text-paper/80"
-                    style={{ letterSpacing: 0.6 }}
-                  >
-                    {s.label}
-                  </Txt>
-                </View>
-              ))}
-            </View>
+                <Txt
+                  className="mt-1.5 text-center text-[0.6875rem] uppercase text-paper/80"
+                  style={{ letterSpacing: 0.6 }}
+                >
+                  {s.label}
+                </Txt>
+              </View>
+            ))}
+          </View>
 
-            <Button className="w-full max-w-[300px]" onPress={() => setStep('goal')}>
-              Let’s start
-            </Button>
-            {/* One line under the button, not two. The other one listed
+          <Button className="w-full max-w-[300px]" onPress={() => setStep('goal')}>
+            Let’s start
+          </Button>
+          {/* One line under the button, not two. The other one listed
                 grammar, readings, conversations and review, which is what the
                 three figures above already stand for: a welcome screen that
                 says a thing twice is asking to be skipped twice.
@@ -337,13 +341,13 @@ export function OnboardingScreen() {
                 Nothing here goes below 80% paper: on the dusk scene's horizon
                 glow, 75% is the WCAG AA floor, and the old value was 40%,
                 under AA even on flat ink at 3.51:1. */}
-            <Txt className="mt-6 max-w-[320px] text-center text-[0.78125rem] leading-5 text-paper/80">
-              New to the Urdu script? Learn the whole course in English letters instead, and switch over whenever you’re
-              ready.
-            </Txt>
-          </View>
-        </Reveal>
-      </Screen>
+          <Txt className="mt-6 max-w-[320px] text-center text-[0.78125rem] leading-5 text-paper/80">
+            New to the Urdu script? Learn the whole course in English letters instead, and switch over whenever you’re
+            ready.
+          </Txt>
+        </View>
+      </Reveal>,
+      { backdrop: <DuskScene />, contentClassName: 'grow justify-center' }
     );
   }
 
