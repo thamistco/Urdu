@@ -186,9 +186,24 @@ export function leagueMovementLine(current: LeagueId): string {
   return `${rise} · ${fall}.`;
 }
 
-/** Gems awarded for a completed lesson, scaled by accuracy. */
+/**
+ * Below this share right, a review was not really attempted: four options
+ * tapped at random land a quarter of them.
+ */
+export const REVIEW_ATTEMPTED = 0.25;
+
+/**
+ * Gems awarded for a completed lesson, scaled by accuracy.
+ *
+ * A review pays more than a lesson, to bring learners back to it, but only
+ * once it was tried: a Daily Review tapped through at 10% paid 8 gems, more
+ * than a lesson done at 73% (QA, 2026-10-18). Under the line it pays a
+ * lesson's rate, not less, so a learner coming back after weeks and getting
+ * most of it wrong is not punished for having forgotten (learning review,
+ * 2026-10-19, P-091).
+ */
 export function gemsForLesson(accuracy: number, isReview: boolean): number {
-  const base = isReview ? 8 : 5;
+  const base = isReview && accuracy >= REVIEW_ATTEMPTED ? 8 : 5;
   const bonus = accuracy >= 1 ? 5 : accuracy >= 0.8 ? 2 : 0;
   return base + bonus;
 }

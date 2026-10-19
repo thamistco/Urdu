@@ -6,6 +6,7 @@ import {
   REFILL_COST,
   demote,
   gemsForLesson,
+  REVIEW_ATTEMPTED,
   gemsShortOfRefill,
   getLeague,
   leagueAbove,
@@ -219,6 +220,18 @@ describe('gems for a lesson', () => {
   it('pays a whole number — gems are counted, not measured', () => {
     for (let accuracy = 0; accuracy <= 1.0001; accuracy += 0.05) {
       expect(Number.isInteger(gemsForLesson(accuracy, false))).toBe(true);
+    }
+  });
+
+  it('pays a review its extra only once it was really tried', () => {
+    expect(gemsForLesson(0.1, true)).toBe(gemsForLesson(0.1, false));
+    expect(gemsForLesson(REVIEW_ATTEMPTED - 0.01, true)).toBe(gemsForLesson(REVIEW_ATTEMPTED - 0.01, false));
+    expect(gemsForLesson(REVIEW_ATTEMPTED, true)).toBeGreaterThan(gemsForLesson(REVIEW_ATTEMPTED, false));
+  });
+
+  it('never pays a review less than a lesson', () => {
+    for (let accuracy = 0; accuracy <= 1.0001; accuracy += 0.05) {
+      expect(gemsForLesson(accuracy, true)).toBeGreaterThanOrEqual(gemsForLesson(accuracy, false));
     }
   });
 
