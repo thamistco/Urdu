@@ -1654,7 +1654,7 @@ function numeralReadExercises(lesson: Lesson, picks: readonly Word[]): Exercise[
   const DIGITS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
   return seededShuffle(candidates, `${lesson.id}:numerals`)
     .slice(0, NUMERALS_PER_LESSON)
-    .map((value): Exercise => {
+    .map((value, i): Exercise => {
       const tens = Math.floor(value / 10);
       const unit = value % 10;
       const otherThan = (d: number, avoid: number, key: string) =>
@@ -1675,6 +1675,10 @@ function numeralReadExercises(lesson: Lesson, picks: readonly Word[]): Exercise[
         // Seated by a real shuffle rather than left answer-first: see
         // `seededShuffle`'s own note on what that cost when it was not.
         options: seededShuffle(options, `${lesson.id}:${value}:seat`),
+        // Said once, then tested: on every question it would turn the
+        // reversed option into a check on reading the hint (second check,
+        // 2026-10-19, P-089).
+        saysDirection: i === 0,
       };
     });
 }
