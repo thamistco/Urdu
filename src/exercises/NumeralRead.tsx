@@ -53,6 +53,12 @@ export function NumeralReadExercise({ exercise, locked, onGraded }: ExerciseProp
       </PromptCard>
       <View className="h-4" />
       <Question>What number is this?</Question>
+      {/* Said before the answer, not only after a reversal: the direction was
+          tested first at question 44 of 47 in Unit 3 and 40 of 43 in Unit 19,
+          with nothing anywhere saying it, and the miss was graded (learning
+          review, 2026-10-17, P-089). The digits still have to be read; this
+          says which way. */}
+      <Txt className="-mt-2 mb-3 text-center text-xs text-paper/70">Urdu digits run left to right, like these.</Txt>
       <View className="flex-row flex-wrap justify-between">
         {options.map((o) => {
           const state = picked === null ? 'idle' : o === value ? 'correct' : o === picked ? 'wrong' : 'muted';
