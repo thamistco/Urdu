@@ -27,11 +27,11 @@ before shipping).
 
 ## What the agents cost
 
-| Check                 | Rounds | Tool calls | Time (first + re-checks) | Tokens reported (last round) |
-| --------------------- | ------ | ---------- | ------------------------ | ---------------------------- |
-| P-002 critic          | 2      | 10 + 3     | 88 s + 21 s              | 82,097                       |
-| P-004 critic          | 2      | 13 + 3     | 93 s + 28 s              | 89,083                       |
-| P-003 critic          | 3      | 17 + 3 + 3 | 128 s + 39 s + 32 s      | 102,088                      |
+| Check        | Rounds | Tool calls | Time (first + re-checks) | Tokens reported (last round) |
+| ------------ | ------ | ---------- | ------------------------ | ---------------------------- |
+| P-002 critic | 2      | 10 + 3     | 88 s + 21 s              | 82,097                       |
+| P-004 critic | 2      | 13 + 3     | 93 s + 28 s              | 89,083                       |
+| P-003 critic | 3      | 17 + 3 + 3 | 128 s + 39 s + 32 s      | 102,088                      |
 
 Every agent finished well inside its budget (30 tool calls, 15 minutes); none
 had to be stopped. The token figures are as the harness reports them for the
