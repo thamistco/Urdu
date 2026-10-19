@@ -115,7 +115,7 @@ function FreezeCard() {
               sat beside a disabled button with nothing to say why (QA,
               2026-10-13, L1). */}
           <Txt className="mt-1 text-xs text-paper/55">
-            {`Gems: you start with 20 and earn ${gemsForLesson(0, false)} to ${gemsForLesson(1, false)} for each lesson you finish, more for reviews. They buy freezes and heart refills.`}
+            {`Gems: you start with 20 and earn ${gemsForLesson(0, false)} to ${gemsForLesson(1, false)} for each lesson you finish, more for a review you work through. They buy freezes and heart refills.`}
           </Txt>
         </View>
         <View className="flex-row gap-1.5" accessible accessibilityLabel={`${freezes} of ${FREEZE_MAX} streak freezes`}>
