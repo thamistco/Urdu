@@ -254,6 +254,8 @@ export type Exercise =
       value: number;
       /** the values on offer, `value` among them */
       options: number[];
+      /** The lesson's first numeral question, which says which way digits run. */
+      saysDirection?: boolean;
     }
   | {
       /** read a short passage, then answer a comprehension question */

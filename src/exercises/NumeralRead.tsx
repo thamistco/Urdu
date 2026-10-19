@@ -56,9 +56,13 @@ export function NumeralReadExercise({ exercise, locked, onGraded }: ExerciseProp
       {/* Said before the answer, not only after a reversal: the direction was
           tested first at question 44 of 47 in Unit 3 and 40 of 43 in Unit 19,
           with nothing anywhere saying it, and the miss was graded (learning
-          review, 2026-10-17, P-089). The digits still have to be read; this
-          says which way. */}
-      <Txt className="-mt-2 mb-3 text-center text-xs text-paper/70">Urdu digits run left to right, like these.</Txt>
+          review, 2026-10-17, P-089). Once a lesson, so the second question
+          still tests it, and short: at 200% text on a 320x568 phone a longer
+          line with a wider gap hid the numbers on the options below it
+          (second check, 2026-10-19). */}
+      {exercise.saysDirection ? (
+        <Txt className="-mt-2 mb-1 text-center text-xs text-paper/70">Digits run left to right, unlike words.</Txt>
+      ) : null}
       <View className="flex-row flex-wrap justify-between">
         {options.map((o) => {
           const state = picked === null ? 'idle' : o === value ? 'correct' : o === picked ? 'wrong' : 'muted';

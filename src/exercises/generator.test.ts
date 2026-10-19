@@ -2201,6 +2201,12 @@ describe('numeralRead', () => {
     }
   });
 
+  it('says which way digits run on the first question of a lesson, and only there', () => {
+    for (const id of ['v-numbers', 'v-numbers-more']) {
+      expect(numeralsIn(id).map((ex) => !!ex.saysDirection)).toEqual([true, false]);
+    }
+  });
+
   it('shows the number it is asking about', () => {
     const digits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
     for (const ex of ALL_LESSONS.flatMap((l) => numeralsIn(l.id))) {
