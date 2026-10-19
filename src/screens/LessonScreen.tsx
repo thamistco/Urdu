@@ -13,7 +13,7 @@ import { Hearts } from '../components/Stats';
 import { Txt, Bold, Heading, Eyebrow } from '../components/Text';
 import { Lexeme } from '../components/Lexeme';
 import { Illustration } from '../components/Illustration';
-import { SpeakerButton } from '../exercises/common';
+import { SpeakerButton, SPOKEN_ONLY } from '../exercises/common';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { announce, invalidateSpeech } from '../lib/speech';
@@ -21,7 +21,8 @@ import { cardsOnTrack, dueQueue, dueBudget, type SrsGrade } from '../lib/srs';
 import { srsGradeFor } from '../lib/sessionGrading';
 import { unitEvidenceFrom } from '../lib/unitSkip';
 import { useSessionGradeFlush } from './useSessionGradeFlush';
-import { answerReveal } from './answerReveal';
+import { answerReveal, spokenVerdict } from './answerReveal';
+import { useBannerFocus } from './useBannerFocus';
 import { REFILL_COST, gemsShortOfRefill, minutesUntilNextHeart } from '../lib/gamification';
 import { useProgressStore, type ItemType } from '../store/useProgressStore';
 import { heartsAreFree } from '../lib/hearts';
@@ -387,6 +388,8 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   }, [current, attempt]);
 
   const reveal = graded === false && current && !isTeaching(current) ? answerReveal(current) : null;
+  const answered = graded != null && !!current && !isTeaching(current);
+  const bannerRef = useBannerFocus(answered, idx);
   const total = exercises.length;
 
   /**
@@ -757,6 +760,13 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
           {more.show ? <MoreBelowCue scrollRef={bodyRef} view={more.view} y={more.y} /> : null}
         </View>
 
+        {/* Heard, not seen; see `spokenVerdict`. Always mounted, so the region
+            is there before its words change: one that appears together with
+            its text is often not read at all. */}
+        <View aria-live="polite" style={SPOKEN_ONLY}>
+          <Txt>{answered ? spokenVerdict(!!graded, reveal, track) : ''}</Txt>
+        </View>
+
         {/* feedback footer */}
         {graded != null && (
           <Animated.View
@@ -772,7 +782,12 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
             }}
           >
             <SafeAreaView edges={['bottom']}>
-              <View className="px-5 py-4" style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }}>
+              <View
+                ref={bannerRef}
+                tabIndex={-1}
+                className="px-5 py-4"
+                style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }}
+              >
                 <View className="mb-3 flex-row items-center gap-2">
                   <Illustration
                     name={isTeaching(current) ? 'lattice' : graded ? 'check' : 'crescent'}
