@@ -681,7 +681,6 @@ async function checkMoreBelow(browser, url) {
 
   await checkExerciseOpensAtTop(browser, url);
   await checkMoreBelow(browser, url);
-  await checkMoreBelow(browser, url);
   await checkVerdictIsHeard(browser, url);
 
   /**
