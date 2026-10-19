@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { answerReveal } from './answerReveal';
+import { answerReveal, spokenVerdict } from './answerReveal';
 import type { Exercise } from '../exercises/types';
 import { WORDS, glossOf } from '../data/words';
 import { LETTERS } from '../data/letters';
@@ -135,5 +135,30 @@ describe('answerReveal', () => {
       const filled = [r!.script, r!.roman, r!.meaning, r!.label].filter((v) => v && v.length);
       expect(filled.length, ex.kind).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('the verdict a screen reader hears', () => {
+  const water = { script: 'پانی', roman: 'paani', meaning: 'Water' };
+
+  it('says a right answer was right', () => {
+    expect(spokenVerdict(true, null, 'both')).toBe('Beautifully done.');
+  });
+
+  it('says the answer after a wrong one, the way the banner shows it', () => {
+    expect(spokenVerdict(false, water, 'both')).toBe('Not quite. The answer: paani, Water.');
+    expect(spokenVerdict(false, water, 'roman')).toBe('Not quite. The answer: paani, Water.');
+  });
+
+  it('keeps the script track free of Roman, as the banner does', () => {
+    expect(spokenVerdict(false, water, 'script')).toBe('Not quite. The answer: پانی, Water.');
+  });
+
+  it('reads a label answer as it is', () => {
+    expect(spokenVerdict(false, { label: 'Initial' }, 'both')).toBe('Not quite. The answer: Initial.');
+  });
+
+  it('still says it was wrong when there is no answer to show', () => {
+    expect(spokenVerdict(false, null, 'both')).toBe('Not quite, but that’s okay.');
   });
 });

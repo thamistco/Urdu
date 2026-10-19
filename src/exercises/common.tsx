@@ -151,7 +151,7 @@ function VerdictMark({ correct }: { correct: boolean }) {
 }
 
 /** On screen for a screen reader, invisible to everyone else. */
-const SPOKEN_ONLY = { position: 'absolute', width: 1, height: 1, overflow: 'hidden' } as const;
+export const SPOKEN_ONLY = { position: 'absolute', width: 1, height: 1, overflow: 'hidden' } as const;
 
 /** The prompt "paper" — the warm surface the script/emoji lives on. */
 /**

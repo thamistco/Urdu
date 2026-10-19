@@ -2,6 +2,7 @@ import type { Exercise } from '../exercises/types';
 import { POSITIONS } from '../data/letters';
 import { glossOf } from '../data/words';
 import { sentenceText } from '../data/sentences';
+import { plainRoman } from '../lib/roman';
 
 /**
  * What to show a learner who just got it wrong.
@@ -71,4 +72,21 @@ export function answerReveal(ex: Exercise): AnswerReveal | null {
       // A second copy in this panel would be telling the learner twice.
       return null;
   }
+}
+
+/**
+ * The banner's verdict, as one sentence for a screen reader.
+ *
+ * The banner said right or wrong only on screen: nothing announced it, and
+ * after a tap the tile that had focus was disabled, so focus fell to the page
+ * and a screen-reader user heard nothing at all (design review, 2026-10-19).
+ * This is what an always-present live region reads instead. It follows the
+ * banner: the Roman on every track but `script`, which promises none.
+ */
+export function spokenVerdict(correct: boolean, reveal: AnswerReveal | null, track: string): string {
+  if (correct) return 'Beautifully done.';
+  if (!reveal) return 'Not quite, but that’s okay.';
+  const said = reveal.label ?? (track !== 'script' && reveal.roman ? plainRoman(reveal.roman) : reveal.script);
+  const answer = [said, reveal.meaning].filter(Boolean).join(', ');
+  return answer ? `Not quite. The answer: ${answer}.` : 'Not quite, but that’s okay.';
 }

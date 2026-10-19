@@ -165,6 +165,90 @@ async function checkExerciseOpensAtTop(browser, url) {
   await short.close();
 }
 
+/**
+ * An answer given by keyboard is heard, and leaves focus somewhere.
+ *
+ * The banner said right or wrong only on screen. Nothing announced it, and
+ * the tile that had focus was disabled by the answer, so focus fell to the
+ * page: a screen-reader user heard nothing and a keyboard user's next Tab
+ * started again from the top (design review, 2026-10-19). This answers
+ * v-first-words' first question with Enter and requires a polite live region
+ * that names the verdict, and focus not on the page itself. Run against the
+ * build before the fix it reports both.
+ */
+async function checkVerdictIsHeard(browser, url) {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+  await page.goto(url);
+  await openTheDoor(page);
+  await page.evaluate(() => {
+    const raw = JSON.parse(localStorage.getItem('qaaf-progress') || '{"state":{},"version":0}');
+    raw.state = { ...raw.state, onboarded: true, goal: 'family', level: 0, hearts: 99, completedLessons: {} };
+    localStorage.setItem('qaaf-progress', JSON.stringify(raw));
+  });
+  await page.goto(await lessonUrl(page, 'v-first-words'));
+  await page.waitForFunction(() => /\d+ of \d+/.test(document.body.innerText), null, { timeout: 20000 });
+  const focused = await page.evaluate(() => {
+    const tile = [...document.querySelectorAll('[role="button"]')].find((n) => {
+      const r = n.getBoundingClientRect();
+      return r.width > 100 && r.height > 40 && r.y > 80;
+    });
+    tile?.focus();
+    return !!tile && document.activeElement === tile;
+  });
+  if (!focused) {
+    problems.push('v-first-words opened with no answer tile to focus, so the spoken verdict was not tested.');
+    return page.close();
+  }
+  await page.keyboard.press('Enter');
+  const heard = await spokenVerdictOf(page);
+  if (!heard) problems.push('An answer given by keyboard was not announced: no polite live region named the verdict.');
+  else if (/^Not quite/.test(heard) && !/The answer: \S/.test(heard)) {
+    problems.push(`A wrong answer was announced without the answer: "${heard}".`);
+  }
+  const kept = await focusKept(page);
+  if (!kept) {
+    problems.push('After an answer given by keyboard, focus fell to the page: the next Tab starts from the top.');
+  }
+  await page.close();
+}
+
+/** The verdict a polite live region says, once one does; null after three seconds. */
+function spokenVerdictOf(page) {
+  return page
+    .waitForFunction(
+      () =>
+        [...document.querySelectorAll('[aria-live="polite"]')]
+          .map((n) => n.textContent.trim())
+          .find((t) => /^(Beautifully done|Not quite)/.test(t)),
+      null,
+      { timeout: 3000 }
+    )
+    .then((h) => h.jsonValue())
+    .catch(() => null);
+}
+
+/**
+ * Whether focus settles on something live: not the page, and not the tile
+ * just disabled, which keeps focus for a moment before the browser drops it.
+ * The app moves focus two frames after the answer, once the banner is on the
+ * page, so this waits for it rather than reading it at once.
+ */
+function focusKept(page) {
+  return page
+    .waitForFunction(
+      () => {
+        const a = document.activeElement;
+        return !!a && a !== document.body && !a.matches('[aria-disabled="true"], :disabled');
+      },
+      null,
+      { timeout: 1500 }
+    )
+    .then(
+      () => true,
+      () => false
+    );
+}
+
 /** The step counter, and the lesson body's scroll position if it overflows. */
 function whereInLesson(page) {
   // Two frames first: the app puts a new exercise at its top on the frame
@@ -598,6 +682,7 @@ async function checkMoreBelow(browser, url) {
   await checkExerciseOpensAtTop(browser, url);
   await checkMoreBelow(browser, url);
   await checkMoreBelow(browser, url);
+  await checkVerdictIsHeard(browser, url);
 
   /**
    * Screens outside the lesson flow don't get walked above, but a bad
