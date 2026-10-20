@@ -785,10 +785,21 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
               <View
                 ref={bannerRef}
                 tabIndex={-1}
-                className="px-5 py-4"
-                style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }}
+                // Spacing in px, not rem: it is the room around the answer,
+                // not text. In rem it doubled at 200% text, and on a 320x568
+                // phone a wrong answer's banner ran 37px past the screen with
+                // Continue cut off, 69px for a short sentence (design review,
+                // 2026-10-20, Q-070). These are the 100% sizes, so nothing
+                // moves at normal text; the words inside still grow.
+                style={{
+                  width: '100%',
+                  maxWidth: CONTENT_MAX_WIDTH,
+                  alignSelf: 'center',
+                  paddingHorizontal: 20,
+                  paddingVertical: 16,
+                }}
               >
-                <View className="mb-3 flex-row items-center gap-2">
+                <View className="flex-row items-center" style={{ marginBottom: 12, gap: 8 }}>
                   <Illustration
                     name={isTeaching(current) ? 'lattice' : graded ? 'check' : 'crescent'}
                     tile={false}
@@ -838,12 +849,15 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
                     off, since a wrong answer is always told how it is said. */}
                 {reveal ? (
                   <View
-                    className="mb-3 rounded-xl px-3.5 py-3"
-                    style={{ backgroundColor: withAlpha(palette.rose, 0.12) }}
+                    className="rounded-xl"
+                    style={{
+                      backgroundColor: withAlpha(palette.rose, 0.12),
+                      marginBottom: 12,
+                      paddingHorizontal: 14,
+                      paddingVertical: 12,
+                    }}
                   >
-                    <Eyebrow style={{ color: palette.roseLight }} className="mb-1.5">
-                      The answer
-                    </Eyebrow>
+                    <Eyebrow style={{ color: palette.roseLight, marginBottom: 6 }}>The answer</Eyebrow>
                     {reveal.label ? (
                       <Bold className="text-[0.9375rem]">{reveal.label}</Bold>
                     ) : (
@@ -865,7 +879,11 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
                             align="left"
                           />
                         </View>
-                        {reveal.meaning ? <Txt className="mt-1.5 text-sm text-paper/85">{reveal.meaning}</Txt> : null}
+                        {reveal.meaning ? (
+                          <Txt className="text-sm text-paper/85" style={{ marginTop: 6 }}>
+                            {reveal.meaning}
+                          </Txt>
+                        ) : null}
                       </>
                     )}
                   </View>
