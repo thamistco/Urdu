@@ -165,6 +165,88 @@ async function checkExerciseOpensAtTop(browser, url) {
   await short.close();
 }
 
+/** v-first-words opened for a learner past onboarding, at `w`x`h`. */
+async function openFirstWords(browser, url, w, h) {
+  const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
+  await page.goto(url);
+  await openTheDoor(page);
+  await page.evaluate(() => {
+    const raw = JSON.parse(localStorage.getItem('qaaf-progress') || '{"state":{},"version":0}');
+    raw.state = { ...raw.state, onboarded: true, goal: 'family', level: 0, hearts: 99, completedLessons: {} };
+    localStorage.setItem('qaaf-progress', JSON.stringify(raw));
+  });
+  await page.goto(await lessonUrl(page, 'v-first-words'));
+  await page.waitForFunction(() => /\d+ of \d+/.test(document.body.innerText), null, { timeout: 20000 });
+  return page;
+}
+
+/**
+ * A wrong answer's banner at 200% text keeps Continue on a small screen.
+ *
+ * Its spacing was in rem and doubled with the text, so at 320x568 the banner
+ * ran 37px past the screen with Continue cut off, 69px for a short sentence
+ * (design review, 2026-10-20, Q-070). This answers v-first-words until one
+ * answer is wrong, at a 32px root font, and requires Continue to end on the
+ * screen once the banner has settled.
+ */
+async function checkWrongBannerFits(browser, url) {
+  const page = await openFirstWords(browser, url, 320, 568);
+  await page.evaluate(() => (document.documentElement.style.fontSize = '32px'));
+  let verdict = null;
+  for (let i = 0; i < 8 && !/^Not quite/.test(verdict || ''); i++) {
+    if (verdict) {
+      const before = await page.evaluate(() => document.body.innerText);
+      await page
+        .getByText(/^Continue$/)
+        .last()
+        .click({ force: true });
+      await changed(page, before);
+    }
+    if (await page.getByText(/^Got it$/).count()) {
+      await stepAnyhow(page);
+      verdict = null;
+      continue;
+    }
+    await page.evaluate(() => {
+      const tiles = [...document.querySelectorAll('[role="button"]')].filter((n) => {
+        const r = n.getBoundingClientRect();
+        return r.width > 100 && r.height > 40 && r.y > 80;
+      });
+      tiles[tiles.length - 1]?.click();
+    });
+    verdict = await spokenVerdictOf(page);
+  }
+  if (!/^Not quite/.test(verdict || '')) {
+    problems.push('No wrong answer was reached in v-first-words, so the banner at 200% text was not measured.');
+    return page.close();
+  }
+  const bottom = await settledBottom(page, /^(Continue|Finish)$/);
+  if (bottom > 568) {
+    problems.push(
+      `At 200% text on 320x568, a wrong answer's Continue ends at ${Math.round(bottom)}px, off the screen.`
+    );
+  }
+  await page.close();
+}
+
+/** The bottom of the last element reading `label`, once it stops moving (the banner slides in). */
+async function settledBottom(page, label) {
+  let last = null;
+  for (let i = 0; i < 20; i++) {
+    const b = await page.evaluate((src) => {
+      const re = new RegExp(src);
+      const n = [...document.querySelectorAll('[role="button"]')]
+        .filter((x) => re.test((x.textContent || '').trim()))
+        .pop();
+      return n ? n.getBoundingClientRect().bottom : null;
+    }, label.source);
+    if (b != null && b === last) return b;
+    last = b;
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+  }
+  return last ?? Infinity;
+}
+
 /**
  * An answer given by keyboard is heard, and leaves focus somewhere.
  *
@@ -177,16 +259,7 @@ async function checkExerciseOpensAtTop(browser, url) {
  * build before the fix it reports both.
  */
 async function checkVerdictIsHeard(browser, url) {
-  const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
-  await page.goto(url);
-  await openTheDoor(page);
-  await page.evaluate(() => {
-    const raw = JSON.parse(localStorage.getItem('qaaf-progress') || '{"state":{},"version":0}');
-    raw.state = { ...raw.state, onboarded: true, goal: 'family', level: 0, hearts: 99, completedLessons: {} };
-    localStorage.setItem('qaaf-progress', JSON.stringify(raw));
-  });
-  await page.goto(await lessonUrl(page, 'v-first-words'));
-  await page.waitForFunction(() => /\d+ of \d+/.test(document.body.innerText), null, { timeout: 20000 });
+  const page = await openFirstWords(browser, url, 390, 844);
   const focused = await page.evaluate(() => {
     const tile = [...document.querySelectorAll('[role="button"]')].find((n) => {
       const r = n.getBoundingClientRect();
@@ -682,6 +755,7 @@ async function checkMoreBelow(browser, url) {
   await checkExerciseOpensAtTop(browser, url);
   await checkMoreBelow(browser, url);
   await checkVerdictIsHeard(browser, url);
+  await checkWrongBannerFits(browser, url);
 
   /**
    * Screens outside the lesson flow don't get walked above, but a bad
