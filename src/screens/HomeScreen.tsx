@@ -820,7 +820,7 @@ export function HomeScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={
                   catchUp
-                    ? `Review first: ${dueNow} things are due. Review ${CATCH_UP_SIZE}, then carry on.`
+                    ? `Review first: start with ${CATCH_UP_SIZE}, then carry on.`
                     : finished
                       ? 'Course complete. Open your daily review.'
                       : `Continue: ${currentLesson.title}. ${currentLesson.subtitle}`
@@ -857,13 +857,23 @@ export function HomeScreen() {
                             : 'Start here'}
                     </Eyebrow>
                     <Bold className="mt-0.5 text-[0.9375rem]">
-                      {catchUp ? `${dueNow} things to bring back` : finished ? 'Keep it warm' : currentLesson.title}
+                      {/* The first batch, not the whole pile: a returner shown
+                          hundreds due is where learners of other apps say they
+                          quit (learner voice, 2026-10-20, P-104). Not "today":
+                          Home offers the next batch as soon as this one is done
+                          while more than 30 are due (second check). The total
+                          is on the Review tab's Daily review card. */}
+                      {catchUp
+                        ? `${CATCH_UP_SIZE} to bring back first`
+                        : finished
+                          ? 'Keep it warm'
+                          : currentLesson.title}
                     </Bold>
                     <Txt className="text-xs text-paper/55">
                       {catchUp
                         ? finished
-                          ? `More than a review can bring back at once. Start with ${CATCH_UP_SIZE}.`
-                          : `More than a lesson can bring back. Review ${CATCH_UP_SIZE}, then carry on with ${currentLesson.title}, or pick it on the path below.`
+                          ? 'Start with these.'
+                          : `Then carry on with ${currentLesson.title}, or pick it on the path below.`
                         : finished
                           ? 'You’ve made it through the whole course. Daily review keeps it fresh.'
                           : `${currentUnit ? currentUnit.title.replace(/ · .*/, '') : currentLesson.subtitle} · ${currentLesson.subtitle}`}
