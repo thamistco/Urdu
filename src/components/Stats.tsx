@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { View, useWindowDimensions } from 'react-native';
+import { Platform, View, useWindowDimensions } from 'react-native';
 import { Bold, Txt } from './Text';
 import { Illustration } from './Illustration';
 import { palette, withAlpha } from '../theme';
@@ -53,6 +53,21 @@ export function StatBar({ streak, gems, hearts }: { streak: number; gems: number
 }
 
 /**
+ * The window's width at normal text size: its width divided by how much text
+ * is scaled, by the system on a phone or by the root font size on the web.
+ * Read on every render, since the web gives no event when the text size
+ * changes; the lesson header renders again on every step.
+ */
+export function useTextWidth(): number {
+  const { width, fontScale } = useWindowDimensions();
+  const rootPx =
+    Platform.OS === 'web' && typeof document !== 'undefined'
+      ? parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+      : 16;
+  return width / Math.max(fontScale || 1, rootPx / 16);
+}
+
+/**
  * Row of heart pips (used in the lesson player).
  *
  * `free` while hearts cost nothing (Unit 1, lib/hearts.ts). Five full pips
@@ -63,9 +78,11 @@ export function StatBar({ streak, gems, hearts }: { streak: number; gems: number
  * the pip that went is marked for a moment and a screen reader hears it.
  */
 export function Hearts({ count, free = false }: { count: number; free?: boolean }) {
-  // Under 300px (a 360px phone at 200% text) the badge says only "Free"; the
-  // label read aloud keeps the whole rule (QA round 5, M27).
-  const tight = useWindowDimensions().width < 300;
+  // Under 300 text-widths the badge says only "Free"; the label read aloud
+  // keeps the whole rule (QA round 5, M27). Counted in text, not pixels: a
+  // 320px phone at 200% text is still 320px wide, and the badge read "Fre…"
+  // (design review, 2026-10-19, Q-072).
+  const tight = useTextWidth() < 300;
   const prev = useRef(count);
   const [lost, setLost] = useState(false);
   useEffect(() => {

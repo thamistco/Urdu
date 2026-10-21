@@ -338,6 +338,10 @@ async function checkWrongBannerFits(browser, url) {
     problems.push('No wrong answer was reached in v-first-words, so the banner at 200% text was not measured.');
     return page.close();
   }
+  const badge = await freeBadge(page);
+  if (badge && badge.clipped) {
+    problems.push(`At 200% text on 320x568 the hearts badge is cut off: "${badge.text}" in ${badge.width}px.`);
+  }
   const bottom = await settledBottom(page, /^(Continue|Finish)$/);
   if (bottom > 568) {
     problems.push(
@@ -345,6 +349,21 @@ async function checkWrongBannerFits(browser, url) {
     );
   }
   await page.close();
+}
+
+/**
+ * The free-hearts badge's words and whether they are cut off. At 200% text on
+ * a 320px phone the full rule needs 265px and had 96, and read "Fre…"
+ * (design review, 2026-10-19, Q-072).
+ */
+function freeBadge(page) {
+  return page.evaluate(() => {
+    const n = [...document.querySelectorAll('div')].find(
+      (d) => !d.children.length && /^Free( until Unit 1 is done)?$/.test((d.textContent || '').trim())
+    );
+    if (!n) return null;
+    return { text: n.textContent.trim(), width: n.clientWidth, clipped: n.scrollWidth > n.clientWidth + 1 };
+  });
 }
 
 /** The bottom of the last element reading `label`, once it stops moving (the banner slides in). */
