@@ -677,7 +677,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-19',
     words: ['میں', 'کل', 'بازار', 'جاؤں', 'گا'],
-    roman: 'main kal bazaar jaaoon ga',
+    roman: 'main kal bazaar jaaooñ ga',
     meaning: 'I will go to the market tomorrow',
     level: 'intermediate',
     concept: 'g-future',
@@ -807,7 +807,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-99',
     words: ['میں', 'آپ', 'کو', 'فون', 'کروں', 'گا'],
-    roman: 'main aap ko fon karoon ga',
+    roman: 'main aap ko fon karooñ ga',
     meaning: 'I will call you',
     level: 'intermediate',
     concept: 'g-future',
@@ -1022,7 +1022,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-120',
     words: ['میں', 'کیا', 'کروں'],
-    roman: 'main kya karoon',
+    roman: 'main kya karooñ',
     meaning: 'What should I do?',
     level: 'advanced',
     concept: 'g-subjunctive',
@@ -1758,7 +1758,7 @@ export const SENTENCES: Sentence[] = [
   {
     id: 's-213',
     words: ['میں', 'اگلے', 'سال', 'پڑھوں', 'گا'],
-    roman: 'main agle saal paṛhoon ga',
+    roman: 'main agle saal paṛhooñ ga',
     meaning: 'I will study next year',
     level: 'intermediate',
     concept: 'g-future',
