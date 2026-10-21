@@ -305,10 +305,12 @@ async function checkMatchingKeepsFocus(browser, url) {
  * ran 37px past the screen with Continue cut off, 69px for a short sentence
  * (design review, 2026-10-20, Q-070). This answers v-first-words until one
  * answer is wrong, at a 32px root font, and requires Continue to end on the
- * screen once the banner has settled.
+ * screen once the banner has settled. In landscape the banner outgrew the
+ * window and nothing scrolled to Continue (QA, 2026-10-21), so it runs there
+ * too.
  */
-async function checkWrongBannerFits(browser, url) {
-  const page = await openLesson(browser, url, 'v-first-words', 320, 568);
+async function checkWrongBannerFits(browser, url, w, h) {
+  const page = await openLesson(browser, url, 'v-first-words', w, h);
   await page.evaluate(() => (document.documentElement.style.fontSize = '32px'));
   let verdict = null;
   for (let i = 0; i < 8 && !/^Not quite/.test(verdict || ''); i++) {
@@ -340,12 +342,12 @@ async function checkWrongBannerFits(browser, url) {
   }
   const badge = await freeBadge(page);
   if (badge && badge.clipped) {
-    problems.push(`At 200% text on 320x568 the hearts badge is cut off: "${badge.text}" in ${badge.width}px.`);
+    problems.push(`At 200% text on ${w}x${h} the hearts badge is cut off: "${badge.text}" in ${badge.width}px.`);
   }
   const bottom = await settledBottom(page, /^(Continue|Finish)$/);
-  if (bottom > 568) {
+  if (bottom > h) {
     problems.push(
-      `At 200% text on 320x568, a wrong answer's Continue ends at ${Math.round(bottom)}px, off the screen.`
+      `At 200% text on ${w}x${h}, a wrong answer's Continue ends at ${Math.round(bottom)}px, off the screen.`
     );
   }
   await page.close();
@@ -892,7 +894,9 @@ async function checkMoreBelow(browser, url) {
   await checkExerciseOpensAtTop(browser, url);
   await checkMoreBelow(browser, url);
   await checkVerdictIsHeard(browser, url);
-  await checkWrongBannerFits(browser, url);
+  // Portrait, and landscape, where the banner outgrew the window (QA, 2026-10-21).
+  await checkWrongBannerFits(browser, url, 320, 568);
+  await checkWrongBannerFits(browser, url, 844, 390);
   await checkMatchingKeepsFocus(browser, url);
 
   /**

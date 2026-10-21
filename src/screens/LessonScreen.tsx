@@ -201,7 +201,9 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   // Under 300px (a 360px phone at 200% text) the header wraps, so the hearts
   // badge takes a line of its own rather than being squeezed to "F…" (QA,
   // 2026-10-13).
-  const narrowHeader = useWindowDimensions().width < 300;
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const narrowHeader = windowWidth < 300;
+  const [headerHeight, setHeaderHeight] = useState(0);
   const gradeItem = useProgressStore((s) => s.gradeItem);
   // `flushSessionGrades` (`lib/sessionGrading.ts`) keeps its item type as a
   // loose `string`, like the rest of `lib/`, rather than depending on
@@ -664,6 +666,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
             contents track the content column so they line up with the exercise */}
         <View
           className="flex-row items-center gap-3 px-4 pb-3 pt-1"
+          onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
           style={{
             width: '100%',
             maxWidth: CONTENT_MAX_WIDTH,
@@ -779,9 +782,16 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
                   : withAlpha(palette.rose, 0.16),
               borderTopWidth: 1,
               borderTopColor: isTeaching(current) ? palette.gold : graded ? palette.jade : palette.rose,
+              // Never taller than the screen under the header: in landscape at
+              // 150% and 200% text a wrong answer's banner was taller than the
+              // window, with Continue below it and nothing that scrolled (QA,
+              // 2026-10-21). Past this the answer scrolls; Continue stays.
+              // A cap of 90% of the window alone still left Continue 41px
+              // off, the header being 96px tall at 200%.
+              maxHeight: Math.max(160, windowHeight - headerHeight - 8),
             }}
           >
-            <SafeAreaView edges={['bottom']}>
+            <SafeAreaView edges={['bottom']} style={{ flexShrink: 1 }}>
               <View
                 ref={bannerRef}
                 tabIndex={-1}
@@ -797,43 +807,45 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
                   alignSelf: 'center',
                   paddingHorizontal: 20,
                   paddingVertical: 16,
+                  flexShrink: 1,
                 }}
               >
-                <View className="flex-row items-center" style={{ marginBottom: 12, gap: 8 }}>
-                  <Illustration
-                    name={isTeaching(current) ? 'lattice' : graded ? 'check' : 'crescent'}
-                    tile={false}
-                    size={24}
-                  />
-                  <View className="flex-1">
-                    <Bold
-                      style={{
-                        color: isTeaching(current) ? palette.gold : graded ? palette.jadeLight : palette.roseLight,
-                      }}
-                    >
-                      {isTeaching(current)
-                        ? 'Keep that in mind'
-                        : graded
-                          ? 'Beautifully done'
-                          : 'Not quite, but that’s okay'}
-                    </Bold>
-                  </View>
-                  {/* Hear it again. Only on a wrong answer, which is where it
+                <ScrollView style={{ flexGrow: 0, flexShrink: 1 }}>
+                  <View className="flex-row items-center" style={{ marginBottom: 12, gap: 8 }}>
+                    <Illustration
+                      name={isTeaching(current) ? 'lattice' : graded ? 'check' : 'crescent'}
+                      tile={false}
+                      size={24}
+                    />
+                    <View className="flex-1">
+                      <Bold
+                        style={{
+                          color: isTeaching(current) ? palette.gold : graded ? palette.jadeLight : palette.roseLight,
+                        }}
+                      >
+                        {isTeaching(current)
+                          ? 'Keep that in mind'
+                          : graded
+                            ? 'Beautifully done'
+                            : 'Not quite, but that’s okay'}
+                      </Bold>
+                    </View>
+                    {/* Hear it again. Only on a wrong answer, which is where it
                       was asked for and where it is worth most: the app says the
                       word once when the answer lands, and before this there was
                       no way to ask for it a second time. */}
-                  {!graded && current && !isTeaching(current) && replay ? (
-                    <SpeakerButton
-                      size={38}
-                      // One wording for every speaker: "Hear" and the word, its
-                      // marks dropped for the screen reader (QA, L15).
-                      label={`Hear ${replay.roman ? plainRoman(replay.roman) : replay.urdu}`}
-                      onPress={() => announce(replay.id, replay.urdu, replay.roman)}
-                    />
-                  ) : null}
-                </View>
+                    {!graded && current && !isTeaching(current) && replay ? (
+                      <SpeakerButton
+                        size={38}
+                        // One wording for every speaker: "Hear" and the word, its
+                        // marks dropped for the screen reader (QA, L15).
+                        label={`Hear ${replay.roman ? plainRoman(replay.roman) : replay.urdu}`}
+                        onPress={() => announce(replay.id, replay.urdu, replay.roman)}
+                      />
+                    ) : null}
+                  </View>
 
-                {/* The answer, in full, and only when it was got wrong.
+                  {/* The answer, in full, and only when it was got wrong.
                     Script at a size worth reading, the transliteration under
                     it the way `Lexeme` sets a word everywhere else, and the
                     English on its own line rather than after a colon.
@@ -847,47 +859,48 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
                     large Nastaliq on it (QA, 2026-10-09), so it follows the
                     track, and shows the Roman even when "Show Roman Urdu" is
                     off, since a wrong answer is always told how it is said. */}
-                {reveal ? (
-                  <View
-                    className="rounded-xl"
-                    style={{
-                      backgroundColor: withAlpha(palette.rose, 0.12),
-                      marginBottom: 12,
-                      paddingHorizontal: 14,
-                      paddingVertical: 12,
-                    }}
-                  >
-                    <Eyebrow style={{ color: palette.roseLight, marginBottom: 6 }}>The answer</Eyebrow>
-                    {reveal.label ? (
-                      <Bold className="text-[0.9375rem]">{reveal.label}</Bold>
-                    ) : (
-                      <>
-                        {/* A word can afford 26; a six-word sentence at that
+                  {reveal ? (
+                    <View
+                      className="rounded-xl"
+                      style={{
+                        backgroundColor: withAlpha(palette.rose, 0.12),
+                        marginBottom: 12,
+                        paddingHorizontal: 14,
+                        paddingVertical: 12,
+                      }}
+                    >
+                      <Eyebrow style={{ color: palette.roseLight, marginBottom: 6 }}>The answer</Eyebrow>
+                      {reveal.label ? (
+                        <Bold className="text-[0.9375rem]">{reveal.label}</Bold>
+                      ) : (
+                        <>
+                          {/* A word can afford 26; a six-word sentence at that
                             size wraps to three lines and pushes Continue off a
                             small screen. */}
-                        {/* Clear of the eyebrow: Nastaliq rises well above its
+                          {/* Clear of the eyebrow: Nastaliq rises well above its
                             line, and جیکٹ touched "THE ANSWER" (QA report v3,
                             L22). 6px was not enough for بیگم, whose گ
                             rises above the 2.3x line box (2026-10-13). */}
-                        <View style={{ paddingTop: 12 }}>
-                          <Lexeme
-                            urdu={reveal.script ?? ''}
-                            roman={reveal.roman}
-                            track={track}
-                            forceRoman={track !== 'script'}
-                            size={(reveal.script ?? '').length > 18 ? 20 : 26}
-                            align="left"
-                          />
-                        </View>
-                        {reveal.meaning ? (
-                          <Txt className="text-sm text-paper/85" style={{ marginTop: 6 }}>
-                            {reveal.meaning}
-                          </Txt>
-                        ) : null}
-                      </>
-                    )}
-                  </View>
-                ) : null}
+                          <View style={{ paddingTop: 12 }}>
+                            <Lexeme
+                              urdu={reveal.script ?? ''}
+                              roman={reveal.roman}
+                              track={track}
+                              forceRoman={track !== 'script'}
+                              size={(reveal.script ?? '').length > 18 ? 20 : 26}
+                              align="left"
+                            />
+                          </View>
+                          {reveal.meaning ? (
+                            <Txt className="text-sm text-paper/85" style={{ marginTop: 6 }}>
+                              {reveal.meaning}
+                            </Txt>
+                          ) : null}
+                        </>
+                      )}
+                    </View>
+                  ) : null}
+                </ScrollView>
 
                 <Button
                   variant={isTeaching(current) ? 'primary' : graded ? 'correct' : 'incorrect'}
