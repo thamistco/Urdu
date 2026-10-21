@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Platform, View } from 'react-native';
+import { keepFocus } from '../lib/focusLost';
 import { Choice, Question, palette, type ChoiceState } from './common';
 import { Txt, Bold } from '../components/Text';
 import { Lexeme } from '../components/Lexeme';
@@ -30,6 +31,20 @@ export function MatchingExercise({ exercise, track, locked, onGraded }: Exercise
   /** Every word that was part of a wrong pair. They, and only they, go back
    *  into review as missed (QA, 2026-10-13, H4). */
   const [slipped, setSlipped] = useState<Set<string>>(new Set());
+
+  // A matched pair is disabled, and the tile that had focus with it, so the
+  // browser dropped focus to the page after every pair but the last: a
+  // keyboard user's next Tab started again at the close button (QA,
+  // 2026-10-20). Focus goes on to the first word still unmatched; after the
+  // last pair the answer banner takes it.
+  const wordsRef = useRef<View>(null);
+  useEffect(() => {
+    if (Platform.OS !== 'web' || matched.size === 0 || matched.size === words.length) return;
+    return keepFocus(() => {
+      const column = wordsRef.current as unknown as HTMLElement | null;
+      column?.querySelector<HTMLElement>('[role="button"]:not([aria-disabled="true"])')?.focus({ preventScroll: true });
+    });
+  }, [matched, words.length]);
 
   const finish = (misses: number) => {
     setDone(true);
@@ -107,7 +122,7 @@ export function MatchingExercise({ exercise, track, locked, onGraded }: Exercise
           a keycap 1 beside "Monday" (QA report v3, L20). */}
       <Question>Match each word to its meaning</Question>
       <View className="flex-row justify-between">
-        <View className="w-[48%] gap-3">
+        <View ref={wordsRef} className="w-[48%] gap-3">
           {left.map((w) => (
             <Choice
               key={w.id}

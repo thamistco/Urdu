@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Platform, type View } from 'react-native';
+import { keepFocus } from '../lib/focusLost';
 
 /**
  * Where focus goes when the answer banner opens.
@@ -16,18 +17,7 @@ export function useBannerFocus(open: boolean, step: number) {
   const ref = useRef<View>(null);
   useEffect(() => {
     if (!open || Platform.OS !== 'web') return;
-    // Two frames on: in the commit itself the banner is not yet there (it
-    // slides in), and the browser drops focus from the disabled button only
-    // at its next update. Done at once, it found nothing to focus and focus
-    // still fell to the page (check:stability, 2026-10-19).
-    let frame = requestAnimationFrame(() => {
-      frame = requestAnimationFrame(() => {
-        const active = document.activeElement as HTMLElement | null;
-        const lost = !active || active === document.body || active.matches('[aria-disabled="true"], :disabled');
-        if (lost) (ref.current as unknown as HTMLElement | null)?.focus({ preventScroll: true });
-      });
-    });
-    return () => cancelAnimationFrame(frame);
+    return keepFocus(() => (ref.current as unknown as HTMLElement | null)?.focus({ preventScroll: true }));
   }, [open, step]);
   return ref;
 }

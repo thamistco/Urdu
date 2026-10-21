@@ -165,8 +165,8 @@ async function checkExerciseOpensAtTop(browser, url) {
   await short.close();
 }
 
-/** v-first-words opened for a learner past onboarding, at `w`x`h`. */
-async function openFirstWords(browser, url, w, h) {
+/** A lesson opened for a learner past onboarding, at `w`x`h`. */
+async function openLesson(browser, url, id, w, h) {
   const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
   await page.goto(url);
   await openTheDoor(page);
@@ -175,9 +175,127 @@ async function openFirstWords(browser, url, w, h) {
     raw.state = { ...raw.state, onboarded: true, goal: 'family', level: 0, hearts: 99, completedLessons: {} };
     localStorage.setItem('qaaf-progress', JSON.stringify(raw));
   });
-  await page.goto(await lessonUrl(page, 'v-first-words'));
+  await page.goto(await lessonUrl(page, id));
   await page.waitForFunction(() => /\d+ of \d+/.test(document.body.innerText), null, { timeout: 20000 });
   return page;
+}
+
+/** Answer anything until the matching board is on screen; false if it never comes. */
+async function walkToBoard(page) {
+  for (let i = 0; i < 70; i++) {
+    if (await page.getByText(/^Match each word to its meaning$/).count()) return true;
+    const input = page.locator('input:visible, textarea:visible');
+    if (await input.count()) await input.first().fill('x');
+    // Building a word: tap each letter tile once, in any order.
+    await page.evaluate(() =>
+      [...document.querySelectorAll('[role="button"]')]
+        .filter((n) => {
+          const t = (n.textContent || '').replace(/\u200f/g, '').trim();
+          return (
+            n.getAttribute('aria-disabled') !== 'true' &&
+            t.length >= 1 &&
+            t.length <= 2 &&
+            !/[←✕]/.test(t) &&
+            n.getBoundingClientRect().y > 80
+          );
+        })
+        .forEach((n) => n.click())
+    );
+    await stepAnyhow(page);
+  }
+  return false;
+}
+
+/** The board's answer tiles still open, left column (the words) or right (the meanings). */
+function openTiles(page, side) {
+  return page.evaluate((side) => {
+    const all = [...document.querySelectorAll('[role="button"]')].filter((n) => {
+      const r = n.getBoundingClientRect();
+      return n.getAttribute('aria-disabled') !== 'true' && r.width > 100 && r.height > 40 && r.y > 80;
+    });
+    const mid = innerWidth / 2;
+    return all.filter((n) => n.getBoundingClientRect().x < mid === (side === 'left')).length;
+  }, side);
+}
+
+/** Focus the `i`th open tile on `side` and press Space, as a keyboard user does. */
+async function pressTile(page, side, i) {
+  await page.evaluate(
+    ({ side, i }) => {
+      const mid = innerWidth / 2;
+      const tiles = [...document.querySelectorAll('[role="button"]')].filter((n) => {
+        const r = n.getBoundingClientRect();
+        return n.getAttribute('aria-disabled') !== 'true' && r.width > 100 && r.height > 40 && r.y > 80;
+      });
+      tiles.filter((n) => n.getBoundingClientRect().x < mid === (side === 'left'))[i]?.focus();
+    },
+    { side, i }
+  );
+  await page.keyboard.press('Space');
+}
+
+/** Make one pair on the board by keyboard: the first word against each meaning in turn. */
+async function pairOnce(page) {
+  const rights = await openTiles(page, 'right');
+  let paired = false;
+  for (let j = 0; j < rights && !paired; j++) {
+    await pressTile(page, 'left', 0);
+    const before = await openTiles(page, 'right');
+    await pressTile(page, 'right', j);
+    paired = await page
+      .waitForFunction(
+        (n) => {
+          const mid = innerWidth / 2;
+          return (
+            [...document.querySelectorAll('[role="button"]')].filter((x) => {
+              const r = x.getBoundingClientRect();
+              return x.getAttribute('aria-disabled') !== 'true' && r.width > 100 && r.y > 80 && r.x >= mid;
+            }).length < n
+          );
+        },
+        before,
+        { timeout: 800 }
+      )
+      .then(
+        () => true,
+        () => false
+      );
+    // A wrong pair stays marked for a moment and takes no taps until it clears.
+    if (!paired) {
+      await page.waitForFunction(
+        () =>
+          ![...document.querySelectorAll('[data-testid="choice-verdict"]')].some((n) =>
+            /your answer/.test(n.textContent)
+          ),
+        null,
+        { timeout: 4000 }
+      );
+    }
+  }
+  return paired;
+}
+
+/**
+ * A matched pair leaves focus on the board.
+ *
+ * Matching disables both tiles of a pair, the focused one with them, so the
+ * browser dropped focus to the page after every pair but the last: a keyboard
+ * user's next Tab started again at the close button (QA, 2026-10-20). This
+ * walks v-road-p2 to its board, makes one pair by keyboard, and requires focus
+ * on a live control. Against the build before the fix it reports the page.
+ */
+async function checkMatchingKeepsFocus(browser, url) {
+  const page = await openLesson(browser, url, 'v-road-p2', 390, 844);
+  if (!(await walkToBoard(page))) {
+    problems.push('v-road-p2 never reached its matching board, so focus after a pair was not tested.');
+    return page.close();
+  }
+  const paired = await pairOnce(page);
+  if (!paired) problems.push("No pair was made on v-road-p2's board, so focus after a pair was not tested.");
+  else if (!(await focusKept(page))) {
+    problems.push('After a pair matched by keyboard, focus fell to the page: the next Tab starts from the top.');
+  }
+  await page.close();
 }
 
 /**
@@ -190,7 +308,7 @@ async function openFirstWords(browser, url, w, h) {
  * screen once the banner has settled.
  */
 async function checkWrongBannerFits(browser, url) {
-  const page = await openFirstWords(browser, url, 320, 568);
+  const page = await openLesson(browser, url, 'v-first-words', 320, 568);
   await page.evaluate(() => (document.documentElement.style.fontSize = '32px'));
   let verdict = null;
   for (let i = 0; i < 8 && !/^Not quite/.test(verdict || ''); i++) {
@@ -259,7 +377,7 @@ async function settledBottom(page, label) {
  * build before the fix it reports both.
  */
 async function checkVerdictIsHeard(browser, url) {
-  const page = await openFirstWords(browser, url, 390, 844);
+  const page = await openLesson(browser, url, 'v-first-words', 390, 844);
   const focused = await page.evaluate(() => {
     const tile = [...document.querySelectorAll('[role="button"]')].find((n) => {
       const r = n.getBoundingClientRect();
@@ -756,6 +874,7 @@ async function checkMoreBelow(browser, url) {
   await checkMoreBelow(browser, url);
   await checkVerdictIsHeard(browser, url);
   await checkWrongBannerFits(browser, url);
+  await checkMatchingKeepsFocus(browser, url);
 
   /**
    * Screens outside the lesson flow don't get walked above, but a bad
