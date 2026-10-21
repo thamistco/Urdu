@@ -533,7 +533,7 @@ const CORE_WORDS: Word[] = [
   { id: 'w-naarangi', urdu: 'نارنگی', roman: 'naarangi', meaning: 'orange (fruit)', emoji: '🍊', topic: 'fruits' },
   { id: 'w-angoor', urdu: 'انگور', roman: 'angoor', meaning: 'grapes', emoji: '🍇', topic: 'fruits' },
   { id: 'w-tarbooz', urdu: 'تربوز', roman: 'tarbooz', meaning: 'watermelon', emoji: '🍉', topic: 'fruits' },
-  { id: 'w-laimoon', urdu: 'لیموں', roman: 'laimoon', meaning: 'lemon', emoji: '🍋', topic: 'fruits' },
+  { id: 'w-laimoon', urdu: 'لیموں', roman: 'laimooñ', meaning: 'lemon', emoji: '🍋', topic: 'fruits' },
   { id: 'w-aaroo', urdu: 'آڑو', roman: 'aaṛoo', meaning: 'peach', emoji: '🍑', topic: 'fruits' },
   { id: 'w-cherry', urdu: 'چیری', roman: 'cherry', meaning: 'cherry', emoji: '🍒', topic: 'fruits' },
   { id: 'w-amrood', urdu: 'امرود', roman: 'amrood', meaning: 'guava', emoji: '🟢', topic: 'fruits' },

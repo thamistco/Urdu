@@ -432,7 +432,7 @@ export const GRAMMAR: GrammarConcept[] = [
         ['نہ', '"might not", "neither…nor"', 'شاید وہ نہ آئے'],
       ],
       rowsRoman: [
-        ['nahiñ', '', 'main nahiñ jaaoon ga (I will not go)'],
+        ['nahiñ', '', 'main nahiñ jaaooñ ga (I will not go)'],
         ['mat', '', 'mat bolo (don’t speak)'],
         ['na', '', 'shaayad wo na aaye (perhaps he won’t come)'],
       ],
@@ -709,9 +709,9 @@ export const GRAMMAR: GrammarConcept[] = [
     summary: 'What you will do',
     level: 'intermediate',
     explain: [
-      'The future adds ‑گا / ‑گی / ‑گے (‑ga / ‑gi / ‑ge) to a short form of the verb, جاؤں، جائے، جائیں (jaaoon, jaaye, jaayeñ): میں جاؤں گا (main jaaoon ga): “I will go”.',
+      'The future adds ‑گا / ‑گی / ‑گے (‑ga / ‑gi / ‑ge) to a short form of the verb, جاؤں، جائے، جائیں (jaaooñ, jaaye, jaayeñ): میں جاؤں گا (main jaaooñ ga): “I will go”.',
       'The گا (ga) part agrees with the subject, exactly like the other verb endings you have met.',
-      'Common forms: میں کروں گا (main karoon ga, I will do), وہ کرے گا (wo kare ga, he will do), ہم کریں گے (hum kareñ ge, we will do).',
+      'Common forms: میں کروں گا (main karooñ ga, I will do), وہ کرے گا (wo kare ga, he will do), ہم کریں گے (hum kareñ ge, we will do).',
     ],
     examples: [
       { urdu: 'میں کل آؤں گا', roman: 'main kal aaoon ga', meaning: 'I will come tomorrow' },
@@ -955,13 +955,13 @@ export const GRAMMAR: GrammarConcept[] = [
     level: 'advanced',
     explain: [
       'The subjunctive covers wishes, suggestions, doubts and “if”, things not stated as fact.',
-      'Forms are the future without گا (ga): میں جاؤں (main jaaoon, that I go), وہ جائے (wo jaaye, that he go), ہم جائیں (hum jaayeñ, that we go).',
+      'Forms are the future without گا (ga): میں جاؤں (main jaaooñ, that I go), وہ جائے (wo jaaye, that he go), ہم جائیں (hum jaayeñ, that we go).',
       'Use it after اگر (agar, if), شاید (shaayad, perhaps), and to suggest: چلیں؟ (chaleñ?): “shall we go?” Its negative is نہ (na), not نہیں (nahiñ).',
     ],
     examples: [
       { urdu: 'شاید وہ آئے', roman: 'shaayad wo aaye', meaning: 'Perhaps he will come' },
       { urdu: 'اگر وقت ہو تو ملیں', roman: 'agar waqt ho to mileñ', meaning: 'If there is time, let us meet' },
-      { urdu: 'میں کیا کروں؟', roman: 'main kya karoon?', meaning: 'What should I do?' },
+      { urdu: 'میں کیا کروں؟', roman: 'main kya karooñ?', meaning: 'What should I do?' },
     ],
     drills: [
       {

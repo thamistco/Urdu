@@ -16,7 +16,7 @@ export const CITY_PACKS: TopicPack[] = [
       ['w-khidmatgar', 'فضائی میزبان', 'fazaai mezbaan', 'flight attendant', '🧑‍✈️'],
       ['w-pilot', 'پائلٹ', 'paaeloṭ', 'pilot', '👨‍✈️'],
       ['w-udaan', 'اڑان', 'uṛaan', 'take-off', '🛫'],
-      ['w-landing', 'لینڈنگ', 'laiñḍing', 'landing', '🛬'],
+      ['w-landing', 'لینڈنگ', 'lainḍing', 'landing', '🛬'],
       ['w-guzarnama', 'اجازت نامہ', 'ijaazat-naama', 'permit', '📄'],
       ['w-safar-nama', 'سفرنامہ', 'safar-naama', 'travelogue', '📔'],
     ]
