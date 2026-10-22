@@ -331,6 +331,41 @@ async function checkMatchingKeepsFocus(browser, url) {
 }
 
 /**
+ * Answer the question on screen any way at all, varying the tile with `i` so
+ * a run never taps the right one every time, and return what was announced.
+ * The first version always took the last tile and gave up after eight steps,
+ * and one local run in three never got a wrong answer (2026-10-21).
+ */
+async function answerSomehow(page, i) {
+  const input = page.locator('input:visible, textarea:visible');
+  if (await input.count()) {
+    await input.first().fill('xq');
+    await input.first().press('Enter');
+  } else {
+    await page.evaluate((i) => {
+      const tiles = [...document.querySelectorAll('[role="button"]')].filter((n) => {
+        const r = n.getBoundingClientRect();
+        return (
+          n.getAttribute('aria-disabled') !== 'true' &&
+          !/^(Check|Continue|Finish)$/i.test((n.textContent || '').trim()) &&
+          r.width > 100 &&
+          r.height > 40 &&
+          r.y > 80
+        );
+      });
+      tiles[i % Math.max(tiles.length, 1)]?.click();
+    }, i);
+    const check = page.getByText(/^Check$/);
+    if (await check.count())
+      await check
+        .last()
+        .click({ force: true })
+        .catch(() => {});
+  }
+  return spokenVerdictOf(page);
+}
+
+/**
  * A wrong answer's banner at 200% text keeps Continue on a small screen.
  *
  * Its spacing was in rem and doubled with the text, so at 320x568 the banner
@@ -345,7 +380,7 @@ async function checkWrongBannerFits(browser, url, w, h) {
   const page = await openLesson(browser, url, 'v-first-words', w, h);
   await page.evaluate(() => (document.documentElement.style.fontSize = '32px'));
   let verdict = null;
-  for (let i = 0; i < 8 && !/^Not quite/.test(verdict || ''); i++) {
+  for (let i = 0; i < 20 && !/^Not quite/.test(verdict || ''); i++) {
     if (verdict) {
       const before = await page.evaluate(() => document.body.innerText);
       await page
@@ -359,17 +394,12 @@ async function checkWrongBannerFits(browser, url, w, h) {
       verdict = null;
       continue;
     }
-    await page.evaluate(() => {
-      const tiles = [...document.querySelectorAll('[role="button"]')].filter((n) => {
-        const r = n.getBoundingClientRect();
-        return r.width > 100 && r.height > 40 && r.y > 80;
-      });
-      tiles[tiles.length - 1]?.click();
-    });
-    verdict = await spokenVerdictOf(page);
+    verdict = await answerSomehow(page, i);
   }
   if (!/^Not quite/.test(verdict || '')) {
-    problems.push('No wrong answer was reached in v-first-words, so the banner at 200% text was not measured.');
+    problems.push(
+      `No wrong answer was reached in v-first-words at ${w}x${h}, so the banner at 200% text was not measured.`
+    );
     return page.close();
   }
   const badge = await freeBadge(page);
