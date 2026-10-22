@@ -99,6 +99,27 @@ export function onPlaybackChange(listener: (on: boolean) => void) {
 export const isPlaying = () => playing;
 
 /**
+ * A bundled clip that would not load: offline, or a dropped request. Offline,
+ * a tap on "Hear" played nothing and said nothing, and the speaker looked the
+ * same, the worst kind of silence in an app that teaches how words sound
+ * (performance review, 2026-10-21). `SoundNotice` listens and says so.
+ */
+const failListeners = new Set<() => void>();
+// Only when the device says it is offline: a clip can fail online too (a
+// browser refusing to autoplay, a codec), and "check your connection" was
+// then shown on a lesson's first card with nothing wrong (2026-10-21).
+const clipFailed = () => {
+  if (typeof navigator === 'undefined' || navigator.onLine !== false) return;
+  failListeners.forEach((l) => l());
+};
+export function onClipFailed(listener: () => void) {
+  failListeners.add(listener);
+  return () => {
+    failListeners.delete(listener);
+  };
+}
+
+/**
  * Play a bundled clip, returning how long it runs for — or null if there is no
  * clip. `replayAsync` resolves when playback *starts*, so anything that has to
  * follow the audio needs the duration rather than the promise.
@@ -142,6 +163,7 @@ async function playClip(id: string): Promise<number | null> {
         // voice); only now the next tap tries the network again.
         end();
         forget();
+        clipFailed();
         return 0;
       }
       const ms = typeof status.durationMillis === 'number' ? status.durationMillis : 0;
@@ -150,9 +172,13 @@ async function playClip(id: string): Promise<number | null> {
     } catch {
       end();
       forget();
+      clipFailed();
       return null;
     }
   } catch {
+    // Offline the load itself throws, and the device voice that follows is
+    // silent on most phones and every headless browser: said either way.
+    clipFailed();
     return null;
   }
 }

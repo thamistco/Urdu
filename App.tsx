@@ -15,6 +15,7 @@ import { NotoNastaliqUrdu_400Regular, NotoNastaliqUrdu_700Bold } from '@expo-goo
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { ConfirmHost } from './src/components/ConfirmHost';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
+import { SoundNotice } from './src/components/SoundNotice';
 import { linking } from './src/navigation/linking';
 import { initSound } from './src/lib/sound';
 import { useSettingsStore } from './src/store/useSettingsStore';
@@ -204,6 +205,7 @@ export default function App() {
           </ErrorBoundary>
           <ConfirmHost />
         </NavigationContainer>
+        <SoundNotice />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

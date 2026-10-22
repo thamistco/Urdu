@@ -275,6 +275,38 @@ async function pairOnce(page) {
   return paired;
 }
 
+/** Whether the "sound didn't load" notice appears within `ms`. */
+function soundNoticeWithin(page, ms) {
+  return page
+    .waitForFunction(() => /The sound didn’t load/.test(document.body.innerText), null, { timeout: ms })
+    .then(
+      () => true,
+      () => false
+    );
+}
+
+/**
+ * A clip that cannot load says so, offline and only offline.
+ *
+ * Offline, "Hear alif" played nothing and said nothing, and the speaker
+ * looked the same (performance review, 2026-10-21). Now a short notice says
+ * the sound did not load. It must not cry wolf: online, a first card whose
+ * clip a browser declines to autoplay showed it too, so it is gated on the
+ * device being offline. Against the build before the notice this reports it
+ * missing.
+ */
+async function checkSoundSaysWhenOffline(browser, url) {
+  const page = await openLesson(browser, url, 'l-1', 390, 844);
+  if (await soundNoticeWithin(page, 2500))
+    problems.push('Online, "The sound didn’t load" showed on l-1 with nothing wrong.');
+  await page.context().setOffline(true);
+  await page.locator('[aria-label^="Hear"]').first().click();
+  if (!(await soundNoticeWithin(page, 4000))) {
+    problems.push('Offline, tapping "Hear" on l-1 played nothing and said nothing.');
+  }
+  await page.close();
+}
+
 /**
  * A matched pair leaves focus on the board.
  *
@@ -898,6 +930,7 @@ async function checkMoreBelow(browser, url) {
   await checkWrongBannerFits(browser, url, 320, 568);
   await checkWrongBannerFits(browser, url, 844, 390);
   await checkMatchingKeepsFocus(browser, url);
+  await checkSoundSaysWhenOffline(browser, url);
 
   /**
    * Screens outside the lesson flow don't get walked above, but a bad
