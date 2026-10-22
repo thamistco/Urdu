@@ -203,7 +203,9 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   // 2026-10-13).
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const narrowHeader = windowWidth < 300;
-  const [headerHeight, setHeaderHeight] = useState(0);
+  // How far down the screen the exercise body starts: the header, and a
+  // review's eyebrow when there is one.
+  const [aboveBody, setAboveBody] = useState(0);
   const gradeItem = useProgressStore((s) => s.gradeItem);
   // `flushSessionGrades` (`lib/sessionGrading.ts`) keeps its item type as a
   // loose `string`, like the rest of `lib/`, rather than depending on
@@ -671,7 +673,6 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
             contents track the content column so they line up with the exercise */}
         <View
           className="flex-row items-center gap-3 px-4 pb-3 pt-1"
-          onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
           style={{
             width: '100%',
             maxWidth: CONTENT_MAX_WIDTH,
@@ -744,7 +745,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
             `grow justify-center` is the same pair the onboarding screen
             already uses for the same reason; a body taller than the screen
             fills the container and scrolls as before. */}
-        <View className="flex-1">
+        <View className="flex-1" onLayout={(e) => setAboveBody(e.nativeEvent.layout.y)}>
           <Screen
             scroll
             padded={false}
@@ -792,8 +793,10 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
               // window, with Continue below it and nothing that scrolled (QA,
               // 2026-10-21). Past this the answer scrolls; Continue stays.
               // A cap of 90% of the window alone still left Continue 41px
-              // off, the header being 96px tall at 200%.
-              maxHeight: Math.max(160, windowHeight - headerHeight - 8),
+              // off, the header being 96px tall at 200%; a cap under the header
+              // alone left a review's Continue 2px off, under its "Review"
+              // eyebrow (QA, 2026-10-22). So: under everything above the body.
+              maxHeight: Math.max(160, windowHeight - aboveBody - 8),
             }}
           >
             <SafeAreaView edges={['bottom']} style={{ flexShrink: 1 }}>
