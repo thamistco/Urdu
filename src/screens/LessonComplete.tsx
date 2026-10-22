@@ -9,7 +9,7 @@ import { Display, Heading, Txt, Bold, Eyebrow } from '../components/Text';
 import { Illustration } from '../components/Illustration';
 import type { IconName } from '../art/icons';
 import { palette, withAlpha } from '../theme';
-import { DAILY_PRACTICE_ALLOWANCE, PRACTICE_XP_PER_RIGHT_ANSWER } from '../lib/repeatReward';
+import { PRACTICE_XP_PER_RIGHT_ANSWER } from '../lib/repeatReward';
 import { levelTitle } from '../lib/gamification';
 import { count } from '../lib/plural';
 import { useEffect, useState } from 'react';
@@ -108,8 +108,8 @@ export function LessonComplete({
                   attempt at this rule showed "+8" with no reason (second
                   check, 2026-10-20, P-102). */}
               {result.practiceCapped ? (
-                <Txt className="-mt-2 mb-4 text-xs leading-5 text-paper/75">
-                  {`Past ${DAILY_PRACTICE_ALLOWANCE} XP of practice a day, practice pays ${PRACTICE_XP_PER_RIGHT_ANSWER} XP for each right answer.`}
+                <Txt className="-mt-2 mb-4 text-center text-xs leading-5 text-paper/75">
+                  {`You've done a lot of practice today, so until tomorrow practice gives ${PRACTICE_XP_PER_RIGHT_ANSWER} XP for each right answer. New lessons still give full XP.`}
                 </Txt>
               ) : null}
             </Reveal>
