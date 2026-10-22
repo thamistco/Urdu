@@ -407,6 +407,12 @@ async function checkWrongBannerFits(browser, url, w, h) {
     problems.push(`At 200% text on ${w}x${h} the hearts badge is cut off: "${badge.text}" in ${badge.width}px.`);
   }
   const bottom = await settledBottom(page, /^(Continue|Finish)$/);
+  const answer = await answerScroll(page);
+  if (answer.clipped && !answer.cued) {
+    problems.push(
+      `At 200% text on ${w}x${h} the answer runs ${answer.hidden}px past its box inside the banner with no "More below".`
+    );
+  }
   if (bottom > h) {
     problems.push(
       `At 200% text on ${w}x${h}, a wrong answer's Continue ends at ${Math.round(bottom)}px, off the screen.`
@@ -427,6 +433,27 @@ function freeBadge(page) {
     );
     if (!n) return null;
     return { text: n.textContent.trim(), width: n.clientWidth, clipped: n.scrollWidth > n.clientWidth + 1 };
+  });
+}
+
+/**
+ * Whether the answer scrolls inside the banner, and whether anything says so.
+ * At 200% text in landscape only the answer card's top showed and nothing said
+ * there was more (QA, 2026-10-21, Q-082).
+ */
+function answerScroll(page) {
+  return page.evaluate(() => {
+    const box = [...document.querySelectorAll('div')].find(
+      (n) =>
+        /auto|scroll/.test(getComputedStyle(n).overflowY) &&
+        /the answer/i.test(n.textContent || '') &&
+        n.getBoundingClientRect().height < innerHeight * 0.8
+    );
+    const hidden = box ? box.scrollHeight - box.clientHeight - box.scrollTop : 0;
+    const cued = [...document.querySelectorAll('[role="button"]')].some((n) =>
+      /^More below/.test(n.getAttribute('aria-label') || '')
+    );
+    return { clipped: hidden > 24, hidden: Math.round(hidden), cued };
   });
 }
 

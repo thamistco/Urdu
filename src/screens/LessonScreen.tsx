@@ -357,6 +357,11 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   const current = exercises[idx];
   /** "More below" on a teaching card that runs past the screen (P-076). */
   const more = useMoreBelow(isTeaching(current) && graded == null, `${idx}-${attempt}`, BODY_PAD_BOTTOM);
+  // The answer, when the banner is capped and it scrolls inside it: at 200%
+  // text in landscape only the card's top showed, and nothing said there was
+  // more (QA, 2026-10-21, Q-082).
+  const bannerScrollRef = useRef<ScrollView>(null);
+  const answerMore = useMoreBelow(graded === false, `answer-${idx}-${attempt}`);
   /** The clip the feedback banner offers to replay, when there is one. */
   const replay = current ? audioOf(current) : null;
   /**
@@ -810,42 +815,43 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
                   flexShrink: 1,
                 }}
               >
-                <ScrollView style={{ flexGrow: 0, flexShrink: 1 }}>
-                  <View className="flex-row items-center" style={{ marginBottom: 12, gap: 8 }}>
-                    <Illustration
-                      name={isTeaching(current) ? 'lattice' : graded ? 'check' : 'crescent'}
-                      tile={false}
-                      size={24}
-                    />
-                    <View className="flex-1">
-                      <Bold
-                        style={{
-                          color: isTeaching(current) ? palette.gold : graded ? palette.jadeLight : palette.roseLight,
-                        }}
-                      >
-                        {isTeaching(current)
-                          ? 'Keep that in mind'
-                          : graded
-                            ? 'Beautifully done'
-                            : 'Not quite, but that’s okay'}
-                      </Bold>
-                    </View>
-                    {/* Hear it again. Only on a wrong answer, which is where it
+                <View style={{ flexShrink: 1 }}>
+                  <ScrollView ref={bannerScrollRef} style={{ flexGrow: 0, flexShrink: 1 }} {...answerMore.scrollProps}>
+                    <View className="flex-row items-center" style={{ marginBottom: 12, gap: 8 }}>
+                      <Illustration
+                        name={isTeaching(current) ? 'lattice' : graded ? 'check' : 'crescent'}
+                        tile={false}
+                        size={24}
+                      />
+                      <View className="flex-1">
+                        <Bold
+                          style={{
+                            color: isTeaching(current) ? palette.gold : graded ? palette.jadeLight : palette.roseLight,
+                          }}
+                        >
+                          {isTeaching(current)
+                            ? 'Keep that in mind'
+                            : graded
+                              ? 'Beautifully done'
+                              : 'Not quite, but that’s okay'}
+                        </Bold>
+                      </View>
+                      {/* Hear it again. Only on a wrong answer, which is where it
                       was asked for and where it is worth most: the app says the
                       word once when the answer lands, and before this there was
                       no way to ask for it a second time. */}
-                    {!graded && current && !isTeaching(current) && replay ? (
-                      <SpeakerButton
-                        size={38}
-                        // One wording for every speaker: "Hear" and the word, its
-                        // marks dropped for the screen reader (QA, L15).
-                        label={`Hear ${replay.roman ? plainRoman(replay.roman) : replay.urdu}`}
-                        onPress={() => announce(replay.id, replay.urdu, replay.roman)}
-                      />
-                    ) : null}
-                  </View>
+                      {!graded && current && !isTeaching(current) && replay ? (
+                        <SpeakerButton
+                          size={38}
+                          // One wording for every speaker: "Hear" and the word, its
+                          // marks dropped for the screen reader (QA, L15).
+                          label={`Hear ${replay.roman ? plainRoman(replay.roman) : replay.urdu}`}
+                          onPress={() => announce(replay.id, replay.urdu, replay.roman)}
+                        />
+                      ) : null}
+                    </View>
 
-                  {/* The answer, in full, and only when it was got wrong.
+                    {/* The answer, in full, and only when it was got wrong.
                     Script at a size worth reading, the transliteration under
                     it the way `Lexeme` sets a word everywhere else, and the
                     English on its own line rather than after a colon.
@@ -859,48 +865,52 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
                     large Nastaliq on it (QA, 2026-10-09), so it follows the
                     track, and shows the Roman even when "Show Roman Urdu" is
                     off, since a wrong answer is always told how it is said. */}
-                  {reveal ? (
-                    <View
-                      className="rounded-xl"
-                      style={{
-                        backgroundColor: withAlpha(palette.rose, 0.12),
-                        marginBottom: 12,
-                        paddingHorizontal: 14,
-                        paddingVertical: 12,
-                      }}
-                    >
-                      <Eyebrow style={{ color: palette.roseLight, marginBottom: 6 }}>The answer</Eyebrow>
-                      {reveal.label ? (
-                        <Bold className="text-[0.9375rem]">{reveal.label}</Bold>
-                      ) : (
-                        <>
-                          {/* A word can afford 26; a six-word sentence at that
+                    {reveal ? (
+                      <View
+                        className="rounded-xl"
+                        style={{
+                          backgroundColor: withAlpha(palette.rose, 0.12),
+                          marginBottom: 12,
+                          paddingHorizontal: 14,
+                          paddingVertical: 12,
+                        }}
+                      >
+                        <Eyebrow style={{ color: palette.roseLight, marginBottom: 6 }}>The answer</Eyebrow>
+                        {reveal.label ? (
+                          <Bold className="text-[0.9375rem]">{reveal.label}</Bold>
+                        ) : (
+                          <>
+                            {/* A word can afford 26; a six-word sentence at that
                             size wraps to three lines and pushes Continue off a
                             small screen. */}
-                          {/* Clear of the eyebrow: Nastaliq rises well above its
+                            {/* Clear of the eyebrow: Nastaliq rises well above its
                             line, and جیکٹ touched "THE ANSWER" (QA report v3,
                             L22). 6px was not enough for بیگم, whose گ
                             rises above the 2.3x line box (2026-10-13). */}
-                          <View style={{ paddingTop: 12 }}>
-                            <Lexeme
-                              urdu={reveal.script ?? ''}
-                              roman={reveal.roman}
-                              track={track}
-                              forceRoman={track !== 'script'}
-                              size={(reveal.script ?? '').length > 18 ? 20 : 26}
-                              align="left"
-                            />
-                          </View>
-                          {reveal.meaning ? (
-                            <Txt className="text-sm text-paper/85" style={{ marginTop: 6 }}>
-                              {reveal.meaning}
-                            </Txt>
-                          ) : null}
-                        </>
-                      )}
-                    </View>
+                            <View style={{ paddingTop: 12 }}>
+                              <Lexeme
+                                urdu={reveal.script ?? ''}
+                                roman={reveal.roman}
+                                track={track}
+                                forceRoman={track !== 'script'}
+                                size={(reveal.script ?? '').length > 18 ? 20 : 26}
+                                align="left"
+                              />
+                            </View>
+                            {reveal.meaning ? (
+                              <Txt className="text-sm text-paper/85" style={{ marginTop: 6 }}>
+                                {reveal.meaning}
+                              </Txt>
+                            ) : null}
+                          </>
+                        )}
+                      </View>
+                    ) : null}
+                  </ScrollView>
+                  {answerMore.show ? (
+                    <MoreBelowCue scrollRef={bannerScrollRef} view={answerMore.view} y={answerMore.y} fade={false} />
                   ) : null}
-                </ScrollView>
+                </View>
 
                 <Button
                   variant={isTeaching(current) ? 'primary' : graded ? 'correct' : 'incorrect'}
