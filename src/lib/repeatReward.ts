@@ -44,3 +44,30 @@ export function repeatReward(alreadyCompleted: boolean, earned: Reward & { exerc
     gems: Math.min(earned.gems, earned.exercises * REPEAT_GEMS_PER_EXERCISE),
   };
 }
+
+/**
+ * XP a day's practice can earn at full rate: twice the Steady goal, room for a
+ * catch-up and a review. Past it, practice pays per right answer.
+ *
+ * Every practice kind paid its full XP whatever the score: a Daily Review
+ * tapped through at random 20, Topic practice 18, Grammar 16, and leagues rank
+ * on XP. An hour of tapping at chance paid about 1,974 XP; promotion needs 150
+ * a week. Cutting only reviews (P-102's first attempt) moved the farming to
+ * Topic practice and fined a returner whose catch-up went badly, 30 XP down to
+ * 8 (second check, 2026-10-20). An allowance across all practice closes the
+ * hour (about 516 XP) while a Steady day, a serious day and a returner's
+ * first day back pay what they did (learning review, 2026-10-22, P-102).
+ */
+export const DAILY_PRACTICE_ALLOWANCE = 60;
+export const PRACTICE_XP_PER_RIGHT_ANSWER = 2;
+
+/**
+ * What a practice lesson (anything in the Practice tab, or a path lesson done
+ * again) pays, given what practice has already earned today: in full while it
+ * fits in the allowance, and past it 2 XP per right answer, never more than in
+ * full. It grows with every right answer, so there is no cliff at the line.
+ */
+export function practiceXp(full: number, correct: number, practiceXpToday: number): number {
+  const room = Math.max(0, DAILY_PRACTICE_ALLOWANCE - practiceXpToday);
+  return Math.min(full, room + PRACTICE_XP_PER_RIGHT_ANSWER * Math.max(0, correct));
+}

@@ -9,6 +9,7 @@ import { Display, Heading, Txt, Bold, Eyebrow } from '../components/Text';
 import { Illustration } from '../components/Illustration';
 import type { IconName } from '../art/icons';
 import { palette, withAlpha } from '../theme';
+import { DAILY_PRACTICE_ALLOWANCE, PRACTICE_XP_PER_RIGHT_ANSWER } from '../lib/repeatReward';
 import { levelTitle } from '../lib/gamification';
 import { count } from '../lib/plural';
 import { useEffect, useState } from 'react';
@@ -103,6 +104,14 @@ export function LessonComplete({
                 <RewardTile icon="gem" value={`+${result.gemsGained}`} label="Gems" color={palette.jadeLight} />
                 <RewardTile icon="crescent" value={`${accuracy}%`} label="Accuracy" color={palette.roseLight} />
               </View>
+              {/* Why the XP is lower, said once, where the number is: the first
+                  attempt at this rule showed "+8" with no reason (second
+                  check, 2026-10-20, P-102). */}
+              {result.practiceCapped ? (
+                <Txt className="-mt-2 mb-4 text-xs leading-5 text-paper/75">
+                  {`Past ${DAILY_PRACTICE_ALLOWANCE} XP of practice a day, practice pays ${PRACTICE_XP_PER_RIGHT_ANSWER} XP for each right answer.`}
+                </Txt>
+              ) : null}
             </Reveal>
 
             {/* A low score used to pass without comment: a playtester finished

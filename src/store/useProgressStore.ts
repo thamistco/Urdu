@@ -21,7 +21,7 @@ import { ACHIEVEMENTS } from '../data/achievements';
 import { heartsAreFree } from '../lib/hearts';
 import { UNITS } from '../data/units';
 import { lessonsToSkip, type UnitEvidence } from '../lib/unitSkip';
-import { repeatReward } from '../lib/repeatReward';
+import { practiceXp, repeatReward } from '../lib/repeatReward';
 
 export type Goal = 'family' | 'read' | 'heritage' | 'curious';
 /**
@@ -48,6 +48,8 @@ export type FinishResult = {
    * how many are left. Reported once: the lesson that reports it clears it.
    */
   freezeUsed: { left: number; days: number } | null;
+  /** True when today's practice allowance lowered this lesson's XP. */
+  practiceCapped: boolean;
   /** How many of the unit's lessons a passed unit review marked as known. */
   lessonsSkipped: number;
 };
@@ -114,6 +116,8 @@ type ProgressState = {
   dailyGoalId: string;
   todayKey: string;
   todayXp: number;
+  /** XP from practice today, against `DAILY_PRACTICE_ALLOWANCE`. */
+  todayPracticeXp: number;
 
   // league
   leagueId: LeagueId;
@@ -205,7 +209,7 @@ type ProgressState = {
 const rollDay = (state: ProgressState): Partial<ProgressState> => {
   const today = dayKey();
   if (state.todayKey !== today) {
-    return { todayKey: today, todayXp: 0 };
+    return { todayKey: today, todayXp: 0, todayPracticeXp: 0 };
   }
   return {};
 };
@@ -234,6 +238,7 @@ export const useProgressStore = create<ProgressState>()(
       dailyGoalId: 'steady',
       todayKey: dayKey(),
       todayXp: 0,
+      todayPracticeXp: 0,
 
       leagueId: 'clay',
       weekKey: weekKeyOf(),
@@ -337,11 +342,17 @@ export const useProgressStore = create<ProgressState>()(
         // A lesson already finished pays for the work done in it, not for
         // being that lesson again. See `repeatReward` for the measurements.
         const repeat = !!s2.completedLessons[lessonId];
-        const { xp: xpGained, gems: gemsGained } = repeatReward(repeat, {
+        const { xp: xpEarned, gems: gemsGained } = repeatReward(repeat, {
           xp: xp + bonusXp,
           gems: gemsForLesson(accuracy, isReview),
           exercises: total,
         });
+        // Practice, and a path lesson done again, share a daily allowance at
+        // full rate; past it they pay per right answer (P-102). A path
+        // lesson's first completion is never practice.
+        const practice = repeat || lessonId.startsWith('practice-');
+        const xpGained = practice ? practiceXp(xpEarned, correct, s2.todayPracticeXp) : xpEarned;
+        const practiceCapped = practice && xpGained < xpEarned;
 
         // --- streak ---
         // The same two rules the app runs when it opens (`rolloverStreak`):
@@ -382,6 +393,7 @@ export const useProgressStore = create<ProgressState>()(
 
         // --- daily + history ---
         const todayXp = s2.todayXp + xpGained;
+        const todayPracticeXp = s2.todayPracticeXp + (practice ? xpGained : 0);
         const xpHistory = { ...s2.xpHistory, [today]: (s2.xpHistory[today] ?? 0) + xpGained };
 
         // --- lesson record ---
@@ -435,6 +447,7 @@ export const useProgressStore = create<ProgressState>()(
           weekKey,
           weeklyXp,
           todayXp,
+          todayPracticeXp,
           xpHistory,
           completedLessons,
           perfectLessons,
@@ -472,6 +485,7 @@ export const useProgressStore = create<ProgressState>()(
           newAchievements,
           freezeUsed,
           lessonsSkipped: toSkip.length,
+          practiceCapped,
         };
       },
 
@@ -536,6 +550,7 @@ export const useProgressStore = create<ProgressState>()(
           dailyGoalId: 'steady',
           todayKey: dayKey(),
           todayXp: 0,
+          todayPracticeXp: 0,
           leagueId: 'clay',
           weekKey: weekKeyOf(),
           weeklyXp: 0,
