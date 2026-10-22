@@ -312,10 +312,13 @@ function walk(dir) {
  * attempt at this flagged its own explanation. Block comments and JSX comments
  * both have to go, not just `//` lines.
  *
- * A line ending in `audit:emoji-ok` is exempt. There are two, both places where
- * an emoji is deliberately *content*: a topic with no bespoke drawing falls back
- * to the emoji it carries in the data, and the synthetic word built for phrases
- * needs some picture. Marking them beats loosening the rule.
+ * A line ending in `audit:emoji-ok` is exempt: the synthetic words built for
+ * phrases and sentences need some picture. Marking them beats loosening the
+ * rule. There were
+ * two more, a topic with no drawing falling back to its data emoji, on Home's
+ * path and the Practice tab; the exemption hid 🙏 and 🎙️ on Unit 1's path
+ * among drawn icons (QA, 2026-10-22), so both now fall back to a drawn
+ * sparkle instead.
  */
 const blankOut = (m) => m.replace(/[^\n]/g, ' '); // keep the newlines, lose the text
 const stripComments = (src) =>
