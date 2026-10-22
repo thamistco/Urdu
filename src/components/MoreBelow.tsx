@@ -80,12 +80,15 @@ export function MoreBelowCue({
   view,
   y,
   of = 'card',
+  fade = true,
 }: {
   scrollRef: RefObject<ScrollView | null>;
   view: number;
   y: number;
   /** What the rest belongs to, for the spoken name: a lesson's card, or a screen. */
   of?: 'card' | 'screen';
+  /** The fade to the app's ground; off over a tinted surface, where it shows as a dark band. */
+  fade?: boolean;
 }) {
   const reduced = useSettingsStore((s) => s.reducedMotion);
   return (
@@ -94,17 +97,19 @@ export function MoreBelowCue({
       pointerEvents="box-none"
       style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 72 }}
     >
-      <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 40 }}>
-        <Svg width="100%" height="40">
-          <Defs>
-            <LinearGradient id="moreBelowFade" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor={palette.ink} stopOpacity="0" />
-              <Stop offset="1" stopColor={palette.ink} stopOpacity="1" />
-            </LinearGradient>
-          </Defs>
-          <Rect x="0" y="0" width="100%" height="40" fill="url(#moreBelowFade)" />
-        </Svg>
-      </View>
+      {fade ? (
+        <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 40 }}>
+          <Svg width="100%" height="40">
+            <Defs>
+              <LinearGradient id="moreBelowFade" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor={palette.ink} stopOpacity="0" />
+                <Stop offset="1" stopColor={palette.ink} stopOpacity="1" />
+              </LinearGradient>
+            </Defs>
+            <Rect x="0" y="0" width="100%" height="40" fill="url(#moreBelowFade)" />
+          </Svg>
+        </View>
+      ) : null}
       <View
         pointerEvents="box-none"
         style={{ position: 'absolute', left: 0, right: 0, bottom: 12, alignItems: 'center' }}
