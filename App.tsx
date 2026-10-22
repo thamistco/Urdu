@@ -70,10 +70,12 @@ export default function App() {
   });
 
   /**
-   * The bold Nastaliq after the first paint, not before it. It sets only the
-   * numerals on a few cards, and as a second 530 KB file on the critical path
-   * it held the first screen back on a slow phone (QA, 2026-10-13, M24). Until
-   * it arrives those numerals show in the regular weight.
+   * The bold Nastaliq after the first paint, not before it: as a second
+   * 530 KB file on the critical path it held the first screen back on a slow
+   * phone (QA, 2026-10-13, M24). It is not only a few numerals, as this once
+   * said: `<Urdu>` defaults to bold, so the front door's قاف wordmark is in it,
+   * and shows a thin fallback face until it arrives, 5.4s on Slow 4G
+   * (performance review, 2026-10-21, P-096).
    */
   useEffect(() => {
     if (!fontsLoaded) return;
