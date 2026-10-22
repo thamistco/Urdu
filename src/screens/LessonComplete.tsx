@@ -109,7 +109,7 @@ export function LessonComplete({
                   check, 2026-10-20, P-102). */}
               {result.practiceCapped ? (
                 <Txt className="-mt-2 mb-4 text-center text-xs leading-5 text-paper/75">
-                  {`You've done a lot of practice today, so until tomorrow practice gives ${PRACTICE_XP_PER_RIGHT_ANSWER} XP for each right answer. New lessons still give full XP.`}
+                  {`You’ve done a lot of practice today, so until tomorrow practice gives ${PRACTICE_XP_PER_RIGHT_ANSWER} XP for each right answer. New lessons on the path still give full XP.`}
                 </Txt>
               ) : null}
             </Reveal>
