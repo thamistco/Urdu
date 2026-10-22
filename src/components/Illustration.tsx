@@ -1,8 +1,9 @@
 import { View, Text as RNText } from 'react-native';
 import { ICONS, IconName } from '../art/icons';
 import { palette, withAlpha } from '../theme';
-import { TOPICS, type Word } from '../data/words';
+import { type Word } from '../data/words';
 import { WORD_ICON, NUMERALS, COLOURS } from '../data/art';
+import { TOPIC_ICON } from '../art/topicIcons';
 
 /**
  * The tile every picture sits in.
@@ -184,137 +185,6 @@ const GOAL_ICON: Record<string, IconName> = {
  * shared placeholder on every uncovered topic at once — but a new topic should
  * get a drawing here rather than rely on it.
  */
-const TOPIC_ICON: Record<string, IconName> = {
-  'first-words': 'sparkle',
-  family: 'family',
-  'family-more': 'family',
-  food: 'bowl',
-  kitchen: 'bowl',
-  cooking: 'bowl',
-  meals: 'bowl',
-  home: 'house',
-  household: 'house',
-  nature: 'moon',
-  nature2: 'tree',
-  environment: 'tree',
-  greetings: 'salaam',
-  honorifics: 'salaam',
-  formal: 'salaam',
-  faith: 'mosque',
-  body: 'eye',
-  'body-more': 'arm',
-  senses: 'eye',
-  organs: 'intestine',
-  weather: 'rain',
-  'weather-more': 'sun',
-  sky: 'sun',
-  days: 'clock',
-  time: 'clock',
-  timewords: 'clock',
-  'measure-time': 'clock',
-  school: 'book',
-  education: 'book',
-  subjects: 'book',
-  literature: 'scroll',
-  poetry: 'scroll',
-  history: 'scroll',
-  'work-life': 'briefcase',
-  jobs: 'briefcase',
-  business: 'briefcase',
-  office: 'briefcase',
-  'jobs-more': 'gear',
-  tools: 'gear',
-  appliances: 'gear',
-  science: 'gear',
-  tech: 'bolt',
-  digital: 'bolt',
-  verbs: 'bolt',
-  verbs2: 'bolt',
-  verbs3: 'bolt',
-  'motion-verbs': 'bolt',
-  'mind-verbs': 'bolt',
-  health: 'heart',
-  illness: 'handHeart',
-  lifeevents: 'handHeart',
-  medicine: 'droplet',
-  bathroom: 'droplet',
-  money: 'tag',
-  'shopping-talk': 'tag',
-  bank: 'gem',
-  economy: 'gem',
-  festivals: 'medal',
-  celebrations: 'medal',
-  sports: 'medal',
-  emotions: 'smile',
-  feelings: 'smile',
-  personality: 'smile',
-  relationships: 'handshake',
-  social: 'handshake',
-  expressions: 'speechBubble',
-  idioms: 'speechBubble',
-  'speech-verbs': 'speechBubble',
-  media: 'speechBubble',
-  phone: 'speechBubble',
-  city: 'door',
-  places: 'door',
-  rooms: 'door',
-  furniture: 'chair',
-  drinks: 'tea',
-  tastes: 'tea',
-  fruits: 'apple',
-  vegetables: 'sprout',
-  farm: 'sprout',
-  garden: 'sprout',
-  grains: 'bread',
-  landscape: 'mountain',
-  sealife: 'waves',
-  emergency: 'flame',
-  // The five beginner-stage topics that were still falling back to emoji, plus
-  // the later ones an icon already in the set covers honestly. See the note on
-  // the new marks in `art/icons.tsx` for why the first stage was worth clearing
-  // out and the rest were not.
-  questions: 'question',
-  opposites: 'opposites',
-  quantity: 'amount',
-  adjectives: 'sizes',
-  animals: 'paw',
-  wildlife: 'paw',
-  quality: 'star',
-  routine: 'clock',
-  shapes: 'lattice',
-  restaurant: 'bowl',
-  hotel: 'bed',
-  culture: 'mosque',
-  services: 'gear',
-  // The other three stages, closed in a second pass. `directions-more` and
-  // `clothing-more` share their neighbour's mark deliberately, the way
-  // `family-more` and the food topics already do — they are the same picture,
-  // not a thinner version of one. `abstract` takes the `lamp` that was drawn
-  // and never used, and `describing-more` takes `sizes`, since "Fine
-  // Description" is "Describing" done more precisely.
-  transport: 'car',
-  road: 'signpost',
-  directions: 'compass',
-  'directions-more': 'compass',
-  travel: 'suitcase',
-  'travel-more': 'map',
-  airport: 'plane',
-  countries: 'globe',
-  clothing: 'shirt',
-  'clothing-more': 'shirt',
-  appearance: 'mirror',
-  abstract: 'lamp',
-  philosophy: 'candle',
-  law: 'scales',
-  politics: 'ballot',
-  'music-art': 'note',
-  materials: 'bricks',
-  containers: 'jar',
-  birds: 'feather',
-  toys: 'kite',
-  connectors: 'link',
-  'describing-more': 'sizes',
-};
 
 export function GoalArt({ goalKey, size = 44 }: { goalKey: string; size?: number }) {
   return <Illustration name={GOAL_ICON[goalKey] ?? 'sparkle'} size={size} />;
@@ -325,14 +195,9 @@ export function TopicArt({ topicId, size = 44 }: { topicId: string; size?: numbe
   // rather than falling through to its own emoji.
   if (topicId === 'numbers' || topicId === 'numbers-more') return <NumeralTile numeral="۳" size={size} />;
   if (topicId === 'colours') return <Illustration name="swatches" size={size} />;
-  if (TOPIC_ICON[topicId]) return <Illustration name={TOPIC_ICON[topicId]} size={size} />;
-  // topics without a bespoke illustration yet → their emoji in the medallion
-  const emoji = TOPICS.find((t) => t.id === topicId)?.icon ?? '✨'; // audit:emoji-ok — topic art falls back to its data emoji
-  return (
-    <Medallion size={size}>
-      <RNText style={{ fontSize: size * 0.42 }}>{emoji}</RNText>
-    </Medallion>
-  );
+  // A topic with no drawn icon gets a drawn sparkle, never its emoji (see
+  // LessonIcon below; QA, 2026-10-22).
+  return <Illustration name={TOPIC_ICON[topicId] ?? 'sparkle'} size={size} />;
 }
 
 /**
@@ -387,9 +252,10 @@ export function LessonIcon({ kind, topic, size = 34 }: { kind: string; topic?: s
       return <RNText style={{ fontFamily: 'NotoNastaliq-Bold', color: palette.gold, fontSize: size * 0.86 }}>۳</RNText>;
     }
     if (topic === 'colours') return <Illustration name="swatches" tile={false} size={size} />;
-    if (TOPIC_ICON[topic]) return <Illustration name={TOPIC_ICON[topic]} tile={false} size={size} />;
-    const emoji = TOPICS.find((t) => t.id === topic)?.icon ?? '✨'; // audit:emoji-ok — falls back to the topic's own emoji
-    return <RNText style={{ fontSize: size * 0.72 }}>{emoji}</RNText>;
+    // A topic with no drawn icon gets a drawn sparkle, never its emoji: the
+    // emoji fallback was exempt from the audit, and two Unit 1 nodes showed
+    // 🙏 and 🎙️ among drawn icons (QA, 2026-10-22; standard 86).
+    return <Illustration name={TOPIC_ICON[topic] ?? 'sparkle'} tile={false} size={size} />;
   }
   return <Illustration name={lessonIconName(kind)} tile={false} size={size} />;
 }
