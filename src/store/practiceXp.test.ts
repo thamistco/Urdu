@@ -38,6 +38,12 @@ describe('practice XP', () => {
     expect(play('v-first-words', 5, 40, 19).paid).toBe(19);
   });
 
+  it('pays a first read of a new story or conversation in full, past the allowance too', () => {
+    for (let i = 0; i < 4; i++) play('practice-review', 10, 10, 20);
+    expect(play('practice-reading-r-1', 1, 1, 25).paid).toBe(30);
+    expect(play('practice-reading-r-1', 1, 1, 25).paid).toBeLessThanOrEqual(2);
+  });
+
   it('says so when it caps', () => {
     for (let i = 0; i < 3; i++) play('practice-review', 10, 10, 20);
     expect(play('practice-review', 3, 10, 20)).toEqual({ paid: 6, capped: true });

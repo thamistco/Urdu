@@ -347,10 +347,14 @@ export const useProgressStore = create<ProgressState>()(
           gems: gemsForLesson(accuracy, isReview),
           exercises: total,
         });
-        // Practice, and a path lesson done again, share a daily allowance at
-        // full rate; past it they pay per right answer (P-102). A path
-        // lesson's first completion is never practice.
-        const practice = repeat || lessonId.startsWith('practice-');
+        // Practice, and a lesson done again, share a daily allowance at full
+        // rate; past it they pay per right answer (P-102). A first
+        // completion of anything new is never practice: the Practice tab's 29
+        // stories and conversations are new reading, and once counted as
+        // practice a first, perfect read paid 2 XP past the allowance instead
+        // of 25 (second check, 2026-10-22).
+        const newContent = /^practice-(reading|dialogue)-/.test(lessonId);
+        const practice = repeat || (lessonId.startsWith('practice-') && !newContent);
         const xpGained = practice ? practiceXp(xpEarned, correct, s2.todayPracticeXp) : xpEarned;
         const practiceCapped = practice && xpGained < xpEarned;
 
