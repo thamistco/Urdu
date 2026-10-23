@@ -24,6 +24,7 @@ const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright-core');
 const { serveDist, findChromium, openTheDoor } = require('./lib/serve-dist');
+const { glyphStrokes } = require('./lib/glyph-trace');
 
 const ROOT = path.join(__dirname, '..');
 const DIST = path.join(ROOT, 'dist');
@@ -304,6 +305,72 @@ async function checkSoundSaysWhenOffline(browser, url) {
   if (!(await soundNoticeWithin(page, 4000))) {
     problems.push('Offline, tapping "Hear" on l-1 played nothing and said nothing.');
   }
+  await page.close();
+}
+
+/** Trace the letter on screen from a picture of it, as the playtest does; false if there is no pad. */
+async function traceOnScreen(page) {
+  const pad = page.locator('[aria-label^="Drawing area"]').first();
+  const box = (await pad.count()) ? await pad.boundingBox() : null;
+  if (!box) return false;
+  const { PNG } = require('pngjs');
+  const area = { x: box.x + 4, y: box.y + 4, width: box.width - 8, height: box.height - 8 };
+  const png = PNG.sync.read(await page.screenshot({ clip: area, scale: 'css' }));
+  const scale = png.width / area.width;
+  for (const walk of (glyphStrokes(png) || []).filter((w) => w.length)) {
+    await page.mouse.move(area.x + walk[0].x / scale, area.y + walk[0].y / scale);
+    await page.mouse.down();
+    for (const q of walk) await page.mouse.move(area.x + q.x / scale, area.y + q.y / scale);
+    await page.mouse.up();
+  }
+  return true;
+}
+
+/**
+ * A question whose answers run under the fold says so.
+ *
+ * "More below" was on teaching cards only, so at 320x568 l-1's "Which
+ * position is this letter showing?" put Middle and End, one of them the
+ * answer, at 547px with nothing to say there was more (QA, 2026-10-19,
+ * Q-075). This walks l-1 to that question and requires the cue whenever an
+ * answer ends under the screen. Against the build before the fix it reports
+ * the missing cue.
+ */
+async function checkQuestionSaysMoreBelow(browser, url) {
+  const page = await openLesson(browser, url, 'l-1', 320, 568);
+  // The script track: on the default one the Roman under each answer is gone
+  // with the letters' names, and the four answers fit.
+  await page.evaluate(() =>
+    localStorage.setItem(
+      'qaaf-settings',
+      JSON.stringify({ state: { soundEnabled: false, reducedMotion: true, track: 'script' }, version: 0 })
+    )
+  );
+  await page.reload();
+  await page.waitForFunction(() => /\d+ of \d+/.test(document.body.innerText), null, { timeout: 20000 });
+  let found = false;
+  for (let i = 0; i < 12 && !found; i++) {
+    if (await page.getByText(/^Which position is this letter showing\?$/).count()) {
+      found = true;
+      break;
+    }
+    if (await page.getByText(/^Draw over the grey letter$/).count()) await traceOnScreen(page);
+    await stepAnyhow(page);
+  }
+  if (!found) {
+    problems.push('l-1 never reached its position question at 320x568, so "More below" on questions was not tested.');
+    return page.close();
+  }
+  await page.waitForFunction(() => document.fonts.status === 'loaded', null, { timeout: 5000 }).catch(() => {});
+  const r = await page.evaluate(async () => {
+    await new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res)));
+    const below = [...document.querySelectorAll('[role="button"]')].some(
+      (n) => /^(Middle|End)/.test((n.textContent || '').trim()) && n.getBoundingClientRect().bottom > innerHeight
+    );
+    return { below, cue: !!document.querySelector('[aria-label^="More below"]') };
+  });
+  if (r.below && !r.cue)
+    problems.push('At 320x568 l-1\'s position question has answers under the fold and no "More below".');
   await page.close();
 }
 
@@ -988,6 +1055,7 @@ async function checkMoreBelow(browser, url) {
   await checkWrongBannerFits(browser, url, 844, 390);
   await checkMatchingKeepsFocus(browser, url);
   await checkSoundSaysWhenOffline(browser, url);
+  await checkQuestionSaysMoreBelow(browser, url);
 
   /**
    * Screens outside the lesson flow don't get walked above, but a bad
