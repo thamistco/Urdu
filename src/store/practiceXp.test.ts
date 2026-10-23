@@ -12,7 +12,7 @@ import { DAILY_PRACTICE_ALLOWANCE, PRACTICE_XP_PER_RIGHT_ANSWER } from '../lib/r
 const play = (lessonId: string, correct: number, total: number, xp: number) => {
   const before = useProgressStore.getState().totalXp;
   const r = useProgressStore.getState().finishLesson({ lessonId, correct, total, xp, isReview: true });
-  return { paid: useProgressStore.getState().totalXp - before, capped: r.practiceCapped };
+  return { paid: useProgressStore.getState().totalXp - before, capped: r.practiceCapped, repeat: r.repeatCapped };
 };
 
 describe('practice XP', () => {
@@ -30,7 +30,7 @@ describe('practice XP', () => {
   });
 
   it("pays a returner's first catch-up in full, however it went", () => {
-    expect(play('practice-catchup', 4, 20, 30)).toEqual({ paid: 30, capped: false });
+    expect(play('practice-catchup', 4, 20, 30)).toMatchObject({ paid: 30, capped: false });
   });
 
   it('never caps a first time through a path lesson', () => {
@@ -46,7 +46,13 @@ describe('practice XP', () => {
 
   it('says so when it caps', () => {
     for (let i = 0; i < 3; i++) play('practice-review', 10, 10, 20);
-    expect(play('practice-review', 3, 10, 20)).toEqual({ paid: 6, capped: true });
+    expect(play('practice-review', 3, 10, 20)).toMatchObject({ paid: 6, capped: true });
+  });
+
+  it('says so when a repeat pays for its exercises rather than in full', () => {
+    play('practice-reading-r-1', 1, 1, 25);
+    expect(play('practice-reading-r-1', 1, 1, 25)).toMatchObject({ paid: 2, repeat: true });
+    expect(play('v-first-words', 10, 40, 19)).toMatchObject({ repeat: false });
   });
 
   it('starts again the next day', () => {
