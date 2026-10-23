@@ -162,6 +162,8 @@ Plain language, no jargon:
 - what was decided on the owner's behalf, and the commit to revert if wanted;
 - what was proposed tonight and will be checked again tomorrow;
 - anything only the owner can do.
+- where Qaaf stands against [the launch bar](LAUNCH_BAR.md), with the table
+  updated that night, and whether the manager would launch now.
 
 ## What a run must not do
 
