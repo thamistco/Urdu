@@ -357,8 +357,14 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   const { record: recordItemGrade, flushNow: flushPendingGrades } = useSessionGradeFlush(exercises, applyGrade);
 
   const current = exercises[idx];
-  /** "More below" on a teaching card that runs past the screen (P-076). */
-  const more = useMoreBelow(isTeaching(current) && graded == null, `${idx}-${attempt}`, BODY_PAD_BOTTOM);
+  /**
+   * "More below" on any exercise that runs past the screen before it is
+   * answered: teaching cards first (P-076), and since then questions too, since
+   * at 320x568 "Which position is this letter showing?" put two of its four
+   * answers, the right one among them, wholly under the fold with nothing to
+   * say so (QA, 2026-10-19, Q-075).
+   */
+  const more = useMoreBelow(graded == null, `${idx}-${attempt}`, BODY_PAD_BOTTOM);
   // The answer, when the banner is capped and it scrolls inside it: at 200%
   // text in landscape only the card's top showed, and nothing said there was
   // more (QA, 2026-10-21, Q-082).
