@@ -375,6 +375,31 @@ async function checkQuestionSaysMoreBelow(browser, url) {
 }
 
 /**
+ * A passed trace in a lesson is praised once, by the banner.
+ *
+ * The pad said "That is the shape ✓" and "Nicely done.", then the banner
+ * "Beautifully done": three lines for one trace (Q-078). This traces l-1's
+ * first letter and fails if the pad still praises it once the banner is up.
+ */
+async function checkTracePraisedOnce(browser, url) {
+  const page = await openLesson(browser, url, 'l-1', 390, 844);
+  for (let i = 0; i < 4 && !(await page.getByText(/^Draw over the grey letter$/).count()); i++) await stepAnyhow(page);
+  if (!(await traceOnScreen(page))) {
+    problems.push('l-1 showed no tracing pad, so praise after a trace was not tested.');
+    return page.close();
+  }
+  await page
+    .getByText(/^Check$/)
+    .last()
+    .click({ force: true });
+  const verdict = await spokenVerdictOf(page);
+  if (/^Beautifully done/.test(verdict || '') && (await page.getByText(/^That is the shape/).count())) {
+    problems.push('A passed trace is praised twice: the pad says "That is the shape" under the banner.');
+  }
+  await page.close();
+}
+
+/**
  * A matched pair leaves focus on the board.
  *
  * Matching disables both tiles of a pair, the focused one with them, so the
@@ -1056,6 +1081,7 @@ async function checkMoreBelow(browser, url) {
   await checkMatchingKeepsFocus(browser, url);
   await checkSoundSaysWhenOffline(browser, url);
   await checkQuestionSaysMoreBelow(browser, url);
+  await checkTracePraisedOnce(browser, url);
 
   /**
    * Screens outside the lesson flow don't get walked above, but a bad

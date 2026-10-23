@@ -37,8 +37,13 @@ export function answerReveal(ex: Exercise): AnswerReveal | null {
         script: ex.tiles.filter((_, i) => ex.correct[i]).join('   ') || ex.letter.forms.isolated,
         roman: ex.letter.name,
       };
-    case 'letterPick':
     case 'letterTrace':
+      // Nothing to reveal: the shape is already on the pad, drawn in grey
+      // under the learner's line, and the pad says what was missed. A card
+      // showing ـت again under "The answer" read as a correction to a
+      // question that had none (design review, 2026-10-23).
+      return null;
+    case 'letterPick':
       // Show the form that was actually asked about. Every option on a
       // `letterPick` renders at one position — often a joined one — so
       // revealing the isolated glyph answered with a different-looking shape

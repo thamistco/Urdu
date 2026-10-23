@@ -55,11 +55,20 @@ export function TracePad({
   position,
   locked = false,
   onScored,
+  quietPass = false,
 }: {
   letter: Letter;
   position: PositionKey;
   locked?: boolean;
   onScored?: (result: TraceResult) => void;
+  /**
+   * Say nothing on a pass. In a lesson the answer banner says "Beautifully
+   * done" a moment later, and three lines of praise for one trace read as
+   * noise (design review, 2026-10-20 and 2026-10-23, Q-078). Letter Lab has
+   * no banner, so there the pad says it itself. A refusal always keeps its
+   * reason: the banner cannot say which part of the letter was missed.
+   */
+  quietPass?: boolean;
 }) {
   const entry = GLYPH_MASKS[`${letter.id}:${position}`];
 
@@ -215,7 +224,7 @@ export function TracePad({
             </Button>
           </View>
         </View>
-      ) : (
+      ) : result.pass && quietPass ? null : (
         <View className="items-center">
           {/* Which of the two things went wrong, rather than the same eight
               words every time. A trace is graded on covering the shape *and*
