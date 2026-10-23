@@ -9,7 +9,7 @@ import { Display, Heading, Txt, Bold, Eyebrow } from '../components/Text';
 import { Illustration } from '../components/Illustration';
 import type { IconName } from '../art/icons';
 import { palette, withAlpha } from '../theme';
-import { PRACTICE_XP_PER_RIGHT_ANSWER } from '../lib/repeatReward';
+import { PRACTICE_XP_PER_RIGHT_ANSWER, REPEAT_XP_PER_EXERCISE } from '../lib/repeatReward';
 import { levelTitle } from '../lib/gamification';
 import { count } from '../lib/plural';
 import { useEffect, useState } from 'react';
@@ -110,6 +110,12 @@ export function LessonComplete({
               {result.practiceCapped ? (
                 <Txt className="-mt-2 mb-4 text-center text-xs leading-5 text-paper/75">
                   {`You’ve done a lot of practice today, so until tomorrow practice gives ${PRACTICE_XP_PER_RIGHT_ANSWER} XP for each right answer. New lessons on the path still give full XP.`}
+                </Txt>
+              ) : result.repeatCapped ? (
+                // The other way a lesson pays less, said too: a repeat paid
+                // +2 at 100% with nothing to say why (QA, 2026-10-23).
+                <Txt className="-mt-2 mb-4 text-center text-xs leading-5 text-paper/75">
+                  {`You’ve finished this one before, so this time it gives ${REPEAT_XP_PER_EXERCISE} XP for each exercise. New lessons on the path give full XP.`}
                 </Txt>
               ) : null}
             </Reveal>

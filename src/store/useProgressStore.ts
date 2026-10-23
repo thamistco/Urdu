@@ -50,6 +50,8 @@ export type FinishResult = {
   freezeUsed: { left: number; days: number } | null;
   /** True when today's practice allowance lowered this lesson's XP. */
   practiceCapped: boolean;
+  /** True when this lesson, done before, paid for its exercises rather than in full (`repeatReward`). */
+  repeatCapped: boolean;
   /** How many of the unit's lessons a passed unit review marked as known. */
   lessonsSkipped: number;
 };
@@ -357,6 +359,7 @@ export const useProgressStore = create<ProgressState>()(
         const practice = repeat || (lessonId.startsWith('practice-') && !newContent);
         const xpGained = practice ? practiceXp(xpEarned, correct, s2.todayPracticeXp) : xpEarned;
         const practiceCapped = practice && xpGained < xpEarned;
+        const repeatCapped = repeat && xpEarned < xp + bonusXp;
 
         // --- streak ---
         // The same two rules the app runs when it opens (`rolloverStreak`):
@@ -490,6 +493,7 @@ export const useProgressStore = create<ProgressState>()(
           freezeUsed,
           lessonsSkipped: toSkip.length,
           practiceCapped,
+          repeatCapped,
         };
       },
 
