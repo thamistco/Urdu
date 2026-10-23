@@ -25,6 +25,10 @@ purpose in the `HARF_*` environment variables, which CI, the pre-push hook and
   dispatches them with budgets, checks on them, stops any that stall, and alone
   builds and ships.
 - **A plain-language summary of every change at the end of each day.**
+- **No launch date (2026-10-23).** World Urdu Day is no longer a deadline.
+  Keep improving every night; the manager says when Qaaf can launch, judged
+  against [`docs/daily-review/LAUNCH_BAR.md`](docs/daily-review/LAUNCH_BAR.md),
+  in each night's summary.
 
 The nightly review in [`docs/daily-review/`](docs/daily-review/README.md) runs
 all of this.
