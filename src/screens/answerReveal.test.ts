@@ -111,6 +111,10 @@ describe('answerReveal', () => {
     expect(answerReveal({ kind: 'grammarDrill', drill: { answer: 'x' } } as unknown as Exercise)).toBeNull();
   });
 
+  it('reveals nothing after a trace, whose shape is already on the pad', () => {
+    expect(answerReveal({ kind: 'letterTrace', letter, position: 'isolated' } as unknown as Exercise)).toBeNull();
+  });
+
   it('never returns an empty reveal, which would render a blank red panel', () => {
     // A reveal that is neither null nor populated is the one shape the panel
     // cannot draw: it renders the heading "The answer" over nothing at all.
@@ -122,7 +126,6 @@ describe('answerReveal', () => {
       { kind: 'meaningPick', word, options: [word] },
       { kind: 'listenTap', word, options: [word] },
       { kind: 'letterPick', letter, position: 'isolated', options: [] },
-      { kind: 'letterTrace', letter, position: 'isolated' },
       { kind: 'letterSpot', word, letter, tiles: ['پا', 'نی'], correct: [true, false] },
       { kind: 'letterContrast', letter },
       { kind: 'letterForm', letter, position: 'initial' },

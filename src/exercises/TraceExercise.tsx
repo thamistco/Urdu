@@ -32,6 +32,7 @@ export function TraceExercise({ exercise, locked, onGraded }: ExerciseProps<Trac
         letter={letter}
         position={position}
         locked={locked}
+        quietPass
         onScored={({ pass }) => onGraded({ items: [{ id: letter.id, type: 'letter' }], correct: pass })}
       />
     </View>
