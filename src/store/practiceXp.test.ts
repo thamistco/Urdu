@@ -30,7 +30,7 @@ describe('practice XP', () => {
   });
 
   it("pays a returner's first catch-up in full, however it went", () => {
-    expect(play('practice-catchup', 4, 20, 30)).toMatchObject({ paid: 30, capped: false });
+    expect(play('practice-catchup', 4, 20, 30)).toEqual({ paid: 30, capped: false, repeat: false });
   });
 
   it('never caps a first time through a path lesson', () => {
@@ -46,7 +46,7 @@ describe('practice XP', () => {
 
   it('says so when it caps', () => {
     for (let i = 0; i < 3; i++) play('practice-review', 10, 10, 20);
-    expect(play('practice-review', 3, 10, 20)).toMatchObject({ paid: 6, capped: true });
+    expect(play('practice-review', 3, 10, 20)).toEqual({ paid: 6, capped: true, repeat: false });
   });
 
   it('says so when a repeat pays for its exercises rather than in full', () => {
