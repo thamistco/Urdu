@@ -922,7 +922,7 @@ async function answerNumeralRead(page, text, wrongOnPurpose) {
 const NAMED_TAP_KIND = [
   [/Which position is this letter showing\?/i, 'letterForm'],
   [/Which one is /i, 'letterContrast'],
-  [/Which letter is this\?/i, 'letterPick'],
+  [/Which letter makes this sound\?/i, 'letterPick'],
   [/Which tile is /i, 'letterSpot'],
   [/Which word is this\?|Which word means this\?/i, 'multipleChoice'],
   [/What does it mean\?/i, 'meaningPick'],

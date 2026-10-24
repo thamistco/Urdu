@@ -246,7 +246,9 @@ export function LetterPickExercise({ exercise, locked, onGraded }: ExerciseProps
         </Txt>
       </PromptCard>
       <View className="h-4" />
-      <Question>Which letter is this?</Question>
+      {/* The card gives the sound and the name, and the tiles are shapes;
+          "Which letter is this?" asked the reverse (tester, 2026-10-23). */}
+      <Question>Which letter makes this sound?</Question>
       <View className="flex-row flex-wrap justify-between">
         {options.map((o) => {
           const state = picked == null ? 'idle' : o.id === letter.id ? 'correct' : o.id === picked ? 'wrong' : 'muted';
