@@ -16,6 +16,9 @@ purpose in the `HARF_*` environment variables, which CI, the pre-push hook and
   delegated. Make them, ship them, and say so in the day's summary; the owner
   reverts what they disagree with. Only money, accounts, keys and outside
   dashboards need the owner.
+- **Ask before using the text-to-speech key (2026-10-24),** every time, with
+  the expected cost from `node scripts/generate-voice.js --cost`. See "What a
+  run must not do" in `docs/daily-review/README.md`.
 - **Research from several perspectives,** at least three and one of them the
   case against.
 - **Two checks before a research change ships,** the second from a different

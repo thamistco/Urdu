@@ -19,12 +19,18 @@
  *
  * No key set → prints a notice and exits 0, so the build still works.
  *
- *   node scripts/generate-voice.js            generate anything not done yet
- *   node scripts/generate-voice.js --force    regenerate everything
+ *   node scripts/generate-voice.js --approved          generate anything not done yet
+ *   node scripts/generate-voice.js --approved --force  regenerate everything
+ *
+ * --approved is given only after the owner has said yes to the cost that
+ * --cost prints (2026-10-24); with a key and without it, the run prints the
+ * cost and records nothing.
  *   node scripts/generate-voice.js --voices   list the Urdu voices your key can use
  *   node scripts/generate-voice.js --audition record a sample line in every candidate
  *                                            voice, to choose a narrator by ear
  *   node scripts/generate-voice.js --manifest rebuild the manifest from disk only
+ *   node scripts/generate-voice.js --cost     what a run (or --force) would cost; needs
+ *                                            no key and sends nothing
  */
 const fs = require('fs');
 const path = require('path');
@@ -472,36 +478,10 @@ function writeManifest() {
   return { f: f.length, m: m.length };
 }
 
-// ---- main ---------------------------------------------------------------
-(async () => {
-  const args = process.argv.slice(2);
-
-  if (args.includes('--voices')) return listGoogleVoices();
-  if (args.includes('--audition')) return auditionVoices(process.env.GENDER || 'MALE');
-
-  if (args.includes('--manifest')) {
-    {
-      const n = writeManifest();
-      console.log(`Manifest rebuilt from disk: ${n.f} clips, ${n.m} in the second voice.`);
-    }
-    return;
-  }
-
-  const provider = pickProvider();
-  if (!provider) {
-    console.log('No TTS API key set (GOOGLE_TTS_API_KEY or ELEVENLABS_API_KEY).');
-    console.log('Skipping voice generation — the app will use device TTS. See VOICE_SETUP.md.');
-    // Still refresh the manifest, in case clips were committed to the repo.
-    const n = writeManifest();
-    if (n.f) console.log(`Found ${n.f} clips already on disk (${n.m} in the second voice); manifest written.`);
-    process.exit(0);
-  }
-
-  const force = args.includes('--force');
-  const all = collectItems();
-  if (provider.name === 'Google Cloud TTS') await assertVoicesExist(all);
-  if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true });
-
+/**
+ * Which clips a run would make: missing from disk, or stale against the ledger.
+ */
+function findWork(all) {
   // Generating is idempotent: anything already on disk *that still says what
   // the course says* is left alone unless --force. That is what makes this a
   // one-time job — add words later and only the new ones cost anything — while
@@ -534,6 +514,83 @@ function writeManifest() {
         stale.push(i);
     }
   }
+  return { ledger, missing, stale };
+}
+
+/**
+ * What a run would cost, without a key and without a request.
+ *
+ * The owner asks to be told the expected cost before the key is used at all
+ * (2026-10-24), so this counts what the same run would send and prices it from
+ * Google's published rates (cloud.google.com/text-to-speech/pricing, read
+ * 2026-10-24): Chirp 3 HD $30 a million characters past the first million
+ * free each month, WaveNet $4 past four million. The free allowance is per
+ * billing account per month and shared with anything else on it, so both the
+ * figure with it and without it are printed. A clip that comes back silent is
+ * asked for again, up to five times, so the ceiling is five times the base.
+ */
+const PRICE_PER_MILLION = 30;
+const FREE_MILLIONS = 1;
+const MAX_ATTEMPTS = 5;
+
+function printCost(all, force) {
+  const { missing, stale } = findWork(all);
+  const todo = force ? all : [...missing, ...stale];
+  const chars = todo.reduce((n, i) => n + i.text.length, 0);
+  const dollars = (c) => `$${((c / 1e6) * PRICE_PER_MILLION).toFixed(2)}`;
+  const billable = (c) => Math.max(0, c - FREE_MILLIONS * 1e6);
+  console.log(
+    `Voice set ${VOICE_SET}${force ? ' (--force)' : ''}: ${todo.length} of ${all.length} clips, ` +
+      `${chars.toLocaleString('en-GB')} characters.`
+  );
+  console.log(`  if this month's free million is unused: ${dollars(billable(chars))}`);
+  console.log(`  if it is already used:                  ${dollars(chars)}`);
+  console.log(`  ceiling, every clip retried to the cap: ${dollars(chars * MAX_ATTEMPTS)}`);
+  console.log('Nothing was sent.');
+}
+
+// ---- main ---------------------------------------------------------------
+(async () => {
+  const args = process.argv.slice(2);
+
+  if (args.includes('--voices')) return listGoogleVoices();
+  if (args.includes('--audition')) return auditionVoices(process.env.GENDER || 'MALE');
+
+  if (args.includes('--manifest')) {
+    {
+      const n = writeManifest();
+      console.log(`Manifest rebuilt from disk: ${n.f} clips, ${n.m} in the second voice.`);
+    }
+    return;
+  }
+
+  const force = args.includes('--force');
+  if (args.includes('--cost')) return printCost(collectItems(), force);
+
+  const provider = pickProvider();
+  if (!provider) {
+    console.log('No TTS API key set (GOOGLE_TTS_API_KEY or ELEVENLABS_API_KEY).');
+    console.log('Skipping voice generation — the app will use device TTS. See VOICE_SETUP.md.');
+    // Still refresh the manifest, in case clips were committed to the repo.
+    const n = writeManifest();
+    if (n.f) console.log(`Found ${n.f} clips already on disk (${n.m} in the second voice); manifest written.`);
+    process.exit(0);
+  }
+  // A key in the environment is not permission to spend it: the owner is
+  // asked first, with the cost, every time (2026-10-24). `check:all` runs
+  // this script by name too, so a shell that happens to hold a key would
+  // otherwise record whatever is missing on the way to a push.
+  if (!args.includes('--approved')) {
+    printCost(collectItems(), force);
+    console.log('A key is set, but nothing is recorded without --approved, once the owner has said yes.');
+    process.exit(0);
+  }
+
+  const all = collectItems();
+  if (provider.name === 'Google Cloud TTS') await assertVoicesExist(all);
+  if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true });
+
+  const { ledger, missing, stale } = findWork(all);
   const todo = force ? all : [...missing, ...stale];
   const chars = todo.reduce((n, i) => n + i.text.length, 0);
 
