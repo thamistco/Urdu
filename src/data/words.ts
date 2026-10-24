@@ -203,7 +203,7 @@ const CORE_WORDS: Word[] = [
   { id: 'w-zindagi2', urdu: 'زندگی', roman: 'zindagi', meaning: 'life', emoji: '🌱', topic: 'first-words' },
   { id: 'w-duniya', urdu: 'دنیا', roman: 'duniya', meaning: 'world', emoji: '🌍', topic: 'first-words' },
   { id: 'w-log', urdu: 'لوگ', roman: 'log', meaning: 'people', emoji: '👥', topic: 'first-words' },
-  { id: 'w-khat', urdu: 'خط', roman: 'khat', meaning: 'letter', emoji: '✉️', topic: 'first-words' },
+  { id: 'w-khat', urdu: 'خط', roman: 'khat', meaning: 'letter (mail)', emoji: '✉️', topic: 'first-words' },
   { id: 'w-awaaz', urdu: 'آواز', roman: 'aawaaz', meaning: 'voice / sound', emoji: '🔊', topic: 'voices' },
   { id: 'w-roshni2', urdu: 'روشنی', roman: 'roshni', meaning: 'light', emoji: '💡', topic: 'first-words' },
   { id: 'w-baat', urdu: 'بات', roman: 'baat', meaning: 'talk / matter', emoji: '💬', topic: 'voices' },

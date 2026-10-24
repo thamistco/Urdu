@@ -322,7 +322,7 @@ const PLANNED_UNITS: Unit[] = [
     romanTitle: 'Unit 1 · First Words',
     romanSubtitle: 'Everyday words, greetings, yes, no and thank you, and voices and stories',
     lessons: [
-      L(1, 'Meet the letters', 'alif · be · pe · te · Te'),
+      L(1, 'Meet the letters', 'alif · alif madda · be · pe · te · Te'),
       V('first-words', 'First words', 15, 7),
       L(1, 'Position practice', 'alone · start · middle · end'),
       V('greetings', 'Greetings'),
