@@ -61,7 +61,9 @@ report.
    once a second check from a different viewpoint says SHIP (see below).
 7. **Write** the night's report as `YYYY-MM-DD-<area>.md` and update the
    "last reviewed" date above.
-8. **Summarise the day** for the owner (see below).
+8. **Audit:** `qaaf-auditor` on the night's commits, reports and draft
+   summary; answer every flag.
+9. **Summarise the day** for the owner (see below).
 
 ## Several perspectives, every time
 
@@ -109,6 +111,9 @@ The specialists live in `.claude/agents/`:
 | `qaaf-learner-voice` | What learners say about other apps, and what Urdu learners want          |
 | `qaaf-growth`        | Monetisation, launch, store presence, marketing, retention, referral     |
 | `qaaf-qa`            | Plays the built app hunting for bugs                                     |
+| `qaaf-tester`        | Plays the app as one kind of learner (eight personas, rotated)           |
+| `qaaf-content`       | Moderates the course: accuracy, respect, fit for children, consistency   |
+| `qaaf-auditor`       | Audits the manager's own night before the summary goes out               |
 
 **The manager** is the session running the review. It alone builds, commits,
 merges and ships. Its duties:
@@ -116,7 +121,9 @@ merges and ships. Its duties:
 1. **Prepare.** Build `dist/` once before dispatching, so no agent builds; give
    each agent that needs the app its own port; give each one task.
 2. **Dispatch in parallel, in the background,** each with its budget (30 to 40
-   tool calls, 15 to 20 minutes) and the report format in its file.
+   tool calls, 15 to 20 minutes) and the report format in its file: QA, the
+   rotation's specialists, one tester persona and the content moderator (see
+   "Checks and balances").
 3. **Check on them.** Every few minutes, check each running agent's state. A
    background agent's output file does not grow while it works, so its size
    says nothing (learned 2026-10-06); track elapsed time against the budget
@@ -138,6 +145,56 @@ merges and ships. Its duties:
    items. A specialist advises; the manager decides.
 5. **Second-check, build, ship,** and record what each agent cost in the
    night's report, so the next night can be cheaper.
+
+## Checks and balances
+
+The owner, 2026-10-24: there are no community testers or moderators, so the
+review builds its own, as many agents as it needs, with checks and balances so
+that everything keeps running smoothly. Nobody checks their own work:
+
+| Work                        | Done by         | Checked by                                       |
+| --------------------------- | --------------- | ------------------------------------------------ |
+| Finding bugs                | `qaaf-qa`       | the manager reproduces each before fixing it     |
+| Learning, design, growth    | the specialists | `qaaf-critic`, from a different viewpoint        |
+| How it feels to a learner   | `qaaf-tester`   | the manager reproduces; the critic on changes    |
+| The course's content        | `qaaf-content`  | the manager reads each source; a native ear (H1) |
+| Building, shipping, records | the manager     | `qaaf-auditor`, before the summary               |
+| The whole night             | the manager     | the owner, from the summary                      |
+
+**Every night** dispatches, beside `qaaf-qa` and the rotation's specialists,
+one `qaaf-tester` persona, the next in its list after the last report's, and
+`qaaf-content` on the content changed since its last report, or, if none
+changed, the next unit in order. **Before the summary**, `qaaf-auditor` gets
+the night's commit range, reports and draft summary. The summary answers
+each of its flags, by fixing it or saying why not.
+
+**Run health,** checked at the start of each night and written in the
+night's agents report:
+
+1. **The machine.** If `/home/user/Urdu` is missing or has no `node_modules`,
+   the container was rebuilt (it was on 22 October). Fetch the deploy branch,
+   check it out tracking the remote, and run `npm ci`. Anything that was only
+   on the old machine is gone; say what in the summary.
+2. **Last night's deploy.** The latest push's deploy run succeeded, and its
+   "Verify the live site is serving this commit" step passed. If not, fixing
+   that comes before anything else tonight.
+3. **Flaky checks.** A check that failed in CI and passed on a re-run, with
+   no change, is recorded in BACKLOG as a Q-item ("flaky: <check>, <date>").
+   On its second time it is fixed that night, not re-run again.
+4. **Agents.** Which agent types are registered (a type missing from the list
+   runs as general-purpose, told to read its file); each agent's cost against
+   its budget. A night whose agents spend more than 1.2 million tokens in all
+   says why, and the next night trims.
+5. **Held work.** Only the deploy branch may be pushed without the owner's
+   permission, and a branch that is not pushed is lost when the machine is
+   rebuilt (P-020 was, on 22 October). Work that is built but not shipped
+   (held, dropped for now, or waiting on a second check) is saved as
+   `docs/daily-review/held/<id>-<what>.patch` (`git format-patch`) and
+   committed on the deploy branch, with its BACKLOG item pointing to it.
+   Remove the patch when the work ships or is given up for good.
+6. **Two bad nights.** If the deploy fails two nights running, or the
+   auditor flags the same thing twice, the next night ships no new features
+   until that is fixed.
 
 ## Decisions
 
