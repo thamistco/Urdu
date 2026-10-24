@@ -1,0 +1,204 @@
+From 4622b150a391a02fa9c109c36e7992e6c5c19333 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 23 Oct 2026 23:54:36 +0000
+Subject: [PATCH] P-105b: review asks by recognition the letter forms a lesson
+ only traced
+
+A letter lesson asks some forms only by tracing. Unit 2's l-2 never
+asks se medial or final, jeem isolated or final, che initial, baRi-he
+initial or final, or khe isolated by picking or naming them, and seven
+review sittings still left four of those never recognised: review picks
+a form by index and never looks at what the lesson asked. 33 letters
+across the nine letter lessons have such a form (learning review,
+2026-10-23). Asking more inside the lesson would lengthen it about as
+much as it helps (2026-10-22); review is where the gap is.
+
+`recogniseGaps` finds, once, from the letter lessons themselves, the
+forms each letter's lesson never asks by recognition (by glyph, so a
+non-joiner's identical forms count once). In review, and when a letter
+is woven into another lesson, a letter with such forms is asked one of
+them on two turns in three, by naming then picking; the third turn is
+as before, tracing included. Letters without gaps are asked as before;
+lessons and their lengths are unchanged.
+
+The first version took tracing out of review for those letters; a
+review with only letters due then went to 52% "which position", past
+check:shape's 40%, so one turn in three stays as it was. The case
+against: the rule does not know when a gap is filled, so review keeps
+steering to those forms; naming a position is labelling, not reading.
+
+Tests: the gaps are forms l-2 never recognises; ten sittings ask every
+one; l-2 keeps its tracing. The coverage test fails with review on the
+old chooser (checked). check:shape passes.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FgFsmHsJ32w9Di1MVKqKTX
+---
+ src/exercises/generator.test.ts | 51 ++++++++++++++++++++++++
+ src/exercises/generator.ts      | 70 ++++++++++++++++++++++++++++++++-
+ 2 files changed, 120 insertions(+), 1 deletion(-)
+
+diff --git a/src/exercises/generator.test.ts b/src/exercises/generator.test.ts
+index f5efe401..e3cba075 100644
+--- a/src/exercises/generator.test.ts
++++ b/src/exercises/generator.test.ts
+@@ -15,6 +15,7 @@ import {
+   tileLookalikes,
+   soundsOverlap,
+   soundTokens,
++  recogniseGaps,
+ } from './generator';
+ import { getLetter, LETTERS, POSITIONS, type Letter } from '../data/letters';
+ import { resolveLesson, UNITS, ALL_LESSONS, lessonOrderForTrack, type Lesson } from '../data/units';
+@@ -2479,3 +2480,53 @@ describe('Daily Review word builds', () => {
+     expect(kinds).toContain('wordBuild');
+   });
+ });
++
++describe('review asks by recognition the letter forms a lesson only traced (P-105b)', () => {
++  const U2 = ['se', 'jeem', 'che', 'baRi-he', 'khe'];
++  const due = (ids: string[]) => ids.map((id) => ({ type: 'letter' as const, id }));
++  const known = new Set(['alif', 'alif-madda', 'be', 'pe', 'te', 'Te', ...U2]);
++  // Ten sittings: the unit review twice and eight Daily Reviews, with the due
++  // queue in different orders. A letter's turn and form both move with the
++  // sitting, so a given form comes round within six of them.
++  const orders = [
++    U2,
++    [...U2].reverse(),
++    [...U2.slice(2), ...U2.slice(0, 2)],
++    [...U2.slice(1), U2[0]],
++    [...U2.slice(3), ...U2.slice(0, 3)],
++  ];
++  const sittings = () => [
++    ...[0, 1].map((v) =>
++      buildLessonExercises(resolveLesson('rev-the-people-you-know')!, due(orders[v]), 'both', known, v)
++    ),
++    ...Array.from({ length: 8 }, (_, v) =>
++      buildLessonExercises(resolveLesson('practice-review')!, due(orders[v % orders.length]), 'both', known, v)
++    ),
++  ];
++
++  it('finds the forms l-2 never asks by recognition', () => {
++    const gaps = U2.flatMap((id) => recogniseGaps(id).map((p) => `${id}:${p}`));
++    expect(gaps.length).toBeGreaterThan(0);
++    const recognisedInLesson = new Set(
++      buildLessonExercises(resolveLesson('l-2')!, [], 'both', new Set())
++        .filter((e) => e.kind === 'letterForm' || e.kind === 'letterPick')
++        .map((e) => `${(e as { letter: { id: string } }).letter.id}:${(e as { position: string }).position}`)
++    );
++    for (const g of gaps) expect(recognisedInLesson.has(g), g).toBe(false);
++  });
++
++  it('asks every one of them within ten review sittings', () => {
++    const asked = new Set(
++      sittings()
++        .flat()
++        .filter((e) => e.kind === 'letterForm' || e.kind === 'letterPick')
++        .map((e) => `${(e as { letter: { id: string } }).letter.id}:${(e as { position: string }).position}`)
++    );
++    for (const id of U2) for (const p of recogniseGaps(id)) expect(asked.has(`${id}:${p}`), `${id}:${p}`).toBe(true);
++  });
++
++  it('leaves the letter lesson as it was, its tracing included', () => {
++    const lesson = buildLessonExercises(resolveLesson('l-2')!, [], 'both', new Set());
++    expect(lesson.filter((e) => e.kind === 'letterTrace').length).toBeGreaterThan(0);
++  });
++});
+diff --git a/src/exercises/generator.ts b/src/exercises/generator.ts
+index c2958f34..d66c14b7 100644
+--- a/src/exercises/generator.ts
++++ b/src/exercises/generator.ts
+@@ -540,6 +540,11 @@ export function distractLetters(letter: Letter, n: number, position?: PositionKe
+ }
+ 
+ function letterExercise(letter: Letter): Exercise {
++  // A letter with forms its lesson only traced is asked one of those, by
++  // recognition, as in review (P-105b).
++  if (recogniseGaps(letter.id).length) {
++    return reviewLetterExercise(letter, Math.floor(Math.random() * 3), Math.floor(Math.random() * 4));
++  }
+   // Three ways to meet a letter: name the position of a glyph, pick the glyph
+   // out of four, or draw it. Tracing is the slowest, so it stays a minority.
+   const roll = Math.random();
+@@ -605,6 +610,69 @@ function letterExerciseAt(letter: Letter, turn: number, positionIndex: number):
+   return { kind: 'letterPick', letter, position, options: shuffle([letter, ...distractors]) };
+ }
+ 
++/**
++ * The forms of a letter its own lesson never asks by recognition, by glyph, so
++ * a non-joiner's identical forms are one form, not two.
++ *
++ * A letter lesson asks some forms only by tracing: Unit 2's l-2 never asks se
++ * medial or final, jeem isolated or final, che initial, baRi-he initial or
++ * final, or khe isolated by picking or naming them, and seven review sittings
++ * still left four of those never recognised, since review picks a form by
++ * index and never looks at what the lesson asked. 33 letters in all nine
++ * letter lessons have such a form (learning review, 2026-10-23, P-105b).
++ *
++ * Built once, from the letter lessons themselves with no review items, so it
++ * follows them if they change. Letter lessons are the same on every build.
++ */
++let recogniseGapCache: Map<string, PositionKey[]> | null = null;
++export function recogniseGaps(letterId: string): PositionKey[] {
++  if (!recogniseGapCache) {
++    const recognised = new Map<string, Set<string>>();
++    for (const lesson of ALL_LESSONS.filter((l) => l.kind === 'letters')) {
++      for (const ex of buildLessonExercises(lesson, [], 'both', new Set())) {
++        if (ex.kind !== 'letterForm' && ex.kind !== 'letterPick') continue;
++        const seen = recognised.get(ex.letter.id) ?? new Set<string>();
++        seen.add(ex.letter.forms[ex.position]);
++        recognised.set(ex.letter.id, seen);
++      }
++    }
++    recogniseGapCache = new Map();
++    for (const l of LETTERS) {
++      const seen = recognised.get(l.id) ?? new Set<string>();
++      const glyphs = new Set<string>();
++      const gaps: PositionKey[] = [];
++      for (const { key } of POSITIONS) {
++        const glyph = l.forms[key as PositionKey];
++        if (seen.has(glyph) || glyphs.has(glyph)) continue;
++        glyphs.add(glyph);
++        gaps.push(key as PositionKey);
++      }
++      recogniseGapCache.set(l.id, gaps);
++    }
++  }
++  return recogniseGapCache.get(letterId) ?? [];
++}
++
++/**
++ * A letter in review: on two turns in three, recognition on a form its lesson
++ * only traced, while it has one; on the third, and for a letter with none,
++ * `letterExerciseAt` as before, tracing included (P-105b). Taking tracing out
++ * entirely left naming or picking on every turn, and a review with only
++ * letters due went to 52% "which position", past check:shape's 40%; tracing
++ * also helps letters be recognised (Longcamp et al. 2005).
++ */
++function reviewLetterExercise(letter: Letter, turn: number, positionIndex: number): Exercise {
++  const gaps = recogniseGaps(letter.id);
++  const t = ((turn % 3) + 3) % 3;
++  if (!gaps.length || t === 0) return letterExerciseAt(letter, turn, positionIndex);
++  const position = gaps[((positionIndex % gaps.length) + gaps.length) % gaps.length];
++  if (t === 2) {
++    const distractors = distractLetters(letter, DISTRACTORS, position);
++    return { kind: 'letterPick', letter, position, options: shuffle([letter, ...distractors]) };
++  }
++  return { kind: 'letterForm', letter, position, options: POSITIONS.map((p) => p.key) };
++}
++
+ /**
+  * URD-022: reorder a lesson's letters so visually confusable ones never sit
+  * next to each other in the round-major sequence below. `l-3` teaches
+@@ -2776,7 +2844,7 @@ export function buildLessonExercises(
+           if (contrastChoice && contrastChoice.i === i) {
+             exercises.push(letterContrastExercise(contrastChoice.letter, contrastChoice.mates));
+           } else {
+-            exercises.push(letterExerciseAt(l, i + letterTurnOffset, i + letterPosOffset));
++            exercises.push(reviewLetterExercise(l, i + letterTurnOffset, i + letterPosOffset));
+           }
+         }
+       } else {
+-- 
+2.43.0
+
