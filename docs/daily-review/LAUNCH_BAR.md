@@ -13,17 +13,17 @@ apps add their own items (marked). Charging money adds P-001 and
 
 Each of these is met when the evidence named beside it exists.
 
-| #   | The bar                                                                                 | Evidence                                                      | 2026-10-23                       |
-| --- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------- | -------------------------------- |
-| R1  | No open bug a learner can hit that blocks, loses progress, or teaches something wrong   | Every open Q-item triaged; none of those kinds left           | not met: 18 to fix, sorted below |
-| R2  | QA finds nothing above low on two nights running                                        | Two consecutive QA reports                                    | not met                          |
-| R3  | Every one of the 16 areas reviewed with no open high finding                            | README dates; reports                                         | not met                          |
-| R4  | A screen-reader user can complete Unit 1                                                | P-115 (letter spotting) built; checks pass                    | not met                          |
-| R5  | 200% text works at 320x568 and in landscape on every exercise kind                      | `check:stability`, `check:controls`; Lesson complete measured | partly                           |
-| R6  | Offline is honest: an installed app opens, or does not claim to be installable          | P-111, or `display` changed                                   | not met                          |
-| R7  | A learner can tell you something is wrong from inside the app                           | P-020 rebuilt (lost on 22 October) and P-113                  | not met                          |
-| R8  | The course's own decisions are settled: re-asking misses (P-085), letter forms (P-105b) | Built and second-checked, or dropped with a reason            | not met                          |
-| R9  | The privacy page meets UK GDPR article 13 apart from the holder's details               | P-093 drafted                                                 | not met                          |
+| #   | The bar                                                                                 | Evidence                                                      | 2026-10-23                         |
+| --- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------- |
+| R1  | No open bug a learner can hit that blocks, loses progress, or teaches something wrong   | Every open Q-item triaged; none of those kinds left           | not met: 16 to fix, sorted below   |
+| R2  | QA finds nothing above low on two nights running                                        | Two consecutive QA reports                                    | not met: one low-to-medium (fixed) |
+| R3  | Every one of the 16 areas reviewed with no open high finding                            | README dates; reports                                         | not met                            |
+| R4  | A screen-reader user can complete Unit 1                                                | P-115 (letter spotting) built; checks pass                    | not met                            |
+| R5  | 200% text works at 320x568 and in landscape on every exercise kind                      | `check:stability`, `check:controls`; Lesson complete measured | partly                             |
+| R6  | Offline is honest: an installed app opens, or does not claim to be installable          | P-111, or `display` changed                                   | not met                            |
+| R7  | A learner can tell you something is wrong from inside the app                           | P-020 rebuilt (lost on 22 October) and P-113                  | not met                            |
+| R8  | The course's own decisions are settled: re-asking misses (P-085), letter forms (P-105b) | Built and second-checked, or dropped with a reason            | half: P-105b dropped, with why     |
+| R9  | The privacy page meets UK GDPR article 13 apart from the holder's details               | P-093 drafted                                                 | not met                            |
 
 ## 2. What needs a person (not money)
 
@@ -44,8 +44,10 @@ Each of these is met when the evidence named beside it exists.
 ## The verdict
 
 **2026-10-23: not ready.** Of the review's own bar, nothing is fully met; the
-largest pieces are the 18 queued items sorted below as before launch (R1) and
-two clean QA nights (R2). The person and owner items are open. Each night moves this table
+largest pieces are the 16 queued items left below as before launch (R1; 18
+at the start of the night, three closed, one added by the first tester) and two clean QA nights (R2). R8 is
+half settled: P-105b was built and dropped on its second check, with the
+reason; P-085 is still open. The person and owner items are open. Each night moves this table
 and says so in the summary; when every row in sections 1 and 2 is met and O1
 and O2 are done, the summary says "ready to launch".
 
@@ -55,15 +57,16 @@ and O2 are done, the summary says "ready to launch".
 learner hit it, and would it stop them, lose their work, or teach them
 something wrong?
 
-**Before launch (18):** Q-010 (search "Qaaf" against trademarks before
+**Before launch (16: 18 at the start of the night, 3 closed, 1 added):** Q-010 (search "Qaaf" against trademarks before
 publicising the name), Q-026, Q-027, Q-034, Q-073, Q-080 (large text and small
 screens; R5), Q-077 (letter spotting by screen reader; R4), Q-038
-(leaving a lesson throws its answers away), Q-040, Q-044, Q-051 (right answers
-marked wrong: synonyms, forgiving spelling, sentence variants), Q-045 (emoji
+(leaving a lesson throws its answers away), Q-051 (right answers
+marked wrong: sentence variants), Q-045 (emoji
 give answers away), Q-052 (letter-spot tiles that overlap), Q-053 (Urdu in
 grammar notes in the browser's font, possibly disjoined), Q-069 (Safari can
-wipe a lapsed learner's progress), Q-075 (two answers below the fold with no
-cue), Q-035 (privacy; R9), and Q-025 if sign-in stays on the web (O2).
+wipe a lapsed learner's progress), Q-035 (privacy; R9), Q-025 if sign-in stays on the web (O2), and Q-093
+(placement says a speaker knows the words, then that they know none; added
+by the first tester, since the speaker who cannot read is who Qaaf is for).
 
 **Needs a person (H1 to H3):** Q-049, Q-057, Q-058, Q-081 (a native ear);
 Q-062 (a real phone).
@@ -76,6 +79,13 @@ Q-046, Q-047 (the track's place; the tab icons are done), Q-048, Q-050,
 Q-054, Q-055, Q-056, Q-059 (کنجی's gloss), Q-060, Q-061, Q-064, Q-065, Q-067,
 Q-074, Q-076, Q-078, Q-083, Q-085. "The best it can be" still wants them, and
 the nights keep taking them; they do not hold launch.
+
+**Closed the same night (3):** Q-040 and Q-044, found already done on
+checking (synonyms and forgiving spelling are accepted); Q-075, fixed
+(853f26e).
+
+**Found the same night, can follow:** Q-086, Q-087, Q-088 to Q-092 (the
+content sweep), Q-094 to Q-096 (the tester).
 
 **Closed on sorting (5):** Q-015 (fixed 16 October, 9e11bdd), Q-063 and Q-066
 (done 16 October), Q-070 (fixed 20 and 21 October), Q-033 (the same as
