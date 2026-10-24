@@ -345,7 +345,7 @@ const PLANNED_UNITS: Unit[] = [
     romanTitle: 'Unit 2 · The People You Know',
     romanSubtitle: 'Family, close and extended',
     lessons: [
-      L(2, 'The jeem family', 'jeem · che · he · khe'),
+      L(2, 'The jeem family', 'se · jeem · che · baṛī he · khe'),
       V('family', 'Family'),
       V('family-more', 'More family'),
       REV('the-people-you-know'),
