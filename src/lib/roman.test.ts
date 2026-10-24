@@ -33,6 +33,7 @@ describe('nearMiss', () => {
     ['pattar', 'patthar'],
     ['humsafar', 'ham-safar'],
     ['kharach', 'kharch'],
+    ['cheeze', 'cheez'],
     ['kanstar', 'kanastar'],
     ['fikirmand', 'fikarmand'],
     ['cheenti', 'cheeoñṭi'],
