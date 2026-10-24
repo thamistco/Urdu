@@ -29,7 +29,7 @@ import { heartsAreFree } from '../lib/hearts';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { resolveLesson, type Lesson } from '../data/units';
 import { ExerciseView } from '../exercises';
-import { buildLessonExercises, isWovenReview } from '../exercises/generator';
+import { buildLessonExercises, isWovenReview, reaskExercises, type Miss } from '../exercises/generator';
 import type { Exercise, GradedResult } from '../exercises/types';
 import type { FinishResult } from '../store/useProgressStore';
 import { LessonComplete } from './LessonComplete';
@@ -244,6 +244,13 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   const chargedRef = useRef<Set<string>>(new Set());
   /** Per item: right on every sighting this lesson, first time. See `lessonsToSkip`. */
   const firstTryRef = useRef<Map<string, boolean>>(new Map());
+  /**
+   * P-085: each item still wrong at its last showing, by item, with the
+   * exercise it was missed on; asked once more after the lesson is saved.
+   */
+  const missRef = useRef<Map<string, Miss>>(new Map());
+  /** The planned re-asks, read by `advance` in the same tap that planned them. */
+  const reaskRef = useRef<Exercise[]>([]);
   const loseHeart = useProgressStore((s) => s.loseHeart);
   const finishLesson = useProgressStore((s) => s.finishLesson);
   const refillHearts = useProgressStore((s) => s.refillHearts);
@@ -356,7 +363,12 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
    */
   const { record: recordItemGrade, flushNow: flushPendingGrades } = useSessionGradeFlush(exercises, applyGrade);
 
-  const current = exercises[idx];
+  /** The re-asks (P-085), planned when the last question is answered. */
+  const [reask, setReask] = useState<Exercise[]>([]);
+  const steps = useMemo(() => (reask.length ? [...exercises, ...reask] : exercises), [exercises, reask]);
+  const current = steps[idx];
+  /** Past the lesson proper: graded and saved already, so nothing here grades. */
+  const inReask = idx >= exercises.length;
   /**
    * "More below" on any exercise that runs past the screen before it is
    * answered: teaching cards first (P-076), and since then questions too, since
@@ -407,6 +419,28 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   const bannerRef = useBannerFocus(answered, idx);
   const total = exercises.length;
 
+  /** Keeps the item if it was missed here, forgets it once it is answered right first time. */
+  const noteMiss = useCallback(
+    (result: GradedResult, at: number) => {
+      const ex = exercises[at];
+      if (result.items.length !== 1 || isPretest(ex)) return;
+      const k = `${result.items[0].type}:${result.items[0].id}`;
+      if (result.correct && !result.retried) missRef.current.delete(k);
+      else missRef.current.set(k, { ex, at });
+    },
+    [exercises]
+  );
+
+  /** On the lesson's last step, what to ask once more, so its button says Continue. */
+  const planReask = useCallback(
+    (at: number) => {
+      if (at !== exercises.length - 1 || isReview || !lesson) return;
+      reaskRef.current = reaskExercises([...missRef.current.values()], lesson, track, exercises.length);
+      setReask(reaskRef.current);
+    },
+    [exercises, isReview, lesson, track]
+  );
+
   /**
    * A teaching card has nothing to grade, so it goes straight on.
    *
@@ -427,13 +461,20 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
    */
   const onGraded = useCallback(
     (result: GradedResult) => {
+      if (idx >= exercises.length) {
+        setGraded(result.correct);
+        return;
+      }
       if (isTeaching(exercises[idx])) {
         const seen = srsGradeFor(result.correct, !!result.retried, demandOf(exercises[idx]));
         result.items.forEach((it) => recordItemGrade(it, seen));
         if (result.correct) setCorrectCount((c) => c + 1);
+        planReask(idx);
         advanceRef.current();
         return;
       }
+      noteMiss(result, idx);
+      planReask(idx);
       setGraded(result.correct);
       // Answering opens the feedback banner, which takes a third of the
       // screen, so bring it into view. Used to fire only on a wrong answer —
@@ -493,7 +534,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
     // against exercise 0 — which in a grammar lesson is the teaching card, and
     // `isTeaching` therefore suppressed the heart loss for every wrong answer in
     // the lesson. Grammar cost nothing to get wrong.
-    [loseHeart, exercises, idx, recordItemGrade]
+    [loseHeart, exercises, idx, recordItemGrade, noteMiss, planReask]
   );
 
   // Stop this lesson's audio the instant the screen is left, however that
@@ -510,6 +551,16 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
    */
   const advanceRef = useRef<() => void>(() => {});
 
+  const next = () => {
+    setGraded(null);
+    setIdx(idx + 1);
+  };
+  /** The results screen, after the lesson and any re-asks (P-085). */
+  const finished = () => {
+    feedback.levelUp();
+    setDone(true);
+  };
+
   const advance = () => {
     invalidateSpeech();
     if (heartsSpent) {
@@ -521,9 +572,9 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
       setOutOfHearts(true);
       return;
     }
+    if (inReask) return idx < steps.length - 1 ? next() : finished();
     if (idx < total - 1) {
-      setGraded(null);
-      setIdx(idx + 1);
+      next();
     } else {
       // Flushed here too, not just on unmount: `finishLesson` below persists
       // XP/streak/gems immediately, and `LessonComplete` renders in this
@@ -543,9 +594,9 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
         unitEvidence: isReview ? unitEvidenceFrom(lesson.id, firstTryRef.current) : undefined,
         romanTrack: track === 'roman',
       });
-      feedback.levelUp();
       setResult(r);
-      setDone(true);
+      if (reaskRef.current.length) next();
+      else finished();
     }
   };
 
@@ -564,6 +615,8 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   useEffect(() => {
     chargedRef.current = new Set();
     firstTryRef.current = new Map();
+    missRef.current = new Map();
+    reaskRef.current = [];
   }, [lesson.id]);
 
   if (done && result) {
@@ -704,6 +757,9 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
               // and 1,750 elements each, and lessons opened slower as they
               // piled up (performance review, 2026-10-11).
               const leave = () => nav.popTo('Main');
+              // Saved already: closing a re-ask goes to the results, and the
+              // "will not be kept" warning would be untrue (P-085).
+              if (inReask) return setDone(true);
               const answered = exercises.slice(0, graded != null ? idx + 1 : idx).some((e) => !isTeaching(e));
               if (!answered) return leave();
               confirmAction(
@@ -719,7 +775,15 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
           {/* A floor, so the hearts badge cannot squeeze the bar and the step
               count out of sight at 200% text (QA round 5, M27). */}
           <View className="flex-1" style={{ minWidth: 72 }}>
-            <ProgressBar progress={(idx + (graded != null ? 1 : 0)) / total} color={palette.jade} height={12} />
+            <ProgressBar
+              progress={
+                inReask
+                  ? (idx - total + (graded != null ? 1 : 0)) / reask.length
+                  : (idx + (graded != null ? 1 : 0)) / total
+              }
+              color={palette.jade}
+              height={12}
+            />
             {/* How far, in steps. The bar alone gave no sense of a 43-step
                 lesson's length, and testers concluded the sentence lessons
                 never ended (QA report, 2026-10-12). */}
@@ -728,14 +792,18 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
               className="mt-0.5 text-right text-[0.625rem] text-paper/55"
               style={{ fontVariant: ['tabular-nums'] }}
             >
-              {Math.min(idx + 1, total)} of {total}
+              {inReask
+                ? `Once more · ${idx - total + 1} of ${reask.length}`
+                : `${Math.min(idx + 1, total)} of ${total}`}
             </Txt>
           </View>
           <Hearts count={hearts} free={heartsFree} />
         </View>
-        {isReview || isWovenReview(current) ? (
+        {inReask || isReview || isWovenReview(current) ? (
           <View style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }} className="px-4">
-            <Eyebrow style={{ color: palette.gold }}>{isReview ? 'Review' : 'Review · from an earlier lesson'}</Eyebrow>
+            <Eyebrow style={{ color: palette.gold }}>
+              {inReask ? 'Once more · the ones you missed' : isReview ? 'Review' : 'Review · from an earlier lesson'}
+            </Eyebrow>
           </View>
         ) : null}
 
@@ -926,7 +994,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
                   sound={false}
                   onPress={advance}
                 >
-                  {idx < total - 1 ? 'Continue' : 'Finish'}
+                  {idx < steps.length - 1 ? 'Continue' : 'Finish'}
                 </Button>
               </View>
             </SafeAreaView>

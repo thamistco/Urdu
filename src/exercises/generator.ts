@@ -3153,6 +3153,134 @@ function fallbackReviewRefs(
   return mixed;
 }
 
+/**
+ * A missed item, as the lesson screen saw it: the exercise it was missed on,
+ * and where in the lesson that was.
+ */
+export type Miss = { ex: Exercise; at: number };
+
+/** At most this many re-asks at the end of a lesson: +2% to +7% length (P-085, 2026-10-19). */
+export const REASK_CAP = 5;
+
+/**
+ * A re-ask comes at least this many steps after its miss. Oldest first already
+ * makes the shortest gap as long as it can be (spacing helps recall, Pyc and
+ * Rawson 2009); a miss in the last steps is left, since asking it again almost
+ * straight away is close to copying the answer just shown (judgement).
+ */
+const REASK_MIN_GAP = 3;
+
+/**
+ * P-085: each item still wrong at its last showing is asked once more at the
+ * end of the lesson, in a different exercise kind, oldest miss first.
+ *
+ * The lesson is graded and saved before these are asked, and the screen
+ * grades none of them, so a re-ask changes nothing but what the learner leaves
+ * knowing: getting it right after feedback (Pashler et al. 2005). Not in a
+ * review, which shows each item once and would grow by about 30%. Matching
+ * boards report both words of a wrong pair, one of them perhaps innocent, and
+ * sentences, grammar and numerals have no item to re-ask; none of those come
+ * back.
+ */
+export function reaskExercises(
+  misses: readonly Miss[],
+  lesson: Lesson,
+  track: LearnTrack,
+  total: number,
+  cap = REASK_CAP
+): Exercise[] {
+  if (lesson.kind === 'review') return [];
+  const taught = taughtThrough(lesson, track);
+  const out: Exercise[] = [];
+  for (const m of [...misses].sort((a, b) => a.at - b.at)) {
+    if (out.length >= cap) break;
+    if (total + out.length - m.at < REASK_MIN_GAP) continue;
+    const again = reaskOf(m.ex, track, taught);
+    if (again && again.kind !== m.ex.kind) out.push(again);
+  }
+  return out;
+}
+
+/** The letters a learner has met by the end of this lesson; null off the path. */
+function taughtThrough(lesson: Lesson, track: LearnTrack): ReadonlySet<string> | null {
+  const before = lettersTaughtBefore(lesson.id, track);
+  return before ? new Set([...before, ...(lesson.letterIds ?? [])]) : null;
+}
+
+function reaskOf(ex: Exercise, track: LearnTrack, taught: ReadonlySet<string> | null): Exercise | null {
+  switch (ex.kind) {
+    case 'letterTrace':
+    case 'letterForm':
+      return letterPickAt(ex.letter, ex.position);
+    case 'letterContrast':
+    case 'letterSpot':
+      return letterPickAt(ex.letter, 'isolated');
+    case 'letterPick':
+      return reaskLetterPick(ex.letter, ex.position, taught);
+    case 'typeWord':
+    case 'wordBuild':
+    case 'wordFromMeaning':
+    case 'listenTap':
+    case 'multipleChoice':
+    case 'meaningPick':
+      return reaskWord(ex.kind, ex.word, track, taught);
+    default:
+      return null;
+  }
+}
+
+function letterPickAt(letter: Letter, position: PositionKey): Exercise {
+  return {
+    kind: 'letterPick',
+    letter,
+    position,
+    options: shuffle([letter, ...distractLetters(letter, DISTRACTORS, position)]),
+  };
+}
+
+/**
+ * A missed "which letter makes this sound" comes back as the letter against
+ * the ones it is confused with, if the learner has met any; otherwise found
+ * inside its word; otherwise named by position. Never the position question
+ * when a mate exists: P-105b's second check found it guessable once the
+ * answer has just been shown.
+ */
+function reaskLetterPick(letter: Letter, position: PositionKey, taught: ReadonlySet<string> | null): Exercise {
+  const met = taught ? LETTERS.filter((l) => taught.has(l.id)) : LETTERS;
+  const mates = confusableMatesIn(letter, met);
+  if (mates.length) return letterContrastExercise(letter, mates);
+  const word = LETTER_CONTEXT_WORD.get(letter.id);
+  if (word) return letterSpotExercise(letter, word);
+  return { kind: 'letterForm', letter, position, options: POSITIONS.map((p) => p.key) };
+}
+
+/**
+ * A missed word comes back the other way round: what was produced is
+ * recognised, and what was recognised is recalled from its meaning. A typed
+ * word is built from tiles only when every letter in it has been taught, on
+ * the script tracks, and it is short enough to build.
+ */
+function reaskWord(
+  kind: Exercise['kind'],
+  word: Word,
+  track: LearnTrack,
+  taught: ReadonlySet<string> | null
+): Exercise {
+  const pool = poolFor(word);
+  const recall = (): Exercise => ({
+    kind: 'wordFromMeaning',
+    word,
+    options: shuffle([word, ...distractorsFor(word, pool, { distinctMeaning: true })]),
+  });
+  if (kind === 'typeWord') {
+    const canBuild = track !== 'roman' && buildableLetters(word) <= MAX_BUILD_TILES && lettersAllTaught(word, taught);
+    return canBuild ? { kind: 'wordBuild', word, tiles: buildTilesFor(word) } : recall();
+  }
+  if (kind === 'wordBuild' || kind === 'meaningPick') return recall();
+  const meaning = wordExercise(word, pool, track, 'meet', 1);
+  return meaning.kind === kind ? recall() : meaning;
+}
+
 /** Map an exercise to the item(s) it exercises, for SRS grading. */
 export function itemsOf(ex: Exercise): ItemRef[] {
   switch (ex.kind) {
