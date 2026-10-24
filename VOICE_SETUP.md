@@ -115,6 +115,11 @@ and prints what is missing and what recording it would cost. Clips are made by
 hand (step 3) once the owner says yes, and committed (step 4). A key left in the
 repository's secrets is no longer read by any workflow and can be deleted.
 
+The cost of this: a change to anything spoken leaves its clips stale, and
+`check:voice-fidelity` then fails the build, so the change cannot deploy until
+the clips are recorded with the owner's yes. `--cost` prices at Google's rates;
+ElevenLabs bills differently.
+
 ---
 
 ## ElevenLabs instead

@@ -237,7 +237,10 @@ Plain language, no jargon:
   key goes in an environment variable for that one command, with
   `--approved`, and is never written to any file, commit or message. Without
   `--approved` the script prints the cost and records nothing, and the deploy
-  no longer generates at all. (This replaces the 2026-10-08 "keep
+  no longer generates at all. So a change to any spoken Urdu (a word, its
+  pronunciation form, a sentence) leaves its clips stale, `check:voice-fidelity`
+  fails, and nothing deploys until the owner says yes and the clips are
+  recorded: ask the same night the change is made, or hold the change. (This replaces the 2026-10-08 "keep
   using the key".)
 - Ship a research change that has had only one check, or whose second check
   came from the same viewpoint as its first.
