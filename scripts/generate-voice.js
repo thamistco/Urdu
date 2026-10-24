@@ -546,7 +546,7 @@ function printCost(all, force) {
   console.log(`  if this month's free million is unused: ${dollars(billable(chars))}`);
   console.log(`  if it is already used:                  ${dollars(chars)}`);
   console.log(`  ceiling, every clip retried to the cap: ${dollars(chars * MAX_ATTEMPTS)}`);
-  console.log('Nothing was sent.');
+  console.log('Priced at Google Chirp 3 HD rates; ElevenLabs bills differently. Nothing was sent.');
 }
 
 // ---- main ---------------------------------------------------------------

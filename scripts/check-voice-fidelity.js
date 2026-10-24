@@ -322,7 +322,10 @@ if (ranked.length) {
 if (problems.length) {
   console.log(`\n${problems.length} clip${problems.length === 1 ? '' : 's'} not what the course asked for:\n`);
   for (const p of problems.sort()) console.log('  •', p);
-  console.log('\nRegenerate with `npm run gen:voice` (a key set); a changed word goes stale on its own.');
+  console.log(
+    '\nA changed word goes stale on its own. Price the re-record with `npm run gen:voice -- --cost`, ask the owner,\n' +
+      'and once they say yes run `npm run gen:voice -- --approved` with the key set (docs/daily-review/README.md).'
+  );
   process.exit(1);
 }
 
