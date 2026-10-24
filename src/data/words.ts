@@ -728,7 +728,7 @@ const CORE_WORDS: Word[] = [
   { id: 'w-gaari', urdu: 'گاڑی', roman: 'gaaṛi', meaning: 'car', emoji: '🚗', topic: 'transport' },
   { id: 'w-bas', urdu: 'بس', roman: 'bas', meaning: 'bus', emoji: '🚌', topic: 'transport' },
   { id: 'w-train', urdu: 'ٹرین', roman: 'ṭrain', meaning: 'train', emoji: '🚆', topic: 'transport' },
-  { id: 'w-jahaaz', urdu: 'جہاز', roman: 'jahaaz', meaning: 'plane / ship', emoji: '✈️', topic: 'transport' },
+  { id: 'w-jahaaz', urdu: 'جہاز', roman: 'jahaaz', meaning: 'ship / plane', emoji: '✈️', topic: 'transport' },
   { id: 'w-cycle', urdu: 'سائیکل', roman: 'cycle', meaning: 'bicycle', emoji: '🚲', topic: 'transport' },
   { id: 'w-kashti', urdu: 'کشتی', roman: 'kashti', meaning: 'boat', emoji: '⛵', topic: 'transport' },
   { id: 'w-rickshaw', urdu: 'رکشہ', roman: 'rickshaw', meaning: 'rickshaw', emoji: '🛺', topic: 'transport' },

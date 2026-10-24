@@ -36,7 +36,7 @@ export const FOOD_PACKS: TopicPack[] = [
       ['w-naan', 'نان', 'naan', 'naan bread', '🫓'],
       ['w-paratha', 'پراٹھا', 'paraaṭha', 'paratha', '🥞'],
       ['w-samosa', 'سموسہ', 'samosa', 'samosa', '🥟'],
-      ['w-halwa', 'حلوہ', 'halwa', 'sweet halwa', '🍮'],
+      ['w-halwa', 'حلوہ', 'halwa', 'halwa, a sweet dish', '🍮'],
       ['w-kheer', 'کھیر', 'kheer', 'rice pudding', '🍨'],
       ['w-mithai', 'مٹھائی', 'miṭhaai', 'sweets', '🍬'],
       ['w-raita', 'رائتہ', 'raaita', 'yoghurt side', '🥗'],

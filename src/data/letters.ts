@@ -260,7 +260,7 @@ export const LETTERS: Letter[] = [
     forms: connector('ح'),
     word: 'حلوہ',
     roman: 'halwa',
-    meaning: 'sweet dish',
+    meaning: 'halwa, a sweet dish',
     emoji: '🍮',
     group: 2,
     note: 'A dotless deep curve; khe adds one dot above it. It sounds like choṭī he, borrowed from Arabic; you meet it in خدا حافظ (khuda haafiz, “goodbye”).',
