@@ -169,10 +169,19 @@ Plain language, no jargon:
 
 - Spend money, create accounts, sign up for services, or accept terms.
 - Post, publish or contact anyone outside this repository and its site.
-- Generate audio except with the owner's text-to-speech key, passed as an
-  environment variable for that one command and never written to any file.
-  The owner said on 2026-10-08 to keep using the key given in chat until they
-  say otherwise.
+- Use the owner's text-to-speech key without asking first. The owner,
+  2026-10-24: ask permission before each use, with the expected cost. Run
+  `node scripts/generate-voice.js --cost` (and with `VOICE_SET=m`, and
+  `--force` if a re-record is meant), which needs no key and sends nothing,
+  and put its figures in the question: the clips, the characters, the cost
+  with and without the month's free allowance, and the ceiling if every clip
+  is retried. Ask in the conversation and wait; a night with no answer leaves
+  the clips for another night and says so in the summary. Once allowed, the
+  key goes in an environment variable for that one command, with
+  `--approved`, and is never written to any file, commit or message. Without
+  `--approved` the script prints the cost and records nothing, and the deploy
+  no longer generates at all. (This replaces the 2026-10-08 "keep
+  using the key".)
 - Ship a research change that has had only one check, or whose second check
   came from the same viewpoint as its first.
 - Weaken a check to go green, or report a deploy live without reading the

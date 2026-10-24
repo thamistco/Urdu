@@ -36,7 +36,7 @@ before a large run.
    **Enable**. Google asks you to attach a billing account — you stay inside the
    free allowance, but the API will not enable without one.
 3. **APIs & Services → Credentials → Create credentials → API key**. Copy it.
-4. Press **Restrict key** and, under *API restrictions*, limit it to
+4. Press **Restrict key** and, under _API restrictions_, limit it to
    **Cloud Text-to-Speech API**. An unrestricted key that leaks can be used for
    anything on the project.
 
@@ -59,7 +59,7 @@ nothing.
 GOOGLE_TTS_API_KEY=...     \
 VOICE_NAME=ur-IN-Wavenet-A \
 LANG_CODE=ur-IN            \
-npm run gen:voice
+npm run gen:voice -- --approved   # only once the owner has said yes to the cost
 ```
 
 A few minutes. It writes `assets/voice/<id>.mp3` and rebuilds
@@ -69,6 +69,12 @@ The run is **idempotent** — it skips anything already on disk. If it stops
 half-way, run it again and it carries on. Add vocabulary later and only the new
 words are synthesised. `--force` regenerates everything; use it when you change
 voice.
+
+`npm run gen:voice -- --cost` (add `--force` for a full re-record, and
+`VOICE_SET=m` for the second voice) prints what the same run would send and
+cost, with no key and no request. On 2026-10-24 a full re-record was 20,095
+characters a voice: nothing inside the month's free million, $0.60 a voice
+past it.
 
 Listen to a few before going on:
 
@@ -100,25 +106,14 @@ id, and falls back to device TTS only for anything without one.
 
 ---
 
-## The other way: let CI do it
+## CI does not generate (2026-10-24)
 
-If you would rather not commit audio, put the key in the repository and let each
-build synthesise.
-
-**Settings → Secrets and variables → Actions → New repository secret**
-
-| Secret | Value |
-| --- | --- |
-| `GOOGLE_TTS_API_KEY` | your key |
-| `VOICE_NAME` *(optional)* | e.g. `ur-IN-Wavenet-A` |
-
-The **Deploy web preview** workflow already runs the generator when the key is
-present and skips it silently when it is not. The trade-off is that every build
-spends ~11,000 characters of the allowance — about ninety builds a month stay
-inside the free tier.
-
-Committing the clips (step 4) avoids this entirely, and is the better default
-for an app you intend to release.
+The owner asked to be asked, with the cost, before every use of the key. A
+build cannot ask, so the **Deploy web preview** workflow no longer synthesises,
+even when a `GOOGLE_TTS_API_KEY` secret exists: it runs `--cost` for both voices
+and prints what is missing and what recording it would cost. Clips are made by
+hand (step 3) once the owner says yes, and committed (step 4). A key left in the
+repository's secrets is no longer read by any workflow and can be deleted.
 
 ---
 
@@ -144,9 +139,9 @@ at this volume — check their pricing against 11,000 characters first.
 
 ## If something goes wrong
 
-| Symptom | Cause |
-| --- | --- |
-| `403 … API has not been used` | The API is not enabled on that project — step 1.2. |
-| `400 … voice … does not exist` | Wrong `VOICE_NAME` for the `LANG_CODE`. Run `--voices`. |
-| `429` | Rate limited. Run it again; finished clips are skipped. |
-| Clips exist but nothing plays | Manifest not rebuilt — `npm run gen:voice -- --manifest`. |
+| Symptom                        | Cause                                                     |
+| ------------------------------ | --------------------------------------------------------- |
+| `403 … API has not been used`  | The API is not enabled on that project — step 1.2.        |
+| `400 … voice … does not exist` | Wrong `VOICE_NAME` for the `LANG_CODE`. Run `--voices`.   |
+| `429`                          | Rate limited. Run it again; finished clips are skipped.   |
+| Clips exist but nothing plays  | Manifest not rebuilt — `npm run gen:voice -- --manifest`. |

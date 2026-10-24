@@ -140,32 +140,19 @@ jobs:
       - name: Check for physical left/right in Urdu-bearing components
         run: npm run check:direction
 
-      - name: Generate voice clips (only if a TTS key is set)
-        env:
-          GOOGLE_TTS_API_KEY: ${{ secrets.GOOGLE_TTS_API_KEY }}
-          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
-          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
-        run: node scripts/generate-voice.js
+      # The owner, 2026-10-24: ask before every use of the text-to-speech
+      # key, with its cost. A deploy cannot ask, so it no longer generates:
+      # it says what is missing or stale in both voices and what recording it
+      # would cost, sends nothing, and the clips are made by hand once the
+      # owner says yes (docs/daily-review/README.md, "What a run must not
+      # do"). Both sets, since a changed word must be re-recorded in each.
+      - name: Say what voice clips are missing and what they would cost
+        run: |
+          node scripts/generate-voice.js --cost
+          VOICE_SET=m node scripts/generate-voice.js --cost
 
-      # The app offers two voices and asks which one during setup, so both sets
-      # have to be current. Only the first was ever generated here, which meant
-      # a changed word reached the deploy freshly recorded in the woman's voice
-      # and stale in the man's, and nothing in the pipeline said so. Found by
-      # having to regenerate the second set by hand after a content fix.
-      #
-      # Costs nothing when nothing is stale: the generator asks the API only
-      # for clips whose text or voice has changed, so the usual run is a
-      # no-op in both sets.
-      - name: Generate the second voice's clips (only if a TTS key is set)
-        env:
-          VOICE_SET: m
-          GOOGLE_TTS_API_KEY: ${{ secrets.GOOGLE_TTS_API_KEY }}
-          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
-          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
-        run: node scripts/generate-voice.js
-
-      # After generation, so a clip the API returned as silence is caught here
-      # rather than by a learner. ~40s for all 2,893 with ffmpeg, which the
+      # So a clip the API returned as silence is caught here rather than by a
+      # learner. ~40s for all 2,893 with ffmpeg, which the
       # ubuntu runners ship.
       - name: Check that every voice clip is audible
         run: npm run check:voice
