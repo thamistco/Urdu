@@ -19,8 +19,9 @@ type DialogueEx = Extract<Exercise, { kind: 'dialogue' }>;
  * is read. That matters more in Urdu than it looks — the polite forms only make
  * sense once you can see who is speaking to whom.
  *
- * Same two stages as a reading passage: read it in Urdu, then the English
- * appears alongside the question, so the first pass is never a translation.
+ * Same two stages as a reading passage: read it in Urdu, then the question,
+ * and the English once it is answered. Shown alongside the question, the
+ * English answered it for anyone who reads English (QA, 2026-10-24).
  */
 export function DialogueExercise({ exercise, track, showRoman, locked, onGraded }: ExerciseProps<DialogueEx>) {
   const { dialogue } = exercise;
@@ -90,7 +91,7 @@ export function DialogueExercise({ exercise, track, showRoman, locked, onGraded 
                     ) : null}
                   </>
                 )}
-                {stage === 'answer' ? (
+                {picked != null ? (
                   <Txt style={{ color: palette.ink }} className="mt-1 text-xs leading-4 opacity-75">
                     {withRegister(l.meaning, l.urdu)}
                   </Txt>

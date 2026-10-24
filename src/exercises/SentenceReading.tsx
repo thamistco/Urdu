@@ -257,7 +257,10 @@ export function ReadingExercise({ exercise, track, showRoman, locked, onGraded }
                   ) : null}
                 </>
               )}
-              {stage === 'answer' ? (
+              {/* The English once the question is answered, not with it: shown
+                  beside the question, "The tea is hot and sweet." answered
+                  "How is the tea?" for anyone reading English (QA, 2026-10-24). */}
+              {picked != null ? (
                 <Txt style={{ color: palette.ink }} className="mt-1 text-xs leading-4 opacity-70">
                   {withRegister(l.meaning, l.urdu)}
                 </Txt>
