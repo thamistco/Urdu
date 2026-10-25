@@ -124,7 +124,7 @@ export const NEAR_CELLS = 2;
  * Precision was 0.5, and at that half a drawing could be anywhere: three
  * straight swipes across the card (down, across, a diagonal) were praised as
  * "Beautifully done" on 63 of the 160 forms, two crossed lines on 33 (tester,
- * a complete beginner, 2026-10-24). At 0.8 those are 16 and 5. Measured over
+ * a complete beginner, 2026-10-24). At 0.8 those are 16 and 4. Measured over
  * the simulated hands below, no honest trace changes: careful, sloppy and
  * shaky ones pass as before, and a trace drawn off the model or at the wrong
  * size fails on coverage before precision, at every precision tried.

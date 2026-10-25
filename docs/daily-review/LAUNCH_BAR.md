@@ -74,20 +74,22 @@ Q-062 (a real phone).
 
 **Store apps only (O3):** Q-001, Q-002, Q-019, Q-024.
 
-**Can follow launch (34):** Q-003, Q-005, Q-006 (costs money), Q-007, Q-008,
+**Can follow launch (33):** Q-003, Q-005, Q-006 (costs money), Q-007, Q-008,
 Q-009, Q-017, Q-018, Q-028, Q-030, Q-036, Q-037, Q-039, Q-041, Q-042, Q-043,
 Q-046, Q-047 (the track's place; the tab icons are done), Q-048, Q-050,
 Q-054, Q-055, Q-056, Q-059 (کنجی's gloss), Q-060, Q-061, Q-064, Q-065, Q-067,
-Q-074, Q-076, Q-078, Q-083, Q-085. "The best it can be" still wants them, and
+Q-074, Q-076, Q-078, Q-085. "The best it can be" still wants them, and
 the nights keep taking them; they do not hold launch.
 
 **Closed the same night (3):** Q-040 and Q-044, found already done on
 checking (synonyms and forgiving spelling are accepted); Q-075, fixed
 (853f26e).
 
-**Found on 24 October, fixed the same night:** Q-053 (grammar notes in the
-browser's font), Q-097 (tracing praised swipes), Q-098 (a reading's question
-answered by its English). **Can follow:** Q-099 to Q-105.
+**Fixed on 24 October:** Q-053 (grammar notes in the browser's font, found
+12 October, before launch), Q-083 (unused fonts shipped, can follow), and,
+found the same night, Q-097 (tracing praised swipes), Q-098 (a reading's
+question answered by its English) and Q-099 (the leave dialog's wording).
+**Found on 24 October, can follow:** Q-100 to Q-107.
 
 **Found on 23 October, can follow:** Q-086, Q-087, Q-088 to Q-092 (the
 content sweep), Q-094 to Q-096 (the tester).
