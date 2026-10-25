@@ -774,13 +774,17 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
               // piled up (performance review, 2026-10-11).
               const leave = () => nav.popTo('Main');
               // Saved already: closing a re-ask goes to the results, and the
-              // "will not be kept" warning would be untrue (P-085).
+              // "starts again" warning would be untrue (P-085).
               if (inReask) return setDone(true);
               const answered = exercises.slice(0, graded != null ? idx + 1 : idx).some((e) => !isTeaching(e));
               if (!answered) return leave();
+              // Said as it is: the lesson and its XP start again, but each
+              // answer's review grade is kept on the way out (the unmount
+              // flush, useSessionGradeFlush). It said the answers "will not be
+              // kept" (QA, 2026-10-24, Q-099).
               confirmAction(
                 'Leave this lesson?',
-                'Your answers in this lesson will not be kept, and it starts again next time.',
+                'It starts again from the beginning next time. What you answered still counts towards your reviews.',
                 'Leave',
                 leave
               );
