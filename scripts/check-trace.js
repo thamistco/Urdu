@@ -244,6 +244,51 @@ for (const grade of GRADES) {
   );
 }
 
+// Straight swipes across the card, the way a learner who has given up on the
+// shape draws: three (down, across, a diagonal) were praised on 63 of the 160
+// forms at a precision of 0.5 (tester, 2026-10-24). A single line down the
+// middle is left out: for alif and its like it is the honest trace.
+{
+  const line = ([x1, y1, x2, y2]) =>
+    Array.from({ length: 31 }, (_, k) => ({
+      x: SIDE * (x1 + ((x2 - x1) * k) / 30),
+      y: SIDE * (y1 + ((y2 - y1) * k) / 30),
+    }));
+  const SWIPES = {
+    'three swipes': [
+      [0.52, 0.08, 0.42, 0.95],
+      [0.15, 0.5, 0.85, 0.5],
+      [0.8, 0.3, 0.2, 0.7],
+    ],
+    'a plus': [
+      [0.5, 0.1, 0.5, 0.9],
+      [0.1, 0.5, 0.9, 0.5],
+    ],
+    'an X': [
+      [0.15, 0.15, 0.85, 0.85],
+      [0.85, 0.15, 0.15, 0.85],
+    ],
+  };
+  // One form in eight at most: a swipe that happens to lie along a simple
+  // letter is, near enough, a trace of it.
+  const MAX_RATE = 12.5;
+  for (const [name, swipes] of Object.entries(SWIPES)) {
+    let passed = 0;
+    let n = 0;
+    for (const entry of Object.values(GLYPH_MASKS)) {
+      const targets = traceTargets(decodeMask(entry[0], MASK_GRID), MASK_GRID);
+      n++;
+      if (scoreTrace(swipes.map(line), SIDE, MASK_GRID, targets.skeleton, targets.tolerant).pass) passed++;
+    }
+    const rate = (passed / n) * 100;
+    const ok = rate <= MAX_RATE;
+    if (!ok) failures++;
+    console.log(
+      `${name.padEnd(24)} ${passed}/${n} pass (${rate.toFixed(0)}%)  want ≤${MAX_RATE}%  ${ok ? 'ok' : 'PROBLEM'}`
+    );
+  }
+}
+
 console.log('');
 if (failures) {
   console.log(`${failures} of the grades behave wrongly — the exercise is not calibrated.`);
