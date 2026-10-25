@@ -8,9 +8,16 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 import * as Font from 'expo-font';
-import { Fraunces_600SemiBold, Fraunces_900Black } from '@expo-google-fonts/fraunces';
-import { PublicSans_400Regular, PublicSans_500Medium, PublicSans_700Bold } from '@expo-google-fonts/public-sans';
-import { NotoNastaliqUrdu_400Regular, NotoNastaliqUrdu_700Bold } from '@expo-google-fonts/noto-nastaliq-urdu';
+// Each weight by its own file. The packages' index requires every weight it
+// has, so the bundler shipped all 40 font files, 4.5 MB, for the 7 the app
+// loads (performance review, 2026-10-24, Q-083).
+import Fraunces_600SemiBold from '@expo-google-fonts/fraunces/Fraunces_600SemiBold.ttf';
+import Fraunces_900Black from '@expo-google-fonts/fraunces/Fraunces_900Black.ttf';
+import PublicSans_400Regular from '@expo-google-fonts/public-sans/PublicSans_400Regular.ttf';
+import PublicSans_500Medium from '@expo-google-fonts/public-sans/PublicSans_500Medium.ttf';
+import PublicSans_700Bold from '@expo-google-fonts/public-sans/PublicSans_700Bold.ttf';
+import NotoNastaliqUrdu_400Regular from '@expo-google-fonts/noto-nastaliq-urdu/NotoNastaliqUrdu_400Regular.ttf';
+import NotoNastaliqUrdu_700Bold from '@expo-google-fonts/noto-nastaliq-urdu/NotoNastaliqUrdu_700Bold.ttf';
 
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { ConfirmHost } from './src/components/ConfirmHost';
