@@ -50,6 +50,14 @@ function isTeaching(ex: Exercise | undefined): boolean {
 }
 
 /**
+ * Said, and shown under "Once more", when the re-asks start: the lesson is
+ * already saved, and nothing here counts. Without it the last question said
+ * Continue, the bar ran back to empty and ✕ still looked like losing the
+ * lesson (P-085 second check, 2026-10-24).
+ */
+const REASK_SAVED = 'Lesson saved. These don’t count; close any time for your results.';
+
+/**
  * The first question ever asked about a word, where guessing is the point.
  *
  * Guessing before being told is worth more than being told outright — four
@@ -419,6 +427,17 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   const bannerRef = useBannerFocus(answered, idx);
   const total = exercises.length;
 
+  /**
+   * A re-ask's answer: the banner and nothing else, no grade and no heart.
+   * Scrolled to like any answer, since a re-ask's recall grid is the case
+   * that scroll was added for (P-085 second check).
+   */
+  const answerReask = useCallback((correct: boolean) => {
+    setGraded(correct);
+    clearTimeout(toEndRef.current);
+    toEndRef.current = setTimeout(() => bodyRef.current?.scrollToEnd({ animated: true }), 120);
+  }, []);
+
   /** Keeps the item if it was missed here, forgets it once it is answered right first time. */
   const noteMiss = useCallback(
     (result: GradedResult, at: number) => {
@@ -461,10 +480,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
    */
   const onGraded = useCallback(
     (result: GradedResult) => {
-      if (idx >= exercises.length) {
-        setGraded(result.correct);
-        return;
-      }
+      if (idx >= exercises.length) return answerReask(result.correct);
       if (isTeaching(exercises[idx])) {
         const seen = srsGradeFor(result.correct, !!result.retried, demandOf(exercises[idx]));
         result.items.forEach((it) => recordItemGrade(it, seen));
@@ -534,7 +550,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
     // against exercise 0 — which in a grammar lesson is the teaching card, and
     // `isTeaching` therefore suppressed the heart loss for every wrong answer in
     // the lesson. Grammar cost nothing to get wrong.
-    [loseHeart, exercises, idx, recordItemGrade, noteMiss, planReask]
+    [loseHeart, exercises, idx, recordItemGrade, noteMiss, planReask, answerReask]
   );
 
   // Stop this lesson's audio the instant the screen is left, however that
@@ -741,7 +757,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
         >
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Close lesson"
+            accessibilityLabel={inReask ? 'Close and see your results' : 'Close lesson'}
             style={reach(12)}
             onPress={() => {
               feedback.tap();
@@ -776,11 +792,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
               count out of sight at 200% text (QA round 5, M27). */}
           <View className="flex-1" style={{ minWidth: 72 }}>
             <ProgressBar
-              progress={
-                inReask
-                  ? (idx - total + (graded != null ? 1 : 0)) / reask.length
-                  : (idx + (graded != null ? 1 : 0)) / total
-              }
+              progress={inReask ? 1 : (idx + (graded != null ? 1 : 0)) / total}
               color={palette.jade}
               height={12}
             />
@@ -804,6 +816,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
             <Eyebrow style={{ color: palette.gold }}>
               {inReask ? 'Once more · the ones you missed' : isReview ? 'Review' : 'Review · from an earlier lesson'}
             </Eyebrow>
+            {inReask ? <Txt className="mt-1 text-xs text-paper/65">{REASK_SAVED}</Txt> : null}
           </View>
         ) : null}
 
@@ -847,7 +860,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
             is there before its words change: one that appears together with
             its text is often not read at all. */}
         <View aria-live="polite" style={SPOKEN_ONLY}>
-          <Txt>{answered ? spokenVerdict(!!graded, reveal, track) : ''}</Txt>
+          <Txt>{answered ? spokenVerdict(!!graded, reveal, track) : idx === total ? REASK_SAVED : ''}</Txt>
         </View>
 
         {/* feedback footer */}
@@ -994,7 +1007,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
                   sound={false}
                   onPress={advance}
                 >
-                  {idx < steps.length - 1 ? 'Continue' : 'Finish'}
+                  {idx < steps.length - 1 && idx !== total - 1 ? 'Continue' : 'Finish'}
                 </Button>
               </View>
             </SafeAreaView>
