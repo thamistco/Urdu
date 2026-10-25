@@ -6,20 +6,25 @@ import { ALL_LESSONS, findLesson, lessonOrderForTrack, type Lesson } from '../da
 import type { LearnTrack } from '../store/useSettingsStore';
 
 /** Every lesson a learner can be graded in, on each track it is on. */
-const SITTINGS: Array<{ lesson: Lesson; track: LearnTrack; exercises: Exercise[] }> = (['both', 'roman'] as const).flatMap(
-  (track) =>
-    lessonOrderForTrack(track)
-      .map((id) => findLesson(id)!)
-      .filter((l) => l && l.kind !== 'review')
-      .map((lesson) => ({ lesson, track, exercises: buildLessonExercises(lesson, [], track, new Set()) }))
+const SITTINGS: Array<{ lesson: Lesson; track: LearnTrack; exercises: Exercise[] }> = (
+  ['both', 'roman'] as const
+).flatMap((track) =>
+  lessonOrderForTrack(track)
+    .map((id) => findLesson(id)!)
+    .filter((l) => l && l.kind !== 'review')
+    .map((lesson) => ({ lesson, track, exercises: buildLessonExercises(lesson, [], track, new Set()) }))
 );
 
 const positionOf = (ex: Exercise) => ('position' in ex ? ex.position : undefined);
-const key = (ex: Exercise) => itemsOf(ex).map((i) => `${i.type}:${i.id}`).join(',');
+const key = (ex: Exercise) =>
+  itemsOf(ex)
+    .map((i) => `${i.type}:${i.id}`)
+    .join(',');
 
 /** Letter ids for each script character, from the letters' own forms. */
 const LETTER_OF = new Map<string, string>();
-for (const l of LETTERS) for (const g of Object.values(l.forms)) for (const c of g.replace(/ـ/g, '')) LETTER_OF.set(c, l.id);
+for (const l of LETTERS)
+  for (const g of Object.values(l.forms)) for (const c of g.replace(/ـ/g, '')) LETTER_OF.set(c, l.id);
 
 describe('P-085: re-asking a missed item', () => {
   it('asks the same item in a different kind, keeping a letter’s position', () => {
@@ -49,7 +54,9 @@ describe('P-085: re-asking a missed item', () => {
   it('builds a typed word from tiles only on a script track, and only from letters already taught', () => {
     for (const { lesson, track, exercises } of SITTINGS) {
       const order = lessonOrderForTrack(track);
-      const taught = new Set(order.slice(0, order.indexOf(lesson.id) + 1).flatMap((id) => findLesson(id)?.letterIds ?? []));
+      const taught = new Set(
+        order.slice(0, order.indexOf(lesson.id) + 1).flatMap((id) => findLesson(id)?.letterIds ?? [])
+      );
       for (const ex of exercises.filter((e) => e.kind === 'typeWord')) {
         const [again] = reaskExercises([{ ex, at: 0 }], lesson, track, 10);
         if (again?.kind !== 'wordBuild') continue;
