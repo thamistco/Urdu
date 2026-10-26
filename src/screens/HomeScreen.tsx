@@ -827,8 +827,12 @@ export function HomeScreen() {
                 }
                 style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
               >
+                {/* Wraps, and its text column keeps its longest word: at 200% on
+                    320x568 the column was squeezed to one letter a line
+                    (S/T/A/R/T H/E/R/E) and the card ran 2,000px tall, its button
+                    off the screen (QA, 2026-10-26; Q-080). */}
                 <View
-                  className="mb-4 flex-row items-center gap-3 rounded-2xl border px-4 py-3.5"
+                  className="mb-4 flex-row flex-wrap items-center gap-3 rounded-2xl border px-4 py-3.5"
                   style={{
                     backgroundColor: withAlpha(palette.gold, 0.14),
                     borderColor: withAlpha(palette.gold, 0.42),
@@ -846,7 +850,7 @@ export function HomeScreen() {
                       <LessonIcon kind={currentLesson.kind} topic={currentLesson.topic} size={26} />
                     )}
                   </View>
-                  <View className="flex-1">
+                  <View className="flex-1" style={wholeWords}>
                     <Eyebrow style={{ color: palette.gold }}>
                       {catchUp
                         ? 'Review first'
