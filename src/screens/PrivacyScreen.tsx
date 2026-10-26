@@ -35,19 +35,27 @@ export function PrivacyScreen() {
       <Screen>
         <TopBar onBack={nav.canGoBack() ? () => nav.goBack() : undefined} title="Privacy Policy" />
         <Heading className="mb-1 text-lg">Your data, plainly</Heading>
-        <Txt className="mb-6 text-[0.75rem] text-paper/55">Last updated 2026-10-16</Txt>
+        <Txt className="mb-6 text-[0.75rem] text-paper/55">Last updated 2026-10-26</Txt>
 
         <Section title="No account is required">
           Qaaf works fully as a guest. Your lesson progress, streak, hearts, gems and settings are stored only on this
           device, in its local app storage. We never see them, and nothing is sent anywhere unless you turn on sign-in
-          below.
+          below. That storage is what lets the app work; nothing in it is used for tracking.
         </Section>
 
         <Section title="If you choose to sign in">
           Signing in with Google or Apple is optional and exists so your progress can follow you to a second device. It
-          creates an account identified by the email your provider shares with us, and your progress is copied to that
-          account so it can be restored elsewhere. You can stop syncing at any time from Settings; your on-device
-          progress keeps working exactly as before.
+          creates an account identified by the email your provider shares with us, and your progress and settings are
+          copied to that account so they can be restored elsewhere. Signing in also keeps a sign-in key on this device,
+          so you stay signed in. You can stop syncing at any time from Settings; your on-device progress keeps working
+          exactly as before.
+        </Section>
+
+        <Section title="Why we keep it, and who handles it">
+          We keep your account only to give you the saved progress you asked for by signing in: that is what makes it
+          lawful for us to hold it. Supabase stores the account and the copy of your progress for us. Google or Apple
+          confirm who you are when you sign in, under their own privacy policies. GitHub hosts the website. Some of
+          these services may keep data outside the UK; where they do, it is protected by the safeguards UK law requires.
         </Section>
 
         <Section title="What we do not do">
@@ -72,6 +80,20 @@ export function PrivacyScreen() {
           and the copy of your progress stored with it; if you have signed out, sign in again to find it. Our database
           provider may keep backups, and records of past sign-ins, after an account is deleted. Resetting your progress
           from Settings clears it without needing to delete the app.
+        </Section>
+
+        <Section title="How long it is kept">
+          Your account and its copy of your progress are kept until you delete them. After that, the database provider’s
+          backups may hold a copy for a short time, until they are replaced.
+        </Section>
+
+        <Section title="Your rights">
+          You can ask to see the data we hold about you, to have it corrected or deleted, to limit how we use it, to
+          have a copy of it, or object to how we use it. Delete account in Settings does the deleting for you straight
+          away. Nothing is required of you: you only ever need to sign in if you want your progress on another device.
+          Nothing about you is decided automatically; the review schedule is worked out on your device and only decides
+          which words come back. If you are unhappy with how your data is handled, tell us first and we will reply, and
+          you can also complain to the Information Commissioner’s Office at ico.org.uk.
         </Section>
 
         <Section title="Children">
