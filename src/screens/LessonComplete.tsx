@@ -38,11 +38,14 @@ export function LessonComplete({
   result,
   correct,
   total,
+  skippedTraces = 0,
   onHome,
 }: {
   result: FinishResult;
   correct: number;
   total: number;
+  /** Traces passed over with "Can't trace now", already left out of `total`. */
+  skippedTraces?: number;
   onHome: () => void;
 }) {
   const accuracy = total > 0 ? Math.round((correct / total) * 100) : 100;
@@ -262,6 +265,9 @@ export function LessonComplete({
                 {correct < total
                   ? 'Whatever slipped comes back first in your next practice.'
                   : 'Nothing slipped. The words come back when they are due.'}
+                {skippedTraces
+                  ? ` ${skippedTraces === 1 ? 'One trace' : `${skippedTraces} traces`} skipped, not counted; trace any letter in Letter Lab.`
+                  : ''}
               </Txt>
             )}
             <Button onPress={onHome}>Continue</Button>

@@ -123,4 +123,29 @@ describe('LessonScreen wiring (URD-055)', () => {
       /const\s*\{\s*record:\s*recordItemGrade\s*,\s*flushNow:\s*flushPendingGrades\s*\}\s*=\s*useSessionGradeFlush\(/
     );
   });
+
+  // P-122, "Can't trace now": a skipped step grades nothing, costs nothing,
+  // and is left out of the score (second check, 2026-10-26: counted as wrong,
+  // a learner who cannot trace could never pass 74% on l-1).
+  it('a skipped step grades nothing and charges nothing', () => {
+    const skip = extractBody('skipStep', 'const skipStep = useCallback(');
+    for (const call of ['recordItemGrade(', 'loseHeart(', 'setCorrectCount(', 'noteMiss(']) {
+      expect(skip, call).not.toContain(call);
+    }
+    expect(skip).toContain('skippedRef.current += 1');
+    expect(skip).toContain('advanceRef.current()');
+  });
+
+  it('onGraded turns a skip away before it grades anything, re-asks included', () => {
+    const body = extractBody('onGraded', 'const onGraded = useCallback(');
+    const skip = body.indexOf('result.skipped');
+    expect(skip).toBeGreaterThan(-1);
+    expect(skip).toBeLessThan(body.indexOf('recordItemGrade('));
+    expect(skip).toBeLessThan(body.indexOf('answerReask('));
+  });
+
+  it('the lesson is scored without the steps that were skipped', () => {
+    const advanceBody = extractBody('advance', 'const advance = () =>');
+    expect(advanceBody).toMatch(/total:\s*total\s*-\s*skippedRef\.current/);
+  });
 });
