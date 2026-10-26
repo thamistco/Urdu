@@ -657,6 +657,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
     missRef.current = new Map();
     reaskRef.current = [];
     skippedRef.current = 0;
+    setSkippedCount(0);
   }, [lesson.id]);
 
   if (done && result) {
