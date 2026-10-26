@@ -808,9 +808,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
               className="mt-0.5 text-right text-[0.625rem] text-paper/55"
               style={{ fontVariant: ['tabular-nums'] }}
             >
-              {inReask
-                ? `Once more · ${idx - total + 1} of ${reask.length}`
-                : `${Math.min(idx + 1, total)} of ${total}`}
+              {inReask ? `${idx - total + 1} of ${reask.length}` : `${Math.min(idx + 1, total)} of ${total}`}
             </Txt>
           </View>
           <Hearts count={hearts} free={heartsFree} />
@@ -820,7 +818,11 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
             <Eyebrow style={{ color: palette.gold }}>
               {inReask ? 'Once more · the ones you missed' : isReview ? 'Review' : 'Review · from an earlier lesson'}
             </Eyebrow>
-            {inReask ? <Txt className="mt-1 text-xs text-paper/65">{REASK_SAVED}</Txt> : null}
+            {/* On the first re-ask only: at 200% on 320x568 the header with this
+                line took 44% of the screen on every re-ask and pushed the
+                question under the fold (design review, 2026-10-26). After the
+                first, the eyebrow and ✕'s label carry it. */}
+            {idx === total ? <Txt className="mt-1 text-xs text-paper/65">{REASK_SAVED}</Txt> : null}
           </View>
         ) : null}
 
