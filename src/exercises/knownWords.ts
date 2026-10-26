@@ -11,9 +11,9 @@ type Progress = {
 };
 
 /**
- * Words a learner knows without having practised them here: the words of the
- * word lessons they skipped, as a speaker at onboarding or by passing a unit
- * review (Q-093).
+ * Words a learner knows without having practised them in their own lesson: the
+ * words of the word lessons they skipped, as a speaker at onboarding (known by
+ * ear) or by passing a unit review (tested there, on screen) (Q-093).
  *
  * A speaker who said they understand Urdu has 50 beginner word lessons marked
  * "Skipped as already known", 501 words, and every count read only the words
@@ -40,7 +40,7 @@ export function knownWordIds(p: Pick<Progress, 'learnedWords' | 'skippedLessons'
 }
 
 /** The letters this learner has met: practised, or in a letter lesson done or skipped. */
-function lettersMet(p: Progress): Set<string> {
+export function lettersMet(p: Progress): Set<string> {
   const met = new Set(p.learnedLetters);
   for (const id of [...Object.keys(p.completedLessons), ...Object.keys(p.skippedLessons)]) {
     const lesson = findLesson(id);

@@ -18,7 +18,7 @@ import { lastSevenDayKeys } from '../lib/date';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { LETTERS } from '../data/letters';
 import { WORDS } from '../data/words';
-import { knownWordIds } from '../exercises/knownWords';
+import { knownWordIds, lettersMet } from '../exercises/knownWords';
 import type { NoParamScreen, RootStackParamList } from '../navigation/types';
 import { wholeWords } from '../lib/wholeWords';
 
@@ -218,8 +218,8 @@ export function ProfileScreen() {
             <StatBox icon="bolt" value={s.totalXp} label="Total XP" />
             <StatBox icon="gem" value={s.gems} label="Gems" />
             <StatBox icon="medal" value={s.longestStreak} label="Best streak" />
-            <StatBox icon="pen" value={`${s.learnedLetters.length}/${LETTERS.length}`} label="Letters" />
-            <StatBox icon="book" value={`${knownWords}/${WORDS.length}`} label="Words" />
+            <StatBox icon="pen" value={`${lettersMet(s).size}/${LETTERS.length}`} label="Letters" />
+            <StatBox icon="book" value={`${knownWords}/${WORDS.length}`} label="Words known" />
           </View>
           <FreezeCard />
         </Reveal>
