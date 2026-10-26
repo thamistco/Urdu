@@ -295,7 +295,7 @@ const CORE_WORDS: Word[] = [
   { id: 'w-darwaza', urdu: 'دروازہ', roman: 'darwaaza', meaning: 'door', emoji: '🚪', topic: 'home' },
   { id: 'w-khirki', urdu: 'کھڑکی', roman: 'khiṛki', meaning: 'window', emoji: '🪟', topic: 'home' },
   { id: 'w-chabi', urdu: 'چابی', roman: 'chaabi', meaning: 'key', emoji: '🔑', topic: 'home' },
-  { id: 'w-ghadi', urdu: 'گھڑی', roman: 'ghaṛi', meaning: 'clock', emoji: '⌚', topic: 'home' },
+  { id: 'w-ghadi', urdu: 'گھڑی', roman: 'ghaṛi', meaning: 'watch / clock', emoji: '⌚', topic: 'home' },
   { id: 'w-bistar', urdu: 'بستر', roman: 'bistar', meaning: 'bed', emoji: '🛏️', topic: 'home' },
   { id: 'w-chiragh', urdu: 'چراغ', roman: 'chiraagh', meaning: 'lamp', emoji: '🪔', topic: 'home' },
   { id: 'w-nal2', urdu: 'نل', roman: 'nal', meaning: 'tap', emoji: '🚰', topic: 'home' },
@@ -659,8 +659,8 @@ const CORE_WORDS: Word[] = [
   { id: 'w-ghanta', urdu: 'گھنٹہ', roman: 'ghanṭa', meaning: 'hour', emoji: '⏳', topic: 'time' },
   { id: 'w-dophar', urdu: 'دوپہر', roman: 'dopahar', meaning: 'noon', emoji: '🌞', topic: 'time' },
   { id: 'w-aadhiraat', urdu: 'آدھی رات', roman: 'aadhi raat', meaning: 'midnight', emoji: '🌚', topic: 'time' },
-  { id: 'w-fajar', urdu: 'فجر', roman: 'fajar', meaning: 'dawn', emoji: '🌄', topic: 'time' },
-  { id: 'w-pichla', urdu: 'پچھلا', roman: 'pichhla', meaning: 'previous / last', emoji: '⏮️', topic: 'time' },
+  { id: 'w-fajar', urdu: 'فجر', roman: 'fajar', meaning: 'dawn (also the dawn prayer)', emoji: '🌄', topic: 'time' },
+  { id: 'w-pichla', urdu: 'پچھلا', roman: 'pichhla', meaning: 'previous (as in last week)', emoji: '⏮️', topic: 'time' },
   { id: 'w-agla', urdu: 'اگلا', roman: 'agla', meaning: 'next', emoji: '⏭️', topic: 'time' },
   { id: 'w-waqfa', urdu: 'وقفہ', roman: 'waqfa', meaning: 'interval / break', emoji: '⏸️', topic: 'time' },
   { id: 'w-dermiyaan', urdu: 'درمیان', roman: 'darmiyaan', meaning: 'in between', emoji: '↔️', topic: 'time' },
@@ -1058,8 +1058,8 @@ const CORE_WORDS: Word[] = [
   // the twelve months — Urdu uses the same names as English, adapted to its
   // own script and sounds, the way most languages that adopted the Gregorian
   // calendar do
-  { id: 'w-january', urdu: 'جنوری', roman: 'janvari', meaning: 'January', emoji: '📅', topic: 'days' },
-  { id: 'w-february', urdu: 'فروری', roman: 'farvari', meaning: 'February', emoji: '📅', topic: 'days' },
+  { id: 'w-january', urdu: 'جنوری', roman: 'janwari', meaning: 'January', emoji: '📅', topic: 'days' },
+  { id: 'w-february', urdu: 'فروری', roman: 'farwari', meaning: 'February', emoji: '📅', topic: 'days' },
   { id: 'w-march', urdu: 'مارچ', roman: 'maarch', meaning: 'March', emoji: '📅', topic: 'days' },
   { id: 'w-april', urdu: 'اپریل', roman: 'aprail', meaning: 'April', emoji: '📅', topic: 'days' },
   { id: 'w-may', urdu: 'مئی', roman: 'maee', meaning: 'May', emoji: '📅', topic: 'days' },

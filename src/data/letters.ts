@@ -223,7 +223,7 @@ export const LETTERS: Letter[] = [
     meaning: 'whole / proven',
     emoji: '✅',
     group: 2,
-    note: 'Three dots above. One of three letters spelling the same “s”, borrowed from Arabic; you meet it in متاثر (mutaassir, “impressed”).',
+    note: 'The be shape with three dots above. One of three letters spelling the same “s”, borrowed from Arabic; you meet it in متاثر (mutaassir, “impressed”).',
   },
   {
     id: 'jeem',
@@ -302,7 +302,7 @@ export const LETTERS: Letter[] = [
     forms: nonConnector('ڈ'),
     word: 'ڈبہ',
     roman: 'ḍabba',
-    meaning: 'box',
+    meaning: 'box / tin',
     emoji: '📦',
     group: 3,
     note: 'Daal with the retroflex mark, the hard d made with the tongue curled back.',
