@@ -265,11 +265,16 @@ export function LessonComplete({
                 {correct < total
                   ? 'Whatever slipped comes back first in your next practice.'
                   : 'Nothing slipped. The words come back when they are due.'}
-                {skippedTraces
-                  ? ` ${skippedTraces === 1 ? 'One trace' : `${skippedTraces} traces`} skipped, not counted; trace any letter in Letter Lab.`
-                  : ''}
               </Txt>
             )}
+            {/* At any score: under 60% the line above is not shown, and the
+                learners who skip most were then told nothing about why the
+                total fell from 42 to 31 (second check, 2026-10-26). */}
+            {skippedTraces ? (
+              <Txt className="mb-4 text-center text-xs text-paper/55">
+                {`${skippedTraces === 1 ? 'One trace' : `${skippedTraces} traces`} skipped, not counted; trace any letter in Letter Lab.`}
+              </Txt>
+            ) : null}
             <Button onPress={onHome}>Continue</Button>
           </Reveal>
         </SafeAreaView>

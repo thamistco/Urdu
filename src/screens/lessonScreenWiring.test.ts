@@ -148,4 +148,8 @@ describe('LessonScreen wiring (URD-055)', () => {
     const advanceBody = extractBody('advance', 'const advance = () =>');
     expect(advanceBody).toMatch(/total:\s*total\s*-\s*skippedRef\.current/);
   });
+
+  it('the results screen shows the same total, without the skipped steps', () => {
+    expect(code).toMatch(/<LessonComplete[\s\S]*?total=\{total\s*-\s*skippedCount\}/);
+  });
 });
