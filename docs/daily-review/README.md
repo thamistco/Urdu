@@ -26,7 +26,7 @@ report.
 | 5   | Interaction and ease of use  | Friction, dead ends, confusing controls, error states, speed of a session                    | 2026-10-23    |
 | 6   | Onboarding and first session | The first five minutes: does a stranger reach a win and want a second day                    | 2026-10-23    |
 | 7   | Retention and habit          | Streaks, reminders, goals, comeback paths, what brings people back                           | 2026-10-23    |
-| 8   | Content quality              | Urdu accuracy, translations, audio, cultural fit, originality                                | 2026-10-24    |
+| 8   | Content quality              | Urdu accuracy, translations, audio, cultural fit, originality                                | 2026-10-26    |
 | 9   | Performance and reliability  | Load time, bundle size, offline, crashes, low-end phones                                     | 2026-10-24    |
 | 10  | Monetisation and pricing     | What is free, what is paid, price, trial, paywall design, family plans                       | 2026-10-23    |
 | 11  | Launch readiness             | Native builds, store accounts and listings, legal, support, payments                         | 2026-10-24    |
