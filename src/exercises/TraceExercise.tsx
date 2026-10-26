@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Question, palette } from './common';
-import { Eyebrow } from '../components/Text';
-import { Button } from '../components/Button';
+import { Eyebrow, Txt } from '../components/Text';
 import { TracePad, tracePadKey } from '../components/TracePad';
 import { POSITIONS } from '../data/letters';
 import type { ExerciseProps, Exercise } from './types';
@@ -47,12 +46,18 @@ export function TraceExercise({ exercise, locked, onGraded }: ExerciseProps<Trac
           second step (design review, 2026-10-26, R4). Shown to everyone:
           react-native-web always reports a screen reader as on, so it cannot
           be offered to screen-reader users alone. It grades nothing. */}
+      {/* Small and muted, not a button the size of Check: before the first
+          stroke it was the only control that looked live, and a beginner
+          would take it (second check, 2026-10-26). 44px tall to tap. */}
       {!scored && !locked ? (
-        <View className="mt-3">
-          <Button variant="ghost" onPress={() => onGraded({ items: [], correct: true, skipped: true })}>
-            Can’t trace now
-          </Button>
-        </View>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => onGraded({ items: [], correct: true, skipped: true })}
+          style={{ minHeight: 44, alignSelf: 'center', justifyContent: 'center', paddingHorizontal: 12 }}
+          className="mt-1"
+        >
+          <Txt className="text-sm text-paper/60">Can’t trace now</Txt>
+        </Pressable>
       ) : null}
     </View>
   );

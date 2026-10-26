@@ -257,6 +257,13 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
    * exercise it was missed on; asked once more after the lesson is saved.
    */
   const missRef = useRef<Map<string, Miss>>(new Map());
+  /**
+   * Steps passed over with "Can't trace now" (P-122). Left out of the score:
+   * counted as wrong, a learner who cannot trace could never pass 74% on l-1
+   * or earn its perfect bonus (second check, 2026-10-26).
+   */
+  const skippedRef = useRef(0);
+  const [skippedCount, setSkippedCount] = useState(0);
   /** The planned re-asks, read by `advance` in the same tap that planned them. */
   const reaskRef = useRef<Exercise[]>([]);
   const loseHeart = useProgressStore((s) => s.loseHeart);
@@ -463,6 +470,8 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   /** A step passed over ("Can't trace now"): on to the next, grading and counting nothing. */
   const skipStep = useCallback(
     (at: number) => {
+      skippedRef.current += 1;
+      setSkippedCount(skippedRef.current);
       planReask(at);
       advanceRef.current();
     },
@@ -489,8 +498,8 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
    */
   const onGraded = useCallback(
     (result: GradedResult) => {
-      if (idx >= exercises.length) return answerReask(result.correct);
       if (result.skipped) return skipStep(idx);
+      if (idx >= exercises.length) return answerReask(result.correct);
       if (isTeaching(exercises[idx])) {
         const seen = srsGradeFor(result.correct, !!result.retried, demandOf(exercises[idx]));
         result.items.forEach((it) => recordItemGrade(it, seen));
@@ -587,6 +596,18 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
     setDone(true);
   };
 
+  /**
+   * On to the next step, or, after the last, the lesson saved and its results.
+   *
+   * The grades are flushed before `finishLesson`, not just on unmount:
+   * `finishLesson` persists XP/streak/gems immediately, and `LessonComplete`
+   * renders in this same mounted screen rather than a new one — so if this
+   * visit's SRS grades waited for unmount alone, closing the app from that
+   * results screen (before ever pressing "home") would persist the lesson's
+   * rewards while silently losing its SRS grading. Safe to call before the
+   * effect's own unmount-time flush later finds an already-emptied map and
+   * does nothing.
+   */
   const advance = () => {
     invalidateSpeech();
     if (heartsSpent) {
@@ -602,19 +623,11 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
     if (idx < total - 1) {
       next();
     } else {
-      // Flushed here too, not just on unmount: `finishLesson` below persists
-      // XP/streak/gems immediately, and `LessonComplete` renders in this
-      // same mounted screen rather than a new one — so if this visit's SRS
-      // grades waited for unmount alone, closing the app from that results
-      // screen (before ever pressing "home") would persist the lesson's
-      // rewards while silently losing its SRS grading. Safe to call before
-      // the effect's own unmount-time flush later finds an already-emptied
-      // map and does nothing.
       flushPendingGrades();
       const r = finishLesson({
         lessonId: lesson.id,
         correct: correctCount,
-        total,
+        total: total - skippedRef.current,
         xp: lesson.xp,
         isReview,
         unitEvidence: isReview ? unitEvidenceFrom(lesson.id, firstTryRef.current) : undefined,
@@ -643,10 +656,19 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
     firstTryRef.current = new Map();
     missRef.current = new Map();
     reaskRef.current = [];
+    skippedRef.current = 0;
   }, [lesson.id]);
 
   if (done && result) {
-    return <LessonComplete result={result} correct={correctCount} total={total} onHome={() => nav.popTo('Main')} />;
+    return (
+      <LessonComplete
+        result={result}
+        correct={correctCount}
+        total={total - skippedCount}
+        skippedTraces={skippedCount}
+        onHome={() => nav.popTo('Main')}
+      />
+    );
   }
 
   // Nothing this lesson could ask. A white screen is what it used to be (an
