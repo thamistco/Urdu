@@ -21,7 +21,7 @@ import { strength } from '../lib/srs';
 import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { MIN_WORDS_FOR_A_ROUND } from '../lib/readingPace';
-import { knownWordIds, readingPool } from '../exercises/knownWords';
+import { knownWordIds, readingPool, wordsKnownByEar } from '../exercises/knownWords';
 import { TOPICS, WORDS, wordsByTopic, LEVEL_META, LEVEL_ORDER, type Level } from '../data/words';
 import { GRAMMAR } from '../data/grammar';
 import { PASSAGES, DIALOGUES } from '../data/sentences';
@@ -88,6 +88,8 @@ export function PracticeScreen() {
   const completedLessons = useProgressStore((s) => s.completedLessons);
   // Words known by ear count too (Q-093): see `knownWords`.
   const known = useMemo(() => knownWordIds({ learnedWords, skippedLessons }), [learnedWords, skippedLessons]);
+  // Only a learner with words known by ear waits on letters; for anyone else every known word is in the pool.
+  const byEar = useMemo(() => wordsKnownByEar(skippedLessons).size > 0, [skippedLessons]);
   const readable = useMemo(
     () => readingPool({ learnedWords, learnedLetters, skippedLessons, completedLessons }, WORDS).length,
     [learnedWords, learnedLetters, skippedLessons, completedLessons]
@@ -277,8 +279,9 @@ export function PracticeScreen() {
             <Card className="mb-6">
               <Bold className="text-[0.9375rem] text-paper/80">Read faster</Bold>
               <Txt className="mt-1 text-sm text-paper/60">
-                Words you know, read at a glance. Opens once {MIN_WORDS_FOR_A_ROUND} words you know are in letters
-                you’ve learned; so far there {readable === 1 ? 'is 1' : `are ${readable}`}.
+                {byEar
+                  ? `Words you know, read at a glance. Opens once ${MIN_WORDS_FOR_A_ROUND} words you know are in letters you’ve learned; so far there ${readable === 1 ? 'is 1' : `are ${readable}`}.`
+                  : `Words you know, read at a glance. Opens once you know ${MIN_WORDS_FOR_A_ROUND} words; you know ${readable}.`}
               </Txt>
             </Card>
           </Reveal>
@@ -477,7 +480,7 @@ export function PracticeScreen() {
                               {t.title}
                             </Bold>
                             <Txt className="mt-0.5 text-[0.6875rem] text-paper/55">
-                              {knownHere}/{words.length} words
+                              {knownHere}/{words.length} known
                             </Txt>
                             <View className="mt-2">
                               <ProgressBar

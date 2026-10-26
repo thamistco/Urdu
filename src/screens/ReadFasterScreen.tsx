@@ -144,8 +144,8 @@ export function ReadFasterScreen() {
       <Shell onBack={back}>
         <Heading className="mb-2 text-xl">Learn a few more words first</Heading>
         <Txt className="text-sm leading-6 text-paper/70">
-          Read faster uses only words you have already learned, so it never tests a word you have not met. It opens once
-          you know {MIN_WORDS_FOR_A_ROUND}. You know {pool.length} so far.
+          Read faster uses only words you know, in letters you’ve learned. It opens once there are{' '}
+          {MIN_WORDS_FOR_A_ROUND}; so far there {pool.length === 1 ? 'is 1' : `are ${pool.length}`}.
         </Txt>
       </Shell>
     );

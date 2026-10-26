@@ -70,7 +70,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   {
     id: 'wordsmith',
     title: 'Wordsmith',
-    description: 'Learn new words.',
+    description: 'Practise new words in lessons.',
     icon: 'book',
     metric: 'wordsLearned',
     tiers: [10, 30, 60, 100],
