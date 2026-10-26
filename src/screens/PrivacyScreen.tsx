@@ -84,9 +84,10 @@ export function PrivacyScreen() {
           Uninstalling the app, or on the website clearing this site’s data in your browser, removes everything stored
           on your device, including any Say it back recording, which on a phone sits in the app’s temporary storage
           until the system clears it. If you are signed in, Delete account in Settings (under Data) deletes your account
-          and the copy of your progress stored with it; if you have signed out, sign in again to find it. Records of
-          past sign-ins may also be kept after an account is deleted. Resetting your progress from Settings clears it
-          without needing to delete the app.
+          and the copy of your progress stored with it; if you have signed out, sign in again to find it. If it says
+          deleting is not switched on yet, nothing has been deleted; please try again later. Records of past sign-ins
+          may also be kept after an account is deleted. Resetting your progress from Settings clears it without needing
+          to delete the app.
         </Section>
 
         <Section title="How long it is kept">
@@ -98,19 +99,20 @@ export function PrivacyScreen() {
         <Section title="Your rights">
           The law gives you the right to see the data we hold about you, to have it corrected or deleted, to limit or
           object to how we use it, and to have a copy of it. If you are signed in, Delete account in Settings deletes
-          your account and its copy of your progress. A way to contact us for anything else will be added to this page.
-          You only ever need to sign in if you want your progress on another device; everything else works without it.
-          Nothing about you is decided automatically: the review schedule is worked out on your device and only decides
-          which words come back. If you are unhappy with how your data is handled, you can complain to the Information
+          your account and its copy of your progress. If it says deleting is not switched on yet, nothing has been
+          deleted; please try again later. A way to contact us for anything else will be added to this page. You only
+          ever need to sign in if you want your progress on another device; everything else works without it. Nothing
+          about you is decided automatically: the review schedule is worked out on your device and only decides which
+          words come back. If you are unhappy with how your data is handled, you can complain to the Information
           Commissioner’s Office at ico.org.uk.
         </Section>
 
         <Section title="Children">
-          Children can use Qaaf as guests. Nothing about them leaves the device, there are no ads, and there is no chat
-          or contact with other people; the league is a practice group the app makes up, not real players. Signing in is
-          the only thing that sends anything (an email address and progress), so we ask that children under 13 do not
-          sign in without a parent. If you think a child has signed in without your permission, Delete account in
-          Settings removes the account.
+          Children can use Qaaf as guests. Nothing they do in the app leaves the device, there are no ads, and there is
+          no chat or contact with other people; the league is a practice group the app makes up, not real players.
+          Signing in is the only way anything about them reaches us (an email address, their progress and settings), so
+          we ask that children under 13 do not sign in without a parent. If you think a child has signed in without your
+          permission, use Delete account in Settings.
         </Section>
 
         <Section title="Changes to this policy">
