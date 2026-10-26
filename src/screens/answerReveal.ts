@@ -23,20 +23,30 @@ import { plainRoman } from '../lib/roman';
  */
 export type AnswerReveal = { script?: string; roman?: string; meaning?: string; label?: string };
 
+const ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
+
 export function answerReveal(ex: Exercise): AnswerReveal | null {
   switch (ex.kind) {
     case 'letterForm':
       return { label: POSITIONS.find((p) => p.key === ex.position)?.label ?? '' };
-    case 'letterSpot':
+    case 'letterSpot': {
       // The question is which *tile* of the word holds the letter, and the
       // learner already knew the letter — that was the prompt. Showing them
-      // "ا / alif" answered a question they had not asked and left the one
-      // they got wrong unanswered. Show the tile instead, with the letter's
-      // name for the reading.
+      // "ا / alif" answered a question they had not asked. Showing the tile
+      // did no better: a tile is the letter with its neighbours, so alif in
+      // پانی came back as "پان", which reads as another word (paan) (QA,
+      // 2026-10-24, Q-101). The word, and which tile it was; the row above
+      // already marks that tile.
+      const at = ex.correct.indexOf(true);
       return {
-        script: ex.tiles.filter((_, i) => ex.correct[i]).join('   ') || ex.letter.forms.isolated,
-        roman: ex.letter.name,
+        script: ex.word.urdu,
+        roman: ex.word.roman,
+        meaning:
+          at < 0
+            ? ex.letter.name
+            : `${ex.letter.name} is the ${ORDINALS[at] ?? `number ${at + 1}`} tile from the right`,
       };
+    }
     case 'letterTrace':
       // Nothing to reveal: the shape is already on the pad, drawn in grey
       // under the learner's line, and the pad says what was missed. A card
