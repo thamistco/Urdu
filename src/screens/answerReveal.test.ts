@@ -67,7 +67,7 @@ describe('answerReveal', () => {
     expect(r?.script).not.toBe(joined.forms.isolated);
   });
 
-  it('answers "which tile holds this letter" with the tile', () => {
+  it('answers "which tile holds this letter" with the word and which tile', () => {
     // The learner knew the letter — that was the prompt. What they got wrong
     // was which tile of the word carries it.
     const r = answerReveal({
@@ -75,10 +75,13 @@ describe('answerReveal', () => {
       letter,
       word,
       tiles: ['پا', 'پان', 'انی', 'نی'],
-      correct: [true, false, false, false],
+      correct: [false, true, false, false],
     } as unknown as Exercise);
-    expect(r?.script).toBe('پا');
-    expect(r?.roman).toBe(letter.name);
+    // The word, not a tile: a tile is the letter with its neighbours and can
+    // read as another word ("پان", Q-101).
+    expect(r?.script).toBe(word.urdu);
+    expect(r?.roman).toBe(word.roman);
+    expect(r?.meaning).toBe(`${letter.name} is the second tile from the right`);
   });
 
   it('answers a letter-position question with the position', () => {
