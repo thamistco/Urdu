@@ -18,6 +18,7 @@ import { lastSevenDayKeys } from '../lib/date';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { LETTERS } from '../data/letters';
 import { WORDS } from '../data/words';
+import { knownWordIds } from '../exercises/knownWords';
 import type { NoParamScreen, RootStackParamList } from '../navigation/types';
 import { wholeWords } from '../lib/wholeWords';
 
@@ -164,6 +165,9 @@ function FreezeCard() {
 export function ProfileScreen() {
   const nav = useNavigation<Nav>();
   const s = useProgressStore();
+  // Words known by ear from a skipped lesson count as known (Q-093): see `knownWords`.
+  const known = knownWordIds(s);
+  const knownWords = WORDS.filter((w) => known.has(w.id)).length;
   const { level, ratio, into, span } = levelProgress(s.totalXp);
   const league = getLeague(s.leagueId);
   const unlockedAch = ACHIEVEMENTS.filter((a) => (s.achieved[a.id] ?? 0) > 0).length;
@@ -215,7 +219,7 @@ export function ProfileScreen() {
             <StatBox icon="gem" value={s.gems} label="Gems" />
             <StatBox icon="medal" value={s.longestStreak} label="Best streak" />
             <StatBox icon="pen" value={`${s.learnedLetters.length}/${LETTERS.length}`} label="Letters" />
-            <StatBox icon="book" value={`${s.learnedWords.length}/${WORDS.length}`} label="Words" />
+            <StatBox icon="book" value={`${knownWords}/${WORDS.length}`} label="Words" />
           </View>
           <FreezeCard />
         </Reveal>

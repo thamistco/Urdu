@@ -14,7 +14,6 @@ import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import type { RootStackParamList } from '../navigation/types';
 import {
-  readableWords,
   pickRound,
   wordsPerMinute,
   wordsRead,
@@ -22,6 +21,7 @@ import {
   MIN_WORDS_FOR_A_ROUND,
   type Attempt,
 } from '../lib/readingPace';
+import { readingPool } from '../exercises/knownWords';
 
 /**
  * Taps are ignored this long after the screen changes. "Show me" and "I read
@@ -44,11 +44,18 @@ type Phase = 'intro' | 'reading' | 'revealed' | 'done';
 export function ReadFasterScreen() {
   const nav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const learnedWords = useProgressStore((s) => s.learnedWords);
+  const learnedLetters = useProgressStore((s) => s.learnedLetters);
+  const skippedLessons = useProgressStore((s) => s.skippedLessons);
+  const completedLessons = useProgressStore((s) => s.completedLessons);
   const best = useProgressStore((s) => s.readingBestWpm);
   const recordReadingPace = useProgressStore((s) => s.recordReadingPace);
   const track = useSettingsStore((s) => s.track);
 
-  const pool = useMemo(() => readableWords(learnedWords, WORDS), [learnedWords]);
+  // Words known by ear too, once their letters are met (Q-093): see `knownWords`.
+  const pool = useMemo(
+    () => readingPool({ learnedWords, learnedLetters, skippedLessons, completedLessons }, WORDS),
+    [learnedWords, learnedLetters, skippedLessons, completedLessons]
+  );
   const [round, setRound] = useState<Word[]>([]);
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>('intro');
