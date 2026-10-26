@@ -789,6 +789,24 @@ const WOVEN = new WeakSet<Exercise>();
 export const isWovenReview = (ex: Exercise | undefined) => !!ex && WOVEN.has(ex);
 const DISTRACTORS = OPTIONS_PER_QUESTION - 1;
 
+/**
+ * A gloss's senses, for telling meanings apart: "reason / wisdom" is both
+ * "reason" and "wisdom". Whole glosses were compared, so عقل "reason /
+ * wisdom" could be offered against حکمت "wisdom", and پچھلا "previous / last"
+ * against آخری "last": one question, two right answers. 121 pairs of words
+ * share a sense that way, 13 of them within a topic (content sweep,
+ * 2026-10-26). An aside in brackets is not a sense of its own.
+ */
+export function sensesOf(meaning: string): string[] {
+  const whole = meaning.trim().toLowerCase();
+  const senses = whole
+    .replace(/\([^)]*\)/g, '')
+    .split(/[/,;]/)
+    .map((m) => m.trim())
+    .filter(Boolean);
+  return senses.length ? senses : [whole];
+}
+
 export function distractorsFor(
   word: Word,
   pool: Word[],
@@ -796,7 +814,7 @@ export function distractorsFor(
 ): Word[] {
   const chosen: Word[] = [];
   const usedCues = new Set<string>([cueOf(word)]);
-  const usedMeanings = new Set<string>([word.meaning.toLowerCase()]);
+  const usedMeanings = new Set<string>(sensesOf(word.meaning));
   // URD-049: two distinct vocabulary entries can be genuine Urdu homographs
   // (identical spelling, different meaning — 40 such pairs exist, e.g.
   // w-chashma/w-chashma2, چشمہ meaning both "glasses" and "spring"). Neither
@@ -822,9 +840,9 @@ export function distractorsFor(
         usedCues.add(cue);
       }
       if (distinctMeaning) {
-        const m = c.meaning.toLowerCase();
-        if (usedMeanings.has(m)) continue;
-        usedMeanings.add(m);
+        const senses = sensesOf(c.meaning);
+        if (senses.some((m) => usedMeanings.has(m))) continue;
+        senses.forEach((m) => usedMeanings.add(m));
       }
       chosen.push(c);
     }
