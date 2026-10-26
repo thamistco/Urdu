@@ -1531,7 +1531,7 @@ function lettersTaughtBefore(lessonId: string, track: LearnTrack): ReadonlySet<s
  * A letter with hamza or a final he form (ئ ؤ ۃ ۂ) is not one of the forty
  * cards, so it counts as taught only once all forty are.
  */
-function lettersAllTaught(w: Word, taught: ReadonlySet<string> | null): boolean {
+export function lettersAllTaught(w: Word, taught: ReadonlySet<string> | null): boolean {
   if (!taught) return true;
   return Array.from(w.urdu).every((c) => {
     if (!SCRIPT_LETTER.test(c)) return true;

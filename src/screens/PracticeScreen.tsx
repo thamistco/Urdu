@@ -20,7 +20,8 @@ import { cardsOnTrack, dueCount } from '../lib/srs';
 import { strength } from '../lib/srs';
 import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
-import { readableWords, MIN_WORDS_FOR_A_ROUND } from '../lib/readingPace';
+import { MIN_WORDS_FOR_A_ROUND } from '../lib/readingPace';
+import { knownWordIds, readingPool } from '../exercises/knownWords';
 import { TOPICS, WORDS, wordsByTopic, LEVEL_META, LEVEL_ORDER, type Level } from '../data/words';
 import { GRAMMAR } from '../data/grammar';
 import { PASSAGES, DIALOGUES } from '../data/sentences';
@@ -82,15 +83,21 @@ export function PracticeScreen() {
   const srs = useProgressStore((s) => s.srs);
   const srsType = useProgressStore((s) => s.srsType);
   const learnedWords = useProgressStore((s) => s.learnedWords);
+  const learnedLetters = useProgressStore((s) => s.learnedLetters);
+  const skippedLessons = useProgressStore((s) => s.skippedLessons);
+  const completedLessons = useProgressStore((s) => s.completedLessons);
+  // Words known by ear count too (Q-093): see `knownWords`.
+  const known = useMemo(() => knownWordIds({ learnedWords, skippedLessons }), [learnedWords, skippedLessons]);
+  const readable = useMemo(
+    () => readingPool({ learnedWords, learnedLetters, skippedLessons, completedLessons }, WORDS).length,
+    [learnedWords, learnedLetters, skippedLessons, completedLessons]
+  );
   const readingBest = useProgressStore((s) => s.readingBestWpm);
   const track = useSettingsStore((s) => s.track);
   // Only offered when a round can actually be played: on a track with script,
   // and with enough taught words that a round does not repeat itself. A card
   // that opened onto "learn more first" would be a dead end.
-  const canReadFaster = useMemo(
-    () => track !== 'roman' && readableWords(learnedWords, WORDS).length >= MIN_WORDS_FOR_A_ROUND,
-    [track, learnedWords]
-  );
+  const canReadFaster = track !== 'roman' && readable >= MIN_WORDS_FOR_A_ROUND;
   const regenHearts = useProgressStore((s) => s.regenHearts);
 
   useEffect(() => {
@@ -270,8 +277,8 @@ export function PracticeScreen() {
             <Card className="mb-6">
               <Bold className="text-[0.9375rem] text-paper/80">Read faster</Bold>
               <Txt className="mt-1 text-sm text-paper/60">
-                Words you know, read at a glance. Opens once you know {MIN_WORDS_FOR_A_ROUND} words; you know{' '}
-                {readableWords(learnedWords, WORDS).length}.
+                Words you know, read at a glance. Opens once {MIN_WORDS_FOR_A_ROUND} words you know are in letters
+                you’ve learned; so far there {readable === 1 ? 'is 1' : `are ${readable}`}.
               </Txt>
             </Card>
           </Reveal>
@@ -455,13 +462,13 @@ export function PracticeScreen() {
                 <View className="flex-row flex-wrap justify-between">
                   {levelTopics.map((t, i) => {
                     const words = wordsByTopic(t.id);
-                    const known = words.filter((w) => learnedWords.includes(w.id)).length;
+                    const knownHere = words.filter((w) => known.has(w.id)).length;
                     return (
                       <Reveal key={t.id} delay={Math.min(i * 25, 250)} style={{ width: '48%', ...wholeWords }}>
                         <Pressable
                           onPress={() => go(`practice-topic-${t.id}`)}
                           accessibilityRole="button"
-                          accessibilityLabel={`Practise ${t.title}, ${known} of ${words.length} words learned`}
+                          accessibilityLabel={`Practise ${t.title}, ${knownHere} of ${words.length} words known`}
                           style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.97 : 1 }] })}
                         >
                           <View className="mb-3 rounded-2xl border border-white/10 bg-ink-700 p-4">
@@ -470,11 +477,11 @@ export function PracticeScreen() {
                               {t.title}
                             </Bold>
                             <Txt className="mt-0.5 text-[0.6875rem] text-paper/55">
-                              {known}/{words.length} words
+                              {knownHere}/{words.length} words
                             </Txt>
                             <View className="mt-2">
                               <ProgressBar
-                                progress={words.length ? known / words.length : 0}
+                                progress={words.length ? knownHere / words.length : 0}
                                 color={meta.color}
                                 height={5}
                                 spring={false}
