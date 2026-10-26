@@ -132,6 +132,18 @@ export const NEAR_CELLS = 2;
 export const NEED_COVERAGE = 0.7;
 export const NEED_PRECISION = 0.8;
 
+/**
+ * Of each dot group, the share that must be gone over.
+ *
+ * Dots are a small part of a letter's length, so a trace could reach 70% of
+ * be's skeleton without its dot, and be without its dot is not be: three
+ * straight swipes were praised on ب while the same swipes failed on پ (QA,
+ * 2026-10-26). The glyph mask splits cleanly into a body and its dot groups
+ * (58 of the 160 forms have one; پ's three dots are one group), so each group
+ * other than the body has to be reached on its own.
+ */
+export const NEED_PART = 0.5;
+
 /** Cells a stroke set paints, given a brush radius. */
 function paintedCells(strokes: Pt[][], side: number, grid: number): Set<number> {
   const cell = side / grid;
@@ -182,6 +194,8 @@ export type TraceScore = {
   coverage: number;
   /** how much of the stroke was on the letter, 0..1 */
   precision: number;
+  /** a dot group was left out: see `NEED_PART` */
+  missedPart: boolean;
   pass: boolean;
 };
 
@@ -203,7 +217,8 @@ export function scoreTrace(
   side: number,
   grid: number,
   skeleton: Uint8Array,
-  tolerant: Uint8Array
+  tolerant: Uint8Array,
+  parts: readonly (readonly number[])[] = []
 ): TraceScore {
   const painted = paintedCells(strokes, side, grid);
 
@@ -228,9 +243,10 @@ export function scoreTrace(
 
   const coverage = total ? reached / total : 0;
   const precision = painted.size ? onGlyph / painted.size : 0;
-  const pass = painted.size > 12 && coverage >= NEED_COVERAGE && precision >= NEED_PRECISION;
+  const missedPart = parts.some((cells) => cells.filter((i) => near[i]).length < NEED_PART * cells.length);
+  const pass = painted.size > 12 && coverage >= NEED_COVERAGE && precision >= NEED_PRECISION && !missedPart;
 
-  return { coverage, precision, pass };
+  return { coverage, precision, missedPart, pass };
 }
 
 /**
@@ -251,10 +267,47 @@ export function scoreTrace(
  * the right place at all. Wobble is free; drawing somewhere else is not.
  */
 export function traceTargets(mask: Uint8Array, grid: number) {
+  const skeleton = centreline(mask, grid);
   return {
-    skeleton: centreline(mask, grid),
+    skeleton,
     tolerant: dilate(mask, grid, 2),
+    parts: dotGroups(mask, grid).map((group) => group.filter((i) => skeleton[i])),
   };
+}
+
+/**
+ * The glyph's separate pieces of ink other than the largest, the body: its dot
+ * groups, and a madda. Found on the mask, not the skeleton, which the thinning
+ * leaves in specks.
+ */
+function dotGroups(mask: Uint8Array, grid: number): number[][] {
+  const seen = new Uint8Array(mask.length);
+  const groups: number[][] = [];
+  for (let start = 0; start < mask.length; start++) {
+    if (!mask[start] || seen[start]) continue;
+    const group: number[] = [];
+    const stack = [start];
+    seen[start] = 1;
+    while (stack.length) {
+      const c = stack.pop()!;
+      group.push(c);
+      const x = c % grid;
+      const y = (c / grid) | 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const nx = x + dx;
+          const ny = y + dy;
+          const j = ny * grid + nx;
+          if (nx < 0 || ny < 0 || nx >= grid || ny >= grid || !mask[j] || seen[j]) continue;
+          seen[j] = 1;
+          stack.push(j);
+        }
+      }
+    }
+    groups.push(group);
+  }
+  groups.sort((a, b) => b.length - a.length);
+  return groups.slice(1);
 }
 
 /**

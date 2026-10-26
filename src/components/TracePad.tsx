@@ -7,9 +7,9 @@ import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { POSITIONS, type Letter, type PositionKey } from '../data/letters';
 import { GLYPH_MASKS, MASK_GRID, FONT_ASCENT, FONT_DESCENT } from '../data/glyphMasks';
-import { decodeMask, traceTargets, scoreTrace, NEED_PRECISION, type Pt } from '../lib/trace';
+import { decodeMask, traceTargets, scoreTrace, NEED_COVERAGE, NEED_PRECISION, type Pt } from '../lib/trace';
 
-export type TraceResult = { pass: boolean; coverage: number; precision: number };
+export type TraceResult = { pass: boolean; coverage: number; precision: number; missedPart?: boolean };
 
 /**
  * Keep the drawing surface out of the phone's own gesture strip.
@@ -112,9 +112,16 @@ export function TracePad({
   const check = () => {
     if (result != null || locked || !targets || !side) return;
 
-    const { coverage, precision, pass } = scoreTrace(strokes, side, MASK_GRID, targets.skeleton, targets.tolerant);
+    const { coverage, precision, missedPart, pass } = scoreTrace(
+      strokes,
+      side,
+      MASK_GRID,
+      targets.skeleton,
+      targets.tolerant,
+      targets.parts
+    );
 
-    const r = { pass, coverage, precision };
+    const r = { pass, coverage, precision, missedPart };
     setResult(r);
     pass ? feedback.correctAnnounce(letter.id, letter.forms[position], letter.name) : feedback.incorrect();
     onScored?.(r);
@@ -239,14 +246,18 @@ export function TracePad({
               ? 'That is the shape ✓'
               : result.precision < NEED_PRECISION
                 ? 'Keep the line on the grey shape'
-                : 'There is still some letter to trace'}
+                : result.missedPart && result.coverage >= NEED_COVERAGE
+                  ? 'Draw the dots too'
+                  : 'There is still some letter to trace'}
           </Bold>
           <Txt className="mt-1 text-xs text-paper/55">
             {result.pass
               ? 'Nicely done.'
               : result.precision < NEED_PRECISION
                 ? 'Some of your line landed away from the letter.'
-                : 'Part of the grey shape has not been drawn over yet.'}
+                : result.missedPart && result.coverage >= NEED_COVERAGE
+                  ? 'The dots are part of the letter: they tell it apart from its look-alikes.'
+                  : 'Part of the grey shape has not been drawn over yet.'}
           </Txt>
         </View>
       )}

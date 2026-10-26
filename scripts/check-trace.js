@@ -206,7 +206,7 @@ for (const grade of GRADES) {
     }
     if (pts.length < 3) continue;
     const strokes = toStrokes(pts, grade.jitter, rng);
-    const r = scoreTrace(strokes, SIDE, MASK_GRID, targets.skeleton, targets.tolerant);
+    const r = scoreTrace(strokes, SIDE, MASK_GRID, targets.skeleton, targets.tolerant, targets.parts);
     n++;
     if (r.pass) passed++;
     if (grade.want === 'pass' && r.coverage < worstCov) {
@@ -235,12 +235,38 @@ for (const grade of GRADES) {
     const xs = row % 2 ? [SIDE - 4, 4] : [4, SIDE - 4];
     for (let t = 0; t <= 1; t += 0.05) stroke.push({ x: xs[0] + (xs[1] - xs[0]) * t, y });
   }
-  const r = scoreTrace([stroke], SIDE, MASK_GRID, targets.skeleton, targets.tolerant);
+  const r = scoreTrace([stroke], SIDE, MASK_GRID, targets.skeleton, targets.tolerant, targets.parts);
   const ok = !r.pass;
   if (!ok) failures++;
   console.log(
     `${'scribble'.padEnd(24)} coverage ${(r.coverage * 100).toFixed(0)}% · ` +
       `precision ${(r.precision * 100).toFixed(0)}% → ${r.pass ? 'PASSES (PROBLEM)' : 'refused, ok'}`
+  );
+}
+
+// The body without its dots: a careful trace of a dotted letter that leaves
+// its dots out is another letter, ب without its dot, and was praised (QA,
+// 2026-10-26). Every form with a dot group is traced along its body only.
+{
+  const rng = makeRng(777);
+  let passed = 0;
+  let n = 0;
+  for (const entry of Object.values(GLYPH_MASKS)) {
+    const mask = decodeMask(entry[0], MASK_GRID);
+    const targets = traceTargets(mask, MASK_GRID);
+    if (!targets.parts.length) continue;
+    const dots = new Set(targets.parts.flat());
+    const body = centreline(mask).filter((p) => !dots.has(p.y * MASK_GRID + p.x));
+    if (body.length < 3) continue;
+    n++;
+    const r = scoreTrace(toStrokes(body, 0.4, rng), SIDE, MASK_GRID, targets.skeleton, targets.tolerant, targets.parts);
+    if (r.pass) passed++;
+  }
+  const rate = (passed / n) * 100;
+  const ok = rate <= 5;
+  if (!ok) failures++;
+  console.log(
+    `${'body without its dots'.padEnd(24)} ${passed}/${n} pass (${rate.toFixed(0)}%)  want ≤5%  ${ok ? 'ok' : 'PROBLEM'}`
   );
 }
 
@@ -278,7 +304,8 @@ for (const grade of GRADES) {
     for (const entry of Object.values(GLYPH_MASKS)) {
       const targets = traceTargets(decodeMask(entry[0], MASK_GRID), MASK_GRID);
       n++;
-      if (scoreTrace(swipes.map(line), SIDE, MASK_GRID, targets.skeleton, targets.tolerant).pass) passed++;
+      if (scoreTrace(swipes.map(line), SIDE, MASK_GRID, targets.skeleton, targets.tolerant, targets.parts).pass)
+        passed++;
     }
     const rate = (passed / n) * 100;
     const ok = rate <= MAX_RATE;
