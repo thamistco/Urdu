@@ -37,25 +37,32 @@ export function PrivacyScreen() {
         <Heading className="mb-1 text-lg">Your data, plainly</Heading>
         <Txt className="mb-6 text-[0.75rem] text-paper/55">Last updated 2026-10-26</Txt>
 
+        <Section title="Who we are">
+          Who runs Qaaf, and how to contact them, will be added to this page before Qaaf launches.
+        </Section>
+
         <Section title="No account is required">
-          Qaaf works fully as a guest. Your lesson progress, streak, hearts, gems and settings are stored only on this
-          device, in its local app storage. We never see them, and nothing is sent anywhere unless you turn on sign-in
-          below. That storage is what lets the app work; nothing in it is used for tracking.
+          Qaaf works fully as a guest. Your lesson progress, streak, hearts, gems, settings and the answers you gave
+          when you started (why you are learning, and whether you already speak some Urdu) are stored only on this
+          device, in its local app storage. We never see them, and none of it is sent anywhere unless you sign in. That
+          storage is what lets the app work; nothing in it is used for tracking.
         </Section>
 
         <Section title="If you choose to sign in">
-          Signing in with Google or Apple is optional and exists so your progress can follow you to a second device. It
-          creates an account identified by the email your provider shares with us, and your progress and settings are
-          copied to that account so they can be restored elsewhere. Signing in also keeps a sign-in key on this device,
-          so you stay signed in. You can stop syncing at any time from Settings; your on-device progress keeps working
-          exactly as before.
+          Where Qaaf offers sign-in, signing in with Google or Apple is optional and exists so your progress can follow
+          you to a second device. It creates an account identified by the email your provider shares with us, and your
+          progress, settings and those answers are copied to that account so they can be restored elsewhere. If the
+          account already holds progress from another device, that copy replaces the progress on this one. Signing in
+          also keeps a sign-in key on this device, so you stay signed in. To stop syncing, sign out in Settings: the
+          progress on this device stays, and you can carry on as a guest.
         </Section>
 
         <Section title="Why we keep it, and who handles it">
-          We keep your account only to give you the saved progress you asked for by signing in: that is what makes it
-          lawful for us to hold it. Supabase stores the account and the copy of your progress for us. Google or Apple
-          confirm who you are when you sign in, under their own privacy policies. GitHub hosts the website. Some of
-          these services may keep data outside the UK; where they do, it is protected by the safeguards UK law requires.
+          The legal reason we can keep your account is that you asked us to: keeping your progress is the service you
+          signed in for. Supabase stores the account and the copy of your progress for us. Google or Apple confirm who
+          you are when you sign in, under their own privacy policies. GitHub hosts the website. Some of these services
+          may store data outside the UK, for example in the United States. Which countries, and the protections that
+          apply, will be added here once they are confirmed.
         </Section>
 
         <Section title="What we do not do">
@@ -77,28 +84,33 @@ export function PrivacyScreen() {
           Uninstalling the app, or on the website clearing this site’s data in your browser, removes everything stored
           on your device, including any Say it back recording, which on a phone sits in the app’s temporary storage
           until the system clears it. If you are signed in, Delete account in Settings (under Data) deletes your account
-          and the copy of your progress stored with it; if you have signed out, sign in again to find it. Our database
-          provider may keep backups, and records of past sign-ins, after an account is deleted. Resetting your progress
-          from Settings clears it without needing to delete the app.
+          and the copy of your progress stored with it; if you have signed out, sign in again to find it. Records of
+          past sign-ins may also be kept after an account is deleted. Resetting your progress from Settings clears it
+          without needing to delete the app.
         </Section>
 
         <Section title="How long it is kept">
-          Your account and its copy of your progress are kept until you delete them. After that, the database provider’s
-          backups may hold a copy for a short time, until they are replaced.
+          Your account and its copy of your progress are kept until you delete them. After that, copies may remain in
+          the database provider’s backups until those backups are replaced. We will state that period here once it is
+          confirmed.
         </Section>
 
         <Section title="Your rights">
-          You can ask to see the data we hold about you, to have it corrected or deleted, to limit how we use it, to
-          have a copy of it, or object to how we use it. Delete account in Settings does the deleting for you straight
-          away. Nothing is required of you: you only ever need to sign in if you want your progress on another device.
-          Nothing about you is decided automatically; the review schedule is worked out on your device and only decides
-          which words come back. If you are unhappy with how your data is handled, tell us first and we will reply, and
-          you can also complain to the Information Commissioner’s Office at ico.org.uk.
+          The law gives you the right to see the data we hold about you, to have it corrected or deleted, to limit or
+          object to how we use it, and to have a copy of it. If you are signed in, Delete account in Settings deletes
+          your account and its copy of your progress. A way to contact us for anything else will be added to this page.
+          You only ever need to sign in if you want your progress on another device; everything else works without it.
+          Nothing about you is decided automatically: the review schedule is worked out on your device and only decides
+          which words come back. If you are unhappy with how your data is handled, you can complain to the Information
+          Commissioner’s Office at ico.org.uk.
         </Section>
 
         <Section title="Children">
-          Qaaf is a general-audience language course and is not directed at children under 13. We do not knowingly
-          collect personal information from a child under that age.
+          Children can use Qaaf as guests. Nothing about them leaves the device, there are no ads, and there is no chat
+          or contact with other people; the league is a practice group the app makes up, not real players. Signing in is
+          the only thing that sends anything (an email address and progress), so we ask that children under 13 do not
+          sign in without a parent. If you think a child has signed in without your permission, Delete account in
+          Settings removes the account.
         </Section>
 
         <Section title="Changes to this policy">
