@@ -12,6 +12,8 @@ export type GradedResult = {
   correct: boolean;
   /** Right, but only on the retry after a wrong first try: see `srsGradeFor`. */
   retried?: boolean;
+  /** Passed over without an answer ("Can't trace now"): no grade, no heart, not counted right. */
+  skipped?: boolean;
 };
 
 export type Exercise =

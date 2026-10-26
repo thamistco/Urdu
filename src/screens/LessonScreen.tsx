@@ -460,6 +460,15 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
     [exercises, isReview, lesson, track]
   );
 
+  /** A step passed over ("Can't trace now"): on to the next, grading and counting nothing. */
+  const skipStep = useCallback(
+    (at: number) => {
+      planReask(at);
+      advanceRef.current();
+    },
+    [planReask]
+  );
+
   /**
    * A teaching card has nothing to grade, so it goes straight on.
    *
@@ -481,6 +490,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   const onGraded = useCallback(
     (result: GradedResult) => {
       if (idx >= exercises.length) return answerReask(result.correct);
+      if (result.skipped) return skipStep(idx);
       if (isTeaching(exercises[idx])) {
         const seen = srsGradeFor(result.correct, !!result.retried, demandOf(exercises[idx]));
         result.items.forEach((it) => recordItemGrade(it, seen));
@@ -550,7 +560,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
     // against exercise 0 — which in a grammar lesson is the teaching card, and
     // `isTeaching` therefore suppressed the heart loss for every wrong answer in
     // the lesson. Grammar cost nothing to get wrong.
-    [loseHeart, exercises, idx, recordItemGrade, noteMiss, planReask, answerReask]
+    [loseHeart, exercises, idx, recordItemGrade, noteMiss, planReask, answerReask, skipStep]
   );
 
   // Stop this lesson's audio the instant the screen is left, however that

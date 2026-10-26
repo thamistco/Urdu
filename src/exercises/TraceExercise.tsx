@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { View } from 'react-native';
 import { Question, palette } from './common';
 import { Eyebrow } from '../components/Text';
+import { Button } from '../components/Button';
 import { TracePad, tracePadKey } from '../components/TracePad';
 import { POSITIONS } from '../data/letters';
 import type { ExerciseProps, Exercise } from './types';
@@ -20,6 +22,7 @@ type TraceEx = Extract<Exercise, { kind: 'letterTrace' }>;
 export function TraceExercise({ exercise, locked, onGraded }: ExerciseProps<TraceEx>) {
   const { letter, position } = exercise;
   const positionLabel = POSITIONS.find((p) => p.key === position)?.label ?? position;
+  const [scored, setScored] = useState(false);
 
   return (
     <View>
@@ -33,8 +36,24 @@ export function TraceExercise({ exercise, locked, onGraded }: ExerciseProps<Trac
         position={position}
         locked={locked}
         quietPass
-        onScored={({ pass }) => onGraded({ items: [{ id: letter.id, type: 'letter' }], correct: pass })}
+        onScored={({ pass }) => {
+          setScored(true);
+          onGraded({ items: [{ id: letter.id, type: 'letter' }], correct: pass });
+        }}
       />
+      {/* A way past a trace for anyone who cannot draw now: a screen-reader
+          user meets a drawing area with nothing to act on, and Check stays
+          off until there is a stroke, so l-1 could not be finished past its
+          second step (design review, 2026-10-26, R4). Shown to everyone:
+          react-native-web always reports a screen reader as on, so it cannot
+          be offered to screen-reader users alone. It grades nothing. */}
+      {!scored && !locked ? (
+        <View className="mt-3">
+          <Button variant="ghost" onPress={() => onGraded({ items: [], correct: true, skipped: true })}>
+            Can’t trace now
+          </Button>
+        </View>
+      ) : null}
     </View>
   );
 }
