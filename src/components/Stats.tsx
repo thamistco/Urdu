@@ -77,7 +77,7 @@ export function useTextWidth(): number {
  * (2026-10-12). So the free stretch says it is free, and a lost heart says so:
  * the pip that went is marked for a moment and a screen reader hears it.
  */
-export function Hearts({ count, free = false }: { count: number; free?: boolean }) {
+export function Hearts({ count, free = false }: { count: number; free?: boolean | 'unit' | 'lesson' | null }) {
   // Under 300 text-widths the badge says only "Free"; the label read aloud
   // keeps the whole rule (QA round 5, M27). Counted in text, not pixels: a
   // 320px phone at 200% text is still 320px wide, and the badge read "Fre…"
@@ -101,7 +101,11 @@ export function Hearts({ count, free = false }: { count: number; free?: boolean 
         accessibilityRole="image"
         // Not "Hearts are…": the checks find speaker buttons by a label that
         // starts "Hear", and this one was taken for one.
-        accessibilityLabel="Unit 1 is free: wrong answers cost no hearts until you finish it"
+        accessibilityLabel={
+          free === 'lesson'
+            ? 'This lesson is free: wrong answers cost no hearts'
+            : 'Unit 1 is free: wrong answers cost no hearts until you finish it'
+        }
         className="flex-row items-center gap-1"
         // Shrinks rather than pushing the header wider than the screen at
         // large text sizes (QA, 2026-10-13, M27).
@@ -112,7 +116,7 @@ export function Hearts({ count, free = false }: { count: number; free?: boolean 
           {/* Not "in Unit 1": a learner who jumps ahead keeps free hearts
               until Unit 1 is finished, and read "Free in Unit 1" over a
               Unit 36 lesson as a mistake (QA report, 2026-10-12). */}
-          {tight ? 'Free' : 'Free until Unit 1 is done'}
+          {tight ? 'Free' : free === 'lesson' ? 'Free this lesson' : 'Free until Unit 1 is done'}
         </Bold>
       </View>
     );
