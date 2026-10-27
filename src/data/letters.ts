@@ -814,7 +814,7 @@ export function shapeGroups(letter: Pick<Letter, 'forms'>): { keys: PositionKey[
  */
 export function positionHint(letter: Pick<Letter, 'forms'>, key: PositionKey): string {
   if (key === 'medial' && letter.forms.medial === letter.forms.final) {
-    return 'joined only from the right, same as the end form';
+    return 'joined on one side, same as the end form';
   }
   return POSITIONS.find((p) => p.key === key)!.hint;
 }

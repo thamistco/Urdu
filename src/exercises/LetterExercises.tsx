@@ -49,7 +49,7 @@ export function LetterFormExercise({ exercise, locked, onGraded }: ExerciseProps
     keys.length === 1
       ? positionHint(letter, keys[0])
       : keys.includes('medial')
-        ? 'joined only from the right'
+        ? 'joined on one side'
         : 'on its own, or first in a word';
 
   return (
