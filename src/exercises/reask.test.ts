@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildLessonExercises, itemsOf, reaskExercises, REASK_CAP, type Miss } from './generator';
 import type { Exercise } from './types';
 import { LETTERS } from '../data/letters';
-import { ALL_LESSONS, findLesson, lessonOrderForTrack, type Lesson } from '../data/units';
+import { ALL_LESSONS, findLesson, lessonOrderForTrack, resolveLesson, type Lesson } from '../data/units';
 import type { LearnTrack } from '../store/useSettingsStore';
 
 /** Every lesson a learner can be graded in, on each track it is on. */
@@ -85,5 +85,31 @@ describe('P-085: re-asking a missed item', () => {
     const review = ALL_LESSONS.find((l) => l.kind === 'review')!;
     const ex = SITTINGS.flatMap((s) => s.exercises).find((e) => e.kind === 'wordFromMeaning')!;
     expect(reaskExercises([{ ex, at: 0 }], review, 'both', 10)).toEqual([]);
+  });
+});
+
+describe('re-asks in topic practice keep to the letters the learner has met (Q-095)', () => {
+  it('offers no letter outside the graded ones', () => {
+    const lesson = resolveLesson('practice-topic-first-words')!;
+    const known = new Set(LETTERS.slice(0, 12).map((l) => l.id));
+    const untaught = new Set<string>();
+    let picks = 0;
+    for (let i = 0; i < 100; i++) {
+      for (const ex of buildLessonExercises(
+        lesson,
+        [...known].map((id) => ({ id, type: 'letter' as const })),
+        'both',
+        known
+      )) {
+        if (ex.kind !== 'letterForm' && ex.kind !== 'letterTrace') continue;
+        for (const again of reaskExercises([{ ex, at: 0 }], lesson, 'both', 10, known)) {
+          if (again.kind !== 'letterPick') continue;
+          picks++;
+          for (const o of again.options) if (!known.has(o.id)) untaught.add(o.id);
+        }
+      }
+    }
+    expect(picks).toBeGreaterThan(20);
+    expect([...untaught]).toEqual([]);
   });
 });

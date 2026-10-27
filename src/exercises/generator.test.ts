@@ -2524,10 +2524,12 @@ describe('letter questions offer only letters the learner has met (Q-095)', () =
   it('never offers hamza, whatever the pool', () => {
     for (const letter of LETTERS) {
       for (let i = 0; i < 20; i++) {
-        expect(
-          distractLetters(letter, 3, 'final').some((l) => l.id === 'hamza'),
-          letter.id
-        ).toBe(false);
+        for (const pool of [undefined, new Set(LETTERS.map((l) => l.id))]) {
+          expect(
+            distractLetters(letter, 3, 'final', pool).some((l) => l.id === 'hamza'),
+            letter.id
+          ).toBe(false);
+        }
       }
     }
   });

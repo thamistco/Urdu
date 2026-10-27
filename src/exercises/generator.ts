@@ -1772,7 +1772,7 @@ export function buildLessonExercises(
       ? new Set([...known].filter((id) => LETTER_IDS.has(id)))
       : onPath;
   // What a letter question may offer as a wrong option: see `decoyOrder`.
-  const letterPool = taught ? new Set([...taught, ...(lesson.letterIds ?? [])]) : null;
+  const letterPool = lettersMetBy(lesson, track, known);
 
   if (lesson.kind === 'letters' && lesson.letterIds && teachesScript) {
     // URD-022: reordered so visually confusable letters (daal/Daal/zaal,
@@ -3238,10 +3238,12 @@ export function reaskExercises(
   lesson: Lesson,
   track: LearnTrack,
   total: number,
+  /** Every item the learner has been graded on, as `buildLessonExercises` takes it. */
+  known: ReadonlySet<string> = new Set(),
   cap = REASK_CAP
 ): Exercise[] {
   if (lesson.kind === 'review') return [];
-  const taught = taughtThrough(lesson, track);
+  const taught = lettersMetBy(lesson, track, known);
   const out: Exercise[] = [];
   for (const m of [...misses].sort((a, b) => a.at - b.at)) {
     if (out.length >= cap) break;
@@ -3252,9 +3254,18 @@ export function reaskExercises(
   return out;
 }
 
-/** The letters a learner has met by the end of this lesson; null off the path. */
-function taughtThrough(lesson: Lesson, track: LearnTrack): ReadonlySet<string> | null {
-  const before = lettersTaughtBefore(lesson.id, track);
+/**
+ * The letters a learner has met by the end of this lesson: the path's, or in
+ * a practice lesson (off the path) the letters they have been graded on, as
+ * the lesson body decides. Null when there is nothing to go by, and on the
+ * Roman track. Re-asks once read the path alone, so in topic practice a missed
+ * letter came back against letters never taught (second check, Q-095).
+ */
+function lettersMetBy(lesson: Lesson, track: LearnTrack, known: ReadonlySet<string>): ReadonlySet<string> | null {
+  if (track === 'roman') return null;
+  const before =
+    lettersTaughtBefore(lesson.id, track) ??
+    (lesson.id.startsWith('practice-') ? new Set([...known].filter((id) => LETTER_IDS.has(id))) : null);
   return before ? new Set([...before, ...(lesson.letterIds ?? [])]) : null;
 }
 
