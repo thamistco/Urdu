@@ -124,6 +124,11 @@ const checked = [];
  * above nothing overflows, so this walks g-past at 320x568, answering
  * anything, and reads the scroll view each time the step counter moves.
  * Without the fix, steps 3, 4 and 5 opened 106, 116 and 32px down.
+ *
+ * Read twice: as the step opens, and 300ms later. A grammar card's timer
+ * for its next block could fire on the exercise after it and glide that one
+ * to its foot (0px, then 57, 89, 96 within 200ms), so a single early read
+ * caught it one run in five, as about 20px, and passed the rest.
  */
 async function checkExerciseOpensAtTop(browser, url) {
   const short = await browser.newPage({ viewport: { width: 320, height: 568 }, deviceScaleFactor: 1 });
@@ -147,6 +152,9 @@ async function checkExerciseOpensAtTop(browser, url) {
     if (!w.step) break;
     if (last != null && w.step !== last && w.top != null) {
       measured++;
+      await short.waitForTimeout(300);
+      const later = await whereInLesson(short);
+      if (later.step === w.step && later.top != null) w.top = Math.max(w.top, later.top);
       if (w.top > 4) {
         problems.push(
           `At 320x568, step ${w.step} of g-past opened scrolled ${Math.round(w.top)}px down: ` +
