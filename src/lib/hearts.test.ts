@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import { heartsAreFree, GRACE_ENDS_AFTER } from './hearts';
+import { heartsAreFree, heartsFreeFor, GRACE_ENDS_AFTER } from './hearts';
 import { UNITS, ALL_LESSONS } from '../data/units';
 import { REFILL_COST, gemsForLesson } from './gamification';
 
@@ -27,10 +27,16 @@ describe('the first unit costs no hearts', () => {
     expect(heartsAreFree({ [GRACE_ENDS_AFTER]: { best: 1, done: 1 } }, {})).toBe(false);
   });
 
-  it('ends for a learner who skipped the first unit at onboarding', () => {
+  it('ends for a learner who skipped the first unit, after their first lesson', () => {
     // A heritage learner who already speaks Urdu never plays these lessons,
-    // and is past them in every sense that matters here.
-    expect(heartsAreFree({}, { [GRACE_ENDS_AFTER]: true })).toBe(false);
+    // and is past them, but nothing has told them about hearts until a
+    // lesson ends with the note: that first lesson is still free.
+    const skipped = { [GRACE_ENDS_AFTER]: true };
+    expect(heartsAreFree({}, skipped)).toBe(true);
+    expect(heartsAreFree({ 'g-pronouns': { best: 1, done: 1 } }, skipped)).toBe(false);
+    // And the header says which: not "until Unit 1 is done" to someone past it.
+    expect(heartsFreeFor({}, skipped)).toBe('lesson');
+    expect(heartsFreeFor({}, {})).toBe('unit');
   });
 
   /**

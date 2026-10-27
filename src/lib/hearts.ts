@@ -16,9 +16,12 @@ import { UNITS } from '../data/units';
  * (LessonComplete), and only then can lose one.
  *
  * Keyed on the unit's last lesson rather than a lesson count, so regrouping
- * the course cannot silently move the line. Skipped counts as done: a heritage
- * learner who skipped Unit 1 at onboarding is past it in every sense that
- * matters here.
+ * the course cannot silently move the line. Skipped counts as done, a heritage
+ * learner who skipped Unit 1 at onboarding being past it, but only once they
+ * have finished a lesson: that lesson's end is where the note says hearts are
+ * on. Before Unit 1's review could be skipped, such a learner took it with
+ * free hearts and met the note at its end; skipping it put hearts on in their
+ * first lesson with nothing yet said about them (second check, 2026-10-27).
  */
 const FIRST_UNIT_ENDS_WITH = UNITS[0].lessons[UNITS[0].lessons.length - 1].id;
 
@@ -26,7 +29,17 @@ export function heartsAreFree(
   completedLessons: Record<string, unknown>,
   skippedLessons: Record<string, unknown>
 ): boolean {
-  return !completedLessons[FIRST_UNIT_ENDS_WITH] && !skippedLessons[FIRST_UNIT_ENDS_WITH];
+  return heartsFreeFor(completedLessons, skippedLessons) !== null;
+}
+
+/** Why hearts are free, for the words that say so: Unit 1, or this one lesson. */
+export function heartsFreeFor(
+  completedLessons: Record<string, unknown>,
+  skippedLessons: Record<string, unknown>
+): 'unit' | 'lesson' | null {
+  if (completedLessons[FIRST_UNIT_ENDS_WITH]) return null;
+  if (!skippedLessons[FIRST_UNIT_ENDS_WITH]) return 'unit';
+  return Object.keys(completedLessons).length === 0 ? 'lesson' : null;
 }
 
 /** Exported for the test, which should fail if the course is regrouped and this

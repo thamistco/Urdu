@@ -25,7 +25,7 @@ import { answerReveal, spokenVerdict } from './answerReveal';
 import { useBannerFocus } from './useBannerFocus';
 import { REFILL_COST, gemsShortOfRefill, minutesUntilNextHeart } from '../lib/gamification';
 import { useProgressStore, type ItemType } from '../store/useProgressStore';
-import { heartsAreFree } from '../lib/hearts';
+import { heartsAreFree, heartsFreeFor } from '../lib/hearts';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { resolveLesson, type Lesson } from '../data/units';
 import { ExerciseView } from '../exercises';
@@ -272,7 +272,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   const hearts = useProgressStore((s) => s.hearts);
   const gems = useProgressStore((s) => s.gems);
   const heartsUpdatedAt = useProgressStore((s) => s.heartsUpdatedAt);
-  const heartsFree = useProgressStore((s) => heartsAreFree(s.completedLessons, s.skippedLessons));
+  const heartsFree = useProgressStore((s) => heartsFreeFor(s.completedLessons, s.skippedLessons));
 
   /**
    * Build the exercise set once, weaving in whatever SRS items are due.
