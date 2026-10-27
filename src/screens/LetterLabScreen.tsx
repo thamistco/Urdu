@@ -154,7 +154,7 @@ export function LetterLabScreen() {
           {/* the paper — read it, or write it */}
           <View className="my-4">
             {tracing ? (
-              <TracePad key={tracePadKey(letter.id, pos)} letter={letter} position={pos} />
+              <TracePad key={tracePadKey(letter.id, pos)} letter={letter} position={pos} again />
             ) : (
               <Pressable
                 accessibilityRole="button"

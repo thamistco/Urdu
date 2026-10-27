@@ -56,6 +56,7 @@ export function TracePad({
   locked = false,
   onScored,
   quietPass = false,
+  again = false,
 }: {
   letter: Letter;
   position: PositionKey;
@@ -69,6 +70,14 @@ export function TracePad({
    * reason: the banner cannot say which part of the letter was missed.
    */
   quietPass?: boolean;
+  /**
+   * Offer another go once scored. In a lesson the lesson moves on, but the
+   * Letter Lab has nothing after the verdict: a refused trace left no Clear,
+   * no Check and no way to add the missing dots, so the only way out was to
+   * leave the letter (QA, 2026-10-27). A refusal keeps the strokes, so a
+   * missing dot can be added; a pass starts a clean pad.
+   */
+  again?: boolean;
 }) {
   const entry = GLYPH_MASKS[`${letter.id}:${position}`];
 
@@ -259,6 +268,20 @@ export function TracePad({
                   ? 'The dots are part of the letter: they tell it apart from its look-alikes.'
                   : 'Part of the grey shape has not been drawn over yet.'}
           </Txt>
+          {again ? (
+            <View className="mt-3 self-stretch">
+              <Button
+                variant="ghost"
+                onPress={() => {
+                  if (result.pass) return reset();
+                  feedback.tap();
+                  setResult(null);
+                }}
+              >
+                {result.pass ? 'Trace it again' : 'Keep drawing'}
+              </Button>
+            </View>
+          ) : null}
         </View>
       )}
     </View>
