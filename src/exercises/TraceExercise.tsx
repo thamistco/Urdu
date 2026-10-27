@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Platform, Pressable, View } from 'react-native';
 import { Question, SPOKEN_ONLY, palette } from './common';
 import { Eyebrow, Txt } from '../components/Text';
@@ -64,16 +64,30 @@ function CantTraceNow({ onPress }: { onPress: () => void }) {
   const web = Platform.OS === 'web';
   const [screenReader, setScreenReader] = useState(false);
   const [focused, setFocused] = useState(false);
+  const ref = useRef<View>(null);
   useEffect(() => {
     if (web) return;
     AccessibilityInfo.isScreenReaderEnabled().then(setScreenReader, () => {});
     const sub = AccessibilityInfo.addEventListener('screenReaderChanged', setScreenReader);
     return () => sub.remove();
   }, [web]);
+  // Hidden, the button is a pixel at the column's top left, which is where the
+  // browser scrolls on focus. At 200% zoom or on a short screen the full-size
+  // button below Check was then off screen and focus seemed to vanish, so
+  // bring it into view once it has its real size.
+  useEffect(() => {
+    if (!web || !focused) return;
+    const frame = requestAnimationFrame(() => {
+      const node = ref.current as unknown as { scrollIntoView?: (o: { block: 'nearest' }) => void } | null;
+      node?.scrollIntoView?.({ block: 'nearest' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [web, focused]);
   if (!web && !screenReader) return null;
   const seen = !web || focused;
   return (
     <Pressable
+      ref={ref}
       accessibilityRole="button"
       onPress={onPress}
       onFocus={() => setFocused(true)}
