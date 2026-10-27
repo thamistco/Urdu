@@ -238,7 +238,7 @@ export function HomeScreen() {
   );
   // Today's slips or a held-over backlog: the review card words them apart.
   // Only as many as one lesson weaves back in count as slips, so "your next
-  // lesson brings them back" stays true (second check, Q-096).
+  // lessons bring them back" stays true (second check, Q-096).
   const slipsOnly = useMemo(
     () => dueNow <= dueBudget('vocab', 0) && dueAllFromToday(cardsOnTrack(store.srs, store.srsType, track)),
     [dueNow, store.srs, store.srsType, track]
