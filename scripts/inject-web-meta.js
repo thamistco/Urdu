@@ -150,8 +150,9 @@ const tags = [
   // by any client that picks direction from the first letter.
   iconUrl && wide && `<meta property="og:image:alt" content="${CARD_ALT}" />`,
   // summary_large_image needs a wide picture; a square app icon belongs in the
-  // small card, which crops it to a square rather than letterboxing it.
-  `<meta name="twitter:card" content="${wide ? 'summary_large_image' : 'summary'}" />`,
+  // small card, which crops it to a square rather than letterboxing it. With no
+  // image written at all (no origin), a large card would promise one it lacks.
+  `<meta name="twitter:card" content="${iconUrl && wide ? 'summary_large_image' : 'summary'}" />`,
   `<meta name="twitter:title" content="${esc(shareTitle)}" />`,
   shareLine && `<meta name="twitter:description" content="${esc(shareLine)}" />`,
   iconUrl && `<meta name="twitter:image" content="${esc(iconUrl)}" />`,

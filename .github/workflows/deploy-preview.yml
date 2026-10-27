@@ -198,6 +198,12 @@ jobs:
           HARF_BUILD_SHA: ${{ github.sha }}
         run: npm run web:meta
 
+      # Nothing looked at what a pasted link shows. Locally the page had no
+      # picture tags at all, yet still asked chat clients for the large card.
+      # Reads the page and the picture just written, so runs straight after.
+      - name: Check a shared link shows its picture
+        run: npm run check:share-card
+
       # Drives the built app in a real browser and answers questions, checking
       # that the question does not change under the answer. Needs the bundle, so
       # it runs after the export rather than with the other checks.

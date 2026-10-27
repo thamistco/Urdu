@@ -36,6 +36,7 @@ const { refuseIfBusy, PLAYTEST_LOCK } = require('./lib/dist-lock');
 const ROOT = path.join(__dirname, '..');
 const WORKFLOW = path.join(ROOT, '.github', 'workflows', 'deploy-preview.yml');
 const REPO = 'Urdu'; // matches github.event.repository.name in the workflow
+const OWNER = 'thamistco'; // matches github.repository_owner in the workflow
 
 /**
  * URD-057: caught here, first, unconditionally — before the workflow is
@@ -227,6 +228,9 @@ const ENV = {
   ...process.env,
   CI: '1',
   HARF_BASE_URL: `/${REPO}`,
+  // The workflow's web:meta step sets this. Without it the local page had no
+  // og:image at all, so local and deployed pages differed in what they share.
+  SITE_ORIGIN: `https://${OWNER}.github.io`,
   HARF_BUILD_SHA: process.env.HARF_BUILD_SHA || 'local',
 };
 
