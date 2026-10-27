@@ -29,7 +29,7 @@ import { LEVEL_META, LEVEL_ORDER, type Level, glossOf } from '../data/words';
 import { WORDS } from '../data/words';
 import { DAILY_GOALS } from '../data/achievements';
 import type { RootStackParamList } from '../navigation/types';
-import { cardsOnTrack, dueAllFromToday, dueCount, reviewFirst, CATCH_UP_SIZE } from '../lib/srs';
+import { cardsOnTrack, dueAllFromToday, dueBudget, dueCount, reviewFirst, CATCH_UP_SIZE } from '../lib/srs';
 import { testerFlags } from '../store/useTesterStore';
 import { wholeWords } from '../lib/wholeWords';
 
@@ -237,10 +237,16 @@ export function HomeScreen() {
     [store.srs, store.srsType, track]
   );
   // Today's slips or a held-over backlog: the review card words them apart.
+  // Only as many as one lesson weaves back in count as slips, so "your next
+  // lesson brings them back" stays true (second check, Q-096).
   const slipsOnly = useMemo(
-    () => dueAllFromToday(cardsOnTrack(store.srs, store.srsType, track)),
-    [store.srs, store.srsType, track]
+    () => dueNow <= dueBudget('vocab', 0) && dueAllFromToday(cardsOnTrack(store.srs, store.srsType, track)),
+    [dueNow, store.srs, store.srsType, track]
   );
+  const things = (n: number) => `${n} ${n === 1 ? 'thing' : 'things'}`;
+  const reviewCard = slipsOnly
+    ? { eyebrow: 'Missed today', count: `${things(dueNow)} to look at again` }
+    : { eyebrow: 'Ready to review', count: `${things(dueNow)} to review` };
 
   /**
    * There is no push notification telling a learner their streak is about to
@@ -779,7 +785,9 @@ export function HomeScreen() {
                   nav.navigate('Lesson', { lessonId: 'practice-review' });
                 }}
                 accessibilityRole="button"
-                accessibilityLabel={`Review ${dueNow} ${dueNow === 1 ? 'item' : 'items'} due now`}
+                // The card's own words, so a screen reader hears what is shown
+                // and a voice user can say it (label in name).
+                accessibilityLabel={`${reviewCard.eyebrow}: ${reviewCard.count}`}
                 style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
               >
                 <View
@@ -803,13 +811,11 @@ export function HomeScreen() {
                         owed; anything from an earlier day says plainly that now
                         is when a review pays, as a gain rather than a threat.
                         The count and the card stay either way. */}
-                    <Eyebrow style={{ color: palette.jade }}>{slipsOnly ? 'From today' : 'Ready to review'}</Eyebrow>
-                    <Bold className="mt-0.5 text-[0.9375rem]">
-                      {dueNow} {slipsOnly ? 'worth another look' : 'ready to review'}
-                    </Bold>
+                    <Eyebrow style={{ color: palette.jade }}>{reviewCard.eyebrow}</Eyebrow>
+                    <Bold className="mt-0.5 text-[0.9375rem]">{reviewCard.count}</Bold>
                     <Txt className="text-xs text-paper/55">
                       {slipsOnly
-                        ? 'Today’s slips. Your next lessons bring them back anyway, so there’s no rush.'
+                        ? 'Your next lesson brings them back first, so there’s no rush.'
                         : 'A few minutes now and they’ll last much longer.'}
                     </Txt>
                   </View>
