@@ -342,11 +342,24 @@ export function OnboardingScreen() {
 
                 Nothing here goes below 80% paper: on the dusk scene's horizon
                 glow, 75% is the WCAG AA floor, and the old value was 40%,
-                under AA even on flat ink at 3.51:1. */}
-          <Txt className="mt-6 max-w-[320px] text-center text-[0.78125rem] leading-5 text-paper/80">
-            New to the Urdu script? Learn the whole course in English letters instead, and switch over whenever you’re
-            ready.
-          </Txt>
+                under AA even on flat ink at 3.51:1.
+
+                It reads as something to do, so it does it (Q-103): it was plain
+                text, and a tap on it did nothing. It starts onboarding with the
+                Roman track already chosen, on the screen that explains it. */}
+          <Pressable
+            accessibilityRole="link"
+            onPress={() => {
+              setTrack('roman');
+              setStep('goal');
+            }}
+            className="mt-6 min-h-[44px] max-w-[320px] justify-center"
+          >
+            <Txt className="text-center text-[0.78125rem] leading-5 text-paper/80">
+              New to the Urdu script? <Txt className="underline">Learn the whole course in English letters instead</Txt>
+              , and switch over whenever you’re ready.
+            </Txt>
+          </Pressable>
         </View>
       </Reveal>,
       { backdrop: <DuskScene />, contentClassName: 'grow justify-center' }
