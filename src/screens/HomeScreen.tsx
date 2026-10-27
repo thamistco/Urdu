@@ -29,7 +29,7 @@ import { LEVEL_META, LEVEL_ORDER, type Level, glossOf } from '../data/words';
 import { WORDS } from '../data/words';
 import { DAILY_GOALS } from '../data/achievements';
 import type { RootStackParamList } from '../navigation/types';
-import { cardsOnTrack, dueCount, reviewFirst, CATCH_UP_SIZE } from '../lib/srs';
+import { cardsOnTrack, dueAllFromToday, dueCount, reviewFirst, CATCH_UP_SIZE } from '../lib/srs';
 import { testerFlags } from '../store/useTesterStore';
 import { wholeWords } from '../lib/wholeWords';
 
@@ -234,6 +234,11 @@ export function HomeScreen() {
   // the learner's track, like dueNow, so it never offers what cannot be shown.
   const catchUp = useMemo(
     () => reviewFirst(cardsOnTrack(store.srs, store.srsType, track)),
+    [store.srs, store.srsType, track]
+  );
+  // Today's slips or a held-over backlog: the review card words them apart.
+  const slipsOnly = useMemo(
+    () => dueAllFromToday(cardsOnTrack(store.srs, store.srsType, track)),
     [store.srs, store.srsType, track]
   );
 
@@ -791,12 +796,21 @@ export function HomeScreen() {
                     <Illustration name="clock" tile={false} size={22} />
                   </View>
                   <View className="flex-1">
-                    <Eyebrow style={{ color: palette.jade }}>Due for review</Eyebrow>
+                    {/* Two wordings, by when the items were last seen (Q-096). Straight
+                        after a first lesson everything due is that lesson's
+                        mistakes, and "Leave them and they fade" read as debt on
+                        day one to two testers. Today's slips are offered, not
+                        owed; anything from an earlier day says plainly that now
+                        is when a review pays, as a gain rather than a threat.
+                        The count and the card stay either way. */}
+                    <Eyebrow style={{ color: palette.jade }}>{slipsOnly ? 'From today' : 'Ready to review'}</Eyebrow>
                     <Bold className="mt-0.5 text-[0.9375rem]">
-                      {dueNow} {dueNow === 1 ? 'thing' : 'things'} to bring back
+                      {dueNow} {slipsOnly ? 'worth another look' : 'ready to review'}
                     </Bold>
                     <Txt className="text-xs text-paper/55">
-                      Review them now and they stick. Leave them and they fade.
+                      {slipsOnly
+                        ? 'Today’s slips. Your next lessons bring them back anyway, so there’s no rush.'
+                        : 'A few minutes now and they’ll last much longer.'}
                     </Txt>
                   </View>
                   <Txt style={{ color: palette.jade, fontSize: 20 }}>›</Txt>
