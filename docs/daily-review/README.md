@@ -22,16 +22,16 @@ report.
 | 1   | Market and competitors       | Who else teaches Urdu, what they charge, where they are weak, who our learners are           | 2026-10-24    |
 | 2   | Accessibility                | Screen readers, contrast, text size, motor and colour-blind use                              | 2026-10-26    |
 | 3   | Visual design and aesthetics | Consistency, hierarchy, polish, the Moonrise brand across every screen                       | 2026-10-26    |
-| 4   | Learning effectiveness       | Does it teach? Curriculum order, spaced repetition, script mastery                           | 2026-10-23    |
-| 5   | Interaction and ease of use  | Friction, dead ends, confusing controls, error states, speed of a session                    | 2026-10-23    |
-| 6   | Onboarding and first session | The first five minutes: does a stranger reach a win and want a second day                    | 2026-10-23    |
-| 7   | Retention and habit          | Streaks, reminders, goals, comeback paths, what brings people back                           | 2026-10-23    |
-| 8   | Content quality              | Urdu accuracy, translations, audio, cultural fit, originality                                | 2026-10-26    |
+| 4   | Learning effectiveness       | Does it teach? Curriculum order, spaced repetition, script mastery                           | 2026-10-27    |
+| 5   | Interaction and ease of use  | Friction, dead ends, confusing controls, error states, speed of a session                    | 2026-10-27    |
+| 6   | Onboarding and first session | The first five minutes: does a stranger reach a win and want a second day                    | 2026-10-27    |
+| 7   | Retention and habit          | Streaks, reminders, goals, comeback paths, what brings people back                           | 2026-10-27    |
+| 8   | Content quality              | Urdu accuracy, translations, audio, cultural fit, originality                                | 2026-10-27    |
 | 9   | Performance and reliability  | Load time, bundle size, offline, crashes, low-end phones                                     | 2026-10-24    |
-| 10  | Monetisation and pricing     | What is free, what is paid, price, trial, paywall design, family plans                       | 2026-10-23    |
+| 10  | Monetisation and pricing     | What is free, what is paid, price, trial, paywall design, family plans                       | 2026-10-27    |
 | 11  | Launch readiness             | Native builds, store accounts and listings, legal, support, payments                         | 2026-10-24    |
 | 12  | Marketing and advertising    | Positioning, channels, creators, paid ads, budget, launch moments                            | 2026-10-26    |
-| 13  | Growth and referral          | Sharing, invites, family features, word of mouth, community                                  | 2026-10-23    |
+| 13  | Growth and referral          | Sharing, invites, family features, word of mouth, community                                  | 2026-10-27    |
 | 14  | Analytics, feedback, privacy | What to measure, how to hear from learners, staying privacy-respecting                       | 2026-10-26    |
 | 15  | What learners say            | Reviews of other apps, forums, what people love and wish existed, what Urdu learners ask for | 2026-10-26    |
 | 16  | Learning science             | What research shows works for learning a language and a script, and whether Qaaf does it     | 2026-10-26    |

@@ -16,7 +16,7 @@ Each of these is met when the evidence named beside it exists.
 | #   | The bar                                                                                 | Evidence                                                      | 2026-10-26                                  |
 | --- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------- |
 | R1  | No open bug a learner can hit that blocks, loses progress, or teaches something wrong   | Every open Q-item triaged; none of those kinds left           | not met: 11 to fix, sorted below            |
-| R2  | QA finds nothing above low on two nights running                                        | Two consecutive QA reports                                    | not met: a high tonight (fixed)             |
+| R2  | QA finds nothing above low on two nights running                                        | Two consecutive QA reports                                    | not met: a medium on 27 October (fixed)     |
 | R3  | Every one of the 16 areas reviewed with no open high finding                            | README dates; reports                                         | not met                                     |
 | R4  | A screen-reader user can complete Unit 1                                                | P-115 (letter spotting) built; checks pass                    | not met: traces passable (P-122); tiles not |
 | R5  | 200% text works at 320x568 and in landscape on every exercise kind                      | `check:stability`, `check:controls`; Lesson complete measured | partly                                      |
@@ -45,13 +45,14 @@ Each of these is met when the evidence named beside it exists.
 
 ## The verdict
 
-**2026-10-26: not ready.** R9 is nearly met: the privacy page now covers
-article 13 apart from who holds the data, the countries it is kept in and the
-backup period, which only the owner can read off the accounts. R4 moved: a
-screen-reader user can now get past a trace (P-122); letter spotting still
-cannot be answered (P-115). 11 queued items are left before launch (R1), and
-QA found a high tonight (fixed), so R2 has not started. The person and owner items are open. Each night moves this table
-and says so in the summary; when every row in sections 1 and 2 is met and O1
+**2026-10-27: not ready.** Nothing in sections 1 and 2 changed state
+tonight. R4 holds where it was: a screen-reader user can get past a trace,
+and since the owner's decision on 26 October the skip is shown only to them
+and to keyboard users (P-122), while letter spotting still cannot be answered
+(P-115). R1: still 11 before launch; nothing found tonight joins them (Q-116
+to Q-130 can follow). R2 has not started: QA's worst tonight was a medium
+(the Letter Lab's trace dead-ended after a refusal), fixed. R9 still waits on
+the owner's details (O-11). When every row in sections 1 and 2 is met and O1
 and O2 are done, the summary says "ready to launch".
 
 ## R1: the open queued items, sorted (2026-10-23)
@@ -81,6 +82,8 @@ the nights keep taking them; they do not hold launch.
 **Closed the same night (3):** Q-040 and Q-044, found already done on
 checking (synonyms and forgiving spelling are accepted); Q-075, fixed
 (853f26e).
+
+**Found on 27 October, can follow:** Q-116 to Q-130. **Fixed on 27 October:** Q-096, Q-104, Q-109, Q-115, and parts of Q-095, Q-102 and Q-103.
 
 **Fixed on 26 October:** Q-080 (Home's card at 200%), Q-093 (a speaker's known words), Q-101 (the letter-spot answer card), Q-110 (two right answers by shared sense), and the dot rule for traces. **Found on 26 October, can follow:** Q-108, Q-109, Q-111 to Q-115.
 

@@ -40,6 +40,10 @@ are Hindu, Sikh or not religious.
 
 ## Area 10: the screen at the daily limit (P-106)
 
+**2026-10-27: not part of launch.** Launch is the free web app
+(`LAUNCH_BAR.md`), and nothing in the app is paid. This draft stays for if a
+paid tier is ever added, after O-9; no run should build it before then.
+
 A draft, in the app's voice: "That's today's two new lessons. Your reviews and
 the whole alphabet stay open. New lessons open again tomorrow." Always free:
 the alphabet, every review, two new lessons a day. Premium adds as many new
