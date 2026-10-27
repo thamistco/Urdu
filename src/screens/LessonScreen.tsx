@@ -461,7 +461,8 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   const planReask = useCallback(
     (at: number) => {
       if (at !== exercises.length - 1 || isReview || !lesson) return;
-      reaskRef.current = reaskExercises([...missRef.current.values()], lesson, track, exercises.length);
+      const known = new Set(Object.keys(useProgressStore.getState().srs));
+      reaskRef.current = reaskExercises([...missRef.current.values()], lesson, track, exercises.length, known);
       setReask(reaskRef.current);
     },
     [exercises, isReview, lesson, track]
