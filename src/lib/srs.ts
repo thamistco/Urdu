@@ -5,6 +5,8 @@
  * "the words you got wrong come back first" is a real mechanic, not a promise.
  */
 
+import { dayKey } from './date';
+
 export type SrsGrade = 'again' | 'good' | 'easy';
 
 export type SrsCard = {
@@ -212,6 +214,21 @@ export function reviewFirst(cards: Record<string, SrsCard>, now = Date.now()): b
 
 export function dueCount(cards: Record<string, SrsCard>, now = Date.now()): number {
   return Object.values(cards).filter((c) => isDue(c, now)).length;
+}
+
+/**
+ * Whether everything due was last seen today: today's slips, not a backlog.
+ *
+ * A miss is due again at once, so straight after a learner's first lesson
+ * Home showed its mistakes as "things to bring back … Leave them and they
+ * fade", and two testers read day one as debt (Q-096). Home words the two
+ * cases apart: today's slips can wait for tomorrow at little cost (Karpicke
+ * and Roediger 2007), items held over from an earlier day cannot.
+ */
+export function dueAllFromToday(cards: Record<string, SrsCard>, now = Date.now()): boolean {
+  const today = dayKey(new Date(now));
+  const due = Object.values(cards).filter((c) => isDue(c, now));
+  return due.length > 0 && due.every((c) => dayKey(new Date(c.lastSeen)) === today);
 }
 
 /** The share of a unit review that due items may take (QA, 2026-10-13, H8). */

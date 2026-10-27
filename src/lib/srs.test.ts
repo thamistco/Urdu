@@ -4,6 +4,7 @@ import {
   REVIEW_FIRST_AT,
   capIntervals,
   cardsOnTrack,
+  dueAllFromToday,
   dueCount,
   dueQueue,
   isDue,
@@ -181,5 +182,36 @@ describe('capIntervals on entries that are not cards', () => {
   it('fills a missing ease, step count and last-seen time rather than letting NaN through', () => {
     const out = capIntervals({ 'w-z': { due: now } } as unknown as Record<string, SrsCard>, now)!;
     expect(out['w-z']).toMatchObject({ id: 'w-z', ease: 2.5, reps: 0, lastSeen: now, due: now });
+  });
+});
+
+describe('dueAllFromToday (Q-096)', () => {
+  const card = (id: string, lastSeen: number, due = lastSeen): SrsCard => ({
+    id,
+    ease: 2.5,
+    interval: 0,
+    reps: 0,
+    due,
+    lastSeen,
+  });
+
+  it('is true when everything due was missed today', () => {
+    expect(dueAllFromToday({ a: card('a', T0), b: card('b', T0 + 60_000) }, T0 + 3_600_000)).toBe(true);
+  });
+
+  it('is false once anything due is held over from an earlier day', () => {
+    expect(dueAllFromToday({ a: card('a', T0), b: card('b', T0 - DAY) }, T0 + 3_600_000)).toBe(false);
+  });
+
+  it('ignores what is not due, and is false with nothing due', () => {
+    expect(dueAllFromToday({ a: card('a', T0), b: card('b', T0 - DAY, T0 + DAY) }, T0 + 1)).toBe(true);
+    expect(dueAllFromToday({ b: card('b', T0 - DAY, T0 + DAY) }, T0)).toBe(false);
+  });
+
+  it('goes by the learner’s day, not UTC’s', () => {
+    // 23:30 and 00:30 in London (BST) are both 8 October in UTC.
+    const lateLastNight = Date.UTC(2026, 9, 8, 22, 30);
+    const justAfterMidnight = Date.UTC(2026, 9, 8, 23, 30);
+    expect(dueAllFromToday({ a: card('a', lateLastNight) }, justAfterMidnight)).toBe(false);
   });
 });
