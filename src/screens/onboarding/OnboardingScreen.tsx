@@ -673,7 +673,7 @@ export function OnboardingScreen() {
           <Dots of="daily" />
           <Heading className="mb-1 text-2xl">Set a daily goal</Heading>
           <Txt className="mb-6 text-sm text-paper/55">
-            XP are the points you earn in lessons. Choose a goal you can keep; you can change it whenever you like.
+            XP are the points you earn as you learn. Choose a goal you can keep; you can change it whenever you like.
           </Txt>
           {/* Radios, as in Settings: the gold border was the only sign of
               which goal was set, so a screen reader heard four buttons and
