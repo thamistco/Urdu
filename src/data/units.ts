@@ -377,12 +377,12 @@ const PLANNED_UNITS: Unit[] = [
     // phrases lesson in Unit 1 teaches "aap kaise hain?" and "mera naam ... hai"
     // whole, at lesson 8. These are the first a learner assembles rather than
     // repeats, which is a different milestone and worth naming as itself.
-    subtitle: 'Colours, describing what you see, opposites, and your first sentences',
+    subtitle: 'Colours, describing what you see, opposites, and building your own sentences',
     lessons: [
       V('colours', 'Colours'),
       V('adjectives', 'Describing'),
       V('opposites', 'Opposites'),
-      G('g-pronouns', 'Pronouns', 'I, you, he, we, they'),
+      G('g-pronouns', 'Pronouns', 'I, you, he, she, we, they'),
       G('g-to-be', 'Am, is, are', 'The verb “to be”'),
       /**
        * Lesson 32 of 350, and it belongs here rather than earlier.
