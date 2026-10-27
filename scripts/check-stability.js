@@ -981,7 +981,7 @@ async function checkMoreBelow(browser, url) {
       if (/Lesson complete|You're done|Keep it warm/i.test(t)) break;
 
       // typing and drawing are not answered by tapping an option
-      if (/Type this word/.test(t)) {
+      if (/Type the Urdu for this/.test(t)) {
         const input = page.locator('input:visible').first();
         if (await input.count()) await input.fill('zzz').catch(() => {});
         await tapOnScreen('text=/^Check$/');

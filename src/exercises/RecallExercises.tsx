@@ -108,7 +108,7 @@ export function TypeWordExercise({ exercise, track, locked, onGraded }: Exercise
       </PromptCard>
 
       <View className="h-4" />
-      <Question>Type this word</Question>
+      <Question>Type the Urdu for this</Question>
 
       {/* The padding is the input's own, not the box's: the box looked 280x54
           and only a 246x29 strip inside it took a tap (design review,

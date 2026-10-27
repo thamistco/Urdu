@@ -774,7 +774,7 @@ const advance = async (page) => {
  * same generic `'tap'`, which no `--require` list could ever distinguish).
  */
 async function answer(page, text, wrongOnPurpose) {
-  if (/Type this word|Write it from memory/i.test(text)) {
+  if (/Type the Urdu for this|Write it from memory/i.test(text)) {
     const input = await onScreen(page.locator('input:visible'));
     if (!input) return null;
     // A deliberately wrong answer here is a real string, not empty: an empty

@@ -175,7 +175,7 @@ async function walk(page, steps) {
       continue;
     }
     if (/Lesson complete|You're done|Keep it warm|FLAWLESS SESSION|SESSION COMPLETE|ACCURACY/i.test(t)) return true;
-    if (/Type this word/.test(t)) {
+    if (/Type the Urdu for this/.test(t)) {
       const input = page.locator('input:visible').first();
       if (await input.count()) await input.fill('zzz').catch(() => {});
       await tapOnScreen(page, 'text=/^Check$/');
