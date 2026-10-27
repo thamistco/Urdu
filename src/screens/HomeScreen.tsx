@@ -815,7 +815,7 @@ export function HomeScreen() {
                     <Bold className="mt-0.5 text-[0.9375rem]">{reviewCard.count}</Bold>
                     <Txt className="text-xs text-paper/55">
                       {slipsOnly
-                        ? 'Your next lesson brings them back first, so there’s no rush.'
+                        ? 'Your next lessons bring them back first, so there’s no rush.'
                         : 'A few minutes now and they’ll last much longer.'}
                     </Txt>
                   </View>
