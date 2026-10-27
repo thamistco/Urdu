@@ -13,7 +13,7 @@ apps add their own items (marked). Charging money adds P-001 and
 
 Each of these is met when the evidence named beside it exists.
 
-| #   | The bar                                                                                 | Evidence                                                      | 2026-10-26                                  |
+| #   | The bar                                                                                 | Evidence                                                      | 2026-10-27                                  |
 | --- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------- |
 | R1  | No open bug a learner can hit that blocks, loses progress, or teaches something wrong   | Every open Q-item triaged; none of those kinds left           | not met: 11 to fix, sorted below            |
 | R2  | QA finds nothing above low on two nights running                                        | Two consecutive QA reports                                    | not met: a medium on 27 October (fixed)     |
