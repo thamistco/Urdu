@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lessonsToSkip, unitEvidenceFrom, UNIT_SKIP_MIN_ASKED, type Tally } from './unitSkip';
+import { lessonsToSkip, reviewsWithNothingLeft, unitEvidenceFrom, UNIT_SKIP_MIN_ASKED, type Tally } from './unitSkip';
 import { taughtByLesson } from './review';
 import { UNITS, type Lesson } from '../data/units';
 
@@ -85,5 +85,37 @@ describe('unitEvidenceFrom, on the real course', () => {
 
   it('is undefined for a review placed in no unit', () => {
     expect(unitEvidenceFrom('practice-review', new Map())).toBeUndefined();
+  });
+});
+
+describe('reviewsWithNothingLeft', () => {
+  const beginner = UNITS.filter((u) => u.level === 'beginner');
+  const basics = beginner.flatMap((u) => u.lessons).filter((l) => l.kind === 'vocab' || l.kind === 'phrases');
+  const letters = beginner.flatMap((u) => u.lessons).filter((l) => l.kind === 'letters');
+  const reviewOf = (n: number) => UNITS[n].lessons.filter((l) => l.kind === 'review').map((l) => l.id);
+
+  it('passes over Unit 1’s review for a speaker who skipped the basics and the alphabet', () => {
+    const skipped = new Set([...basics, ...letters].map((l) => l.id));
+    expect(reviewsWithNothingLeft(skipped, false)).toEqual(expect.arrayContaining(reviewOf(0)));
+  });
+
+  it('keeps a review while any lesson of its unit is still to take', () => {
+    const skipped = new Set([...basics, ...letters].map((l) => l.id));
+    for (const id of reviewsWithNothingLeft(skipped, false)) {
+      const unit = UNITS.find((u) => u.lessons.some((l) => l.id === id))!;
+      expect(unit.lessons.filter((l) => l.kind !== 'review').every((l) => skipped.has(l.id))).toBe(true);
+    }
+    // The alphabet kept: Unit 1 still teaches letters, so its review stays.
+    expect(reviewsWithNothingLeft(new Set(basics.map((l) => l.id)), false)).not.toEqual(
+      expect.arrayContaining(reviewOf(0))
+    );
+  });
+
+  it('does not count letter lessons on the Roman track, which never shows them', () => {
+    expect(reviewsWithNothingLeft(new Set(basics.map((l) => l.id)), true)).toEqual(expect.arrayContaining(reviewOf(0)));
+  });
+
+  it('passes over nothing when nothing is skipped', () => {
+    expect(reviewsWithNothingLeft(new Set(), false)).toEqual([]);
   });
 });

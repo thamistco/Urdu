@@ -74,3 +74,22 @@ export function unitEvidenceFrom(lessonId: string, firstTry: ReadonlyMap<string,
   }
   return { ...tally(all, firstTry), byLesson };
 }
+
+/**
+ * The unit reviews left with nothing to review once `skipped` is passed over.
+ *
+ * A speaker who skips the basics and the alphabet at onboarding is told those
+ * lessons are done, and then Home's Continue opened Unit 1's review: 22
+ * questions on the letters and words just skipped, with hearts on after it,
+ * then Unit 2's, then Unit 3's (tester, reader route, 2026-10-27). A review
+ * reviews its unit's lessons, so when every one of them is skipped there is
+ * nothing for it to do. A unit with any lesson still to take keeps its review.
+ * On the Roman track letter lessons are never shown, so they do not count.
+ */
+export function reviewsWithNothingLeft(skipped: ReadonlySet<string>, romanTrack: boolean, units = UNITS): string[] {
+  return units.flatMap((u) => {
+    const taught = u.lessons.filter((l) => l.kind !== 'review' && !(romanTrack && l.kind === 'letters'));
+    if (!taught.length || !taught.every((l) => skipped.has(l.id))) return [];
+    return u.lessons.filter((l) => l.kind === 'review').map((l) => l.id);
+  });
+}
