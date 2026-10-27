@@ -1,5 +1,5 @@
 import type { Exercise } from '../exercises/types';
-import { POSITIONS } from '../data/letters';
+import { shapeGroups } from '../data/letters';
 import { glossOf } from '../data/words';
 import { sentenceText } from '../data/sentences';
 import { plainRoman } from '../lib/roman';
@@ -28,7 +28,10 @@ const ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seven
 export function answerReveal(ex: Exercise): AnswerReveal | null {
   switch (ex.kind) {
     case 'letterForm':
-      return { label: POSITIONS.find((p) => p.key === ex.position)?.label ?? '' };
+      // The button's own words: for a letter with two shapes alike the
+      // options are "Alone or start" and "Middle or end", and the answer said
+      // "End", which was not one of them (parent tester, 2026-10-27).
+      return { label: shapeGroups(ex.letter).find((g) => g.keys.includes(ex.position))?.label ?? '' };
     case 'letterSpot': {
       // The question is which *tile* of the word holds the letter, and the
       // learner already knew the letter — that was the prompt. Showing them
