@@ -2958,6 +2958,7 @@ export function buildLessonExercises(
   // reached. Less severe here than in a review lesson — an ordinary lesson has
   // no floor keyed to this count — but it is the same unguarded assumption and
   // is fixed with it rather than left for whoever notices next.
+  let wovenIn = 0;
   if (lesson.kind !== 'review' && reviewRefs.length) {
     const woven: Exercise[] = [];
     const weavable = (ref: ItemRef) =>
@@ -3000,6 +3001,7 @@ export function buildLessonExercises(
     const splitsAPair = opensOnAPretest(exercises[0]) && exercises[1]?.kind === 'wordTeach';
     exercises.splice(splitsAPair ? 2 : 1, 0, ...woven);
     woven.forEach((ex) => WOVEN.add(ex));
+    wovenIn = woven.length;
   }
 
   // A vocabulary lesson is composed to an exact shape — meet, recall, type,
@@ -3051,7 +3053,10 @@ export function buildLessonExercises(
     lesson.kind === 'grammar' ||
     lesson.kind === 'phrases' ||
     lesson.kind === 'letters';
-  return composed ? exercises : exercises.slice(0, lesson.size);
+  // The woven items are on top of the lesson's own `size`. Trimmed to `size`
+  // alone, a reading or dialogue lesson (size 2) with four due kept one of
+  // them and lost its own comprehension question (second check, Q-096).
+  return composed ? exercises : exercises.slice(0, lesson.size + wovenIn);
 }
 
 /**

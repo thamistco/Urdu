@@ -2534,3 +2534,19 @@ describe('letter questions offer only letters the learner has met (Q-095)', () =
     }
   });
 });
+
+describe('due items woven into a reading or dialogue lesson', () => {
+  it('keep the lesson’s own questions and every due item', () => {
+    const due = ['w-paani', 'w-ghar', 'w-kitaab', 'w-naam'].map((id) => ({ id, type: 'word' as const }));
+    for (const id of ['r-5', 'd-1']) {
+      const lesson = resolveLesson(id)!;
+      const plain = buildLessonExercises(lesson, [], 'both');
+      const woven = buildLessonExercises(lesson, due, 'both');
+      expect(woven.length, id).toBe(plain.length + due.length);
+      expect(
+        woven.map((e) => e.kind),
+        id
+      ).toEqual(expect.arrayContaining(plain.map((e) => e.kind)));
+    }
+  });
+});
