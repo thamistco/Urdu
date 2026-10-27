@@ -113,8 +113,8 @@ const SCRIPT_LESSON_IDS = UNITS.filter((u) => u.level === 'beginner')
 // No `icon` field: the goal cards draw their art from the key via `GoalArt`,
 // and the emoji that used to sit here were read by nothing at all.
 const GOALS: { key: Goal; label: string; desc: string }[] = [
-  { key: 'family', label: 'Speak with family', desc: 'Parents, grandparents, relatives back home' },
-  { key: 'read', label: 'Read & write it', desc: 'Nastaliq, the Urdu script' },
+  { key: 'family', label: 'Speak with family', desc: 'Parents, grandparents, a partner’s family' },
+  { key: 'read', label: 'Read & write it', desc: 'The Urdu script, letter by letter' },
   { key: 'heritage', label: 'Reconnect with heritage', desc: 'Poetry, faith, where your family is from' },
   { key: 'curious', label: 'I’m just curious', desc: 'No particular reason' },
 ];
@@ -501,7 +501,12 @@ export function OnboardingScreen() {
     // Drawn art, like every other choice in the app. These two were the last
     // raw emoji on the screen a learner sees first.
     const OPTIONS: { key: Background; label: string; desc: string; icon: IconName }[] = [
-      { key: 'new', label: 'I’m starting from scratch', desc: 'Urdu is new to me, spoken and written', icon: 'sprout' },
+      {
+        key: 'new',
+        label: 'I’m starting from scratch',
+        desc: 'New to me, or I know a few words from family',
+        icon: 'sprout',
+      },
       {
         key: 'speaker',
         label: 'I already speak or understand it',
@@ -668,7 +673,7 @@ export function OnboardingScreen() {
           <Dots of="daily" />
           <Heading className="mb-1 text-2xl">Set a daily goal</Heading>
           <Txt className="mb-6 text-sm text-paper/55">
-            Choose one you can keep. You can change it whenever you like.
+            XP are the points you earn in lessons. Choose a goal you can keep; you can change it whenever you like.
           </Txt>
           {/* Radios, as in Settings: the gold border was the only sign of
               which goal was set, so a screen reader heard four buttons and
