@@ -7,7 +7,7 @@ import { Button } from '../components/Button';
 import { SpeakerButton } from './common';
 import { feedback } from '../lib/feedback';
 import { announce } from '../lib/speech';
-import { POSITIONS, positionHint } from '../data/letters';
+import { LETTERS, POSITIONS, positionHint } from '../data/letters';
 import type { ExerciseProps, Exercise } from './types';
 import { plainRoman } from '../lib/roman';
 
@@ -95,7 +95,18 @@ export function LetterTeachExercise({ exercise, onGraded }: ExerciseProps<TeachE
           in, and a screenshot showed the cost: four separate glyphs are a list
           rather than a word, so there is no word-order to respect, and the
           progression came out reading End, Middle, Start, Alone. */}
-      <Txt className={`mb-2 ${short ? 'mt-3' : 'mt-5'} text-center text-xs text-paper/60`}>
+      {/* Said once, on the course's first letter: everything after it, "the
+          letter after it", a start form on the right of انار, assumes the
+          learner knows which way the script runs, and nothing before this
+          card told them (tester, Q-102). */}
+      {letter.id === LETTERS[0].id ? (
+        <Txt className={`${short ? 'mt-3' : 'mt-5'} text-center text-xs text-paper/80`}>
+          Urdu is written from right to left, so a word starts on the right.
+        </Txt>
+      ) : null}
+      <Txt
+        className={`mb-2 ${letter.id === LETTERS[0].id ? 'mt-2' : short ? 'mt-3' : 'mt-5'} text-center text-xs text-paper/60`}
+      >
         It changes shape depending on where it sits
       </Txt>
       {/* Two by two when narrow: four 68px tiles overflowed at 360px with
