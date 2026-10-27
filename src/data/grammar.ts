@@ -61,8 +61,8 @@ export const GRAMMAR: GrammarConcept[] = [
     summary: 'I, you, he/she, we, they',
     level: 'beginner',
     explain: [
-      'Urdu pronouns do not change for gender, میں (main) means “I” whether you are a man or a woman.',
-      'There are three words for “you”. آپ (aap) is polite and safe with anyone. تم (tum) is casual, for friends and children. تو (tu) is very intimate and can sound rude, leave it alone at first.',
+      'Urdu pronouns do not change for gender: میں (main) means “I” whether you are a man or a woman.',
+      'There are three words for “you”. آپ (aap) is polite and safe with anyone. تم (tum) is casual, for friends and children. تو (tu) is very intimate and can sound rude: leave it alone at first.',
       'وہ (wo) does double duty: it means “he”, “she” and “they”, and also “that”. Context tells you which.',
     ],
     table: {
@@ -119,7 +119,7 @@ export const GRAMMAR: GrammarConcept[] = [
     explain: [
       'Urdu sentences usually end with the verb. The commonest verb is ہونا (hona): “to be”.',
       'Pick the ending by who you are talking about: ہوں (hoon) after میں (main), ہے (hai) after a single person or thing, ہیں (hain) after آپ (aap), ہم (hum), and plurals, and ہو (ho) after تم (tum).',
-      'There is no word for “a” or “an”, “I am a doctor” is simply میں ڈاکٹر ہوں (main ḍaakṭar hoon).',
+      'There is no word for “a” or “an”: “I am a doctor” is simply میں ڈاکٹر ہوں (main ḍaakṭar hoon).',
     ],
     table: {
       heading: ['Pronoun', 'to be', 'Example'],
