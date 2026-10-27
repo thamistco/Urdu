@@ -520,13 +520,18 @@ export function tileLookalikes(a: string, b: string): boolean {
  * screen to tell them apart — a real, measured ~0.35% of all `letterPick`
  * draws (258,000-draw simulation), not a hypothetical.
  */
-export function distractLetters(letter: Letter, n: number, position?: PositionKey): Letter[] {
+export function distractLetters(
+  letter: Letter,
+  n: number,
+  position?: PositionKey,
+  pool?: ReadonlySet<string> | null
+): Letter[] {
   const usedTokens = new Set(soundTokens(letter));
   const usedGlyphs = new Set(position ? [letter.forms[position]] : []);
   const picked: Letter[] = [];
-  for (const candidate of shuffle(LETTERS)) {
+  for (const candidate of decoyOrder(pool)) {
     if (picked.length >= n) break;
-    if (candidate.id === letter.id) continue;
+    if (candidate.id === letter.id || candidate.id === 'hamza') continue;
     const tokens = soundTokens(candidate);
     if (tokens.some((t) => usedTokens.has(t))) continue;
     if (position && usedGlyphs.has(candidate.forms[position])) continue;
@@ -539,7 +544,28 @@ export function distractLetters(letter: Letter, n: number, position?: PositionKe
   return picked;
 }
 
-function letterExercise(letter: Letter): Exercise {
+/**
+ * Wrong options for a letter question: letters the learner has met, in a
+ * random order, then the rest in course order to make up the number.
+ *
+ * Drawn from the whole alphabet, 87% of the wrong options in the first two
+ * letter lessons were letters never taught, and every question had one: a
+ * learner could rule an option out for being new rather than read the right
+ * one (learning review, Q-095). A wrong option nobody would pick tells
+ * nothing (Haladyna, Downing and Rodriguez 2002), and ones that compete
+ * with the answer are what make a choice a real act of recall (Little,
+ * Bjork, Bjork and Angello 2012). Course order for the rest means a review
+ * with only a few letters known still fills its four options, with the
+ * letters coming next. Hamza is never a wrong option: its end form is a
+ * mark, not a letter. `pool` null means nothing to go by (a lesson off the
+ * path), so the whole alphabet, as before.
+ */
+function decoyOrder(pool?: ReadonlySet<string> | null): Letter[] {
+  if (!pool) return shuffle(LETTERS);
+  return [...shuffle(LETTERS.filter((l) => pool.has(l.id))), ...LETTERS.filter((l) => !pool.has(l.id))];
+}
+
+function letterExercise(letter: Letter, pool: ReadonlySet<string> | null): Exercise {
   // Three ways to meet a letter: name the position of a glyph, pick the glyph
   // out of four, or draw it. Tracing is the slowest, so it stays a minority.
   const roll = Math.random();
@@ -553,7 +579,7 @@ function letterExercise(letter: Letter): Exercise {
   if (roll < 0.72) {
     return { kind: 'letterForm', letter, position, options: POSITIONS.map((p) => p.key) };
   }
-  const distractors = distractLetters(letter, DISTRACTORS, position);
+  const distractors = distractLetters(letter, DISTRACTORS, position, pool);
   return { kind: 'letterPick', letter, position, options: shuffle([letter, ...distractors]) };
 }
 
@@ -591,7 +617,12 @@ function letterExercise(letter: Letter): Exercise {
  * Two independent parameters make each caller's intent an argument rather
  * than an assumption about how they interact.
  */
-function letterExerciseAt(letter: Letter, turn: number, positionIndex: number): Exercise {
+function letterExerciseAt(
+  letter: Letter,
+  turn: number,
+  positionIndex: number,
+  pool: ReadonlySet<string> | null
+): Exercise {
   const position = POSITIONS[((positionIndex % POSITIONS.length) + POSITIONS.length) % POSITIONS.length]
     .key as PositionKey;
   const t = ((turn % 3) + 3) % 3;
@@ -601,7 +632,7 @@ function letterExerciseAt(letter: Letter, turn: number, positionIndex: number): 
   if (t !== 2) {
     return { kind: 'letterForm', letter, position, options: POSITIONS.map((p) => p.key) };
   }
-  const distractors = distractLetters(letter, DISTRACTORS, position);
+  const distractors = distractLetters(letter, DISTRACTORS, position, pool);
   return { kind: 'letterPick', letter, position, options: shuffle([letter, ...distractors]) };
 }
 
@@ -1740,6 +1771,8 @@ export function buildLessonExercises(
     teachesScript && !onPath && lesson.id.startsWith('practice-')
       ? new Set([...known].filter((id) => LETTER_IDS.has(id)))
       : onPath;
+  // What a letter question may offer as a wrong option: see `decoyOrder`.
+  const letterPool = taught ? new Set([...taught, ...(lesson.letterIds ?? [])]) : null;
 
   if (lesson.kind === 'letters' && lesson.letterIds && teachesScript) {
     // URD-022: reordered so visually confusable letters (daal/Daal/zaal,
@@ -2053,7 +2086,7 @@ export function buildLessonExercises(
             return;
           }
         }
-        exercises.push(letterExerciseAt(l, round + idx + turnOffset, nextPos(l.id, idx)));
+        exercises.push(letterExerciseAt(l, round + idx + turnOffset, nextPos(l.id, idx), letterPool));
       });
     }
     letters.forEach((l, idx) => {
@@ -2077,9 +2110,9 @@ export function buildLessonExercises(
       }
       if (!pushedTail) {
         const turn = 1 + ((tailRound + idx + turnOffset) % 2); // never letterTrace here
-        exercises.push(letterExerciseAt(l, turn, nextPos(l.id, idx)));
+        exercises.push(letterExerciseAt(l, turn, nextPos(l.id, idx), letterPool));
       }
-      exercises.push(letterExerciseAt(l, 0, nextPos(l.id, idx))); // always letterTrace
+      exercises.push(letterExerciseAt(l, 0, nextPos(l.id, idx), letterPool)); // always letterTrace
     });
 
     /**
@@ -2794,7 +2827,7 @@ export function buildLessonExercises(
           if (contrastChoice && contrastChoice.i === i) {
             exercises.push(letterContrastExercise(contrastChoice.letter, contrastChoice.mates));
           } else {
-            exercises.push(letterExerciseAt(l, i + letterTurnOffset, i + letterPosOffset));
+            exercises.push(letterExerciseAt(l, i + letterTurnOffset, i + letterPosOffset, letterPool));
           }
         }
       } else {
@@ -2932,7 +2965,7 @@ export function buildLessonExercises(
     for (const ref of reviewRefs.filter(weavable)) {
       if (ref.type === 'letter') {
         const l = getLetter(ref.id) as Letter;
-        woven.push(letterExercise(l));
+        woven.push(letterExercise(l, letterPool));
       } else {
         const w = getAnyWord(ref.id) as Word;
         woven.push(wordExercise(w, poolFor(w), track, 'recall'));
@@ -3229,10 +3262,10 @@ function reaskOf(ex: Exercise, track: LearnTrack, taught: ReadonlySet<string> | 
   switch (ex.kind) {
     case 'letterTrace':
     case 'letterForm':
-      return letterPickAt(ex.letter, ex.position);
+      return letterPickAt(ex.letter, ex.position, taught);
     case 'letterContrast':
     case 'letterSpot':
-      return letterPickAt(ex.letter, 'isolated');
+      return letterPickAt(ex.letter, 'isolated', taught);
     case 'letterPick':
       return reaskLetterPick(ex.letter, ex.position, taught);
     case 'typeWord':
@@ -3247,12 +3280,12 @@ function reaskOf(ex: Exercise, track: LearnTrack, taught: ReadonlySet<string> | 
   }
 }
 
-function letterPickAt(letter: Letter, position: PositionKey): Exercise {
+function letterPickAt(letter: Letter, position: PositionKey, taught: ReadonlySet<string> | null): Exercise {
   return {
     kind: 'letterPick',
     letter,
     position,
-    options: shuffle([letter, ...distractLetters(letter, DISTRACTORS, position)]),
+    options: shuffle([letter, ...distractLetters(letter, DISTRACTORS, position, taught)]),
   };
 }
 

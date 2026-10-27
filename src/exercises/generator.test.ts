@@ -2479,3 +2479,56 @@ describe('Daily Review word builds', () => {
     expect(kinds).toContain('wordBuild');
   });
 });
+
+describe('letter questions offer only letters the learner has met (Q-095)', () => {
+  /** Letters taught on this track's path up to and including this lesson. */
+  const metBy = (lessonId: string, track: 'both' | 'script') => {
+    const order = lessonOrderForTrack(track);
+    const met = new Set<string>();
+    for (const id of order.slice(0, order.indexOf(lessonId) + 1))
+      for (const l of resolveLesson(id)?.letterIds ?? []) met.add(l);
+    return met;
+  };
+
+  for (const track of ['both', 'script'] as const) {
+    it(`every wrong option in a letter lesson is a taught letter, on ${track}`, () => {
+      const lessons = lessonOrderForTrack(track)
+        .map((id) => resolveLesson(id))
+        .filter((l): l is Lesson => !!l && l.kind === 'letters');
+      expect(lessons.length).toBeGreaterThan(5);
+      const untaught: string[] = [];
+      for (const lesson of lessons) {
+        const met = metBy(lesson.id, track);
+        for (let i = 0; i < 30; i++) {
+          for (const ex of buildLessonExercises(lesson, [], track)) {
+            if (ex.kind !== 'letterPick') continue;
+            // Four options always: the path never leaves a question short.
+            expect(ex.options, lesson.id).toHaveLength(OPTIONS_PER_QUESTION);
+            for (const o of ex.options) if (!met.has(o.id)) untaught.push(`${lesson.id}: ${o.id}`);
+          }
+        }
+      }
+      expect([...new Set(untaught)]).toEqual([]);
+    });
+  }
+
+  it('fills a short pool from the letters coming next, never hamza', () => {
+    const be = getLetter('be')!;
+    for (let i = 0; i < 200; i++) {
+      const picked = distractLetters(be, 3, 'isolated', new Set(['alif', 'be']));
+      expect(picked).toHaveLength(3);
+      expect(picked.some((l) => l.id === 'hamza')).toBe(false);
+    }
+  });
+
+  it('never offers hamza, whatever the pool', () => {
+    for (const letter of LETTERS) {
+      for (let i = 0; i < 20; i++) {
+        expect(
+          distractLetters(letter, 3, 'final').some((l) => l.id === 'hamza'),
+          letter.id
+        ).toBe(false);
+      }
+    }
+  });
+});
