@@ -168,3 +168,15 @@ describe('the verdict a screen reader hears', () => {
     expect(spokenVerdict(false, null, 'both')).toBe('Not quite, but that’s okay.');
   });
 });
+
+describe('the which-position answer', () => {
+  it('names the button the learner saw, grouped when two shapes are alike', () => {
+    const alif = LETTERS.find((l) => l.id === 'alif')!;
+    const be = LETTERS.find((l) => l.id === 'be')!;
+    const form = (letter: typeof alif, position: 'final' | 'initial' | 'medial') =>
+      answerReveal({ kind: 'letterForm', letter, position, options: [] } as Exercise)?.label;
+    expect(form(alif, 'final')).toBe('Middle or end');
+    expect(form(alif, 'initial')).toBe('Alone or start');
+    expect(form(be, 'final')).toBe('End');
+  });
+});
