@@ -24,6 +24,7 @@ import { WORDS } from '../../data/words';
 import { ALL_LESSONS } from '../../data/units';
 import { LETTERS } from '../../data/letters';
 import { placementFor } from '../../data/placement';
+import { reviewsWithNothingLeft } from '../../lib/unitSkip';
 
 /**
  * What the welcome screen promises, counted rather than typed.
@@ -258,7 +259,8 @@ export function OnboardingScreen() {
   const isSpeaker = background === 'speaker';
   const canSkipScript = lvl === 2 && wantsScript && isSpeaker && SCRIPT_LESSON_IDS.length > 0;
   const basicsSkips = isSpeaker ? SKIPPABLE_FOR_SPEAKERS : [];
-  const skipIds = Array.from(new Set([...basicsSkips, ...(canSkipScript && skipScript ? SCRIPT_LESSON_IDS : [])]));
+  const lessonSkips = new Set([...basicsSkips, ...(canSkipScript && skipScript ? SCRIPT_LESSON_IDS : [])]);
+  const skipIds = [...lessonSkips, ...reviewsWithNothingLeft(lessonSkips, track === 'roman')];
 
   const finish = () => {
     setTrackSetting(track);
