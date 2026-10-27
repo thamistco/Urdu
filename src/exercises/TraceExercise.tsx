@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Pressable, View } from 'react-native';
-import { Question, palette } from './common';
+import { useEffect, useState } from 'react';
+import { AccessibilityInfo, Platform, Pressable, View } from 'react-native';
+import { Question, SPOKEN_ONLY, palette } from './common';
 import { Eyebrow, Txt } from '../components/Text';
 import { TracePad, tracePadKey } from '../components/TracePad';
 import { POSITIONS } from '../data/letters';
@@ -40,25 +40,50 @@ export function TraceExercise({ exercise, locked, onGraded }: ExerciseProps<Trac
           onGraded({ items: [{ id: letter.id, type: 'letter' }], correct: pass });
         }}
       />
-      {/* A way past a trace for anyone who cannot draw now: a screen-reader
-          user meets a drawing area with nothing to act on, and Check stays
-          off until there is a stroke, so l-1 could not be finished past its
-          second step (design review, 2026-10-26, R4). Shown to everyone:
-          react-native-web always reports a screen reader as on, so it cannot
-          be offered to screen-reader users alone. It grades nothing. */}
-      {/* Small and muted, not a button the size of Check: before the first
-          stroke it was the only control that looked live, and a beginner
-          would take it (second check, 2026-10-26). 44px tall to tap. */}
       {!scored && !locked ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => onGraded({ items: [], correct: true, skipped: true })}
-          style={{ minHeight: 44, alignSelf: 'center', justifyContent: 'center', paddingHorizontal: 12 }}
-          className="mt-1"
-        >
-          <Txt className="text-sm text-paper/60">Can’t trace now</Txt>
-        </Pressable>
+        <CantTraceNow onPress={() => onGraded({ items: [], correct: true, skipped: true })} />
       ) : null}
     </View>
+  );
+}
+
+/**
+ * A way past a trace for a learner who cannot draw it: a screen-reader user
+ * meets a drawing area with nothing to act on, and Check stays off until there
+ * is a stroke, so l-1 could not be finished past its second step (design
+ * review, 2026-10-26, R4). It grades nothing; the lesson leaves it out of the
+ * score.
+ *
+ * Only for the learners who need it, so it cannot tempt anyone else to skip the
+ * one exercise that trains the hand (the owner, 2026-10-26). On a phone it shows
+ * while VoiceOver or TalkBack is on. On the web, where react-native-web reports
+ * a screen reader as always on, it is in the page but out of sight, reached by
+ * a screen reader, and shown when a keyboard user tabs to it.
+ */
+function CantTraceNow({ onPress }: { onPress: () => void }) {
+  const web = Platform.OS === 'web';
+  const [screenReader, setScreenReader] = useState(false);
+  const [focused, setFocused] = useState(false);
+  useEffect(() => {
+    if (web) return;
+    AccessibilityInfo.isScreenReaderEnabled().then(setScreenReader, () => {});
+    const sub = AccessibilityInfo.addEventListener('screenReaderChanged', setScreenReader);
+    return () => sub.remove();
+  }, [web]);
+  if (!web && !screenReader) return null;
+  const seen = !web || focused;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      style={
+        seen ? { minHeight: 44, alignSelf: 'center', justifyContent: 'center', paddingHorizontal: 12 } : SPOKEN_ONLY
+      }
+      className={seen ? 'mt-1' : undefined}
+    >
+      <Txt className="text-sm text-paper/60">Can’t trace now</Txt>
+    </Pressable>
   );
 }
