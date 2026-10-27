@@ -359,13 +359,22 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   // set again a frame later, after a glide already under way has had its
   // last say (measured: 5 to 34px left over without it, at a fast tap).
   const toEndRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // Which exercise is open. An exercise asks for the end with its own timer
+  // (a grammar card's next block, 120ms on), and a quick Continue let that
+  // timer fire on the next exercise and glide it to its foot: g-past at
+  // 320x568 opened its third step at 0px and slid to 106px within 200ms, one
+  // run in five caught by check:stability as 20px. Only the exercise still
+  // open may scroll the lesson.
+  const openStep = `${idx}-${attempt}`;
+  const openStepRef = useRef(openStep);
   useEffect(() => {
+    openStepRef.current = openStep;
     clearTimeout(toEndRef.current);
     const top = () => bodyRef.current?.scrollTo({ y: 0, animated: false });
     top();
     const frame = requestAnimationFrame(top);
     return () => cancelAnimationFrame(frame);
-  }, [idx, attempt]);
+  }, [openStep]);
 
   /**
    * Which items this lesson visit has sighted, and each one's most recent
@@ -889,7 +898,9 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
                 showRoman={showRoman}
                 locked={graded != null}
                 onGraded={onGraded}
-                onExpand={() => bodyRef.current?.scrollToEnd({ animated: true })}
+                onExpand={() => {
+                  if (openStepRef.current === openStep) bodyRef.current?.scrollToEnd({ animated: true });
+                }}
               />
             </View>
           </Screen>
