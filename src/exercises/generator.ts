@@ -524,12 +524,14 @@ export function distractLetters(
   letter: Letter,
   n: number,
   position?: PositionKey,
-  pool?: ReadonlySet<string> | null
+  pool?: ReadonlySet<string> | null,
+  /** Only the pool, even if that makes fewer than `n`: see the letter lessons' pass. */
+  poolOnly = false
 ): Letter[] {
   const usedTokens = new Set(soundTokens(letter));
   const usedGlyphs = new Set(position ? [letter.forms[position]] : []);
   const picked: Letter[] = [];
-  for (const candidate of decoyOrder(pool)) {
+  for (const candidate of poolOnly && pool ? shuffle(LETTERS.filter((l) => pool.has(l.id))) : decoyOrder(pool)) {
     if (picked.length >= n) break;
     if (candidate.id === letter.id || candidate.id === 'hamza') continue;
     // Not as a shape no word has: ـآ was a wrong option in 168 of 200 builds of l-1.
@@ -641,6 +643,33 @@ function letterExerciseAt(
   }
   const distractors = distractLetters(letter, DISTRACTORS, position, pool);
   return { kind: 'letterPick', letter, position, options: shuffle([letter, ...distractors]) };
+}
+
+/**
+ * A letter lesson's "which letter?" offers only letters already met: those
+ * taught before it and those whose card has come up in it so far.
+ *
+ * The lesson pool is every letter the lesson teaches, so l-1's sixth step
+ * offered be, pe and Te three and five steps before their cards (QA,
+ * 2026-10-28). Filling up to four from the letters coming next would bring
+ * them straight back, so a pick that cannot yet have four from letters met
+ * asks "which position?" instead. Off the path (`taught` null) nothing
+ * changes.
+ */
+function introducedFirst(sequence: Exercise[], taught: ReadonlySet<string> | null): Exercise[] {
+  if (!taught) return sequence;
+  const met = new Set(taught);
+  return sequence.map((ex) => {
+    if (ex.kind === 'letterTeach') met.add(ex.letter.id);
+    if (ex.kind !== 'letterPick' || ex.options.every((o) => o.id === ex.letter.id || met.has(o.id))) return ex;
+    const distractors = distractLetters(ex.letter, DISTRACTORS, ex.position, met, true);
+    // Too few met yet for four options, which check:answerable holds every
+    // question to: ask where it sits instead.
+    if (distractors.length < DISTRACTORS) {
+      return { kind: 'letterForm', letter: ex.letter, position: ex.position, options: POSITIONS.map((p) => p.key) };
+    }
+    return { ...ex, options: shuffle([ex.letter, ...distractors]) };
+  });
 }
 
 /**
@@ -2147,7 +2176,7 @@ export function buildLessonExercises(
       withCards.push(ex);
     }
     exercises.length = 0;
-    exercises.push(...withCards);
+    exercises.push(...introducedFirst(withCards, taught));
   }
 
   if (lesson.kind === 'phrases') {

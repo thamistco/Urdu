@@ -2506,7 +2506,8 @@ describe('letter questions offer only letters the learner has met (Q-095)', () =
         for (let i = 0; i < 30; i++) {
           for (const ex of buildLessonExercises(lesson, [], track)) {
             if (ex.kind !== 'letterPick') continue;
-            // Four options always: the path never leaves a question short.
+            // Four always: a pick that could not have four from letters met
+            // is asked as "which position?" instead.
             expect(ex.options, lesson.id).toHaveLength(OPTIONS_PER_QUESTION);
             for (const o of ex.options) if (!met.has(o.id)) untaught.push(`${lesson.id}: ${o.id}`);
           }
@@ -2627,5 +2628,31 @@ describe('letters are asked only in the positions Urdu uses (Q-095)', () => {
       for (const { id, t } of words) if (rule.finds(t)) bad.push(`${rule.what}: ${id} ${t}`);
     }
     expect(bad).toEqual([]);
+  });
+});
+
+describe('a letter lesson offers only letters already introduced (QA, 2026-10-28)', () => {
+  it('never offers a letter before its card, and keeps four options', () => {
+    const early: string[] = [];
+    let withFour = 0;
+    let picks = 0;
+    for (const id of ['l-1', 'l-1-2', 'l-3']) {
+      const lesson = resolveLesson(id)!;
+      const order = lessonOrderForTrack('both');
+      const before = new Set(order.slice(0, order.indexOf(id)).flatMap((l) => resolveLesson(l)?.letterIds ?? []));
+      for (let i = 0; i < 30; i++) {
+        const met = new Set(before);
+        for (const ex of buildLessonExercises(lesson, [], 'both')) {
+          if (ex.kind === 'letterTeach') met.add(ex.letter.id);
+          if (ex.kind !== 'letterPick') continue;
+          for (const o of ex.options) if (!met.has(o.id)) early.push(`${id}: ${o.id} before its card`);
+          picks++;
+          if (ex.options.length === OPTIONS_PER_QUESTION) withFour++;
+        }
+      }
+    }
+    expect([...new Set(early)]).toEqual([]);
+    expect(picks).toBeGreaterThan(20);
+    expect(withFour).toBe(picks);
   });
 });
