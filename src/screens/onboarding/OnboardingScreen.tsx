@@ -132,17 +132,46 @@ type Step = 'welcome' | 'goal' | 'track' | 'voice' | 'background' | 'placement' 
  */
 const FLOW: Step[] = ['goal', 'track', ...(MALE_VOICE_AVAILABLE ? (['voice'] as Step[]) : []), 'background', 'daily'];
 
-function Dots({ of }: { of: Step }) {
+/** The step before each one with dots, for Back. */
+const BACK_TO: Partial<Record<Step, Step>> = {
+  goal: 'welcome',
+  track: 'goal',
+  voice: 'track',
+  background: MALE_VOICE_AVAILABLE ? 'voice' : 'track',
+  daily: 'background',
+};
+
+/**
+ * The progress dots, with Back beside them. Every step lives at one address,
+ * so the browser's back button left onboarding altogether, and there was no
+ * other way to change an earlier answer (QA, 2026-10-28). Answers are kept;
+ * the quick check, if it comes again, starts from its first question.
+ */
+function Dots({ of, onBack }: { of: Step; onBack: (to: Step) => void }) {
   const at = FLOW.indexOf(of);
+  const to = BACK_TO[of];
   return (
-    <View className="mb-6 flex-row gap-1.5">
-      {FLOW.map((key, i) => (
-        <View
-          key={key}
-          className="h-1 flex-1 rounded-full"
-          style={{ backgroundColor: i <= at ? palette.gold : withAlpha(palette.white, 0.12) }}
-        />
-      ))}
+    <View className="mb-6 flex-row items-center gap-3">
+      {to ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          onPress={() => onBack(to)}
+          hitSlop={8}
+          style={{ minHeight: 44, minWidth: 44, justifyContent: 'center' }}
+        >
+          <Txt className="text-sm text-paper/80">‹ Back</Txt>
+        </Pressable>
+      ) : null}
+      <View className="flex-1 flex-row gap-1.5">
+        {FLOW.map((key, i) => (
+          <View
+            key={key}
+            className="h-1 flex-1 rounded-full"
+            style={{ backgroundColor: i <= at ? palette.gold : withAlpha(palette.white, 0.12) }}
+          />
+        ))}
+      </View>
     </View>
   );
 }
@@ -214,6 +243,15 @@ export function OnboardingScreen() {
   const setTrackSetting = useSettingsStore((s) => s.setTrack);
   const setVoiceGender = useSettingsStore((s) => s.setVoiceGender);
   const setOnboardingDraft = useSettingsStore((s) => s.setOnboardingDraft);
+  const goBack = (to: Step) => {
+    feedback.tap();
+    // A quick check left part-way starts again from its first question.
+    setPIdx(0);
+    setPCorrect(0);
+    setPAnswered(false);
+    setPPicked(null);
+    setStep(to);
+  };
   useEffect(() => {
     setOnboardingDraft(step === 'welcome' ? null : { step, goal, track, voice, background, daily });
   }, [setOnboardingDraft, step, goal, track, voice, background, daily]);
@@ -383,7 +421,7 @@ export function OnboardingScreen() {
   if (step === 'goal') {
     return cued(
       <Reveal>
-        <Dots of="goal" />
+        <Dots of="goal" onBack={goBack} />
         <Heading className="mb-1 text-2xl">Why are you learning Urdu?</Heading>
         <Txt className="mb-6 text-sm text-paper/55">This shapes which words we teach first.</Txt>
         <View className="gap-3" accessibilityRole="radiogroup" aria-label="Why are you learning Urdu?">
@@ -428,7 +466,7 @@ export function OnboardingScreen() {
   if (step === 'track') {
     return cued(
       <Reveal>
-        <Dots of="track" />
+        <Dots of="track" onBack={goBack} />
         {/* No subtitle: TrackChooser's own opening line says the same thing
               concretely, with a real lesson count, two lines further down. */}
         <Heading className="mb-4 text-2xl">How do you want to learn?</Heading>
@@ -458,7 +496,7 @@ export function OnboardingScreen() {
     return (
       <Screen>
         <Reveal>
-          <Dots of="voice" />
+          <Dots of="voice" onBack={goBack} />
           <Heading className="mb-1 text-2xl">Whose voice would you like?</Heading>
           <Txt className="mb-4 text-sm text-paper/55">
             Every word is read aloud, in the voice you choose. You can change it later in Settings.
@@ -534,7 +572,7 @@ export function OnboardingScreen() {
     return (
       <Screen>
         <Reveal>
-          <Dots of="background" />
+          <Dots of="background" onBack={goBack} />
           <Heading className="mb-1 text-2xl">Do you already know some Urdu?</Heading>
           <Txt className="mb-6 text-sm text-paper/55">
             {track === 'roman'
@@ -683,7 +721,7 @@ export function OnboardingScreen() {
     return (
       <Screen>
         <Reveal>
-          <Dots of="daily" />
+          <Dots of="daily" onBack={goBack} />
           <Heading className="mb-1 text-2xl">Set a daily goal</Heading>
           <Txt className="mb-6 text-sm text-paper/55">
             XP are the points you earn as you learn. Choose a goal you can keep; you can change it whenever you like.
