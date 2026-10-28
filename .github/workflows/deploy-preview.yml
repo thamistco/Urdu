@@ -204,6 +204,12 @@ jobs:
       - name: Check a shared link shows its picture
         run: npm run check:share-card
 
+      # Chrome offered to install the app, and the installed icon opened the
+      # offline page. Until a service worker keeps the app (P-111), it must not
+      # claim to be installable (launch bar R6).
+      - name: Check the app claims to be installable only if it opens offline
+        run: npm run check:installable
+
       # Drives the built app in a real browser and answers questions, checking
       # that the question does not change under the answer. Needs the bundle, so
       # it runs after the export rather than with the other checks.

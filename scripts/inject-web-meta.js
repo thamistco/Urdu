@@ -123,7 +123,12 @@ let manifestWritten = false;
         description,
         start_url: `${baseUrl}/`,
         scope: `${baseUrl}/`,
-        display: 'standalone',
+        // A browser tab, not an installed app (launch bar R6). Chrome offered to
+        // install Qaaf, and the installed icon then opened the offline page,
+        // since nothing keeps the app on the device. The manifest stays for the
+        // shortcut's name; full screen comes back with an offline worker
+        // (P-111, held: docs/daily-review/held/). check:installable holds this.
+        display: 'browser',
         orientation: 'portrait',
         background_color: background,
         theme_color: background,

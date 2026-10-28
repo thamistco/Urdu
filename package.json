@@ -62,6 +62,7 @@
     "check:grammar-distractors": "node scripts/check-grammar-distractors.js",
     "check:claims": "node scripts/check-claims.js",
     "check:share-card": "node scripts/check-share-card.js",
+    "check:installable": "node scripts/check-installable.js",
     "playtest": "node scripts/playtest.js",
     "playtest:selftest": "node scripts/playtest-selftest.js",
     "prepare": "git config core.hooksPath .githooks || true"
