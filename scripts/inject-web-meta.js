@@ -233,7 +233,7 @@ fs.writeFileSync(INDEX, html);
 
 console.log(`Injected ${tags.length} meta tags into ${path.relative(ROOT, INDEX)}`);
 if (manifestWritten)
-  console.log(`  wrote ${MANIFEST_NAME} — installs as "${expo.extra?.storeName || name}", labelled "${name}"`);
+  console.log(`  wrote ${MANIFEST_NAME} — shortcuts are named "${expo.extra?.storeName || name}", labelled "${name}"`);
 if (!origin) console.log('  (SITE_ORIGIN not set — share-image tags skipped, since a relative og:image never renders)');
 else if (!iconUrl) console.log('  (assets/images/icon.png missing — share-image tags skipped)');
 else console.log(`  share card copied to ${SHARE_NAME}, served at ${iconUrl}`);

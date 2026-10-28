@@ -27,9 +27,13 @@ if (!fs.existsSync(file)) {
 const manifest = JSON.parse(fs.readFileSync(file, 'utf8'));
 const worker = fs.existsSync(path.join(DIST, 'sw.js'));
 
-if (!worker && manifest.display !== 'browser') {
+// display_override wins over display where a browser supports it, so a
+// standalone there makes the app installable whatever display says (second
+// check, 2026-10-28: Chrome reported it installable while this passed).
+const asks = [...(manifest.display_override || []), manifest.display];
+if (!worker && asks.some((d) => d !== 'browser')) {
   console.error(
-    `check:installable failed: the manifest asks for display "${manifest.display}", which browsers offer to install, ` +
+    `check:installable failed: the manifest asks for display ${JSON.stringify(asks)}, which browsers offer to install, ` +
       'but no service worker keeps the app on the device, so an installed copy opens the offline page. ' +
       'Use "browser" until P-111 ships.'
   );
