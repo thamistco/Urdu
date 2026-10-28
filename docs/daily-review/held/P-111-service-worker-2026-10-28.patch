@@ -1,0 +1,491 @@
+From 85035b802df7fa4ccc58dd639c8699be5d9b3378 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 28 Oct 2026 01:10:06 +0000
+Subject: [PATCH] Open an installed Qaaf with no signal: a service worker
+ (P-111, R6)
+
+Chrome offers to install the web app, and the installed icon then opened
+the browser's offline page: no service worker, so a lesson reloaded with
+no signal, or the app opened on a train, showed the dinosaur (design
+review, 24 and 28 October; launch bar R6).
+
+web:meta now writes dist/sw.js and registers it, on export only, never
+under expo start. The worker keeps what a first lesson needs: the app
+shell, its CSS and JS, the seven fonts, the five reward sounds and the
+two scenery images, each named from the build (20 files, 2,080 KB
+gzipped, 5,736 KB raw; budget 2.5 MB and 6 MB). Pages go network first
+and fall back to the kept shell; hashed files (name.<hash>.ext, and the
+bundles' name-<hash>.js|css) are cache first; voice clips are kept as
+they are played, at most 300. Its version is a hash of the kept files,
+so a deploy that changes them replaces it, and it deletes only this
+app's own qaaf- caches, since Cache Storage is shared with every
+repository on the host. scripts/sw-kill.js is the off switch, to ship as
+sw.js if the worker ever misbehaves.
+
+One case is not covered: Home's address is the base without its slash
+(/Urdu), written by the router after load, which lies outside the
+worker's scope (/Urdu/), so reloading Home in a browser tab offline still
+fails. An installed app launches at /Urdu/, inside it.
+
+check:offline installs it in a real browser profile, cuts the network,
+reloads l-1 (its first card, Nastaliq drawn) and opens the start address
+(Home). Broken on purpose: with no registration it fails ("no service
+worker installed"); with bundles left uncached (a dot-only hash
+pattern, the first version's bug) it fails on both pages.
+
+Design's specification, three viewpoints and the case against (a worker
+outlives deploys and can strand a learner) are in tonight's report; the
+second check is a different agent's.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FgFsmHsJ32w9Di1MVKqKTX
+---
+ .github/workflows/deploy-preview.yml |   9 ++
+ package.json                         |   1 +
+ scripts/check-offline.js             | 157 ++++++++++++++++++++++++
+ scripts/inject-web-meta.js           |   8 ++
+ scripts/lib/service-worker.js        | 176 +++++++++++++++++++++++++++
+ scripts/sw-kill.js                   |  23 ++++
+ 6 files changed, 374 insertions(+)
+ create mode 100644 scripts/check-offline.js
+ create mode 100644 scripts/lib/service-worker.js
+ create mode 100644 scripts/sw-kill.js
+
+diff --git a/.github/workflows/deploy-preview.yml b/.github/workflows/deploy-preview.yml
+index 3c19452b..58292dbc 100644
+--- a/.github/workflows/deploy-preview.yml
++++ b/.github/workflows/deploy-preview.yml
+@@ -234,6 +234,15 @@ jobs:
+           CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
+             npm run check:sizes
+ 
++      # The manifest makes the app installable, and the installed icon opened
++      # the browser's offline page. The service worker keeps what a first
++      # lesson needs; this installs it in a real profile, cuts the network and
++      # opens a lesson and Home (P-111, launch bar R6).
++      - name: Check an installed app opens with no signal
++        run: |
++          CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
++            npm run check:offline
++
+       # The path used to be one flat ScrollView mounting every lesson row —
+       # 174, then 608, then 348 as content grew. HomeScreen.tsx now collapses
+       # every course stage except the learner's own, which is real
+diff --git a/package.json b/package.json
+index 95f4ffae..15c13a56 100644
+--- a/package.json
++++ b/package.json
+@@ -62,6 +62,7 @@
+     "check:grammar-distractors": "node scripts/check-grammar-distractors.js",
+     "check:claims": "node scripts/check-claims.js",
+     "check:share-card": "node scripts/check-share-card.js",
++    "check:offline": "node scripts/check-offline.js",
+     "playtest": "node scripts/playtest.js",
+     "playtest:selftest": "node scripts/playtest-selftest.js",
+     "prepare": "git config core.hooksPath .githooks || true"
+diff --git a/scripts/check-offline.js b/scripts/check-offline.js
+new file mode 100644
+index 00000000..669eac74
+--- /dev/null
++++ b/scripts/check-offline.js
+@@ -0,0 +1,157 @@
++/* eslint-disable */
++/**
++ * An installed Qaaf opens with no signal (P-111, launch bar R6).
++ *
++ * The manifest makes the web app installable, and until the service worker
++ * existed the installed icon opened the browser's offline page: a promise
++ * broken on the train. This drives the built app in a real browser profile,
++ * lets the worker install, cuts the network, and asserts:
++ *
++ *   - the worker controls the page and holds every file it lists, within the
++ *     size budget;
++ *   - a lesson reloaded offline opens on its first card, with the Nastaliq
++ *     font drawn;
++ *   - the app opened offline from its start address reaches Home.
++ *
++ * Needs a web build in dist/ with web:meta run on it.
++ *
++ * Run with:  npm run check:offline
++ */
++
++const fs = require('fs');
++const os = require('os');
++const path = require('path');
++const { serveDist, findChromium, openTheDoor } = require('./lib/serve-dist');
++const { precacheSize, BUDGET_GZIP, BUDGET_RAW } = require('./lib/service-worker');
++
++const DIST = path.join(__dirname, '..', 'dist');
++const PORT = 8347;
++
++const html = fs.existsSync(path.join(DIST, 'index.html')) ? fs.readFileSync(path.join(DIST, 'index.html'), 'utf8') : '';
++const workerFile = path.join(DIST, 'sw.js');
++if (!html || !fs.existsSync(workerFile)) {
++  console.error('check:offline: no dist/index.html or dist/sw.js. Build the web app and run web:meta first.');
++  process.exit(1);
++}
++const BASE = (/<meta name="qaaf:base" content="([^"]*)"/.exec(html)?.[1] ?? '').replace(/\/+$/, '');
++const source = fs.readFileSync(workerFile, 'utf8');
++const VERSION = /const VERSION = "([^"]+)"/.exec(source)?.[1];
++const PRECACHE = JSON.parse(/const PRECACHE = (\[.*\]);/.exec(source)?.[1] ?? '[]');
++
++const problems = [];
++
++(async () => {
++  const { chromium } = require('playwright-core');
++  const server = await serveDist(DIST, PORT);
++  const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'qaaf-offline-'));
++  const context = await chromium.launchPersistentContext(profile, {
++    executablePath: findChromium() || undefined,
++    viewport: { width: 390, height: 844 },
++  });
++  const root = `http://localhost:${PORT}${BASE}/`;
++  try {
++    const page = context.pages()[0] || (await context.newPage());
++    await page.goto(root);
++    await openTheDoor(page);
++    await page.evaluate(() => {
++      const raw = JSON.parse(localStorage.getItem('qaaf-progress') || '{"state":{},"version":0}');
++      raw.state = { ...raw.state, onboarded: true, goal: 'read', level: 0, hearts: 5, completedLessons: {} };
++      localStorage.setItem('qaaf-progress', JSON.stringify(raw));
++    });
++    await page.goto(root);
++
++    // The first visit installs the worker; the next opening of the start
++    // address is the one it serves, as an installed app's launch is. (Home's
++    // own address is the base without its slash, /Urdu, which the router
++    // writes after load and which lies outside the worker's scope /Urdu/, so
++    // reloading Home in a tab offline is the one case not covered.) Polled,
++    // with a limit, so a worker that never activates fails rather than hangs.
++    let active = false;
++    for (let i = 0; i < 80 && !active; i++) {
++      active = await page.evaluate(
++        async () =>
++          !!(await navigator.serviceWorker.getRegistrations()).find((r) => r.active && r.active.state === 'activated')
++      );
++      if (!active) await page.waitForTimeout(250);
++    }
++    if (!active) {
++      problems.push('no service worker installed (was web:meta run, and is it registered?)');
++      throw new Error('stop');
++    }
++    await page.goto(root);
++    const controlled = await page
++      .waitForFunction(() => !!navigator.serviceWorker && !!navigator.serviceWorker.controller, null, {
++        timeout: 20000,
++      })
++      .then(
++        () => true,
++        () => false
++      );
++    if (!controlled) {
++      problems.push('the worker installed but did not serve the start address');
++      throw new Error('stop');
++    }
++    const held = await page.evaluate(async (version) => {
++      const [reg] = await navigator.serviceWorker.getRegistrations();
++      const cache = (await caches.has(version)) ? await caches.open(version) : null;
++      return { scope: reg ? reg.scope : '', entries: cache ? (await cache.keys()).length : 0 };
++    }, VERSION);
++    if (!held.scope.endsWith(`${BASE}/`)) problems.push(`the worker's scope is ${held.scope}, not the app's ${BASE}/`);
++    if (held.entries !== PRECACHE.length)
++      problems.push(`the cache holds ${held.entries} of the ${PRECACHE.length} files the worker lists`);
++    const size = precacheSize(DIST, PRECACHE);
++    if (size.gzip > BUDGET_GZIP)
++      problems.push(`the precache is ${Math.round(size.gzip / 1024)} KB gzipped, over ${BUDGET_GZIP / 1024} KB`);
++    if (size.raw > BUDGET_RAW)
++      problems.push(`the precache is ${Math.round(size.raw / 1024)} KB raw, over ${BUDGET_RAW / 1024} KB`);
++
++    // A lesson reloaded with no signal.
++    await page.goto(`${root}lesson/l-1`);
++    await page.waitForFunction(() => /\d+ of \d+/.test(document.body.innerText), null, { timeout: 20000 });
++    await context.setOffline(true);
++    await page.reload().catch((e) => problems.push(`reloading l-1 offline failed: ${e.message.split('\n')[0]}`));
++    const lesson = await page
++      .waitForFunction(() => /a new letter/i.test(document.body.innerText), null, { timeout: 15000 })
++      .then(
++        () => true,
++        () => false
++      );
++    if (!lesson) problems.push('l-1 reloaded offline did not reach its first card');
++    else {
++      const nastaliq = await page.evaluate(async () => {
++        await document.fonts.ready;
++        return [...document.fonts].some((f) => /nastaliq/i.test(f.family) && f.status === 'loaded');
++      });
++      if (!nastaliq) problems.push('l-1 reloaded offline drew no Nastaliq font');
++    }
++
++    // The app opened offline from its start address.
++    const fresh = await context.newPage();
++    await fresh.goto(root).catch((e) => problems.push(`opening the app offline failed: ${e.message.split('\n')[0]}`));
++    const home = await fresh
++      .waitForFunction(() => /meet the letters|start here|continue/i.test(document.body.innerText), null, {
++        timeout: 15000,
++      })
++      .then(
++        () => true,
++        () => false
++      );
++    if (!home) problems.push('the app opened offline did not reach Home');
++  } catch (e) {
++    if (e.message !== 'stop') throw e;
++  } finally {
++    await context.close();
++    server.close();
++    fs.rmSync(profile, { recursive: true, force: true });
++  }
++
++  if (problems.length) {
++    console.error('check:offline failed:');
++    for (const p of problems) console.error(`  - ${p}`);
++    process.exit(1);
++  }
++  console.log(`check:offline: ${VERSION} holds ${PRECACHE.length} files; a lesson and Home open with no signal.`);
++})().catch((e) => {
++  console.error(e);
++  process.exit(1);
++});
+diff --git a/scripts/inject-web-meta.js b/scripts/inject-web-meta.js
+index 3aea65f3..b0e9a81f 100644
+--- a/scripts/inject-web-meta.js
++++ b/scripts/inject-web-meta.js
+@@ -17,6 +17,7 @@
+ 
+ const fs = require('fs');
+ const path = require('path');
++const { writeServiceWorker } = require('./lib/service-worker');
+ 
+ const ROOT = path.join(__dirname, '..');
+ const DIST = path.join(ROOT, process.argv[2] || 'dist');
+@@ -224,9 +225,16 @@ if (html.includes('<!-- qaaf:meta -->')) {
+ 
+ const block = `\n    <!-- qaaf:meta -->\n    ${tags.join('\n    ')}\n    <!-- /qaaf:meta -->`;
+ html = html.replace('</title>', `</title>${block}`);
++// After the block, because the fonts it preloads are part of what is kept.
++const worker = writeServiceWorker(DIST, html, baseUrl);
++html = html.replace('<!-- /qaaf:meta -->', `${worker.tag}\n    <!-- /qaaf:meta -->`);
+ fs.writeFileSync(INDEX, html);
+ 
+ console.log(`Injected ${tags.length} meta tags into ${path.relative(ROOT, INDEX)}`);
++console.log(
++  `  wrote sw.js (${worker.version}): ${worker.list.length} files kept for offline, ` +
++    `${Math.round(worker.size.gzip / 1024)} KB gzipped, ${Math.round(worker.size.raw / 1024)} KB raw`
++);
+ if (manifestWritten)
+   console.log(`  wrote ${MANIFEST_NAME} — installs as "${expo.extra?.storeName || name}", labelled "${name}"`);
+ if (!origin) console.log('  (SITE_ORIGIN not set — share-image tags skipped, since a relative og:image never renders)');
+diff --git a/scripts/lib/service-worker.js b/scripts/lib/service-worker.js
+new file mode 100644
+index 00000000..39ca1329
+--- /dev/null
++++ b/scripts/lib/service-worker.js
+@@ -0,0 +1,176 @@
++/* eslint-disable */
++/**
++ * The service worker that lets an installed Qaaf open with no signal (P-111).
++ *
++ * Chrome offered to install the web app and the installed icon then showed
++ * the offline dinosaur, which is a promise broken on the train, the one place
++ * a phone app is most used (R6; design review, 2026-10-24 and 2026-10-28). The
++ * worker keeps what a first lesson needs, about 2.3 MB gzipped, and nothing
++ * else ahead of time.
++ *
++ * Written at export by inject-web-meta, never under `expo start`, so a dev
++ * server is never cached. Every URL is resolved against the worker's own
++ * scope, so nothing here names /Urdu.
++ *
++ * - Pages: network first, never stored by address; offline, the cached app
++ *   shell. Pages' own 404.html for deep links passes through untouched.
++ * - Hashed files (a 32-hex content hash in the name, after a dot for assets
++ *   and a hyphen for the JS and CSS bundles): cache first. Voice clips
++ *   go into `qaaf-audio` as they are played, at most 300, oldest out first.
++ * - Anything else, any other origin, any non-GET: the network, untouched.
++ * - Updates: the version is a hash of the precached files' bytes, so a deploy
++ *   that changes them changes sw.js; the new worker takes over at once and
++ *   deletes only this app's old `qaaf-` caches. Cache Storage is shared with
++ *   every repository on thamistco.github.io, so it never deletes all of them.
++ *
++ * If the worker ever misbehaves, removing its registration does not remove an
++ * installed copy: ship `scripts/sw-kill.js` as dist/sw.js instead.
++ */
++
++const fs = require('fs');
++const path = require('path');
++const crypto = require('crypto');
++const zlib = require('zlib');
++
++/** Most of the precache, gzipped and raw: the check holds the build to it. */
++const BUDGET_GZIP = 2.5 * 1024 * 1024;
++const BUDGET_RAW = 6 * 1024 * 1024;
++const AUDIO_CAP = 300;
++
++const SOUNDS = ['correct', 'incorrect', 'levelup', 'streak', 'tap'];
++const SCENERY = ['evening', 'evening-dusk'];
++const HASHED = '\\.[0-9a-f]{32}\\.[a-z0-9]+$';
++
++function filesUnder(dir) {
++  const out = [];
++  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
++    const f = path.join(dir, e.name);
++    if (e.isDirectory()) out.push(...filesUnder(f));
++    else out.push(f);
++  }
++  return out;
++}
++
++/**
++ * Every file the app shell needs, relative to the site root, each named from
++ * the build rather than matched by a pattern at run time. `cache.addAll` is
++ * all or nothing, so a name that 404s fails the install and keeps the old
++ * worker; one missing here fails the export instead.
++ */
++function precacheList(dist, html, baseUrl) {
++  const prefix = `${baseUrl}/`;
++  const fromPage = [...html.matchAll(/(?:href|src)="([^"]+\.(?:css|js|ttf))"/g)]
++    .map((m) => m[1])
++    .filter((href) => href.startsWith(prefix))
++    .map((href) => href.slice(prefix.length));
++  const assets = filesUnder(path.join(dist, 'assets')).map((f) => path.relative(dist, f).split(path.sep).join('/'));
++  const named = (base) => {
++    const hit = assets.find((a) => new RegExp(`/${base}${HASHED}`).test(a));
++    if (!hit) throw new Error(`service worker: no ${base}.<hash> in the export`);
++    return hit;
++  };
++  const list = [
++    './',
++    'manifest.webmanifest',
++    'app-icon.png',
++    'favicon.ico',
++    ...fromPage,
++    named('NotoNastaliqUrdu_700Bold'),
++    ...SOUNDS.map(named),
++    ...SCENERY.map(named),
++  ];
++  const unique = [...new Set(list)];
++  for (const entry of unique) {
++    const file = path.join(dist, entry === './' ? 'index.html' : decodeURI(entry));
++    if (!fs.existsSync(file)) throw new Error(`service worker: ${entry} is not in the export`);
++  }
++  return unique;
++}
++
++/** The bytes the worker will hold, raw and gzipped, for the budget. */
++function precacheSize(dist, list) {
++  let raw = 0;
++  let gzip = 0;
++  for (const entry of list) {
++    const buf = fs.readFileSync(path.join(dist, entry === './' ? 'index.html' : decodeURI(entry)));
++    raw += buf.length;
++    gzip += zlib.gzipSync(buf).length;
++  }
++  return { raw, gzip };
++}
++
++function workerSource(version, list) {
++  return `// Written by scripts/lib/service-worker.js at export (P-111). Do not edit.
++const VERSION = ${JSON.stringify(version)};
++const AUDIO = 'qaaf-audio';
++const PRECACHE = ${JSON.stringify(list)};
++// Expo names assets name.<hash>.ext and its bundles name-<hash>.js|css.
++const HASHED = /[.-][0-9a-f]{32}\\.[a-z0-9]+$/;
++const SCOPE = self.registration.scope;
++
++self.addEventListener('install', (e) => {
++  e.waitUntil(
++    caches.open(VERSION)
++      .then((c) => c.addAll(PRECACHE.map((u) => new URL(u, SCOPE).href)))
++      .then(() => self.skipWaiting())
++  );
++});
++
++self.addEventListener('activate', (e) => {
++  e.waitUntil(
++    caches.keys()
++      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('qaaf-') && k !== VERSION && k !== AUDIO).map((k) => caches.delete(k))))
++      .then(() => self.clients.claim())
++  );
++});
++
++async function keepAudio(url, response) {
++  const cache = await caches.open(AUDIO);
++  await cache.put(url, response);
++  const keys = await cache.keys();
++  for (const old of keys.slice(0, Math.max(0, keys.length - ${AUDIO_CAP}))) await cache.delete(old);
++}
++
++self.addEventListener('fetch', (e) => {
++  const req = e.request;
++  const url = new URL(req.url);
++  if (req.method !== 'GET' || !url.href.startsWith(SCOPE)) return;
++  if (req.mode === 'navigate') {
++    e.respondWith(fetch(req).catch(() => caches.match(SCOPE, { cacheName: VERSION })));
++    return;
++  }
++  if (!HASHED.test(url.pathname)) return;
++  e.respondWith(
++    caches.match(url.href, { ignoreSearch: true }).then(
++      (hit) =>
++        hit ||
++        fetch(url.href).then((r) => {
++          if (r.status === 200 && /\\.(mp3|m4a|ogg|wav)$/.test(url.pathname)) e.waitUntil(keepAudio(url.href, r.clone()));
++          return r;
++        })
++    )
++  );
++});
++`;
++}
++
++/**
++ * Write dist/sw.js and return the tag that registers it. The path is absolute
++ * under the base: a relative one would resolve against /Urdu/lesson/l-1 on a
++ * deep link and register nothing.
++ */
++function writeServiceWorker(dist, html, baseUrl) {
++  const list = precacheList(dist, html, baseUrl);
++  const hash = crypto.createHash('sha256');
++  for (const entry of list) {
++    if (entry !== './') hash.update(fs.readFileSync(path.join(dist, decodeURI(entry))));
++  }
++  const version = `qaaf-${hash.digest('hex').slice(0, 8)}`;
++  fs.writeFileSync(path.join(dist, 'sw.js'), workerSource(version, list));
++  const tag =
++    `<script>if ('serviceWorker' in navigator) addEventListener('load', function () {` +
++    ` navigator.serviceWorker.register('${baseUrl}/sw.js', { scope: '${baseUrl}/' }); });</script>`;
++  return { tag, version, list, size: precacheSize(dist, list) };
++}
++
++module.exports = { writeServiceWorker, precacheList, precacheSize, BUDGET_GZIP, BUDGET_RAW };
+diff --git a/scripts/sw-kill.js b/scripts/sw-kill.js
+new file mode 100644
+index 00000000..987fc075
+--- /dev/null
++++ b/scripts/sw-kill.js
+@@ -0,0 +1,23 @@
++/* eslint-disable */
++// The service worker's off switch (P-111). Not shipped normally.
++//
++// Removing the registration from the page does not remove a worker a learner
++// already has: it keeps serving from its cache until something replaces it.
++// If the real worker ever misbehaves, copy this file over dist/sw.js in the
++// deploy instead. Browsers check sw.js for changes on each visit, so this one
++// installs, deletes this app's caches (only the `qaaf-` ones: Cache Storage is
++// shared with every repository on the same host), unregisters itself and
++// reloads any open page onto the network. Learners' progress is in
++// localStorage, not in a cache, and is not touched.
++self.addEventListener('install', () => self.skipWaiting());
++self.addEventListener('activate', (e) => {
++  e.waitUntil(
++    (async () => {
++      const keys = await caches.keys();
++      await Promise.all(keys.filter((k) => k.startsWith('qaaf-')).map((k) => caches.delete(k)));
++      await self.registration.unregister();
++      const pages = await self.clients.matchAll({ type: 'window' });
++      for (const page of pages) page.navigate(page.url);
++    })()
++  );
++});
+-- 
+2.43.0
+
