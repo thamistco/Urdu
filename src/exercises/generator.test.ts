@@ -2662,3 +2662,19 @@ describe('a letter lesson offers only letters already introduced (QA, 2026-10-28
     expect(withFour).toBe(picks);
   });
 });
+
+describe('grammar drill options read as the drill means them (QA, 2026-10-28)', () => {
+  it('shows the pronoun تو as tu, not the "then" of the sentences', () => {
+    const drills = GRAMMAR.flatMap((c) => c.drills.map((d) => ({ c, d })));
+    for (const { d } of drills) if (d.optionsRoman) expect(d.optionsRoman, d.id).toHaveLength(d.options.length);
+    const lesson = resolveLesson('g-pronouns')!;
+    const seen = new Set<string>();
+    for (let i = 0; i < 20; i++) {
+      for (const ex of buildLessonExercises(lesson, [], 'roman')) {
+        if (ex.kind !== 'grammarDrill' || ex.drill.id !== 'g-pronouns-d1') continue;
+        seen.add(ex.romanOptions![ex.drill.options.indexOf('تو')]);
+      }
+    }
+    expect([...seen]).toEqual(['tu']);
+  });
+});
