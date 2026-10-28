@@ -749,10 +749,13 @@ export function OnboardingScreen() {
   // the background answer is about speaking, and it is the one that skips the
   // basic vocabulary, so it decides the card below too. The script questions
   // are about reading, and all they can do is sharpen a speaker's label from
-  // "speaks some" to "reads some".
+  // "speaks some" to "reads some". Only where they were in the script: the
+  // Roman track's check is in English letters, and a speaker who had just
+  // chosen not to learn the script was told "You already read some Urdu"
+  // (tester, Roman-track speaker, 2026-10-28).
   const lvlName = !isSpeaker
     ? 'Starting from the beginning'
-    : lvl === 2
+    : lvl === 2 && wantsScript
       ? 'You already read some Urdu'
       : 'You already speak some Urdu';
   return (
