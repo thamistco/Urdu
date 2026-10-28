@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Pressable, type ScrollView } from 'react-native';
 import { useMoreBelow, MoreBelowCue } from '../../components/MoreBelow';
 import { Screen } from '../../components/Screen';
@@ -25,6 +25,7 @@ import { ALL_LESSONS } from '../../data/units';
 import { LETTERS } from '../../data/letters';
 import { placementFor } from '../../data/placement';
 import { reviewsWithNothingLeft } from '../../lib/unitSkip';
+import { resumableDraft } from '../../lib/onboardingDraft';
 
 /**
  * What the welcome screen promises, counted rather than typed.
@@ -147,10 +148,17 @@ function Dots({ of }: { of: Step }) {
 }
 
 export function OnboardingScreen() {
-  const [step, setStep] = useState<Step>('welcome');
-  const [goal, setGoal] = useState<Goal | null>(null);
-  const [track, setTrack] = useState<LearnTrack>('both');
-  const [voice, setVoice] = useState<VoiceGender>('f');
+  // Where a reload left off, if it did: see lib/onboardingDraft (Q-103).
+  const [resumed] = useState(() =>
+    resumableDraft(
+      useSettingsStore.getState().onboardingDraft,
+      DAILY_GOALS.map((g) => g.id)
+    )
+  );
+  const [step, setStep] = useState<Step>(resumed?.step ?? 'welcome');
+  const [goal, setGoal] = useState<Goal | null>(resumed?.goal ?? null);
+  const [track, setTrack] = useState<LearnTrack>(resumed?.track ?? 'both');
+  const [voice, setVoice] = useState<VoiceGender>(resumed?.voice ?? 'f');
   /**
    * "More below" on the two choices that run past a small phone: at 320x568
    * the track screen's Continue sat 151px under the fold, and the goal
@@ -192,12 +200,12 @@ export function OnboardingScreen() {
     () => placementFor(track).map((q) => ({ ...q, options: shuffle(q.options) })),
     [track]
   );
-  const [background, setBackground] = useState<Background | null>(null);
+  const [background, setBackground] = useState<Background | null>(resumed?.background ?? null);
   const [pIdx, setPIdx] = useState(0);
   const [pCorrect, setPCorrect] = useState(0);
   const [pAnswered, setPAnswered] = useState(false);
   const [pPicked, setPPicked] = useState<string | null>(null);
-  const [daily, setDaily] = useState('steady');
+  const [daily, setDaily] = useState(resumed?.daily ?? 'steady');
   // opt-in, never the default — see the note on `canSkipScript` below
   const [skipScript, setSkipScript] = useState(false);
 
@@ -205,6 +213,10 @@ export function OnboardingScreen() {
   const setDailyGoal = useProgressStore((s) => s.setDailyGoal);
   const setTrackSetting = useSettingsStore((s) => s.setTrack);
   const setVoiceGender = useSettingsStore((s) => s.setVoiceGender);
+  const setOnboardingDraft = useSettingsStore((s) => s.setOnboardingDraft);
+  useEffect(() => {
+    setOnboardingDraft(step === 'welcome' ? null : { step, goal, track, voice, background, daily });
+  }, [setOnboardingDraft, step, goal, track, voice, background, daily]);
 
   // The placement level and what it (plus a heritage background) skips —
   // computed here rather than inline in `finish` so the "ready" screen can
@@ -271,6 +283,7 @@ export function OnboardingScreen() {
     setDailyGoal(daily);
     feedback.levelUp();
     completeOnboarding(goal ?? 'curious', lvl, background ?? 'new', skipIds);
+    setOnboardingDraft(null);
   };
 
   // ---- welcome ----
