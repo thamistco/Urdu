@@ -1,4 +1,4 @@
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Pressable } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
@@ -57,6 +57,22 @@ function TabIcon({ name, color }: { name: string; color: string }) {
   );
 }
 
+/**
+ * A tab that is not showing is out of reach, not only out of sight.
+ *
+ * On the web the tab navigator keeps every visited tab laid out underneath
+ * the current one, hidden from screen readers with aria-hidden but still in
+ * the tab order: from Review, Tab walked into Home's 87 buttons, silent
+ * because they were hidden, and 216 from Profile (screen-reader tester,
+ * 2026-10-28). `visibility: hidden` takes them out of the tab order and the
+ * accessibility tree, and unlike `display: none` keeps the tab's layout and
+ * scroll for when it comes back. Native hides inactive tabs itself.
+ */
+function TabScene({ focused, children }: { focused: boolean; children: React.ReactNode }) {
+  if (Platform.OS !== 'web') return <>{children}</>;
+  return <View style={{ flex: 1, visibility: focused ? 'visible' : 'hidden' } as object}>{children}</View>;
+}
+
 function TabBar({ state, navigation }: BottomTabBarProps) {
   return (
     <View
@@ -106,7 +122,11 @@ function TabBar({ state, navigation }: BottomTabBarProps) {
 
 export function MainTabs() {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }} tabBar={(props) => <TabBar {...props} />}>
+    <Tab.Navigator
+      screenOptions={{ headerShown: false }}
+      tabBar={(props) => <TabBar {...props} />}
+      screenLayout={({ navigation, children }) => <TabScene focused={navigation.isFocused()}>{children}</TabScene>}
+    >
       <Tab.Screen name="Learn" component={HomeScreen} />
       <Tab.Screen name="Practice" component={PracticeScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
