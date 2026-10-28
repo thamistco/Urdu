@@ -179,4 +179,14 @@ describe('the which-position answer', () => {
     expect(form(alif, 'initial')).toBe('Alone or start');
     expect(form(be, 'final')).toBe('End');
   });
+
+  it('names only positions a letter is asked in: hamza and nūn ghunna never start a word', () => {
+    const at = (id: string, position: 'isolated' | 'medial' | 'final') =>
+      answerReveal({ kind: 'letterForm', letter: LETTERS.find((l) => l.id === id)!, position, options: [] } as Exercise)
+        ?.label;
+    expect(at('hamza', 'isolated')).toBe('Alone');
+    expect(at('noon-ghunna', 'isolated')).toBe('Alone');
+    expect(at('noon-ghunna', 'final')).toBe('End');
+    expect(at('alif-madda', 'isolated')).toBe('Alone or start');
+  });
 });
