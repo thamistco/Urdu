@@ -532,6 +532,8 @@ export function distractLetters(
   for (const candidate of decoyOrder(pool)) {
     if (picked.length >= n) break;
     if (candidate.id === letter.id || candidate.id === 'hamza') continue;
+    // Not as a shape no word has: ـآ was a wrong option in 168 of 200 builds of l-1.
+    if (position && !positionsOf(candidate).includes(position)) continue;
     const tokens = soundTokens(candidate);
     if (tokens.some((t) => usedTokens.has(t))) continue;
     if (position && usedGlyphs.has(candidate.forms[position])) continue;
@@ -565,11 +567,16 @@ function decoyOrder(pool?: ReadonlySet<string> | null): Letter[] {
   return [...shuffle(LETTERS.filter((l) => pool.has(l.id))), ...LETTERS.filter((l) => !pool.has(l.id))];
 }
 
+/** The positions a letter is asked in: its `askAt`, else all four. */
+export function positionsOf(letter: Letter): PositionKey[] {
+  return letter.askAt ?? POSITIONS.map((p) => p.key);
+}
+
 function letterExercise(letter: Letter, pool: ReadonlySet<string> | null): Exercise {
   // Three ways to meet a letter: name the position of a glyph, pick the glyph
   // out of four, or draw it. Tracing is the slowest, so it stays a minority.
   const roll = Math.random();
-  const position = rand(POSITIONS.map((p) => p.key)) as PositionKey;
+  const position = rand(positionsOf(letter));
 
   // Tracing needs a generated mask; without one there is nothing to score
   // against, so fall through rather than showing a card that cannot be answered.
@@ -623,8 +630,8 @@ function letterExerciseAt(
   positionIndex: number,
   pool: ReadonlySet<string> | null
 ): Exercise {
-  const position = POSITIONS[((positionIndex % POSITIONS.length) + POSITIONS.length) % POSITIONS.length]
-    .key as PositionKey;
+  const positions = positionsOf(letter);
+  const position = positions[((positionIndex % positions.length) + positions.length) % positions.length];
   const t = ((turn % 3) + 3) % 3;
   if (t === 0 && GLYPH_MASKS[`${letter.id}:${position}`]) {
     return { kind: 'letterTrace', letter, position };

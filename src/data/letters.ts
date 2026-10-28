@@ -43,6 +43,18 @@ export type Letter = {
   icon?: IconName;
   note: string;
   /**
+   * The positions a lesson asks this letter in, when not all four.
+   *
+   * The data gives every letter four forms, and the first lessons drilled them
+   * all, so alif madda was asked as ـآ in every build of l-1, a joined form no
+   * word in the course has: of 50 آ in the word list, 47 start a word and 3
+   * follow ر, unjoined. The same held for baṛī ye and nūn ghunna away from the
+   * end, and hamza at the start (learning review, Q-095, 2026-10-28). A form
+   * the learner will not read is still shown on the letter's card and in the
+   * Letter Lab; it is only not asked about.
+   */
+  askAt?: PositionKey[];
+  /**
    * What the voice clip should say, when the glyph itself will not do.
    *
    * `generate-voice.js` records a letter by synthesising its isolated form —
@@ -153,6 +165,7 @@ export const LETTERS: Letter[] = [
     emoji: '🥭',
     group: 1,
     note: 'Alif wearing a wavy hat (madda). It starts a word with a long “aa”, which alif alone cannot do at the beginning.',
+    askAt: ['isolated', 'initial'],
     confusableWith: 'alif',
   },
   {
@@ -609,6 +622,7 @@ export const LETTERS: Letter[] = [
     icon: 'check',
     group: 7,
     note: 'A dotless noon at the end of a word. It nasalises the vowel before it.',
+    askAt: ['isolated', 'final'],
     // Silent alone, so the clip says its name. See `pronounce`'s own comment.
     pronounce: 'نون غنہ',
     confusableWith: 'noon',
@@ -721,6 +735,7 @@ export const LETTERS: Letter[] = [
     emoji: '🍵',
     group: 8,
     note: 'A tiny mark rather than a full letter. It marks a catch in the voice between two vowels.',
+    askAt: ['isolated', 'medial', 'final'],
   },
   {
     id: 'choti-ye',
@@ -761,6 +776,7 @@ export const LETTERS: Letter[] = [
     emoji: '👟',
     group: 8,
     note: 'The “big” ye, a wide sweeping tail used at the end of words for the “e/ai” sound.',
+    askAt: ['isolated', 'final'],
     confusableWith: 'choti-ye',
   },
 ];

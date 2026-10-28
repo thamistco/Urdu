@@ -13,6 +13,7 @@ import {
   isWovenReview,
   buildTilesFor,
   tileLookalikes,
+  positionsOf,
   soundsOverlap,
   soundTokens,
 } from './generator';
@@ -1040,7 +1041,7 @@ describe('URD-047: a confusable letter is posed directly against its partner, no
     }
   });
 
-  it('reaches all four joining forms for every letter in every real letter lesson — tightened to zero (URD-060)', () => {
+  it('reaches every form a letter is asked in, in every real letter lesson — tightened to zero (URD-060)', () => {
     // CURRICULUM CRITIC, URD-047: replacing a sighting with a position-free
     // kind used to eat a step of the position cycle, because `positionIndex`
     // came from the round number. Measured on the `final` form (last in
@@ -1063,6 +1064,9 @@ describe('URD-047: a confusable letter is posed directly against its partner, no
     // exactly once regardless of which kind each individual call lands on.
     // Checked for all four forms, not just `final` — `final` was this
     // test's own history, but the same argument applies to every position.
+    // "All four" is now every position the letter is asked in (`askAt`,
+    // letters.ts): four for all but four letters, and asked-only positions
+    // are tested from the other side below.
     let slots = 0;
     const missing: string[] = [];
     for (const lesson of letterLessons()) {
@@ -1076,8 +1080,8 @@ describe('URD-047: a confusable letter is posed directly against its partner, no
       for (const id of lesson.letterIds ?? []) {
         slots++;
         const seen = formsOf.get(id) ?? new Set();
-        for (const p of POSITIONS) {
-          if (!seen.has(p.key)) missing.push(`${lesson.id}/${id}: missing ${p.key} (has ${[...seen].join(',')})`);
+        for (const p of positionsOf(getLetter(id)!)) {
+          if (!seen.has(p)) missing.push(`${lesson.id}/${id}: missing ${p} (has ${[...seen].join(',')})`);
         }
       }
     }
@@ -2548,5 +2552,67 @@ describe('due items woven into a reading or dialogue lesson', () => {
         id
       ).toEqual(expect.arrayContaining(plain.map((e) => e.kind)));
     }
+  });
+});
+
+describe('letters are asked only in the positions Urdu uses (Q-095)', () => {
+  const letterLessons = () => UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'letters');
+  const askedAt = (ex: Exercise) =>
+    ex.kind === 'letterForm' || ex.kind === 'letterTrace' || ex.kind === 'letterPick' ? ex.position : null;
+
+  it('never asks a letter, or offers one as a wrong option, at a position it is not asked in', () => {
+    const wrong = new Set<string>();
+    for (const track of ['both', 'script'] as const) {
+      for (const lesson of letterLessons()) {
+        for (let i = 0; i < 20; i++) {
+          for (const ex of buildLessonExercises(lesson, [], track)) {
+            const at = askedAt(ex);
+            if (!at || !('letter' in ex)) continue;
+            if (!positionsOf(ex.letter).includes(at)) wrong.add(`${lesson.id}: ${ex.letter.id} at ${at}`);
+            if (ex.kind === 'letterPick')
+              for (const o of ex.options)
+                if (!positionsOf(o).includes(at)) wrong.add(`${lesson.id}: option ${o.id} at ${at}`);
+          }
+        }
+      }
+    }
+    expect([...wrong]).toEqual([]);
+  });
+
+  it('never drills alif madda joined, a shape no word in the course has', () => {
+    const joined: string[] = [];
+    for (const id of ['l-1', 'l-1-2']) {
+      for (let i = 0; i < 50; i++) {
+        for (const ex of buildLessonExercises(resolveLesson(id)!, [], 'both')) {
+          const at = askedAt(ex);
+          if (!at || at === 'isolated' || at === 'initial') continue;
+          if ('letter' in ex && ex.letter.id === 'alif-madda') joined.push(`${id} ${ex.kind} ${at}`);
+          if (ex.kind === 'letterPick' && ex.options.some((o) => o.id === 'alif-madda'))
+            joined.push(`${id} option ${at}`);
+        }
+      }
+    }
+    expect(joined).toEqual([]);
+  });
+
+  it('matches the course: no word uses a letter at a position it is not asked in', () => {
+    // Alif madda after ر is unjoined (قرآن), so it reads as alone or start.
+    const SEPARATE = /[اآدڈذرڑزژو]$/;
+    const bad: string[] = [];
+    for (const letter of LETTERS.filter((l) => l.askAt)) {
+      for (const w of WORDS) {
+        const text = w.urdu.replace(/[\u064B-\u0652\u0670]/g, '');
+        for (const word of text.split(/\s+/)) {
+          [...word].forEach((ch, i) => {
+            if (ch !== letter.forms.isolated) return;
+            const joinedBefore = i > 0 && !SEPARATE.test(word.slice(0, i));
+            const joinedAfter = i < word.length - 1 && letter.connects;
+            const at = joinedBefore ? (joinedAfter ? 'medial' : 'final') : joinedAfter ? 'initial' : 'isolated';
+            if (!positionsOf(letter).includes(at)) bad.push(`${w.id} ${word}: ${letter.id} at ${at}`);
+          });
+        }
+      }
+    }
+    expect(bad).toEqual([]);
   });
 });
