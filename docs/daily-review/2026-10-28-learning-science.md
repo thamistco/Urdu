@@ -8,7 +8,7 @@ Reviewed by `qaaf-learning` (18 tool calls, about 4 minutes, read-only). It drov
 
 - Every l-1 asked آ joined twice: a pick in its middle shape, and "which position?" on its end shape.
 - Every l-1-2 asked "which position?" on its middle shape and traced its end shape.
-- In 168 of 200 l-1 builds, ـآ was offered as a wrong option.
+- ـآ was offered as a wrong option in a middle- or end-position pick in about 140 of every 200 l-1 builds. That is the auditor's count, settling near 140 over 1,000 builds; the learning review's own count of 168 did not reproduce.
 
 **The course's word list** (2,170 tokens) shows where four letters actually occur:
 
