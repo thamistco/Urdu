@@ -4,6 +4,7 @@ import { guardedStorage, keepSavedFields, keepWellTypedFields } from './storage'
 import { setMuted } from '../lib/sound';
 import { setHapticsEnabled } from '../lib/haptics';
 import { setGlossEnabled, setVoiceSet } from '../lib/speech';
+import type { OnboardingDraft } from '../lib/onboardingDraft';
 
 export type LearnTrack = 'script' | 'roman' | 'both';
 
@@ -26,6 +27,8 @@ type SettingsState = {
   /** Which recorded voice reads the Urdu. */
   voiceGender: VoiceGender;
   track: LearnTrack;
+  /** Onboarding's answers so far, so a reload resumes it: see lib/onboardingDraft. */
+  onboardingDraft: OnboardingDraft | null;
   setSound: (v: boolean) => void;
   setHaptics: (v: boolean) => void;
   setShowRoman: (v: boolean) => void;
@@ -33,6 +36,7 @@ type SettingsState = {
   setSpeakMeaning: (v: boolean) => void;
   setVoiceGender: (v: VoiceGender) => void;
   setTrack: (t: LearnTrack) => void;
+  setOnboardingDraft: (d: OnboardingDraft | null) => void;
   syncEffects: () => void;
 };
 
@@ -61,6 +65,7 @@ export const useSettingsStore = create<SettingsState>()(
        */
       voiceGender: 'f',
       track: 'both',
+      onboardingDraft: null,
       setSound: (v) => {
         setMuted(!v);
         set({ soundEnabled: v });
@@ -80,6 +85,7 @@ export const useSettingsStore = create<SettingsState>()(
         set({ voiceGender: v });
       },
       setTrack: (t) => set({ track: t, showRoman: t !== 'script' }),
+      setOnboardingDraft: (d) => set({ onboardingDraft: d }),
       syncEffects: () => {
         const s = get();
         setMuted(!s.soundEnabled);
