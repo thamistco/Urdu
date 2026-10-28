@@ -1,4 +1,4 @@
-From 85035b802df7fa4ccc58dd639c8699be5d9b3378 Mon Sep 17 00:00:00 2001
+From f3eabcfc1f676c297751842d332f1a544968efee Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
 Date: Wed, 28 Oct 2026 01:10:06 +0000
 Subject: [PATCH] Open an installed Qaaf with no signal: a service worker
@@ -52,10 +52,10 @@ Claude-Session: https://claude.ai/code/session_01FgFsmHsJ32w9Di1MVKqKTX
  create mode 100644 scripts/sw-kill.js
 
 diff --git a/.github/workflows/deploy-preview.yml b/.github/workflows/deploy-preview.yml
-index 3c19452b..58292dbc 100644
+index 49e27526..4baa8529 100644
 --- a/.github/workflows/deploy-preview.yml
 +++ b/.github/workflows/deploy-preview.yml
-@@ -234,6 +234,15 @@ jobs:
+@@ -240,6 +240,15 @@ jobs:
            CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
              npm run check:sizes
  
@@ -72,13 +72,13 @@ index 3c19452b..58292dbc 100644
        # 174, then 608, then 348 as content grew. HomeScreen.tsx now collapses
        # every course stage except the learner's own, which is real
 diff --git a/package.json b/package.json
-index 95f4ffae..15c13a56 100644
+index 33e0633a..3498aa15 100644
 --- a/package.json
 +++ b/package.json
-@@ -62,6 +62,7 @@
-     "check:grammar-distractors": "node scripts/check-grammar-distractors.js",
+@@ -63,6 +63,7 @@
      "check:claims": "node scripts/check-claims.js",
      "check:share-card": "node scripts/check-share-card.js",
+     "check:installable": "node scripts/check-installable.js",
 +    "check:offline": "node scripts/check-offline.js",
      "playtest": "node scripts/playtest.js",
      "playtest:selftest": "node scripts/playtest-selftest.js",
@@ -247,7 +247,7 @@ index 00000000..669eac74
 +  process.exit(1);
 +});
 diff --git a/scripts/inject-web-meta.js b/scripts/inject-web-meta.js
-index 3aea65f3..b0e9a81f 100644
+index 744c6257..a89a90d3 100644
 --- a/scripts/inject-web-meta.js
 +++ b/scripts/inject-web-meta.js
 @@ -17,6 +17,7 @@
@@ -258,7 +258,7 @@ index 3aea65f3..b0e9a81f 100644
  
  const ROOT = path.join(__dirname, '..');
  const DIST = path.join(ROOT, process.argv[2] || 'dist');
-@@ -224,9 +225,16 @@ if (html.includes('<!-- qaaf:meta -->')) {
+@@ -229,9 +230,16 @@ if (html.includes('<!-- qaaf:meta -->')) {
  
  const block = `\n    <!-- qaaf:meta -->\n    ${tags.join('\n    ')}\n    <!-- /qaaf:meta -->`;
  html = html.replace('</title>', `</title>${block}`);
@@ -273,7 +273,7 @@ index 3aea65f3..b0e9a81f 100644
 +    `${Math.round(worker.size.gzip / 1024)} KB gzipped, ${Math.round(worker.size.raw / 1024)} KB raw`
 +);
  if (manifestWritten)
-   console.log(`  wrote ${MANIFEST_NAME} — installs as "${expo.extra?.storeName || name}", labelled "${name}"`);
+   console.log(`  wrote ${MANIFEST_NAME} — shortcuts are named "${expo.extra?.storeName || name}", labelled "${name}"`);
  if (!origin) console.log('  (SITE_ORIGIN not set — share-image tags skipped, since a relative og:image never renders)');
 diff --git a/scripts/lib/service-worker.js b/scripts/lib/service-worker.js
 new file mode 100644
