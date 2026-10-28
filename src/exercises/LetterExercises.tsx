@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { Choice, PromptCard, Question, palette, withAlpha } from './common';
 import { Urdu, Txt, Bold, Eyebrow, urduGlyph } from '../components/Text';
-import { POSITIONS, PositionKey, positionHint, shapeGroups } from '../data/letters';
+import { POSITIONS, PositionKey, shapeGroups, groupPositionHint } from '../data/letters';
 import { feedback } from '../lib/feedback';
 import { contrastNotesFor } from './letterContrastNotes';
 import { isCorrectPosition } from './letterFormGrading';
@@ -45,12 +45,7 @@ export function LetterFormExercise({ exercise, locked, onGraded }: ExerciseProps
   // report, 2026-10-12).
   const groups = shapeGroups(letter);
   const twoShapes = groups.length < POSITIONS.length;
-  const groupHint = (keys: PositionKey[]) =>
-    keys.length === 1
-      ? positionHint(letter, keys[0])
-      : keys.includes('medial')
-        ? 'joined on one side'
-        : 'on its own, or first in a word';
+  const groupHint = (keys: PositionKey[]) => groupPositionHint(letter, keys);
 
   return (
     <View>
