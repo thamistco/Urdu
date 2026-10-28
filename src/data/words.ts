@@ -725,7 +725,7 @@ const CORE_WORDS: Word[] = [
   { id: 'w-sinama', urdu: 'سینما', roman: 'sinama', meaning: 'cinema', emoji: '🎬', topic: 'places' },
   { id: 'w-girjaghar', urdu: 'گرجا گھر', roman: 'girja ghar', meaning: 'church', emoji: '⛪', topic: 'places' },
   { id: 'w-mandir', urdu: 'مندر', roman: 'mandir', meaning: 'temple', emoji: '🛕', topic: 'places' },
-  { id: 'w-qabristan', urdu: 'قبرستان', roman: 'qabristaan', meaning: 'cemetery', emoji: '⚰️', topic: 'places' },
+  { id: 'w-qabristan', urdu: 'قبرستان', roman: 'qabristaan', meaning: 'cemetery', emoji: '🪦', topic: 'places' },
   { id: 'w-basstop', urdu: 'بس اسٹاپ', roman: 'bas isṭaap', meaning: 'bus stop', emoji: '🚏', topic: 'places' },
   { id: 'w-chauraha', urdu: 'چوراہا', roman: 'chauraaha', meaning: 'intersection', emoji: '🚦', topic: 'places' },
   { id: 'w-imaarat2', urdu: 'عمارت', roman: 'imaarat', meaning: 'building', emoji: '🏢', topic: 'places' },
