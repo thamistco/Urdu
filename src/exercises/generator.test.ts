@@ -2595,23 +2595,36 @@ describe('letters are asked only in the positions Urdu uses (Q-095)', () => {
     expect(joined).toEqual([]);
   });
 
-  it('matches the course: no word uses a letter at a position it is not asked in', () => {
-    // Alif madda after ر is unjoined (قرآن), so it reads as alone or start.
-    const SEPARATE = /[اآدڈذرڑزژو]$/;
+  /**
+   * The course's words, against each position a letter is not asked in. Each
+   * rule is the fact its askAt rests on (learning review, 2026-10-28), and
+   * each is shown to catch a made-up word first, so none can pass by
+   * matching nothing.
+   */
+  const JOINS_FORWARD = /[^\sاآدڈذرڑزژوۂۓے۔ء]$/;
+  const RULES: { what: string; finds: (word: string) => boolean; catches: string }[] = [
+    {
+      what: 'joined alif madda (ـآ)',
+      finds: (w) => [...w].some((c, i) => c === 'آ' && JOINS_FORWARD.test(w.slice(0, i))),
+      catches: 'بآواز',
+    },
+    { what: 'nūn ghunna mid-word', finds: (w) => /ں./u.test(w), catches: 'ہوںگا' },
+    { what: 'baṛī ye mid-word', finds: (w) => /ے./u.test(w), catches: 'بےشک' },
+    { what: 'hamza starting a word', finds: (w) => w.startsWith('ء'), catches: 'ءاب' },
+    { what: "hamza's bare end mark (ٔ)", finds: (w) => w.includes('\u0654'), catches: 'خانہ\u0654' },
+  ];
+
+  it('matches the course: no word uses a letter where it is not asked', () => {
+    const words = WORDS.flatMap((w) =>
+      w.urdu
+        .replace(/[\u064B-\u0652\u0670]/g, '')
+        .split(/\s+/)
+        .map((t) => ({ id: w.id, t }))
+    );
     const bad: string[] = [];
-    for (const letter of LETTERS.filter((l) => l.askAt)) {
-      for (const w of WORDS) {
-        const text = w.urdu.replace(/[\u064B-\u0652\u0670]/g, '');
-        for (const word of text.split(/\s+/)) {
-          [...word].forEach((ch, i) => {
-            if (ch !== letter.forms.isolated) return;
-            const joinedBefore = i > 0 && !SEPARATE.test(word.slice(0, i));
-            const joinedAfter = i < word.length - 1 && letter.connects;
-            const at = joinedBefore ? (joinedAfter ? 'medial' : 'final') : joinedAfter ? 'initial' : 'isolated';
-            if (!positionsOf(letter).includes(at)) bad.push(`${w.id} ${word}: ${letter.id} at ${at}`);
-          });
-        }
-      }
+    for (const rule of RULES) {
+      expect(rule.finds(rule.catches), `${rule.what} must catch ${rule.catches}`).toBe(true);
+      for (const { id, t } of words) if (rule.finds(t)) bad.push(`${rule.what}: ${id} ${t}`);
     }
     expect(bad).toEqual([]);
   });

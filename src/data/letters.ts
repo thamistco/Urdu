@@ -735,7 +735,8 @@ export const LETTERS: Letter[] = [
     emoji: '🍵',
     group: 8,
     note: 'A tiny mark rather than a full letter. It marks a catch in the voice between two vowels.',
-    askAt: ['isolated', 'medial', 'final'],
+    // Not its end form: that is the bare mark ٔ, which no word in the course has.
+    askAt: ['isolated', 'medial'],
   },
   {
     id: 'choti-ye',
