@@ -534,7 +534,7 @@ export function distractLetters(
   for (const candidate of poolOnly && pool ? shuffle(LETTERS.filter((l) => pool.has(l.id))) : decoyOrder(pool)) {
     if (picked.length >= n) break;
     if (candidate.id === letter.id || candidate.id === 'hamza') continue;
-    // Not as a shape no word has: ـآ was a wrong option in 168 of 200 builds of l-1.
+    // Not as a shape no word has: ـآ was a wrong option in about 140 of every 200 l-1 builds.
     if (position && !positionsOf(candidate).includes(position)) continue;
     const tokens = soundTokens(candidate);
     if (tokens.some((t) => usedTokens.has(t))) continue;
