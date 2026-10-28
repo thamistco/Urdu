@@ -2612,7 +2612,13 @@ describe('letters are asked only in the positions Urdu uses (Q-095)', () => {
     { what: 'nūn ghunna mid-word', finds: (w) => /ں./u.test(w), catches: 'ہوںگا' },
     { what: 'baṛī ye mid-word', finds: (w) => /ے./u.test(w), catches: 'بےشک' },
     { what: 'hamza starting a word', finds: (w) => w.startsWith('ء'), catches: 'ءاب' },
-    { what: "hamza's bare end mark (ٔ)", finds: (w) => w.includes('\u0654'), catches: 'خانہ\u0654' },
+    {
+      // The end mark is met only on he (ۂ, the izāfat in کرۂ, درجۂ, معاہدۂ),
+      // which word-build teaches as its own tile, "hamza on he"; never floating.
+      what: "hamza's end mark off he (ٔ, ۓ)",
+      finds: (w) => /[\u0654\u06D3]/u.test(w.replace(/\u06C1\u0654/g, '\u06C2')),
+      catches: 'خانۓ',
+    },
   ];
 
   it('matches the course: no word uses a letter where it is not asked', () => {

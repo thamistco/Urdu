@@ -801,14 +801,26 @@ export type PositionKey = (typeof POSITIONS)[number]['key'];
  * four, and the Letter Lab offered four "forms" of which only two differed
  * (tester report, 2026-10-12). Grouped, each shape is one choice.
  */
-export function shapeGroups(letter: Pick<Letter, 'forms'>): { keys: PositionKey[]; label: string }[] {
+export function shapeGroups(letter: Pick<Letter, 'forms' | 'askAt'>): { keys: PositionKey[]; label: string }[] {
   const groups: { keys: PositionKey[]; label: string }[] = [];
   for (const p of POSITIONS) {
     const same = groups.find((g) => letter.forms[g.keys[0]] === letter.forms[p.key]);
-    if (same) {
-      same.keys.push(p.key);
-      same.label = `${same.label} or ${p.label.toLowerCase()}`;
-    } else groups.push({ keys: [p.key], label: p.label });
+    if (same) same.keys.push(p.key);
+    else groups.push({ keys: [p.key], label: '' });
+  }
+  // Named for the positions the letter is asked in, where it has a list: hamza's
+  // ء answered "Alone or start" though no word starts with it (second check,
+  // 2026-10-28). A shape asked nowhere keeps its full name as a wrong option.
+  const label = (keys: PositionKey[]) =>
+    keys
+      .map((k, i) => {
+        const name = POSITIONS.find((p) => p.key === k)!.label;
+        return i ? name.toLowerCase() : name;
+      })
+      .join(' or ');
+  for (const g of groups) {
+    const asked = letter.askAt ? g.keys.filter((k) => letter.askAt!.includes(k)) : g.keys;
+    g.label = label(asked.length ? asked : g.keys);
   }
   return groups;
 }
