@@ -1387,7 +1387,7 @@ function sentenceReinforceClimb(picks: Sentence[], pool: Word[], track: LearnTra
  * gracefully when this is missing rather than assuming it never is.
  */
 function grammarDrillExercise(concept: GrammarConcept, drill: GrammarDrill, track: LearnTrack): Exercise | undefined {
-  const romanOptions = romanAll(drill.options);
+  const romanOptions = drill.optionsRoman ?? romanAll(drill.options);
   if (track === 'roman' && !romanOptions) return undefined;
   return { kind: 'grammarDrill', concept, drill, romanOptions: romanOptions ?? undefined };
 }

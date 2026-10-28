@@ -26,6 +26,13 @@ export type GrammarDrill = {
   meaning: string;
   answer: string;
   options: string[];
+  /**
+   * The options in Roman, where the shared table would read one wrongly: it
+   * learns each spelling from the sentences, where تو is "to" (then), so the
+   * pronoun تو (tu) showed as "to" under a card that called it tu (QA,
+   * 2026-10-28).
+   */
+  optionsRoman?: string[];
   /** why the answer is right — shown after answering */
   because: string;
 };
@@ -97,6 +104,7 @@ export const GRAMMAR: GrammarConcept[] = [
         meaning: 'You (polite) are a teacher',
         answer: 'آپ',
         options: ['آپ', 'تم', 'تو', 'میں'],
+        optionsRoman: ['aap', 'tum', 'tu', 'main'],
         because:
           'ہیں (hain) goes with آپ (aap). تم (tum) takes ہو (ho), تو (tu) takes ہے (hai), and میں (main) takes ہوں (hoon).',
       },
