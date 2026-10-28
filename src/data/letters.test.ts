@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LETTERS, POSITIONS, getLetter, glyphName, positionHint } from './letters';
+import { LETTERS, POSITIONS, getLetter, glyphName, groupPositionHint, positionHint } from './letters';
 import { WORDS } from './words';
 import { LETTER_CONTEXT_WORD } from '../exercises/generator';
 import { contrastLine } from '../exercises/letterContrastNotes';
@@ -470,5 +470,15 @@ describe('glyphName', () => {
       if (n) byName.set(said(n), [...(byName.get(said(n)) ?? []), g]);
     }
     expect([...byName].filter(([, gs]) => gs.length > 1)).toEqual([]);
+  });
+});
+
+describe('groupPositionHint', () => {
+  it('describes only the positions a letter is asked in', () => {
+    const at = (id: string) => getLetter(id)!;
+    expect(groupPositionHint(at('hamza'), ['isolated', 'initial'])).toBe('standing by itself');
+    expect(groupPositionHint(at('noon-ghunna'), ['isolated', 'initial'])).toBe('standing by itself');
+    expect(groupPositionHint(at('alif-madda'), ['isolated', 'initial'])).toBe('on its own, or first in a word');
+    expect(groupPositionHint(at('alif'), ['medial', 'final'])).toBe('joined on one side');
   });
 });

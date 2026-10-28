@@ -848,6 +848,20 @@ export function positionHint(letter: Pick<Letter, 'forms'>, key: PositionKey): s
   return POSITIONS.find((p) => p.key === key)!.hint;
 }
 
+/**
+ * The line under a "which position?" option that may stand for several
+ * positions sharing one shape. Built from the positions the letter is asked
+ * in, as its label is: hamza's ء reads "Alone", and the old hint under it,
+ * "on its own, or first in a word", said it starts a word, the claim the
+ * label had dropped (second check, 2026-10-28).
+ */
+export function groupPositionHint(letter: Pick<Letter, 'forms' | 'askAt'>, all: PositionKey[]): string {
+  const asked = letter.askAt ? all.filter((k) => letter.askAt!.includes(k)) : all;
+  const keys = asked.length ? asked : all;
+  if (keys.length === 1) return positionHint(letter, keys[0]);
+  return keys.includes('medial') ? 'joined on one side' : 'on its own, or first in a word';
+}
+
 export const getLetter = (id: string) => LETTERS.find((l) => l.id === id);
 
 /**
