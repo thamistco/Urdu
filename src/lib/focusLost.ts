@@ -20,14 +20,21 @@ export function focusLost(): boolean {
  * passed (QA, 2026-10-20).
  */
 export function keepFocus(restore: () => void): () => void {
+  // A focusout's frame can still be pending when this is stopped: answering a
+  // question drops focus in the same moment the step's own keeper hands over
+  // to the answer banner's, and that late frame stole focus back to the
+  // question (2026-10-29). So nothing restores once stopped.
+  let stopped = false;
+  const check = () => !stopped && focusLost() && restore();
   let frame = requestAnimationFrame(() => {
-    frame = requestAnimationFrame(() => focusLost() && restore());
+    frame = requestAnimationFrame(check);
   });
   const onFocusOut = () => {
-    requestAnimationFrame(() => focusLost() && restore());
+    requestAnimationFrame(check);
   };
   document.addEventListener('focusout', onFocusOut);
   return () => {
+    stopped = true;
     cancelAnimationFrame(frame);
     document.removeEventListener('focusout', onFocusOut);
   };

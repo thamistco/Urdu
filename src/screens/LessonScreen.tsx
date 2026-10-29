@@ -23,6 +23,7 @@ import { unitEvidenceFrom } from '../lib/unitSkip';
 import { useSessionGradeFlush } from './useSessionGradeFlush';
 import { answerReveal, spokenVerdict } from './answerReveal';
 import { useBannerFocus } from './useBannerFocus';
+import { useStepFocus, STEP_COUNTER_ID } from './useStepFocus';
 import { REFILL_COST, gemsShortOfRefill, minutesUntilNextHeart } from '../lib/gamification';
 import { useProgressStore, type ItemType } from '../store/useProgressStore';
 import { heartsAreFree, heartsFreeFor } from '../lib/hearts';
@@ -441,6 +442,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   const reveal = graded === false && current && !isTeaching(current) ? answerReveal(current) : null;
   const answered = graded != null && !!current && !isTeaching(current);
   const bannerRef = useBannerFocus(answered, idx);
+  const stepBodyRef = useStepFocus(graded == null, openStep);
   const total = exercises.length;
 
   /**
@@ -847,6 +849,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
                 lesson's length, and testers concluded the sentence lessons
                 never ended (QA report, 2026-10-12). */}
             <Txt
+              nativeID={STEP_COUNTER_ID}
               numberOfLines={1}
               className="mt-0.5 text-right text-[0.625rem] text-paper/55"
               style={{ fontVariant: ['tabular-nums'] }}
@@ -890,7 +893,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
             contentClassName="grow justify-center"
             scrollProps={more.scrollProps}
           >
-            <View className="px-5 pt-4" style={{ paddingBottom: BODY_PAD_BOTTOM }}>
+            <View ref={stepBodyRef} className="px-5 pt-4" style={{ paddingBottom: BODY_PAD_BOTTOM }}>
               <ExerciseView
                 key={`${idx}-${attempt}`}
                 exercise={retried}

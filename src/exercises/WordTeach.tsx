@@ -63,7 +63,7 @@ export function WordTeachExercise({ exercise, track, onGraded }: ExerciseProps<T
 
   return (
     <View>
-      <Eyebrow style={{ color: palette.gold }} className="mb-3 text-center">
+      <Eyebrow accessibilityRole="header" style={{ color: palette.gold }} className="mb-3 text-center">
         A new word
       </Eyebrow>
 

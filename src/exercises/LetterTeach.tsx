@@ -65,7 +65,12 @@ export function LetterTeachExercise({ exercise, onGraded }: ExerciseProps<TeachE
 
   return (
     <View>
-      <Eyebrow style={{ color: palette.gold }} className="mb-3 text-center">
+      <Eyebrow
+        accessibilityRole="header"
+        accessibilityLabel={`A new letter: ${letter.name}`}
+        style={{ color: palette.gold }}
+        className="mb-3 text-center"
+      >
         A new letter
       </Eyebrow>
 

@@ -196,7 +196,13 @@ export function PromptCard({
 }
 
 export function Question({ children }: { children: ReactNode }) {
-  return <Txt className="mb-4 text-center text-base text-paper/80">{children}</Txt>;
+  // A heading, so a new step has somewhere for focus to land (useStepFocus)
+  // and a screen-reader user can jump straight to what is being asked.
+  return (
+    <Txt accessibilityRole="header" className="mb-4 text-center text-base text-paper/80">
+      {children}
+    </Txt>
+  );
 }
 
 /**
