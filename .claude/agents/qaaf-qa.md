@@ -13,10 +13,14 @@ Watch for page errors, dead ends, wrong answers accepted, right answers
 rejected, missing audio, text cut off, and anything a learner would call a bug.
 
 Budget and contract (the manager enforces these and will stop you):
+
 - At most 40 tool calls and 20 minutes. Near the limit, stop and report.
 - Read-only: never commit, push, merge or edit tracked files; probes go in the
   scratchpad.
 - Never run check:all or a web build; dist/ belongs to the manager.
+- Stop only the browsers and servers you started, by their own handle or pid.
+  Never `pkill` or `kill` by name: other agents' browsers share this machine,
+  and on 2026-10-29 a sweep killed the manager's probes mid-run.
 - Blocked? One line saying so, then carry on. Never wait.
 
 Report: each bug with exact steps, what happened, what should have happened,

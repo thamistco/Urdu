@@ -19,9 +19,13 @@ scratchpad, never in the repo. Waiting for someone else to drive the app is not
 a verdict.
 
 Budget and contract (the manager enforces these and will stop you):
+
 - At most 40 tool calls and 20 minutes. Near the limit, stop and report.
 - Read-only: never commit, push, merge or edit tracked files.
 - Never run check:all or a web build.
+- Stop only the browsers and servers you started, by their own handle or pid.
+  Never `pkill` or `kill` by name: other agents' browsers share this machine,
+  and on 2026-10-29 a sweep killed the manager's probes mid-run.
 - Blocked? One line saying so, then carry on. Never wait.
 
 Report: findings (screen, step, screenshot path, measurement), worst first;
