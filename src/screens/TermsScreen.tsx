@@ -27,7 +27,11 @@ export function TermsScreen() {
       <Screen>
         <TopBar onBack={nav.canGoBack() ? () => nav.goBack() : undefined} title="Terms of Service" />
         <Heading className="mb-1 text-lg">The short version</Heading>
-        <Txt className="mb-6 text-[0.75rem] text-paper/55">Last updated 2026-09-22</Txt>
+        <Txt className="mb-6 text-[0.75rem] text-paper/55">Last updated 2026-10-29</Txt>
+
+        <Section title="Who we are">
+          Who runs Qaaf, and how to contact them, will be added here before Qaaf launches.
+        </Section>
 
         <Section title="What Qaaf is">
           Qaaf is a self-study Urdu course: lessons, vocabulary, grammar and spaced-repetition review. It is free, has
@@ -40,14 +44,15 @@ export function TermsScreen() {
         </Section>
 
         <Section title="Your progress">
-          By default your progress is stored only on your device and can be lost if you uninstall the app, clear its
-          storage, or switch devices without signing in first. Signing in is the way to protect against that; using the
-          app without it is a choice you are free to make; we are not responsible for progress lost as a result.
+          Your progress is stored only on this device: in this browser on the website, in the app on a phone. Clearing
+          this site’s data or the app’s storage, uninstalling the app, private browsing, or changing browser or device
+          starts you afresh, and we cannot get it back. Where sign-in is offered, signing in keeps a copy you can carry
+          on from elsewhere.
         </Section>
 
         <Section title="Using the app fairly">
           Please don’t try to break, reverse-engineer for harmful purposes, or resell access to the app. It is provided
-          for personal, non-commercial language learning.
+          for personal, family and classroom language learning.
         </Section>
 
         <Section title="No warranty">
@@ -56,8 +61,7 @@ export function TermsScreen() {
         </Section>
 
         <Section title="Changes">
-          We may update the app and these terms over time. Continuing to use Qaaf after a change means you accept the
-          updated terms.
+          We may update the app and these terms over time. If these terms change, the date above will change.
         </Section>
 
         {HAS_CONTACT ? (
