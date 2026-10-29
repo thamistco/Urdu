@@ -368,6 +368,8 @@ export function HomeScreen() {
   const pathRef = useRef<ScrollView>(null);
   const currentNode = useRef<View>(null);
   const didAutoScroll = useRef(false);
+  // The current lesson the auto-scroll below last measured, scrolled or not.
+  const checkedFor = useRef<string | undefined>(undefined);
   // URD-032: the height of everything above the accordion (header, level
   // card, continue card, today's-word card, jump-ahead hint) — see
   // `toggleLevel` below for what this is for. Captured via `onLayout`
@@ -458,7 +460,7 @@ export function HomeScreen() {
   // return. Waiting for focus scrolls when the learner can see it.
   const focused = useIsFocused();
   useEffect(() => {
-    if (!focused || didAutoScroll.current || showPathNotice || comebackOwed) return;
+    if (!focused || didAutoScroll.current || checkedFor.current === currentId || showPathNotice || comebackOwed) return;
     // The measure below reads the node's position on screen as its place in
     // the list, which holds only for a list at the top. A fresh Home always
     // was; one returned to after a stage advance is wherever it was left
@@ -512,6 +514,11 @@ export function HomeScreen() {
          */
         const ENOUGH_ON_SCREEN = 56;
         const visibleBottom = Dimensions.get('window').height - tabBarHeight;
+        // Checked and in view: done for this lesson. Without this a lesson
+        // already on screen was checked again on every return to the tab,
+        // and the scroll to the top above threw away wherever the learner
+        // had scrolled Home to (QA, 2026-10-29: 1,800px down, back to 0).
+        checkedFor.current = currentId;
         if (pageY + Math.min(height, ENOUGH_ON_SCREEN) <= visibleBottom) return;
         didAutoScroll.current = true;
         pathRef.current?.scrollTo({ y: pageY - 200, animated: true });
