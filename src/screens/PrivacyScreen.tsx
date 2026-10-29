@@ -79,8 +79,8 @@ export function PrivacyScreen() {
           phone app they play from your device. On the website they come from the same site as everything else, which
           GitHub Pages hosts: like any web host, GitHub receives your IP address and browser details with each request
           and keeps them for security, under GitHub’s own privacy statement. We cannot see those records. If a recording
-          is missing or will not play, or if you turn on hearing the English meaning, your device’s own voice reads it,
-          and some browsers do that on their maker’s servers.
+          is missing or will not play, or if you turn on Read the meaning in English, your device’s own voice may read
+          it, and some browsers do that on their maker’s servers.
         </Section>
 
         <Section title="Deleting your data">
