@@ -9,12 +9,12 @@ export const STEP_COUNTER_ID = 'lesson-step-counter';
  * Where focus goes when a lesson step opens.
  *
  * Continue and Got it unmount the button that had focus, so the browser
- * dropped focus to the page on every step: 12 of 12 transitions in l-1 left a
- * keyboard user starting again from the top, and a screen-reader user hearing
- * nothing about the new question (design review, 2026-10-29, Q-113). Focus
- * moves to the step's heading — the question, or a teaching card's title — so
- * the next thing read is what the step asks. A step with no heading falls back
- * to the "12 of 42" counter.
+ * dropped focus to the page on every step in l-1 (12 of 12 in the design
+ * review's keyboard walk, 19 of 19 in the manager's; Q-113, found 2026-10-26):
+ * a keyboard user started again from the top, and a screen-reader user heard
+ * nothing about the new question. Focus moves to the step's heading — the
+ * question, or a teaching card's title — so the next thing read is what the
+ * step asks. A step with no heading falls back to the "12 of 42" counter.
  *
  * Only while the step is open and only when focus was lost: once it is
  * answered, `useBannerFocus` owns focus, and a learner whose focus is on

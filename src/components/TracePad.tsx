@@ -189,7 +189,7 @@ export function TracePad({
                   fontSize,
                   lineHeight,
                   textAlign: 'center',
-                  // 0.5: at 0.14 the model measured 1.33:1 on parchment, and a
+                  // 0.5: at 0.14 the model was 1.32:1 on parchment, and a
                   // low-vision tester could not find it (2026-10-29). 0.5 is
                   // 3.15:1, the minimum for a graphic the task needs, and the
                   // learner's full-ink stroke still stands out from it at 4.26:1.
