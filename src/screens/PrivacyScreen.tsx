@@ -35,7 +35,7 @@ export function PrivacyScreen() {
       <Screen>
         <TopBar onBack={nav.canGoBack() ? () => nav.goBack() : undefined} title="Privacy Policy" />
         <Heading className="mb-1 text-lg">Your data, plainly</Heading>
-        <Txt className="mb-6 text-[0.75rem] text-paper/55">Last updated 2026-10-26</Txt>
+        <Txt className="mb-6 text-[0.75rem] text-paper/55">Last updated 2026-10-29</Txt>
 
         <Section title="Who we are">
           Who runs Qaaf, and how to contact them, will be added to this page before Qaaf launches.
@@ -67,10 +67,10 @@ export function PrivacyScreen() {
 
         <Section title="What we do not do">
           No advertising and no ad network of any kind. No selling, renting or sharing your data with third parties for
-          marketing. No tracking across other apps or websites. The microphone is used only when you tap Say it back on
-          a line, to record you saying it so you can hear yourself next to the course’s own recording. That recording
-          stays on your device. It is never uploaded, never shared and never scored, and nothing else in the app ever
-          listens to you.
+          marketing. No tracking across other apps or websites. No analytics: we do not count visits or record how you
+          use the app. The microphone is used only when you tap Say it back on a line, to record you saying it so you
+          can hear yourself next to the course’s own recording. That recording stays on your device. It is never
+          uploaded, never shared and never scored, and nothing else in the app ever listens to you.
         </Section>
 
         <Section title="Audio and other assets">
@@ -108,11 +108,12 @@ export function PrivacyScreen() {
         </Section>
 
         <Section title="Children">
-          Children can use Qaaf as guests. Nothing they do in the app leaves the device, there are no ads, and there is
-          no chat or contact with other people; the league is a practice group the app makes up, not real players.
-          Signing in is the only way anything about them reaches us (an email address, their progress and settings), so
-          we ask that children under 13 do not sign in without a parent. If you think a child has signed in without your
-          permission, use Delete account in Settings.
+          Children and teenagers can use Qaaf as guests. As a guest, nothing anyone does in Qaaf leaves the device: no
+          ads, no tracking, and no chat or contact with other people; the league is a practice group the app makes up,
+          not real players. Say it back recordings stay on the device. Signing in is the only way anything about a
+          learner reaches us (an email address, their progress and settings). If you are under 13, please don’t sign in
+          without a parent or carer; if you are under 18, we suggest telling one. If you think a child has signed in
+          without your permission, use Delete account in Settings.
         </Section>
 
         <Section title="Changes to this policy">
