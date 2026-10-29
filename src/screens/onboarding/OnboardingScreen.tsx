@@ -200,7 +200,14 @@ export function OnboardingScreen() {
   // 40: the screen's own bottom padding (pb-10), not more of it.
   // The welcome too: in landscape its "Let’s start" sat 22px under a 390px
   // fold with nothing to say so (QA, 2026-10-19).
-  const more = useMoreBelow(step === 'welcome' || step === 'goal' || step === 'track', step, 40);
+  // Every step now. The voice, background, quick-check, daily and ready steps
+  // had a plain <Screen>: React kept one scroll view across them, so at large
+  // text three opened scrolled to the bottom, question and options off the
+  // top, and the 2000px voice screen said nothing about its choices below the
+  // fold (low-vision tester, 2026-10-29). Each quick-check question is its own
+  // screen too.
+  const screenKey = () => (step === 'placement' ? `placement-${pIdx}` : step);
+  const more = useMoreBelow(true, screenKey(), 40);
   const cued = (
     body: React.ReactNode,
     screen: Pick<React.ComponentProps<typeof Screen>, 'backdrop' | 'contentClassName'> = {}
@@ -210,7 +217,7 @@ export function OnboardingScreen() {
           goal screen's scroll onto the track screen, which then opened with
           its heading off the top and the cue over a Continue already in view
           (second check, 2026-10-18). */}
-      <Screen key={step} scrollRef={scrollRef} scrollProps={more.scrollProps} {...screen}>
+      <Screen key={screenKey()} scrollRef={scrollRef} scrollProps={more.scrollProps} {...screen}>
         {body}
       </Screen>
       {more.show ? <MoreBelowCue scrollRef={scrollRef} view={more.view} y={more.y} of="screen" /> : null}
@@ -493,57 +500,55 @@ export function OnboardingScreen() {
       { key: 'f', label: 'A woman’s voice', desc: 'The voice the course was made with', icon: 'woman' },
       { key: 'm', label: 'A man’s voice', desc: 'The whole course, in a second voice', icon: 'man' },
     ];
-    return (
-      <Screen>
-        <Reveal>
-          <Dots of="voice" onBack={goBack} />
-          <Heading className="mb-1 text-2xl">Whose voice would you like?</Heading>
-          <Txt className="mb-4 text-sm text-paper/55">
-            Every word is read aloud, in the voice you choose. You can change it later in Settings.
-          </Txt>
-          <View accessibilityRole="radiogroup" aria-label="Whose voice would you like?">
-            {OPTIONS.map((o) => {
-              const active = voice === o.key;
-              return (
-                <Pressable
-                  accessibilityRole="radio"
-                  aria-checked={active}
-                  key={o.key}
-                  onPress={() => {
-                    feedback.tap();
-                    setVoice(o.key);
-                    // Say something in it, so the choice is made by ear rather
-                    // than by label — which is the only way to choose a voice.
-                    setVoiceSet(o.key);
-                    announce('w-salam', 'السلام علیکم', 'assalaam-o-alaikum');
+    return cued(
+      <Reveal>
+        <Dots of="voice" onBack={goBack} />
+        <Heading className="mb-1 text-2xl">Whose voice would you like?</Heading>
+        <Txt className="mb-4 text-sm text-paper/55">
+          Every word is read aloud, in the voice you choose. You can change it later in Settings.
+        </Txt>
+        <View accessibilityRole="radiogroup" aria-label="Whose voice would you like?">
+          {OPTIONS.map((o) => {
+            const active = voice === o.key;
+            return (
+              <Pressable
+                accessibilityRole="radio"
+                aria-checked={active}
+                key={o.key}
+                onPress={() => {
+                  feedback.tap();
+                  setVoice(o.key);
+                  // Say something in it, so the choice is made by ear rather
+                  // than by label — which is the only way to choose a voice.
+                  setVoiceSet(o.key);
+                  announce('w-salam', 'السلام علیکم', 'assalaam-o-alaikum');
+                }}
+                accessibilityLabel={`${o.label}. ${o.desc}. Tap to hear it.`}
+              >
+                <View
+                  className="mb-3 flex-row items-center gap-3 rounded-2xl border p-4"
+                  style={{
+                    borderColor: active ? palette.gold : withAlpha(palette.white, 0.1),
+                    backgroundColor: active ? withAlpha(palette.gold, 0.12) : palette.ink800,
+                    borderWidth: 2,
                   }}
-                  accessibilityLabel={`${o.label}. ${o.desc}. Tap to hear it.`}
                 >
-                  <View
-                    className="mb-3 flex-row items-center gap-3 rounded-2xl border p-4"
-                    style={{
-                      borderColor: active ? palette.gold : withAlpha(palette.white, 0.1),
-                      backgroundColor: active ? withAlpha(palette.gold, 0.12) : palette.ink800,
-                      borderWidth: 2,
-                    }}
-                  >
-                    <Illustration name={o.icon} size={44} />
-                    <View className="flex-1">
-                      <Bold className="text-[0.9375rem]">{o.label}</Bold>
-                      <Txt className="text-xs text-paper/55">{o.desc}</Txt>
-                    </View>
-                    <Illustration name="speaker" tile={false} size={20} />
+                  <Illustration name={o.icon} size={44} />
+                  <View className="flex-1">
+                    <Bold className="text-[0.9375rem]">{o.label}</Bold>
+                    <Txt className="text-xs text-paper/55">{o.desc}</Txt>
                   </View>
-                </Pressable>
-              );
-            })}
-          </View>
-          <Txt className="mb-2 text-center text-[0.6875rem] text-paper/55">Tap either one to hear it.</Txt>
-          <Button className="mt-2" onPress={() => setStep('background')}>
-            Continue
-          </Button>
-        </Reveal>
-      </Screen>
+                  <Illustration name="speaker" tile={false} size={20} />
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Txt className="mb-2 text-center text-[0.6875rem] text-paper/55">Tap either one to hear it.</Txt>
+        <Button className="mt-2" onPress={() => setStep('background')}>
+          Continue
+        </Button>
+      </Reveal>
     );
   }
 
@@ -569,64 +574,62 @@ export function OnboardingScreen() {
         icon: 'speechBubble',
       },
     ];
-    return (
-      <Screen>
-        <Reveal>
-          <Dots of="background" onBack={goBack} />
-          <Heading className="mb-1 text-2xl">Do you already know some Urdu?</Heading>
-          <Txt className="mb-6 text-sm text-paper/55">
-            {track === 'roman'
-              ? 'If you already understand it spoken, we’ll skip the basic words you know.'
-              : 'If you already understand it spoken, we’ll skip the basic words you know and get you to the script faster.'}
-          </Txt>
-          <View className="gap-3" accessibilityRole="radiogroup" aria-label="Do you already know some Urdu?">
-            {OPTIONS.map((o) => {
-              const sel = background === o.key;
-              return (
-                <Pressable
-                  accessibilityRole="radio"
-                  aria-checked={sel}
-                  key={o.key}
-                  onPress={() => {
-                    feedback.tap();
-                    setBackground(o.key);
+    return cued(
+      <Reveal>
+        <Dots of="background" onBack={goBack} />
+        <Heading className="mb-1 text-2xl">Do you already know some Urdu?</Heading>
+        <Txt className="mb-6 text-sm text-paper/55">
+          {track === 'roman'
+            ? 'If you already understand it spoken, we’ll skip the basic words you know.'
+            : 'If you already understand it spoken, we’ll skip the basic words you know and get you to the script faster.'}
+        </Txt>
+        <View className="gap-3" accessibilityRole="radiogroup" aria-label="Do you already know some Urdu?">
+          {OPTIONS.map((o) => {
+            const sel = background === o.key;
+            return (
+              <Pressable
+                accessibilityRole="radio"
+                aria-checked={sel}
+                key={o.key}
+                onPress={() => {
+                  feedback.tap();
+                  setBackground(o.key);
+                }}
+              >
+                <View
+                  className="flex-row items-center gap-4 rounded-2xl border p-4"
+                  style={{
+                    borderColor: sel ? palette.gold : withAlpha(palette.white, 0.1),
+                    backgroundColor: sel ? withAlpha(palette.gold, 0.1) : palette.ink700,
+                    borderWidth: 2,
                   }}
                 >
-                  <View
-                    className="flex-row items-center gap-4 rounded-2xl border p-4"
-                    style={{
-                      borderColor: sel ? palette.gold : withAlpha(palette.white, 0.1),
-                      backgroundColor: sel ? withAlpha(palette.gold, 0.1) : palette.ink700,
-                      borderWidth: 2,
-                    }}
-                  >
-                    <Illustration name={o.icon} tile={false} size={34} />
-                    <View className="flex-1">
-                      <Bold className="text-[0.9375rem]">{o.label}</Bold>
-                      <Txt className="text-xs text-paper/60">{o.desc}</Txt>
-                    </View>
+                  <Illustration name={o.icon} tile={false} size={34} />
+                  <View className="flex-1">
+                    <Bold className="text-[0.9375rem]">{o.label}</Bold>
+                    <Txt className="text-xs text-paper/60">{o.desc}</Txt>
                   </View>
-                </Pressable>
-              );
-            })}
-          </View>
-          <Button
-            className="mt-6"
-            disabled={!background}
-            onPress={() => {
-              setPIdx(0);
-              setPCorrect(0);
-              // The quick check is only for someone who already speaks Urdu.
-              // For a beginner every answer led to the same path, so it was
-              // four questions that decided nothing, under a line saying they
-              // worked out where to start (daily review 2026-10-07, P-005).
-              setStep(background === 'speaker' ? 'placement' : 'daily');
-            }}
-          >
-            Continue
-          </Button>
-        </Reveal>
-      </Screen>
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Button
+          className="mt-6"
+          disabled={!background}
+          onPress={() => {
+            setPIdx(0);
+            setPCorrect(0);
+            // The quick check is only for someone who already speaks Urdu.
+            // For a beginner every answer led to the same path, so it was
+            // four questions that decided nothing, under a line saying they
+            // worked out where to start (daily review 2026-10-07, P-005).
+            setStep(background === 'speaker' ? 'placement' : 'daily');
+          }}
+        >
+          Continue
+        </Button>
+      </Reveal>
     );
   }
 
@@ -652,119 +655,115 @@ export function OnboardingScreen() {
         }
       }, 350);
     };
-    return (
-      <Screen>
-        <Reveal key={pIdx}>
-          {/* One segment per question, so the bar and "2 of 4" beneath it
+    return cued(
+      <Reveal key={pIdx}>
+        {/* One segment per question, so the bar and "2 of 4" beneath it
               say the same thing. It showed the five onboarding steps here
               before, and a tester read five segments over "4 of 4" as a
               question gone missing (2026-10-12). */}
-          <View className="mb-6 flex-row gap-1.5">
-            {questions.map((_, i) => (
-              <View
-                key={i}
-                className="h-1 flex-1 rounded-full"
-                style={{ backgroundColor: i <= pIdx ? palette.gold : withAlpha(palette.white, 0.12) }}
-              />
-            ))}
-          </View>
-          <Eyebrow style={{ color: palette.gold }} className="mb-3">
-            Quick check · {pIdx + 1} of {questions.length}
-          </Eyebrow>
-          <Heading className={`${question.kind === 'script' ? 'mb-2' : 'mb-6'} text-xl`}>{question.q}</Heading>
-          {/* True to what the score does: it can only offer to skip the
+        <View className="mb-6 flex-row gap-1.5">
+          {questions.map((_, i) => (
+            <View
+              key={i}
+              className="h-1 flex-1 rounded-full"
+              style={{ backgroundColor: i <= pIdx ? palette.gold : withAlpha(palette.white, 0.12) }}
+            />
+          ))}
+        </View>
+        <Eyebrow style={{ color: palette.gold }} className="mb-3">
+          Quick check · {pIdx + 1} of {questions.length}
+        </Eyebrow>
+        <Heading className={`${question.kind === 'script' ? 'mb-2' : 'mb-6'} text-xl`}>{question.q}</Heading>
+        {/* True to what the score does: it can only offer to skip the
               alphabet (canSkipScript); the skipped basics come from the answer
               before. A speaker who cannot read yet should not feel tested. */}
-          {question.kind === 'script' ? (
-            <Txt className="mb-5 text-sm text-paper/60">
-              In the script. If you can’t read it yet, guess: this only decides whether we offer to skip the alphabet.
-            </Txt>
-          ) : null}
-          <View className="mb-8 h-28 items-center justify-center rounded-2xl bg-parchment">
-            {question.kind === 'script' ? (
-              <Urdu style={{ color: palette.ink, ...urduGlyph(52) }}>{question.sub}</Urdu>
-            ) : (
-              <Heading heading={false} style={{ color: palette.ink }} className="text-2xl">
-                {question.sub}
-              </Heading>
-            )}
-          </View>
-          <View className="gap-3">
-            {question.options.map((opt) => {
-              const picked = pPicked === opt.label;
-              return (
-                <Pressable accessibilityRole="button" key={opt.label} onPress={() => pick(opt.label, opt.c)}>
-                  <View
-                    className="rounded-xl border px-4 py-4"
-                    style={{
-                      borderWidth: 2,
-                      borderColor: picked ? palette.gold : withAlpha(palette.white, 0.1),
-                      backgroundColor: picked ? withAlpha(palette.gold, 0.12) : palette.ink700,
-                    }}
-                  >
-                    <Txt className="text-[0.9375rem]">{opt.label}</Txt>
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
-          <Txt className="mt-6 text-center text-xs text-paper/55">
-            No wrong answers. This only works out where to start you.
+        {question.kind === 'script' ? (
+          <Txt className="mb-5 text-sm text-paper/60">
+            In the script. If you can’t read it yet, guess: this only decides whether we offer to skip the alphabet.
           </Txt>
-        </Reveal>
-      </Screen>
+        ) : null}
+        <View className="mb-8 h-28 items-center justify-center rounded-2xl bg-parchment">
+          {question.kind === 'script' ? (
+            <Urdu style={{ color: palette.ink, ...urduGlyph(52) }}>{question.sub}</Urdu>
+          ) : (
+            <Heading heading={false} style={{ color: palette.ink }} className="text-2xl">
+              {question.sub}
+            </Heading>
+          )}
+        </View>
+        <View className="gap-3">
+          {question.options.map((opt) => {
+            const picked = pPicked === opt.label;
+            return (
+              <Pressable accessibilityRole="button" key={opt.label} onPress={() => pick(opt.label, opt.c)}>
+                <View
+                  className="rounded-xl border px-4 py-4"
+                  style={{
+                    borderWidth: 2,
+                    borderColor: picked ? palette.gold : withAlpha(palette.white, 0.1),
+                    backgroundColor: picked ? withAlpha(palette.gold, 0.12) : palette.ink700,
+                  }}
+                >
+                  <Txt className="text-[0.9375rem]">{opt.label}</Txt>
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Txt className="mt-6 text-center text-xs text-paper/55">
+          No wrong answers. This only works out where to start you.
+        </Txt>
+      </Reveal>
     );
   }
 
   // ---- daily goal ----
   if (step === 'daily') {
-    return (
-      <Screen>
-        <Reveal>
-          <Dots of="daily" onBack={goBack} />
-          <Heading className="mb-1 text-2xl">Set a daily goal</Heading>
-          <Txt className="mb-6 text-sm text-paper/55">
-            XP are the points you earn as you learn. Choose a goal you can keep; you can change it whenever you like.
-          </Txt>
-          {/* Radios, as in Settings: the gold border was the only sign of
+    return cued(
+      <Reveal>
+        <Dots of="daily" onBack={goBack} />
+        <Heading className="mb-1 text-2xl">Set a daily goal</Heading>
+        <Txt className="mb-6 text-sm text-paper/55">
+          XP are the points you earn as you learn. Choose a goal you can keep; you can change it whenever you like.
+        </Txt>
+        {/* Radios, as in Settings: the gold border was the only sign of
               which goal was set, so a screen reader heard four buttons and
               no choice (QA, 2026-10-08). The same for every choice below. */}
-          <View className="gap-3" accessibilityRole="radiogroup" aria-label="Daily goal">
-            {DAILY_GOALS.map((g) => {
-              const sel = daily === g.id;
-              return (
-                <Pressable
-                  accessibilityRole="radio"
-                  aria-checked={sel}
-                  key={g.id}
-                  onPress={() => {
-                    feedback.tap();
-                    setDaily(g.id);
+        <View className="gap-3" accessibilityRole="radiogroup" aria-label="Daily goal">
+          {DAILY_GOALS.map((g) => {
+            const sel = daily === g.id;
+            return (
+              <Pressable
+                accessibilityRole="radio"
+                aria-checked={sel}
+                key={g.id}
+                onPress={() => {
+                  feedback.tap();
+                  setDaily(g.id);
+                }}
+              >
+                <View
+                  className="flex-row items-center justify-between rounded-2xl border p-4"
+                  style={{
+                    borderColor: sel ? palette.gold : withAlpha(palette.white, 0.1),
+                    backgroundColor: sel ? withAlpha(palette.gold, 0.1) : palette.ink700,
+                    borderWidth: 2,
                   }}
                 >
-                  <View
-                    className="flex-row items-center justify-between rounded-2xl border p-4"
-                    style={{
-                      borderColor: sel ? palette.gold : withAlpha(palette.white, 0.1),
-                      backgroundColor: sel ? withAlpha(palette.gold, 0.1) : palette.ink700,
-                      borderWidth: 2,
-                    }}
-                  >
-                    <View>
-                      <Bold className="text-[0.9375rem]">{g.label}</Bold>
-                      <Txt className="text-xs text-paper/60">{g.desc}</Txt>
-                    </View>
-                    <Bold style={{ color: palette.gold }}>+{g.xp} XP</Bold>
+                  <View>
+                    <Bold className="text-[0.9375rem]">{g.label}</Bold>
+                    <Txt className="text-xs text-paper/60">{g.desc}</Txt>
                   </View>
-                </Pressable>
-              );
-            })}
-          </View>
-          <Button className="mt-6" onPress={() => setStep('ready')}>
-            Continue
-          </Button>
-        </Reveal>
-      </Screen>
+                  <Bold style={{ color: palette.gold }}>+{g.xp} XP</Bold>
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Button className="mt-6" onPress={() => setStep('ready')}>
+          Continue
+        </Button>
+      </Reveal>
     );
   }
 
@@ -796,104 +795,103 @@ export function OnboardingScreen() {
     : lvl === 2 && wantsScript
       ? 'You already read some Urdu'
       : 'You already speak some Urdu';
-  return (
+  return cued(
     // Scrolls, and centres itself when there is room, like the welcome. With
     // `scroll={false}` a speaker's card, the moved-ahead card and the alphabet
     // choice together pushed "Start learning" off the bottom of a phone, with
     // no way to reach it (reported by the owner on 2026-10-07, screenshot).
-    <Screen contentClassName="grow justify-center">
-      <Reveal>
-        <View className="items-center">
-          <Illustration name="crescent" tile={false} size={64} />
-          <Display accessibilityRole="header" className="mb-2 mt-4 text-3xl">
-            You’re all set
-          </Display>
-          <GeoDivider />
+    <Reveal>
+      <View className="items-center">
+        <Illustration name="crescent" tile={false} size={64} />
+        <Display accessibilityRole="header" className="mb-2 mt-4 text-3xl">
+          You’re all set
+        </Display>
+        <GeoDivider />
+        <View
+          className="my-4 w-full rounded-2xl border p-5"
+          style={{ borderColor: withAlpha(palette.gold, 0.3), backgroundColor: withAlpha(palette.gold, 0.08) }}
+        >
+          <Eyebrow style={{ color: palette.gold }} className="mb-1">
+            Your starting level
+          </Eyebrow>
+          <Bold className="text-lg">{lvlName}</Bold>
+          <Txt className="mt-1 text-sm text-paper/60">
+            We start you where you are, and the words you miss come back first.
+          </Txt>
+        </View>
+        {basicsSkips.length > 0 && (
           <View
-            className="my-4 w-full rounded-2xl border p-5"
-            style={{ borderColor: withAlpha(palette.gold, 0.3), backgroundColor: withAlpha(palette.gold, 0.08) }}
+            className="mb-4 w-full rounded-2xl border p-5"
+            style={{ borderColor: withAlpha(palette.jade, 0.3), backgroundColor: withAlpha(palette.jade, 0.08) }}
           >
-            <Eyebrow style={{ color: palette.gold }} className="mb-1">
-              Your starting level
+            <Eyebrow style={{ color: palette.jade }} className="mb-1">
+              Moved ahead
             </Eyebrow>
-            <Bold className="text-lg">{lvlName}</Bold>
             <Txt className="mt-1 text-sm text-paper/60">
-              We start you where you are, and the words you miss come back first.
-            </Txt>
-          </View>
-          {basicsSkips.length > 0 && (
-            <View
-              className="mb-4 w-full rounded-2xl border p-5"
-              style={{ borderColor: withAlpha(palette.jade, 0.3), backgroundColor: withAlpha(palette.jade, 0.08) }}
-            >
-              <Eyebrow style={{ color: palette.jade }} className="mb-1">
-                Moved ahead
-              </Eyebrow>
-              <Txt className="mt-1 text-sm text-paper/60">
-                {/* What the learner said, not what they scored: the skips come
+              {/* What the learner said, not what they scored: the skips come
                     from "I already speak or understand it", so after four
                     wrong answers "you showed you know" was false (design
                     review, 2026-10-10). */}
-                Because you understand Urdu spoken, the basic word lessons are marked done, so you go straight to{' '}
-                {track === 'roman' ? 'the rest of the course' : 'the script and reading'}. Each one is still open on the
-                path if you want it.
-              </Txt>
-            </View>
-          )}
+              Because you understand Urdu spoken, the basic word lessons are marked done, so you go straight to{' '}
+              {track === 'roman' ? 'the rest of the course' : 'the script and reading'}. Each one is still open on the
+              path if you want it.
+            </Txt>
+          </View>
+        )}
 
-          {/* The one call the quiz will not make for you. */}
-          {canSkipScript && (
-            <View
-              className="mb-4 w-full rounded-2xl border p-5"
-              style={{ borderColor: withAlpha(palette.gold, 0.3), backgroundColor: withAlpha(palette.gold, 0.06) }}
-            >
-              <Eyebrow style={{ color: palette.gold }} className="mb-1">
-                The alphabet
-              </Eyebrow>
-              <Txt className="mb-3 text-sm text-paper/60">
-                You read every script question correctly. Do you want the nine alphabet lessons, or shall we mark them
-                done?
-              </Txt>
-              <View accessibilityRole="radiogroup" aria-label="The alphabet">
-                {[
-                  { v: false, t: 'Start from the alphabet', d: 'All 40 letters, in each of their four shapes' },
-                  { v: true, t: 'Skip the alphabet', d: 'I can already read Urdu writing' },
-                ].map((o) => {
-                  const on = skipScript === o.v;
-                  return (
-                    <Pressable
-                      accessibilityRole="radio"
-                      aria-checked={on}
-                      key={String(o.v)}
-                      onPress={() => {
-                        feedback.tap();
-                        setSkipScript(o.v);
+        {/* The one call the quiz will not make for you. */}
+        {canSkipScript && (
+          <View
+            className="mb-4 w-full rounded-2xl border p-5"
+            style={{ borderColor: withAlpha(palette.gold, 0.3), backgroundColor: withAlpha(palette.gold, 0.06) }}
+          >
+            <Eyebrow style={{ color: palette.gold }} className="mb-1">
+              The alphabet
+            </Eyebrow>
+            <Txt className="mb-3 text-sm text-paper/60">
+              You read every script question correctly. Do you want the nine alphabet lessons, or shall we mark them
+              done?
+            </Txt>
+            <View accessibilityRole="radiogroup" aria-label="The alphabet">
+              {[
+                { v: false, t: 'Start from the alphabet', d: 'All 40 letters, in each of their four shapes' },
+                { v: true, t: 'Skip the alphabet', d: 'I can already read Urdu writing' },
+              ].map((o) => {
+                const on = skipScript === o.v;
+                return (
+                  <Pressable
+                    accessibilityRole="radio"
+                    aria-checked={on}
+                    key={String(o.v)}
+                    onPress={() => {
+                      feedback.tap();
+                      setSkipScript(o.v);
+                    }}
+                    className="mb-2"
+                  >
+                    <View
+                      className="rounded-xl border p-3"
+                      style={{
+                        borderColor: on ? palette.gold : withAlpha(palette.white, 0.12),
+                        backgroundColor: on ? withAlpha(palette.gold, 0.14) : palette.ink800,
+                        borderWidth: on ? 2 : 1,
                       }}
-                      className="mb-2"
                     >
-                      <View
-                        className="rounded-xl border p-3"
-                        style={{
-                          borderColor: on ? palette.gold : withAlpha(palette.white, 0.12),
-                          backgroundColor: on ? withAlpha(palette.gold, 0.14) : palette.ink800,
-                          borderWidth: on ? 2 : 1,
-                        }}
-                      >
-                        <Bold className="text-sm">{o.t}</Bold>
-                        <Txt className="text-xs text-paper/55">{o.d}</Txt>
-                      </View>
-                    </Pressable>
-                  );
-                })}
-              </View>
-              <Txt className="text-[0.6875rem] text-paper/55">Either way you can tap ahead to any lesson later.</Txt>
+                      <Bold className="text-sm">{o.t}</Bold>
+                      <Txt className="text-xs text-paper/55">{o.d}</Txt>
+                    </View>
+                  </Pressable>
+                );
+              })}
             </View>
-          )}
-          <Button className="mt-4 w-full" onPress={finish}>
-            Start learning
-          </Button>
-        </View>
-      </Reveal>
-    </Screen>
+            <Txt className="text-[0.6875rem] text-paper/55">Either way you can tap ahead to any lesson later.</Txt>
+          </View>
+        )}
+        <Button className="mt-4 w-full" onPress={finish}>
+          Start learning
+        </Button>
+      </View>
+    </Reveal>,
+    { contentClassName: 'grow justify-center' }
   );
 }
