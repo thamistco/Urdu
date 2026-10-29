@@ -726,7 +726,7 @@ export const LETTERS: Letter[] = [
     forms: {
       isolated: 'ء',
       initial: 'ء',
-      medial: 'ئ',
+      medial: 'ـئـ',
       final: 'ٔ',
     },
     word: 'چائے',
