@@ -206,6 +206,9 @@ export function OnboardingScreen() {
   // top, and the 2000px voice screen said nothing about its choices below the
   // fold (low-vision tester, 2026-10-29). Each quick-check question is its own
   // screen too.
+  // Declared here, not with the other quick-check state below: `screenKey`
+  // reads it during this render, before that line would have run.
+  const [pIdx, setPIdx] = useState(0);
   const screenKey = () => (step === 'placement' ? `placement-${pIdx}` : step);
   const more = useMoreBelow(true, screenKey(), 40);
   const cued = (
@@ -237,7 +240,6 @@ export function OnboardingScreen() {
     [track]
   );
   const [background, setBackground] = useState<Background | null>(resumed?.background ?? null);
-  const [pIdx, setPIdx] = useState(0);
   const [pCorrect, setPCorrect] = useState(0);
   const [pAnswered, setPAnswered] = useState(false);
   const [pPicked, setPPicked] = useState<string | null>(null);
