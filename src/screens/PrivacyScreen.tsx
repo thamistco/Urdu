@@ -67,17 +67,20 @@ export function PrivacyScreen() {
 
         <Section title="What we do not do">
           No advertising and no ad network of any kind. No selling, renting or sharing your data with third parties for
-          marketing. No tracking across other apps or websites. No analytics: we do not count visits or record how you
-          use the app. The microphone is used only when you tap Say it back on a line, to record you saying it so you
-          can hear yourself next to the course’s own recording. That recording stays on your device. It is never
-          uploaded, never shared and never scored, and nothing else in the app ever listens to you.
+          marketing. No tracking across other apps or websites. No analytics: we do not count visits or track how you
+          use the app; the only record we hold is the progress a signed-in learner chooses to sync. The microphone is
+          used only when you tap Say it back on a line, to record you saying it so you can hear yourself next to the
+          course’s own recording. That recording stays on your device. It is never uploaded, never shared and never
+          scored, and nothing else in the app ever listens to you.
         </Section>
 
         <Section title="Audio and other assets">
           The Urdu voice recordings and the fonts are part of Qaaf itself, never fetched from another service. In the
           phone app they play from your device. On the website they come from the same site as everything else, which
           GitHub Pages hosts: like any web host, GitHub receives your IP address and browser details with each request
-          and keeps them for security, under GitHub’s own privacy statement. We cannot see those records.
+          and keeps them for security, under GitHub’s own privacy statement. We cannot see those records. If a recording
+          is missing or will not play, your device’s own voice may read the word instead, and some browsers do that on
+          their maker’s servers.
         </Section>
 
         <Section title="Deleting your data">
@@ -108,12 +111,14 @@ export function PrivacyScreen() {
         </Section>
 
         <Section title="Children">
-          Children and teenagers can use Qaaf as guests. As a guest, nothing anyone does in Qaaf leaves the device: no
-          ads, no tracking, and no chat or contact with other people; the league is a practice group the app makes up,
-          not real players. Say it back recordings stay on the device. Signing in is the only way anything about a
-          learner reaches us (an email address, their progress and settings). If you are under 13, please don’t sign in
-          without a parent or carer; if you are under 18, we suggest telling one. If you think a child has signed in
-          without your permission, use Delete account in Settings.
+          Children and teenagers can use Qaaf as guests. As a guest, nothing about you or your progress is sent to us
+          (the website’s host sees each request, as described under Audio and other assets): no ads, no tracking, and no
+          chat or contact with other people; the league is a practice group the app makes up, not real players. Say it
+          back recordings stay on the device. Signing in is the only way anything about a learner reaches us: an email
+          address and, from Google, a name and profile picture; their progress, settings and starting answers; and
+          records of sign-ins. If you are under 13, please don’t sign in without a parent or carer; if you are under 18,
+          we suggest telling one. If you think a child has signed in without your permission, use Delete account in
+          Settings on the device they used, while signed in as them; signing out there stops anything more being sent.
         </Section>
 
         <Section title="Changes to this policy">
