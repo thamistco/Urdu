@@ -189,7 +189,11 @@ export function TracePad({
                   fontSize,
                   lineHeight,
                   textAlign: 'center',
-                  color: withAlpha(palette.ink, result ? 0.3 : 0.14),
+                  // 0.5: at 0.14 the model measured 1.33:1 on parchment, and a
+                  // low-vision tester could not find it (2026-10-29). 0.5 is
+                  // 3.15:1, the minimum for a graphic the task needs, and the
+                  // learner's full-ink stroke still stands out from it at 4.26:1.
+                  color: withAlpha(palette.ink, 0.5),
                   transform: [{ translateX }, { translateY }],
                 }}
               >
