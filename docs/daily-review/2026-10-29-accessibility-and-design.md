@@ -7,7 +7,7 @@ Reviewed by `qaaf-design` (28 tool calls, about 5 minutes, read-only) on the b0c
 R4 is "a screen-reader user can complete Unit 1".
 
 1. **Q-113: focus fell to the page on every step.**
-   - Walking l-1 by keyboard, every Got it, Continue and "Can't trace now" left focus on the body: 12 of 12 transitions.
+   - Walking l-1 by keyboard, every Got it, Continue and "Can't trace now" left focus on the body: 12 of 12 transitions in its 24-step walk. The manager's own walk of the same lesson, 30 steps, found 19 of 19; that walk is the before-and-after below.
    - The lesson had no headings and no landmarks. Answering did move focus to the answer banner.
 2. **Q-112: answer tiles are named only by a glyph** (`‏ا`, `‏تـ`), with no `lang`.
    - Naming a tile by its letter would give the answer away.
@@ -43,7 +43,7 @@ R4 is "a screen-reader user can complete Unit 1".
 
 **The trace guide at 3:1** (persona 6, bug fix).
 
-- The letter to trace measured 1.33:1 on parchment. It is now 3.15:1, the minimum for a graphic the task needs.
+- The letter to trace was 1.32:1 on parchment from the palette (1.33:1 from the tester's screen pixels). It is now 3.15:1, the minimum for a graphic the task needs.
 - The learner's own stroke still stands out from it at 4.26:1. Both were computed from the palette.
 
 **Every onboarding screen opens at its top, with "More below"** (persona 6, bug fix).

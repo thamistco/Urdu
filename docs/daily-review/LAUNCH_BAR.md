@@ -85,7 +85,7 @@ the nights keep taking them; they do not hold launch.
 checking (synonyms and forgiving spelling are accepted); Q-075, fixed
 (853f26e).
 
-**Found on 29 October, can follow:** Q-140 to Q-148. **Fixed on 29 October:** Q-113 (focus on each step), and the onboarding scroll and trace guide found by the low-vision tester.
+**Found on 29 October, can follow:** Q-140 to Q-148. **Fixed on 29 October:** Q-113 (focus on each step), Q-138 (one START badge), and the onboarding scroll and trace guide found by the low-vision tester.
 
 **Found on 28 October, can follow:** Q-131 to Q-139. **Fixed on 28 October:** Q-095 (the rest), Q-103 (the rest).
 
