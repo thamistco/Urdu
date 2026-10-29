@@ -6,7 +6,7 @@ Played by `qaaf-tester` (33 tool calls, about 9 minutes) on the b0cfed4d build. 
 
 **At lesson 1's first trace, step 2 of 42.**
 
-- The grey letter to trace measured 1.33:1 on the cream canvas.
+- The grey letter to trace measured 1.33:1 on the cream canvas, from screen pixels (1.32:1 from the palette).
 - The instruction sits over it.
 - The only way past, "Can't trace now", is visible to screen readers only (P-122, kept by the owner for accessibility).
 
