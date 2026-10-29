@@ -110,7 +110,8 @@ export const TOPIC_ICON: Record<string, IconName> = {
   shapes: 'lattice',
   restaurant: 'bowl',
   hotel: 'bed',
-  // Not the mosque: the topic is arts, poetry and festivals of every faith.
+  // Not the mosque: the topic is arts, poetry and festivals, not one place of
+  // worship.
   culture: 'feather',
   services: 'gear',
   // The other three stages, closed in a second pass. `directions-more` and
