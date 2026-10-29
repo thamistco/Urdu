@@ -70,17 +70,24 @@ const GREETING: Record<string, string> = {
  *  already speaks Urdu (see `Background` in the progress store) — they count
  *  the same as `completed` for unlocking what comes next, but render as their
  *  own state rather than a real "done", since nothing was actually attempted. */
+/**
+ * Done, skipped, the one lesson to start, or not reached.
+ *
+ * "Start" is the lesson Continue opens, and only that one. It used to be any
+ * lesson whose predecessor was done or skipped, so a learner past a run of
+ * skips had several: a Roman-track speaker saw START on Unit 4's Pronouns and
+ * on Unit 10's first reading (tester, 2026-10-28, Q-138). The others stay
+ * open to tap, as every lesson is.
+ */
 function lessonState(
   lessonId: string,
   completed: Record<string, unknown>,
   skipped: Record<string, unknown>,
-  order: string[]
+  currentId: string
 ): 'done' | 'skipped' | 'current' | 'locked' {
   if (completed[lessonId]) return 'done';
   if (skipped[lessonId]) return 'skipped';
-  const idx = order.indexOf(lessonId);
-  const prev = order[idx - 1];
-  if (idx === 0 || (prev && (completed[prev] || skipped[prev]))) return 'current';
+  if (lessonId === currentId) return 'current';
   // Tester mode opens the path so any lesson can be looked at without playing
   // thirty before it. Off by default even once unlocked, precisely so the locked
   // state a real learner meets can still be seen.
@@ -1064,7 +1071,7 @@ export function HomeScreen() {
                     </View>
                     <View className="mt-3 ps-2">
                       {unit.lessons.map((lesson, li) => {
-                        const st = lessonState(lesson.id, store.completedLessons, store.skippedLessons, order);
+                        const st = lessonState(lesson.id, store.completedLessons, store.skippedLessons, currentId);
                         const offset = [0, 28, 44, 28][li % 4];
                         const node = (
                           <LessonNode
