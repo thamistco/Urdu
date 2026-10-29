@@ -46,8 +46,9 @@ export function TermsScreen() {
         <Section title="Your progress">
           Unless you sign in, your progress is stored only on this device: in this browser on the website, in the app on
           a phone. Clearing this site’s data or the app’s storage, uninstalling the app, private browsing, changing
-          browser or device, or, on an iPhone or in Safari, going about a week without opening Qaaf, starts you afresh,
-          and we cannot get it back. Where sign-in is offered, signing in keeps a copy you can carry on from elsewhere.
+          browser or device, or, in Safari or in a browser on an iPhone, going about a week without opening Qaaf, starts
+          you afresh, and we cannot get it back. Where sign-in is offered, signing in keeps a copy you can carry on from
+          elsewhere.
         </Section>
 
         <Section title="Using the app fairly">

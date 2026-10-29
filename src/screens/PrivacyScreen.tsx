@@ -68,10 +68,10 @@ export function PrivacyScreen() {
         <Section title="What we do not do">
           No advertising and no ad network of any kind. No selling, renting or sharing your data with third parties for
           marketing. No tracking across other apps or websites. No analytics: we do not count visits or track how you
-          use the app; the only record we hold is the progress a signed-in learner chooses to sync. The microphone is
-          used only when you tap Say it back on a line, to record you saying it so you can hear yourself next to the
-          course’s own recording. That recording stays on your device. It is never uploaded, never shared and never
-          scored, and nothing else in the app ever listens to you.
+          use the app; the only record of use we hold is the progress a signed-in learner syncs, and records of
+          sign-ins. The microphone is used only when you tap Say it back on a line, to record you saying it so you can
+          hear yourself next to the course’s own recording. That recording stays on your device. It is never uploaded,
+          never shared and never scored, and nothing else in the app ever listens to you.
         </Section>
 
         <Section title="Audio and other assets">
@@ -79,8 +79,8 @@ export function PrivacyScreen() {
           phone app they play from your device. On the website they come from the same site as everything else, which
           GitHub Pages hosts: like any web host, GitHub receives your IP address and browser details with each request
           and keeps them for security, under GitHub’s own privacy statement. We cannot see those records. If a recording
-          is missing or will not play, your device’s own voice may read the word instead, and some browsers do that on
-          their maker’s servers.
+          is missing or will not play, or if you turn on hearing the English meaning, your device’s own voice reads it,
+          and some browsers do that on their maker’s servers.
         </Section>
 
         <Section title="Deleting your data">
