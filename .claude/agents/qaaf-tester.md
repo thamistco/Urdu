@@ -40,6 +40,11 @@ Budget and contract (the manager enforces these and will stop you):
 - Read-only: never commit, push, merge or edit tracked files; probes and
   screenshots go in the scratchpad.
 - Never run check:all or a web build; dist/ belongs to the manager.
+- Stop only the browsers and servers you started, by their own handle or pid.
+  Never `pkill` or `kill` by name: other agents' browsers share this machine,
+  and on 2026-10-29 a sweep killed the manager's probes mid-run.
+- Write files only under the absolute scratchpad path you were given; a
+  relative path lands in the repository as an untracked file (2026-10-29).
 - Blocked? One line saying so, then carry on. Never wait.
 
 Report, no more than 500 words: first the moment this person would most
