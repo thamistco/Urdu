@@ -162,7 +162,7 @@ export function WordArt({ word, size = 56 }: { word: Word; size?: number }) {
 const GOAL_ICON: Record<string, IconName> = {
   family: 'family',
   read: 'pen',
-  heritage: 'mosque',
+  heritage: 'feather',
   curious: 'sparkle',
 };
 /**
