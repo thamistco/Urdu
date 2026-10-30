@@ -72,7 +72,8 @@ function moveWithin(group: Element, items: HTMLElement[], at: number, e: Keyboar
   e.preventDefault();
   const target = items[to];
   target.focus();
-  const mode = group.getAttribute('data-arrows') ?? (items[at].getAttribute('role') === 'radio' ? 'choose' : 'moveOnly');
+  const mode =
+    group.getAttribute('data-arrows') ?? (items[at].getAttribute('role') === 'radio' ? 'choose' : 'moveOnly');
   if (mode === 'choose' && !isChosen(target)) target.click();
 }
 
