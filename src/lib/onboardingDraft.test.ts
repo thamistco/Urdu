@@ -2,7 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { resumableDraft } from './onboardingDraft';
 
 const DAILY = ['casual', 'steady', 'serious'];
-const saved = { step: 'track', goal: 'family', track: 'roman', voice: 'm', background: null, daily: 'serious' };
+const saved = {
+  step: 'track',
+  goal: 'family',
+  track: 'roman',
+  voice: 'm',
+  background: null,
+  daily: 'serious',
+  placement: null,
+};
 
 describe('resuming onboarding after a reload (Q-103)', () => {
   it('picks up where the learner was, with their answers', () => {
@@ -16,11 +24,23 @@ describe('resuming onboarding after a reload (Q-103)', () => {
     expect(resumableDraft({ ...saved, step: 'welcome' }, DAILY)).toBeNull();
   });
 
-  it('sends a speaker past the quick check back to it, since its answers were not kept', () => {
+  it('sends a speaker past the quick check back to it only when its score was not kept', () => {
     for (const step of ['daily', 'ready']) {
       expect(resumableDraft({ ...saved, step, background: 'speaker' }, DAILY)?.step).toBe('placement');
     }
     expect(resumableDraft({ ...saved, step: 'ready', background: 'new' }, DAILY)?.step).toBe('ready');
+  });
+
+  it('keeps a finished quick check, so a reload after it does not ask it again (Q-141)', () => {
+    for (const step of ['daily', 'ready']) {
+      const d = resumableDraft({ ...saved, step, background: 'speaker', placement: 3 }, DAILY);
+      expect([d?.step, d?.placement]).toEqual([step, 3]);
+    }
+    for (const placement of [-1, 1.5, '3', 'all']) {
+      expect(resumableDraft({ ...saved, step: 'ready', background: 'speaker', placement }, DAILY)?.step).toBe(
+        'placement'
+      );
+    }
   });
 
   it('goes back to the question a later step needs answered', () => {
