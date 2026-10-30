@@ -22,6 +22,7 @@ import { heartsAreFree } from '../lib/hearts';
 import { UNITS } from '../data/units';
 import { lessonsToSkip, type UnitEvidence } from '../lib/unitSkip';
 import { practiceXp, repeatReward } from '../lib/repeatReward';
+import { keepSnapshot, type LessonSnapshot } from '../lib/lessonResume';
 
 export type Goal = 'family' | 'read' | 'heritage' | 'curious';
 /**
@@ -113,6 +114,8 @@ type ProgressState = {
   comeback: { lost: number } | null;
   /** Freezes spent on the current gap since the last lesson; see lib/streak.ts. */
   freezesOnHold: number;
+  /** Lessons left partway, to pick up where they were left (Q-038, lib/lessonResume.ts). */
+  lessonsInProgress: LessonSnapshot[];
 
   // daily goal
   dailyGoalId: string;
@@ -181,6 +184,10 @@ type ProgressState = {
     romanTrack?: boolean;
   }) => FinishResult;
   setDailyGoal: (id: string) => void;
+  /** Keep a lesson left partway (lib/lessonResume.ts), latest first. */
+  holdLesson: (snap: LessonSnapshot) => void;
+  /** Forget a lesson's part-done copy, on any track. */
+  dropLesson: (lessonId: string) => void;
   /** Buy one streak freeze. False, and nothing spent, when it cannot. */
   buyFreeze: () => boolean;
   /**
@@ -236,6 +243,7 @@ export const useProgressStore = create<ProgressState>()(
       freezeNotice: null,
       comeback: null,
       freezesOnHold: 0,
+      lessonsInProgress: [],
 
       dailyGoalId: 'steady',
       todayKey: dayKey(),
@@ -450,6 +458,8 @@ export const useProgressStore = create<ProgressState>()(
           comeback: null,
           skippedLessons,
           freezesOnHold: active.freezesOnHold,
+          // Finished, so nothing left to pick up.
+          lessonsInProgress: s2.lessonsInProgress.filter((l) => l.lessonId !== lessonId),
           leagueId,
           weekKey,
           weeklyXp,
@@ -528,6 +538,9 @@ export const useProgressStore = create<ProgressState>()(
         });
       },
       addGems: (n) => set((s) => ({ gems: s.gems + n })),
+      holdLesson: (snap) => set((s) => ({ lessonsInProgress: keepSnapshot(s.lessonsInProgress, snap) })),
+      dropLesson: (lessonId) =>
+        set((s) => ({ lessonsInProgress: s.lessonsInProgress.filter((l) => l.lessonId !== lessonId) })),
 
       dismissPathNotice: (pathSize: number) => set({ pathNoticeSeen: true, pathSize }),
       notePathSize: (pathSize: number) => set({ pathSize }),
@@ -555,6 +568,7 @@ export const useProgressStore = create<ProgressState>()(
           freezeNotice: null,
           comeback: null,
           freezesOnHold: 0,
+          lessonsInProgress: [],
           dailyGoalId: 'steady',
           todayKey: dayKey(),
           todayXp: 0,

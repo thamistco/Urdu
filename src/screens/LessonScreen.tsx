@@ -36,6 +36,8 @@ import type { FinishResult } from '../store/useProgressStore';
 import { LessonComplete } from './LessonComplete';
 import type { RootStackParamList } from '../navigation/types';
 import { confirmAction } from '../lib/confirm';
+import { dayKey } from '../lib/date';
+import { restoreSnapshot, takeSnapshot } from '../lib/lessonResume';
 import { plainRoman } from '../lib/roman';
 import { useMoreBelow, MoreBelowCue } from '../components/MoreBelow';
 
@@ -44,6 +46,9 @@ type Rt = RouteProp<RootStackParamList, 'Lesson'>;
 
 /** Space under each exercise, which "More below" does not count as more. */
 const BODY_PAD_BOTTOM = 32;
+
+/** A lesson that can be left and picked up again: anything but practice (Q-038). */
+const resumable = (lessonId: string) => !lessonId.startsWith('practice-');
 
 /** Teaching cards are informational — no hearts, no pass/fail styling. */
 function isTeaching(ex: Exercise | undefined): boolean {
@@ -207,6 +212,20 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   const showRoman = useSettingsStore((s) => s.showRoman);
   const track = useSettingsStore((s) => s.track);
   const setTrack = useSettingsStore((s) => s.setTrack);
+  /**
+   * Where this lesson was left, if it was left partway (Q-038): the same
+   * questions, the step after the last one answered, and the lesson's own
+   * tallies, so leaving at step 30 of 49 no longer meant starting from the
+   * first card. Practice is short and built from what is due today, so it
+   * always starts afresh.
+   */
+  const resumed = useMemo(() => {
+    if (!resumable(lesson.id)) return null;
+    const held = useProgressStore
+      .getState()
+      .lessonsInProgress.find((l) => l.lessonId === lesson.id && l.track === track);
+    return restoreSnapshot(held, lesson.id, track, dayKey());
+  }, [lesson.id, track]);
   // Under 300px (a 360px phone at 200% text) the header wraps, so the hearts
   // badge takes a line of its own rather than being squeezed to "F…" (QA,
   // 2026-10-13).
@@ -264,7 +283,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
    * or earn its perfect bonus (second check, 2026-10-26).
    */
   const skippedRef = useRef(0);
-  const [skippedCount, setSkippedCount] = useState(0);
+  const [skippedCount, setSkippedCount] = useState(() => resumed?.skipped ?? 0);
   /** The planned re-asks, read by `advance` in the same tap that planned them. */
   const reaskRef = useRef<Exercise[]>([]);
   const loseHeart = useProgressStore((s) => s.loseHeart);
@@ -274,6 +293,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   const gems = useProgressStore((s) => s.gems);
   const heartsUpdatedAt = useProgressStore((s) => s.heartsUpdatedAt);
   const heartsFree = useProgressStore((s) => heartsFreeFor(s.completedLessons, s.skippedLessons));
+  const holdLesson = useProgressStore((s) => s.holdLesson);
 
   /**
    * Build the exercise set once, weaving in whatever SRS items are due.
@@ -285,6 +305,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
    * an equal-but-different object.
    */
   const exercises = useMemo(() => {
+    if (resumed) return resumed.exercises;
     const srs = useProgressStore.getState().srs;
     const srsType = useProgressStore.getState().srsType;
     // How many due items to ask for is scheduling policy, not a screen
@@ -310,9 +331,9 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lesson.id, track]);
 
-  const [idx, setIdx] = useState(0);
+  const [idx, setIdx] = useState(() => resumed?.at ?? 0);
   const [graded, setGraded] = useState<null | boolean>(null);
-  const [correctCount, setCorrectCount] = useState(0);
+  const [correctCount, setCorrectCount] = useState(() => resumed?.correct ?? 0);
   const [done, setDone] = useState(false);
   const [result, setResult] = useState<FinishResult | null>(null);
   /**
@@ -333,7 +354,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
    * of them is the first time the learner hears it asked for, with no text on
    * screen: it costs no heart, like the guess before it (QA, M15).
    */
-  const pretestedRef = useRef(new Set<string>());
+  const pretestedRef = useRef(new Set<string>(resumed?.pretested));
   /** Last heart gone, but the learner is still reading why. */
   const [heartsSpent, setHeartsSpent] = useState(false);
   /**
@@ -664,13 +685,42 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
    * paid for and cost no hearts at all.
    */
   useEffect(() => {
-    chargedRef.current = new Set();
-    firstTryRef.current = new Map();
-    missRef.current = new Map();
+    // Or, for a lesson picked up where it was left, the ledger it was left with.
+    chargedRef.current = new Set(resumed?.charged);
+    firstTryRef.current = new Map(resumed?.firstTry);
+    missRef.current = new Map(resumed?.misses);
+    pretestedRef.current = new Set(resumed?.pretested);
     reaskRef.current = [];
-    skippedRef.current = 0;
-    setSkippedCount(0);
+    skippedRef.current = resumed?.skipped ?? 0;
+    setSkippedCount(skippedRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `resumed` is derived from `lesson.id` and read once per lesson
   }, [lesson.id]);
+
+  /**
+   * Kept as the lesson goes, so it can be picked up where it was left: after
+   * each answer, the step to open on is the next one. Not before the first
+   * answer, not once it is saved (the re-asks), and not after the results.
+   * `finishLesson` drops the copy.
+   */
+  useEffect(() => {
+    if (!resumable(lesson.id) || done || inReask) return;
+    const at = graded != null ? idx + 1 : idx;
+    if (at < 1 || at >= exercises.length) return;
+    holdLesson(
+      takeSnapshot(lesson.id, track, dayKey(), {
+        exercises,
+        at,
+        correct: correctCount,
+        skipped: skippedRef.current,
+        charged: chargedRef.current,
+        firstTry: firstTryRef.current,
+        misses: missRef.current,
+        pretested: pretestedRef.current,
+      })
+    );
+    // Saved on a step's answer and on moving on; the refs are read as they stand then.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idx, graded]);
 
   if (done && result) {
     return (
@@ -829,7 +879,9 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
               // kept" (QA, 2026-10-24, Q-099).
               confirmAction(
                 'Leave this lesson?',
-                'It starts again from the beginning next time. What you answered still counts towards your reviews.',
+                resumable(lesson.id)
+                  ? 'You can pick it up where you left off for a week. What you answered still counts towards your reviews.'
+                  : 'It starts again from the beginning next time. What you answered still counts towards your reviews.',
                 'Leave',
                 leave
               );
@@ -869,6 +921,13 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
                 question under the fold (design review, 2026-10-26). After the
                 first, the eyebrow and ✕'s label carry it. */}
             {idx === total ? <Txt className="mt-1 text-xs text-paper/65">{REASK_SAVED}</Txt> : null}
+          </View>
+        ) : null}
+        {/* On the step a lesson reopens on, until it is answered: without it,
+            a lesson opening at step 23 reads as a different lesson (Q-038). */}
+        {resumed && idx === resumed.at && graded == null ? (
+          <View style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }} className="px-4">
+            <Txt className="text-xs text-paper/65">Picking up where you left off.</Txt>
           </View>
         ) : null}
 
