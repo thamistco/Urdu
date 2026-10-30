@@ -25,6 +25,7 @@ import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { SoundNotice } from './src/components/SoundNotice';
 import { linking } from './src/navigation/linking';
 import { initSound } from './src/lib/sound';
+import { installGroupKeys } from './src/lib/groupKeys';
 import { useSettingsStore } from './src/store/useSettingsStore';
 import { useProgressStore } from './src/store/useProgressStore';
 import { useAuthStore } from './src/store/useAuthStore';
@@ -84,6 +85,9 @@ export default function App() {
    * and shows a thin fallback face until it arrives, 5.4s on Slow 4G
    * (performance review, 2026-10-21, P-096).
    */
+  // Space, arrows and one Tab stop for every radio group and tab bar (web).
+  useEffect(() => installGroupKeys(), []);
+
   useEffect(() => {
     if (!fontsLoaded) return;
     Font.loadAsync({ 'NotoNastaliq-Bold': NotoNastaliqUrdu_700Bold }).catch(() => {});

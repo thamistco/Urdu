@@ -1,5 +1,6 @@
 import { View, Pressable } from 'react-native';
 import { Txt, Bold } from './Text';
+import { arrowsOnly } from '../lib/groupKeys';
 import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { SCRIPT_LESSON_COUNT, TOTAL_LESSON_COUNT } from '../data/units';
@@ -104,7 +105,16 @@ function Bullet({ text, kind }: { text: string; kind: 'gain' | 'cost' }) {
   );
 }
 
-export function TrackChooser({ value, onChange }: { value: LearnTrack; onChange: (t: LearnTrack) => void }) {
+export function TrackChooser({
+  value,
+  onChange,
+  appliesAtOnce = false,
+}: {
+  value: LearnTrack;
+  onChange: (t: LearnTrack) => void;
+  /** Settings: a choice rewrites the course at once, so arrows only move focus (lib/groupKeys). */
+  appliesAtOnce?: boolean;
+}) {
   return (
     <View>
       {/* Two facts, one line each: this really does change the course, and it is
@@ -115,7 +125,12 @@ export function TrackChooser({ value, onChange }: { value: LearnTrack; onChange:
         have learned is lost.
       </Txt>
 
-      <View className="gap-3" accessibilityRole="radiogroup" aria-label="Learning track">
+      <View
+        className="gap-3"
+        accessibilityRole="radiogroup"
+        aria-label="Learning track"
+        {...(appliesAtOnce ? arrowsOnly('moveOnly') : {})}
+      >
         {TRACK_OPTIONS.map((t) => {
           const sel = value === t.key;
           return (
