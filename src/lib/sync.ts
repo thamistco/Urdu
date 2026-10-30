@@ -100,3 +100,19 @@ export function stopSync() {
   currentUserId = null;
   if (pushTimer) clearTimeout(pushTimer);
 }
+
+/**
+ * Sends a change still waiting out the upload's 1.5s pause, then stops.
+ *
+ * For signing out: `stopSync` alone dropped whatever the learner did in the
+ * moment before, so the copy they would sign in to elsewhere missed it (Q-025,
+ * from P-015's second check). Deleting an account stops without sending.
+ */
+export async function finishSync() {
+  if (pushTimer) {
+    clearTimeout(pushTimer);
+    pushTimer = null;
+    await pushProgress();
+  }
+  stopSync();
+}
