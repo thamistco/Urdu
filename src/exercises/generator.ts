@@ -2315,6 +2315,35 @@ export function buildLessonExercises(
       ? (lesson.wordIds.map(getWord).filter(Boolean) as Word[])
       : seededShuffle(pool, lesson.id).slice(0, Math.max(3, lesson.size - 4 - Math.min(2, reviewRefs.length)));
     /**
+     * Wrong options in a graded question come from words the learner has met.
+     *
+     * They came from the whole topic, later parts included, so in the first
+     * lesson of each topic 66 to 82% of wrong options were words the learner
+     * had not yet been shown, and about 10 of 11 "word from meaning" questions
+     * offered one (learning review, 2026-10-29, P-136). An option nobody has
+     * seen is eliminated without knowing the answer, so the question tests
+     * less than it seems to: the word-level version of what P-123 did for
+     * letters. Met means taught by an earlier lesson, or introduced earlier in
+     * this one. Same topic first; any topic when the topic has too few; the
+     * whole topic only when fewer than three words have been met at all.
+     * Pretest questions keep the topic pool: nothing is graded on them.
+     *
+     * Only on the path: a practice drill ranges over its whole topic by design.
+     */
+    const metBefore = lesson.wordIds
+      ? new Set(taughtUpTo(lesson.id).words.filter((id) => !lesson.wordIds!.includes(id)))
+      : null;
+    const metHere = new Set<string>();
+    const metOptions = (w: Word): { from: Word[]; first?: Word[] } => {
+      if (!metBefore) return { from: pool };
+      const met = (x: Word) => x.id !== w.id && (metBefore.has(x.id) || metHere.has(x.id));
+      const sameTopic = pool.filter(met);
+      if (sameTopic.length > DISTRACTORS) return { from: sameTopic };
+      const anyTopic = [...sameTopic, ...WORDS.filter((x) => x.topic !== lesson.topic && met(x))];
+      if (anyTopic.length < DISTRACTORS) return { from: pool };
+      return { from: anyTopic, first: sameTopic };
+    };
+    /**
      * Every word three times, each time asking for more.
      *
      * The lesson used to meet each word once, come back to two of them, type
@@ -2414,12 +2443,20 @@ export function buildLessonExercises(
        * is the same length — what changed is that the first of the three tells
        * the learner something rather than asking.
        */
-      (w, i) => [
-        { ...wordExercise(w, pool, track, 'meet', i % 3), pretest: true },
-        { kind: 'wordTeach', word: w },
-      ],
-      (w) => wordExercise(w, pool, track, 'recall'),
-      (w, i) => produceExercise(w, pool, track, teachesScript, i, taught),
+      (w, i) => {
+        // Met from here on: its card follows this question at once. The
+        // pretest itself keeps the topic pool, so this is safe to mark first.
+        metHere.add(w.id);
+        return [
+          { ...wordExercise(w, pool, track, 'meet', i % 3), pretest: true },
+          { kind: 'wordTeach', word: w },
+        ];
+      },
+      (w) => {
+        const { from, first } = metOptions(w);
+        return wordExercise(w, from, track, 'recall', undefined, first);
+      },
+      (w, i) => produceExercise(w, metOptions(w).from, track, teachesScript, i, taught),
     ];
 
     for (let cycle = 0; cycle < groups.length + passes.length - 1; cycle++) {
