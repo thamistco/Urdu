@@ -195,20 +195,19 @@ function LessonNode({
         >
           {lesson.title}
         </Bold>
-        {/* One line, and never cut off.
+        {/* One line at normal size, and never cut off.
 
             The path zig-zags, so each row's text column is a different width,
             and at 320pt word previews like "1 of 2 · to know, to accept, to
             want" were cut off. They were ellipsised to keep the rows even, which
             hid what a learner was told the lesson held. The subtitles are now
-            short enough to fit (a word count, or a few hand-written words), so
-            `numberOfLines` is only a backstop that keeps the row one line tall.
-            It is not the plan. `check:row-fit` renders every row at 320pt on
-            both tracks and fails if any subtitle is actually cut off or any
-            title wraps. */}
+            short enough to fit on one line. There is no line limit: at 1.5x text
+            the old one-line backstop ended them in an ellipsis (Q-026), so a
+            long one now wraps. `check:row-fit` renders every row at 320pt on
+            both tracks and fails if any subtitle takes a second line or any
+            title wraps at normal size, or anything is cut off at 1.5x. */}
         <Txt
           testID="row-subtitle"
-          numberOfLines={1}
           className="text-xs text-paper/55"
           style={{ writingDirection: 'ltr', textAlign: 'left' }}
         >
