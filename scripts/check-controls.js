@@ -1198,6 +1198,96 @@ async function main() {
         await p.close();
       }
     }
+
+    /**
+     * Radio groups and tab bars answer the keyboard (Q-131, Q-140): Space
+     * chooses, arrows move (and choose, in a radio group, unless the group's
+     * choices apply at once), and a group is one Tab stop. react-native-web
+     * answers Space only on a button, so for weeks Space and the arrows did
+     * nothing on every radio and tab (design reviews, 2026-10-26 and 30).
+     * One of each kind: an onboarding radio group, the tab bar, and Settings'
+     * daily goals, where a choice applies at once and arrows only move.
+     */
+    {
+      const p = await browser.newPage({ viewport: { width: 390, height: 844 } });
+      const checked = (group) =>
+        p.evaluate(
+          (g) =>
+            [...document.querySelectorAll(`${g} [role="radio"]`)]
+              .map((r) => (r.getAttribute('aria-checked') === 'true' ? 1 : 0))
+              .join(''),
+          group
+        );
+      const focused = () =>
+        p.evaluate(() => {
+          const a = document.activeElement;
+          return a ? `${a.getAttribute('role')}:${(a.getAttribute('aria-label') || a.textContent || '').trim()}` : '';
+        });
+      try {
+        await p.goto(`http://localhost:${PORT}/Urdu/`);
+        await openTheDoor(p);
+        await tapByText(p, /^Let’s start$/);
+        await p.locator('[role="radio"]').first().waitFor({ timeout: 8000 });
+        await p.locator('[role="radio"]').first().focus();
+        await p.keyboard.press('Space');
+        const afterSpace = await checked('[role="radiogroup"]');
+        await p.keyboard.press('ArrowDown');
+        const afterArrow = await checked('[role="radiogroup"]');
+        await p.keyboard.press('Tab');
+        const afterTab = await focused();
+        if (!afterSpace.startsWith('1')) {
+          problems.push(`Space on the first goal did not choose it (aria-checked ${afterSpace}).`);
+        }
+        if (!afterArrow.startsWith('01')) {
+          problems.push(`ArrowDown in the goal group did not move to and choose the next goal (${afterArrow}).`);
+        }
+        if (afterTab.startsWith('radio:')) {
+          problems.push(`Tab from a goal stayed inside the group (${afterTab}): a group should be one Tab stop.`);
+        }
+
+        await enterAsGuest(p, `http://localhost:${PORT}/Urdu/`, {}, {});
+        await p.goto(`http://localhost:${PORT}/Urdu/`);
+        await p.locator('[role="tab"]').first().waitFor({ timeout: 8000 });
+        await p.locator('[role="tab"]').first().focus();
+        const url = p.url();
+        await p.keyboard.press('ArrowRight');
+        const tabArrow = await focused();
+        if (!/^tab:/.test(tabArrow) || /^tab:Learn/.test(tabArrow) || p.url() !== url) {
+          problems.push(
+            `ArrowRight on the Learn tab should move focus to the next tab only; got ${tabArrow} at ${p.url()}.`
+          );
+        }
+        await p.keyboard.press('Space');
+        await p.waitForURL((u) => String(u) !== url, { timeout: 4000 }).catch(() => {});
+        if (p.url() === url) problems.push('Space on a focused tab did not open it.');
+
+        await p.goto(`http://localhost:${PORT}/Urdu/settings`);
+        const goals = '[role="radiogroup"][aria-label="Daily goal"]';
+        await p.locator(`${goals} [role="radio"]`).first().waitFor({ timeout: 8000 });
+        const before = await checked(goals);
+        await p
+          .locator(`${goals} [role="radio"]`)
+          .nth(Math.max(before.indexOf('1'), 0))
+          .focus();
+        await p.keyboard.press('ArrowRight');
+        const settingsArrow = await checked(goals);
+        const settingsFocus = await focused();
+        await p.keyboard.press('Space');
+        const settingsSpace = await checked(goals);
+        if (settingsArrow !== before) {
+          problems.push(
+            `An arrow in Settings' daily goals changed the goal (${before} to ${settingsArrow}): it applies at once, so arrows should only move.`
+          );
+        }
+        if (settingsSpace === before || !settingsFocus.startsWith('radio:')) {
+          problems.push(
+            `In Settings' daily goals an arrow then Space did not choose the next goal (${before}, ${settingsSpace}).`
+          );
+        }
+      } finally {
+        await p.close();
+      }
+    }
   } finally {
     if (browser) await browser.close();
     server.close();
@@ -1234,6 +1324,9 @@ async function main() {
   console.log('check:controls — closing a lesson part way through asks first, and saying no keeps it.');
   console.log('check:controls — a lesson left is a lesson let go: none stays mounted under Home.');
   console.log('check:controls — from a cold start to the lesson path, the app contacts no host but its own.');
+  console.log(
+    'check:controls — radio groups and the tab bar answer Space and the arrows, and each group is one Tab stop.'
+  );
 }
 
 main().catch((err) => {
