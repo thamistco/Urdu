@@ -715,7 +715,7 @@ async function main() {
     if (!/welcome back/i.test(shortRun.body) || !/one lesson today starts a new streak/i.test(shortRun.body)) {
       problems.push('A learner back after 5 days with a 2-day streak broken sees a bare 0 and no welcome back.');
     }
-    if (/built a 2-day streak/i.test(shortRun.body)) {
+    if (/\b2[- ]day/i.test(shortRun.body)) {
       problems.push('Home names a broken 2-day streak, praise too thin to be kind.');
     }
     if (!/keep your 12-day streak/i.test(frozen.body)) {
