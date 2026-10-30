@@ -11,7 +11,7 @@ import { palette, withAlpha } from '../theme';
 import { feedback } from '../lib/feedback';
 import { announce, hasClip } from '../lib/speech';
 import { WORDS } from '../data/words';
-import { LETTERS, PositionKey, glyphName, positionHint, shapeGroups } from '../data/letters';
+import { LETTERS, POSITIONS, PositionKey, glyphName, positionHint, shapeGroups } from '../data/letters';
 import { useProgressStore } from '../store/useProgressStore';
 import { Illustration } from '../components/Illustration';
 import type { RootStackParamList } from '../navigation/types';
@@ -142,13 +142,16 @@ export function LetterLabScreen() {
             <Eyebrow style={{ color: palette.gold }}>
               {letter.name} · “{letter.sound}”
             </Eyebrow>
-            {!letter.connects && (
-              <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: withAlpha(palette.rose, 0.2) }}>
-                <Eyebrow className="text-[0.5rem]" style={{ color: palette.roseLight }}>
-                  Never joins forward
-                </Eyebrow>
-              </View>
-            )}
+            {/* Not when a form it is asked in joins forward: hamza is not
+                marked to join, but its middle form ـئـ does (QA, 2026-10-30). */}
+            {!letter.connects &&
+              !(letter.askAt ?? POSITIONS.map((p) => p.key)).some((p) => letter.forms[p].endsWith('ـ')) && (
+                <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: withAlpha(palette.rose, 0.2) }}>
+                  <Eyebrow className="text-[0.5rem]" style={{ color: palette.roseLight }}>
+                    Never joins forward
+                  </Eyebrow>
+                </View>
+              )}
           </View>
 
           {/* the paper — read it, or write it */}
