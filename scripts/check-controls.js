@@ -702,8 +702,9 @@ async function main() {
       );
     }
     // A broken streak gets a welcome back on Home, said once and kindly; a
-    // streak a freeze kept does not, and nor does one too short to praise
-    // (P-011, lib/streak.ts).
+    // streak a freeze kept does not. One too short to praise gets the card
+    // without its number: since P-138 a 2-day streak is welcomed back, never
+    // as "a 2-day streak" (P-011, lib/streak.ts).
     if (!/welcome back/i.test(lapsed.body) || !/built a 12-day streak/i.test(lapsed.body)) {
       problems.push('A learner back after 5 days with a 12-day streak broken is not welcomed back on Home.');
     }
@@ -711,8 +712,11 @@ async function main() {
       problems.push('Home welcomes back a learner whose freeze kept their streak, as if it had broken.');
     }
     const shortRun = await afterOpening({ streak: 2, freezes: 0, lastActiveDay: daysAgo(5) });
-    if (/welcome back/i.test(shortRun.body)) {
-      problems.push('Home welcomes back a 2-day streak, praise too thin to be kind.');
+    if (!/welcome back/i.test(shortRun.body) || !/one lesson today starts a new streak/i.test(shortRun.body)) {
+      problems.push('A learner back after 5 days with a 2-day streak broken sees a bare 0 and no welcome back.');
+    }
+    if (/built a 2-day streak/i.test(shortRun.body)) {
+      problems.push('Home names a broken 2-day streak, praise too thin to be kind.');
     }
     if (!/keep your 12-day streak/i.test(frozen.body)) {
       problems.push('After a freeze covers yesterday, Home does not say today is still needed to keep the streak.');
