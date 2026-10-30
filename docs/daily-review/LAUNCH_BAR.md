@@ -47,8 +47,8 @@ Each of these is met when the evidence named beside it exists.
 
 **2026-10-30: not ready.** R4 moved again without being met: every radio
 group and the tab bar now answer Space and the arrow keys, and each group is
-one Tab stop (Q-131, Q-140), so a keyboard or screen-reader user can make
-onboarding's choices at all. Answer tiles are still named only by their glyph
+one Tab stop (Q-131, Q-140); before, only Enter worked and every choice was
+its own Tab stop. Answer tiles are still named only by their glyph
 (Q-112) and letter spotting cannot be answered by ear (P-115). R1: still 12
 before launch; nothing found tonight joins them (P-144, a review that charges
 hearts for forgetting, is serious but not blocking: hearts refill). R2 has not
