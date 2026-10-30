@@ -272,7 +272,8 @@ export function LetterLabScreen() {
             })}
           </View>
 
-          {shapeGroups(letter).length < 4 ? (
+          {/* Exactly two shapes: hamza has three, and was told two. */}
+          {shapeGroups(letter).length === 2 ? (
             <Txt className="-mt-3 mb-5 text-center text-xs text-paper/60">
               {letter.name} never joins to the letter after it, so it has two shapes, not four.
             </Txt>
