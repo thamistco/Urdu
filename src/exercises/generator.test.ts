@@ -626,6 +626,23 @@ describe("URD-045: a letter's context sighting asks the learner to find it in th
     }
   });
 
+  it('shows the letter being hunted only in the tiles that count (Q-052)', () => {
+    // Wrapped in its neighbours, the letter also showed in the tiles either
+    // side, and a learner who tapped one of those was marked wrong: in کتاب
+    // "which tile is be?" offered تاب and اب, both holding be. Checked on
+    // every context word, not just the lessons that happen to draw one.
+    let checked = 0;
+    for (const [letterId, word] of LETTER_CONTEXT_WORD) {
+      const letter = getLetter(letterId)!;
+      const { tiles, correct } = letterSpotTiles(letter, word);
+      tiles.forEach((tile, i) => {
+        expect(tile.includes(letter.forms.isolated), `${letterId}: ${word.urdu} tile ${tile}`).toBe(correct[i]);
+      });
+      checked++;
+    }
+    expect(checked).toBeGreaterThan(30);
+  });
+
   it('tints the character each tile is actually about', () => {
     // The tile is the letter wrapped in its real neighbours, so the letter
     // being hunted appears inside several tiles at once and only the one it

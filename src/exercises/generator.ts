@@ -162,6 +162,9 @@ export const LETTER_CONTEXT_WORD: Map<string, Word> = (() => {
   return map;
 })();
 
+/** The joining stroke, standing in for a letter a tile must not show. */
+const TATWEEL = 'ـ';
+
 /**
  * URD-045: `LETTER_CONTEXT_WORD`'s sighting used to go through `wordExercise`
  * like any ordinary vocabulary word — `multipleChoice`/`meaningPick`/
@@ -242,12 +245,25 @@ export function letterSpotTiles(
    */
   const focusAt: number[] = [];
   const realChars = new Set<string>();
+  /**
+   * The letter being hunted appears in its own tile only (Q-052). Wrapped in
+   * its neighbours, it also showed in the tiles either side: in کتاب "which
+   * tile is be?" offered تاب and اب, both holding be, and only اب was
+   * accepted, so a learner who found the letter was marked wrong (testers,
+   * 2026-10-12 and 23). In a neighbour's tile it now stands as a joining
+   * stroke where the two letters join, so the neighbour keeps its true
+   * joined shape, and is left out where they do not.
+   */
+  const target = letter.forms.isolated;
+  const joinsForward = (ch: string) => LETTERS.find((l) => l.forms.isolated === ch)?.connects ?? true;
   for (let i = 0; i < raw.length; i++) {
     if (!isReal(i)) continue;
-    const left = isReal(i - 1) ? raw[i - 1] : '';
-    const right = isReal(i + 1) ? raw[i + 1] : '';
+    const isCorrect = raw[i] === target;
+    let left = isReal(i - 1) ? raw[i - 1] : '';
+    let right = isReal(i + 1) ? raw[i + 1] : '';
+    if (!isCorrect && left === target) left = letter.connects ? TATWEEL : '';
+    if (!isCorrect && right === target) right = joinsForward(raw[i]) ? TATWEEL : '';
     const cluster = left + raw[i] + right;
-    const isCorrect = raw[i] === letter.forms.isolated;
     // DESIGN CRITIC: `LETTER_CONTEXT_WORD` includes two genuine multi-word
     // phrases (`baRi-he`'s خدا حافظ, `hamza`'s ان شاء اللہ) — the prompt
     // above shows their real spaces, but the old tile row silently dropped
