@@ -444,8 +444,16 @@ export function SettingsScreen() {
               value={s.showRoman}
               onChange={s.setShowRoman}
             />
-            <View className="h-px bg-white/5 my-2" />
-            <Bold className="mb-2 mt-1 text-sm">Learning track</Bold>
+          </Card>
+        </Reveal>
+
+        {/* Its own section, not inside a card: its options are cards already,
+            and at 2x text on a 320 screen the two cards' padding left their
+            words a 90px column, breaking "Nastaliq" and "Recommended" mid-word
+            (Q-027). */}
+        <Reveal delay={90}>
+          <Eyebrow className="mb-2 text-paper/55">Learning track</Eyebrow>
+          <View className="mb-5">
             <TrackChooser
               appliesAtOnce
               value={s.track}
@@ -454,7 +462,7 @@ export function SettingsScreen() {
                 force((n) => n + 1);
               }}
             />
-          </Card>
+          </View>
         </Reveal>
 
         <Reveal delay={120}>

@@ -149,8 +149,11 @@ export function TrackChooser({
               }}
             >
               <View
-                className="rounded-2xl border p-4"
+                // Fixed, not rem: padding need not grow with the text, and at 2x
+                // it took the words' room (Q-027). The same 16px at 1x.
+                className="rounded-2xl border"
                 style={{
+                  padding: 16,
                   borderColor: sel ? palette.gold : withAlpha(palette.white, 0.1),
                   backgroundColor: sel ? withAlpha(palette.gold, 0.1) : palette.ink700,
                   borderWidth: 2,
@@ -168,13 +171,22 @@ export function TrackChooser({
                   {t.recommended ? (
                     <View
                       className="rounded-full px-2 py-0.5"
-                      style={{ backgroundColor: withAlpha(palette.jade, 0.2) }}
+                      style={{ backgroundColor: withAlpha(palette.jade, 0.2), maxWidth: '100%' }}
                     >
                       {/* Sentence case, not an eyebrow: tracked capitals made
                           the one word 201px wide at 2x text, wider than the
                           whole card on a 320 screen, and a single word cannot
                           wrap. */}
-                      <Bold className="text-[0.6875rem]" style={{ color: palette.jadeLight }}>
+                      {/* At 2x on a 320 screen the word hung 69px past Settings'
+                          card (Q-027). The card now has the room; breaking the
+                          word is only a backstop, never shrinking it. */}
+                      <Bold
+                        className="text-[0.6875rem]"
+                        style={{
+                          color: palette.jadeLight,
+                          ...({ overflowWrap: 'break-word' } as object),
+                        }}
+                      >
                         Recommended
                       </Bold>
                     </View>
