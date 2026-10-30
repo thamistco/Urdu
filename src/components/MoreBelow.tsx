@@ -9,6 +9,9 @@ import { useSettingsStore } from '../store/useSettingsStore';
 /** How far past the bottom the content has to run before anything says so. */
 export const MORE_BELOW_SLACK = 24;
 
+/** The in-flow cue's height; a caller keeps this much space once it has gone, so nothing jumps. */
+export const MORE_BELOW_BAND = 60;
+
 /** Pixels of content still below the visible area. */
 export const leftBelow = (content: number, view: number, y: number) => content - (view + y);
 
@@ -107,7 +110,7 @@ export function MoreBelowCue({
       pointerEvents="box-none"
       style={
         inFlow
-          ? { height: 60, backgroundColor: palette.ink }
+          ? { height: MORE_BELOW_BAND, backgroundColor: palette.ink }
           : { position: 'absolute', left: 0, right: 0, bottom: 0, height: 72 }
       }
     >

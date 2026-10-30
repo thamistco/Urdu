@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Pressable, type ScrollView } from 'react-native';
-import { useMoreBelow, MoreBelowCue } from '../../components/MoreBelow';
+import { useMoreBelow, MoreBelowCue, MORE_BELOW_BAND } from '../../components/MoreBelow';
 import { Screen } from '../../components/Screen';
 import { Button } from '../../components/Button';
 import { Reveal } from '../../components/Reveal';
@@ -211,6 +211,14 @@ export function OnboardingScreen() {
   const [pIdx, setPIdx] = useState(0);
   const screenKey = () => (step === 'placement' ? `placement-${pIdx}` : step);
   const more = useMoreBelow(true, screenKey(), 40);
+  // A screen whose band has shown keeps its space after it goes: collapsing
+  // it grew the scroll view by 60px at the end of a scroll, and the content
+  // under a finger jumped down by up to that much (second check, 2026-10-30).
+  const [bandFor, setBandFor] = useState<string | null>(null);
+  const shownKey = more.show ? screenKey() : null;
+  useEffect(() => {
+    if (shownKey) setBandFor(shownKey);
+  }, [shownKey]);
   const cued = (
     body: React.ReactNode,
     screen: Pick<React.ComponentProps<typeof Screen>, 'backdrop' | 'contentClassName'> = {}
@@ -223,7 +231,11 @@ export function OnboardingScreen() {
       <Screen key={screenKey()} scrollRef={scrollRef} scrollProps={more.scrollProps} {...screen}>
         {body}
       </Screen>
-      {more.show ? <MoreBelowCue scrollRef={scrollRef} view={more.view} y={more.y} of="screen" inFlow /> : null}
+      {more.show ? (
+        <MoreBelowCue scrollRef={scrollRef} view={more.view} y={more.y} of="screen" inFlow />
+      ) : bandFor === screenKey() ? (
+        <View style={{ height: MORE_BELOW_BAND }} />
+      ) : null}
     </View>
   );
 
