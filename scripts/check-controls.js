@@ -1209,8 +1209,9 @@ async function main() {
      * choices apply at once), and a group is one Tab stop. react-native-web
      * answers Space only on a button, so for weeks Space and the arrows did
      * nothing on every radio and tab (design reviews, 2026-10-26 and 30).
-     * One of each kind: an onboarding radio group, the tab bar, and Settings'
-     * daily goals, where a choice applies at once and arrows only move.
+     * One of each kind: an onboarding radio group, the tab bar (which is last
+     * on the page, so Tab from it must leave it), and Settings' learning
+     * track, whose choice rewrites the course, so arrows there only move.
      */
     {
       const p = await browser.newPage({ viewport: { width: 390, height: 844 } });
@@ -1254,6 +1255,14 @@ async function main() {
         await p.locator('[role="tab"]').first().waitFor({ timeout: 8000 });
         await p.locator('[role="tab"]').first().focus();
         const url = p.url();
+        // One Tab stop: the tab bar is the last thing on the page, so Tab
+        // from a tab must leave it, not walk to the next tab (second check).
+        await p.keyboard.press('Tab');
+        const tabTab = await focused();
+        if (tabTab.startsWith('tab:')) {
+          problems.push(`Tab from the Learn tab went to ${tabTab}: the tab bar should be one Tab stop.`);
+        }
+        await p.locator('[role="tab"]').first().focus();
         await p.keyboard.press('ArrowRight');
         const tabArrow = await focused();
         if (!/^tab:/.test(tabArrow) || /^tab:Learn/.test(tabArrow) || p.url() !== url) {
@@ -1265,27 +1274,30 @@ async function main() {
         await p.waitForURL((u) => String(u) !== url, { timeout: 4000 }).catch(() => {});
         if (p.url() === url) problems.push('Space on a focused tab did not open it.');
 
+        // Settings' learning track rewrites the course, so arrows there only
+        // move; Space chooses. Its daily goal follows the usual pattern.
         await p.goto(`http://localhost:${PORT}/Urdu/settings`);
-        const goals = '[role="radiogroup"][aria-label="Daily goal"]';
-        await p.locator(`${goals} [role="radio"]`).first().waitFor({ timeout: 8000 });
-        const before = await checked(goals);
+        const tracks = '[role="radiogroup"][aria-label="Learning track"]';
+        await p.locator(`${tracks} [role="radio"]`).first().waitFor({ timeout: 8000 });
+        const before = await checked(tracks);
         await p
-          .locator(`${goals} [role="radio"]`)
+          .locator(`${tracks} [role="radio"]`)
           .nth(Math.max(before.indexOf('1'), 0))
           .focus();
-        await p.keyboard.press('ArrowRight');
-        const settingsArrow = await checked(goals);
-        const settingsFocus = await focused();
+        await p.keyboard.press('ArrowDown');
+        const trackArrow = await checked(tracks);
+        const trackFocus = await focused();
         await p.keyboard.press('Space');
-        const settingsSpace = await checked(goals);
-        if (settingsArrow !== before) {
+        const trackSpace = await checked(tracks);
+        if (trackArrow !== before) {
           problems.push(
-            `An arrow in Settings' daily goals changed the goal (${before} to ${settingsArrow}): it applies at once, so arrows should only move.`
+            `An arrow in Settings' learning track changed the track (${before} to ${trackArrow}): it rewrites ` +
+              'the course, so arrows there should only move.'
           );
         }
-        if (settingsSpace === before || !settingsFocus.startsWith('radio:')) {
+        if (trackSpace === before || !trackFocus.startsWith('radio:')) {
           problems.push(
-            `In Settings' daily goals an arrow then Space did not choose the next goal (${before}, ${settingsSpace}).`
+            `In Settings' learning track an arrow then Space did not choose the next track (${before}, ${trackSpace}).`
           );
         }
       } finally {
