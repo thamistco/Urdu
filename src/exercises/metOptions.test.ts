@@ -32,7 +32,10 @@ describe('wrong options in graded word questions are words already met', () => {
               const metOthers = [...seen].filter((w) => w !== answer).length;
               if (metOthers < 3) continue;
               const unseen = (ex.options as { id: string }[]).filter((o) => o.id !== answer && !seen.has(o.id));
-              expect(unseen.map((o) => o.id), `${id} ${ex.kind} for ${answer}`).toEqual([]);
+              expect(
+                unseen.map((o) => o.id),
+                `${id} ${ex.kind} for ${answer}`
+              ).toEqual([]);
               asked++;
             }
           }
