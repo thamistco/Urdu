@@ -67,7 +67,7 @@ export const FOOD_PACKS: TopicPack[] = [
     [
       ['w-restaurant', 'ریستوران', 'resturaan', 'restaurant', '🍽️'],
       ['w-menu', 'مینو', 'menyu', 'menu', '📋'],
-      ['w-bearer', 'بیرا', 'baira', 'waiter', '🧑‍🍳'],
+      ['w-bearer', 'بیرا', 'baira', 'waiter', '🤵'],
       ['w-order', 'آرڈر', 'aarḍar', 'order', '📝'],
       ['w-bill', 'بل', 'bil', 'bill', '🧾'],
       ['w-tip', 'بخشش', 'bakhshish', 'tip', '💵'],

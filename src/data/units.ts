@@ -442,7 +442,7 @@ const PLANNED_UNITS: Unit[] = [
     level: 'beginner',
     color: GOLD,
     title: 'Unit 7 · Food & Nature',
-    subtitle: 'kaaf, qaaf and gaaf, then food and drink, nature and animals',
+    subtitle: 'fe, qaaf, kaaf and gaaf, then food and drink, nature and animals',
     romanTitle: 'Unit 7 · Food & Nature',
     romanSubtitle: 'Food and drink, nature, and animals',
     lessons: [
