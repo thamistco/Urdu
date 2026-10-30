@@ -7,7 +7,7 @@ import type { Session } from '@supabase/supabase-js';
 
 import { supabase, isAuthConfigured } from '../lib/supabase';
 import { guardedStorage, keepSavedFields, keepWellTypedFields } from './storage';
-import { pullThenMerge, stopSync } from '../lib/sync';
+import { finishSync, pullThenMerge, stopSync } from '../lib/sync';
 
 // It reads session storage at load, and a browser that refuses storage threw
 // here, before anything rendered: a blank page (QA, 2026-10-13, M21). There is
@@ -128,8 +128,9 @@ export const useAuthStore = create<AuthState>()(
       },
 
       signOut: async () => {
-        // Stop uploading under the account being left, as deleting one does.
-        stopSync();
+        // Stop uploading under the account being left, after sending anything
+        // still waiting (Q-025).
+        await finishSync();
         if (supabase) await supabase.auth.signOut().catch(() => {});
         set({ session: null, isGuest: false });
       },
