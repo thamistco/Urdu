@@ -223,7 +223,7 @@ export function OnboardingScreen() {
       <Screen key={screenKey()} scrollRef={scrollRef} scrollProps={more.scrollProps} {...screen}>
         {body}
       </Screen>
-      {more.show ? <MoreBelowCue scrollRef={scrollRef} view={more.view} y={more.y} of="screen" /> : null}
+      {more.show ? <MoreBelowCue scrollRef={scrollRef} view={more.view} y={more.y} of="screen" inFlow /> : null}
     </View>
   );
 

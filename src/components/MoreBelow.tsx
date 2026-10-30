@@ -81,6 +81,7 @@ export function MoreBelowCue({
   y,
   of = 'card',
   fade = true,
+  inFlow = false,
 }: {
   scrollRef: RefObject<ScrollView | null>;
   view: number;
@@ -89,15 +90,28 @@ export function MoreBelowCue({
   of?: 'card' | 'screen';
   /** The fade to the app's ground; off over a tinted surface, where it shows as a dark band. */
   fade?: boolean;
+  /**
+   * A band of its own under the scroll view rather than floating over its
+   * bottom, so nothing tappable can sit under the pill. Floating, it covered
+   * the quick check's fourth option and "Start learning" at 320x568, and a
+   * tap there scrolled instead of answering (design review, 2026-10-30; the
+   * goal step's Continue, 2026-10-27). The caller puts it after the scroll
+   * view in a column, which then shrinks by its height while it shows.
+   */
+  inFlow?: boolean;
 }) {
   const reduced = useSettingsStore((s) => s.reducedMotion);
   return (
     <Animated.View
       exiting={reduced ? undefined : FadeOut.duration(160)}
       pointerEvents="box-none"
-      style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 72 }}
+      style={
+        inFlow
+          ? { height: 60, backgroundColor: palette.ink }
+          : { position: 'absolute', left: 0, right: 0, bottom: 0, height: 72 }
+      }
     >
-      {fade ? (
+      {fade && !inFlow ? (
         <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 40 }}>
           <Svg width="100%" height="40">
             <Defs>
