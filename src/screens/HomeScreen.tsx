@@ -20,7 +20,7 @@ import { feedback } from '../lib/feedback';
 import { levelProgress, levelTitle } from '../lib/gamification';
 import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
-import { comebackLine } from '../lib/streak';
+import { comebackLine, COMEBACK_NAMES_STREAK_FROM } from '../lib/streak';
 import { Lesson, unitsForTrack, findLesson, ALL_LESSONS } from '../data/units';
 import { needsPathMoveNotice, pathSignature } from '../lib/progress';
 import { streakStatus } from '../lib/streak';
@@ -732,8 +732,12 @@ export function HomeScreen() {
                 <Eyebrow style={{ color: palette.gold }} className="mb-1">
                   Welcome back
                 </Eyebrow>
-                <Bold className="text-base">You’d built a {store.comeback.lost}-day streak.</Bold>
-                <Txt className="mt-1 text-sm leading-6 text-paper/75">
+                {/* Named only from three days: a one- or two-day streak gets
+                    the card without the number (P-138, lib/streak.ts). */}
+                {store.comeback.lost >= COMEBACK_NAMES_STREAK_FROM ? (
+                  <Bold className="mb-1 text-base">You’d built a {store.comeback.lost}-day streak.</Bold>
+                ) : null}
+                <Txt className="text-sm leading-6 text-paper/75">
                   {comebackLine(store.learnedWords.length, track === 'roman' ? 0 : store.learnedLetters.length)}
                 </Txt>
               </Card>

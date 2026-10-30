@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  COMEBACK_MIN_STREAK,
+  COMEBACK_NAMES_STREAK_FROM,
   comebackFrom,
   comebackLine,
   markActiveToday,
@@ -195,13 +195,15 @@ describe('welcome back (P-011)', () => {
     expect(comebackFrom(yesterday, rollStreak(yesterday, '2026-10-02'))).toBeNull();
   });
 
-  it('is not owed for a streak too short to praise', () => {
-    for (const streak of [1, COMEBACK_MIN_STREAK - 1]) {
+  it('is owed for a streak of any length; only one long enough to praise is named (P-138)', () => {
+    for (const streak of [1, COMEBACK_NAMES_STREAK_FROM - 1, COMEBACK_NAMES_STREAK_FROM]) {
       const before: StreakState = { streak, freezes: 0, lastActiveDay: '2026-10-01' };
-      expect(comebackFrom(before, rollStreak(before, '2026-10-05'))).toBeNull();
+      expect(comebackFrom(before, rollStreak(before, '2026-10-05'))).toEqual({ lost: streak });
     }
-    const enough: StreakState = { streak: COMEBACK_MIN_STREAK, freezes: 0, lastActiveDay: '2026-10-01' };
-    expect(comebackFrom(enough, rollStreak(enough, '2026-10-05'))).toEqual({ lost: COMEBACK_MIN_STREAK });
+    expect(COMEBACK_NAMES_STREAK_FROM).toBeGreaterThan(1);
+    // Never for a streak that was already 0.
+    const none: StreakState = { streak: 0, freezes: 0, lastActiveDay: '2026-10-01' };
+    expect(comebackFrom(none, rollStreak(none, '2026-10-05'))).toBeNull();
   });
 
   it('says what has been learned, never what was missed', () => {

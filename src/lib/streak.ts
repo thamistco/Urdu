@@ -131,15 +131,18 @@ export function rollStreak(
  * set once: a second roll over a streak already at 0 changes nothing.
  */
 export function comebackFrom(before: StreakState, after: StreakState): { lost: number } | null {
-  return before.streak >= COMEBACK_MIN_STREAK && after.streak === 0 ? { lost: before.streak } : null;
+  return before.streak >= 1 && after.streak === 0 ? { lost: before.streak } : null;
 }
 
 /**
- * Below this, a broken streak is not worth a welcome back: "You'd built a
- * 1-day streak" is praise that reads as hollow, to the learner most likely to
- * lapse (second check, 2026-10-10). Home stays as it was for them.
+ * From this length the welcome back names the streak. Below it the card still
+ * shows, without the number: "You'd built a 1-day streak" is praise that reads
+ * as hollow (second check, 2026-10-10), but saying nothing left a learner who
+ * did two days and came back on day 5, the typical week-one dropout, with a
+ * bare 0 they had been told the day before to keep (P-138: learning review
+ * and returning tester, 2026-10-30).
  */
-export const COMEBACK_MIN_STREAK = 3;
+export const COMEBACK_NAMES_STREAK_FROM = 3;
 
 /** Home's welcome back: what has been learned, then the way on. Letters are
  *  left at 0 by the caller on the Roman track, which teaches none. "Learned",
