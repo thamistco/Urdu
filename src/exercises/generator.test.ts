@@ -944,6 +944,15 @@ describe('URD-022: visually confusable letters are not drilled back to back', ()
   });
 });
 
+/**
+ * P-135: alif madda's position questions became contrasts with alif, so it has
+ * its own URD-047 contrast plus one per position question replaced. Pinned,
+ * not a lower bound, so a change in either direction is seen: P-135b means to
+ * cap these at one a lesson, and will change this table on purpose (audit,
+ * 2026-10-30).
+ */
+const UNASKABLE_CONTRASTS: Record<string, number> = { 'l-1/alif-madda': 4, 'l-1-2/alif-madda': 2 };
+
 describe('URD-047: a confusable letter is posed directly against its partner, not only kept apart from it', () => {
   const letterLessons = () => UNITS.flatMap((u) => u.lessons).filter((l) => l.kind === 'letters');
   type ContrastEx = Extract<Exercise, { kind: 'letterContrast' }>;
@@ -973,7 +982,7 @@ describe('URD-047: a confusable letter is posed directly against its partner, no
         // against its partner in place of each position question too, so it
         // has its one contrast and those; never fewer.
         if (!positionAskable(getLetter(id)!)) {
-          expect(contrastFor.get(id) ?? 0, `${lesson.id}/${id}`).toBeGreaterThanOrEqual(expected);
+          expect(contrastFor.get(id) ?? 0, `${lesson.id}/${id}`).toBe(UNASKABLE_CONTRASTS[`${lesson.id}/${id}`]);
           continue;
         }
         expect(contrastFor.get(id) ?? 0, `${lesson.id}/${id}`).toBe(expected);
@@ -1040,7 +1049,7 @@ describe('URD-047: a confusable letter is posed directly against its partner, no
         // P-135: alif madda's position questions become contrasts, so it has
         // more than one; it still never loses its context sighting.
         if (!positionAskable(getLetter(id)!)) {
-          expect(spots >= 1 && contrasts >= 1, `${lesson.id}/${id}: ${spots} spots, ${contrasts} contrasts`).toBe(true);
+          expect([spots, contrasts], `${lesson.id}/${id}`).toEqual([1, UNASKABLE_CONTRASTS[`${lesson.id}/${id}`]]);
           continue;
         }
         expect([spots, contrasts], `${lesson.id}/${id}`).toEqual([1, 1]);
