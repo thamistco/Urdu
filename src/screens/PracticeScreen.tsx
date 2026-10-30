@@ -1,5 +1,6 @@
 import { withEmphasis, plainText } from '../components/Emphasis';
 import { reach } from '../lib/reach';
+import { arrowsOnly } from '../lib/groupKeys';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Pressable, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -294,6 +295,8 @@ export function PracticeScreen() {
           <View
             className="mb-3 flex-row flex-wrap rounded-2xl border border-white/10 bg-ink-700 p-1"
             accessibilityRole="tablist"
+            // Switching shelf changes nothing else, so arrows choose (lib/groupKeys).
+            {...arrowsOnly('choose')}
           >
             {(['topics', 'grammar', 'reading'] as const).map((k) => (
               <Pressable
