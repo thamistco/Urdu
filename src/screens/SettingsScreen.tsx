@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { View, Switch, Pressable, TextInput } from 'react-native';
-import { arrowsOnly } from '../lib/groupKeys';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
@@ -461,13 +460,7 @@ export function SettingsScreen() {
         <Reveal delay={120}>
           <Eyebrow className="mb-2 text-paper/55">Daily goal</Eyebrow>
           <Card className="mb-5">
-            {/* A goal applies at once, so arrows only move focus (lib/groupKeys). */}
-            <View
-              className="flex-row flex-wrap gap-2"
-              accessibilityRole="radiogroup"
-              aria-label="Daily goal"
-              {...arrowsOnly('moveOnly')}
-            >
+            <View className="flex-row flex-wrap gap-2" accessibilityRole="radiogroup" aria-label="Daily goal">
               {DAILY_GOALS.map((g) => {
                 const active = dailyGoalId === g.id;
                 return (
