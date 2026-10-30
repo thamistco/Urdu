@@ -452,7 +452,9 @@ export function HomeScreen() {
 
   // A welcome back stays in view too, like the path notice: scrolled to the
   // path, it was above the fold and a lapsed learner never saw it (P-011).
-  const comebackOwed = !!store.comeback;
+  // Only while the streak is 0: a copy adopted from the cloud could carry a
+  // welcome back beside a streak that is live on this device (Q-034).
+  const comebackOwed = !!store.comeback && store.streak === 0;
   // Only while Home is on screen. Home now stays mounted under a lesson
   // (leaving one pops back to it rather than pushing a fresh Home), so a
   // stage finished in a lesson changes the current lesson while Home is
@@ -727,7 +729,7 @@ export function HomeScreen() {
               built; never what was missed. It has no button of its own: the
               Continue card further down is the way in. It goes once a lesson
               is finished. */}
-          {store.comeback && (
+          {comebackOwed && store.comeback && (
             <Reveal delay={50}>
               <Card className="mb-4">
                 <Eyebrow style={{ color: palette.gold }} className="mb-1">

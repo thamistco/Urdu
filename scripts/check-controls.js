@@ -718,6 +718,12 @@ async function main() {
     if (/\b2[- ]day/i.test(shortRun.body)) {
       problems.push('Home names a broken 2-day streak, praise too thin to be kind.');
     }
+    // A welcome back owed by a copy from another device is not shown beside
+    // a streak that is live on this one (Q-034).
+    const stale = await afterOpening({ streak: 4, freezes: 0, lastActiveDay: daysAgo(1), comeback: { lost: 12 } });
+    if (/welcome back/i.test(stale.body)) {
+      problems.push('Home shows a welcome back beside a live 4-day streak: a stale card from another copy.');
+    }
     if (!/keep your 12-day streak/i.test(frozen.body)) {
       problems.push('After a freeze covers yesterday, Home does not say today is still needed to keep the streak.');
     }
