@@ -574,6 +574,42 @@ export function positionsOf(letter: Letter): PositionKey[] {
   return letter.askAt ?? POSITIONS.map((p) => p.key);
 }
 
+/**
+ * Whether "which position?" asks anything about this letter: whether the
+ * positions it is asked in have more than one shape between them.
+ *
+ * Alif madda is asked alone and at the start, and both are آ, so its position
+ * question always had the one answer "Alone or start": three free right
+ * answers in l-1, each scheduled as if recalled (learning reviews, 2026-10-29
+ * and 30, P-135). It is the only letter so far; other non-joiners still have
+ * two shapes.
+ */
+export function positionAskable(letter: Letter): boolean {
+  return new Set(positionsOf(letter).map((p) => letter.forms[p])).size > 1;
+}
+
+/**
+ * "Which position?", or for a letter where that asks nothing, the nearest
+ * question that does: the letter against a lookalike already met (alif, for
+ * alif madda: the madda is the mark to learn), then the letter found in a
+ * word, then "which letter?" from letters already met. Contrast comes before
+ * the pick because picks first put the all-letters review past check:shape's
+ * 40% limit on one kind (measured, 2026-10-30). `met` null means nothing to go
+ * by, so any letter counts as met.
+ */
+function letterFormOr(letter: Letter, position: PositionKey, met: ReadonlySet<string> | null): Exercise {
+  if (positionAskable(letter)) return { kind: 'letterForm', letter, position, options: POSITIONS.map((p) => p.key) };
+  const mates = confusableMatesIn(letter, met ? LETTERS.filter((l) => met.has(l.id)) : LETTERS);
+  if (mates.length) return letterContrastExercise(letter, mates);
+  const word = LETTER_CONTEXT_WORD.get(letter.id);
+  if (word) return letterSpotExercise(letter, word);
+  const distractors = distractLetters(letter, DISTRACTORS, position, met, !!met);
+  if (distractors.length === DISTRACTORS) {
+    return { kind: 'letterPick', letter, position, options: shuffle([letter, ...distractors]) };
+  }
+  return { kind: 'letterForm', letter, position, options: POSITIONS.map((p) => p.key) };
+}
+
 function letterExercise(letter: Letter, pool: ReadonlySet<string> | null): Exercise {
   // Three ways to meet a letter: name the position of a glyph, pick the glyph
   // out of four, or draw it. Tracing is the slowest, so it stays a minority.
@@ -585,9 +621,7 @@ function letterExercise(letter: Letter, pool: ReadonlySet<string> | null): Exerc
   if (roll < 0.3 && GLYPH_MASKS[`${letter.id}:${position}`]) {
     return { kind: 'letterTrace', letter, position };
   }
-  if (roll < 0.72) {
-    return { kind: 'letterForm', letter, position, options: POSITIONS.map((p) => p.key) };
-  }
+  if (roll < 0.72) return letterFormOr(letter, position, pool);
   const distractors = distractLetters(letter, DISTRACTORS, position, pool);
   return { kind: 'letterPick', letter, position, options: shuffle([letter, ...distractors]) };
 }
@@ -638,9 +672,7 @@ function letterExerciseAt(
   if (t === 0 && GLYPH_MASKS[`${letter.id}:${position}`]) {
     return { kind: 'letterTrace', letter, position };
   }
-  if (t !== 2) {
-    return { kind: 'letterForm', letter, position, options: POSITIONS.map((p) => p.key) };
-  }
+  if (t !== 2) return letterFormOr(letter, position, pool);
   const distractors = distractLetters(letter, DISTRACTORS, position, pool);
   return { kind: 'letterPick', letter, position, options: shuffle([letter, ...distractors]) };
 }
@@ -665,9 +697,7 @@ function introducedFirst(sequence: Exercise[], taught: ReadonlySet<string> | nul
     const distractors = distractLetters(ex.letter, DISTRACTORS, ex.position, met, true);
     // Too few met yet for four options, which check:answerable holds every
     // question to: ask where it sits instead.
-    if (distractors.length < DISTRACTORS) {
-      return { kind: 'letterForm', letter: ex.letter, position: ex.position, options: POSITIONS.map((p) => p.key) };
-    }
+    if (distractors.length < DISTRACTORS) return letterFormOr(ex.letter, ex.position, met);
     return { ...ex, options: shuffle([ex.letter, ...distractors]) };
   });
 }

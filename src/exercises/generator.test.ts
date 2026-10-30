@@ -14,6 +14,7 @@ import {
   buildTilesFor,
   tileLookalikes,
   positionsOf,
+  positionAskable,
   soundsOverlap,
   soundTokens,
 } from './generator';
@@ -968,6 +969,13 @@ describe('URD-047: a confusable letter is posed directly against its partner, no
       for (const id of lesson.letterIds ?? []) {
         const expected = matesIn(id, lesson).length > 0 ? 1 : 0;
         if (expected) checkedAny = true;
+        // P-135: a letter whose position cannot be asked (alif madda) is set
+        // against its partner in place of each position question too, so it
+        // has its one contrast and those; never fewer.
+        if (!positionAskable(getLetter(id)!)) {
+          expect(contrastFor.get(id) ?? 0, `${lesson.id}/${id}`).toBeGreaterThanOrEqual(expected);
+          continue;
+        }
         expect(contrastFor.get(id) ?? 0, `${lesson.id}/${id}`).toBe(expected);
       }
     }
@@ -1029,6 +1037,12 @@ describe('URD-047: a confusable letter is posed directly against its partner, no
         if (!LETTER_CONTEXT_WORD.get(id)) continue;
         const spots = exercises.filter((e) => e.kind === 'letterSpot' && e.letter.id === id).length;
         const contrasts = exercises.filter((e) => isContrast(e) && e.letter.id === id).length;
+        // P-135: alif madda's position questions become contrasts, so it has
+        // more than one; it still never loses its context sighting.
+        if (!positionAskable(getLetter(id)!)) {
+          expect(spots >= 1 && contrasts >= 1, `${lesson.id}/${id}: ${spots} spots, ${contrasts} contrasts`).toBe(true);
+          continue;
+        }
         expect([spots, contrasts], `${lesson.id}/${id}`).toEqual([1, 1]);
       }
     }
@@ -1080,8 +1094,14 @@ describe('URD-047: a confusable letter is posed directly against its partner, no
       for (const id of lesson.letterIds ?? []) {
         slots++;
         const seen = formsOf.get(id) ?? new Set();
-        for (const p of positionsOf(getLetter(id)!)) {
-          if (!seen.has(p)) missing.push(`${lesson.id}/${id}: missing ${p} (has ${[...seen].join(',')})`);
+        const letter = getLetter(id)!;
+        // Reached by shape: a position counts as shown when a position with
+        // the same glyph was. The same as by position for every letter but
+        // alif madda, whose two asked positions are both آ (P-135).
+        const shown = new Set([...seen].map((p) => letter.forms[p as keyof typeof letter.forms]));
+        for (const p of positionsOf(letter)) {
+          if (!shown.has(letter.forms[p]))
+            missing.push(`${lesson.id}/${id}: missing ${p} (has ${[...seen].join(',')})`);
         }
       }
     }
