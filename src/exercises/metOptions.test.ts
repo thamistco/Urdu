@@ -29,6 +29,8 @@ describe('wrong options in graded word questions are words already met', () => {
               }
               if (!('options' in ex) || !('word' in ex) || ('pretest' in ex && ex.pretest)) continue;
               const answer = ex.word.id;
+              // A smaller pool must never cost an option (second check).
+              expect((ex.options as unknown[]).length, `${id} ${ex.kind} for ${answer}`).toBe(4);
               const metOthers = [...seen].filter((w) => w !== answer).length;
               if (metOthers < 3) continue;
               const unseen = (ex.options as { id: string }[]).filter((o) => o.id !== answer && !seen.has(o.id));
