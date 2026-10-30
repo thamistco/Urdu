@@ -371,6 +371,12 @@ function confusableMatesIn(letter: Letter, lessonLetters: Letter[]): Letter[] {
  * carried where the codebase already carries it: this is one sighting of six,
  * and URD-019's last-two-sightings-must-agree rule (`sessionGrading.ts`)
  * means a single lucky guess here does not by itself move the schedule.
+ *
+ * Not one of six for alif madda since P-135: its position questions, which
+ * asked nothing, became contrasts, so it is four sightings of six in l-1 and
+ * two in l-1-2, one of them its second to last. Still a real 50/50 in place
+ * of a free answer, but the premise above holds less for it (second check,
+ * 2026-10-30). Capping fallback contrasts at one a lesson is P-135b.
  */
 function letterContrastExercise(letter: Letter, mates: Letter[]): Exercise {
   return { kind: 'letterContrast', letter, options: shuffle([letter, ...mates]) };

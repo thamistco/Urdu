@@ -1095,13 +1095,17 @@ describe('URD-047: a confusable letter is posed directly against its partner, no
         slots++;
         const seen = formsOf.get(id) ?? new Set();
         const letter = getLetter(id)!;
-        // Reached by shape: a position counts as shown when a position with
-        // the same glyph was. The same as by position for every letter but
-        // alif madda, whose two asked positions are both آ (P-135).
-        const shown = new Set([...seen].map((p) => letter.forms[p as keyof typeof letter.forms]));
+        // By position for every letter. Only one whose asked positions all
+        // share a shape (positionAskable false: alif madda, both آ) is
+        // counted by shape, since it is never asked "which position?" and a
+        // position counts as shown when one with the same glyph was (P-135).
+        // Counting every letter by shape would let a non-joiner such as daal
+        // lose its start or end form unnoticed (second check, 2026-10-30).
+        const byShape = !positionAskable(letter);
+        const key = (p: string) => (byShape ? letter.forms[p as keyof typeof letter.forms] : p);
+        const shown = new Set([...seen].map(key));
         for (const p of positionsOf(letter)) {
-          if (!shown.has(letter.forms[p]))
-            missing.push(`${lesson.id}/${id}: missing ${p} (has ${[...seen].join(',')})`);
+          if (!shown.has(key(p))) missing.push(`${lesson.id}/${id}: missing ${p} (has ${[...seen].join(',')})`);
         }
       }
     }
