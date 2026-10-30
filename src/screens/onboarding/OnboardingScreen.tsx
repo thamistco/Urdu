@@ -240,7 +240,7 @@ export function OnboardingScreen() {
     [track]
   );
   const [background, setBackground] = useState<Background | null>(resumed?.background ?? null);
-  const [pCorrect, setPCorrect] = useState(0);
+  const [pCorrect, setPCorrect] = useState(resumed?.placement ?? 0);
   const [pAnswered, setPAnswered] = useState(false);
   const [pPicked, setPPicked] = useState<string | null>(null);
   const [daily, setDaily] = useState(resumed?.daily ?? 'steady');
@@ -262,8 +262,11 @@ export function OnboardingScreen() {
     setStep(to);
   };
   useEffect(() => {
-    setOnboardingDraft(step === 'welcome' ? null : { step, goal, track, voice, background, daily });
-  }, [setOnboardingDraft, step, goal, track, voice, background, daily]);
+    // The quick check's score only once it is finished: past it, on a
+    // speaker's route.
+    const placement = background === 'speaker' && (step === 'daily' || step === 'ready') ? pCorrect : null;
+    setOnboardingDraft(step === 'welcome' ? null : { step, goal, track, voice, background, daily, placement });
+  }, [setOnboardingDraft, step, goal, track, voice, background, daily, pCorrect]);
 
   // The placement level and what it (plus a heritage background) skips —
   // computed here rather than inline in `finish` so the "ready" screen can
