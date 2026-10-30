@@ -10,6 +10,21 @@ back.
 This folder is the review's memory. A run that is not written down here did not
 happen.
 
+## First: the before-launch list (owner, 2026-10-30)
+
+The owner asked why the app is never ready. The answer was that the list that
+decides launch (`LAUNCH_BAR.md`, "R1: the open queued items", before launch)
+barely moved, 14 to 12 in a week, because each night spent itself on that
+night's new findings. So from 30 October:
+
+- **Every night starts on that list and works through it, a few items at a
+  time,** each through the usual gate and, where it comes from research, a
+  second check. The summary opens with how many are left.
+- **New findings are fixed at once only if they block a learner, lose their
+  work or teach something wrong.** Everything else is recorded and waits.
+- **The rotation below becomes a light pass:** QA on the night's changes and
+  one tester, not the full set of specialists, until the list reaches zero.
+
 ## The rotation
 
 As many areas a night as the night allows: the owner asked (2026-10-06) for as
