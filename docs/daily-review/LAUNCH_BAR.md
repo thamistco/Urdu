@@ -13,17 +13,17 @@ apps add their own items (marked). Charging money adds P-001 and
 
 Each of these is met when the evidence named beside it exists.
 
-| #   | The bar                                                                                 | Evidence                                                      | 2026-10-29                                   |
-| --- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------- | -------------------------------------------- |
-| R1  | No open bug a learner can hit that blocks, loses progress, or teaches something wrong   | Every open Q-item triaged; none of those kinds left           | not met: 12 to fix (P-137 joins)             |
-| R2  | QA finds nothing above low on two nights running                                        | Two consecutive QA reports                                    | not met: a medium on 29 October (fixed)      |
-| R3  | Every one of the 16 areas reviewed with no open high finding                            | README dates; reports                                         | not met                                      |
-| R4  | A screen-reader user can complete Unit 1                                                | P-115 (letter spotting) built; checks pass                    | not met: focus lands on each step; tiles not |
-| R5  | 200% text works at 320x568 and in landscape on every exercise kind                      | `check:stability`, `check:controls`; Lesson complete measured | partly: onboarding fixed at 200%; Q-147      |
-| R6  | Offline is honest: an installed app opens, or does not claim to be installable          | P-111, or `display` changed                                   | met: display browser (P-134); P-111 held     |
-| R7  | A learner can tell you something is wrong from inside the app                           | P-020 rebuilt (lost on 22 October) and P-113                  | not met: P-130 specified, not built          |
-| R8  | The course's own decisions are settled: re-asking misses (P-085), letter forms (P-105b) | Built and second-checked, or dropped with a reason            | met: P-085 built, P-105b dropped             |
-| R9  | The privacy page meets UK GDPR article 13 apart from the holder's details               | P-093 drafted                                                 | nearly: text second-checked; holder to come  |
+| #   | The bar                                                                                 | Evidence                                                      | 2026-10-30                                      |
+| --- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------- |
+| R1  | No open bug a learner can hit that blocks, loses progress, or teaches something wrong   | Every open Q-item triaged; none of those kinds left           | not met: 12 to fix                              |
+| R2  | QA finds nothing above low on two nights running                                        | Two consecutive QA reports                                    | not met: a medium on 30 October                 |
+| R3  | Every one of the 16 areas reviewed with no open high finding                            | README dates; reports                                         | not met                                         |
+| R4  | A screen-reader user can complete Unit 1                                                | P-115 (letter spotting) built; checks pass                    | not met: groups and tabs by keyboard; tiles not |
+| R5  | 200% text works at 320x568 and in landscape on every exercise kind                      | `check:stability`, `check:controls`; Lesson complete measured | partly                                          |
+| R6  | Offline is honest: an installed app opens, or does not claim to be installable          | P-111, or `display` changed                                   | met: display browser (P-134); P-111 held        |
+| R7  | A learner can tell you something is wrong from inside the app                           | P-020 rebuilt (lost on 22 October) and P-113                  | not met: P-130 specified, not built             |
+| R8  | The course's own decisions are settled: re-asking misses (P-085), letter forms (P-105b) | Built and second-checked, or dropped with a reason            | met: P-085 built, P-105b dropped                |
+| R9  | The privacy page meets UK GDPR article 13 apart from the holder's details               | P-093 drafted                                                 | nearly: text second-checked; holder to come     |
 
 ## 2. What needs a person (not money)
 
@@ -45,16 +45,15 @@ Each of these is met when the evidence named beside it exists.
 
 ## The verdict
 
-**2026-10-29: not ready.** R4 moved again without being met: each lesson
-step now puts focus on its question, so a keyboard or screen-reader user no
-longer starts every step from the top of the page (Q-113: 19 of 19 step
-changes, from 0). Answer tiles are still named only by their glyph (Q-112) and
-letter spotting cannot be answered by ear (P-115). R9: the privacy and terms
-text passed its second check (P-127, P-128); the holder's details still wait
-on the owner (O-11). R1: 12 before launch. P-137 joins: a learner who already
-knows a unit cannot test out of it by its review, and loses hearts trying. R2
-has not started: QA's worst tonight was a medium (Home lost its scroll on a
-tab switch), fixed. When every row in sections 1 and 2 is met and O1 and O2
+**2026-10-30: not ready.** R4 moved again without being met: every radio
+group and the tab bar now answer Space and the arrow keys, and each group is
+one Tab stop (Q-131, Q-140), so a keyboard or screen-reader user can make
+onboarding's choices at all. Answer tiles are still named only by their glyph
+(Q-112) and letter spotting cannot be answered by ear (P-115). R1: still 12
+before launch; nothing found tonight joins them (P-144, a review that charges
+hearts for forgetting, is serious but not blocking: hearts refill). R2 has not
+started: QA's worst tonight was a medium (hamza described two ways), fixed. R7
+and R9 are unchanged. When every row in sections 1 and 2 is met and O1 and O2
 are done, the summary says "ready to launch".
 
 ## R1: the open queued items, sorted (2026-10-23)
@@ -84,6 +83,8 @@ the nights keep taking them; they do not hold launch.
 **Closed the same night (3):** Q-040 and Q-044, found already done on
 checking (synonyms and forgiving spelling are accepted); Q-075, fixed
 (853f26e).
+
+**Found on 30 October, can follow:** Q-149 to Q-158. **Fixed on 30 October:** Q-131, Q-140, Q-141, Q-136, Q-143.
 
 **Found on 29 October, can follow:** Q-140 to Q-148. **Fixed on 29 October:** Q-113 (focus on each step), Q-138 (one START badge), and the onboarding scroll and trace guide found by the low-vision tester.
 
