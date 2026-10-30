@@ -723,9 +723,10 @@ export function HomeScreen() {
           )}
 
           {/* Welcome back, in place of a silent zero (P-011, lib/streak.ts).
-              It says what was built and what has been learned, never what was
-              missed. It has no button of its own: the Continue card further
-              down is the way in. It goes once a lesson is finished. */}
+              It says what has been learned, and from three days what was
+              built; never what was missed. It has no button of its own: the
+              Continue card further down is the way in. It goes once a lesson
+              is finished. */}
           {store.comeback && (
             <Reveal delay={50}>
               <Card className="mb-4">
@@ -733,13 +734,20 @@ export function HomeScreen() {
                   Welcome back
                 </Eyebrow>
                 {/* Named only from three days: a one- or two-day streak gets
-                    the card without the number (P-138, lib/streak.ts). */}
+                    the card without the number, its learned line taking the
+                    bold place (P-138, lib/streak.ts). */}
                 {store.comeback.lost >= COMEBACK_NAMES_STREAK_FROM ? (
-                  <Bold className="mb-1 text-base">You’d built a {store.comeback.lost}-day streak.</Bold>
-                ) : null}
-                <Txt className="text-sm leading-6 text-paper/75">
-                  {comebackLine(store.learnedWords.length, track === 'roman' ? 0 : store.learnedLetters.length)}
-                </Txt>
+                  <>
+                    <Bold className="text-base">You’d built a {store.comeback.lost}-day streak.</Bold>
+                    <Txt className="mt-1 text-sm leading-6 text-paper/75">
+                      {comebackLine(store.learnedWords.length, track === 'roman' ? 0 : store.learnedLetters.length)}
+                    </Txt>
+                  </>
+                ) : (
+                  <Bold className="text-base leading-6">
+                    {comebackLine(store.learnedWords.length, track === 'roman' ? 0 : store.learnedLetters.length)}
+                  </Bold>
+                )}
               </Card>
             </Reveal>
           )}
