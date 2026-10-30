@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { Choice, PromptCard, Question, palette, withAlpha } from './common';
 import { Urdu, Txt, Bold, Eyebrow, urduGlyph } from '../components/Text';
-import { POSITIONS, PositionKey, shapeGroups, groupPositionHint } from '../data/letters';
+import { PositionKey, shapeGroups, groupPositionHint } from '../data/letters';
 import { feedback } from '../lib/feedback';
 import { contrastNotesFor } from './letterContrastNotes';
 import { isCorrectPosition } from './letterFormGrading';
@@ -44,7 +44,9 @@ export function LetterFormExercise({ exercise, locked, onGraded }: ExerciseProps
   // four, such a letter had two right answers in every question (tester
   // report, 2026-10-12).
   const groups = shapeGroups(letter);
-  const twoShapes = groups.length < POSITIONS.length;
+  // Exactly two: hamza has three (ء, ـئـ, ٔ), and "two shapes, not four" was
+  // told to it too (P-133 second check, Q-136).
+  const twoShapes = groups.length === 2;
   const groupHint = (keys: PositionKey[]) => groupPositionHint(letter, keys);
 
   return (
