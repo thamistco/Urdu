@@ -158,6 +158,13 @@ export function LetterTeachExercise({ exercise, onGraded }: ExerciseProps<TeachE
         <Txt className={`${short ? 'mt-3' : 'mt-4'} text-center text-xs text-paper/60`}>
           {letter.name} never joins to the letter after it, so two of those shapes are the same.
         </Txt>
+      ) : letter.forms.initial === letter.forms.isolated ? (
+        // Hamza: alone and start are both ء, which reads as a mistake unless
+        // named, but its middle form joins, so the line above would be false
+        // (QA, 2026-10-30).
+        <Txt className={`${short ? 'mt-3' : 'mt-4'} text-center text-xs text-paper/60`}>
+          {letter.name} looks the same alone and at the start.
+        </Txt>
       ) : null}
 
       {letter.functionNote ? <Txt className="mt-4 text-center text-xs text-paper/55">{letter.functionNote}</Txt> : null}
