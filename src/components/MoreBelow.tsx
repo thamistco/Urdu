@@ -144,7 +144,12 @@ export function MoreBelowCue({
             borderColor: withAlpha(palette.paper, 0.18),
           }}
         >
-          <Bold style={{ fontSize: 13, color: palette.paper }}>More below</Bold>
+          {/* rem, so it grows with the reader's text size: at 200% it stayed
+              13px, the one line on the screen a large-text reader could not
+              read (design review, 2026-10-19, Q-073). */}
+          <Bold className="text-[0.8125rem]" style={{ color: palette.paper }}>
+            More below
+          </Bold>
           <Svg width={12} height={12} viewBox="0 0 12 12" aria-hidden>
             <Path
               d="M2 4.5 L6 8.5 L10 4.5"
