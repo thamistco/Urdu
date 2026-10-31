@@ -4,9 +4,11 @@ import { WORDS } from '../data/words';
 import { LETTERS } from '../data/letters';
 import { buildLessonExercises } from '../exercises/generator';
 import {
+  encode,
   keepSnapshot,
   restoreSnapshot,
   SNAPSHOT_DAYS,
+  SNAPSHOT_VERSION,
   SNAPSHOTS_KEPT,
   takeSnapshot,
   type LessonSnapshot,
@@ -89,11 +91,56 @@ describe('a lesson left partway can be picked up where it was left (Q-038)', () 
     expect(restoreSnapshot({ ...snap, at: exercises.length }, lesson.id, 'both', '2026-10-30')).toBeNull();
   });
 
+  it('offers nothing, rather than crash, for a copy of another shape', () => {
+    const lesson = ALL_LESSONS.find((l) => l.id === 'v-first-words')!;
+    const exercises = buildLessonExercises(lesson, [], 'both');
+    const snap: LessonSnapshot = JSON.parse(
+      JSON.stringify(takeSnapshot(lesson.id, 'both', '2026-10-30', live(exercises)))
+    );
+    expect(restoreSnapshot(snap, lesson.id, 'both', '2026-10-30')).not.toBeNull();
+    expect(restoreSnapshot({ ...snap, v: SNAPSHOT_VERSION + 1 }, lesson.id, 'both', '2026-10-30')).toBeNull();
+    const { misses: _gone, ...noMisses } = snap;
+    expect(restoreSnapshot(noMisses as LessonSnapshot, lesson.id, 'both', '2026-10-30')).toBeNull();
+  });
+
+  /**
+   * Every key every exercise kind can carry, as saved. A change here means a
+   * copy saved before it would be handed to a component expecting the new
+   * shape: bump SNAPSHOT_VERSION, then pin the new hash.
+   */
+  it('changes its version whenever an exercise changes shape', () => {
+    const keys = new Map<string, Set<string>>();
+    const walk = (kind: string, v: unknown, at: string) => {
+      if (Array.isArray(v)) return v.forEach((x) => walk(kind, x, `${at}[]`));
+      if (!v || typeof v !== 'object') return;
+      for (const [k, x] of Object.entries(v)) {
+        keys.get(kind)!.add(`${at}.${k}`);
+        walk(kind, x, `${at}.${k}`);
+      }
+    };
+    for (const lesson of ALL_LESSONS)
+      for (const track of ['both', 'roman'] as const)
+        for (const ex of encode(buildLessonExercises(lesson, [], track)) as { kind: string }[]) {
+          if (!keys.has(ex.kind)) keys.set(ex.kind, new Set());
+          walk(ex.kind, ex, '');
+        }
+    const shape = [...keys]
+      .map(([k, s]) => `${k}{${[...s].sort().join(',')}}`)
+      .sort()
+      .join(' ');
+    let hash = 5381;
+    for (let i = 0; i < shape.length; i++) hash = ((hash * 33) ^ shape.charCodeAt(i)) >>> 0;
+    expect({ version: SNAPSHOT_VERSION, shape: hash.toString(36) }).toEqual({ version: 1, shape: '1sjkh05' });
+  });
+
   it('holds a few lessons at once, the latest first, one copy each', () => {
-    const mk = (id: string) => ({ lessonId: id, track: 'both' }) as LessonSnapshot;
+    const mk = (id: string, savedDay = '2026-10-30') => ({ lessonId: id, track: 'both', savedDay }) as LessonSnapshot;
     let held: LessonSnapshot[] = [];
     for (const id of ['a', 'b', 'c', 'd', 'b']) held = keepSnapshot(held, mk(id));
     expect(held.map((s) => s.lessonId)).toEqual(['b', 'd', 'c']);
     expect(SNAPSHOTS_KEPT).toBe(3);
+    // A copy past its week holds no place.
+    held = keepSnapshot([mk('old', '2026-10-01'), mk('c')], mk('e'));
+    expect(held.map((s) => s.lessonId)).toEqual(['e', 'c']);
   });
 });
