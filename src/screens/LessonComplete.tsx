@@ -38,14 +38,14 @@ export function LessonComplete({
   result,
   correct,
   total,
-  skippedTraces = 0,
+  skippedSteps = 0,
   onHome,
 }: {
   result: FinishResult;
   correct: number;
   total: number;
   /** Traces passed over with "Can't trace now", already left out of `total`. */
-  skippedTraces?: number;
+  skippedSteps?: number;
   onHome: () => void;
 }) {
   const accuracy = total > 0 ? Math.round((correct / total) * 100) : 100;
@@ -270,9 +270,9 @@ export function LessonComplete({
             {/* At any score: under 60% the line above is not shown, and the
                 learners who skip most were then told nothing about why the
                 total fell from 42 to 31 (second check, 2026-10-26). */}
-            {skippedTraces ? (
+            {skippedSteps ? (
               <Txt className="mb-4 text-center text-xs text-paper/55">
-                {`${skippedTraces === 1 ? 'One trace' : `${skippedTraces} traces`} skipped, not counted; trace any letter in Letter Lab.`}
+                {`${skippedSteps === 1 ? 'One step' : `${skippedSteps} steps`} passed over, not counted.`}
               </Txt>
             ) : null}
             <Button onPress={onHome}>Continue</Button>

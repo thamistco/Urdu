@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View } from 'react-native';
-import { Choice, PromptCard, Question, palette } from './common';
+import { Choice, PassOver, PromptCard, Question, palette } from './common';
 import { Urdu, Txt, Eyebrow, urduGlyph, urduLine } from '../components/Text';
 import { feedback } from '../lib/feedback';
 import { glossOf } from '../data/words';
@@ -106,7 +106,11 @@ export function LetterSpotExercise({ exercise, showRoman, locked, onGraded }: Ex
                 // `flex-wrap` rather than needing every tile to share one
                 // row, is the right shape for a tile count that isn't fixed.
                 className="my-1 min-w-[116px]"
-                accessibilityLabel={`Tile ${i + 1} of ${tiles.length}`}
+                // With its verdict once answered: this label replaces the
+                // button's own text, so the spoken "correct answer" Choice
+                // adds was lost and the right tile was marked by colour and a
+                // tick alone (Q-077).
+                accessibilityLabel={`Tile ${i + 1} of ${tiles.length}${VERDICT_SAID[state] ?? ''}`}
               >
                 {/* The letter this tile is about, tinted inside its own
                     neighbours. The neighbours are there so the glyph joins the
@@ -125,6 +129,13 @@ export function LetterSpotExercise({ exercise, showRoman, locked, onGraded }: Ex
           );
         })}
       </View>
+      {/* Which tile shows a shape cannot be said without naming the answer,
+          so a screen-reader user is offered a way past instead (Q-077). */}
+      {picked == null && !locked ? (
+        <PassOver label="Can’t see the tiles" onPress={() => onGraded({ items: [], correct: true, skipped: true })} />
+      ) : null}
     </View>
   );
 }
+
+const VERDICT_SAID: Partial<Record<string, string>> = { wrong: ', your answer', correct: ', correct answer' };
