@@ -250,6 +250,8 @@ const NOW = Date.UTC(2026, 0, 1);
         testOutLessons(r.id, () => false, track === 'roman'),
         track === 'roman'
       );
+      // A review with nothing on its track to test out of is an ordinary one.
+      if (!refs.length) continue;
       const wanted = new Set(refs.map((x) => x.id));
       const built = buildLessonExercises(r, [], track, graded, 0, refs);
       const ids = new Set(built.flatMap(itemsOf).map((it) => it.id));
@@ -260,7 +262,7 @@ const NOW = Date.UTC(2026, 0, 1);
       );
       asked += refs.length;
       missing.push(...refs.filter((x) => !ids.has(x.id)).map((x) => `${r.id}/${track}:${x.id}`));
-      strays.push(...[...ids].filter((id) => !wanted.has(id) && !graded.has(id)).map((id) => `${r.id}/${track}:${id}`));
+      strays.push(...[...ids].filter((id) => !wanted.has(id)).map((id) => `${r.id}/${track}:${id}`));
     }
   }
   check(
@@ -274,9 +276,12 @@ const NOW = Date.UTC(2026, 0, 1);
     weak.length ? weak.slice(0, 6).join(', ') : 'one-of-four letter questions only'
   );
   check(
-    'a test-out asks nothing else the learner has not been graded on',
+    // Not even what the learner has been graded on: topped up with earlier
+    // words, "22 questions on the 5 lessons" held two of Unit 1's (tester,
+    // 2026-10-31).
+    'a test-out asks its own items and nothing else',
     strays.length === 0,
-    strays.length ? `also asked: ${strays.slice(0, 6).join(', ')}` : 'only drawn and graded items'
+    strays.length ? `also asked: ${strays.slice(0, 6).join(', ')}` : 'only the items it drew'
   );
 }
 
