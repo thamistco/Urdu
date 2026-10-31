@@ -28,8 +28,8 @@ import { useStepFocus, STEP_COUNTER_ID } from './useStepFocus';
 import { REFILL_COST, gemsShortOfRefill, minutesUntilNextHeart } from '../lib/gamification';
 import { useProgressStore, type ItemType } from '../store/useProgressStore';
 import { heartsAreFree, heartsFreeFor } from '../lib/hearts';
-import { useSettingsStore } from '../store/useSettingsStore';
-import { resolveLesson, UNITS, type Lesson } from '../data/units';
+import { useSettingsStore, type LearnTrack } from '../store/useSettingsStore';
+import { resolveLesson, UNITS, unitsForTrack, type Lesson } from '../data/units';
 import { ExerciseView } from '../exercises';
 import { buildLessonExercises, isWovenReview, reaskExercises, type Miss } from '../exercises/generator';
 import type { Exercise, GradedResult } from '../exercises/types';
@@ -52,6 +52,13 @@ const BODY_PAD_BOTTOM = 32;
 /** What a test-out is, said before it starts (P-137). */
 const testOutNote = (lessons: number, questions: number) =>
   `${questions} questions on the ${lessons === 1 ? 'lesson' : `${lessons} lessons`} of this unit you haven’t done, about ${Math.max(1, Math.round((questions * 9) / 60))} minutes. Get every question on a lesson right first time and it’s marked known; you can still open it. No hearts.`;
+
+/** The first lesson on this track's path neither done nor skipped: what Home's Continue opens. */
+function nextOnPath(track: LearnTrack): string {
+  const s = useProgressStore.getState();
+  const order = unitsForTrack(track).flatMap((u) => u.lessons.map((l) => l.id));
+  return order.find((id) => !s.completedLessons[id] && !s.skippedLessons[id]) ?? order[0];
+}
 
 /** A lesson that can be left and picked up again: anything but practice (Q-038). */
 const resumable = (lessonId: string) => !lessonId.startsWith('practice-');
@@ -876,8 +883,11 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
               <Button variant="primary" onPress={() => setTestOutStarted(true)}>
                 Start the test
               </Button>
-              <Button variant="ghost" onPress={() => nav.replace('Lesson', { lessonId: testOut[0].id })}>
-                First lesson instead
+              {/* The learner's own next lesson, as Home's Continue has it, not this
+                  unit's first: from Unit 3's review a beginner was sent to
+                  Unit 3, past all of Unit 1 (tester, 2026-10-31). */}
+              <Button variant="ghost" onPress={() => nav.replace('Lesson', { lessonId: nextOnPath(track) })}>
+                My next lesson instead
               </Button>
               {/* The way back for a tap on a review ahead by mistake. */}
               <Button variant="ghost" onPress={() => (nav.canGoBack() ? nav.goBack() : nav.popTo('Main'))}>
@@ -989,9 +999,11 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
               // kept" (QA, 2026-10-24, Q-099).
               confirmAction(
                 'Leave this lesson?',
-                resumable(lesson.id)
-                  ? 'Open it again soon and it picks up where you left off. What you answered still counts towards your reviews.'
-                  : 'It starts again from the beginning next time. What you answered still counts towards your reviews.',
+                isTestOut
+                  ? 'Open it again soon and it picks up where you left off. Nothing counts until it is finished.'
+                  : resumable(lesson.id)
+                    ? 'Open it again soon and it picks up where you left off. What you answered still counts towards your reviews.'
+                    : 'It starts again from the beginning next time. What you answered still counts towards your reviews.',
                 'Leave',
                 leave
               );
@@ -1019,7 +1031,9 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
               {inReask ? `${idx - total + 1} of ${reask.length}` : `${Math.min(idx + 1, total)} of ${total}`}
             </Txt>
           </View>
-          <Hearts count={hearts} free={heartsFree} />
+          {/* A test-out costs none, whatever the unit: "Free until Unit 1 is
+              done" under "No hearts" read as two rules (tester, 2026-10-31). */}
+          <Hearts count={hearts} free={isTestOut ? 'lesson' : heartsFree} />
         </View>
         {inReask || isReview || isWovenReview(current) ? (
           <View style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }} className="px-4">

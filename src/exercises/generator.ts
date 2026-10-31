@@ -1870,7 +1870,10 @@ export function buildLessonExercises(
    */
   testOut: readonly ItemRef[] = []
 ): Exercise[] {
-  if (lesson.kind === 'review' && testOut.length) lesson = { ...lesson, size: Math.max(lesson.size, testOut.length) };
+  // Its own items and nothing else: topped up with earlier words, "20
+  // questions on the 5 lessons" was 22, two of them Unit 1's (tester,
+  // 2026-10-31).
+  if (lesson.kind === 'review' && testOut.length) lesson = { ...lesson, size: testOut.length };
   const exercises: Exercise[] = [];
   // On the Roman track the learner has said they are not learning the
   // alphabet. Letter lessons are already off their path, but review can still
