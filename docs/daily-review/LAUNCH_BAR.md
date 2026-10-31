@@ -16,7 +16,7 @@ Each of these is met when the evidence named beside it exists.
 | #   | The bar                                                                                 | Evidence                                                      | 2026-10-31                                     |
 | --- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------- |
 | R1  | No open bug a learner can hit that blocks, loses progress, or teaches something wrong   | Every open Q-item triaged; none of those kinds left           | not met: 0 for the review; 3 wait on the owner |
-| R2  | QA finds nothing above low on two nights running                                        | Two consecutive QA reports                                    | not met: a medium on 30 October                |
+| R2  | QA finds nothing above low on two nights running                                        | Two consecutive QA reports                                    | not met: a medium on 31 October, fixed         |
 | R3  | Every one of the 16 areas reviewed with no open high finding                            | README dates; reports                                         | not met                                        |
 | R4  | A screen-reader user can complete Unit 1                                                | P-115 (letter spotting) built; checks pass                    | not met: letter spotting passable; Q-112 open  |
 | R5  | 200% text works at 320x568 and in landscape on every exercise kind                      | `check:stability`, `check:controls`; Lesson complete measured | partly                                         |
