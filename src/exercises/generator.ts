@@ -1841,8 +1841,16 @@ export function buildLessonExercises(
    * unit whose every word is already known doesn't slice off the same fixed
    * subset on every single replay.
    */
-  visit = 0
+  visit = 0,
+  /**
+   * P-137: a unit review opened ahead of its unit is a test-out, and these are
+   * the unfinished lessons' own items it asks (`testOutRefs`), first and all
+   * of them, however long that makes it. The one place a review asks about
+   * what the learner has not been graded on: that is what testing out is.
+   */
+  testOut: readonly ItemRef[] = []
 ): Exercise[] {
+  if (lesson.kind === 'review' && testOut.length) lesson = { ...lesson, size: Math.max(lesson.size, testOut.length) };
   const exercises: Exercise[] = [];
   // On the Roman track the learner has said they are not learning the
   // alphabet. Letter lessons are already off their path, but review can still
@@ -2772,7 +2780,11 @@ export function buildLessonExercises(
     // truncate real due items off the end — the exact class of bug this
     // whole block exists to close, just via oversized input instead of a
     // saturated queue.
-    const due = reviewRefs.filter(resolvable).slice(0, lesson.size);
+    const asked = new Set<string>();
+    const due = [...testOut, ...reviewRefs]
+      .filter((r) => !asked.has(key(r)) && !!asked.add(key(r)))
+      .filter(resolvable)
+      .slice(0, lesson.size);
     const refCap = Math.max(due.length, lesson.size - conceptBudget);
     const seenIds = new Set(due.map(key));
     const filler = fallbackReviewRefs(refCap, teachesScript, lesson.id, known, visit, reviewIndex)

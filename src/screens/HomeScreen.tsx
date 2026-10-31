@@ -32,6 +32,7 @@ import type { RootStackParamList } from '../navigation/types';
 import { cardsOnTrack, dueAllFromToday, dueBudget, dueCount, reviewFirst, CATCH_UP_SIZE } from '../lib/srs';
 import { testerFlags } from '../store/useTesterStore';
 import { wholeWords } from '../lib/wholeWords';
+import { testOutLessons } from '../lib/unitSkip';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -100,6 +101,7 @@ function LessonNode({
   unitTitle,
   color,
   state,
+  testOut = false,
   offset,
   onPress,
 }: {
@@ -112,9 +114,14 @@ function LessonNode({
   unitTitle: string;
   color: string;
   state: 'done' | 'skipped' | 'current' | 'locked';
+  /** A unit review that, opened now, would test out of its unfinished lessons (P-137). */
+  testOut?: boolean;
   offset: number;
   onPress: () => void;
 }) {
+  // Said before it starts: a review opened ahead of its unit opened at "1 of
+  // 22" with nothing to say it could mark lessons known (tester, 2026-10-29).
+  const subtitle = testOut ? 'Test out early' : lesson.subtitle;
   const bg =
     state === 'locked' || state === 'skipped' ? palette.ink700 : state === 'done' ? color : withAlpha(color, 0.22);
   const ring = state === 'current' ? palette.gold : 'transparent';
@@ -124,7 +131,7 @@ function LessonNode({
         onPress={onPress}
         hitSlop={8}
         accessibilityRole="button"
-        accessibilityLabel={`${unitTitle}. ${lesson.title}. ${lesson.subtitle}. ${
+        accessibilityLabel={`${unitTitle}. ${lesson.title}. ${subtitle}. ${
           state === 'done'
             ? 'Completed'
             : state === 'skipped'
@@ -211,7 +218,7 @@ function LessonNode({
           className="text-xs text-paper/55"
           style={{ writingDirection: 'ltr', textAlign: 'left' }}
         >
-          {lesson.subtitle}
+          {subtitle}
         </Txt>
       </View>
     </View>
@@ -1100,6 +1107,14 @@ export function HomeScreen() {
                             unitTitle={unit.title}
                             color={unit.color}
                             state={st}
+                            testOut={
+                              lesson.kind === 'review' &&
+                              testOutLessons(
+                                lesson.id,
+                                (id) => !!store.completedLessons[id] || !!store.skippedLessons[id],
+                                track === 'roman'
+                              ).length > 0
+                            }
                             offset={offset}
                             onPress={() => openLesson(lesson, st)}
                           />

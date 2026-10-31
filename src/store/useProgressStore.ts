@@ -55,6 +55,8 @@ export type FinishResult = {
   repeatCapped: boolean;
   /** How many of the unit's lessons a passed unit review marked as known. */
   lessonsSkipped: number;
+  /** Which ones. */
+  skippedIds: string[];
 };
 
 /** What a streak freeze costs, and how many a learner can hold. */
@@ -502,6 +504,7 @@ export const useProgressStore = create<ProgressState>()(
           newAchievements,
           freezeUsed,
           lessonsSkipped: toSkip.length,
+          skippedIds: toSkip,
           practiceCapped,
           repeatCapped,
         };
