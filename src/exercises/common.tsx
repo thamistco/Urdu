@@ -1,6 +1,6 @@
 import { reach } from '../lib/reach';
 import { ReactNode, useEffect, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { AccessibilityInfo, Platform, Pressable, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { Urdu, Txt, Eyebrow } from '../components/Text';
 import { Illustration } from '../components/Illustration';
@@ -368,3 +368,60 @@ export function SpeakerButton({
 
 export { palette, withAlpha } from '../theme';
 export { Urdu };
+
+/**
+ * A way past a step that needs sight or a hand, for a learner who has neither
+ * to give it: a screen-reader user meets a trace's drawing area with nothing to
+ * act on, and Check stays off until there is a stroke, so l-1 could not be
+ * finished past its second step (design review, 2026-10-26, R4); and letter
+ * spotting asks which tile shows a shape, which no label can say without
+ * naming the answer (Q-077). It grades nothing; the lesson leaves it out of the
+ * score.
+ *
+ * Only for the learners who need it, so it cannot tempt anyone else to skip the
+ * one exercise that trains the hand (the owner, 2026-10-26). On a phone it shows
+ * while VoiceOver or TalkBack is on. On the web, where react-native-web reports
+ * a screen reader as always on, it is in the page but out of sight, reached by
+ * a screen reader, and shown when a keyboard user tabs to it.
+ */
+export function PassOver({ label, onPress }: { label: string; onPress: () => void }) {
+  const web = Platform.OS === 'web';
+  const [screenReader, setScreenReader] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const ref = useRef<View>(null);
+  useEffect(() => {
+    if (web) return;
+    AccessibilityInfo.isScreenReaderEnabled().then(setScreenReader, () => {});
+    const sub = AccessibilityInfo.addEventListener('screenReaderChanged', setScreenReader);
+    return () => sub.remove();
+  }, [web]);
+  // Hidden, the button is a pixel at the column's top left, which is where the
+  // browser scrolls on focus. At 200% zoom or on a short screen the full-size
+  // button below Check was then off screen and focus seemed to vanish, so
+  // bring it into view once it has its real size.
+  useEffect(() => {
+    if (!web || !focused) return;
+    const frame = requestAnimationFrame(() => {
+      const node = ref.current as unknown as { scrollIntoView?: (o: { block: 'nearest' }) => void } | null;
+      node?.scrollIntoView?.({ block: 'nearest' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [web, focused]);
+  if (!web && !screenReader) return null;
+  const seen = !web || focused;
+  return (
+    <Pressable
+      ref={ref}
+      accessibilityRole="button"
+      onPress={onPress}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      style={
+        seen ? { minHeight: 44, alignSelf: 'center', justifyContent: 'center', paddingHorizontal: 12 } : SPOKEN_ONLY
+      }
+      className={seen ? 'mt-1' : undefined}
+    >
+      <Txt className="text-sm text-paper/60">{label}</Txt>
+    </Pressable>
+  );
+}

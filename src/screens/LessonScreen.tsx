@@ -728,7 +728,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
         result={result}
         correct={correctCount}
         total={total - skippedCount}
-        skippedTraces={skippedCount}
+        skippedSteps={skippedCount}
         onHome={() => nav.popTo('Main')}
       />
     );
