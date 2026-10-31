@@ -15,7 +15,7 @@ Each of these is met when the evidence named beside it exists.
 
 | #   | The bar                                                                                 | Evidence                                                      | 2026-10-31                                     |
 | --- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------- |
-| R1  | No open bug a learner can hit that blocks, loses progress, or teaches something wrong   | Every open Q-item triaged; none of those kinds left           | not met: 1 to fix (P-137); 3 wait on the owner |
+| R1  | No open bug a learner can hit that blocks, loses progress, or teaches something wrong   | Every open Q-item triaged; none of those kinds left           | not met: 0 for the review; 3 wait on the owner |
 | R2  | QA finds nothing above low on two nights running                                        | Two consecutive QA reports                                    | not met: a medium on 30 October                |
 | R3  | Every one of the 16 areas reviewed with no open high finding                            | README dates; reports                                         | not met                                        |
 | R4  | A screen-reader user can complete Unit 1                                                | P-115 (letter spotting) built; checks pass                    | not met: letter spotting passable; Q-112 open  |
@@ -56,6 +56,18 @@ started: QA's worst tonight was a medium (hamza described two ways), fixed. R7
 and R9 are unchanged. When every row in sections 1 and 2 is met and O1 and O2
 are done, the summary says "ready to launch".
 
+**2026-10-31 (night): not ready, and the review's own share of the list is
+done.** P-137 shipped: a unit review opened ahead of its unit now tests a
+learner out. The critic held it twice, once because a failed test-out filled
+the review queue with untaught words and once because a retake asked the
+same questions it had just answered. The tester then passed a full Unit 2
+test-out. What stands between Qaaf and launch is now the owner's: Q-069 and
+the rest of Q-025 wait on O-6 (sign-in sync, or P-111), Q-035 on O-11, and
+O1, O2 and O4. After those come section 2's person-only checks (H1 to H3).
+R2 has not started: QA's worst tonight was a medium, fixed. Would I launch
+now? Not publicly: Safari can still clear a lapsed learner's progress
+(Q-069), and the privacy page names no holder.
+
 **2026-10-31 (daytime, the before-launch list worked first): not ready, and
 closer.** Of the 12 before-launch items, 8 are done: Q-052, Q-034, Q-073,
 Q-026, Q-027 and Q-077 fixed; Q-038 (a lesson left partway opens where it was
@@ -74,7 +86,7 @@ by their glyph (Q-112) remain.
 learner hit it, and would it stop them, lose their work, or teach them
 something wrong?
 
-**Before launch, 31 October: 1 for the review (P-137), 3 waiting on the owner (Q-069 and Q-025 on O-6, Q-035 on O-11).** Done on 30 and 31 October: Q-052, Q-034, Q-073, Q-026, Q-027, Q-038, Q-077; Q-045 found fixed since 13 October. The list as it stood (12 on 29 October, with P-137; 11 on 26 October; 14 on the 24th, Q-080 and Q-093 fixed, Q-051 found fixed since 13 October): P-137 (a unit review cannot test a learner out), Q-026, Q-027, Q-034, Q-073 (large text and small
+**Before launch, 31 October night: 0 for the review, 3 waiting on the owner (Q-069 and Q-025 on O-6, Q-035 on O-11).** Done on 30 and 31 October: Q-052, Q-034, Q-073, Q-026, Q-027, Q-038, Q-077, P-137; Q-045 found fixed since 13 October. The list as it stood (12 on 29 October, with P-137; 11 on 26 October; 14 on the 24th, Q-080 and Q-093 fixed, Q-051 found fixed since 13 October): P-137 (a unit review cannot test a learner out), Q-026, Q-027, Q-034, Q-073 (large text and small
 screens; R5), Q-077 (letter spotting by screen reader; R4), Q-038
 (leaving a lesson throws its answers away), Q-045 (emoji
 give answers away), Q-052 (letter-spot tiles that overlap), Q-069 (Safari can
