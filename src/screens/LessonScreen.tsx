@@ -230,6 +230,14 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
     const held = useProgressStore
       .getState()
       .lessonsInProgress.find((l) => l.lessonId === lesson.id && l.track === track);
+    // A test-out kept partway is not picked up once its unit is through:
+    // it would ask the unit's lessons as a test-out after they were taken (QA,
+    // 2026-10-31).
+    if (held?.testOut?.length) {
+      const s = useProgressStore.getState();
+      const done = (id: string) => !!s.completedLessons[id] || !!s.skippedLessons[id];
+      if (!testOutLessons(lesson.id, done, track === 'roman').length) return null;
+    }
     return restoreSnapshot(held, lesson.id, track, dayKey());
   }, [lesson.id, track]);
   /**
@@ -365,7 +373,10 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
     // word the learner already knows doesn't offer the same fixed subset of
     // it on every single replay. See `buildLessonExercises`'s `visit` param.
     const visit = useProgressStore.getState().completedLessons[lesson.id]?.done ?? 0;
-    const asking = testOutRefs(testOut, track === 'roman', visit);
+    // A fresh draw on every attempt. A failed test-out is not recorded, so
+    // seeded on `visit` a retake asked the same questions just answered and
+    // shown, and passing was a test of memory (second check, 2026-10-31).
+    const asking = testOutRefs(testOut, track === 'roman', testOut.length ? Date.now() : visit);
     return buildLessonExercises(lesson, due, track, known, visit, asking);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lesson.id, track]);
@@ -860,7 +871,11 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
                 Start the test
               </Button>
               <Button variant="ghost" onPress={() => nav.replace('Lesson', { lessonId: testOut[0].id })}>
-                Take the first lesson instead
+                First lesson instead
+              </Button>
+              {/* The way back for a tap on a review ahead by mistake. */}
+              <Button variant="ghost" onPress={() => (nav.canGoBack() ? nav.goBack() : nav.popTo('Main'))}>
+                Not now
               </Button>
             </View>
           </View>
