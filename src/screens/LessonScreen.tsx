@@ -798,7 +798,13 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
         correct={correctCount}
         total={total - skippedCount}
         skippedSteps={skippedCount}
-        testedOut={testOut}
+        // As things stand now: a test-out picked up partway was planned before
+        // any lesson taken since, which "Still to take" then named (second
+        // check, 2026-10-31).
+        testedOut={testOut.filter((l) => {
+          const s = useProgressStore.getState();
+          return result.skippedIds.includes(l.id) || (!s.completedLessons[l.id] && !s.skippedLessons[l.id]);
+        })}
         onHome={() => nav.popTo('Main')}
       />
     );
