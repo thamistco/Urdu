@@ -45,7 +45,8 @@ function load(rel) {
 const { newCard, review, dueQueue, dueCount, isDue, strength, dueBudget, cardsOnTrack, reviewFirst, CATCH_UP_SIZE } =
   load('src/lib/srs.ts');
 const { buildLessonExercises, itemsOf } = load('src/exercises/generator.ts');
-const { ALL_LESSONS, resolveLesson } = load('src/data/units.ts');
+const { ALL_LESSONS, UNITS, resolveLesson } = load('src/data/units.ts');
+const { testOutLessons, testOutRefs } = load('src/lib/unitSkip.ts');
 const { WORDS, wordsByTopic } = load('src/data/words.ts');
 const { LETTERS } = load('src/data/letters.ts');
 
@@ -206,6 +207,60 @@ const NOW = Date.UTC(2026, 0, 1);
     'a review with nothing due never asks about a word outside what the learner has been graded on',
     untaught.length === 0,
     untaught.length ? `asked about ${untaught.join(', ')}, never graded` : `${asked.length} questions, all known`
+  );
+}
+
+// ---- a unit review opened ahead of its unit tests out of it (P-137) -------
+
+/**
+ * The one exception to the rule above, and it must stay one. A unit review
+ * opened before its unit is finished is a test-out: it asks a few of each
+ * unfinished lesson's own items, which the learner has not been graded on,
+ * because certifying them is the point. Nothing else ungraded may come with
+ * them, and a review reached in order, with its unit done, is never one.
+ */
+{
+  const reviews = UNITS.flatMap((u) => u.lessons.filter((l) => l.kind === 'review').map((r) => ({ u, r })));
+  const inOrder = reviews.filter(({ u, r }) => {
+    const done = new Set(u.lessons.map((l) => l.id));
+    return testOutLessons(r.id, (id) => done.has(id), false).length > 0;
+  });
+  check(
+    'a unit review reached with its unit done is never a test-out',
+    inOrder.length === 0,
+    inOrder.length ? inOrder.map(({ r }) => r.id).join(', ') : `${reviews.length} reviews`
+  );
+
+  const graded = new Set(WORDS.slice(0, 40).map((w) => w.id));
+  let asked = 0;
+  const missing = [];
+  const strays = [];
+  for (const track of ['both', 'roman']) {
+    for (const { r } of reviews) {
+      const refs = testOutRefs(
+        testOutLessons(r.id, () => false, track === 'roman'),
+        track === 'roman'
+      );
+      const wanted = new Set(refs.map((x) => x.id));
+      const ids = new Set(
+        buildLessonExercises(r, [], track, graded, 0, refs)
+          .flatMap(itemsOf)
+          .map((it) => it.id)
+      );
+      asked += refs.length;
+      missing.push(...refs.filter((x) => !ids.has(x.id)).map((x) => `${r.id}/${track}:${x.id}`));
+      strays.push(...[...ids].filter((id) => !wanted.has(id) && !graded.has(id)).map((id) => `${r.id}/${track}:${id}`));
+    }
+  }
+  check(
+    'a test-out asks every one of the unfinished lessons’ items it drew',
+    missing.length === 0,
+    missing.length ? `not asked: ${missing.slice(0, 6).join(', ')}` : `${asked} items over every review, both tracks`
+  );
+  check(
+    'a test-out asks nothing else the learner has not been graded on',
+    strays.length === 0,
+    strays.length ? `also asked: ${strays.slice(0, 6).join(', ')}` : 'only drawn and graded items'
   );
 }
 

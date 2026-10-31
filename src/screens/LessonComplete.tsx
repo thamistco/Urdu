@@ -14,6 +14,7 @@ import { levelTitle } from '../lib/gamification';
 import { count } from '../lib/plural';
 import { useEffect, useState } from 'react';
 import { useProgressStore, type FinishResult } from '../store/useProgressStore';
+import type { Lesson } from '../data/units';
 import { heartsAreFree } from '../lib/hearts';
 import { HEART_REGEN_MINUTES, REFILL_COST } from '../lib/gamification';
 
@@ -39,6 +40,7 @@ export function LessonComplete({
   correct,
   total,
   skippedSteps = 0,
+  testedOut = [],
   onHome,
 }: {
   result: FinishResult;
@@ -46,6 +48,8 @@ export function LessonComplete({
   total: number;
   /** Traces passed over with "Can't trace now", already left out of `total`. */
   skippedSteps?: number;
+  /** A test-out's lessons (P-137): which passed, and which are still to take. */
+  testedOut?: readonly Lesson[];
   onHome: () => void;
 }) {
   const accuracy = total > 0 ? Math.round((correct / total) * 100) : 100;
@@ -175,11 +179,20 @@ export function LessonComplete({
                     {count(result.lessonsSkipped, 'lesson')} marked as known
                   </Bold>
                   <Txt className="mt-1 text-center text-xs text-paper/70">
-                    You knew this unit’s words. Those lessons stay on your path if you want them.
+                    {testedOut.length
+                      ? `${titlesOf(testedOut, result.skippedIds, true)}. They stay on your path if you want them.`
+                      : 'You knew this unit’s words. Those lessons stay on your path if you want them.'}
                   </Txt>
                 </View>
               </Reveal>
             )}
+
+            {/* A test-out says which lessons are still to take, and why. */}
+            {testedOut.length > result.skippedIds.length ? (
+              <Txt className="mb-3 text-center text-xs text-paper/70">
+                {`Still to take: ${titlesOf(testedOut, result.skippedIds, false)}. A lesson is marked known only when every question on it is right first time.`}
+              </Txt>
+            ) : null}
 
             {result.streakIncreased && (
               <Reveal delay={220} style={{ width: '100%' }}>
@@ -281,4 +294,18 @@ export function LessonComplete({
       </Screen>
     </View>
   );
+}
+
+/** The test-out lessons that passed, or those that did not, by title. */
+function titlesOf(lessons: readonly Lesson[], passed: readonly string[], didPass: boolean): string {
+  return lessons
+    .filter((l) => passed.includes(l.id) === didPass)
+    .map(nameOf)
+    .join(', ');
+}
+
+/** A lesson's title, with its part when a unit splits one in two: "Family, Family" said nothing. */
+function nameOf(l: Lesson): string {
+  const part = l.subtitle.match(/part (\d+) of \d+/);
+  return part ? `${l.title} ${part[1]}` : l.title;
 }

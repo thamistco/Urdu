@@ -19,7 +19,7 @@ import { feedback } from '../lib/feedback';
 import { announce, invalidateSpeech } from '../lib/speech';
 import { cardsOnTrack, dueQueue, dueBudget, type SrsGrade } from '../lib/srs';
 import { srsGradeFor } from '../lib/sessionGrading';
-import { unitEvidenceFrom } from '../lib/unitSkip';
+import { testOutLessons, testOutRefs, unitEvidenceFrom } from '../lib/unitSkip';
 import { useSessionGradeFlush } from './useSessionGradeFlush';
 import { answerReveal, spokenVerdict } from './answerReveal';
 import { useBannerFocus } from './useBannerFocus';
@@ -47,6 +47,10 @@ type Rt = RouteProp<RootStackParamList, 'Lesson'>;
 
 /** Space under each exercise, which "More below" does not count as more. */
 const BODY_PAD_BOTTOM = 32;
+
+/** Said on a test-out's first step (P-137). */
+const testOutNote = (n: number) =>
+  `${n === 1 ? 'A few questions on the lesson' : `A few questions on each of the ${n} lessons`} of this unit you haven’t done. Get all of a lesson’s right and it’s marked known; you can still open it. No hearts.`;
 
 /** A lesson that can be left and picked up again: anything but practice (Q-038). */
 const resumable = (lessonId: string) => !lessonId.startsWith('practice-');
@@ -227,6 +231,18 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
       .lessonsInProgress.find((l) => l.lessonId === lesson.id && l.track === track);
     return restoreSnapshot(held, lesson.id, track, dayKey());
   }, [lesson.id, track]);
+  /**
+   * A unit review opened ahead of its unit tests out of it (P-137): these are
+   * its unfinished lessons, each asked a few of its own items, and none means
+   * an ordinary review. Settled once, on opening. It asks about lessons not
+   * yet taken, so a miss is not forgetting and costs no heart.
+   */
+  const testOut = useMemo(() => {
+    if (lesson.kind !== 'review' || !resumable(lesson.id)) return [];
+    const s = useProgressStore.getState();
+    return testOutLessons(lesson.id, (id) => !!s.completedLessons[id] || !!s.skippedLessons[id], track === 'roman');
+  }, [lesson.id, lesson.kind, track]);
+  const isTestOut = testOut.length > 0;
   // Under 300px (a 360px phone at 200% text) the header wraps, so the hearts
   // badge takes a line of its own rather than being squeezed to "F…" (QA,
   // 2026-10-13).
@@ -329,7 +345,8 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
     // word the learner already knows doesn't offer the same fixed subset of
     // it on every single replay. See `buildLessonExercises`'s `visit` param.
     const visit = useProgressStore.getState().completedLessons[lesson.id]?.done ?? 0;
-    return buildLessonExercises(lesson, due, track, known, visit);
+    const asking = testOutRefs(testOut, track === 'roman', visit);
+    return buildLessonExercises(lesson, due, track, known, visit, asking);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lesson.id, track]);
 
@@ -349,7 +366,8 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   const [outOfHearts, setOutOfHearts] = useState(() => {
     useProgressStore.getState().regenHearts();
     const s = useProgressStore.getState();
-    return !heartsAreFree(s.completedLessons, s.skippedLessons) && s.hearts <= 0;
+    // A test-out costs no hearts, so none are needed to start it.
+    return !isTestOut && !heartsAreFree(s.completedLessons, s.skippedLessons) && s.hearts <= 0;
   });
   /**
    * Words met in this lesson's guess-first questions. A listening card on one
@@ -588,7 +606,13 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
       if (isPretest(answered) && 'word' in answered) pretestedRef.current.add(answered.word.id);
       if (result.correct) {
         setCorrectCount((c) => c + 1);
-      } else if (!isTeaching(exercises[idx]) && !isPretest(exercises[idx]) && !isTrace(exercises[idx]) && !freeListen) {
+      } else if (
+        !isTestOut &&
+        !isTeaching(exercises[idx]) &&
+        !isPretest(exercises[idx]) &&
+        !isTrace(exercises[idx]) &&
+        !freeListen
+      ) {
         // One heart per item per lesson — see `chargedRef`.
         const already = result.items.length > 0 && result.items.every((it) => chargedRef.current.has(it.id));
         result.items.forEach((it) => chargedRef.current.add(it.id));
@@ -610,7 +634,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
     // against exercise 0 — which in a grammar lesson is the teaching card, and
     // `isTeaching` therefore suppressed the heart loss for every wrong answer in
     // the lesson. Grammar cost nothing to get wrong.
-    [loseHeart, exercises, idx, recordItemGrade, noteMiss, planReask, answerReask, skipStep]
+    [loseHeart, exercises, idx, recordItemGrade, noteMiss, planReask, answerReask, skipStep, isTestOut]
   );
 
   // Stop this lesson's audio the instant the screen is left, however that
@@ -739,6 +763,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
         correct={correctCount}
         total={total - skippedCount}
         skippedSteps={skippedCount}
+        testedOut={testOut}
         onHome={() => nav.popTo('Main')}
       />
     );
@@ -924,13 +949,23 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
         {inReask || isReview || isWovenReview(current) ? (
           <View style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }} className="px-4">
             <Eyebrow style={{ color: palette.gold }}>
-              {inReask ? 'Once more · the ones you missed' : isReview ? 'Review' : 'Review · from an earlier lesson'}
+              {inReask
+                ? 'Once more · the ones you missed'
+                : isTestOut
+                  ? 'Test out'
+                  : isReview
+                    ? 'Review'
+                    : 'Review · from an earlier lesson'}
             </Eyebrow>
             {/* On the first re-ask only: at 200% on 320x568 the header with this
                 line took 44% of the screen on every re-ask and pushed the
                 question under the fold (design review, 2026-10-26). After the
                 first, the eyebrow and ✕'s label carry it. */}
             {idx === total ? <Txt className="mt-1 text-xs text-paper/65">{REASK_SAVED}</Txt> : null}
+            {/* What a test-out is, and what passes, before the first answer. */}
+            {isTestOut && idx === 0 && graded == null ? (
+              <Txt className="mt-1 text-xs text-paper/65">{testOutNote(testOut.length)}</Txt>
+            ) : null}
           </View>
         ) : null}
         {/* On the step a lesson reopens on, until it is answered: without it,

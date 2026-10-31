@@ -1,18 +1,73 @@
 import { UNITS, type Lesson } from '../data/units';
 import { taughtByLesson } from './review';
+import { seededShuffle } from './shuffle';
+import type { ItemRef } from '../exercises/types';
 
-/** How many of a unit's own words and letters a review must have asked. */
-export const UNIT_SKIP_MIN_ASKED = 10;
-/** And how many of those it must have had right first time. */
-export const UNIT_SKIP_MIN_SHARE = 0.8;
-/** How many of a lesson's own words or letters must have been asked to mark that lesson known. */
-export const UNIT_SKIP_MIN_PER_LESSON = 3;
+/**
+ * How many of a lesson's own words or letters a test-out asks, and all must be
+ * right first time to mark that lesson known; fewer when the lesson teaches
+ * fewer (P-137).
+ */
+export const TEST_OUT_PER_LESSON = 4;
 
 export type Tally = { asked: number; right: number };
+/** One lesson's tally, and how many words and letters it introduces. */
+export type LessonTally = Tally & { of: number };
 /** The unit as a whole, and each of its lessons on the items that lesson introduces. */
-export type UnitEvidence = Tally & { byLesson: Readonly<Record<string, Tally>> };
+export type UnitEvidence = Tally & { byLesson: Readonly<Record<string, LessonTally>> };
 
-const passes = (t: Tally | undefined, min: number) => !!t && t.asked >= min && t.right / t.asked >= UNIT_SKIP_MIN_SHARE;
+/** A lesson's own items asked, `TEST_OUT_PER_LESSON` of them or all it has, and every one right. */
+const passes = (t: LessonTally | undefined) =>
+  !!t && t.of > 0 && t.asked >= Math.min(TEST_OUT_PER_LESSON, t.of) && t.right === t.asked;
+
+/**
+ * A lesson a unit review could mark known: it introduces words or letters this
+ * track shows. Kept per lesson and track, since Home asks it of every review
+ * on each render.
+ */
+const testableKnown = new Map<string, boolean>();
+const testable = (l: Lesson, romanTrack: boolean) => {
+  const key = `${l.id}:${romanTrack}`;
+  const known = testableKnown.get(key);
+  if (known !== undefined) return known;
+  let ok = false;
+  if (l.kind !== 'review' && !(romanTrack && l.kind === 'letters')) {
+    const t = taughtByLesson(l);
+    ok = t.words.length + (romanTrack ? 0 : t.letters.length) > 0;
+  }
+  testableKnown.set(key, ok);
+  return ok;
+};
+
+/**
+ * The lessons a unit review opened now would test out of: those of its unit
+ * that introduce words or letters on this track and are neither done nor
+ * skipped. None means it is an ordinary review, reached in order (P-137).
+ */
+export function testOutLessons(
+  reviewId: string,
+  done: (id: string) => boolean,
+  romanTrack: boolean,
+  units = UNITS
+): Lesson[] {
+  const unit = units.find((u) => u.lessons.some((l) => l.id === reviewId && l.kind === 'review'));
+  return unit ? unit.lessons.filter((l) => testable(l, romanTrack) && !done(l.id)) : [];
+}
+
+/**
+ * What a test-out asks: `TEST_OUT_PER_LESSON` of each lesson's own words and
+ * letters, a different draw on each visit so a retake is not the same quiz.
+ */
+export function testOutRefs(lessons: readonly Lesson[], romanTrack: boolean, visit = 0): ItemRef[] {
+  return lessons.flatMap((l) => {
+    const t = taughtByLesson(l);
+    const own: ItemRef[] = [
+      ...t.words.map((id) => ({ id, type: 'word' as const })),
+      ...(romanTrack ? [] : t.letters.map((id) => ({ id, type: 'letter' as const }))),
+    ];
+    return seededShuffle(own, `test-out:${l.id}:${visit}`).slice(0, TEST_OUT_PER_LESSON);
+  });
+}
 
 /**
  * Which of a unit's lessons a passed unit review marks as already known.
@@ -29,9 +84,20 @@ const passes = (t: Tally | undefined, min: number) => !!t && t.asked >= min && t
  * marked the other half known: measured on every unit, 865 own items asked and
  * none from the unfinished lessons, whose 797 items were then never asked
  * (learning review, 2026-10-16). A mastery test certifies only what it
- * sampled, so each lesson now needs its own evidence: at least
- * `UNIT_SKIP_MIN_PER_LESSON` of the words or letters it introduces asked, and
- * `UNIT_SKIP_MIN_SHARE` of them right first time, on top of the unit's floor.
+ * sampled, so each lesson needs its own evidence.
+ *
+ * Even so, nobody could test out: once a learner had been graded on anything,
+ * a review asked only about what they had been graded on, so a jump ahead
+ * still met none of the unit's items, and only 7 of 242 lessons could ever be
+ * marked known, all in Unit 1 (tester, 2026-10-29; learning review,
+ * 2026-10-31). A review opened ahead of its unit is now a test-out
+ * (`testOutLessons`) that asks `TEST_OUT_PER_LESSON` of each unfinished
+ * lesson's own items, and a lesson passes on all of them right first time.
+ * Each lesson stands alone: the unit-wide 80% gate is gone, so knowing three
+ * lessons of four marks those three, as placement tests with partial credit
+ * do. Four questions of four options passes a learner who knows half the
+ * lesson about one time in seven (measured, binomial), which a lesson left
+ * open to try anyway can bear.
  * A lesson that introduces none (grammar, sentences, readings) is never
  * marked known by a review. Letter lessons are left alone on the Roman track,
  * which never shows them.
@@ -43,10 +109,10 @@ export function lessonsToSkip(
   done: (id: string) => boolean,
   romanTrack: boolean
 ): string[] {
-  if (!evidence || !passes(evidence, UNIT_SKIP_MIN_ASKED)) return [];
+  if (!evidence) return [];
   return unitLessons
     .filter((l) => l.id !== reviewId && !done(l.id) && !(romanTrack && l.kind === 'letters'))
-    .filter((l) => passes(evidence.byLesson[l.id], UNIT_SKIP_MIN_PER_LESSON))
+    .filter((l) => passes(evidence.byLesson[l.id]))
     .map((l) => l.id);
 }
 
@@ -65,11 +131,11 @@ const tally = (ids: Iterable<string>, firstTry: ReadonlyMap<string, boolean>): T
 export function unitEvidenceFrom(lessonId: string, firstTry: ReadonlyMap<string, boolean>): UnitEvidence | undefined {
   const unit = UNITS.find((u) => u.lessons.some((l) => l.id === lessonId));
   if (!unit) return undefined;
-  const byLesson: Record<string, Tally> = {};
+  const byLesson: Record<string, LessonTally> = {};
   const all: string[] = [];
   for (const l of unit.lessons) {
     const { words, letters } = taughtByLesson(l);
-    byLesson[l.id] = tally([...words, ...letters], firstTry);
+    byLesson[l.id] = { ...tally([...words, ...letters], firstTry), of: words.length + letters.length };
     all.push(...words, ...letters);
   }
   return { ...tally(all, firstTry), byLesson };
