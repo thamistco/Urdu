@@ -53,7 +53,7 @@ const BODY_PAD_BOTTOM = 32;
 const testOutNote = (lessons: number, questions: number) =>
   `${questions} questions on the ${lessons === 1 ? 'lesson' : `${lessons} lessons`} of this unit you haven’t done, about ${Math.max(1, Math.round((questions * 9) / 60))} minutes. Get every question on a lesson right first time and it’s marked known; you can still open it. No hearts.`;
 
-/** The first lesson on this track's path neither done nor skipped: what Home's Continue opens. */
+/** The first lesson on this track's path neither done nor skipped: Home's Continue, short of a catch-up review. */
 function nextOnPath(track: LearnTrack): string {
   const s = useProgressStore.getState();
   const order = unitsForTrack(track).flatMap((u) => u.lessons.map((l) => l.id));
@@ -1000,7 +1000,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
               confirmAction(
                 'Leave this lesson?',
                 isTestOut
-                  ? 'Open it again soon and it picks up where you left off. Nothing counts until it is finished.'
+                  ? 'Open it again soon and it picks up where you left off. No lesson is marked known until it is finished.'
                   : resumable(lesson.id)
                     ? 'Open it again soon and it picks up where you left off. What you answered still counts towards your reviews.'
                     : 'It starts again from the beginning next time. What you answered still counts towards your reviews.',

@@ -20,7 +20,7 @@ import {
 import { ACHIEVEMENTS } from '../data/achievements';
 import { heartsAreFree } from '../lib/hearts';
 import { UNITS } from '../data/units';
-import { lessonsToSkip, testOutLessons, type UnitEvidence } from '../lib/unitSkip';
+import { lessonsToSkip, reviewsWithNothingLeft, type UnitEvidence } from '../lib/unitSkip';
 import { practiceXp, repeatReward } from '../lib/repeatReward';
 import { keepSnapshot, type LessonSnapshot } from '../lib/lessonResume';
 
@@ -436,18 +436,22 @@ export const useProgressStore = create<ProgressState>()(
               romanTrack
             )
           : [];
-        const skippedLessons = toSkip.length
+        const marked = toSkip.length
           ? { ...s2.skippedLessons, ...Object.fromEntries(toSkip.map((id) => [id, true])) }
           : s2.skippedLessons;
         /**
-         * A test-out is recorded as the unit's review only once nothing in the
-         * unit is left to take. Recorded on any finish, a failed one showed the
-         * review done on the path, and Unit 1's ended its free hearts (second
-         * check, 2026-10-31, P-137).
+         * A test-out is never recorded as the unit's review: it asks about the
+         * lessons not taken, not the unit. Recorded on any finish, a failed one
+         * showed the review done and ended Unit 1's free hearts; recorded once
+         * the unit was through, a learner with one lesson left had the review
+         * replaced by four questions on that lesson and ticked off (checks,
+         * 2026-10-31, P-137). When it leaves nothing of the unit to take, the
+         * review is passed over, as onboarding passes over one; otherwise it
+         * stays, to be taken as a review.
          */
-        const keepRecord =
-          !testOut ||
-          testOutLessons(lessonId, (id) => !!s2.completedLessons[id] || !!skippedLessons[id], romanTrack).length === 0;
+        const keepRecord = !testOut;
+        const passOver = testOut && reviewsWithNothingLeft(new Set(Object.keys(marked)), romanTrack).includes(lessonId);
+        const skippedLessons = passOver ? { ...marked, [lessonId]: true } : marked;
 
         // --- lesson record ---
         const prev = s2.completedLessons[lessonId];
