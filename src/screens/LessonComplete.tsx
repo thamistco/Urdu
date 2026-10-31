@@ -180,7 +180,7 @@ export function LessonComplete({
                   </Bold>
                   <Txt className="mt-1 text-center text-xs text-paper/70">
                     {testedOut.length
-                      ? `${titlesOf(testedOut, result.skippedIds, true)}. They stay on your path if you want them.`
+                      ? `${titlesOf(testedOut, result.skippedIds, true)}. ${result.skippedIds.length === 1 ? 'It stays' : 'They stay'} on your path if you want them.`
                       : 'You knew this unit’s words. Those lessons stay on your path if you want them.'}
                   </Txt>
                 </View>

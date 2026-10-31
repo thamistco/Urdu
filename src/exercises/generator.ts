@@ -394,6 +394,24 @@ function confusableMatesIn(letter: Letter, lessonLetters: Letter[]): Letter[] {
  * of a free answer, but the premise above holds less for it (second check,
  * 2026-10-30). Capping fallback contrasts at one a lesson is P-135b.
  */
+/**
+ * A letter a test-out asks about (P-137): one of four, never a trace or a
+ * two-way contrast. A trace names the letter it asks for and grades the hand,
+ * and a contrast is a coin toss, so either counted as right first time let a
+ * guess mark a letter lesson known about one time in eight (second check,
+ * 2026-10-31). Wrong options come from the whole alphabet, since the lesson
+ * has not been taken.
+ */
+function testOutLetter(letter: Letter, positionIndex: number): Exercise {
+  const positions = positionsOf(letter);
+  const position = positions[positionIndex % positions.length];
+  const distractors = distractLetters(letter, DISTRACTORS, position, null);
+  if (distractors.length === DISTRACTORS) {
+    return { kind: 'letterPick', letter, position, options: shuffle([letter, ...distractors]) };
+  }
+  return { kind: 'letterForm', letter, position, options: POSITIONS.map((p) => p.key) };
+}
+
 function letterContrastExercise(letter: Letter, mates: Letter[]): Exercise {
   return { kind: 'letterContrast', letter, options: shuffle([letter, ...mates]) };
 }
@@ -2780,6 +2798,7 @@ export function buildLessonExercises(
     // truncate real due items off the end — the exact class of bug this
     // whole block exists to close, just via oversized input instead of a
     // saturated queue.
+    const testingOut = new Set(testOut.map(key));
     const asked = new Set<string>();
     const due = [...testOut, ...reviewRefs]
       .filter((r) => !asked.has(key(r)) && !!asked.add(key(r)))
@@ -2961,7 +2980,9 @@ export function buildLessonExercises(
       if (ref.type === 'letter') {
         const l = teachesScript ? getLetter(ref.id) : undefined;
         if (l) {
-          if (contrastChoice && contrastChoice.i === i) {
+          if (testingOut.has(key(ref))) {
+            exercises.push(testOutLetter(l, i + letterPosOffset));
+          } else if (contrastChoice && contrastChoice.i === i) {
             exercises.push(letterContrastExercise(contrastChoice.letter, contrastChoice.mates));
           } else {
             exercises.push(letterExerciseAt(l, i + letterTurnOffset, i + letterPosOffset, letterPool));

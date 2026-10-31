@@ -23,6 +23,7 @@ const live = (exercises: ReturnType<typeof buildLessonExercises>, at = 5) => ({
   firstTry: new Map([['w-paani', false] as [string, boolean]]),
   misses: new Map([['w-paani', { ex: exercises[0], at: 0 }]]),
   pretested: new Set(['w-ghar']),
+  testOut: ['v-family'],
 });
 
 /** Every object reachable from `v` that is one of the course's words or letters. */
@@ -71,6 +72,8 @@ describe('a lesson left partway can be picked up where it was left (Q-038)', () 
     expect([...back.charged]).toEqual(['w-paani']);
     expect([...back.firstTry]).toEqual([['w-paani', false]]);
     expect([...back.pretested]).toEqual(['w-ghar']);
+    // A test-out resumes as a test-out (P-137).
+    expect(back.testOut).toEqual(['v-family']);
     expect(back.misses.get('w-paani')!.ex).toEqual(exercises[0]);
   });
 

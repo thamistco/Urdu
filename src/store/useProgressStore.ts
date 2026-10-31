@@ -20,7 +20,7 @@ import {
 import { ACHIEVEMENTS } from '../data/achievements';
 import { heartsAreFree } from '../lib/hearts';
 import { UNITS } from '../data/units';
-import { lessonsToSkip, type UnitEvidence } from '../lib/unitSkip';
+import { lessonsToSkip, testOutLessons, type UnitEvidence } from '../lib/unitSkip';
 import { practiceXp, repeatReward } from '../lib/repeatReward';
 import { keepSnapshot, type LessonSnapshot } from '../lib/lessonResume';
 
@@ -184,6 +184,8 @@ type ProgressState = {
     /** A unit review's answers on the unit's own items: see `lessonsToSkip`. */
     unitEvidence?: UnitEvidence;
     romanTrack?: boolean;
+    /** A unit review opened ahead of its unit (P-137): paid as practice, recorded once the unit is through. */
+    testOut?: boolean;
   }) => FinishResult;
   setDailyGoal: (id: string) => void;
   /** Keep a lesson left partway (lib/lessonResume.ts), latest first. */
@@ -343,7 +345,7 @@ export const useProgressStore = create<ProgressState>()(
         });
       },
 
-      finishLesson: ({ lessonId, correct, total, xp, isReview, unitEvidence, romanTrack = false }) => {
+      finishLesson: ({ lessonId, correct, total, xp, isReview, unitEvidence, romanTrack = false, testOut = false }) => {
         const s = get();
         set(rollDay(s));
         const s2 = get();
@@ -366,7 +368,9 @@ export const useProgressStore = create<ProgressState>()(
         // practice a first, perfect read paid 2 XP past the allowance instead
         // of 25 (second check, 2026-10-22).
         const newContent = /^practice-(reading|dialogue)-/.test(lessonId);
-        const practice = repeat || (lessonId.startsWith('practice-') && !newContent);
+        // A test-out too: it costs no hearts, so paid in full every time it
+        // was a way to farm XP by tapping through 41 of them (P-137).
+        const practice = repeat || testOut || (lessonId.startsWith('practice-') && !newContent);
         const xpGained = practice ? practiceXp(xpEarned, correct, s2.todayPracticeXp) : xpEarned;
         const practiceCapped = practice && xpGained < xpEarned;
         const repeatCapped = repeat && xpEarned < xp + bonusXp;
@@ -413,18 +417,6 @@ export const useProgressStore = create<ProgressState>()(
         const todayPracticeXp = s2.todayPracticeXp + (practice ? xpGained : 0);
         const xpHistory = { ...s2.xpHistory, [today]: (s2.xpHistory[today] ?? 0) + xpGained };
 
-        // --- lesson record ---
-        const prev = s2.completedLessons[lessonId];
-        const completedLessons = {
-          ...s2.completedLessons,
-          [lessonId]: {
-            best: Math.max(prev?.best ?? 0, correct),
-            done: (prev?.done ?? 0) + 1,
-          },
-        };
-        const lessonsCompleted = Object.keys(completedLessons).length;
-        const perfectLessons = s2.perfectLessons + (perfect ? 1 : 0);
-
         /**
          * Passing a unit's review counts as having learned the unit: its
          * lessons not yet done are marked skipped, as a heritage learner's are
@@ -440,13 +432,36 @@ export const useProgressStore = create<ProgressState>()(
               unit.lessons,
               lessonId,
               unitEvidence,
-              (id) => !!completedLessons[id] || !!s2.skippedLessons[id],
+              (id) => !!s2.completedLessons[id] || !!s2.skippedLessons[id],
               romanTrack
             )
           : [];
         const skippedLessons = toSkip.length
           ? { ...s2.skippedLessons, ...Object.fromEntries(toSkip.map((id) => [id, true])) }
           : s2.skippedLessons;
+        /**
+         * A test-out is recorded as the unit's review only once nothing in the
+         * unit is left to take. Recorded on any finish, a failed one showed the
+         * review done on the path, and Unit 1's ended its free hearts (second
+         * check, 2026-10-31, P-137).
+         */
+        const keepRecord =
+          !testOut ||
+          testOutLessons(lessonId, (id) => !!s2.completedLessons[id] || !!skippedLessons[id], romanTrack).length === 0;
+
+        // --- lesson record ---
+        const prev = s2.completedLessons[lessonId];
+        const completedLessons = !keepRecord
+          ? s2.completedLessons
+          : {
+              ...s2.completedLessons,
+              [lessonId]: {
+                best: Math.max(prev?.best ?? 0, correct),
+                done: (prev?.done ?? 0) + 1,
+              },
+            };
+        const lessonsCompleted = Object.keys(completedLessons).length;
+        const perfectLessons = s2.perfectLessons + (perfect ? 1 : 0);
 
         // commit
         set({
