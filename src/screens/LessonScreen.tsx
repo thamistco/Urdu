@@ -38,6 +38,7 @@ import type { RootStackParamList } from '../navigation/types';
 import { confirmAction } from '../lib/confirm';
 import { dayKey } from '../lib/date';
 import { restoreSnapshot, takeSnapshot } from '../lib/lessonResume';
+import { onLeavingPage } from '../lib/leavingPage';
 import { plainRoman } from '../lib/roman';
 import { useMoreBelow, MoreBelowCue } from '../components/MoreBelow';
 
@@ -294,6 +295,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   const heartsUpdatedAt = useProgressStore((s) => s.heartsUpdatedAt);
   const heartsFree = useProgressStore((s) => heartsFreeFor(s.completedLessons, s.skippedLessons));
   const holdLesson = useProgressStore((s) => s.holdLesson);
+  const dropLesson = useProgressStore((s) => s.dropLesson);
 
   /**
    * Build the exercise set once, weaving in whatever SRS items are due.
@@ -408,6 +410,12 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
    * (URD-019).
    */
   const { record: recordItemGrade, flushNow: flushPendingGrades } = useSessionGradeFlush(exercises, applyGrade);
+  // Written down when the tab is hidden or closed too, not only when the
+  // screen closes: a reload never unmounts it, and a lesson picked up
+  // afterwards would never grade what was answered before (Q-038, second
+  // check). An item sighted again later in the visit is graded again at the
+  // end; the scheduler leaves a card that is not yet due as it was.
+  useEffect(() => onLeavingPage(flushPendingGrades), [flushPendingGrades]);
 
   /** The re-asks (P-085), planned when the last question is answered. */
   const [reask, setReask] = useState<Exercise[]>([]);
@@ -704,6 +712,8 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
    */
   useEffect(() => {
     if (!resumable(lesson.id) || done || inReask) return;
+    // Opening a held lesson is not progress, so it does not restart its week.
+    if (resumed && idx === resumed.at && graded == null) return;
     const at = graded != null ? idx + 1 : idx;
     if (at < 1 || at >= exercises.length) return;
     holdLesson(
@@ -880,7 +890,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
               confirmAction(
                 'Leave this lesson?',
                 resumable(lesson.id)
-                  ? 'You can pick it up where you left off for a week. What you answered still counts towards your reviews.'
+                  ? 'Open it again within a week to pick up where you left off. What you answered still counts towards your reviews.'
                   : 'It starts again from the beginning next time. What you answered still counts towards your reviews.',
                 'Leave',
                 leave
@@ -927,7 +937,32 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
             a lesson opening at step 23 reads as a different lesson (Q-038). */}
         {resumed && idx === resumed.at && graded == null ? (
           <View style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }} className="px-4">
-            <Txt className="text-xs text-paper/65">Picking up where you left off.</Txt>
+            <View className="flex-row flex-wrap items-center" style={{ columnGap: 8 }}>
+              <Txt className="text-xs text-paper/65">Picking up where you left off.</Txt>
+              {/* A clean run, or the teaching again after days away: the
+                  copy goes and the lesson is built afresh (second check,
+                  2026-10-31). */}
+              <Pressable
+                accessibilityRole="button"
+                onPress={() =>
+                  // Asks, like ✕: a stray tap here threw away the place kept.
+                  confirmAction(
+                    'Start this lesson again?',
+                    'It opens at the first step. What you answered still counts towards your reviews.',
+                    'Start over',
+                    () => {
+                      dropLesson(lesson.id);
+                      nav.replace('Lesson', { lessonId: lesson.id });
+                    }
+                  )
+                }
+                style={reach(8)}
+              >
+                <Bold className="text-xs" style={{ color: palette.gold }}>
+                  Start over
+                </Bold>
+              </Pressable>
+            </View>
           </View>
         ) : null}
 

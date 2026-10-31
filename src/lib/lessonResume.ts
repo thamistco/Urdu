@@ -21,6 +21,8 @@ import type { Miss } from '../exercises/generator';
  * Kept in the existing progress store, never a new storage key.
  */
 export type LessonSnapshot = {
+  /** `SNAPSHOT_VERSION` when saved; a copy from another shape is not offered. */
+  v: number;
   lessonId: string;
   track: string;
   /** The day it was saved; a copy older than a week is not offered. */
@@ -35,6 +37,15 @@ export type LessonSnapshot = {
   misses: [string, unknown][];
   pretested: string[];
 };
+
+/**
+ * The shape of a saved copy. A copy keeps its questions whole, so one saved
+ * before an exercise's shape changed would be handed to a component that reads
+ * the new shape, and crash the lesson on every open until it expired (second
+ * check, 2026-10-31). Bump this whenever `exerciseShape` in the test changes;
+ * the test pins both, so a change to an exercise cannot ship without it.
+ */
+export const SNAPSHOT_VERSION = 1;
 
 /** How many lessons can be held part-done at once, most recent kept. */
 export const SNAPSHOTS_KEPT = 3;
@@ -109,8 +120,10 @@ export function restoreSnapshot(
   track: string,
   today: string
 ): Restored | null {
-  if (!snap || snap.lessonId !== lessonId || snap.track !== track) return null;
-  if (dayNumber(today) - dayNumber(snap.savedDay) > SNAPSHOT_DAYS) return null;
+  if (!snap || snap.v !== SNAPSHOT_VERSION || snap.lessonId !== lessonId || snap.track !== track) return null;
+  if (expired(snap, today)) return null;
+  // Anything it cannot read starts the lesson afresh: a copy is a convenience,
+  // and it is read during render, where a throw takes the screen down.
   try {
     const exercises = decode(snap.exercises) as Exercise[];
     if (!Array.isArray(exercises) || snap.at < 1 || snap.at >= exercises.length) return null;
@@ -124,11 +137,12 @@ export function restoreSnapshot(
       misses: new Map(snap.misses.map(([k, m]) => [k, decode(m) as Miss])),
       pretested: new Set(snap.pretested),
     };
-  } catch (e) {
-    if (e instanceof Unresolved) return null;
-    throw e;
+  } catch {
+    return null;
   }
 }
+
+const expired = (snap: LessonSnapshot, today: string) => dayNumber(today) - dayNumber(snap.savedDay) > SNAPSHOT_DAYS;
 
 /** The copy to keep, from the lesson's live state. */
 export function takeSnapshot(
@@ -138,6 +152,7 @@ export function takeSnapshot(
   live: Omit<Restored, 'exercises'> & { exercises: readonly Exercise[] }
 ): LessonSnapshot {
   return {
+    v: SNAPSHOT_VERSION,
     lessonId,
     track,
     savedDay: today,
@@ -152,10 +167,13 @@ export function takeSnapshot(
   };
 }
 
-/** The held copies with this one first, at most `SNAPSHOTS_KEPT`. */
+/**
+ * The held copies with this one first, at most `SNAPSHOTS_KEPT`. Expired ones
+ * go, so a copy no one can open does not hold a place.
+ */
 export function keepSnapshot(held: readonly LessonSnapshot[], snap: LessonSnapshot): LessonSnapshot[] {
-  return [snap, ...held.filter((s) => !(s.lessonId === snap.lessonId && s.track === snap.track))].slice(
-    0,
-    SNAPSHOTS_KEPT
+  const others = held.filter(
+    (s) => !(s.lessonId === snap.lessonId && s.track === snap.track) && !expired(s, snap.savedDay)
   );
+  return [snap, ...others].slice(0, SNAPSHOTS_KEPT);
 }
