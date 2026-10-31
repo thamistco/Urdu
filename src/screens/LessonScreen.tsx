@@ -890,7 +890,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
               confirmAction(
                 'Leave this lesson?',
                 resumable(lesson.id)
-                  ? 'Open it again within a week to pick up where you left off. What you answered still counts towards your reviews.'
+                  ? 'Open it again soon and it picks up where you left off. What you answered still counts towards your reviews.'
                   : 'It starts again from the beginning next time. What you answered still counts towards your reviews.',
                 'Leave',
                 leave
