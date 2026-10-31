@@ -5,8 +5,10 @@ when the app can launch and everything in it is the best it can be.
 
 This is what "can launch" means, so the answer each night is a judgement
 against a written bar, not a feeling. The nightly summary ends with where Qaaf
-stands against it. Launch here means the free web app, publicised; the store
-apps add their own items (marked). Charging money adds P-001 and
+stands against it. Launch here means the store apps, iPhone and Android (the
+owner, 2026-10-31: "it'll be an app"). The web app stays as a free preview, so
+what only a browser does (Safari clearing a site's storage, web sign-in) can
+follow launch. Charging money adds P-001, Q-002 and
 `docs/COMMERCIAL_READINESS.md`.
 
 ## 1. What the review can do itself
@@ -15,7 +17,7 @@ Each of these is met when the evidence named beside it exists.
 
 | #   | The bar                                                                                 | Evidence                                                      | 2026-10-31                                     |
 | --- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------- |
-| R1  | No open bug a learner can hit that blocks, loses progress, or teaches something wrong   | Every open Q-item triaged; none of those kinds left           | not met: 0 for the review; 3 wait on the owner |
+| R1  | No open bug a learner can hit that blocks, loses progress, or teaches something wrong   | Every open Q-item triaged; none of those kinds left           | not met: 5 for the apps (Q-019 for the review) |
 | R2  | QA finds nothing above low on two nights running                                        | Two consecutive QA reports                                    | not met: a medium on 31 October, fixed         |
 | R3  | Every one of the 16 areas reviewed with no open high finding                            | README dates; reports                                         | not met                                        |
 | R4  | A screen-reader user can complete Unit 1                                                | P-115 (letter spotting) built; checks pass                    | not met: letter spotting passable; Q-112 open  |
@@ -38,8 +40,8 @@ Each of these is met when the evidence named beside it exists.
 | #   | The bar                                                                | Item                | 2026-10-26 |
 | --- | ---------------------------------------------------------------------- | ------------------- | ---------- |
 | O1  | The privacy page names who holds learners' data, and how to reach them | O-11                | open       |
-| O2  | Sign-in on the web either works fully (deletion included) or is hidden | O-6, or P-094 built | open       |
-| O3  | (Store apps only) developer accounts, a closed test, store forms       | O-5, O-7, O-8       | open       |
+| O2  | Sign-in in the app works fully, deletion included, or is left out      | O-6, or P-094 built | open       |
+| O3  | Developer accounts, a closed test, store forms                         | O-5, O-7, O-8       | open       |
 | O4  | The address Qaaf lives at for good, chosen before any link is public   | O-12                | open       |
 | O5  | The name: accepted on desk research, or cleared by an attorney         | O-13 (Q-010)        | open       |
 
@@ -86,7 +88,7 @@ by their glyph (Q-112) remain.
 learner hit it, and would it stop them, lose their work, or teach them
 something wrong?
 
-**Before launch, 31 October night: 0 for the review, 3 waiting on the owner (Q-069 and Q-025 on O-6, Q-035 on O-11).** Done on 30 and 31 October: Q-052, Q-034, Q-073, Q-026, Q-027, Q-038, Q-077, P-137; Q-045 found fixed since 13 October. The list as it stood (12 on 29 October, with P-137; 11 on 26 October; 14 on the 24th, Q-080 and Q-093 fixed, Q-051 found fixed since 13 October): P-137 (a unit review cannot test a learner out), Q-026, Q-027, Q-034, Q-073 (large text and small
+**Before launch, 31 October, with launch as the store apps: 5.** For the review: Q-019 (Expo SDK 54 or later, which both stores now require; the review can do it). Waiting on the owner: Q-001 (native builds, which need the developer accounts, O-5), Q-024 (Apple sign-in revocation, a server function the owner deploys), the rest of Q-025 (account deletion on a native build), Q-035 (privacy, O-11). Moved to "can follow launch" because only the web preview has them: Q-069 (Safari clearing storage). Q-002 (payments) only if Qaaf charges. The web-app list that night was 0 for the review and 3 on the owner (Q-069 and Q-025 on O-6, Q-035 on O-11). Done on 30 and 31 October: Q-052, Q-034, Q-073, Q-026, Q-027, Q-038, Q-077, P-137; Q-045 found fixed since 13 October. The list as it stood (12 on 29 October, with P-137; 11 on 26 October; 14 on the 24th, Q-080 and Q-093 fixed, Q-051 found fixed since 13 October): P-137 (a unit review cannot test a learner out), Q-026, Q-027, Q-034, Q-073 (large text and small
 screens; R5), Q-077 (letter spotting by screen reader; R4), Q-038
 (leaving a lesson throws its answers away), Q-045 (emoji
 give answers away), Q-052 (letter-spot tiles that overlap), Q-069 (Safari can
@@ -95,7 +97,7 @@ wipe a lapsed learner's progress), Q-035 (privacy; R9), Q-025 if sign-in stays o
 **Needs a person (H1 to H3):** Q-049, Q-057, Q-058, Q-081 (a native ear);
 Q-062 (a real phone).
 
-**Store apps only (O3):** Q-001, Q-002, Q-019, Q-024.
+**Store apps (O3), before launch since 31 October:** Q-001, Q-019, Q-024; Q-002 if Qaaf charges. Q-069 is web only and follows launch.
 
 **Can follow launch (33):** Q-003, Q-005, Q-006 (costs money), Q-007, Q-008,
 Q-009, Q-017, Q-018, Q-028, Q-030, Q-036, Q-037, Q-039, Q-041, Q-042, Q-043,
