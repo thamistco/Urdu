@@ -1870,10 +1870,13 @@ export function buildLessonExercises(
    */
   testOut: readonly ItemRef[] = []
 ): Exercise[] {
-  // Its own items and nothing else: topped up with earlier words, "20
-  // questions on the 5 lessons" was 22, two of them Unit 1's (tester,
-  // 2026-10-31).
-  if (lesson.kind === 'review' && testOut.length) lesson = { ...lesson, size: testOut.length };
+  // Its own items and nothing else: topped up with earlier words, "22
+  // questions on the 5 lessons" held two of Unit 1's (tester, 2026-10-31).
+  // Counted once each: l-1-2 re-teaches l-1's letters, so their draws can
+  // overlap, and the room left over was topped up with other words.
+  if (lesson.kind === 'review' && testOut.length) {
+    lesson = { ...lesson, size: new Set(testOut.map((r) => `${r.type}:${r.id}`)).size };
+  }
   const exercises: Exercise[] = [];
   // On the Roman track the learner has said they are not learning the
   // alphabet. Letter lessons are already off their path, but review can still
