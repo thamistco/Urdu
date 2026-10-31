@@ -924,6 +924,8 @@ export const OPTIONS_PER_QUESTION = 4;
  */
 const WOVEN = new WeakSet<Exercise>();
 export const isWovenReview = (ex: Exercise | undefined) => !!ex && WOVEN.has(ex);
+/** Marks a step as woven review again, for a lesson picked up partway (Q-038), whose steps are new objects. */
+export const markWoven = (ex: Exercise) => void WOVEN.add(ex);
 const DISTRACTORS = OPTIONS_PER_QUESTION - 1;
 
 /**

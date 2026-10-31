@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ALL_LESSONS } from '../data/units';
 import { WORDS } from '../data/words';
 import { LETTERS } from '../data/letters';
-import { buildLessonExercises } from '../exercises/generator';
+import { buildLessonExercises, isWovenReview } from '../exercises/generator';
 import {
   encode,
   keepSnapshot,
@@ -92,6 +92,21 @@ describe('a lesson left partway can be picked up where it was left (Q-038)', () 
     expect(restoreSnapshot(dropped, lesson.id, 'both', '2026-10-30')).toBeNull();
     expect(restoreSnapshot({ ...snap, at: 0 }, lesson.id, 'both', '2026-10-30')).toBeNull();
     expect(restoreSnapshot({ ...snap, at: exercises.length }, lesson.id, 'both', '2026-10-30')).toBeNull();
+  });
+
+  it('keeps which steps are review from earlier lessons, so the header still says so', () => {
+    const lesson = ALL_LESSONS.find((l) => l.id === 'v-family')!;
+    const due = WORDS.slice(0, 4).map((w) => ({ id: w.id, type: 'word' as const }));
+    const exercises = buildLessonExercises(lesson, due, 'both');
+    const woven = exercises.flatMap((ex, i) => (isWovenReview(ex) ? [i] : []));
+    expect(woven.length).toBeGreaterThan(0);
+    const back = restoreSnapshot(
+      JSON.parse(JSON.stringify(takeSnapshot(lesson.id, 'both', '2026-10-30', live(exercises, 1)))),
+      lesson.id,
+      'both',
+      '2026-10-30'
+    )!;
+    expect(back.exercises.flatMap((ex, i) => (isWovenReview(ex) ? [i] : []))).toEqual(woven);
   });
 
   it('offers nothing, rather than crash, for a copy of another shape', () => {

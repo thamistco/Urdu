@@ -1,7 +1,7 @@
 import { WORDS, type Word } from '../data/words';
 import { LETTERS, type Letter } from '../data/letters';
 import type { Exercise } from '../exercises/types';
-import type { Miss } from '../exercises/generator';
+import { isWovenReview, markWoven, type Miss } from '../exercises/generator';
 
 /**
  * A lesson left partway, kept so it can be picked up where it was left (Q-038).
@@ -38,6 +38,8 @@ export type LessonSnapshot = {
   pretested: string[];
   /** A test-out's lessons (P-137), kept so it resumes as what it was. */
   testOut?: string[];
+  /** Which steps are review woven in from earlier lessons, which say so in the header. */
+  woven?: number[];
 };
 
 /**
@@ -130,6 +132,9 @@ export function restoreSnapshot(
   try {
     const exercises = decode(snap.exercises) as Exercise[];
     if (!Array.isArray(exercises) || snap.at < 1 || snap.at >= exercises.length) return null;
+    // The header's "Review · from an earlier lesson" went with the objects
+    // it was keyed on (QA, 2026-10-31).
+    (snap.woven ?? []).forEach((i) => exercises[i] && markWoven(exercises[i]));
     return {
       exercises,
       at: snap.at,
@@ -169,6 +174,7 @@ export function takeSnapshot(
     misses: [...live.misses].map(([k, m]) => [k, encode(m)]),
     pretested: [...live.pretested],
     testOut: [...live.testOut],
+    woven: live.exercises.flatMap((ex, i) => (isWovenReview(ex) ? [i] : [])),
   };
 }
 
