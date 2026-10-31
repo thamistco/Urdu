@@ -36,6 +36,8 @@ export type LessonSnapshot = {
   firstTry: [string, boolean][];
   misses: [string, unknown][];
   pretested: string[];
+  /** A test-out's lessons (P-137), kept so it resumes as what it was. */
+  testOut?: string[];
 };
 
 /**
@@ -105,6 +107,7 @@ export type Restored = {
   firstTry: Map<string, boolean>;
   misses: Map<string, Miss>;
   pretested: Set<string>;
+  testOut: string[];
 };
 
 const dayNumber = (day: string) => Math.floor(Date.parse(`${day}T12:00:00Z`) / 86400000);
@@ -136,6 +139,7 @@ export function restoreSnapshot(
       firstTry: new Map(snap.firstTry),
       misses: new Map(snap.misses.map(([k, m]) => [k, decode(m) as Miss])),
       pretested: new Set(snap.pretested),
+      testOut: snap.testOut ?? [],
     };
   } catch {
     return null;
@@ -164,6 +168,7 @@ export function takeSnapshot(
     firstTry: [...live.firstTry],
     misses: [...live.misses].map(([k, m]) => [k, encode(m)]),
     pretested: [...live.pretested],
+    testOut: [...live.testOut],
   };
 }
 

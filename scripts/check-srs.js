@@ -221,9 +221,17 @@ const NOW = Date.UTC(2026, 0, 1);
  */
 {
   const reviews = UNITS.flatMap((u) => u.lessons.filter((l) => l.kind === 'review').map((r) => ({ u, r })));
+  // Reached in order: every lesson done; or half done and half skipped (a
+  // speaker who tested out at onboarding); or on the Roman track with only
+  // the letter lessons left, which that track never shows.
   const inOrder = reviews.filter(({ u, r }) => {
-    const done = new Set(u.lessons.map((l) => l.id));
-    return testOutLessons(r.id, (id) => done.has(id), false).length > 0;
+    const lessons = u.lessons.filter((l) => l.id !== r.id);
+    const all = new Set(lessons.map((l) => l.id));
+    const notLetters = new Set(lessons.filter((l) => l.kind !== 'letters').map((l) => l.id));
+    return (
+      testOutLessons(r.id, (id) => all.has(id), false).length > 0 ||
+      testOutLessons(r.id, (id) => notLetters.has(id), true).length > 0
+    );
   });
   check(
     'a unit review reached with its unit done is never a test-out',
@@ -235,6 +243,7 @@ const NOW = Date.UTC(2026, 0, 1);
   let asked = 0;
   const missing = [];
   const strays = [];
+  const weak = [];
   for (const track of ['both', 'roman']) {
     for (const { r } of reviews) {
       const refs = testOutRefs(
@@ -242,10 +251,12 @@ const NOW = Date.UTC(2026, 0, 1);
         track === 'roman'
       );
       const wanted = new Set(refs.map((x) => x.id));
-      const ids = new Set(
-        buildLessonExercises(r, [], track, graded, 0, refs)
-          .flatMap(itemsOf)
-          .map((it) => it.id)
+      const built = buildLessonExercises(r, [], track, graded, 0, refs);
+      const ids = new Set(built.flatMap(itemsOf).map((it) => it.id));
+      weak.push(
+        ...built
+          .filter((ex) => (ex.kind === 'letterTrace' || ex.kind === 'letterContrast') && wanted.has(ex.letter.id))
+          .map((ex) => `${r.id}/${track}:${ex.kind} ${ex.letter.id}`)
       );
       asked += refs.length;
       missing.push(...refs.filter((x) => !ids.has(x.id)).map((x) => `${r.id}/${track}:${x.id}`));
@@ -256,6 +267,11 @@ const NOW = Date.UTC(2026, 0, 1);
     'a test-out asks every one of the unfinished lessons’ items it drew',
     missing.length === 0,
     missing.length ? `not asked: ${missing.slice(0, 6).join(', ')}` : `${asked} items over every review, both tracks`
+  );
+  check(
+    'a test-out asks no letter by a trace or a two-way contrast, which a guess or the prompt can pass',
+    weak.length === 0,
+    weak.length ? weak.slice(0, 6).join(', ') : 'one-of-four letter questions only'
   );
   check(
     'a test-out asks nothing else the learner has not been graded on',

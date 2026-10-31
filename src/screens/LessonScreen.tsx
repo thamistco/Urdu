@@ -20,6 +20,7 @@ import { announce, invalidateSpeech } from '../lib/speech';
 import { cardsOnTrack, dueQueue, dueBudget, type SrsGrade } from '../lib/srs';
 import { srsGradeFor } from '../lib/sessionGrading';
 import { testOutLessons, testOutRefs, unitEvidenceFrom } from '../lib/unitSkip';
+import { taughtByLesson } from '../lib/review';
 import { useSessionGradeFlush } from './useSessionGradeFlush';
 import { answerReveal, spokenVerdict } from './answerReveal';
 import { useBannerFocus } from './useBannerFocus';
@@ -28,7 +29,7 @@ import { REFILL_COST, gemsShortOfRefill, minutesUntilNextHeart } from '../lib/ga
 import { useProgressStore, type ItemType } from '../store/useProgressStore';
 import { heartsAreFree, heartsFreeFor } from '../lib/hearts';
 import { useSettingsStore } from '../store/useSettingsStore';
-import { resolveLesson, type Lesson } from '../data/units';
+import { resolveLesson, UNITS, type Lesson } from '../data/units';
 import { ExerciseView } from '../exercises';
 import { buildLessonExercises, isWovenReview, reaskExercises, type Miss } from '../exercises/generator';
 import type { Exercise, GradedResult } from '../exercises/types';
@@ -48,9 +49,9 @@ type Rt = RouteProp<RootStackParamList, 'Lesson'>;
 /** Space under each exercise, which "More below" does not count as more. */
 const BODY_PAD_BOTTOM = 32;
 
-/** Said on a test-out's first step (P-137). */
-const testOutNote = (n: number) =>
-  `${n === 1 ? 'A few questions on the lesson' : `A few questions on each of the ${n} lessons`} of this unit you haven’t done. Get all of a lesson’s right and it’s marked known; you can still open it. No hearts.`;
+/** What a test-out is, said before it starts (P-137). */
+const testOutNote = (lessons: number, questions: number) =>
+  `${questions} questions on the ${lessons === 1 ? 'lesson' : `${lessons} lessons`} of this unit you haven’t done, about ${Math.max(1, Math.round((questions * 9) / 60))} minutes. Get every question on a lesson right first time and it’s marked known; you can still open it. No hearts.`;
 
 /** A lesson that can be left and picked up again: anything but practice (Q-038). */
 const resumable = (lessonId: string) => !lessonId.startsWith('practice-');
@@ -234,15 +235,32 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   /**
    * A unit review opened ahead of its unit tests out of it (P-137): these are
    * its unfinished lessons, each asked a few of its own items, and none means
-   * an ordinary review. Settled once, on opening. It asks about lessons not
-   * yet taken, so a miss is not forgetting and costs no heart.
+   * an ordinary review. Settled once, on opening, or kept with a lesson
+   * picked up partway, so it resumes as what it was. It asks about lessons
+   * not yet taken, so a miss is not forgetting and costs no heart.
    */
   const testOut = useMemo(() => {
     if (lesson.kind !== 'review' || !resumable(lesson.id)) return [];
+    if (resumed) return resumed.testOut.map(resolveLesson).filter((l): l is Lesson => !!l);
     const s = useProgressStore.getState();
     return testOutLessons(lesson.id, (id) => !!s.completedLessons[id] || !!s.skippedLessons[id], track === 'roman');
-  }, [lesson.id, lesson.kind, track]);
+  }, [lesson.id, lesson.kind, track, resumed]);
   const isTestOut = testOut.length > 0;
+  /**
+   * What a test-out asks that the learner has never been graded on. Kept out
+   * of the review schedule: graded, a failed test-out put every untaught item
+   * it asked in the schedule, due at once, and the next lessons wove them in
+   * as "from an earlier lesson" and charged hearts for them (second check,
+   * 2026-10-31). A lesson it marks known is skipped like any other.
+   */
+  const untaught = useMemo(() => {
+    const srs = useProgressStore.getState().srs;
+    const own = testOut.flatMap((l) => {
+      const t = taughtByLesson(l);
+      return [...t.words, ...t.letters];
+    });
+    return new Set(own.filter((id) => !srs[id]));
+  }, [testOut]);
   // Under 300px (a 360px phone at 200% text) the header wraps, so the hearts
   // badge takes a line of its own rather than being squeezed to "F…" (QA,
   // 2026-10-13).
@@ -259,8 +277,10 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   // whose `type` is already `'letter' | 'word'` — the same union `ItemType`
   // is — so this cast reflects a real invariant, not a papered-over one.
   const applyGrade = useCallback(
-    (id: string, type: string, grade: SrsGrade) => gradeItem(id, type as ItemType, grade),
-    [gradeItem]
+    (id: string, type: string, grade: SrsGrade) => {
+      if (!untaught.has(id)) gradeItem(id, type as ItemType, grade);
+    },
+    [gradeItem, untaught]
   );
   /**
    * Items this lesson has already taken a heart for: a heart for not knowing
@@ -377,6 +397,8 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
   const pretestedRef = useRef(new Set<string>(resumed?.pretested));
   /** Last heart gone, but the learner is still reading why. */
   const [heartsSpent, setHeartsSpent] = useState(false);
+  /** Past the test-out's opening question (P-137). */
+  const [testOutStarted, setTestOutStarted] = useState(false);
   /**
    * Forces `ExerciseView` to remount after a gem refill.
    *
@@ -697,6 +719,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
         isReview,
         unitEvidence: isReview ? unitEvidenceFrom(lesson.id, firstTryRef.current) : undefined,
         romanTrack: track === 'roman',
+        testOut: isTestOut,
       });
       setResult(r);
       if (reaskRef.current.length) next();
@@ -750,6 +773,7 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
         firstTry: firstTryRef.current,
         misses: missRef.current,
         pretested: pretestedRef.current,
+        testOut: testOut.map((l) => l.id),
       })
     );
     // Saved on a step's answer and on moving on; the refs are read as they stand then.
@@ -809,6 +833,36 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
             <Button variant="primary" onPress={() => nav.popTo('Main')}>
               Back home
             </Button>
+          </View>
+        </SafeAreaView>
+      </Screen>
+    );
+  }
+
+  /**
+   * Asked first. A test-out runs to 40 questions, and Home offers one at every
+   * unit not yet finished, so a beginner tapping a review ahead was put
+   * straight into it with a line of small print (second check, 2026-10-31).
+   */
+  if (isTestOut && !resumed && !testOutStarted) {
+    const unit = UNITS.find((u) => u.lessons.some((l) => l.id === lesson.id));
+    return (
+      <Screen fill>
+        <SafeAreaView className="flex-grow">
+          <View className="flex-grow items-center justify-center px-2">
+            <Eyebrow style={{ color: palette.gold }}>{unit ? `Test out · ${unit.title}` : 'Test out'}</Eyebrow>
+            <Heading className="mb-2 mt-2 text-center text-2xl">Already know this unit?</Heading>
+            <Txt className="mb-8 max-w-[320px] text-center text-sm text-paper/70">
+              {testOutNote(testOut.length, total)}
+            </Txt>
+            <View style={{ width: '100%', maxWidth: 360, gap: 12 }}>
+              <Button variant="primary" onPress={() => setTestOutStarted(true)}>
+                Start the test
+              </Button>
+              <Button variant="ghost" onPress={() => nav.replace('Lesson', { lessonId: testOut[0].id })}>
+                Take the first lesson instead
+              </Button>
+            </View>
           </View>
         </SafeAreaView>
       </Screen>
@@ -962,10 +1016,6 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
                 question under the fold (design review, 2026-10-26). After the
                 first, the eyebrow and ✕'s label carry it. */}
             {idx === total ? <Txt className="mt-1 text-xs text-paper/65">{REASK_SAVED}</Txt> : null}
-            {/* What a test-out is, and what passes, before the first answer. */}
-            {isTestOut && idx === 0 && graded == null ? (
-              <Txt className="mt-1 text-xs text-paper/65">{testOutNote(testOut.length)}</Txt>
-            ) : null}
           </View>
         ) : null}
         {/* On the step a lesson reopens on, until it is answered: without it,
