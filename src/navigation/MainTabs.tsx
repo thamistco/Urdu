@@ -1,5 +1,6 @@
 import { Platform, View } from 'react-native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { useIsFocused } from '@react-navigation/native';
 import { Pressable } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -67,8 +68,15 @@ function TabIcon({ name, color }: { name: string; color: string }) {
  * 2026-10-28). `visibility: hidden` takes them out of the tab order and the
  * accessibility tree, and unlike `display: none` keeps the tab's layout and
  * scroll for when it comes back. Native hides inactive tabs itself.
+ *
+ * Focus is subscribed to, not read: `navigation.isFocused()` in the layout
+ * was read once per render, and from React Navigation 7.5 (Expo SDK 54) a tab
+ * switch no longer re-renders the layout, so the new tab stayed hidden under
+ * the old one and nothing past the tab bar could be reached (check:controls,
+ * 2026-11-01).
  */
-function TabScene({ focused, children }: { focused: boolean; children: React.ReactNode }) {
+function TabScene({ children }: { children: React.ReactNode }) {
+  const focused = useIsFocused();
   if (Platform.OS !== 'web') return <>{children}</>;
   return <View style={{ flex: 1, visibility: focused ? 'visible' : 'hidden' } as object}>{children}</View>;
 }
@@ -125,7 +133,7 @@ export function MainTabs() {
     <Tab.Navigator
       screenOptions={{ headerShown: false }}
       tabBar={(props) => <TabBar {...props} />}
-      screenLayout={({ navigation, children }) => <TabScene focused={navigation.isFocused()}>{children}</TabScene>}
+      screenLayout={({ children }) => <TabScene>{children}</TabScene>}
     >
       <Tab.Screen name="Learn" component={HomeScreen} />
       <Tab.Screen name="Practice" component={PracticeScreen} />
