@@ -3,9 +3,8 @@ module.exports = function (api) {
   return {
     presets: [['babel-preset-expo', { jsxImportSource: 'nativewind' }], 'nativewind/babel'],
     plugins: [
-      // Must be listed last. Reanimated 4 (Expo SDK 54) moved its worklets
-      // into react-native-worklets; the old path only re-exports this one.
-      'react-native-worklets/plugin',
+      // react-native-reanimated plugin must be listed last
+      'react-native-reanimated/plugin',
     ],
   };
 };
