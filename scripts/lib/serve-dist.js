@@ -214,8 +214,9 @@ async function whyBlank(page) {
   page.on('requestfailed', onFailed);
   try {
     const ua = await page.evaluate(() => navigator.userAgent).catch(() => 'unknown');
-    await page.reload().catch((e) => seen.push(`reload: ${e.message}`));
-    await page.waitForTimeout(8000);
+    await page.reload({ waitUntil: 'load' }).catch((e) => seen.push(`reload: ${e.message}`));
+    // Until the first error arrives, or 8s without one: a condition, not a sleep.
+    await page.waitForEvent('pageerror', { timeout: 8000 }).catch(() => {});
     return (
       `\n  browser: ${ua}\n` +
       (seen.length
