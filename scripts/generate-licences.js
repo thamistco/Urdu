@@ -59,9 +59,12 @@ function bundledPackages() {
     const names = new Set();
     for (const f of fs.readdirSync(js).filter((f) => f.endsWith('.map'))) {
       for (const src of JSON.parse(fs.readFileSync(path.join(js, f), 'utf8')).sources) {
-        const all = src.match(/node_modules\/((?:@[^/]+\/)?[^/]+)/g);
-        // The innermost node_modules is the package the file belongs to.
-        if (all) names.add(all[all.length - 1].replace('node_modules/', ''));
+        // The innermost node_modules is the package the file belongs to, and
+        // the path to it is where it was installed: npm nests a package under
+        // the one that needs it when versions differ, as Expo SDK 54 does with
+        // @expo/cli, so the package is not always at the top level.
+        const at = /((?:node_modules\/(?:@[^/]+\/)?[^/]+\/)*node_modules\/(?:@[^/]+\/)?[^/]+)/.exec(src);
+        if (at) names.add(at[1]);
       }
     }
     // Fonts are assets rather than modules, so the maps do not name them.
@@ -114,8 +117,9 @@ const template = (spdx) => {
   return fs.readFileSync(f, 'utf8');
 };
 
-function packageNotice(name) {
-  const dir = path.join(ROOT, 'node_modules', name);
+function packageNotice(installed) {
+  const name = installed.replace(/^.*node_modules\//, '');
+  const dir = path.join(ROOT, installed);
   const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8'));
   const license = pkg.license || (pkg.licenses && pkg.licenses.map((l) => l.type).join(' OR '));
   if (!license) throw new Error(`${name} declares no licence`);
@@ -143,7 +147,10 @@ function fontNotice(file) {
 
 function build() {
   const { names, fonts } = bundledPackages();
-  const entries = names.map(packageNotice);
+  // By package name, as before nesting was read, then by where it is installed.
+  const entries = names
+    .map(packageNotice)
+    .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : a.version < b.version ? -1 : 1));
 
   // One entry per typeface, not per weight: every weight of a family carries
   // the same copyright line and licence.
