@@ -44,7 +44,7 @@
   },
   {
    "name": "@react-native/normalize-colors",
-   "version": "0.76.9",
+   "version": "0.74.89",
    "license": "MIT",
    "text": 4
   },
@@ -320,7 +320,7 @@
   },
   {
    "name": "is-arrayish",
-   "version": "0.2.1",
+   "version": "0.3.4",
    "license": "MIT",
    "text": 29
   },
@@ -332,7 +332,7 @@
   },
   {
    "name": "memoize-one",
-   "version": "5.2.1",
+   "version": "6.0.0",
    "license": "MIT",
    "text": 31
   },
@@ -398,6 +398,12 @@
   },
   {
    "name": "react-is",
+   "version": "16.13.1",
+   "license": "MIT",
+   "text": 39
+  },
+  {
+   "name": "react-is",
    "version": "19.2.8",
    "license": "MIT",
    "text": 40
@@ -452,9 +458,9 @@
   },
   {
    "name": "scheduler",
-   "version": "0.24.0-canary-efb381bbf-20230505",
+   "version": "0.23.2",
    "license": "MIT",
-   "text": 40
+   "text": 39
   },
   {
    "name": "simple-swizzle",
@@ -500,7 +506,7 @@
   },
   {
    "name": "webidl-conversions",
-   "version": "3.0.1",
+   "version": "5.0.0",
    "license": "BSD-2-Clause",
    "text": 52
   },
