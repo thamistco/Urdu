@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import Svg, { Path, Circle, Rect, Line, Polygon, G, Ellipse } from 'react-native-svg';
 import { palette } from '../theme';
 
