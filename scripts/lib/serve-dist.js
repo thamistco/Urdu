@@ -190,8 +190,46 @@ async function renderedScreen(page, timeoutMs = 20000) {
   }
   throw new Error(
     `the app never rendered a screen: ${Math.round(timeoutMs / 1000)}s after loading, the page still holds ` +
-      `${saw.trim().length} characters of text. Nothing measured after this would mean anything, so it stops here.`
+      `${saw.trim().length} characters of text. Nothing measured after this would mean anything, so it stops here.` +
+      (await whyBlank(page))
   );
+}
+
+/**
+ * The page's own errors, from loading it again with something listening.
+ *
+ * A blank page in CI said only that it was blank: Expo SDK 54 rendered
+ * nothing in CI's Chromium 131 and everything in Chromium 153 here, and with
+ * no error to read the cause could not be found (2026-11-01). Called only once
+ * the screen has already failed to appear, so it changes no verdict, only
+ * what the failure says.
+ */
+async function whyBlank(page) {
+  const seen = [];
+  const onError = (e) => seen.push(`page error: ${e.message}`);
+  const onConsole = (m) => m.type() === 'error' && seen.push(`console: ${m.text()}`);
+  const onFailed = (r) => seen.push(`request failed: ${r.url()} (${(r.failure() || {}).errorText})`);
+  page.on('pageerror', onError);
+  page.on('console', onConsole);
+  page.on('requestfailed', onFailed);
+  try {
+    const ua = await page.evaluate(() => navigator.userAgent).catch(() => 'unknown');
+    await page.reload().catch((e) => seen.push(`reload: ${e.message}`));
+    await page.waitForTimeout(8000);
+    return (
+      `\n  browser: ${ua}\n` +
+      (seen.length
+        ? seen
+            .slice(0, 12)
+            .map((s) => `  ${s.slice(0, 400)}`)
+            .join('\n')
+        : '  no error was reported')
+    );
+  } finally {
+    page.off('pageerror', onError);
+    page.off('console', onConsole);
+    page.off('requestfailed', onFailed);
+  }
 }
 
 /**
