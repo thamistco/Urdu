@@ -15,17 +15,17 @@ follow launch. Charging money adds P-001, Q-002 and
 
 Each of these is met when the evidence named beside it exists.
 
-| #   | The bar                                                                                 | Evidence                                                      | 2026-11-01                                    |
-| --- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------- |
-| R1  | No open bug a learner can hit that blocks, loses progress, or teaches something wrong   | Every open Q-item triaged; none of those kinds left           | not met: 4 for the apps, all on the owner     |
-| R2  | QA finds nothing above low on two nights running                                        | Two consecutive QA reports                                    | not met: a low–medium on 1 November (Q-168)   |
-| R3  | Every one of the 16 areas reviewed with no open high finding                            | README dates; reports                                         | not met                                       |
-| R4  | A screen-reader user can complete Unit 1                                                | P-115 (letter spotting) built; checks pass                    | not met: letter spotting passable; Q-112 open |
-| R5  | 200% text works at 320x568 and in landscape on every exercise kind                      | `check:stability`, `check:controls`; Lesson complete measured | partly                                        |
-| R6  | Offline is honest: an installed app opens, or does not claim to be installable          | P-111, or `display` changed                                   | met: display browser (P-134); P-111 held      |
-| R7  | A learner can tell you something is wrong from inside the app                           | P-020 rebuilt (lost on 22 October) and P-113                  | not met: P-130 specified, not built           |
-| R8  | The course's own decisions are settled: re-asking misses (P-085), letter forms (P-105b) | Built and second-checked, or dropped with a reason            | met: P-085 built, P-105b dropped              |
-| R9  | The privacy page meets UK GDPR article 13 apart from the holder's details               | P-093 drafted                                                 | nearly: text second-checked; holder to come   |
+| #   | The bar                                                                                 | Evidence                                                      | 2026-11-01                                           |
+| --- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------- |
+| R1  | No open bug a learner can hit that blocks, loses progress, or teaches something wrong   | Every open Q-item triaged; none of those kinds left           | not met: 5 for the apps (Q-019 for the review, held) |
+| R2  | QA finds nothing above low on two nights running                                        | Two consecutive QA reports                                    | not met: a low–medium on 1 November (Q-168)          |
+| R3  | Every one of the 16 areas reviewed with no open high finding                            | README dates; reports                                         | not met                                              |
+| R4  | A screen-reader user can complete Unit 1                                                | P-115 (letter spotting) built; checks pass                    | not met: letter spotting passable; Q-112 open        |
+| R5  | 200% text works at 320x568 and in landscape on every exercise kind                      | `check:stability`, `check:controls`; Lesson complete measured | partly                                               |
+| R6  | Offline is honest: an installed app opens, or does not claim to be installable          | P-111, or `display` changed                                   | met: display browser (P-134); P-111 held             |
+| R7  | A learner can tell you something is wrong from inside the app                           | P-020 rebuilt (lost on 22 October) and P-113                  | not met: P-130 specified, not built                  |
+| R8  | The course's own decisions are settled: re-asking misses (P-085), letter forms (P-105b) | Built and second-checked, or dropped with a reason            | met: P-085 built, P-105b dropped                     |
+| R9  | The privacy page meets UK GDPR article 13 apart from the holder's details               | P-093 drafted                                                 | nearly: text second-checked; holder to come          |
 
 ## 2. What needs a person (not money)
 
@@ -58,17 +58,15 @@ started: QA's worst tonight was a medium (hamza described two ways), fixed. R7
 and R9 are unchanged. When every row in sections 1 and 2 is met and O1 and O2
 are done, the summary says "ready to launch".
 
-**2026-11-01 (night): not ready, and nothing on the before-launch list is
-the review's.** Q-019 is done for the web: Expo SDK 54, React Native 0.81, React 19, second-checked on the fixed build.
-check:controls caught a regression the upgrade made, a tab switch that left
-the new tab hidden, and it was fixed before shipping. The second check found
-the fixed build the same as the old one on every surface it compared, saved
-progress included. Four items remain, all the owner's: native builds on the
-developer accounts (Q-001), Apple sign-in revocation (Q-024), account
-deletion on a native build (Q-025), and the privacy page's holder (Q-035).
-After those come the person-only checks: a native ear (H1), a real
-VoiceOver or TalkBack pass (H2), and real phones (H3). Would I launch now?
-No: there is no native build yet, and nothing has run on a phone.
+**2026-11-01 (night): not ready.** Q-019, Expo SDK 54, was built and
+passed every check here, including a second check that found it the same as
+the live build on every surface it compared. But CI's older browser
+(Chromium 131) showed a blank page, so it is held, the deploy branch is back
+on SDK 52, and the live site never changed. The check that caught it now
+prints the page's own errors, so the next try will say why. Five remain:
+Q-019 for the review, and the owner's four (Q-001, Q-024, Q-025, Q-035).
+Would I launch now? No: the apps cannot be built until Q-019 ships, and
+nothing has run on a phone.
 
 **2026-10-31 (night): not ready, and the review's own share of the list is
 done.** P-137 shipped: a unit review opened ahead of its unit now tests a
@@ -100,7 +98,7 @@ by their glyph (Q-112) remain.
 learner hit it, and would it stop them, lose their work, or teach them
 something wrong?
 
-**Before launch, 1 November: 4, all waiting on the owner.** Q-019 (Expo SDK 54) is done for the web and passed its second check (83095fb8, 5674bea5); what the first native build must check is listed in Q-001. Left: Q-001 (native builds, on the developer accounts, O-5), Q-024 (Apple sign-in revocation, a server function the owner deploys), the rest of Q-025 (account deletion on a native build), Q-035 (privacy, O-11). **31 October, with launch as the store apps: 5.** For the review: Q-019 (Expo SDK 54 or later, which both stores now require; the review can do it). Waiting on the owner: Q-001 (native builds, which need the developer accounts, O-5), Q-024 (Apple sign-in revocation, a server function the owner deploys), the rest of Q-025 (account deletion on a native build), Q-035 (privacy, O-11). Moved to "can follow launch" because only the web preview has them: Q-069 (Safari clearing storage). Q-002 (payments) only if Qaaf charges. The web-app list that night was 0 for the review and 3 on the owner (Q-069 and Q-025 on O-6, Q-035 on O-11). Done on 30 and 31 October: Q-052, Q-034, Q-073, Q-026, Q-027, Q-038, Q-077, P-137; Q-045 found fixed since 13 October. The list as it stood (12 on 29 October, with P-137; 11 on 26 October; 14 on the 24th, Q-080 and Q-093 fixed, Q-051 found fixed since 13 October): P-137 (a unit review cannot test a learner out), Q-026, Q-027, Q-034, Q-073 (large text and small
+**Before launch, 1 November: 5, one of them the review's.** Q-019 (Expo SDK 54) was built and passed check:all and its second check here, but CI's Chromium 131 never rendered it, so it is held (held/Q-019-expo-sdk54-2026-11-01.patch) until the cause is found. The owner's four: Q-001 (native builds, O-5), Q-024 (Apple sign-in revocation), the rest of Q-025, Q-035 (privacy, O-11). **31 October, with launch as the store apps: 5.** For the review: Q-019 (Expo SDK 54 or later, which both stores now require; the review can do it). Waiting on the owner: Q-001 (native builds, which need the developer accounts, O-5), Q-024 (Apple sign-in revocation, a server function the owner deploys), the rest of Q-025 (account deletion on a native build), Q-035 (privacy, O-11). Moved to "can follow launch" because only the web preview has them: Q-069 (Safari clearing storage). Q-002 (payments) only if Qaaf charges. The web-app list that night was 0 for the review and 3 on the owner (Q-069 and Q-025 on O-6, Q-035 on O-11). Done on 30 and 31 October: Q-052, Q-034, Q-073, Q-026, Q-027, Q-038, Q-077, P-137; Q-045 found fixed since 13 October. The list as it stood (12 on 29 October, with P-137; 11 on 26 October; 14 on the 24th, Q-080 and Q-093 fixed, Q-051 found fixed since 13 October): P-137 (a unit review cannot test a learner out), Q-026, Q-027, Q-034, Q-073 (large text and small
 screens; R5), Q-077 (letter spotting by screen reader; R4), Q-038
 (leaving a lesson throws its answers away), Q-045 (emoji
 give answers away), Q-052 (letter-spot tiles that overlap), Q-069 (Safari can
