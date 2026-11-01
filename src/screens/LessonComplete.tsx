@@ -180,7 +180,7 @@ export function LessonComplete({
                   </Bold>
                   <Txt className="mt-1 text-center text-xs text-paper/70">
                     {testedOut.length
-                      ? `${titlesOf(testedOut, result.skippedIds, true)}. ${result.skippedIds.length === 1 ? 'It stays' : 'They stay'} on your path if you want them.`
+                      ? `${titlesOf(testedOut, result.skippedIds, true)}. ${result.skippedIds.length === 1 ? 'It stays on your path if you want it' : 'They stay on your path if you want them'}.`
                       : 'You knew this unit’s words. Those lessons stay on your path if you want them.'}
                   </Txt>
                 </View>
@@ -300,12 +300,12 @@ export function LessonComplete({
 function titlesOf(lessons: readonly Lesson[], passed: readonly string[], didPass: boolean): string {
   return lessons
     .filter((l) => passed.includes(l.id) === didPass)
-    .map(nameOf)
+    .map(lessonName)
     .join(', ');
 }
 
 /** A lesson's title, with its part when a unit splits one in two: "Family, Family" said nothing. */
-function nameOf(l: Lesson): string {
+export function lessonName(l: Lesson): string {
   const part = l.subtitle.match(/part (\d+) of \d+/);
   return part ? `${l.title} ${part[1]}` : l.title;
 }

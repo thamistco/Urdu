@@ -34,7 +34,8 @@ import { ExerciseView } from '../exercises';
 import { buildLessonExercises, isWovenReview, reaskExercises, type Miss } from '../exercises/generator';
 import type { Exercise, GradedResult } from '../exercises/types';
 import type { FinishResult } from '../store/useProgressStore';
-import { LessonComplete } from './LessonComplete';
+import { LessonComplete, lessonName } from './LessonComplete';
+import { count } from '../lib/plural';
 import type { RootStackParamList } from '../navigation/types';
 import { confirmAction } from '../lib/confirm';
 import { dayKey } from '../lib/date';
@@ -51,7 +52,7 @@ const BODY_PAD_BOTTOM = 32;
 
 /** What a test-out is, said before it starts (P-137). */
 const testOutNote = (lessons: number, questions: number) =>
-  `${questions} questions on the ${lessons === 1 ? 'lesson' : `${lessons} lessons`} of this unit you haven’t done, about ${Math.max(1, Math.round((questions * 9) / 60))} minutes. Get every question on a lesson right first time and it’s marked known; you can still open it. No hearts.`;
+  `${questions} questions on the ${lessons === 1 ? 'lesson' : `${lessons} lessons`} of this unit you haven’t done, about ${count(Math.max(1, Math.round((questions * 9) / 60)), 'minute')}. Get every question on a lesson right first time and it’s marked known; you can still open it. No hearts.`;
 
 /** The first lesson on this track's path neither done nor skipped: Home's Continue, short of a catch-up review. */
 function nextOnPath(track: LearnTrack): string {
@@ -875,7 +876,12 @@ function LessonSession({ lesson }: { lesson: Lesson }) {
         <SafeAreaView className="flex-grow">
           <View className="flex-grow items-center justify-center px-2">
             <Eyebrow style={{ color: palette.gold }}>{unit ? `Test out · ${unit.title}` : 'Test out'}</Eyebrow>
-            <Heading className="mb-2 mt-2 text-center text-2xl">Already know this unit?</Heading>
+            {/* The one lesson by name when only one is left: "Already know this
+                unit?" asked a speaker who had skipped its words about its
+                letters (tester, 2026-11-01). */}
+            <Heading className="mb-2 mt-2 text-center text-2xl">
+              {testOut.length === 1 ? `Already know ${lessonName(testOut[0])}?` : 'Already know this unit?'}
+            </Heading>
             <Txt className="mb-8 max-w-[320px] text-center text-sm text-paper/70">
               {testOutNote(testOut.length, total)}
             </Txt>
