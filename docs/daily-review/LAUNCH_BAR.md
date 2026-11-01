@@ -15,10 +15,10 @@ follow launch. Charging money adds P-001, Q-002 and
 
 Each of these is met when the evidence named beside it exists.
 
-| #   | The bar                                                                                 | Evidence                                                      | 2026-10-31                                    |
+| #   | The bar                                                                                 | Evidence                                                      | 2026-11-01                                    |
 | --- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------- |
 | R1  | No open bug a learner can hit that blocks, loses progress, or teaches something wrong   | Every open Q-item triaged; none of those kinds left           | not met: 4 for the apps, all on the owner     |
-| R2  | QA finds nothing above low on two nights running                                        | Two consecutive QA reports                                    | not met: a medium on 31 October, fixed        |
+| R2  | QA finds nothing above low on two nights running                                        | Two consecutive QA reports                                    | not met: a low–medium on 1 November (Q-168)   |
 | R3  | Every one of the 16 areas reviewed with no open high finding                            | README dates; reports                                         | not met                                       |
 | R4  | A screen-reader user can complete Unit 1                                                | P-115 (letter spotting) built; checks pass                    | not met: letter spotting passable; Q-112 open |
 | R5  | 200% text works at 320x568 and in landscape on every exercise kind                      | `check:stability`, `check:controls`; Lesson complete measured | partly                                        |
@@ -59,7 +59,7 @@ and R9 are unchanged. When every row in sections 1 and 2 is met and O1 and O2
 are done, the summary says "ready to launch".
 
 **2026-11-01 (night): not ready, and nothing on the before-launch list is
-the review's.** Q-019 shipped: Expo SDK 54, React Native 0.81, React 19.
+the review's.** Q-019 is done for the web: Expo SDK 54, React Native 0.81, React 19, second-checked on the fixed build.
 check:controls caught a regression the upgrade made, a tab switch that left
 the new tab hidden, and it was fixed before shipping. The second check found
 the fixed build the same as the old one on every surface it compared, saved
