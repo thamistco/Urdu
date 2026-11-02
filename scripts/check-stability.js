@@ -309,10 +309,32 @@ async function checkSoundSaysWhenOffline(browser, url) {
   if (await soundNoticeWithin(page, 2500))
     problems.push('Online, "The sound didn’t load" showed on l-1 with nothing wrong.');
   await page.context().setOffline(true);
+  // A clip the card loaded while online can be wholly buffered by now, and
+  // then it plays offline: not silent, so no notice is owed. This failed as
+  // "played nothing" when the clip had in fact played, once in each of two
+  // loaded check:all runs (Q-174). So a play that starts counts as sound.
+  await page.evaluate(() => {
+    const play = HTMLMediaElement.prototype.play;
+    window.__qaafPlayed = 0;
+    HTMLMediaElement.prototype.play = function () {
+      const started = play.call(this);
+      Promise.resolve(started).then(
+        () => (window.__qaafPlayed += 1),
+        () => {}
+      );
+      return started;
+    };
+  });
   await page.locator('[aria-label^="Hear"]').first().click();
-  if (!(await soundNoticeWithin(page, 4000))) {
-    problems.push('Offline, tapping "Hear" on l-1 played nothing and said nothing.');
-  }
+  const said = await page
+    .waitForFunction(() => /The sound didn’t load/.test(document.body.innerText) || window.__qaafPlayed > 0, null, {
+      timeout: 4000,
+    })
+    .then(
+      () => true,
+      () => false
+    );
+  if (!said) problems.push('Offline, tapping "Hear" on l-1 played nothing and said nothing.');
   await page.close();
 }
 
