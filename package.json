@@ -42,7 +42,7 @@
     "check:fast": "node scripts/check-fast.js",
     "check:all": "node scripts/check-all.js",
     "soak": "node scripts/soak.js",
-    "build:web": "expo export --platform web --output-dir dist",
+    "build:web": "expo export --platform web --output-dir dist --clear",
     "check:deployed": "node scripts/check-deployed.js",
     "lint": "eslint 'src/**/*.{ts,tsx}' 'scripts/**/*.js'",
     "format": "prettier --write 'src/**/*.{ts,tsx}' 'scripts/**/*.js' '*.{json,js}'",
