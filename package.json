@@ -28,6 +28,7 @@
     "check:direction": "node scripts/check-direction.js",
     "check:scenery": "node scripts/check-scenery.js",
     "check:sizes": "node scripts/check-sizes.js",
+    "check:classic-script": "node scripts/check-classic-script.js",
     "check:path": "node scripts/check-path.js",
     "check:home-scroll": "node scripts/check-home-scroll.js",
     "check:controls": "node scripts/check-controls.js",

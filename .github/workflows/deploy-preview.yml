@@ -198,6 +198,14 @@ jobs:
           HARF_BUILD_SHA: ${{ github.sha }}
         run: npm run web:meta
 
+      # The page loads its bundle as a classic script, which may not hold
+      # module syntax. Expo SDK 54's bundle held import.meta and showed a blank
+      # page, which the browser checks below could only report as "no text".
+      - name: Check every script parses the way the page loads it
+        env:
+          HARF_BASE_URL: /${{ github.event.repository.name }}
+        run: npm run check:classic-script
+
       # Nothing looked at what a pasted link shows. Locally the page had no
       # picture tags at all, yet still asked chat clients for the large card.
       # Reads the page and the picture just written, so runs straight after.
