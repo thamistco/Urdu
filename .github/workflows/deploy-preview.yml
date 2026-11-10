@@ -76,6 +76,14 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      # The playtest recognises the app's screens by their wording. A prompt
+      # was reworded on 2026-10-27 and the harness was not, so for two weeks
+      # every deep run stalled or stopped itself and nothing said so (QA,
+      # 2026-11-10). Its self-test holds each wording to the app's source, but
+      # it only ran when someone remembered to; now a rewording fails here.
+      - name: Check the playtest still reads the app's own wording
+        run: npm run playtest:selftest
+
       - name: Audit content
         run: npm run audit
 
