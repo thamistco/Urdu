@@ -31,7 +31,7 @@ export function PrivacyScreen() {
       <Screen>
         <TopBar onBack={back} title="Privacy Policy" />
         <Heading className="mb-1 text-lg">Your data, plainly</Heading>
-        <Txt className="mb-6 text-[0.75rem] text-paper/55">Last updated 2026-10-29</Txt>
+        <Txt className="mb-6 text-[0.75rem] text-paper/55">Last updated 29 October 2026</Txt>
 
         <Section title="Who we are">
           Who runs Qaaf, and how to contact them, will be added to this page before Qaaf launches.
