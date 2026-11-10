@@ -233,6 +233,37 @@ async function main() {
     }
 
     /**
+     * The same screens reloaded by a learner already in the app: Back has
+     * nothing behind it there either, and must open their tabs, not the
+     * sign-in screen they are already past. `page` is the seeded guest.
+     */
+    for (const path of ['/privacy', '/licences']) {
+      await page.goto(`${origin}${BASE}${path}`);
+      await arrived(page);
+      const back = page.getByRole('button', { name: /Back/ }).first();
+      if (!(await back.count())) {
+        problems.push(`${BASE}${path} reloaded by a learner has no Back.`);
+        continue;
+      }
+      await back.click();
+      const home = await page
+        .waitForFunction(
+          ({ root, shows }) =>
+            location.pathname.replace(/\/$/, '') === root && new RegExp(shows, 'i').test(document.body.innerText),
+          { root: BASE, shows: ROUTES[0].shows.source },
+          { timeout: 10000 }
+        )
+        .then(
+          () => true,
+          () => false
+        );
+      if (!home) {
+        const at = await page.evaluate(() => location.pathname);
+        problems.push(`${BASE}${path} reloaded by a learner: Back ended at ${at}, not on their Learn tab.`);
+      }
+    }
+
+    /**
      * A save is never lost to a version it does not know, and a browser that
      * refuses storage still gets the app.
      *
