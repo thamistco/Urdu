@@ -122,12 +122,57 @@ function fail(kind, why) {
   process.exit(0);
 }
 
+/**
+ * Every fixed address answers 200 with this commit's page.
+ *
+ * Pages answers an address with no file of its own with 404.html and the
+ * status 404, so /privacy looked right in a browser and was a 404 to every
+ * link checker and app-store review (QA, 2026-11-10). The deploy now writes a
+ * page for each (scripts/write-route-pages.js); this is the only place that
+ * can see whether Pages really serves them, because only Pages decides.
+ *
+ * Returns the addresses that failed, each with what was seen.
+ */
+async function routesLive() {
+  const { fixedRoutes } = require('./lib/route-pages');
+  const root = url.endsWith('/') ? url : `${url}/`;
+  const bad = [];
+  for (const r of fixedRoutes()) {
+    const at = new URL(r, root).href;
+    try {
+      const res = await fetch(`${at}?_cb=${Date.now()}`, { headers: { 'Cache-Control': 'no-cache' } });
+      const served = shaFrom(await res.text());
+      if (res.status !== 200) bad.push(`${at}: HTTP ${res.status}`);
+      else if (served !== expected.slice(0, (served || '').length)) bad.push(`${at}: serving ${served || 'no stamp'}`);
+    } catch (e) {
+      bad.push(`${at}: ${e.message}`);
+    }
+  }
+  return bad;
+}
+
 (async () => {
   let last = { kind: 'unreachable', why: 'no attempt made' };
   for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
     const result = await probe();
     if (result.ok) {
       console.log(`check:deployed — ${url} is serving ${result.served}, which is this commit. Live and verified.`);
+      // The CDN swaps files one by one, so a page can lag the root briefly.
+      let bad = await routesLive();
+      for (let a = 1; bad.length && a < ATTEMPTS; a++) {
+        console.log(`  ${bad.length} address(es) not yet right, retrying in ${(FIRST_WAIT_MS * a) / 1000}s`);
+        await sleep(FIRST_WAIT_MS * a);
+        bad = await routesLive();
+      }
+      if (bad.length) {
+        console.error(
+          `check:deployed — the app is live, but ${bad.length} of its addresses do not answer 200 with it:\n` +
+            bad.map((b) => `  ✗ ${b}`).join('\n') +
+            `\n  A link checker, share preview or store review sees these as missing pages.`
+        );
+        process.exit(1);
+      }
+      console.log(`check:deployed — every fixed address answers 200 with this commit.`);
       process.exit(0);
     }
     last = result;

@@ -24,7 +24,9 @@ for (const r of routes) {
   const file = path.join(DIST, `${r}.html`);
   // A real file of that name from the export would be overwritten silently.
   if (fs.existsSync(file) && fs.readFileSync(file, 'utf8') !== html) {
-    console.error(`write-route-pages — dist/${r}.html already exists and is not the app's page; refusing to replace it.`);
+    console.error(
+      `write-route-pages — dist/${r}.html already exists and is not the app's page; refusing to replace it.`
+    );
     process.exit(1);
   }
   fs.mkdirSync(path.dirname(file), { recursive: true });

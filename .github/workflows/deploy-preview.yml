@@ -320,9 +320,13 @@ jobs:
           CHROMIUM_PATH="$(node -e "console.log(require('playwright-core').chromium.executablePath())")" \
             npm run check:links
 
+      # 404.html draws any address, but Pages sends it with the status 404, so
+      # each fixed address (privacy, terms, the tabs) also gets a page of its
+      # own that answers 200. check-deployed.js proves Pages serves them.
       - name: SPA fallback + disable Jekyll
         run: |
           cp dist/index.html dist/404.html
+          node scripts/write-route-pages.js
           touch dist/.nojekyll
 
       - uses: actions/configure-pages@v5
