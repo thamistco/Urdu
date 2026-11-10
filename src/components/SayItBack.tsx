@@ -1,6 +1,6 @@
 import { reach } from '../lib/reach';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 import { Audio } from 'expo-av';
 import { useIsFocused } from '@react-navigation/native';
 import Svg, { Path, Rect } from 'react-native-svg';
@@ -9,13 +9,63 @@ import { palette, withAlpha } from '../theme';
 import { Txt } from './Text';
 
 /**
- * `blocked`: the learner (or the system) said no to the microphone.
- * `failed`: allowed, or never asked, but it could not be opened — no
- * microphone, another app holding it, a browser that cannot record. It used
- * to go back to idle without a word, so the button looked dead (QA,
- * 2026-11-10). Either way a tap tries again.
+ * Why a line cannot be recorded, and how each reason is said in its three
+ * places: under the button, on the button's own label, and aloud.
+ *
+ * - `blocked`: the learner (or the system) said no to the microphone.
+ * - `missing`: there is no microphone to ask for.
+ * - `failed`: allowed, or never asked, but it could not be opened: another
+ *   app holding it, a browser that cannot record.
+ *
+ * Anything but a refusal used to go back to idle without a word, so the
+ * button looked dead (QA, 2026-11-10). Each reason gets its own words because
+ * each has a different remedy, and the wrong one sends a learner to settings
+ * that are not the problem. The notes under the button are short on purpose:
+ * a reading line keeps its buttons in a narrow column beside the Urdu, and
+ * "Microphone unavailable" made that column four times as wide at 320px and
+ * pushed the text onto more lines (second check, 2026-11-10). Whatever the
+ * reason, a tap tries again.
  */
-type Phase = 'idle' | 'recording' | 'ready' | 'blocked' | 'failed';
+const TROUBLE = {
+  blocked: {
+    note: 'Mic off',
+    label: 'Microphone not allowed. Allow it in your settings to say this line back',
+    said: 'Microphone not allowed.',
+  },
+  missing: {
+    note: 'No mic',
+    label: 'No microphone found. Connect one, then tap to try again',
+    said: 'No microphone found.',
+  },
+  failed: {
+    note: 'Mic error',
+    label: 'Couldn’t reach the microphone. Tap to try again',
+    said: 'Couldn’t reach the microphone.',
+  },
+} as const;
+
+type Trouble = keyof typeof TROUBLE;
+type Phase = 'idle' | 'recording' | 'ready' | Trouble;
+
+/**
+ * On the web, whether there is no microphone to ask for.
+ *
+ * expo-av's web build answers "permission denied" for every way asking can
+ * fail, a computer with no microphone included, so that learner was told to
+ * allow it in settings where there was nothing to allow (second check,
+ * 2026-11-10). The browser will say which inputs exist without being granted
+ * anything. On a phone the system's own answer is trusted.
+ */
+async function noMicrophoneOnWeb(): Promise<boolean> {
+  if (Platform.OS !== 'web') return false;
+  const media = typeof navigator === 'undefined' ? undefined : navigator.mediaDevices;
+  if (!media?.enumerateDevices) return true; // a browser that cannot record at all
+  try {
+    return !(await media.enumerateDevices()).some((d) => d.kind === 'audioinput');
+  } catch {
+    return false;
+  }
+}
 
 /** Long enough for any line in the course read slowly; a forgotten tap stops itself. */
 const MAX_RECORDING_MS = 10_000;
@@ -87,6 +137,8 @@ export function SayItBack({
   // microphone's label changes too, but a label changing under the focus is
   // not announced, so a blind learner could not tell the recording had begun.
   const [said, setSaid] = useState('');
+  // A take from earlier is still there to hear after a later try goes wrong.
+  const [hasTake, setHasTake] = useState(false);
   const recording = useRef<Audio.Recording | null>(null);
   const yours = useRef<Audio.Sound | null>(null);
   const autoStop = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -183,6 +235,7 @@ export function SayItBack({
       }
       await yours.current?.unloadAsync().catch(() => {});
       yours.current = sound;
+      setHasTake(true);
       setPhase('ready');
       if (compareAfter) {
         setSaid('Recorded. The line, then you.');
@@ -205,9 +258,19 @@ export function SayItBack({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focused]);
 
+  /** Stop on a reason, and say it. */
+  const trouble = (why: Trouble) => {
+    setPhase(why);
+    setSaid(TROUBLE[why].said);
+  };
+
   const start = async () => {
     if (busy.current) return;
     busy.current = true;
+    // Cleared first, so a second try that goes wrong the same way is said
+    // again: the same words set twice are no change, and a screen reader
+    // heard nothing on the second tap (second check, 2026-11-10).
+    setSaid('');
     // Claimed before the first await, so a second line tapped while this one
     // waits on the permission prompt takes the turn and this one backs out,
     // rather than both opening a microphone.
@@ -221,7 +284,11 @@ export function SayItBack({
       if (active && active.owner !== self) await active.stop(false);
       const permission = await Audio.requestPermissionsAsync();
       if (!stillMine()) return;
-      if (!permission.granted) return setPhase('blocked');
+      if (!permission.granted) {
+        const missing = await noMicrophoneOnWeb();
+        if (stillMine()) trouble(missing ? 'missing' : 'blocked');
+        return;
+      }
       await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
       const { recording: r } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
       if (!stillMine()) {
@@ -241,10 +308,8 @@ export function SayItBack({
       await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true }).catch(() => {});
       // Said only if it is still this line's turn: a line pre-empted while it
       // was opening the recorder backs out quietly, as it does above.
-      if (stillMine()) {
-        setPhase('failed');
-        setSaid('Couldn’t reach the microphone.');
-      } else if (mounted.current) setPhase('idle');
+      if (stillMine()) trouble('failed');
+      else if (mounted.current) setPhase('idle');
     } finally {
       busy.current = false;
       done();
@@ -256,11 +321,9 @@ export function SayItBack({
     ? 'Stop recording and compare'
     : phase === 'ready'
       ? 'Record yourself saying this line again'
-      : phase === 'blocked'
-        ? 'Microphone not allowed. Allow it in your settings to say this line back'
-        : phase === 'failed'
-          ? 'Couldn’t reach the microphone. Tap to try again'
-          : 'Say it back: record yourself saying this line, for up to 10 seconds';
+      : phase !== 'idle'
+        ? TROUBLE[phase].label
+        : 'Say it back: record yourself saying this line, for up to 10 seconds';
 
   return (
     <View className="items-center">
@@ -290,7 +353,7 @@ export function SayItBack({
         {/* Once there is a recording, hearing it again is its own button, not a
             hidden long press on the microphone (which keyboard and switch
             users could never reach) and not a colour change alone. */}
-        {phase === 'ready' ? (
+        {hasTake && !recordingNow ? (
           <Pressable
             onPress={playYours}
             accessibilityRole="button"
@@ -313,9 +376,9 @@ export function SayItBack({
           </Pressable>
         ) : null}
       </View>
-      {phase === 'blocked' || phase === 'failed' ? (
+      {phase in TROUBLE ? (
         <Txt style={{ color: palette.ink }} className="mt-1 text-[0.625rem] opacity-70">
-          {phase === 'blocked' ? 'Microphone off' : 'Microphone unavailable'}
+          {TROUBLE[phase as Trouble].note}
         </Txt>
       ) : null}
       <View aria-live="polite" style={SPOKEN_ONLY}>
