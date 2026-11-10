@@ -8,7 +8,14 @@ import { announce, onPlaybackChange, isPlaying } from '../lib/speech';
 import { palette, withAlpha } from '../theme';
 import { Txt } from './Text';
 
-type Phase = 'idle' | 'recording' | 'ready' | 'blocked';
+/**
+ * `blocked`: the learner (or the system) said no to the microphone.
+ * `failed`: allowed, or never asked, but it could not be opened — no
+ * microphone, another app holding it, a browser that cannot record. It used
+ * to go back to idle without a word, so the button looked dead (QA,
+ * 2026-11-10). Either way a tap tries again.
+ */
+type Phase = 'idle' | 'recording' | 'ready' | 'blocked' | 'failed';
 
 /** Long enough for any line in the course read slowly; a forgotten tap stops itself. */
 const MAX_RECORDING_MS = 10_000;
@@ -232,7 +239,12 @@ export function SayItBack({
       // app holding the microphone, an unsupported browser). Not a permission
       // problem, so it does not say so, and playback mode is restored.
       await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true }).catch(() => {});
-      if (mounted.current) setPhase('idle');
+      // Said only if it is still this line's turn: a line pre-empted while it
+      // was opening the recorder backs out quietly, as it does above.
+      if (stillMine()) {
+        setPhase('failed');
+        setSaid('Couldn’t reach the microphone.');
+      } else if (mounted.current) setPhase('idle');
     } finally {
       busy.current = false;
       done();
@@ -246,7 +258,9 @@ export function SayItBack({
       ? 'Record yourself saying this line again'
       : phase === 'blocked'
         ? 'Microphone not allowed. Allow it in your settings to say this line back'
-        : 'Say it back: record yourself saying this line, for up to 10 seconds';
+        : phase === 'failed'
+          ? 'Couldn’t reach the microphone. Tap to try again'
+          : 'Say it back: record yourself saying this line, for up to 10 seconds';
 
   return (
     <View className="items-center">
@@ -299,9 +313,9 @@ export function SayItBack({
           </Pressable>
         ) : null}
       </View>
-      {phase === 'blocked' ? (
+      {phase === 'blocked' || phase === 'failed' ? (
         <Txt style={{ color: palette.ink }} className="mt-1 text-[0.625rem] opacity-70">
-          Microphone off
+          {phase === 'blocked' ? 'Microphone off' : 'Microphone unavailable'}
         </Txt>
       ) : null}
       <View aria-live="polite" style={SPOKEN_ONLY}>
