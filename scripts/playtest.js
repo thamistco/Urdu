@@ -782,6 +782,9 @@ function lessonDoneText(body) {
  * element the app gives it; the labels by their wording, which the self-test
  * holds to LessonScreen.tsx.
  */
+/** The app's id for the "12 of 42" counter (`STEP_COUNTER_ID` in useStepFocus.ts; the self-test holds them equal). */
+const STEP_COUNTER_ID = 'lesson-step-counter';
+
 const LESSON_HEADER =
   /^(once more · the ones you missed|test out|review|review · from an earlier lesson|picking up where you left off\.|start over|lesson saved\. these don.t count; close any time for your results\.|free|free this lesson|free until unit 1 is done)$/i;
 
@@ -810,7 +813,7 @@ function typingScreen(body) {
 
 async function readScreen(page) {
   const read = await page
-    .evaluate(() => {
+    .evaluate((counterId) => {
       const dead = Array.from(document.querySelectorAll('div')).filter(
         (n) =>
           getComputedStyle(n).pointerEvents === 'none' &&
@@ -821,8 +824,8 @@ async function readScreen(page) {
         const t = n.innerText;
         if (t && t.length > 10) text = text.split(t).join('\n');
       }
-      return { text, counter: document.getElementById('lesson-step-counter')?.innerText || '' };
-    })
+      return { text, counter: document.getElementById(counterId)?.innerText || '' };
+    }, STEP_COUNTER_ID)
     .catch(() => ({ text: '', counter: '' }));
   const { body, lines } = screenLines(read.text, read.counter);
   return {
@@ -3691,5 +3694,7 @@ module.exports = {
   tripwires,
   asContent,
   screenLines,
+  LESSON_HEADER,
+  STEP_COUNTER_ID,
   typingScreen,
 };

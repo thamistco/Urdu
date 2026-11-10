@@ -44,6 +44,8 @@ const {
   chooseOption,
   asContent,
   screenLines,
+  LESSON_HEADER,
+  STEP_COUNTER_ID,
   typingScreen,
   surfaceFindings,
   lessonDoneText,
@@ -325,10 +327,40 @@ const ok = (name, cond) => {
   const labels = [...eyebrow.matchAll(/'([^']+)'/g)].map((m) => m[1]);
   const saved = /const REASK_SAVED = '([^']+)'/.exec(src)?.[1];
   const resume = /Picking up where you left off\./.test(src) ? 'Picking up where you left off.' : null;
+  // The link beside it, as the screen prints it: a line of its own in the JSX.
+  const startOver = /^\s*(Start over)\s*$/m.exec(src)?.[1];
+  ok('the resume line still offers "Start over"', !!startOver);
   ok('the lesson header still names where the learner is', labels.length >= 3 && !!saved && !!resume);
-  for (const l of [...labels, saved, resume, 'Start over'].filter(Boolean))
+  for (const l of [...labels, saved, resume, startOver].filter(Boolean))
     ok(`"${l}" is not read as something taught`, !screenLines(`✕\n${l}\nسرکار`).lines.includes(l));
   ok('while a word on the same screen still is', screenLines('✕\nReview\nسرکار\nsarkaar').lines.includes('sarkaar'));
+
+  // The counter is dropped by the element the app gives it, so the two must
+  // agree on its id: renamed in the app alone, the counter comes straight back.
+  const id = /export const STEP_COUNTER_ID = '([^']+)'/.exec(
+    fs.readFileSync(path.join(__dirname, '..', 'src/screens/useStepFocus.ts'), 'utf8')
+  )?.[1];
+  ok(`the step counter's id is the app's ("${id}")`, !!id && id === STEP_COUNTER_ID);
+
+  // And nothing the course teaches is one of these labels. A word glossed
+  // exactly "Review" or "Free" would vanish from every run without a word:
+  // the filter cannot tell a label from a gloss that reads the same.
+  const { loadData, load } = require('./lib/load-ts');
+  const { WORDS, SENTENCES, LETTERS } = loadData();
+  const { UNITS, ALL_LESSONS } = load('src/data/units');
+  const taught = [
+    ...WORDS.flatMap((w) => [w.meaning, w.roman]),
+    ...SENTENCES.flatMap((x) => [x.meaning, x.roman]),
+    ...LETTERS.flatMap((l) => [l.name, l.meaning, l.roman]),
+    ...UNITS.map((u) => u.title),
+    ...ALL_LESSONS.flatMap((l) => [l.title, l.subtitle]),
+  ].filter(Boolean);
+  const eaten = taught.filter((t) => LESSON_HEADER.test(String(t).trim()));
+  ok(
+    `none of the course's ${taught.length} glosses, readings and titles is a header label` +
+      (eaten.length ? `: ${[...new Set(eaten)].slice(0, 5).join(', ')}` : ''),
+    taught.length > 5000 && eaten.length === 0
+  );
 
   // The hearts badge, from the start of the course: "Free until Unit 1 is
   // done" gave paani a fourth name in lesson 1.
