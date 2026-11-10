@@ -113,6 +113,8 @@ function isSubsequence(before, after) {
 }
 
 const problems = [];
+/** Measurements worth having on every run, printed with the result. */
+const notes = [];
 const checked = [];
 
 /**
@@ -304,6 +306,56 @@ function soundNoticeWithin(page, ms) {
  * device being offline. Against the build before the notice this reports it
  * missing.
  */
+/**
+ * Watch for sound, timed inside the page.
+ *
+ * Counts each play that starts, and notes when the next tap lands and when
+ * the app first answers it, with the notice or with a play. Timed in the
+ * page, a frame at a time, because the question is how long the app took: a
+ * clock on this side also counts the round trips to the browser, and under
+ * load, which is when this check has failed, those are the slow part.
+ */
+function watchForSound(page) {
+  return page.evaluate(() => {
+    const play = HTMLMediaElement.prototype.play;
+    const seen = (window.__qaafSound = { plays: 0, tapped: null, how: '', after: null });
+    HTMLMediaElement.prototype.play = function () {
+      const started = play.call(this);
+      Promise.resolve(started).then(
+        () => (seen.plays += 1),
+        () => {}
+      );
+      return started;
+    };
+    document.addEventListener('click', () => (seen.tapped ??= performance.now()), { capture: true, once: true });
+    const look = () => {
+      const how = /The sound didn’t load/.test(document.body.innerText) ? 'the notice' : seen.plays > 0 ? 'a play' : '';
+      if (how && seen.tapped !== null) {
+        seen.how = how;
+        seen.after = Math.round(performance.now() - seen.tapped);
+      } else requestAnimationFrame(look);
+    };
+    requestAnimationFrame(look);
+  });
+}
+
+/** What `watchForSound` saw within `ms`: { how, after } once the app has answered, or null. */
+function soundHeardWithin(page, ms) {
+  return page
+    .waitForFunction(() => (window.__qaafSound.how ? window.__qaafSound : null), null, { timeout: ms })
+    .then((h) => h.jsonValue())
+    .catch(() => null);
+}
+
+/** What a wait that ran out means, from what turned up afterwards: three different faults. */
+function whySilent(late) {
+  if (!late) return 'Nothing came in the 10s after that either: the app stayed silent.';
+  const what = `${late.how[0].toUpperCase()}${late.how.slice(1)}`;
+  return late.after > 4000
+    ? `${what} came ${late.after}ms after the tap: the app answered, late.`
+    : `${what} had come ${late.after}ms after the tap: the app was on time, and this check was slow to see it.`;
+}
+
 async function checkSoundSaysWhenOffline(browser, url) {
   const page = await openLesson(browser, url, 'l-1', 390, 844);
   if (await soundNoticeWithin(page, 2500))
@@ -313,28 +365,23 @@ async function checkSoundSaysWhenOffline(browser, url) {
   // then it plays offline: not silent, so no notice is owed. This failed as
   // "played nothing" when the clip had in fact played, once in each of two
   // loaded check:all runs (Q-174). So a play that starts counts as sound.
-  await page.evaluate(() => {
-    const play = HTMLMediaElement.prototype.play;
-    window.__qaafPlayed = 0;
-    HTMLMediaElement.prototype.play = function () {
-      const started = play.call(this);
-      Promise.resolve(started).then(
-        () => (window.__qaafPlayed += 1),
-        () => {}
-      );
-      return started;
-    };
-  });
+  await watchForSound(page);
   await page.locator('[aria-label^="Hear"]').first().click();
-  const said = await page
-    .waitForFunction(() => /The sound didn’t load/.test(document.body.innerText) || window.__qaafPlayed > 0, null, {
-      timeout: 4000,
-    })
-    .then(
-      () => true,
-      () => false
-    );
-  if (!said) problems.push('Offline, tapping "Hear" on l-1 played nothing and said nothing.');
+  const heard = await soundHeardWithin(page, 4000);
+  /**
+   * Which of the two it was and how long it took, on every run. This failed
+   * twice under load and passed every time it was looked at, and both
+   * guesses at why (a buffered clip playing; the notice arriving late) were
+   * made with nothing measured (Q-174). The line below is the measurement:
+   * a pass says which and when, and a failure waits on to say whether the
+   * app was late or silent, which are different bugs in different places.
+   */
+  if (heard) {
+    notes.push(`offline, "Hear" on l-1 gave ${heard.how} ${heard.after}ms after the tap`);
+  } else {
+    const late = await soundHeardWithin(page, 10000);
+    problems.push('Offline, tapping "Hear" on l-1 played nothing and said nothing within 4s. ' + whySilent(late));
+  }
   await page.close();
 }
 
@@ -1329,6 +1376,7 @@ async function checkMoreBelow(browser, url) {
     `checked ${checked.length} answered questions and notice dismissals across path and practice lessons, both tracks`
   );
   console.log('also visited: Profile, Achievements, League standings');
+  for (const n of notes) console.log(n);
   if (pageErrors.length) {
     console.log(`\n${pageErrors.length} page errors — a screen crashed:`);
     pageErrors.slice(0, 5).forEach((e) => console.log('  •', e));
