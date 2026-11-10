@@ -43,6 +43,8 @@ const {
   tripwires,
   chooseOption,
   asContent,
+  screenLines,
+  typingScreen,
   surfaceFindings,
   lessonDoneText,
   windBackADay,
@@ -291,6 +293,62 @@ const ok = (name, cond) => {
   ok('a word beside its meaning still is', asContent(['Water', 'پانی']).length === 2);
 }
 
+// -- the step counter is not something taught --------------------------------
+
+{
+  // "2 of 37" heads every screen of a 37-step lesson, so it was learned as
+  // context beside each answer, and every step gave the word another "name".
+  // A run resumed after lesson 100 stopped after three answers on "sarkaar,
+  // government, 2 of 37, 5 of 37" (QA, 2026-11-10). Here the same word is met
+  // on three steps, the way the driver learns a right answer.
+  const m = new Memory();
+  for (const n of [2, 5, 9]) {
+    const lines = screenLines(`✕\n${n} of 37\nسرکار\nsarkaar\nWhat does it mean?`, `${n} of 37`).lines;
+    m.learn([...['government'], ...asContent(lines.slice(0, 4))].slice(0, 4));
+  }
+  const limits = { zeroShapeAfter: 20, clusterMax: 16, clusterNames: 3 };
+  ok('the step counter is not a name for the word', !m.knows('2 of 37') && !m.knows('9 of 37'));
+  ok('so meeting a word on three steps does not collapse memory', tripwires([], m, limits).length === 0);
+  // Only the counter goes: a line that merely contains the same digits stays.
+  ok('and nothing else goes with it', screenLines('2 of 37\n12 of 370', '2 of 37').lines.join('|') === '12 of 370');
+}
+
+{
+  // The header's labels are where the learner is, not what is taught. They
+  // gave "footpath" two extra names in a run resumed after lesson 100, the
+  // first time it got past the counter. Held to LessonScreen.tsx's own
+  // strings, so a reworded label fails here rather than collapsing a run.
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src/screens/LessonScreen.tsx'), 'utf8');
+  // The eyebrow over a re-ask, a review step or a test-out step.
+  const from = src.lastIndexOf('<Eyebrow', src.indexOf("'Once more · the ones you missed'"));
+  const eyebrow = from < 0 ? '' : src.slice(from, src.indexOf('</Eyebrow>', from));
+  const labels = [...eyebrow.matchAll(/'([^']+)'/g)].map((m) => m[1]);
+  const saved = /const REASK_SAVED = '([^']+)'/.exec(src)?.[1];
+  const resume = /Picking up where you left off\./.test(src) ? 'Picking up where you left off.' : null;
+  ok('the lesson header still names where the learner is', labels.length >= 3 && !!saved && !!resume);
+  for (const l of [...labels, saved, resume, 'Start over'].filter(Boolean))
+    ok(`"${l}" is not read as something taught`, !screenLines(`✕\n${l}\nسرکار`).lines.includes(l));
+  ok('while a word on the same screen still is', screenLines('✕\nReview\nسرکار\nsarkaar').lines.includes('sarkaar'));
+
+  // The hearts badge, from the start of the course: "Free until Unit 1 is
+  // done" gave paani a fourth name in lesson 1.
+  const stats = fs.readFileSync(path.join(__dirname, '..', 'src/components/Stats.tsx'), 'utf8');
+  const badge = /\{tight \? '([^']+)' : free === 'lesson' \? '([^']+)' : '([^']+)'\}/.exec(stats);
+  ok('the hearts badge still decides its wording in one place', !!badge);
+  for (const b of badge ? badge.slice(1) : [])
+    ok(`"${b}" is not read as something taught`, !screenLines(`✕\n${b}`).lines.includes(b));
+
+  // A letter-spotting answer names a tile, not a meaning.
+  const reveal = fs.readFileSync(path.join(__dirname, '..', 'src/screens/answerReveal.ts'), 'utf8');
+  const tile = /\} tile from the right`/.test(reveal);
+  ok('the letter-spotting answer still ends "tile from the right"', tile);
+  const said = 'alif is the third tile from the right';
+  ok(
+    `"${said}" is not learned as a meaning`,
+    revealFrom(['The answer', 'پانی', 'paani', said, 'Continue']).join('|') === 'پانی|paani'
+  );
+}
+
 // -- the run is allowed to fail ----------------------------------------------
 
 {
@@ -516,6 +574,21 @@ const ok = (name, cond) => {
     ok(`"${said}" is recognised as the end of a lesson`, lessonDoneText(said) && lessonDoneText(said.toUpperCase()));
   }
   ok('and an ordinary screen is not', !lessonDoneText('READING · COLOURS AROUND ME'));
+}
+
+// A typing question is recognised by the prompt the app really prints. When
+// it was reworded the driver stopped recognising it, and deep runs stalled
+// on the first one they met (QA, 2026-11-10).
+{
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src/exercises/RecallExercises.tsx'), 'utf8');
+  const typing = src.slice(
+    src.indexOf('export function TypeWordExercise'),
+    src.indexOf('export function WordFromMeaningExercise')
+  );
+  const asked = /<Question>([^<]+)<\/Question>/.exec(typing);
+  ok('the typing exercise still prints one question', !!asked);
+  if (asked) ok(`"${asked[1]}" is recognised as a typing question`, typingScreen(`✕\n📋\nMenu\n${asked[1]}\nCHECK`));
+  ok('and a choice question is not', !typingScreen('How do you say it?'));
 }
 
 /**

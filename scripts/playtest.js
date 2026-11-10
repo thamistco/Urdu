@@ -767,8 +767,49 @@ function lessonDoneText(body) {
  * read before. Rebuilding the text by walking nodes would change the line
  * breaks every branch in the step loop matches on.
  */
+/**
+ * The lines of a screen a learner reads, without the lesson's own header.
+ *
+ * "2 of 37" sits at the top of every lesson screen, so it went into the
+ * context learned beside an answer, and each step gave the word another name:
+ * a run resumed after lesson 100 stopped after three answers on "sarkaar,
+ * government, 2 of 37, 5 of 37" (QA, 2026-11-10). With that gone, the same run
+ * stopped on the header's other labels: "Review · from an earlier lesson" and
+ * "Once more · the ones you missed" became names for "footpath". From the
+ * start of the course it was the hearts badge, "Free until Unit 1 is done".
+ * Like the counter, they say where the learner is, not what is taught, so they
+ * are dropped here before anything can learn them. The counter goes by the
+ * element the app gives it; the labels by their wording, which the self-test
+ * holds to LessonScreen.tsx.
+ */
+const LESSON_HEADER =
+  /^(once more · the ones you missed|test out|review|review · from an earlier lesson|picking up where you left off\.|start over|lesson saved\. these don.t count; close any time for your results\.|free|free this lesson|free until unit 1 is done)$/i;
+
+function screenLines(text, counter = '') {
+  const lines = text
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .filter((l) => (!counter || l !== counter.trim()) && !LESSON_HEADER.test(l));
+  return { body: text, lines };
+}
+
+/**
+ * A typing question, by what it asks.
+ *
+ * The app's prompt changed from "Type this word" to "Type the Urdu for this"
+ * on 2026-10-27 (Q-115). The commit updated the scripts it knew of and not this
+ * one, so every typing question since read as a screen with no way forward,
+ * and each run deep enough to meet one stalled there (QA, 2026-11-10). The
+ * self-test now holds this to the prompt in RecallExercises.tsx, so the next
+ * rewording fails there instead of here.
+ */
+function typingScreen(body) {
+  return /type this word|type the word|type the urdu for this/i.test(body);
+}
+
 async function readScreen(page) {
-  const body = await page
+  const read = await page
     .evaluate(() => {
       const dead = Array.from(document.querySelectorAll('div')).filter(
         (n) =>
@@ -780,13 +821,10 @@ async function readScreen(page) {
         const t = n.innerText;
         if (t && t.length > 10) text = text.split(t).join('\n');
       }
-      return text;
+      return { text, counter: document.getElementById('lesson-step-counter')?.innerText || '' };
     })
-    .catch(() => '');
-  const lines = body
-    .split('\n')
-    .map((l) => l.trim())
-    .filter(Boolean);
+    .catch(() => ({ text: '', counter: '' }));
+  const { body, lines } = screenLines(read.text, read.counter);
   return {
     body,
     lines,
@@ -877,7 +915,10 @@ function record(journal, after, entry) {
 function revealFrom(lines) {
   const at = lines.findIndex((l) => /^the answer$/i.test(l));
   if (at === -1) return null;
-  const after = lines.slice(at + 1).filter((l) => !/^(continue|finish)$/i.test(l));
+  // A letter-spotting answer is the word, its reading and which tile held the
+  // letter: "alif is the third tile from the right" sits where a meaning
+  // would, and was learned as one, a fourth name for paani (QA, 2026-11-10).
+  const after = lines.slice(at + 1).filter((l) => !/^(continue|finish)$/i.test(l) && !/ tile from the right$/i.test(l));
   return after.slice(0, 3);
 }
 
@@ -2630,7 +2671,7 @@ async function playSession(page, ctx, sessionName, kind = 'lesson') {
     }
 
     // Typing: nothing on screen to pick from, so this is pure recall.
-    if (/type this word|type the word/i.test(screen.body)) {
+    if (typingScreen(screen.body)) {
       // Line 1 is not reliably the word: on a listen-and-type screen it is
       // the speaker button, and a run that took it literally typed "🔊" into
       // the box and then blamed the app for not explaining the answer.
@@ -3649,4 +3690,6 @@ module.exports = {
   findings,
   tripwires,
   asContent,
+  screenLines,
+  typingScreen,
 };
