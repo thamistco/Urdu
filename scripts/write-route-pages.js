@@ -13,7 +13,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { fixedRoutes, parameterRoutes, MANIFEST } = require('./lib/route-pages');
+const { fixedRoutes, parameterRoutes, parameterPrefixes, MANIFEST } = require('./lib/route-pages');
 
 const DIST = path.join(__dirname, '..', 'dist');
 const index = path.join(DIST, 'index.html');
@@ -25,20 +25,32 @@ if (!fs.existsSync(index)) {
 const html = fs.readFileSync(index, 'utf8');
 const fixed = fixedRoutes();
 const withParameter = parameterRoutes();
-for (const r of [...fixed, ...withParameter]) {
-  const file = path.join(DIST, `${r}.html`);
+/**
+ * An address that is a page and also a folder: /letters is the Letter Lab,
+ * and letters/ holds a page for each letter. Pages answers /letters from
+ * letters.html or by sending the browser to /letters/, and which it does is
+ * its own business, seen by nobody here (second check, 2026-11-10). So the
+ * folder gets the page as its index too, and either way the Lab opens.
+ */
+const folders = parameterPrefixes()
+  .filter((p) => fixed.includes(p))
+  .map((p) => `${p}/`);
+
+const write = (rel) => {
+  const file = path.join(DIST, rel);
   // A real file of that name from the export would be overwritten silently.
   if (fs.existsSync(file) && fs.readFileSync(file, 'utf8') !== html) {
-    console.error(
-      `write-route-pages — dist/${r}.html already exists and is not the app's page; refusing to replace it.`
-    );
+    console.error(`write-route-pages — dist/${rel} already exists and is not the app's page; refusing to replace it.`);
     process.exit(1);
   }
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, html);
-}
-fs.writeFileSync(path.join(DIST, MANIFEST), JSON.stringify({ fixed, withParameter }));
-const kb = Math.round(((fixed.length + withParameter.length) * Buffer.byteLength(html)) / 1024);
+};
+for (const r of [...fixed, ...withParameter]) write(`${r}.html`);
+for (const f of folders) write(`${f}index.html`);
+
+fs.writeFileSync(path.join(DIST, MANIFEST), JSON.stringify({ fixed, withParameter, folders }));
+const pages = fixed.length + withParameter.length + folders.length;
 console.log(
-  `write-route-pages — ${fixed.length} fixed addresses and ${withParameter.length} lessons and letters have their own page (${kb} KB in all).`
+  `write-route-pages — ${fixed.length} fixed addresses and ${withParameter.length} lessons and letters have their own page (${Math.round((pages * Buffer.byteLength(html)) / 1024)} KB in all).`
 );

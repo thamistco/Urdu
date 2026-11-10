@@ -123,6 +123,16 @@ function fail(kind, why) {
 }
 
 /**
+ * One fetch past the CDN's cache, that gives up. Without a limit a connection
+ * that hangs waits on Node's own five minutes, four hundred times over.
+ */
+const get = (at) =>
+  fetch(`${at}${at.includes('?') ? '&' : '?'}_cb=${Date.now()}`, {
+    headers: { 'Cache-Control': 'no-cache' },
+    signal: AbortSignal.timeout(20_000),
+  });
+
+/**
  * Every address the build gave a page answers 200 with this commit's page.
  *
  * Pages answers an address with no file of its own with 404.html and the
@@ -139,39 +149,40 @@ function fail(kind, why) {
  *
  * Returns the addresses that failed, each with what was seen.
  */
-async function routesLive() {
+async function routesLive(again) {
   const { fixedRoutes, parameterPrefixes, MANIFEST } = require('./lib/route-pages');
   const root = url.endsWith('/') ? url : `${url}/`;
-  const get = (at) => fetch(`${at}?_cb=${Date.now()}`, { headers: { 'Cache-Control': 'no-cache' } });
 
   let listed;
   try {
     const res = await get(new URL(MANIFEST, root).href);
     if (res.status !== 200)
-      return { bad: [`${MANIFEST}: HTTP ${res.status}, so the build wrote no list of its pages`] };
+      return { bad: [{ why: `${MANIFEST}: HTTP ${res.status}, so the build wrote no list of its pages` }] };
     listed = await res.json();
   } catch (e) {
-    return { bad: [`${MANIFEST}: ${e.message}`] };
+    return { bad: [{ why: `${MANIFEST}: ${e.message}` }] };
   }
-  const all = [...(listed.fixed || []), ...(listed.withParameter || [])];
+  const all = [...(listed.fixed || []), ...(listed.withParameter || []), ...(listed.folders || [])];
   const bad = [];
-  for (const r of fixedRoutes()) if (!all.includes(r)) bad.push(`/${r}: in linking.ts, but the build gave it no page`);
+  for (const r of fixedRoutes())
+    if (!all.includes(r)) bad.push({ why: `/${r}: in linking.ts, but the build gave it no page` });
   for (const p of parameterPrefixes())
-    if (!all.some((r) => r.startsWith(`${p}/`))) bad.push(`/${p}/…: the build gave none of these a page`);
+    if (!all.some((r) => r.startsWith(`${p}/`))) bad.push({ why: `/${p}/…: the build gave none of these a page` });
 
   // A few at a time: four hundred small pages, and no need to hammer the CDN.
-  const queue = [...all];
+  // On a retry, only the ones that were wrong: the rest were already seen right.
+  const queue = again ? all.filter((r) => again.includes(r)) : [...all];
   const one = async () => {
     for (let r = queue.shift(); r !== undefined; r = queue.shift()) {
       const at = new URL(r, root).href;
       try {
         const res = await get(at);
         const served = shaFrom(await res.text());
-        if (res.status !== 200) bad.push(`${at}: HTTP ${res.status}`);
+        if (res.status !== 200) bad.push({ r, why: `${at}: HTTP ${res.status}` });
         else if (served !== expected.slice(0, (served || '').length))
-          bad.push(`${at}: serving ${served || 'no stamp'}`);
+          bad.push({ r, why: `${at}: serving ${served || 'no stamp'}` });
       } catch (e) {
-        bad.push(`${at}: ${e.message}`);
+        bad.push({ r, why: `${at}: ${e.message}` });
       }
     }
   };
@@ -187,21 +198,22 @@ async function routesLive() {
  * that 404s shows as a grey box in every chat the link is pasted into, with
  * nothing in the app to notice (growth review, 2026-10-27, Q-129).
  *
- * Returns what was wrong, or nothing.
+ * Returns `bad` when it was fetched and was wrong, `unreachable` when it
+ * could not be fetched at all, and neither when it is right.
  */
 async function cardLive() {
   try {
-    const page = await fetch(`${url}${url.includes('?') ? '&' : '?'}_cb=${Date.now()}`);
-    const at = /<meta\s+property="og:image"\s+content="([^"]+)"/i.exec(await page.text())?.[1];
-    if (!at) return ['the live page names no share picture (og:image)'];
-    const res = await fetch(`${at}?_cb=${Date.now()}`);
-    if (res.status !== 200) return [`${at}: HTTP ${res.status}`];
+    const at = /<meta\s+property="og:image"\s+content="([^"]+)"/i.exec(await (await get(url)).text())?.[1];
+    if (!at) return { bad: 'the live page names no share picture (og:image)' };
+    const res = await get(at);
+    if (res.status !== 200) return { bad: `${at}: HTTP ${res.status}` };
     const head = new Uint8Array(await res.arrayBuffer()).subarray(0, 3);
     if (!(head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff))
-      return [`${at}: answered 200, but not with a JPEG`];
-    return [];
+      return { bad: `${at}: answered 200, but not with a JPEG` };
+    return {};
   } catch (e) {
-    return [`the share picture: ${e.message}`];
+    // Never fetched: that says nothing about the picture, as `probe` has it.
+    return { unreachable: e.message };
   }
 }
 
@@ -213,29 +225,35 @@ async function cardLive() {
       console.log(`check:deployed — ${url} is serving ${result.served}, which is this commit. Live and verified.`);
       // The CDN swaps files one by one, so a page can lag the root briefly.
       let pages = await routesLive();
+      const count = pages.count;
       for (let a = 1; pages.bad.length && a < ATTEMPTS; a++) {
         console.log(`  ${pages.bad.length} address(es) not yet right, retrying in ${(FIRST_WAIT_MS * a) / 1000}s`);
         await sleep(FIRST_WAIT_MS * a);
-        pages = await routesLive();
+        pages = await routesLive(pages.bad.every((b) => b.r) ? pages.bad.map((b) => b.r) : undefined);
       }
       if (pages.bad.length) {
         console.error(
           `check:deployed — the app is live, but ${pages.bad.length} of its addresses do not answer 200 with it:\n` +
             pages.bad
               .slice(0, 20)
-              .map((b) => `  ✗ ${b}`)
+              .map((b) => `  ✗ ${b.why}`)
               .join('\n') +
             (pages.bad.length > 20 ? `\n  … and ${pages.bad.length - 20} more` : '') +
             `\n  A link checker, share preview or store review sees these as missing pages.`
         );
         process.exit(1);
       }
-      console.log(`check:deployed — all ${pages.count} addresses with a page answer 200 with this commit.`);
-      const card = await cardLive();
-      if (card.length) {
-        console.error(`check:deployed — the app is live, but a shared link would show no picture:\n  ✗ ${card[0]}`);
+      console.log(`check:deployed — all ${count} addresses with a page answer 200 with this commit.`);
+      let card = await cardLive();
+      for (let a = 1; (card.bad || card.unreachable) && a < ATTEMPTS; a++) {
+        await sleep(FIRST_WAIT_MS * a);
+        card = await cardLive();
+      }
+      if (card.bad) {
+        console.error(`check:deployed — the app is live, but a shared link would show no picture:\n  ✗ ${card.bad}`);
         process.exit(1);
       }
+      if (card.unreachable) fail('unreachable', `the share picture: ${card.unreachable}`);
       console.log('check:deployed — the share picture is served, and is a JPEG.');
       process.exit(0);
     }

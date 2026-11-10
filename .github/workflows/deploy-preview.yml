@@ -333,8 +333,10 @@ jobs:
             npm run check:links
 
       # 404.html draws any address, but Pages sends it with the status 404, so
-      # each fixed address (privacy, terms, the tabs) also gets a page of its
-      # own that answers 200. check-deployed.js proves Pages serves them.
+      # every address the app has (privacy, terms, the tabs, each lesson and
+      # letter) also gets a page of its own that answers 200, and a list of
+      # them. check-deployed.js reads the list back and proves Pages serves
+      # every one.
       - name: SPA fallback + disable Jekyll
         run: |
           cp dist/index.html dist/404.html
