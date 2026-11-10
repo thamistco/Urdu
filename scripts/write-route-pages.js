@@ -1,7 +1,11 @@
 /* eslint-disable */
 /**
- * Give each of the app's fixed addresses a page of its own, so GitHub Pages
- * answers it with 200 instead of 404. See scripts/lib/route-pages.js for why.
+ * Give each of the app's addresses a page of its own, so GitHub Pages answers
+ * it with 200 instead of 404. See scripts/lib/route-pages.js for why.
+ *
+ * Also writes route-pages.json, the list of what was given a page. The deploy
+ * job has no node_modules and cannot read the course, so check-deployed
+ * fetches that list from the live site and holds every address in it to 200.
  *
  * Run after the web export and web:meta, which write dist/index.html:
  *   node scripts/write-route-pages.js
@@ -9,7 +13,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { fixedRoutes } = require('./lib/route-pages');
+const { fixedRoutes, parameterRoutes, MANIFEST } = require('./lib/route-pages');
 
 const DIST = path.join(__dirname, '..', 'dist');
 const index = path.join(DIST, 'index.html');
@@ -19,8 +23,9 @@ if (!fs.existsSync(index)) {
 }
 
 const html = fs.readFileSync(index, 'utf8');
-const routes = fixedRoutes();
-for (const r of routes) {
+const fixed = fixedRoutes();
+const withParameter = parameterRoutes();
+for (const r of [...fixed, ...withParameter]) {
   const file = path.join(DIST, `${r}.html`);
   // A real file of that name from the export would be overwritten silently.
   if (fs.existsSync(file) && fs.readFileSync(file, 'utf8') !== html) {
@@ -32,4 +37,8 @@ for (const r of routes) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, html);
 }
-console.log(`write-route-pages — ${routes.length} addresses have their own page: ${routes.join(', ')}.`);
+fs.writeFileSync(path.join(DIST, MANIFEST), JSON.stringify({ fixed, withParameter }));
+const kb = Math.round(((fixed.length + withParameter.length) * Buffer.byteLength(html)) / 1024);
+console.log(
+  `write-route-pages — ${fixed.length} fixed addresses and ${withParameter.length} lessons and letters have their own page (${kb} KB in all).`
+);

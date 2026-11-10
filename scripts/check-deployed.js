@@ -123,32 +123,60 @@ function fail(kind, why) {
 }
 
 /**
- * Every fixed address answers 200 with this commit's page.
+ * Every address the build gave a page answers 200 with this commit's page.
  *
  * Pages answers an address with no file of its own with 404.html and the
  * status 404, so /privacy looked right in a browser and was a 404 to every
- * link checker and app-store review (QA, 2026-11-10). The deploy now writes a
- * page for each (scripts/write-route-pages.js); this is the only place that
- * can see whether Pages really serves them, because only Pages decides.
+ * link checker and app-store review (QA, 2026-11-10). The build now writes a
+ * page for each address (scripts/write-route-pages.js); this is the only place
+ * that can see whether Pages really serves them, because only Pages decides.
+ *
+ * The list is read back from the live site (route-pages.json), since this job
+ * has no node_modules to work the lessons out with. That list is not simply
+ * trusted: every fixed address in linking.ts must be on it, and so must at
+ * least one page for each kind of address that takes a parameter. A build
+ * that wrote no pages, or an empty list, fails here.
  *
  * Returns the addresses that failed, each with what was seen.
  */
 async function routesLive() {
-  const { fixedRoutes } = require('./lib/route-pages');
+  const { fixedRoutes, parameterPrefixes, MANIFEST } = require('./lib/route-pages');
   const root = url.endsWith('/') ? url : `${url}/`;
-  const bad = [];
-  for (const r of fixedRoutes()) {
-    const at = new URL(r, root).href;
-    try {
-      const res = await fetch(`${at}?_cb=${Date.now()}`, { headers: { 'Cache-Control': 'no-cache' } });
-      const served = shaFrom(await res.text());
-      if (res.status !== 200) bad.push(`${at}: HTTP ${res.status}`);
-      else if (served !== expected.slice(0, (served || '').length)) bad.push(`${at}: serving ${served || 'no stamp'}`);
-    } catch (e) {
-      bad.push(`${at}: ${e.message}`);
-    }
+  const get = (at) => fetch(`${at}?_cb=${Date.now()}`, { headers: { 'Cache-Control': 'no-cache' } });
+
+  let listed;
+  try {
+    const res = await get(new URL(MANIFEST, root).href);
+    if (res.status !== 200)
+      return { bad: [`${MANIFEST}: HTTP ${res.status}, so the build wrote no list of its pages`] };
+    listed = await res.json();
+  } catch (e) {
+    return { bad: [`${MANIFEST}: ${e.message}`] };
   }
-  return bad;
+  const all = [...(listed.fixed || []), ...(listed.withParameter || [])];
+  const bad = [];
+  for (const r of fixedRoutes()) if (!all.includes(r)) bad.push(`/${r}: in linking.ts, but the build gave it no page`);
+  for (const p of parameterPrefixes())
+    if (!all.some((r) => r.startsWith(`${p}/`))) bad.push(`/${p}/…: the build gave none of these a page`);
+
+  // A few at a time: four hundred small pages, and no need to hammer the CDN.
+  const queue = [...all];
+  const one = async () => {
+    for (let r = queue.shift(); r !== undefined; r = queue.shift()) {
+      const at = new URL(r, root).href;
+      try {
+        const res = await get(at);
+        const served = shaFrom(await res.text());
+        if (res.status !== 200) bad.push(`${at}: HTTP ${res.status}`);
+        else if (served !== expected.slice(0, (served || '').length))
+          bad.push(`${at}: serving ${served || 'no stamp'}`);
+      } catch (e) {
+        bad.push(`${at}: ${e.message}`);
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: 8 }, one));
+  return { bad, count: all.length };
 }
 
 (async () => {
@@ -158,21 +186,25 @@ async function routesLive() {
     if (result.ok) {
       console.log(`check:deployed — ${url} is serving ${result.served}, which is this commit. Live and verified.`);
       // The CDN swaps files one by one, so a page can lag the root briefly.
-      let bad = await routesLive();
-      for (let a = 1; bad.length && a < ATTEMPTS; a++) {
-        console.log(`  ${bad.length} address(es) not yet right, retrying in ${(FIRST_WAIT_MS * a) / 1000}s`);
+      let pages = await routesLive();
+      for (let a = 1; pages.bad.length && a < ATTEMPTS; a++) {
+        console.log(`  ${pages.bad.length} address(es) not yet right, retrying in ${(FIRST_WAIT_MS * a) / 1000}s`);
         await sleep(FIRST_WAIT_MS * a);
-        bad = await routesLive();
+        pages = await routesLive();
       }
-      if (bad.length) {
+      if (pages.bad.length) {
         console.error(
-          `check:deployed — the app is live, but ${bad.length} of its addresses do not answer 200 with it:\n` +
-            bad.map((b) => `  ✗ ${b}`).join('\n') +
+          `check:deployed — the app is live, but ${pages.bad.length} of its addresses do not answer 200 with it:\n` +
+            pages.bad
+              .slice(0, 20)
+              .map((b) => `  ✗ ${b}`)
+              .join('\n') +
+            (pages.bad.length > 20 ? `\n  … and ${pages.bad.length - 20} more` : '') +
             `\n  A link checker, share preview or store review sees these as missing pages.`
         );
         process.exit(1);
       }
-      console.log(`check:deployed — every fixed address answers 200 with this commit.`);
+      console.log(`check:deployed — all ${pages.count} addresses with a page answer 200 with this commit.`);
       process.exit(0);
     }
     last = result;
