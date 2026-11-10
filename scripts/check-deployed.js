@@ -179,6 +179,32 @@ async function routesLive() {
   return { bad, count: all.length };
 }
 
+/**
+ * The picture a shared link shows is really there.
+ *
+ * check:share-card proves the build names a 1200x630 JPEG and has the file.
+ * Whether the address in the page then serves it is Pages' doing, and a card
+ * that 404s shows as a grey box in every chat the link is pasted into, with
+ * nothing in the app to notice (growth review, 2026-10-27, Q-129).
+ *
+ * Returns what was wrong, or nothing.
+ */
+async function cardLive() {
+  try {
+    const page = await fetch(`${url}${url.includes('?') ? '&' : '?'}_cb=${Date.now()}`);
+    const at = /<meta\s+property="og:image"\s+content="([^"]+)"/i.exec(await page.text())?.[1];
+    if (!at) return ['the live page names no share picture (og:image)'];
+    const res = await fetch(`${at}?_cb=${Date.now()}`);
+    if (res.status !== 200) return [`${at}: HTTP ${res.status}`];
+    const head = new Uint8Array(await res.arrayBuffer()).subarray(0, 3);
+    if (!(head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff))
+      return [`${at}: answered 200, but not with a JPEG`];
+    return [];
+  } catch (e) {
+    return [`the share picture: ${e.message}`];
+  }
+}
+
 (async () => {
   let last = { kind: 'unreachable', why: 'no attempt made' };
   for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
@@ -205,6 +231,12 @@ async function routesLive() {
         process.exit(1);
       }
       console.log(`check:deployed — all ${pages.count} addresses with a page answer 200 with this commit.`);
+      const card = await cardLive();
+      if (card.length) {
+        console.error(`check:deployed — the app is live, but a shared link would show no picture:\n  ✗ ${card[0]}`);
+        process.exit(1);
+      }
+      console.log('check:deployed — the share picture is served, and is a JPEG.');
       process.exit(0);
     }
     last = result;
