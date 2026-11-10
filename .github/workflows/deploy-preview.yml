@@ -25,11 +25,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      # Node 22, the release line check:all runs on here. This said 20 until
+      # 2026-11-10, months after Node 20 stopped getting fixes, so the gate
+      # and CI ran different runtimes and a package dropping Node 20 would
+      # have failed only in CI.
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -352,7 +356,7 @@ jobs:
       # app.config.js put in the bundle. Without it, "success" here means the
       # upload returned 200 — which is not the same as the site having changed,
       # and twice it was reported as if it were.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Verify the live site is serving this commit
         env:
           SITE_URL: ${{ steps.deployment.outputs.page_url }}
