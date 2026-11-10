@@ -201,6 +201,25 @@ async function main() {
       await arrived(cold);
       const body = await cold.evaluate(() => document.body.innerText);
       const landed = await cold.evaluate(() => location.pathname);
+      /**
+       * And there is a way on from it. Opened cold there is nothing to go
+       * back to, and these screens used to show no Back at all: someone who
+       * followed a store listing's privacy link could read the policy and
+       * could not reach the app (Q-177). Back now opens the front door.
+       */
+      const back = cold.getByRole('button', { name: /Back/ }).first();
+      if (!(await back.count())) {
+        problems.push(`${url} opened cold has no Back, so there is no way from it into the app.`);
+      } else {
+        await back.click();
+        const until = Date.now() + 10000;
+        let door = false;
+        while (!door && Date.now() < until) {
+          door = await atTheDoor(cold).catch(() => false);
+          if (!door) await cold.waitForTimeout(100);
+        }
+        if (!door) problems.push(`${url} opened cold: Back did not open the sign-in screen.`);
+      }
       await cold.close();
       if (!route.shows.test(body)) {
         problems.push(

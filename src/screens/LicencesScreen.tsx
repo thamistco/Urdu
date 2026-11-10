@@ -1,14 +1,10 @@
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../components/Screen';
 import { TopBar } from '../components/TopBar';
+import { useBackOrFrontDoor } from '../navigation/backOrFrontDoor';
 import { Txt, Bold, Heading } from '../components/Text';
-import type { RootStackParamList } from '../navigation/types';
 import LICENCES from '../data/licences.json';
-
-type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 /**
  * The copyright notice and licence of every package and typeface the app
@@ -45,11 +41,11 @@ function Row({ name, version, license, text }: { name: string; version: string; 
 }
 
 export function LicencesScreen() {
-  const nav = useNavigation<Nav>();
+  const back = useBackOrFrontDoor();
   return (
     <View className="flex-1 bg-ink">
       <Screen>
-        <TopBar onBack={nav.canGoBack() ? () => nav.goBack() : undefined} title="Open-source licences" />
+        <TopBar onBack={back} title="Open-source licences" />
         <Heading className="mb-2 text-lg">Software Qaaf is built on</Heading>
         <Txt className="mb-4 text-[0.8125rem] leading-6 text-paper/80">
           Qaaf includes the following open-source software and typefaces. Each is used under the licence shown, and each

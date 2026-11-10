@@ -1,13 +1,9 @@
 import { View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../components/Screen';
 import { TopBar } from '../components/TopBar';
+import { useBackOrFrontDoor } from '../navigation/backOrFrontDoor';
 import { Txt, Bold, Heading } from '../components/Text';
 import { ContactLine, HAS_CONTACT } from '../components/ContactLine';
-import type { RootStackParamList } from '../navigation/types';
-
-type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 /** Same reachability rules as PrivacyScreen — see the note there. */
 
@@ -21,11 +17,11 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export function TermsScreen() {
-  const nav = useNavigation<Nav>();
+  const back = useBackOrFrontDoor();
   return (
     <View className="flex-1 bg-ink">
       <Screen>
-        <TopBar onBack={nav.canGoBack() ? () => nav.goBack() : undefined} title="Terms of Service" />
+        <TopBar onBack={back} title="Terms of Service" />
         <Heading className="mb-1 text-lg">The short version</Heading>
         <Txt className="mb-6 text-[0.75rem] text-paper/55">Last updated 2026-10-29</Txt>
 

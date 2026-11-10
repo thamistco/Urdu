@@ -3,6 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../components/Screen';
 import { TopBar } from '../components/TopBar';
+import { useBackOrFrontDoor } from '../navigation/backOrFrontDoor';
 import { Txt, Bold, Heading } from '../components/Text';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -51,10 +52,11 @@ function Link({ label, url }: { label: string; url: string }) {
 
 export function CreditsScreen() {
   const nav = useNavigation<Nav>();
+  const back = useBackOrFrontDoor();
   return (
     <View className="flex-1 bg-ink">
       <Screen>
-        <TopBar onBack={nav.canGoBack() ? () => nav.goBack() : undefined} title="Credits" />
+        <TopBar onBack={back} title="Credits" />
         <Heading className="mb-6 text-lg">Whose work is in Qaaf</Heading>
 
         <Section title="Course content">
