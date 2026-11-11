@@ -3404,14 +3404,6 @@ async function advanceClock(page, ctx, ms, kind) {
 
 const passADay = (page, ctx) => advanceClock(page, ctx, 24 * 60 * 60 * 1000, 'dayPassed');
 
-/**
- * check:all deletes and rebuilds dist/ as its first act, and this serves dist/
- * for the length of the run. Taken before the browser opens, so a refusal
- * costs nothing and a crash still gives the lock back.
- */
-refuseIfBusy('playtest', CHECK_ALL_LOCK);
-take(PLAYTEST_LOCK, 'playtest');
-
 async function main() {
   if (!fs.existsSync(path.join(DIST, 'index.html'))) {
     console.error('playtest — no dist/. Run `npm run build:web` first.');
@@ -3672,6 +3664,18 @@ async function main() {
 // the pure parts — the memory model, the reveal parser, the rule that only a
 // graded screen may be recorded — impossible to exercise without a full run.
 if (require.main === module) {
+  /**
+   * check:all deletes and rebuilds dist/ as its first act, and a run serves
+   * dist/ for its whole length. Taken before the browser opens, so a refusal
+   * costs nothing and a crash still gives the lock back.
+   *
+   * Only for a run. This sat at the top level, so the self-test, which needs
+   * the pure parts and never touches dist/, refused whenever check:all was
+   * running and held the playtest's lock while it ran. It passed alone and
+   * in CI, and failed as a step of check:all (2026-11-11).
+   */
+  refuseIfBusy('playtest', CHECK_ALL_LOCK);
+  take(PLAYTEST_LOCK, 'playtest');
   main().catch((e) => {
     console.error('playtest —', e.message);
     process.exit(1);
